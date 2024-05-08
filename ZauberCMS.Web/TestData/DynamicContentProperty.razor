@@ -1,0 +1,23 @@
+﻿<CascadingValue Value="this">
+    <DynamicComponent Type="@ComponentType" Parameters="@GetParameters()" />
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public Type ComponentType { get; set; }
+
+    [Parameter]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private Dictionary<string, object> GetParameters()
+    {
+        return new Dictionary<string, object>
+        {
+            ["Value"] = Value,
+            ["ValueChanged"] = ValueChanged
+        };
+    }
+}

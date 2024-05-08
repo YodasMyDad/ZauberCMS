@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Web", "ZauberCMS.Web\ZauberCMS.Web.csproj", "{061BC085-29EB-4A8B-AE8F-36B8B3F2FA4D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Core", "ZauberCMS.Core\ZauberCMS.Core.csproj", "{03BDCFEB-1B26-42F6-BC78-956895C07EC0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Components", "ZauberCMS.Components\ZauberCMS.Components.csproj", "{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{061BC085-29EB-4A8B-AE8F-36B8B3F2FA4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{061BC085-29EB-4A8B-AE8F-36B8B3F2FA4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{061BC085-29EB-4A8B-AE8F-36B8B3F2FA4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{061BC085-29EB-4A8B-AE8F-36B8B3F2FA4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03BDCFEB-1B26-42F6-BC78-956895C07EC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03BDCFEB-1B26-42F6-BC78-956895C07EC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03BDCFEB-1B26-42F6-BC78-956895C07EC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03BDCFEB-1B26-42F6-BC78-956895C07EC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
