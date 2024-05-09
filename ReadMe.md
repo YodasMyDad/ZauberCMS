@@ -1,0 +1,4 @@
+- Setup EF Core from BF
+- Create & Store ContentTypes in the DB, need to be able to pick property editors
+- Create a new page, using ContentType as Type for Page
+- Save the Page, and show in Tree, when clicked, load the page data from the DB
