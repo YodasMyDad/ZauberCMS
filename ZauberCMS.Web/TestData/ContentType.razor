@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Components.Forms
+﻿@using System.Text
+@using Microsoft.AspNetCore.Components.Forms
 
 <EditForm Model="this" OnSubmit="HandleSubmit">
     @foreach (var property in Properties)
@@ -11,10 +12,14 @@
     <button type="submit">Save</button>
 </EditForm>
 
+@((MarkupString)Text)
+
 @code {
     [Parameter]
     public List<ContentPropertyData> Properties { get; set; } = new List<ContentPropertyData>();
 
+    private string Text { get; set; } = string.Empty;
+    
     private void UpdateProperty(string alias, string value)
     {
         var property = Properties.FirstOrDefault(p => p.Alias == alias);
@@ -24,13 +29,15 @@
         }
     }
 
-    private async Task HandleSubmit()
+    private void HandleSubmit()
     {
-        Console.WriteLine("Saving data:");
+        var sb = new StringBuilder();
+        sb.AppendLine("<p>Saving data:</p>");
         foreach (var property in Properties)
         {
-            Console.WriteLine($"{property.Alias}: {property.Value}");
+            sb.AppendLine($"<p>{property.Alias}: {property.Value}</p>");
         }
-        // Additional logic to handle form submission if necessary
+
+        Text = sb.ToString();
     }
 }
