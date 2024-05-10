@@ -1,6 +1,10 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@using ZauberCMS.Core.Plugins
+@using Microsoft.AspNetCore.Components.Authorization
+<Router
+    AppAssembly="@typeof(App).Assembly"
+    AdditionalAssemblies="@ExtensionManager.GetAssemblies(x => x.FullName!.StartsWith("Zauber.Plugins", StringComparison.OrdinalIgnoreCase))">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
         <FocusOnNavigate RouteData="routeData" Selector="h1"/>
     </Found>
 </Router>

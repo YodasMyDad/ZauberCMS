@@ -6,6 +6,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Core", "ZauberCMS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Components", "ZauberCMS.Components\ZauberCMS.Components.csproj", "{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{926273E0-C534-4703-A483-0B32CCB57516}"
+	ProjectSection(SolutionItems) = preProject
+		ReadMe.md = ReadMe.md
+		Notes.md = Notes.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
