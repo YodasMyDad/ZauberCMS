@@ -2,6 +2,9 @@
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Content.Models
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Web.Components.Layout
+
+@layout AdminLayout
 
 <EditForm Model="this" OnSubmit="HandleSubmit">
     @foreach (var property in Properties)

@@ -1,7 +1,39 @@
 ﻿@page "/settings"
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Data
 @using ZauberCMS.Web.Components.Layout
+
 @layout AdminLayout
+
+@inject NavigationManager NavigationManager
 
 <PageTitle>Settings</PageTitle>
 
-<p>This is the settings section</p>
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(args => NavigationManager.NavigateTo("/createcontentype"))/>
+</RadzenStack>
+
+<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                Data="@ContentTypes" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single" @bind-Value=@SelectedContentTypes>
+    <Columns>
+        <RadzenDataGridColumn Property="Id" Filterable="false" Title="ID" Frozen="true" Width="80px" TextAlign="TextAlign.Center"/>
+        <RadzenDataGridColumn Property="Name" Title="Name" Frozen="true" Width="160px"/>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+
+    private IEnumerable<ContentType> ContentTypes { get; set; }
+    private IList<ContentType> SelectedContentTypes { get; set; }
+
+    [Inject] private ZauberDbContext ZauberDbContext { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        ContentTypes = ZauberDbContext.ContentTypes;
+
+        SelectedContentTypes = new List<ContentType>() { ContentTypes.FirstOrDefault() };
+    }
+}

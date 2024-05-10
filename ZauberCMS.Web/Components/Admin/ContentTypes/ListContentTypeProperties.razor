@@ -1,0 +1,26 @@
+﻿@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Plugins
+
+@foreach (var name in AllContentProperties)
+{
+    <p>@name.Value.Name</p>
+}
+
+@code {
+    
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    
+    [Parameter] public Guid Id { get; set; }
+
+    private Dictionary<string, IContentProperty> AllContentProperties { get; set; } = new();
+    
+    protected override void OnInitialized()
+    {
+        
+        AllContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+        
+        base.OnInitialized();
+    }
+
+}

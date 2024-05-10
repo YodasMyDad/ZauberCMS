@@ -1,0 +1,53 @@
+﻿@page "/createcontentype"
+@layout AdminLayout
+
+<PageTitle>Create Content Type</PageTitle>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Add Content Property" Click="@(AddProperty)"/>
+</RadzenStack>
+
+<p>Name</p>
+<p>Other fields too need adding</p>
+
+@foreach (var property in ContentType.ContentProperties)
+{
+    @property.Name
+}
+
+<SectionContent SectionId="AdminLayout.Sections.Footer">
+    <RadzenFooter>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5">
+            <RadzenButton Variant="Variant.Filled" Text="Save" Click="@(Save)"/>
+        </RadzenStack>
+    </RadzenFooter>
+</SectionContent>
+
+@code {
+
+    [Inject] public NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+
+    private ContentType ContentType { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        // TODO - If we are editing, load the content type here
+
+        base.OnInitialized();
+    }
+
+    private void Save()
+    {
+        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Success Summary", Detail = "Success Detail", Duration = 4000 });
+    }
+
+    private async Task AddProperty()
+    {
+        await DialogService.OpenSideAsync<ListContentTypeProperties>("Add Property",
+            new Dictionary<string, object>() { { "Id", ContentType.Id } },
+            new SideDialogOptions() { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+    }
+
+}

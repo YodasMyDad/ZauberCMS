@@ -5,6 +5,10 @@
 
 <PageTitle>Content</PageTitle>
 
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0;">
+    <RadzenButton Variant="Variant.Filled" Text="Content" />
+</RadzenStack>
+
 <p>This is the content section</p>
 
 <SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
@@ -13,37 +17,50 @@
 
 <SectionContent SectionId="AdminLayout.Sections.SideBar">
     <RadzenSidebar @bind-Expanded="@Expanded">
+        <div class="rz-p-4">
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content</RadzenText>
+        </div>
         <RadzenTree Style="width: 100%;">
-            <RadzenTreeItem Text="BMW">
+
+            <RadzenTreeItem Text="Home">
+                <Template>
+                    @*<img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;"/>*@
+                    <RadzenIcon Icon="home"/>
+                    <strong>@context.Text</strong>
+                </Template>
+            </RadzenTreeItem>
+
+            @*<RadzenTreeItem Text="BMW">
                 <ChildContent>
-                    <RadzenTreeItem Text="M3" />
-                    <RadzenTreeItem Text="M5" />
+                    <RadzenTreeItem Text="M3"/>
+                    <RadzenTreeItem Text="M5"/>
                 </ChildContent>
                 <Template>
-                    <img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;" />
+                    <img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;"/>
                     <b>@context.Text</b>
                 </Template>
             </RadzenTreeItem>
             <RadzenTreeItem Text="Audi">
                 <ChildContent>
-                    <RadzenTreeItem Text="RS4" />
-                    <RadzenTreeItem Text="RS6" />
+                    <RadzenTreeItem Text="RS4"/>
+                    <RadzenTreeItem Text="RS6"/>
                 </ChildContent>
                 <Template>
-                    <img alt="Audi" src="https://upload.wikimedia.org/wikipedia/commons/9/92/Audi-Logo_2016.svg" style="width: 20px; margin-right: 8px;" />
+                    <img alt="Audi" src="https://upload.wikimedia.org/wikipedia/commons/9/92/Audi-Logo_2016.svg" style="width: 20px; margin-right: 8px;"/>
                     <b>@context.Text</b>
                 </Template>
             </RadzenTreeItem>
             <RadzenTreeItem Text="Mercedes">
                 <Template>
-                    <img alt="Mercedes" src="https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg" style="width: 20px; margin-right: 8px;" />
+                    <img alt="Mercedes" src="https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg" style="width: 20px; margin-right: 8px;"/>
                     <b>@context.Text</b>
                 </Template>
                 <ChildContent>
-                    <RadzenTreeItem Text="C63 AMG" />
-                    <RadzenTreeItem Text="S63 AMG" />
+                    <RadzenTreeItem Text="C63 AMG"/>
+                    <RadzenTreeItem Text="S63 AMG"/>
                 </ChildContent>
-            </RadzenTreeItem>
+            </RadzenTreeItem>*@
+
         </RadzenTree>
     </RadzenSidebar>
 </SectionContent>

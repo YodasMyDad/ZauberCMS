@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using MimeKit;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Data;
