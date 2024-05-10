@@ -1,63 +1,6 @@
 ﻿@inherits LayoutComponentBase
-<RadzenComponents />
 
-<RadzenLayout>
-    
-    <RadzenHeader class="rz-background-color-primary-darker">
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
-            <RadzenSidebarToggle Click="@(() => sidebar1Expanded = !sidebar1Expanded)" />
-            <RadzenIcon Icon="fingerprint" />
-        </RadzenStack>
-    </RadzenHeader>
-    
-    <RadzenSidebar @bind-Expanded="@sidebar1Expanded">
-        <RadzenTree Style="width: 100%;">
-            <RadzenTreeItem Text="BMW">
-                <ChildContent>
-                    <RadzenTreeItem Text="M3" />
-                    <RadzenTreeItem Text="M5" />
-                </ChildContent>
-                <Template>
-                    <img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;" />
-                    <b>@context.Text</b>
-                </Template>
-            </RadzenTreeItem>
-            <RadzenTreeItem Text="Audi">
-                <ChildContent>
-                    <RadzenTreeItem Text="RS4" />
-                    <RadzenTreeItem Text="RS6" />
-                </ChildContent>
-                <Template>
-                    <img alt="Audi" src="https://upload.wikimedia.org/wikipedia/commons/9/92/Audi-Logo_2016.svg" style="width: 20px; margin-right: 8px;" />
-                    <b>@context.Text</b>
-                </Template>
-            </RadzenTreeItem>
-            <RadzenTreeItem Text="Mercedes">
-                <Template>
-                    <img alt="Mercedes" src="https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg" style="width: 20px; margin-right: 8px;" />
-                    <b>@context.Text</b>
-                </Template>
-                <ChildContent>
-                    <RadzenTreeItem Text="C63 AMG" />
-                    <RadzenTreeItem Text="S63 AMG" />
-                </ChildContent>
-            </RadzenTreeItem>
-        </RadzenTree>
-    </RadzenSidebar>
-    <RadzenBody>
-        <div class="rz-p-4">
-            @Body
-        </div>
-    </RadzenBody>
-    <RadzenFooter>
-        Footer
-    </RadzenFooter>
-</RadzenLayout>
-
-
-@code {
-    bool sidebar1Expanded = true;
-}
+<a href="/admin">Go To Admin Section</a>
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.

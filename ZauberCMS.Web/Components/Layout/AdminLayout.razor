@@ -1,0 +1,37 @@
+﻿@using Microsoft.AspNetCore.Components.Sections
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+<RadzenComponents/>
+<RadzenLayout>
+    <RadzenHeader class="rz-background-color-primary-darker">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5">
+            <SectionOutlet SectionId="@Sections.HeaderBeginning"/>
+            <RadzenIcon Icon="fingerprint"/>
+            <RadzenButton Variant="Variant.Text" Text="Content" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo("/content"))/>
+            <RadzenButton Variant="Variant.Text" Text="Settings" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo("/settings"))/>
+        </RadzenStack>
+    </RadzenHeader>
+    <SectionOutlet SectionId="@Sections.SideBar"/>
+    <RadzenBody>
+        <div class="rz-p-4">
+            @Body
+        </div>
+    </RadzenBody>
+    <SectionOutlet SectionId="@Sections.Footer"/>
+</RadzenLayout>
+
+
+@code {
+    internal static class Sections
+    {
+        internal static SectionOutlet? SideBar = new();
+        internal static SectionOutlet? Footer = new();
+        internal static SectionOutlet? HeaderBeginning = new();
+    }
+}
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
