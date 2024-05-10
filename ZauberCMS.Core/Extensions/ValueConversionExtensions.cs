@@ -11,10 +11,15 @@ public static class ValueConversionExtensions
     public static void ToJsonConversion<T>(this PropertyBuilder<T> propertyBuilder, int columnSize)
         where T : class, new()
     {
-        JsonSerializerOptions? options = null;
+        // Explicitly set JsonSerializerOptions to prevent indentation
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = false
+        };
+
         var converter = new ValueConverter<T, string>
         (
-            v => JsonSerializer.Serialize(v, options),
+            v => JsonSerializer.Serialize(v, options), // Serialize in the most compact form
             v => JsonSerializer.Deserialize<T>(v, options) ?? new T()
         );
 

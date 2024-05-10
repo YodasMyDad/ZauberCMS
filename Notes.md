@@ -11,3 +11,8 @@ dotnet ef --startup-project ../ZauberCMS.Web/ migrations add Initial -o "Data/Mi
 // Optional - as migrations are run on startup  
 dotnet ef database update --context BlogFodderDbContext
 ```
+
+### TODO
+
+Need a Content Section & Settings Section
+Create ability to add properties to the content types

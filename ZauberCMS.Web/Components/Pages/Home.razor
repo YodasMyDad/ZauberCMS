@@ -1,10 +1,10 @@
 ﻿@page "/"
-@using System.Net.Mime
-@using ZauberCMS.Web.TestData
+@using ZauberCMS.Components.Editors
+@using ZauberCMS.Core.Content.Models
 
 <PageTitle>Home</PageTitle>
 
-<ContentType Properties="@_contentProperties"/>
+<ContentTypeEditor Properties="@_contentProperties"/>
 
 @code {
 
@@ -13,14 +13,14 @@
         new ContentPropertyData
         {
             Alias = "Title",
-            ComponentType = typeof(TextContentProperty),
+            ComponentType = "ZauberCMS.Components.Editors.TextContentProperty",
             Value = "Initial Title"
         },
 
         new ContentPropertyData
         {
             Alias = "Description",
-            ComponentType = typeof(TextAreaContentProperty),
+            ComponentType = "ZauberCMS.Components.Editors.TextAreaContentProperty",
             Value = "Initial Description"
         }
     ];

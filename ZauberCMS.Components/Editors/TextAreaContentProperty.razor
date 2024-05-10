@@ -1,0 +1,15 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<InputTextArea Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
+               ValueExpression="@(() => Value)" class="form-control" />
+
+@code {
+    public string Name { get; set; } = "TextArea";
+    
+    public string Alias { get; set; } = "TextArea";
+    
+    [Parameter] public string Value { get; set; } = string.Empty;
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+}

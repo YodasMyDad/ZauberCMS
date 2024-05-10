@@ -28,7 +28,7 @@ public class DefaultAssemblyProvider
   /// <param name="serviceProvider">The service provider that is used to create a logger.</param>
   public DefaultAssemblyProvider(IServiceProvider serviceProvider)
   {
-    this.logger = serviceProvider.GetService<ILoggerFactory>()!.CreateLogger("Zauber.Core");
+    this.logger = serviceProvider.GetService<ILoggerFactory>()!.CreateLogger("ZauberCMS.Core");
     this.IsCandidateAssembly = assembly =>
       assembly.FullName!.StartsWith("Zauber", StringComparison.OrdinalIgnoreCase);
 

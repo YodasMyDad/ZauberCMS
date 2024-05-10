@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MimeKit;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Data;
@@ -12,7 +13,8 @@ public class ZauberDbContext : IdentityDbContext<User, Role, Guid, UserClaim, Us
         
     }
     
-    //public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
+    public DbSet<ContentType> ContentTypes => Set<ContentType>();
+    public DbSet<Content.Models.Content> Content => Set<Content.Models.Content>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
