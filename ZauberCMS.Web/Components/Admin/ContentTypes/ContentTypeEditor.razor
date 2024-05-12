@@ -1,65 +1,82 @@
-﻿@using System.Text
+﻿@page "/createcontentype"
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Content.Models
-@using ZauberCMS.Core.Plugins
-@using ZauberCMS.Web.Components.Layout
-
 @layout AdminLayout
 
-<EditForm Model="this" OnSubmit="HandleSubmit">
-    @foreach (var property in Properties)
-    {
-        AllContentProperties.TryGetValue(property.ComponentType, out var contentProperty);
-        if (contentProperty != null)
-        {
-            <DynamicContentProperty ComponentType="@contentProperty.GetType()"
-                                    Value="@property.Value"
-                                    ValueChanged="@(value => UpdateProperty(property.Alias, value))" />   
-        }
-    }
+<PageTitle>Create Content Type</PageTitle>
+<EditForm Model="ContentType" OnSubmit="Save">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
+        <RadzenButton Variant="Variant.Filled" Text="Add Content Property" Click="@(AddProperty)"/>
+    </RadzenStack>
 
-    <button type="submit">Save</button>
+    <RadzenRow Gap="2rem" Class="rz-p-0">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack>
+                <RadzenFieldset Text="Required">
+                    <RadzenStack Gap="1rem">
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="Name" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenTextBox Style="width: 100%;" Name="Name" @bind-Value="@ContentType.Name"/>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenFieldset>
+                <RadzenFieldset Text="Properties">
+                    <RadzenStack Gap="1rem">
+                        @foreach (var property in ContentType.ContentProperties)
+                        {
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenTextBox Style="width: 100%;" Name="Name" @bind-Value="@property.Name"/>
+                                    <RadzenTextBox Style="width: 100%;" Name="Name" @bind-Value="@property.Description"/>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <p>@property.Component @property.SortOrder</p>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        }
+                    </RadzenStack>
+                </RadzenFieldset>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
 </EditForm>
 
-@((MarkupString)Text)
-
 @code {
-    
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
 
-    private Dictionary<string, IContentProperty> AllContentProperties { get; set; } = new();
-    
-    [Parameter]
-    public List<ContentPropertyData> Properties { get; set; } = [];
+    private ContentType ContentType { get; set; } = new();
 
-    protected override void OnInitialized()
+    private async Task Save()
     {
-        AllContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-
-        base.OnInitialized();
+        var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
+        var result = await Mediator.Send(saveContentTypeCommand);
+        NotificationService.Notify(result.Success ? 
+            new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : 
+            new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = "", Duration = 4000 });
     }
-
-    private string Text { get; set; } = string.Empty;
     
-    private void UpdateProperty(string alias, string value)
+    private async Task AddProperty()
     {
-        var property = Properties.FirstOrDefault(p => p.Alias == alias);
-        if (property != null)
+        var result = await DialogService.OpenSideAsync<ListContentTypeProperties>("Add Property",
+            new Dictionary<string, object>(),
+            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+
+        if (result is IContentProperty property)
         {
-            property.Value = value;
-            property.DateUpdated = DateTime.UtcNow;
+            ContentType.ContentProperties.Add(new ContentTypeProperty
+            {
+                Component = property.GetType().FullName ?? string.Empty,
+                SortOrder = ContentType.ContentProperties.Count + 1
+            });
+            StateHasChanged();
         }
     }
 
-    private void HandleSubmit()
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("<p>Saving data:</p>");
-        foreach (var property in Properties)
-        {
-            sb.AppendLine($"<p>{property.Alias}: {property.Value}</p>");
-        }
-
-        Text = sb.ToString();
-    }
 }

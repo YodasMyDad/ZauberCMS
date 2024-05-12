@@ -1,4 +1,13 @@
-- Setup EF Core from BF
-- Create & Store ContentTypes in the DB, need to be able to pick property editors
-- Create a new page, using ContentType as Type for Page
-- Save the Page, and show in Tree, when clicked, load the page data from the DB
+### Entity Framework
+
+To update and make changes to the EF Core model, the migrations are in the .Core project. Migrations are auto applied at startup in the Program.cs.
+
+```
+dotnet tool update --global dotnet-ef
+
+cd ZauberCMS.Core
+dotnet ef --startup-project ../ZauberCMS.Web/ migrations add Initial -o "Data/Migrations"
+
+// Optional - as migrations are run on startup  
+dotnet ef database update --context BlogFodderDbContext
+```

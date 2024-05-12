@@ -13,8 +13,14 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).IsRequired();
         builder.Property(x => x.Name).HasMaxLength(1000);
+        builder.Property(x => x.Url).HasMaxLength(1000);
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
         builder.Property(e => e.ContentPropertyData).ToJsonConversion(4000);
+        
+        builder.HasOne(d => d.ContentType)
+            .WithMany(p => p.LinkedContent)
+            .HasForeignKey(d => d.ContentTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

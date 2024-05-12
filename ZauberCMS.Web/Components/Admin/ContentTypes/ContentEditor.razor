@@ -1,0 +1,65 @@
+﻿@using System.Text
+@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Web.Components.Layout
+
+@layout AdminLayout
+
+<EditForm Model="this" OnSubmit="HandleSubmit">
+    @foreach (var property in Properties)
+    {
+        AllContentProperties.TryGetValue(property.ComponentType, out var contentProperty);
+        if (contentProperty != null)
+        {
+            <DynamicContentProperty ComponentType="@contentProperty.GetType()"
+                                    Value="@property.Value"
+                                    ValueChanged="@(value => UpdateProperty(property.Alias, value))" />   
+        }
+    }
+
+    <button type="submit">Save</button>
+</EditForm>
+
+@((MarkupString)Text)
+
+@code {
+    
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+
+    private Dictionary<string, IContentProperty> AllContentProperties { get; set; } = new();
+    
+    [Parameter]
+    public List<ContentValue> Properties { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        AllContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+
+        base.OnInitialized();
+    }
+
+    private string Text { get; set; } = string.Empty;
+    
+    private void UpdateProperty(string alias, string value)
+    {
+        var property = Properties.FirstOrDefault(p => p.Alias == alias);
+        if (property != null)
+        {
+            property.Value = value;
+            property.DateUpdated = DateTime.UtcNow;
+        }
+    }
+
+    private void HandleSubmit()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("<p>Saving data:</p>");
+        foreach (var property in Properties)
+        {
+            sb.AppendLine($"<p>{property.Alias}: {property.Value}</p>");
+        }
+
+        Text = sb.ToString();
+    }
+}

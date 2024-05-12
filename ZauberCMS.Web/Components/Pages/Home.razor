@@ -4,20 +4,20 @@
 
 <PageTitle>Home</PageTitle>
 
-<ContentTypeEditor Properties="@_contentProperties"/>
+<ContentEditor Properties="@_contentProperties"/>
 
 @code {
 
-    private readonly List<ContentPropertyData> _contentProperties =
+    private readonly List<ContentValue> _contentProperties =
     [
-        new ContentPropertyData
+        new ContentValue
         {
             Alias = "Title",
             ComponentType = "ZauberCMS.Components.Editors.TextContentProperty",
             Value = "Initial Title"
         },
 
-        new ContentPropertyData
+        new ContentValue
         {
             Alias = "Description",
             ComponentType = "ZauberCMS.Components.Editors.TextAreaContentProperty",

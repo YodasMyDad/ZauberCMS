@@ -10,4 +10,7 @@ public class ContentType
     public DateTime? DateCreated { get; set; } = DateTime.UtcNow;
     public DateTime? DateUpdated { get; set; } = DateTime.UtcNow;
     public List<ContentTypeProperty> ContentProperties { get; set; } = [];
+    
+    // ReSharper disable once CollectionNeverUpdated.Global
+    public List<Content> LinkedContent { get; set; } = [];
 }

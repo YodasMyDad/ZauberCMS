@@ -1,6 +1,6 @@
 ﻿namespace ZauberCMS.Core.Content.Models;
 
-public class ContentPropertyData
+public class ContentValue
 {
     public string Alias { get; set; } = string.Empty;
     public string ComponentType { get; set; } = string.Empty;

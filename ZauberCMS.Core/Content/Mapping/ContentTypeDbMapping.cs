@@ -17,5 +17,7 @@ public class ContentTypeDbMapping : IEntityTypeConfiguration<ContentType>
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
         builder.Property(e => e.ContentProperties).ToJsonConversion(4000);
+        
+        
     }
 }
