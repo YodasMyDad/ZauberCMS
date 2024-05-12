@@ -8,21 +8,22 @@
 
 @if (ContentType != null)
 {
-    <EditForm Model="this" OnSubmit="HandleSubmit">
     
-        @foreach (var property in ContentType.ContentProperties.OrderBy(x => x.SortOrder))
+    <EditForm Model="@Content" OnSubmit="HandleSubmit">
+        <p>
+            <InputText @bind-Value="@Content.Name" class="form-control"/>
+        </p>
+        @foreach (var ctp in ContentType.ContentProperties.OrderBy(x => x.SortOrder))
         {
-            ContentTypeComponents.TryGetValue(property.ContentTypePropertyId, out var contentProperty);
-            if (contentProperty != null)
-            {
-                AllContentProperties.TryGetValue(contentProperty, out var contentPropertyComponent);
+                AllContentTypeProperties.TryGetValue(ctp.Component, out var contentPropertyComponent);
+                
                 if (contentPropertyComponent != null)
                 {
+                    AllContentValues.TryGetValue(ctp.Id, out var contentValue);
                     <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
-                                            Value="@property.Value"
-                                            ValueChanged="@(value => UpdateProperty(property.Alias, value))"/>
+                                            Value="@contentValue.Value"
+                                            ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
                 }   
-            }
         }
 
         <button type="submit">Save</button>
@@ -36,6 +37,7 @@ else
 }
 
 @code {
+    
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
@@ -44,11 +46,12 @@ else
     private Dictionary<Guid, string?> ContentData { get; set; } = new();
     private Content Content { get; set; } = new();
     private ContentType? ContentType { get; set; }
-    private Dictionary<string, IContentProperty> AllContentProperties { get; set; } = new();
+    private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
+    private Dictionary<Guid, ContentValue> AllContentValues { get; set; } = new();
     
     protected override async Task OnInitializedAsync()
     {
-        AllContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+        AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (ContentId != null)
         {
             Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value });    
@@ -62,9 +65,9 @@ else
         await base.OnInitializedAsync();
     }
     
-    private void UpdateProperty(string alias, string value)
+    private void UpdateProperty(Guid ctpId, string value)
     {
-        var property = Content?.ContentPropertyData.FirstOrDefault(p => p.Alias == alias);
+        var property = Content?.ContentPropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
         {
             property.Value = value;
@@ -82,11 +85,26 @@ else
         {
             var contentType = await Mediator.Send(new GetContentTypeCommand { Id = contentTypeId });
             ContentType = contentType;
+            // Now if this is a new content type, just add some initial data
+            foreach (var ctp in ContentType.ContentProperties)
+            {
+                var exists = Content.ContentPropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
+                if (exists == null)
+                {
+                    // Add it
+                    Content.ContentPropertyData.Add(new ContentValue
+                    {
+                        ContentTypePropertyId = ctp.Id
+                    });
+                }
+            }
+
+            AllContentValues = Content.ContentPropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
         }
     }
     
     private void HandleSubmit()
     {
-
+        var test = Content;
     }
 }
