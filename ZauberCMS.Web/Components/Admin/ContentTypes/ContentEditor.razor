@@ -1,49 +1,70 @@
-﻿@using System.Text
+﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Content.Models
 @using ZauberCMS.Core.Plugins
-@using ZauberCMS.Web.Components.Layout
-
+@using Content = ZauberCMS.Core.Content.Models.Content
+@page "/createcontent"
+@page "/createcontent/{ContentId}"
 @layout AdminLayout
 
-<EditForm Model="this" OnSubmit="HandleSubmit">
-    @foreach (var property in Properties)
-    {
-        AllContentProperties.TryGetValue(property.ComponentType, out var contentProperty);
-        if (contentProperty != null)
+@if (ContentType != null)
+{
+    <EditForm Model="this" OnSubmit="HandleSubmit">
+    
+        @foreach (var property in ContentType.ContentProperties.OrderBy(x => x.SortOrder))
         {
-            <DynamicContentProperty ComponentType="@contentProperty.GetType()"
-                                    Value="@property.Value"
-                                    ValueChanged="@(value => UpdateProperty(property.Alias, value))" />   
+            ContentTypeComponents.TryGetValue(property.ContentTypePropertyId, out var contentProperty);
+            if (contentProperty != null)
+            {
+                AllContentProperties.TryGetValue(contentProperty, out var contentPropertyComponent);
+                if (contentPropertyComponent != null)
+                {
+                    <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
+                                            Value="@property.Value"
+                                            ValueChanged="@(value => UpdateProperty(property.Alias, value))"/>
+                }   
+            }
         }
-    }
 
-    <button type="submit">Save</button>
-</EditForm>
-
-@((MarkupString)Text)
+        <button type="submit">Save</button>
+    </EditForm>   
+}
+else
+{
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0;">
+        <RadzenButton Variant="Variant.Filled" Text="Choose Content Type" Click="@ChooseContentType" />
+    </RadzenStack>
+}
 
 @code {
-    
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-
+    [Parameter] public Guid? ContentId { get; set; }
+    
+    private Dictionary<Guid, string?> ContentData { get; set; } = new();
+    private Content Content { get; set; } = new();
+    private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentProperties { get; set; } = new();
     
-    [Parameter]
-    public List<ContentValue> Properties { get; set; } = [];
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         AllContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-
-        base.OnInitialized();
+        if (ContentId != null)
+        {
+            Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value });    
+        }
+        
+        // TODO - I need to loop through the ContentType properties
+        // TODO - And match the contentvalue to that ContentType
+        // TODO - IF there is one, as could be a new document,
+        // TODO - could be a new property added etc....
+        
+        await base.OnInitializedAsync();
     }
-
-    private string Text { get; set; } = string.Empty;
     
     private void UpdateProperty(string alias, string value)
     {
-        var property = Properties.FirstOrDefault(p => p.Alias == alias);
+        var property = Content?.ContentPropertyData.FirstOrDefault(p => p.Alias == alias);
         if (property != null)
         {
             property.Value = value;
@@ -51,15 +72,21 @@
         }
     }
 
+    private async Task ChooseContentType()
+    {
+        var result = await DialogService.OpenSideAsync<ListContentTypes>("Choose Content Type",
+            new Dictionary<string, object>(),
+            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+
+        if (result is Guid contentTypeId)
+        {
+            var contentType = await Mediator.Send(new GetContentTypeCommand { Id = contentTypeId });
+            ContentType = contentType;
+        }
+    }
+    
     private void HandleSubmit()
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("<p>Saving data:</p>");
-        foreach (var property in Properties)
-        {
-            sb.AppendLine($"<p>{property.Alias}: {property.Value}</p>");
-        }
 
-        Text = sb.ToString();
     }
 }

@@ -1,12 +1,11 @@
 ﻿@page "/content"
-@using ZauberCMS.Web.Components.Layout
-@using Microsoft.AspNetCore.Components.Sections
 @layout AdminLayout
+@inject NavigationManager NavigationManager
 
 <PageTitle>Content</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0;">
-    <RadzenButton Variant="Variant.Filled" Text="Content" />
+    <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/createcontent")) />
 </RadzenStack>
 
 <p>This is the content section</p>
@@ -29,39 +28,14 @@
                     <strong>@context.Text</strong>
                 </Template>
             </RadzenTreeItem>
-
-            @*<RadzenTreeItem Text="BMW">
-                <ChildContent>
-                    <RadzenTreeItem Text="M3"/>
-                    <RadzenTreeItem Text="M5"/>
-                </ChildContent>
-                <Template>
-                    <img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;"/>
-                    <b>@context.Text</b>
-                </Template>
-            </RadzenTreeItem>
-            <RadzenTreeItem Text="Audi">
-                <ChildContent>
-                    <RadzenTreeItem Text="RS4"/>
-                    <RadzenTreeItem Text="RS6"/>
-                </ChildContent>
-                <Template>
-                    <img alt="Audi" src="https://upload.wikimedia.org/wikipedia/commons/9/92/Audi-Logo_2016.svg" style="width: 20px; margin-right: 8px;"/>
-                    <b>@context.Text</b>
-                </Template>
-            </RadzenTreeItem>
-            <RadzenTreeItem Text="Mercedes">
-                <Template>
-                    <img alt="Mercedes" src="https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg" style="width: 20px; margin-right: 8px;"/>
-                    <b>@context.Text</b>
-                </Template>
-                <ChildContent>
-                    <RadzenTreeItem Text="C63 AMG"/>
-                    <RadzenTreeItem Text="S63 AMG"/>
-                </ChildContent>
-            </RadzenTreeItem>*@
-
         </RadzenTree>
     </RadzenSidebar>
 </SectionContent>
 
+@code {
+
+    private void SelectContentType()
+    {
+        
+    }
+}

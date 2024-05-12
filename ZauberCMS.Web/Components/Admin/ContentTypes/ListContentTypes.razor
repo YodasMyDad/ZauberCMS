@@ -1,0 +1,39 @@
+﻿@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Plugins
+
+<RadzenListBox FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+               FilterOperator="StringFilterOperator.StartsWith"
+               AllowFiltering="true"
+               @bind-Value="@SelectedContentTypeId"
+               Data="@ContentTypes"
+               TextProperty="Name"
+               ValueProperty="Id"
+               Style="width: 100%; height: 100%;"
+               InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select content type" } })"
+               Change="@OnPropertySelected">
+    <Template>
+        @((context as ContentType)?.Name)
+    </Template>
+</RadzenListBox>
+
+@code {
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
+
+    private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
+    private Guid SelectedContentTypeId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var items = await Mediator.Send(new GetContentTypesCommand { AmountPerPage = int.MaxValue });
+        ContentTypes = items.Items; 
+        await base.OnInitializedAsync();
+        StateHasChanged();
+    }
+
+    private void OnPropertySelected()
+    {
+        DialogService.CloseSide(SelectedContentTypeId);
+    }
+
+}

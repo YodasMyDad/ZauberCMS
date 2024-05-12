@@ -16,7 +16,8 @@ public class GetContentTypesCommand : IRequest<PaginatedList<ContentType>>
     }
     
     public bool AsNoTracking { get; set; } = true;
-    public List<Guid> CategoryTypeIds { get; set; } = [];
+    
+    public List<Guid> Ids { get; set; } = [];
     public int PageIndex { get; set; } = 1;
     public int AmountPerPage { get; set; }
     public string? SearchTerm { get; set; }
