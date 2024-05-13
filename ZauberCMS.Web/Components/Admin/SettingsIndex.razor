@@ -9,7 +9,6 @@
     <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(args => NavigationManager.NavigateTo("/createcontentype"))/>
 </RadzenStack>
 
-
 <RadzenDataGrid AllowFiltering="true"
                 FilterPopupRenderMode="PopupRenderMode.OnDemand"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
@@ -20,17 +19,14 @@
                 SelectionMode="DataGridSelectionMode.Single"
                 RowSelect="@((ContentType value) => OnRowSelect(value))">
     <Columns>
-        @*<RadzenDataGridColumn Property="Photo" Title="Employee" Sortable="false" Filterable="false">
-            <Template Context="data">
-                <RadzenImage Path="@data.Photo" style="width: 40px; height: 40px; border-radius: 8px; margin-right: 8px;" AlternateText="@(data.FirstName + " " + data.LastName)" />
-                @data.FirstName @data.LastName
-            </Template>
-        </RadzenDataGridColumn>*@
         <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated" FormatString="{0:d}"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+            <Template Context="data">
+                @data.DateUpdated.Humanize()
+            </Template>
+        </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
-
 
 <SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
     <RadzenSidebarToggle Click="@(() => ToggleSideBar())" />
@@ -38,31 +34,12 @@
 
 <SectionContent SectionId="AdminLayout.Sections.SideBar">
     <RadzenSidebar @bind-Expanded="@Expanded">
-        <div class="rz-p-4">
-            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Settings</RadzenText>
-        </div>
-        <RadzenTree Style="width: 100%;">
-
-            <RadzenTreeItem Text="Content Types">
-                <Template>
-                    @*<RadzenIcon Icon="home"/>*@
-                    <strong>@context.Text</strong>
-                </Template>
-            </RadzenTreeItem>
-
-            <RadzenTreeItem Text="Data Types">
-                <Template>
-                    @*<RadzenIcon Icon="home"/>*@
-                    <strong>@context.Text</strong>
-                </Template>
-            </RadzenTreeItem>
-            
-        </RadzenTree>
+        <SettingsTree />
     </RadzenSidebar>
 </SectionContent>
 
 @code {
-    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+    [Inject] public ZauberDbContext DbContext { get; set; } = default!;
 
     private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
     private bool Expanded { get; set; } = true;
@@ -70,10 +47,7 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
-        using var scope = ServiceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        ContentTypes = dbContext.ContentTypes;
+        ContentTypes = DbContext.ContentTypes;
     }
     
     public void ToggleSideBar()
@@ -85,7 +59,7 @@
     {
         if (value is ContentType selectedRow)
         {
-            NavigationManager.NavigateTo($"/createcontentype/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"/updatecontentype/{selectedRow.Id}");
         }
     }
 }

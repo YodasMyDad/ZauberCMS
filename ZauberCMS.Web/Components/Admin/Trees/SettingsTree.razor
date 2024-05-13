@@ -1,0 +1,39 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using ZauberCMS.Core.Data
+<div class="rz-p-4">
+    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content Types</RadzenText>
+</div>
+<RadzenTree Data="@ContentTypes" Change="@OnChange" @bind-Value="@Selection">
+    <RadzenTreeLevel Expanded="@(_ => false)" HasChildren="@(_ => false)" TextProperty="Name"/>
+</RadzenTree>
+<div class="rz-p-4">
+    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Data Types</RadzenText>
+</div>
+<p>TODO</p>
+
+@code {
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+
+    private List<ContentType> ContentTypes { get; set; } = [];
+    private object? Selection { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        using var scope = ServiceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        ContentTypes = dbContext.ContentTypes
+            .AsNoTracking()
+            .OrderBy(x => x.Name)
+            .ToList();
+    }
+    
+    void OnChange()
+    {
+        if (Selection is ContentType contentType)
+        {
+            NavigationManager.NavigateTo($"/updatecontentype/{contentType.Id}", forceLoad:true);
+        }
+    }
+
+}

@@ -1,9 +1,8 @@
-﻿@using Microsoft.AspNetCore.Components.Sections
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 <RadzenComponents/>
 <RadzenLayout>
     <RadzenHeader class="rz-background-color-primary-darker">
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
             <SectionOutlet SectionId="@Sections.HeaderBeginning"/>
             <RadzenIcon Icon="fingerprint"/>
             <RadzenButton Variant="Variant.Text" Text="Content" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo("/content"))/>

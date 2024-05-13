@@ -1,8 +1,10 @@
 ﻿@using Microsoft.EntityFrameworkCore
 @using ZauberCMS.Core.Data
 @using Content = ZauberCMS.Core.Content.Models.Content
-
-<RadzenTree Data="@ContentItems" Expand="@OnExpand">
+<div class="rz-p-4">
+    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content</RadzenText>
+</div>
+<RadzenTree Data="@ContentItems" Expand="@OnExpand" Change="@OnChange" @bind-Value="@Selection">
     <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name"/>
 </RadzenTree>
 
@@ -10,6 +12,7 @@
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
 
     private List<Content> ContentItems { get; set; } = [];
+    private object? Selection { get; set; }
 
     protected override void OnInitialized()
     {
@@ -18,7 +21,7 @@
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         ContentItems = dbContext.Content
             .AsNoTracking()
-            .Where(x => x.ParentId == null)
+            .Where(x => x.IsRootContent)
             .OrderBy(x => x.SortOrder)
             .ToList();
     }
@@ -56,7 +59,6 @@
                 .Where(x => x.ParentId == category.Id)
                 .OrderBy(x => x.SortOrder)
                 .ToList();
-            ;
             args.Children.TextProperty = "Name";
         }
         //args.Children.HasChildren = (product) => false;
@@ -68,6 +70,14 @@
             builder.CloseElement();
         };
         */
+    }
+    
+    void OnChange()
+    {
+        if (Selection is Content content)
+        {
+            NavigationManager.NavigateTo($"/updatecontent/{content.Id}");
+        }
     }
 
 }

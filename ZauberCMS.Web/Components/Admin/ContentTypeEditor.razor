@@ -1,5 +1,5 @@
 ﻿@page "/createcontentype"
-@page "/createcontentype/{ContentTypeId:guid}"
+@page "/updatecontentype/{ContentTypeId:guid}"
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @layout AdminLayout
@@ -47,12 +47,24 @@
     </RadzenRow>
 </EditForm>
 
+
+<SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
+    <RadzenSidebarToggle Click="@(() => ToggleSideBar())" />
+</SectionContent>
+
+<SectionContent SectionId="AdminLayout.Sections.SideBar">
+    <RadzenSidebar @bind-Expanded="@Expanded">
+        <SettingsTree />
+    </RadzenSidebar>
+</SectionContent>
+
 @code {
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
-
+    
     [Parameter] public Guid? ContentTypeId { get; set; }
     
+    private bool Expanded { get; set; } = true;
     private ContentType ContentType { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
@@ -89,6 +101,11 @@
             });
             StateHasChanged();
         }
+    }
+    
+    private void ToggleSideBar()
+    {
+        Expanded = !Expanded;
     }
 
 }
