@@ -3,21 +3,35 @@
 
 @layout AdminLayout
 
-@inject NavigationManager NavigationManager
-
 <PageTitle>Settings</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(args => NavigationManager.NavigateTo("/createcontentype"))/>
 </RadzenStack>
 
-<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                Data="@ContentTypes" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single" @bind-Value=@SelectedContentTypes>
+
+<RadzenDataGrid AllowFiltering="true"
+                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                AllowPaging="true"
+                PageSize="20"
+                AllowSorting="true"
+                Data="@ContentTypes"
+                SelectionMode="DataGridSelectionMode.Single"
+                RowSelect="@((ContentType value) => OnRowSelect(value))">
+    @*@bind-Value="@SelectedContent"*@
     <Columns>
-        <RadzenDataGridColumn Property="Id" Filterable="false" Title="ID" Frozen="true" Width="80px" TextAlign="TextAlign.Center"/>
-        <RadzenDataGridColumn Property="Name" Title="Name" Frozen="true" Width="160px"/>
+        @*<RadzenDataGridColumn Property="Photo" Title="Employee" Sortable="false" Filterable="false">
+            <Template Context="data">
+                <RadzenImage Path="@data.Photo" style="width: 40px; height: 40px; border-radius: 8px; margin-right: 8px;" AlternateText="@(data.FirstName + " " + data.LastName)" />
+                @data.FirstName @data.LastName
+            </Template>
+        </RadzenDataGridColumn>*@
+        <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated" FormatString="{0:d}"/>
     </Columns>
 </RadzenDataGrid>
+
 
 <SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
     <RadzenSidebarToggle Click="@(() => ToggleSideBar())" />
@@ -68,5 +82,13 @@
     public void ToggleSideBar()
     {
         Expanded = !Expanded;
+    }
+    
+    private void OnRowSelect(object value)
+    {
+        if (value is ContentType selectedRow)
+        {
+            NavigationManager.NavigateTo($"/createcontentype/{selectedRow.Id}");
+        }
     }
 }

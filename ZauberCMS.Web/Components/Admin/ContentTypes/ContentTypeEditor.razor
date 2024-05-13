@@ -1,4 +1,5 @@
 ﻿@page "/createcontentype"
+@page "/createcontentype/{ContentTypeId:guid}"
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @layout AdminLayout
@@ -47,12 +48,13 @@
 </EditForm>
 
 @code {
-    [Inject] public NavigationManager NavigationManager { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
 
+    [Parameter] public Guid? ContentTypeId { get; set; }
+    
     private ContentType ContentType { get; set; } = new();
-
+    
     private async Task Save()
     {
         var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };

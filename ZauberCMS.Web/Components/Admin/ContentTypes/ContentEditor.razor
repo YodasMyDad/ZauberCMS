@@ -3,63 +3,70 @@
 @using ZauberCMS.Core.Plugins
 @using Content = ZauberCMS.Core.Content.Models.Content
 @page "/createcontent"
-@page "/createcontent/{ContentId}"
+@page "/createcontent/{ContentId:guid}"
 @layout AdminLayout
 
 @if (ContentType != null)
 {
-    
-    <EditForm Model="@Content" OnSubmit="HandleSubmit">
+    <EditForm Model="@Content" OnSubmit="Save">
         <p>
             <InputText @bind-Value="@Content.Name" class="form-control"/>
         </p>
         @foreach (var ctp in ContentType.ContentProperties.OrderBy(x => x.SortOrder))
         {
+            if (ctp.Component != null)
+            {
                 AllContentTypeProperties.TryGetValue(ctp.Component, out var contentPropertyComponent);
-                
                 if (contentPropertyComponent != null)
                 {
                     AllContentValues.TryGetValue(ctp.Id, out var contentValue);
-                    <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
-                                            Value="@contentValue.Value"
-                                            ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
-                }   
+                    if (contentValue != null)
+                    {
+                        <p>@ctp.Name</p>
+                        <p>@ctp.Description</p>
+                        <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
+                                                Value="@contentValue.Value"
+                                                ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
+                    }
+                }
+            }
         }
 
         <button type="submit">Save</button>
-    </EditForm>   
+    </EditForm>
 }
 else
 {
     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0;">
-        <RadzenButton Variant="Variant.Filled" Text="Choose Content Type" Click="@ChooseContentType" />
+        <RadzenButton Variant="Variant.Filled" Text="Choose Content Type" Click="@ChooseContentType"/>
     </RadzenStack>
 }
 
 @code {
-    
+
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Parameter] public Guid? ContentId { get; set; }
-    
-    private Dictionary<Guid, string?> ContentData { get; set; } = new();
+
     private Content Content { get; set; } = new();
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     private Dictionary<Guid, ContentValue> AllContentValues { get; set; } = new();
-    
+
     protected override async Task OnInitializedAsync()
     {
         AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (ContentId != null)
         {
-            Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value });    
+            Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value });
+            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
+            SyncProperties(Content, ContentType);
         }
-        
+
         await base.OnInitializedAsync();
     }
-    
+
     private void UpdateProperty(Guid ctpId, string value)
     {
         var property = Content?.ContentPropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
@@ -70,38 +77,67 @@ else
         }
     }
 
+    private void SyncProperties(Content content, ContentType contentType)
+    {
+        var toRemove = new List<ContentValue>();
+        // Check for properties that were removed
+        foreach (var cpd in content.ContentPropertyData)
+        {
+            var existsInContentType = contentType.ContentProperties.Any(x => x.Id == cpd.ContentTypePropertyId);
+            if (!existsInContentType)
+            {
+                // Mark for removal
+                toRemove.Add(cpd);
+            }
+        }
+
+        // Remove the properties
+        foreach (var tr in toRemove)
+        {
+            content.ContentPropertyData.Remove(tr);
+        }
+
+        // Check for properties to add
+        foreach (var ctp in contentType.ContentProperties)
+        {
+            var exists = content.ContentPropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
+            if (exists == null)
+            {
+                // Add it
+                content.ContentPropertyData.Add(new ContentValue
+                {
+                    ContentTypePropertyId = ctp.Id
+                });
+            }
+        }
+        
+        AllContentValues = Content.ContentPropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+    }
+
     private async Task ChooseContentType()
     {
         var result = await DialogService.OpenSideAsync<ListContentTypes>("Choose Content Type",
             new Dictionary<string, object>(),
             new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
-
         if (result is Guid contentTypeId)
         {
-            var contentType = await Mediator.Send(new GetContentTypeCommand { Id = contentTypeId });
-            ContentType = contentType;
-            // Now if this is a new content type, just add some initial data
-            foreach (var ctp in ContentType.ContentProperties)
+            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = contentTypeId });
+
+            // Need to set the ContentType is this is new content
+            if (ContentId == null)
             {
-                var exists = Content.ContentPropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
-                if (exists == null)
-                {
-                    // Add it
-                    Content.ContentPropertyData.Add(new ContentValue
-                    {
-                        ContentTypePropertyId = ctp.Id
-                    });
-                }
-                //TODO - What if a property was removed?
+                Content.ContentTypeId = ContentType.Id;
             }
 
-            AllContentValues = Content.ContentPropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+            SyncProperties(Content, ContentType);
         }
     }
-    
-    private void HandleSubmit()
+
+    private async Task Save()
     {
-        //TODO - Save a content type
-        var test = Content;
+        var saveContentCommand = new SaveContentCommand { Content = Content };
+        var result = await Mediator.Send(saveContentCommand);
+        NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
     }
+
 }

@@ -1,7 +1,7 @@
 ﻿@page "/content"
 @page "/admin"
+@using ZauberCMS.Core.Content.Commands
 @layout AdminLayout
-@inject NavigationManager NavigationManager
 
 <PageTitle>Content</PageTitle>
 
@@ -9,7 +9,28 @@
     <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/createcontent")) />
 </RadzenStack>
 
-<p>This is the content section</p>
+<RadzenDataGrid AllowFiltering="false"
+                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                AllowPaging="false"
+                PageSize="20"
+                AllowSorting="true"
+                Data="@Contents"
+                SelectionMode="DataGridSelectionMode.Single"
+                RowSelect="@((ZauberCMS.Core.Content.Models.Content value) => OnRowSelect(value))">
+                @*@bind-Value="@SelectedContent"*@
+    <Columns>
+        @*<RadzenDataGridColumn Property="Photo" Title="Employee" Sortable="false" Filterable="false">
+            <Template Context="data">
+                <RadzenImage Path="@data.Photo" style="width: 40px; height: 40px; border-radius: 8px; margin-right: 8px;" AlternateText="@(data.FirstName + " " + data.LastName)" />
+                @data.FirstName @data.LastName
+            </Template>
+        </RadzenDataGridColumn>*@
+        <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated" FormatString="{0:d}"/>
+    </Columns>
+</RadzenDataGrid>
+
 
 <SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
     <RadzenSidebarToggle Click="@(() => ToggleSideBar())" />
@@ -35,8 +56,26 @@
 
 @code {
 
-    private void SelectContentType()
+    private IList<Core.Content.Models.Content> SelectedContent { get; set; }
+    private IEnumerable<Core.Content.Models.Content> Contents { get; set; } = Enumerable.Empty<Core.Content.Models.Content>();
+    protected override async Task OnInitializedAsync()
     {
+        var items = await Mediator.Send(new GetContentsCommand
+        {  
+            AmountPerPage = 20,
+            OrderBy = GetContentsOrderBy.DateUpdatedDescending
+        });
+        Contents = items.Items;
         
+        await base.OnInitializedAsync();
     }
+    
+    private void OnRowSelect(object value)
+    {
+        if (value is Core.Content.Models.Content selectedRow)
+        {
+            NavigationManager.NavigateTo($"/createcontent/{selectedRow.Id}");
+        }
+    }
+
 }
