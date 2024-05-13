@@ -57,11 +57,6 @@ else
             Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value });    
         }
         
-        // TODO - I need to loop through the ContentType properties
-        // TODO - And match the contentvalue to that ContentType
-        // TODO - IF there is one, as could be a new document,
-        // TODO - could be a new property added etc....
-        
         await base.OnInitializedAsync();
     }
     
@@ -97,6 +92,7 @@ else
                         ContentTypePropertyId = ctp.Id
                     });
                 }
+                //TODO - What if a property was removed?
             }
 
             AllContentValues = Content.ContentPropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
@@ -105,6 +101,7 @@ else
     
     private void HandleSubmit()
     {
+        //TODO - Save a content type
         var test = Content;
     }
 }

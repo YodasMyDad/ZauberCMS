@@ -1,7 +1,5 @@
 ﻿@page "/settings"
-@using ZauberCMS.Core.Content.Models
 @using ZauberCMS.Core.Data
-@using ZauberCMS.Web.Components.Layout
 
 @layout AdminLayout
 
@@ -21,12 +19,42 @@
     </Columns>
 </RadzenDataGrid>
 
-@code {
+<SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
+    <RadzenSidebarToggle Click="@(() => ToggleSideBar())" />
+</SectionContent>
 
+<SectionContent SectionId="AdminLayout.Sections.SideBar">
+    <RadzenSidebar @bind-Expanded="@Expanded">
+        <div class="rz-p-4">
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Settings</RadzenText>
+        </div>
+        <RadzenTree Style="width: 100%;">
+
+            <RadzenTreeItem Text="Content Types">
+                <Template>
+                    @*<img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;"/>*@
+                    <RadzenIcon Icon="home"/>
+                    <strong>@context.Text</strong>
+                </Template>
+            </RadzenTreeItem>
+
+            <RadzenTreeItem Text="Data Types">
+                <Template>
+                    @*<img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;"/>*@
+                    <RadzenIcon Icon="home"/>
+                    <strong>@context.Text</strong>
+                </Template>
+            </RadzenTreeItem>
+        </RadzenTree>
+    </RadzenSidebar>
+</SectionContent>
+
+@code {
+    [Inject] private ZauberDbContext ZauberDbContext { get; set; }
+    
     private IEnumerable<ContentType> ContentTypes { get; set; }
     private IList<ContentType> SelectedContentTypes { get; set; }
-
-    [Inject] private ZauberDbContext ZauberDbContext { get; set; }
+    public bool Expanded { get; set; } = true;
     
     protected override async Task OnInitializedAsync()
     {
@@ -34,6 +62,11 @@
 
         ContentTypes = ZauberDbContext.ContentTypes;
 
-        SelectedContentTypes = new List<ContentType>() { ContentTypes.FirstOrDefault() };
+        SelectedContentTypes = new List<ContentType> { ContentTypes.FirstOrDefault() };
+    }
+    
+    public void ToggleSideBar()
+    {
+        Expanded = !Expanded;
     }
 }
