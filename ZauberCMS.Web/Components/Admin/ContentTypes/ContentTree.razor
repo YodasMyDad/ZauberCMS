@@ -1,0 +1,73 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using ZauberCMS.Core.Data
+@using Content = ZauberCMS.Core.Content.Models.Content
+
+<RadzenTree Data="@ContentItems" Expand="@OnExpand">
+    <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name"/>
+</RadzenTree>
+
+@code {
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+
+    private List<Content> ContentItems { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        using var scope = ServiceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        ContentItems = dbContext.Content
+            .AsNoTracking()
+            .Where(x => x.ParentId == null)
+            .OrderBy(x => x.SortOrder)
+            .ToList();
+    }
+
+    private bool HasChildren(object data)
+    {
+        using var scope = ServiceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        if (data is Content content)
+        {
+            return dbContext.Content.AsNoTracking().Count(x => x.ParentId == content.Id) > 0;
+        }
+
+        return false;
+    }
+
+    private bool ShouldBeExpanded(object data)
+    {
+        if (data is Content content)
+        {
+            return HasChildren(content) && content.ParentId == null;
+        }
+
+        return false;
+    }
+
+    void OnExpand(TreeExpandEventArgs args)
+    {
+        using var scope = ServiceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        if (args.Value is Content category)
+        {
+            args.Children.Data = dbContext.Content
+                .AsNoTracking()
+                .Where(x => x.ParentId == category.Id)
+                .OrderBy(x => x.SortOrder)
+                .ToList();
+            ;
+            args.Children.TextProperty = "Name";
+        }
+        //args.Children.HasChildren = (product) => false;
+
+        /* Optional template
+        args.Children.Template = context => builder => {
+            builder.OpenElement(1, "strong");
+            builder.AddContent(2, (context.Value as Product).ProductName);
+            builder.CloseElement();
+        };
+        */
+    }
+
+}

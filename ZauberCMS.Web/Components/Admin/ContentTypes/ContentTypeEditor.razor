@@ -54,7 +54,17 @@
     [Parameter] public Guid? ContentTypeId { get; set; }
     
     private ContentType ContentType { get; set; } = new();
-    
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+        if (ContentTypeId != null)
+        {
+            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
+        }
+    }
+
     private async Task Save()
     {
         var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };

@@ -2,7 +2,6 @@
 
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK
 
-Add ability to create a content type, add properties to content types and save them (Also update)
 Add ability to create content from a content type, save to db (With a slug, sort order) and then list in the tree, when click item in tree, load saved content and update 
 Make the Content Section & Settings Section dynamic so anyone can create sections and add pages
 Move ContentTypeProperty & ContentValue to EF Core as string too big to save Lists

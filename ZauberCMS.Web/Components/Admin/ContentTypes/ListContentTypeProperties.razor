@@ -29,9 +29,10 @@
 
     protected override void OnInitialized()
     {
+        base.OnInitialized();
+        
         AllContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         Properties = AllContentProperties.Select(x => x.Value);
-        base.OnInitialized();
     }
 
     private void OnPropertySelected()

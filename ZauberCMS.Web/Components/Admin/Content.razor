@@ -41,16 +41,7 @@
         <div class="rz-p-4">
             <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content</RadzenText>
         </div>
-        <RadzenTree Style="width: 100%;">
-
-            <RadzenTreeItem Text="Home">
-                <Template>
-                    @*<img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;"/>*@
-                    <RadzenIcon Icon="home"/>
-                    <strong>@context.Text</strong>
-                </Template>
-            </RadzenTreeItem>
-        </RadzenTree>
+        <ContentTree />
     </RadzenSidebar>
 </SectionContent>
 
@@ -60,14 +51,14 @@
     private IEnumerable<Core.Content.Models.Content> Contents { get; set; } = Enumerable.Empty<Core.Content.Models.Content>();
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+        
         var items = await Mediator.Send(new GetContentsCommand
         {  
             AmountPerPage = 20,
             OrderBy = GetContentsOrderBy.DateUpdatedDescending
         });
         Contents = items.Items;
-        
-        await base.OnInitializedAsync();
     }
     
     private void OnRowSelect(object value)

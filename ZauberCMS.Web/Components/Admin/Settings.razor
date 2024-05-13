@@ -19,7 +19,6 @@
                 Data="@ContentTypes"
                 SelectionMode="DataGridSelectionMode.Single"
                 RowSelect="@((ContentType value) => OnRowSelect(value))">
-    @*@bind-Value="@SelectedContent"*@
     <Columns>
         @*<RadzenDataGridColumn Property="Photo" Title="Employee" Sortable="false" Filterable="false">
             <Template Context="data">
@@ -46,37 +45,35 @@
 
             <RadzenTreeItem Text="Content Types">
                 <Template>
-                    @*<img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;"/>*@
-                    <RadzenIcon Icon="home"/>
+                    @*<RadzenIcon Icon="home"/>*@
                     <strong>@context.Text</strong>
                 </Template>
             </RadzenTreeItem>
 
             <RadzenTreeItem Text="Data Types">
                 <Template>
-                    @*<img alt="BMW" src="https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" style="width: 20px; margin-right: 8px;"/>*@
-                    <RadzenIcon Icon="home"/>
+                    @*<RadzenIcon Icon="home"/>*@
                     <strong>@context.Text</strong>
                 </Template>
             </RadzenTreeItem>
+            
         </RadzenTree>
     </RadzenSidebar>
 </SectionContent>
 
 @code {
-    [Inject] private ZauberDbContext ZauberDbContext { get; set; }
-    
-    private IEnumerable<ContentType> ContentTypes { get; set; }
-    private IList<ContentType> SelectedContentTypes { get; set; }
-    public bool Expanded { get; set; } = true;
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+
+    private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
+    private bool Expanded { get; set; } = true;
     
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        ContentTypes = ZauberDbContext.ContentTypes;
-
-        SelectedContentTypes = new List<ContentType> { ContentTypes.FirstOrDefault() };
+        using var scope = ServiceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        ContentTypes = dbContext.ContentTypes;
     }
     
     public void ToggleSideBar()
