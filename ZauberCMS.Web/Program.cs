@@ -21,6 +21,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
+builder.Services.AddControllersWithViews(); 
+
 // Add services to the container.
 #if DEBUG
 builder.Services
@@ -87,8 +89,9 @@ app.UseRouting();
 app.UseAuthorization();
 app.UseAntiforgery();
 
-app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapControllers();
 
 app.Run();

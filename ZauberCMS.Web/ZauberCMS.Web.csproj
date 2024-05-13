@@ -19,6 +19,7 @@
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.4" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.4" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+      <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" />
       <PackageReference Include="Radzen.Blazor" Version="4.31.3" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.4" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
