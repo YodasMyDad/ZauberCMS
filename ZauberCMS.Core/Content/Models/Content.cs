@@ -1,8 +1,9 @@
-﻿using ZauberCMS.Core.Extensions;
+﻿using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Content.Models;
 
-public class Content
+public class Content : IContent
 {
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
     
@@ -10,6 +11,11 @@ public class Content
     /// The name of the content
     /// </summary>
     public string? Name { get; set; }
+    
+    /// <summary>
+    /// The page title
+    /// </summary>
+    public string? PageTitle { get; set; }
     
     /// <summary>
     /// The Url for the content

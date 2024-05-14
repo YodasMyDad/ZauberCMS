@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZauberCMS.Core.Data;
 
@@ -10,9 +11,11 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations
 {
     [DbContext(typeof(ZauberDbContext))]
-    partial class ZauberDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240514091845_PageTitleOnContent")]
+    partial class PageTitleOnContent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.4");
@@ -65,12 +68,6 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.HasIndex("ContentTypeId");
 
-                    b.HasIndex("Name")
-                        .HasDatabaseName("IX_ZauberContent_Name");
-
-                    b.HasIndex("Url")
-                        .HasDatabaseName("IX_ZauberContent_Url");
-
                     b.ToTable("ZauberContent", (string)null);
                 });
 
@@ -102,12 +99,6 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Alias")
-                        .HasDatabaseName("IX_ZauberContentTypes_Alias");
-
-                    b.HasIndex("Name")
-                        .HasDatabaseName("IX_ZauberContentTypes_Name");
 
                     b.ToTable("ZauberContentTypes", (string)null);
                 });

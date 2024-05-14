@@ -1,0 +1,40 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using Radzen
+@using Radzen.Blazor
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenHtmlEditor @bind-Value="@Value" style="height: 300px;" Input="@OnInput" Change="@OnChange" Paste="@OnPaste" Execute="@OnExecute" UploadUrl="upload/image" />
+
+@code {
+    
+    void OnPaste(HtmlEditorPasteEventArgs args)
+    {
+        //console.Log($"Paste: {args.Html}");
+    }
+
+    void OnChange(string html)
+    {
+        ValueChanged.InvokeAsync(html);
+    }
+
+    void OnInput(string html)
+    {
+        //console.Log($"Input: {html}");
+    }
+
+    void OnExecute(HtmlEditorExecuteEventArgs args)
+    {
+        //console.Log($"Execute: {args.CommandName}");
+    }    
+    
+    
+    public string Name { get; set; } = "Rich Text Editor";
+
+    public string Alias { get; set; } = "ZauberCMS.RichTextEditor";
+
+    [Parameter] public string Value { get; set; } = string.Empty;
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    
+    public string Icon { get; set; } = "TODO";
+}

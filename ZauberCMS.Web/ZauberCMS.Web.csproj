@@ -34,6 +34,7 @@
 
     <ItemGroup>
       <_ContentIncludedByDefault Remove="TestData\HomeContentType.json" />
+      <_ContentIncludedByDefault Remove="Views\Home\Index.cshtml" />
     </ItemGroup>
 
 </Project>

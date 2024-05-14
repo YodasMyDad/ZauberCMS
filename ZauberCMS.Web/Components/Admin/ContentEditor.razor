@@ -22,6 +22,9 @@
         <p>
             <InputText @bind-Value="@Content.Name" class="form-control"/>
         </p>
+        <p>
+            @Content.Url
+        </p>
         @foreach (var ctp in ContentType.ContentProperties.OrderBy(x => x.SortOrder))
         {
             if (ctp.Component != null)

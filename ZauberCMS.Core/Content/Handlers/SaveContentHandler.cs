@@ -15,7 +15,7 @@ public class SaveContentHandler(
 {
     private readonly SlugHelper _slugHelper = new(new SlugHelper.Config
     {
-        CharacterReplacements = new Dictionary<string, string> {{" ", "."}}
+        CharacterReplacements = new Dictionary<string, string> {{" ", "-"}}
     });
     
     public async Task<HandlerResult<Models.Content>> Handle(SaveContentCommand request, CancellationToken cancellationToken)

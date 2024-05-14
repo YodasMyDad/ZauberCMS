@@ -1,0 +1,34 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentView
+<PageTitle>@Content?.PageTitle</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="Does this actually work">
+</HeadContent>
+
+<p>I am WebsiteView</p>
+@if (Content != null)
+{
+    <p>@Content.Name</p>
+    @foreach (var prop in Content.ContentPropertyData)
+    {
+        <p>
+            @((MarkupString)prop.Value)
+        </p>
+    }
+}
+else
+{
+    <p>This needs to be a 404 page</p>
+}
+
+@code {
+    [Parameter] public Content? Content { get; set; }
+    
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        
+        
+    }
+
+}

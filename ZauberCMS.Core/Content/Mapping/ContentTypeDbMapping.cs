@@ -18,6 +18,7 @@ public class ContentTypeDbMapping : IEntityTypeConfiguration<ContentType>
         builder.Property(x => x.DateUpdated).IsRequired();
         builder.Property(e => e.ContentProperties).ToJsonConversion(4000);
         
-        
+        builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberContentTypes_Name");
+        builder.HasIndex(x => x.Alias).HasDatabaseName("IX_ZauberContentTypes_Alias");
     }
 }
