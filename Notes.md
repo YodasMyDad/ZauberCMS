@@ -2,11 +2,10 @@
 
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
-Add ContentViews to the Content or ContentType? Then use that to render front end views (Think about this)
+Create a simple front end site with nav and style (Will need to create API for getting data etc...)
 Move ContentTypeProperty & ContentValue to EF Core as string too big to save Lists
 Create datatypes so we can have settings (See below), link to ContentTypeProperty
 Style the admin similar to Umbraco
-Create a simple front end site with nav and style (Will need to create API for getting data etc...)
 
 ### Structure
 
