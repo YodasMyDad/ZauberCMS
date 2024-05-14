@@ -11,7 +11,7 @@
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Right" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
     @if (ContentId != null)
     {
-        <RadzenButton Variant="Variant.Filled" Text="Create Child Content" Click=@(args => NavigationManager.NavigateTo($"/createcontent/{ContentId}", forceLoad: true)) />
+        <RadzenButton Variant="Variant.Filled" Text="Create Child Content" Click=@(args => NavigationManager.NavigateTo($"/createcontent/{ContentId}", forceLoad: true))/>
     }
     <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/createcontent"))/>
 </RadzenStack>
@@ -19,31 +19,72 @@
 @if (ContentType != null)
 {
     <EditForm Model="@Content" OnSubmit="Save">
-        <p>
-            <InputText @bind-Value="@Content.Name" class="form-control"/>
-        </p>
-        <p>
-            @Content.Url
-        </p>
-        @foreach (var ctp in ContentType.ContentProperties.OrderBy(x => x.SortOrder))
-        {
-            if (ctp.Component != null)
-            {
-                AllContentTypeProperties.TryGetValue(ctp.Component, out var contentPropertyComponent);
-                if (contentPropertyComponent != null)
-                {
-                    AllContentValues.TryGetValue(ctp.Id, out var contentValue);
-                    if (contentValue != null)
-                    {
-                        <p>@ctp.Name</p>
-                        <p>@ctp.Description</p>
-                        <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
-                                                Value="@contentValue.Value"
-                                                ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
-                    }
-                }
-            }
-        }
+        <RadzenRow Gap="2rem" Class="rz-p-0">
+            <RadzenColumn Size="12" SizeMD="8">
+                <RadzenStack>
+                    <RadzenFieldset Text="Required">
+                        <RadzenStack Gap="1rem">
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Name"/>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenTextBox Style="width: 100%;" Name="Name" @bind-Value="@Content.Name"/>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Url"/>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Content View"/>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@ContentType.AvailableContentViews" Style="width: 100%; max-width: 400px;"/>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    <RadzenFieldset Text="Properties">
+                        <RadzenStack Gap="1rem">
+
+                            @foreach (var ctp in ContentType.ContentProperties.OrderBy(x => x.SortOrder))
+                            {
+                                if (ctp.Component != null)
+                                {
+                                    AllContentTypeProperties.TryGetValue(ctp.Component, out var contentPropertyComponent);
+                                    if (contentPropertyComponent != null)
+                                    {
+                                        AllContentValues.TryGetValue(ctp.Id, out var contentValue);
+                                        if (contentValue != null)
+                                        {
+                                            <RadzenRow AlignItems="AlignItems.Center">
+                                                <RadzenColumn Size="12" SizeMD="4">
+                                                    <RadzenLabel Text="@ctp.Name" /><br/>
+                                                    <RadzenLabel Text="@ctp.Description" />
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="12" SizeMD="8">
+                                                    <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
+                                                                            Value="@contentValue.Value"
+                                                                            ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+                                        }
+                                    }
+                                }
+                            }
+
+                        </RadzenStack>
+                    </RadzenFieldset>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
 
         <button type="submit">Save</button>
     </EditForm>
@@ -56,12 +97,12 @@ else
 }
 
 <SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
-    <RadzenSidebarToggle Click="@(() => ToggleSideBar())" />
+    <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
 </SectionContent>
 
 <SectionContent SectionId="AdminLayout.Sections.SideBar">
     <RadzenSidebar @bind-Expanded="@Expanded">
-        <ContentTree />
+        <ContentTree/>
     </RadzenSidebar>
 </SectionContent>
 
@@ -73,7 +114,7 @@ else
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
 
-    private Content Content { get; set; } = new(){ IsRootContent = true};
+    private Content Content { get; set; } = new() { IsRootContent = true };
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     private Dictionary<Guid, ContentValue> AllContentValues { get; set; } = new();
@@ -89,19 +130,19 @@ else
             ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
             SyncProperties(Content, ContentType);
         }
-        else if(ParentId != null)
+        else if (ParentId != null)
         {
             Content.ParentId = ParentId;
             Content.IsRootContent = false;
         }
-        
+
         //return base.OnParametersSetAsync();
     }
 
     /*protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        
+
 
     }*/
 
@@ -148,7 +189,7 @@ else
                 });
             }
         }
-        
+
         AllContentValues = Content.ContentPropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
     }
 
@@ -182,4 +223,5 @@ else
     {
         Expanded = !Expanded;
     }
+
 }

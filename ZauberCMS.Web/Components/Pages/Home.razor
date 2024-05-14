@@ -5,18 +5,29 @@
 @using ZauberCMS.Core.Plugins
 @layout MainLayout
 
-@if (Content != null && ComponentView != null)
+@if (Content != null)
 {
-    <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />   
+    if(ComponentView != null)
+    {
+        <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />   
+    }
+    else
+    {
+        <p>It looks like you haven't selected a Component View, or the Component View has been deleted.</p>
+    }
+}
+else
+{
+    <p>Whooops, we can't find that page!</p>
 }
 
 @code {
+    
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     
     [Parameter] public string? Slug { get; set; }
     
     private Content? Content { get; set; }
-    private string ViewName { get; set; } = "ZauberCMS.Web.Components.Layout.ContentViews.WebsiteView";
     private Dictionary<string, IContentView> AllContentViews { get; set; } = new();
     private IContentView? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
@@ -26,11 +37,17 @@
         AllContentViews = ExtensionManager.GetInstances<IContentView>(true);
         // Do this on parameters set or page won't change
         Content = await Mediator.Send(new GetContentBySlugCommand { Slug = Slug, IsRootContent = Slug == null });
-        ComponentView = AllContentViews[ViewName];
-        Parameters = new Dictionary<string, object>
+        if (Content != null)
         {
-            ["Content"] = Content
-        };
+            if (AllContentViews.TryGetValue(Content.ViewComponent, out var contentView))
+            {
+                ComponentView = contentView;
+            }
+            Parameters = new Dictionary<string, object>
+            {
+                ["Content"] = Content
+            };   
+        }
     }
-
+    
 }

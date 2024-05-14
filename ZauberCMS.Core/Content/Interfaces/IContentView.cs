@@ -2,5 +2,8 @@
 
 public interface IContentView
 {
-    public Models.Content? Content { get; set; }
+    /// <summary>
+    /// The Content item that the View uses
+    /// </summary>
+    Models.Content? Content { get; set; }
 }

@@ -15,5 +15,6 @@ public interface IContent
     Guid? ParentId { get; set; }
     DateTime DateCreated { get; set; }
     DateTime DateUpdated { get; set; }
+    string ViewComponent { get; set; }
     List<ContentValue> ContentPropertyData { get; set; }
 }

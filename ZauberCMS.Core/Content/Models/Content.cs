@@ -57,6 +57,12 @@ public class Content : IContent
     /// Gets or sets the date and time of the last update for the content.
     /// </summary>
     public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
+
+
+    /// <summary>
+    /// The component used to render the content
+    /// </summary>
+    public string ViewComponent { get; set; } = string.Empty;
     
     /// <summary>
     /// The content properties

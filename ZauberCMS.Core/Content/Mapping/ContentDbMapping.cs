@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Content.Mapping;
@@ -17,6 +16,7 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.Property(x => x.Url).HasMaxLength(1000);
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
+        builder.Property(x => x.ViewComponent).HasMaxLength(1000);
         builder.Property(e => e.ContentPropertyData).ToJsonConversion(4000);
         
         builder.HasOne(d => d.ContentType)
