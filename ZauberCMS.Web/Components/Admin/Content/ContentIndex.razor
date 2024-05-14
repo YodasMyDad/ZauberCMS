@@ -1,4 +1,4 @@
-﻿@page "/content"
+﻿@page "/admin/content"
 @page "/admin"
 @using ZauberCMS.Core.Content.Commands
 @layout AdminLayout
@@ -6,7 +6,7 @@
 <PageTitle>Content</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/createcontent"))/>
+    <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/admin/createcontent"))/>
 </RadzenStack>
 
 <RadzenDataGrid AllowFiltering="false"
@@ -40,7 +40,7 @@
 </SectionContent>
 
 @code {
-    private IEnumerable<Core.Content.Models.Content> Contents { get; set; } = Enumerable.Empty<Core.Content.Models.Content>();
+    private IEnumerable<Content> Contents { get; set; } = Enumerable.Empty<Content>();
     private bool Expanded { get; set; } = true;
 
     protected override async Task OnInitializedAsync()
@@ -59,7 +59,7 @@
     {
         if (value is Core.Content.Models.Content selectedRow)
         {
-            NavigationManager.NavigateTo($"/updatecontent/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}");
         }
     }
 

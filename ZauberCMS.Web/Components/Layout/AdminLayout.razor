@@ -5,8 +5,9 @@
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
             <SectionOutlet SectionId="@Sections.HeaderBeginning"/>
             <RadzenIcon Icon="fingerprint"/>
-            <RadzenButton Variant="Variant.Text" Text="Content" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo("/content"))/>
-            <RadzenButton Variant="Variant.Text" Text="Settings" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo("/settings"))/>
+            <RadzenButton Variant="Variant.Text" Text="Content" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo("/admin/content"))/>
+            <RadzenButton Variant="Variant.Text" Text="Settings" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo("/admin/settings"))/>
+            <RadzenButton Variant="Variant.Text" Text="Members" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo("/admin/members"))/>
         </RadzenStack>
     </RadzenHeader>
     <SectionOutlet SectionId="@Sections.SideBar"/>
