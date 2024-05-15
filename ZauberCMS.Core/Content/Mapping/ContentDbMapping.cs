@@ -30,5 +30,7 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         
         builder.HasIndex(x => x.Url).HasDatabaseName("IX_ZauberContent_Url");
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberContent_Name");
+
+        builder.Ignore(x => x.ContentValues);
     }
 }

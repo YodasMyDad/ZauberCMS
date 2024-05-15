@@ -23,9 +23,9 @@ namespace ZauberCMS.Core.Extensions;
         {
             if (!str.IsNullOrWhiteSpace())
             {
-                if (Configuration.ForceLowerCase)
+                if (Configuration is { UseCamelCase: false, ForceLowerCase: true })
                 {
-                    str = str.ToLower();   
+                    str = str.ToLower();
                 }
                 str = CleanWhiteSpace(str, Configuration.CollapseWhiteSpace);
                 str = ApplyReplacements(str, Configuration.CharacterReplacements);
@@ -77,17 +77,11 @@ namespace ZauberCMS.Core.Extensions;
 
         public class Config
         {
-            public Dictionary<string, string> CharacterReplacements { get; set; }
-            public bool ForceLowerCase { get; set; }
-            public bool CollapseWhiteSpace { get; set; }
-            public string DeniedCharactersRegex { get; set; }
-            public Config()
-            {
-                CharacterReplacements = new Dictionary<string, string> {{" ", "-"}};
-                ForceLowerCase = true;
-                CollapseWhiteSpace = true;
-                DeniedCharactersRegex = @"[^a-zA-Z0-9\-\._]";
-            }
+            public Dictionary<string, string> CharacterReplacements { get; set; } = new() {{" ", "-"}};
+            public bool ForceLowerCase { get; set; } = true;
+            public bool CollapseWhiteSpace { get; set; } = true;
+            public bool UseCamelCase { get; set; }
+            public string DeniedCharactersRegex { get; set; } = @"[^a-zA-Z0-9\-\._]";
         }
 
     }

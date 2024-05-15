@@ -65,6 +65,14 @@ public class Content : IContent
     /// </summary>
     public List<ContentValue> ContentPropertyData { get; set; } = [];
 
+
+    private Dictionary<string, ContentValue>? _contentValues;
+
+    public Dictionary<string, ContentValue> ContentValues
+    {
+        get { return _contentValues ??= ContentPropertyData.ToDictionary(x => x.Alias, x => x); }
+    }
+
     /// <summary>
     /// If parent ids are set this could have children
     /// </summary>

@@ -17,9 +17,16 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider)
         
         // If is RootContent we just get the first one we can find
         var query = dbContext.Content
+            .AsNoTracking()
             .Include(x => x.Parent)
             .Include(x => x.ContentType)
-            .AsNoTracking();
+            .AsQueryable();
+        
+        if (request.IncludeChildren)
+        {
+            query = query.Include(x => x.Children)
+                .AsSplitQuery();
+        }
         
         // If this is root content, get the first one
         var content = request.IsRootContent
@@ -29,7 +36,7 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider)
                 .FirstOrDefaultAsync(c => c.Url == request.Slug, cancellationToken: cancellationToken);
 
         // If this content has an internal redirect id, return that content instead
-        if (content?.InternalRedirectId != null)
+        if (content?.InternalRedirectId != null && !request.IgnoreInternalRedirect)
         {
             content = await query
                 .FirstOrDefaultAsync(c => c.Id == content.InternalRedirectId.Value, cancellationToken: cancellationToken);

@@ -1,28 +1,22 @@
-﻿@using ZauberCMS.Core.Data.Commands
-@using ZauberCMS.Core.Data.Interfaces
-@using ZauberCMS.Core.Data.Models
+﻿@using ZauberCMS.Core.Content.Commands
 <nav class="nav nav-masthead justify-content-center">
-    <a class="nav-link active" href="#">Home</a>
-    <a class="nav-link" href="#">Features</a>
-    <a class="nav-link" href="#">Contact</a>
+    @if (Website != null)
+    {
+        @foreach (var p in Website.Children.OrderBy(x => x.SortOrder))
+        {
+            @*active*@
+            <a class="nav-link" href="/@p.Url">@p.Name</a>        
+        }   
+    }
 </nav>
 
 @code {
+    private Content? Website { get; set; }
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
-        /*const string navItems = "NavItems";
-        var queries = new List<IQueryModel>
-        {
-            new QueryModel<Content>
-            {
-                Name = navItems,
-                Query = dbContext => dbContext.Content.Where(x => x.IsRootContent)
-            }
-        };
-
-        var result = await Mediator.Send(new MultiQueryCommand(queries));
-        var navigation = result[navItems].Cast<Content>();*/
+        
+        //TODO - This is shite, we need a better way to get content around the site
+        Website = await Mediator.Send(new GetContentBySlugCommand { IsRootContent = true, IncludeChildren = true, IgnoreInternalRedirect = true});
     }
 }

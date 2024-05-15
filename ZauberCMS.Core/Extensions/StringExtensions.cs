@@ -32,8 +32,38 @@ public static partial class StringExtensions
 
         return s;
     }
-
+    
     /// <summary>
+    /// Gets a Type from a string
+    /// </summary>
+    /// <param name="value"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static T? ToValue<T>(this string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return default;
+        }
+        
+        // If T is string, return the original value
+        if (typeof(T) == typeof(string))
+        {
+            return (T)(object)value;
+        }
+    
+        try
+        {
+            return JsonSerializer.Deserialize<T>(value);
+        }
+        catch (JsonException)
+        {
+            // Otherwise, return the default value of type T
+            return default;
+        }
+    }
+
+        /// <summary>
     /// Removes or replaces all line breaks in a string
     /// </summary>
     /// <param name="s"></param>

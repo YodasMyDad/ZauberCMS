@@ -1,19 +1,14 @@
 ﻿@implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout MainLayout
-<PageTitle>WebsiteView Template</PageTitle>
+<PageTitle>@Content?.Name</PageTitle>
 
 <SectionContent SectionId="MainLayout.Sections.PageHeadContent">
-    <meta name="description" content="Does this actually work">
+    <meta name="description" content="">
 </SectionContent>
 
 @if (Content != null)
 {
-    @foreach (var prop in Content.ContentPropertyData)
-    {
-        <p>
-            @((MarkupString)prop.Value)
-        </p>
-    }
+    <p>No one should see this template</p>
 }
 else
 {
@@ -22,11 +17,4 @@ else
 
 @code {
     [Parameter] public Content? Content { get; set; }
-    
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-        
-
-    }
 }

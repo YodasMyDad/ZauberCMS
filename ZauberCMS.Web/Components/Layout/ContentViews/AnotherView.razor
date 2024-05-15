@@ -1,19 +1,21 @@
 ﻿@implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout MainLayout
-<PageTitle>AnotherView Template</PageTitle>
+<PageTitle>@(Content?.GetValue<string>("PageTitle"))</PageTitle>
 
 <SectionContent SectionId="MainLayout.Sections.PageHeadContent">
-    <meta name="description" content="Does this actually work">
+    <meta name="description" content="">
 </SectionContent>
 
 @if (Content != null)
 {
-    @foreach (var prop in Content.ContentPropertyData)
-    {
-        <p>
-            @((MarkupString)prop.Value)
-        </p>
-    }
+    <h1>@(Content.GetValue<string>("Heading"))</h1>
+    <div class="lead">
+        @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
+    </div>
+    <p>&nbsp;</p>
+    <p class="lead">
+        <a href="/about-us" class="btn btn-lg btn-secondary">About Us</a>
+    </p>
 }
 else
 {
@@ -22,11 +24,4 @@ else
 
 @code {
     [Parameter] public Content? Content { get; set; }
-    
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-        
-
-    }
 }

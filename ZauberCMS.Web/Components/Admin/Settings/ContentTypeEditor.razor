@@ -33,8 +33,13 @@
                         {
                             <RadzenRow AlignItems="AlignItems.Center">
                                 <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenTextBox Style="width: 100%;" Name="Name" @bind-Value="@property.Name"/>
-                                    <RadzenTextBox Style="width: 100%;" Name="Name" @bind-Value="@property.Description"/>
+                                    <RadzenTextBox Style="width: 100%;" Name="Name" Value="@property.Name"
+                                                   ValueChanged="@((string name) =>
+                                                                 {
+                                                                     property.Name = name;
+                                                                     property.Alias = _slugHelper.GenerateSlug(name);
+                                                                 })" />
+                                    <RadzenTextBox Style="width: 100%;" Name="Description" @bind-Value="@property.Description"/>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="8">
                                     <p>@property.Component @property.SortOrder</p>
@@ -84,6 +89,11 @@
     private bool Expanded { get; set; } = true;
     private ContentType ContentType { get; set; } = new();
     private List<ContentViewName> ContentViews { get; set; } = [];
+    private readonly SlugHelper _slugHelper = new(new SlugHelper.Config
+    {
+        CharacterReplacements = new Dictionary<string, string> {{" ", ""}},
+        UseCamelCase = true
+    });
 
     protected override async Task OnInitializedAsync()
     {

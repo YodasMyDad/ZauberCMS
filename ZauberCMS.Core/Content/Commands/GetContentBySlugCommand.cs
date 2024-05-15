@@ -13,4 +13,14 @@ public class GetContentBySlugCommand : IRequest<Models.Content?>
     /// Whether or not this is root content
     /// </summary>
     public bool IsRootContent { get; set; }
+    
+    /// <summary>
+    /// Include children in this model
+    /// </summary>
+    public bool IncludeChildren { get; set; }
+    
+    /// <summary>
+    /// Ignores the internal redirect
+    /// </summary>
+    public bool IgnoreInternalRedirect { get; set; }
 }
