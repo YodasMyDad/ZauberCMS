@@ -3,7 +3,6 @@
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
-@layout MainLayout
 
 @if (Content != null)
 {
@@ -14,11 +13,13 @@
     else
     {
         <p>It looks like you haven't selected a Component View, or the Component View has been deleted.</p>
+        <p>This needs to be a component too with a 302 status?</p>
     }
 }
 else
 {
     <p>Whooops, we can't find that page!</p>
+    <p>This needs to be a component that returns a 404 status code</p>
 }
 
 @code {
@@ -43,10 +44,7 @@ else
             {
                 ComponentView = contentView;
             }
-            Parameters = new Dictionary<string, object>
-            {
-                ["Content"] = Content
-            };   
+            Parameters = new Dictionary<string, object> { ["Content"] = Content };   
         }
     }
     

@@ -14,17 +14,27 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider)
         //TODO - Need to sanitise and check slug
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-
+        
         // If is RootContent we just get the first one we can find
+        var query = dbContext.Content
+            .Include(x => x.Parent)
+            .Include(x => x.ContentType)
+            .AsNoTracking();
+        
+        // If this is root content, get the first one
         var content = request.IsRootContent
-            ? await dbContext.Content
-                .AsNoTracking()
-                .Include(c => c.ContentType)
+            ? await query
                 .FirstOrDefaultAsync(c => c.IsRootContent, cancellationToken: cancellationToken)
-            : await dbContext.Content
-                .AsNoTracking()
-                .Include(c => c.ContentType)
+            : await query
                 .FirstOrDefaultAsync(c => c.Url == request.Slug, cancellationToken: cancellationToken);
+
+        // If this content has an internal redirect id, return that content instead
+        if (content?.InternalRedirectId != null)
+        {
+            content = await query
+                .FirstOrDefaultAsync(c => c.Id == content.InternalRedirectId.Value, cancellationToken: cancellationToken);
+        }
+        
         return content;
     }
 }

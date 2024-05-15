@@ -20,4 +20,8 @@
       <ProjectReference Include="..\ZauberCMS.Core\ZauberCMS.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\" />
+    </ItemGroup>
+
 </Project>

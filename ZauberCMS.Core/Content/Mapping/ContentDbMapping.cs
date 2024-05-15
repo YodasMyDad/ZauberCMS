@@ -12,7 +12,6 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).IsRequired();
         builder.Property(x => x.Name).HasMaxLength(1000);
-        builder.Property(x => x.PageTitle).HasMaxLength(1000);
         builder.Property(x => x.Url).HasMaxLength(1000);
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
@@ -23,6 +22,11 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
             .WithMany(p => p.LinkedContent)
             .HasForeignKey(d => d.ContentTypeId)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(d => d.Parent)
+            .WithMany(p => p.Children)
+            .HasForeignKey(d => d.ParentId)
+            .OnDelete(DeleteBehavior.SetNull);
         
         builder.HasIndex(x => x.Url).HasDatabaseName("IX_ZauberContent_Url");
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberContent_Name");

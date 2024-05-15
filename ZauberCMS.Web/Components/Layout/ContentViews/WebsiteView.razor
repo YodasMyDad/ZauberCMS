@@ -1,14 +1,13 @@
 ﻿@implements ZauberCMS.Core.Content.Interfaces.IContentView
-<PageTitle>@Content?.PageTitle</PageTitle>
+@layout MainLayout
+<PageTitle>WebsiteView Template</PageTitle>
 
-<HeadContent>
+<SectionContent SectionId="MainLayout.Sections.PageHeadContent">
     <meta name="description" content="Does this actually work">
-</HeadContent>
+</SectionContent>
 
-<p>I am WebsiteView</p>
 @if (Content != null)
 {
-    <p>@Content.Name</p>
     @foreach (var prop in Content.ContentPropertyData)
     {
         <p>

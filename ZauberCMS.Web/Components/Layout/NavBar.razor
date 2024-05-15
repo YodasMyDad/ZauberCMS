@@ -1,0 +1,28 @@
+﻿@using ZauberCMS.Core.Data.Commands
+@using ZauberCMS.Core.Data.Interfaces
+@using ZauberCMS.Core.Data.Models
+<nav class="nav nav-masthead justify-content-center">
+    <a class="nav-link active" href="#">Home</a>
+    <a class="nav-link" href="#">Features</a>
+    <a class="nav-link" href="#">Contact</a>
+</nav>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        /*const string navItems = "NavItems";
+        var queries = new List<IQueryModel>
+        {
+            new QueryModel<Content>
+            {
+                Name = navItems,
+                Query = dbContext => dbContext.Content.Where(x => x.IsRootContent)
+            }
+        };
+
+        var result = await Mediator.Send(new MultiQueryCommand(queries));
+        var navigation = result[navItems].Cast<Content>();*/
+    }
+}

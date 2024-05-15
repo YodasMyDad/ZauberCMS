@@ -13,11 +13,6 @@ public class Content : IContent
     public string? Name { get; set; }
     
     /// <summary>
-    /// The page title
-    /// </summary>
-    public string? PageTitle { get; set; }
-    
-    /// <summary>
     /// The Url for the content
     /// </summary>
     public string? Url { get; set; }
@@ -41,12 +36,13 @@ public class Content : IContent
     /// <summary>
     /// Redirects behind the scenes to another content node
     /// </summary>
-    public Guid InternalRedirectId { get; set; }
+    public Guid? InternalRedirectId { get; set; }
     
     /// <summary>
     /// The id of the parent content node if there is one
     /// </summary>
     public Guid? ParentId { get; set; }
+    public Content? Parent { get; set; }
 
     /// <summary>
     /// The date and time when the content was created.
@@ -68,4 +64,9 @@ public class Content : IContent
     /// The content properties
     /// </summary>
     public List<ContentValue> ContentPropertyData { get; set; } = [];
+
+    /// <summary>
+    /// If parent ids are set this could have children
+    /// </summary>
+    public List<Content> Children { get; set; } = [];
 }

@@ -1,9 +1,40 @@
 ﻿@inherits LayoutComponentBase
 
-@Body
+<HeadContent>
+    <link rel="stylesheet" href="app.css"/>
+    <link rel="stylesheet" href="ZauberCMS.Web.styles.css"/>
+    <SectionOutlet SectionId="@Sections.PageHeadContent" />
+</HeadContent>
 
+<div class="text-center">
+    <div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
+        <header class="masthead mb-auto">
+            <div class="inner">
+                <h3 class="masthead-brand">ZauberCMS</h3>
+                <NavBar />
+            </div>
+        </header>
+
+        <main role="main" class="inner cover">
+            @Body
+        </main>
+
+        <footer class="mastfoot mt-auto">
+            <div class="inner">
+                <p>This is a proof of concept .Net Blazor CMS</p>
+            </div>
+        </footer>
+    </div>
+</div>
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    internal static class Sections
+    {
+        internal static SectionOutlet? PageHeadContent = new();
+    }
+}

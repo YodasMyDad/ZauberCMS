@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZauberCMS.Core.Data;
 
@@ -10,9 +11,11 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations
 {
     [DbContext(typeof(ZauberDbContext))]
-    partial class ZauberDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240515104324_RemovePageTitle")]
+    partial class RemovePageTitle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.4");
@@ -68,8 +71,6 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.HasIndex("Name")
                         .HasDatabaseName("IX_ZauberContent_Name");
-
-                    b.HasIndex("ParentId");
 
                     b.HasIndex("Url")
                         .HasDatabaseName("IX_ZauberContent_Url");
@@ -350,14 +351,7 @@ namespace ZauberCMS.Core.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ZauberCMS.Core.Content.Models.Content", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("ContentType");
-
-                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.RoleClaim", b =>
@@ -413,11 +407,6 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ZauberCMS.Core.Content.Models.Content", b =>
-                {
-                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>
