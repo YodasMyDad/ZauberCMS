@@ -220,7 +220,23 @@
 
     private void DeleteProperty(ContentTypeProperty property)
     {
-        
+        // Remove the specified property from the list
+        ContentType.ContentProperties.Remove(property);
+
+        // Get properties in the same tab and re-adjust their sort orders
+        var propertiesInSameTab = ContentType.ContentProperties
+            .Where(p => p.TabId == property.TabId)
+            .OrderBy(p => p.SortOrder)
+            .ToList();
+
+        for (int i = 0; i < propertiesInSameTab.Count; i++)
+        {
+            propertiesInSameTab[i].SortOrder = i + 1;
+        }
+
+        // Reload Tabs and update state
+        Tabs.Reload();
+        StateHasChanged();
     }
 
     private void ChangeTab(ContentTypeProperty property)
