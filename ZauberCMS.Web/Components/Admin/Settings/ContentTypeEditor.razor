@@ -24,7 +24,7 @@
         <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" @bind-SelectedIndex="@SelectedTabIndex">
             <Tabs>
                 @{
-                    var orderedTabsList = ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
+                    var orderedTabsList = GetTabsInOrder();
                 }
                 @for (var i = 0; i < orderedTabsList.Count; i++)
                 {
@@ -51,10 +51,10 @@
                                         </RadzenCard>
                                     </CentreColumn>
                                     <RightColumn>
-                                        <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text"/>
-                                        <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text"/>
-                                        <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text"/>
-                                        <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text"/>
+                                        <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" Click="@(() => SortProperty(property, false))"/>
+                                        <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" Click="@(() => DeleteProperty(property))"/>
+                                        <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" Click="@(() => SortProperty(property, true))"/>
+                                        <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" Click="@(() => ChangeTab(property))" />
                                     </RightColumn>
                                 </EditorRow>
                             }
@@ -163,6 +163,49 @@
             })
             .OrderBy(x => x.Name)
             .ToList();
+    }
+
+    private List<Tab> GetTabsInOrder()
+    {
+        return ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
+    }
+
+    private void SortProperty(ContentTypeProperty property, bool moveDown)
+    {
+        if (property.SortOrder < 1 && moveDown == false)
+        {
+            // Move up only if not already at the top
+            foreach (var p in ContentType.ContentProperties)
+            {
+                if (p.Id == property.Id)
+                {
+                    p.SortOrder--;       
+                }
+            }
+        }
+        else if(moveDown)
+        {
+            // Move up only if not already at the top
+            foreach (var p in ContentType.ContentProperties)
+            {
+                if (p.Id == property.Id)
+                {
+                    p.SortOrder++;       
+                }
+            }
+        }
+        Tabs.Reload();
+        StateHasChanged();
+    }
+
+    private void DeleteProperty(ContentTypeProperty property)
+    {
+        
+    }
+
+    private void ChangeTab(ContentTypeProperty property)
+    {
+        
     }
 
     private async Task Save()
