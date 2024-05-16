@@ -124,10 +124,10 @@
             ShowDeleteButton = true;
         }
 
-        InitializeTabs();
+        InitializeTabsAndSortOrders();
     }
-
-    private void InitializeTabs()
+    
+    private void InitializeTabsAndSortOrders()
     {
         if (!ContentType.Tabs.Any())
         {
@@ -140,9 +140,28 @@
             ContentType.Tabs.Add(defaultTab);
 
             // Now set all the properties to be in this tab
-            foreach (var property in ContentType.ContentProperties)
+            for (var index = 0; index < ContentType.ContentProperties.Count; index++)
             {
+                var property = ContentType.ContentProperties[index];
                 property.TabId = defaultTab.Id;
+                property.SortOrder = index + 1;
+            }
+        }
+        else
+        {
+            // Now reset sort orders to be correct
+            foreach (var tab in ContentType.Tabs)
+            {
+                var contentProperties = ContentType.ContentProperties
+                    .Where(x => x.TabId == tab.Id)
+                    .OrderBy(x => x.SortOrder)
+                    .ToList();
+
+                for(var i = 0; i < contentProperties.Count; i++)
+                {
+                    var contentProperty = contentProperties[i];
+                    contentProperty.SortOrder = i + 1;
+                }
             }
         }
     }
@@ -169,34 +188,35 @@
     {
         return ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
     }
-
+    
     private void SortProperty(ContentTypeProperty property, bool moveDown)
     {
-        if (property.SortOrder < 1 && moveDown == false)
+        var propertiesInSameTab = ContentType.ContentProperties
+            .Where(p => p.TabId == property.TabId)
+            .OrderBy(p => p.SortOrder)
+            .ToList();
+
+        var index = propertiesInSameTab.IndexOf(property);
+
+        if (!moveDown && index > 0)
         {
-            // Move up only if not already at the top
-            foreach (var p in ContentType.ContentProperties)
-            {
-                if (p.Id == property.Id)
-                {
-                    p.SortOrder--;       
-                }
-            }
+            // Moving up
+            var previousProperty = propertiesInSameTab[index - 1];
+            previousProperty.SortOrder++;
+            property.SortOrder--;
         }
-        else if(moveDown)
+        else if (moveDown && index < propertiesInSameTab.Count - 1)
         {
-            // Move up only if not already at the top
-            foreach (var p in ContentType.ContentProperties)
-            {
-                if (p.Id == property.Id)
-                {
-                    p.SortOrder++;       
-                }
-            }
+            // Moving down
+            var nextProperty = propertiesInSameTab[index + 1];
+            nextProperty.SortOrder--;
+            property.SortOrder++;
         }
+
         Tabs.Reload();
         StateHasChanged();
     }
+
 
     private void DeleteProperty(ContentTypeProperty property)
     {
