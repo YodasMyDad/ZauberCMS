@@ -2,9 +2,16 @@
 
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
-Style the admin similar to Umbraco and use tabs for content and contenttype (Implement, delete and sort)
+-- Show off POC
+ContentTypes - Style, Add tabs, sorting and deleting
+Content - Style similar to ContentTypes
+Add contextmenu to the Tree for Create, Delete and sort (Sort for Content only)
+Refactor creating content types, so remove the button that appears, make it slicker
+Add settings to datatypes, so you set the settings when you add the datatype to the contenttype (Settings string, SettingsView Component)
+Add in settings, each as their own tree not heading (Content Types, Languages (Add TODO), ViewComponents (Just list and allow view only))
+
+-- This can be done after showing off POC
 Move ContentTypeProperty & ContentValue to EF Core as string too big to save Lists
-Create datatypes so we can have settings (See below), link to ContentTypeProperty
 
 ### Structure
 
@@ -34,6 +41,9 @@ Content
      - Value
      - Settings
    
+
+Maybe.... 
+
 DataType
  - Id
  - Name
