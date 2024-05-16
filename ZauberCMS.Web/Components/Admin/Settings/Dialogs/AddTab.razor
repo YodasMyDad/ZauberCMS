@@ -1,0 +1,12 @@
+﻿<RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Tab Name" @bind-Value="@Name" aria-label="Tab Name"/>
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+@code {
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    private string Name { get; set; } = string.Empty;
+    private void Save()
+    {
+        DialogService.CloseSide(Name);
+    }
+}
