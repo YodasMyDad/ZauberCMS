@@ -11,5 +11,5 @@ public class ContentTypeProperty
     public string? Component { get; set; }
     public DateTime? DateUpdated { get; set; } = DateTime.UtcNow;
     public int SortOrder { get; set; }
-    public string? TabAlias { get; set; }
+    public Guid? TabId { get; set; }
 }

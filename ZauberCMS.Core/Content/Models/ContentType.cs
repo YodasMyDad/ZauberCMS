@@ -1,4 +1,5 @@
 ﻿using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Models;
 
@@ -38,6 +39,15 @@ public class ContentType
     /// The available Views for this ContentType that the user can select to display their content
     /// </summary>
     public List<string> AvailableContentViews { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the list of tabs associated with the content type.
+    /// </summary>
+    /// <remarks>
+    /// Tabs are used to organize the properties of a content type into separate sections.
+    /// Each tab represents a logical grouping of properties.
+    /// </remarks>
+    public List<Tab> Tabs { get; set; } = [];
     
     // ReSharper disable once CollectionNeverUpdated.Global
     /// <summary>

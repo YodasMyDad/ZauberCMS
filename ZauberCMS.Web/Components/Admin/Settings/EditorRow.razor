@@ -1,0 +1,24 @@
+﻿<RadzenRow Gap="1rem" class="rz-pb-3 rz-mb-3" Style="border-bottom: 1px solid #e3e3e3">
+    <RadzenColumn Size="@(LeftColumnSize)" class="rz-p-1">
+        <RadzenStack Gap="0">
+            @LeftColumn
+        </RadzenStack>
+    </RadzenColumn>
+    <RadzenColumn class="rz-p-1" Size="@(CentreColumnSize)">
+        @CentreColumn
+    </RadzenColumn>
+    <RadzenColumn class="rz-p-1" Size="@(RightColumnSize)">
+        <RadzenStack Gap="1" JustifyContent="JustifyContent.Center">
+            @RightColumn
+        </RadzenStack>
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    [Parameter] public int LeftColumnSize { get; set; } = 4;
+    [Parameter] public int RightColumnSize { get; set; } = 1;
+    [Parameter] public int CentreColumnSize { get; set; } = 7;
+    [Parameter] public RenderFragment? LeftColumn { get; set; }
+    [Parameter] public RenderFragment? CentreColumn { get; set; }
+    [Parameter] public RenderFragment? RightColumn { get; set; }
+}
