@@ -307,6 +307,9 @@
             // Add the new tab to the list of tabs
             ContentType.Tabs.Add(newTab);
 
+            // The index will be the total count
+            TabIndex.TryAdd(ContentType.Tabs.Count, newTab);
+            
             // Reload the tabs and update the UI state
             Tabs.Reload();
         }
