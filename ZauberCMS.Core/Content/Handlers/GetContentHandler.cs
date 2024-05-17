@@ -13,7 +13,23 @@ public class GetContentHandler (IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        return await dbContext.Content
-            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
+        var query = dbContext.Content.AsNoTracking().AsQueryable();
+        if (request.IncludeParent)
+        {
+            query = query.Include(x => x.Parent);
+        }
+
+        if (request.IncludeChildren)
+        {
+            query = query.Include(x => x.Children);
+            
+            if (request.IncludeParent)
+            {
+                // Make it a split query if parent is also included
+                query = query.AsSplitQuery();
+            }
+        }
+        
+        return await query.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
     }
 }
