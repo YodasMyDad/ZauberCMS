@@ -30,7 +30,6 @@ public class SaveContentTypeHandler(
         {
             if (request.ContentType.Alias.IsNullOrWhiteSpace())
             {
-                //TODO - Need to check alias doesn't already exist?
                 request.ContentType.Alias = _slugHelper.GenerateSlug(request.ContentType.Name);
             }
             

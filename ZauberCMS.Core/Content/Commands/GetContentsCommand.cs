@@ -5,15 +5,8 @@ namespace ZauberCMS.Core.Content.Commands;
 
 public class GetContentsCommand : IRequest<PaginatedList<Models.Content>>
 {
-    public GetContentsCommand()
-    {
-    }
-    
-    public GetContentsCommand(int amountPerPage)
-    {
-        AmountPerPage = amountPerPage;
-    }
-    
+    public string ContentTypeAlias { get; set; } = string.Empty;
+    public Guid? ContentTypeId { get; set; }
     public bool AsNoTracking { get; set; } = true;
     
     public List<Guid> Ids { get; set; } = [];

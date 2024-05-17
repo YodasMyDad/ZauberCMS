@@ -27,6 +27,20 @@ public class GetContentsHandler(IServiceProvider serviceProvider)
             query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
         }
 
+        if (!request.ContentTypeAlias.IsNullOrWhiteSpace())
+        {
+            var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == request.ContentTypeAlias);
+            if (contentType != null)
+            {
+                request.ContentTypeId = contentType.Id;
+            }
+        }
+        
+        if(request.ContentTypeId != null)
+        {
+            query = query.Where(x => x.ContentTypeId == request.ContentTypeId);
+        }
+
         query = request.OrderBy switch
         {
             GetContentsOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),

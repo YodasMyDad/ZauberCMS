@@ -1,0 +1,30 @@
+﻿@page "/ChangeTab/{ContentTypeId:guid}"
+@using ZauberCMS.Core.Shared.Models
+
+<RadzenListBox @bind-Value="@SelectedTabId"
+               Data="@Tabs"
+               TextProperty="Name"
+               ValueProperty="Id"
+               Style="width: 100%; height: 100%;"
+               InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select new tab" } })"
+               Change="@OnPropertySelected">
+    <Template>
+        @((context as Tab)?.Name)
+    </Template>
+</RadzenListBox>
+
+@code {
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Parameter] public Guid ContentTypeId { get; set; }
+    [Parameter] public List<Tab> Tabs { get; set; } = [];
+    private Guid SelectedTabId { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private void OnPropertySelected()
+    {
+        DialogService.CloseSide(SelectedTabId);
+    }
+}
