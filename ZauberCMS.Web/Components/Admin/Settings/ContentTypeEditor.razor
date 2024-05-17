@@ -297,13 +297,28 @@
     {
         var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
         var result = await Mediator.Send(saveContentTypeCommand);
-        NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = "", Duration = 4000 });
+        NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
     }
 
-    private void DeleteContentType()
+    private async Task DeleteContentType()
     {
         // Check no content is using it first
-        
+        var contentUsingContentType = await Mediator.Send(new GetContentsCommand { ContentTypeId = ContentType.Id });
+        if (contentUsingContentType.Items.Any())
+        {
+            // Display error message
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"Delete Error", Detail = "Unable to delete, because this ContentType is being used", Duration = 4000 });
+        }
+        else
+        {
+            var result = await Mediator.Send(new DeleteContentTypeCommand { ContentTypeId = ContentType.Id });
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Deleted", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo("/admin/settings");
+            }
+        }
     }
 
     private async Task AddTab()

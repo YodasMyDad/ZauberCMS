@@ -11,7 +11,7 @@ public class GetContentsCommand : IRequest<PaginatedList<Models.Content>>
     
     public List<Guid> Ids { get; set; } = [];
     public int PageIndex { get; set; } = 1;
-    public int AmountPerPage { get; set; }
+    public int AmountPerPage { get; set; } = 10;
     public string? SearchTerm { get; set; }
     public GetContentsOrderBy OrderBy { get; set; } = GetContentsOrderBy.DateUpdatedDescending;
 }

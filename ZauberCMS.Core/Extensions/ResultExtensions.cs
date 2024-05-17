@@ -1,3 +1,4 @@
+using System.Text;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
 
@@ -44,6 +45,34 @@ public static class ResultExtensions
     public static IEnumerable<ResultMessage> SuccessMessages(this List<ResultMessage> messages)
     {
         return messages.Where(x => x.MessageType == ResultMessageType.Success);
+    }
+    
+    /// <summary>
+    /// Returns list of messages as string
+    /// </summary>
+    /// <param name="messages"></param>
+    /// <returns></returns>
+    public static string MessagesAsString(this List<ResultMessage> messages)
+    {
+        var messageCount = messages.Count; 
+        if (messageCount != 0)
+        {
+            if (messageCount == 1)
+            {
+                return messages.FirstOrDefault()!.Message;
+            }
+
+            var sb = new StringBuilder();
+            var messagesToUse = messages.SuccessMessages();
+            foreach (var rm in messagesToUse)
+            {
+                sb.AppendLine($"{rm.Message}.");
+            }
+
+            return sb.ToString();
+        }
+
+        return string.Empty;
     }
     
     /// <summary>
