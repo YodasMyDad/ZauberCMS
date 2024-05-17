@@ -1,4 +1,5 @@
-﻿@inherits LayoutComponentBase
+﻿@using ZauberCMS.Core.Content.Commands
+@inherits LayoutComponentBase
 
 <HeadContent>
     <link rel="stylesheet" href="app.css"/>
@@ -21,7 +22,7 @@
 
         <footer class="mastfoot mt-auto">
             <div class="inner">
-                <p>This is a proof of concept .Net Blazor CMS</p>
+                <p>@(Content?.GetValue<string>("Testing"))</p>
             </div>
         </footer>
     </div>
@@ -33,6 +34,15 @@
 </div>
 
 @code {
+    private Content? Content { get; set; } 
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+        // TODO - Need to cache these calls!
+        Content = await Mediator.Send(new GetContentCommand { ContentTypeAlias = "website" });
+    }
+
     internal static class Sections
     {
         internal static SectionOutlet? PageHeadContent = new();
