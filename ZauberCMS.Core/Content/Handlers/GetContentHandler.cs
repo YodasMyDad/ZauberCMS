@@ -13,6 +13,7 @@ public class GetContentHandler (IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        return await dbContext.Content.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
+        return await dbContext.Content
+            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
     }
 }

@@ -3,7 +3,6 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 -- Show off POC
-ContentTypes - Style, Add tabs, sorting and deleting
 Content - Style similar to ContentTypes
 Add contextmenu to the Tree for Create, Delete and sort (Sort for Content only)
 Refactor creating content types, so remove the button that appears, make it slicker

@@ -7,11 +7,14 @@
     <RadzenColumn class="rz-p-1" Size="@(CentreColumnSize)">
         @CentreColumn
     </RadzenColumn>
-    <RadzenColumn class="rz-p-1" Size="@(RightColumnSize)">
-        <RadzenStack Gap="1" JustifyContent="JustifyContent.Center">
-            @RightColumn
-        </RadzenStack>
-    </RadzenColumn>
+    @if (RightColumn != null)
+    {
+        <RadzenColumn class="rz-p-1" Size="@(RightColumnSize)">
+            <RadzenStack Gap="1" JustifyContent="JustifyContent.Center">
+                @RightColumn
+            </RadzenStack>
+        </RadzenColumn>   
+    }
 </RadzenRow>
 
 @code {
@@ -21,4 +24,15 @@
     [Parameter] public RenderFragment? LeftColumn { get; set; }
     [Parameter] public RenderFragment? CentreColumn { get; set; }
     [Parameter] public RenderFragment? RightColumn { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (RightColumn == null)
+        {
+            CentreColumnSize += RightColumnSize;
+        }
+        
+    }
+
 }
