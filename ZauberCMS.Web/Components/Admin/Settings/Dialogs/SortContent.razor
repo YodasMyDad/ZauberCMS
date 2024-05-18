@@ -1,0 +1,34 @@
+﻿@page "/SortContent/{ContentId:guid}"
+
+<RadzenDataGrid AllowPaging="false" AllowSorting="true" Data="@Content">
+    <Columns>
+        <RadzenDataGridColumn Property="Name" Title="Name" />
+    </Columns>
+</RadzenDataGrid>
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Parameter] public Guid ContentId { get; set; }
+    [Parameter] public List<Content> Content { get; set; } = [];
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+    
+    private void Save()
+    {
+        @for (var i = 0; i < Content.Count; i++)
+        {
+            var content = Content[i];
+            content.SortOrder = i + 1;
+        }
+
+        // TODO - Save sorted items here
+        
+        DialogService.CloseSide(true);
+    }
+}

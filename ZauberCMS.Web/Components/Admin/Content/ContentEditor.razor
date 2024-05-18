@@ -226,7 +226,7 @@
 
     private async Task Save()
     {
-        var saveContentCommand = new SaveContentCommand { Content = Content };
+        var saveContentCommand = new SaveContentCommand { Content = [Content] };
         var result = await Mediator.Send(saveContentCommand);
         NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
     }

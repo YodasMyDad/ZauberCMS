@@ -3,7 +3,7 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Commands;
 
-public class SaveContentCommand : IRequest<HandlerResult<Models.Content>>
+public class SaveContentCommand : IRequest<HandlerResult<List<Models.Content>>>
 {
-    public Models.Content? Content { get; set; }
+    public List<Models.Content> Content { get; set; } = [];
 }
