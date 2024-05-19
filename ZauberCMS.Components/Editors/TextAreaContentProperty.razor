@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Forms
+@using ZauberCMS.Core.Content.Interfaces
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <InputTextArea Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
@@ -14,4 +15,6 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     public string Icon { get; set; } = "notes";
     public string Description { get; set; } = "Standard Text area";
+    public Type? SettingsComponent { get; set; }
+    public IContentPropertySettings? SettingsModel { get; set; }
 }

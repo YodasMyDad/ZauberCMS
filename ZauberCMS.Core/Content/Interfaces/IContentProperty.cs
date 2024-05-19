@@ -10,4 +10,6 @@ public interface IContentProperty
     string Value { get; set; }
     string Icon { get; set; }
     EventCallback<string> ValueChanged { get; set; }
+    public Type? SettingsComponent { get; set; }
+    public IContentPropertySettings? SettingsModel { get; set; }
 }

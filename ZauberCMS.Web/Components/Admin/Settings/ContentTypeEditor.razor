@@ -20,10 +20,10 @@
 <RadzenPanel Class="rz-mx-auto">
     <EditForm Model="ContentType" OnSubmit="Save">
         <RadzenRow class="rz-pb-6">
-            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name" 
+            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
                            ValueChanged="@((string name) => { ContentType.Name = name; ContentType.Alias = _slugHelper.GenerateSlug(name); })" aria-label="Name"/>
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
-                <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;" /> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
+                <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
             </RadzenStack>
         </RadzenRow>
         <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
@@ -66,10 +66,11 @@
                                                 </RadzenCard>
                                             </CentreColumn>
                                             <RightColumn>
-                                                <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" Click="@(() => SortProperty(property, false))"/>
-                                                <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" Click="@(() => DeleteProperty(property))"/>
-                                                <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" Click="@(() => SortProperty(property, true))"/>
-                                                <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" Click="@(() => ChangeTab(property))"/>
+                                                <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move up" Click="@(() => SortProperty(property, false))"/>
+                                                <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text"  title="Delete" Click="@(() => DeleteProperty(property))"/>
+                                                <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text"  title="Move Down" Click="@(() => SortProperty(property, true))"/>
+                                                <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Change Tab" Click="@(() => ChangeTab(property))"/>
+                                                <RadzenButton Icon="settings" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Edit Settings" Click="@(() => Settings(property))"/>
                                             </RightColumn>
                                         </EditorRow>
                                     }
@@ -130,6 +131,7 @@
     private bool ShowDeleteButton { get; set; }
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
+
 
     private readonly SlugHelper _slugHelper = new(new SlugHelper.Config
     {
@@ -268,13 +270,23 @@
     private async Task ChangeTab(ContentTypeProperty property)
     {
         var result = await DialogService.OpenSideAsync<ChangeTab>("Add Tab",
-            new Dictionary<string, object>{ { "ContentTypeId", ContentType.Id }, {"Tabs", ContentType.Tabs.OrderBy(x => x.SortOrder).ToList()} },
+            new Dictionary<string, object> { { "ContentTypeId", ContentType.Id }, { "Tabs", ContentType.Tabs.OrderBy(x => x.SortOrder).ToList() } },
             new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
-        
+
         if (result is Guid newTabId)
         {
             property.TabId = newTabId;
             Tabs.Reload();
+        }
+    }
+
+    private async Task Settings(ContentTypeProperty property)
+    {
+        var result = await DialogService.OpenSideAsync<ContentTypePropertySettingsEditor>("Edit Settings",
+            new Dictionary<string, object> { { "ContentTypeProperty", property } },
+            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+        if (result != null)
+        {
         }
     }
 
@@ -313,7 +325,7 @@
         {
             var result = await Mediator.Send(new DeleteContentTypeCommand { ContentTypeId = ContentType.Id });
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Deleted", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
-            
+
             if (result.Success)
             {
                 NavigationManager.NavigateTo("/admin/settings");

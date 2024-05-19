@@ -1,0 +1,7 @@
+﻿@using Radzen.Blazor
+
+<RadzenNumeric @bind-Value="@SettingsModel.MaxLength" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter max length" }})" />
+
+@code {
+    [Parameter] public TextContentSettingsModel SettingsModel { get; set; } = new();
+}

@@ -9,6 +9,7 @@ public class ContentTypeProperty
     public string? Alias { get; set; }
     public string? Description { get; set; }
     public string? Component { get; set; }
+    
     public DateTime? DateUpdated { get; set; } = DateTime.UtcNow;
     public int SortOrder { get; set; }
     public Guid? TabId { get; set; }

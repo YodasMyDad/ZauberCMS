@@ -1,0 +1,20 @@
+﻿@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Plugins
+<h3>@ContentTypeProperty.Component</h3>
+
+@code {
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    
+    [Parameter] public ContentTypeProperty ContentTypeProperty { get; set; } = default!;
+    private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
+    
+    
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+        var test = ContentTypeProperty.Component;
+    }
+
+}

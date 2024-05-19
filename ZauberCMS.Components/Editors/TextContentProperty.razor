@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Forms
+@using ZauberCMS.Core.Content.Interfaces
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <InputText Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
@@ -14,4 +15,6 @@
     public string Alias { get; set; } = "Textbox";
     public string Icon { get; set; } = "border_color";
     public string Description { get; set; } = "Standard text box";
+    public Type? SettingsComponent { get; set; }
+    public IContentPropertySettings? SettingsModel { get; set; }
 }
