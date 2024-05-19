@@ -94,8 +94,8 @@
                                     Detail = result.Messages.MessagesAsString(), Duration = 4000 });
                                 if (result.Success)
                                 {
-                                    // TODO - This doesn't work
-                                    //DataRefresh();
+                                    DataRefresh();
+                                    StateHasChanged();
                                 }
                             }
             
@@ -113,9 +113,18 @@
                                     new Dictionary<string, object>{ { "ContentId", dbContent.Id }, {"Content", dbContent.Children.OrderBy(x => x.SortOrder).ToList()} },
                                     new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
         
-                                if (result is bool success)
+                                if (result is List<Content> sortedContent)
                                 {
-                                    //TODO - Refresh Tree
+                                    var saveResult = await Mediator.Send(new SaveContentCommand {Content = sortedContent});
+                                    if (!saveResult.Success)
+                                    {
+                                        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+                                    }
+                                    else
+                                    {
+                                        DataRefresh();
+                                        StateHasChanged();
+                                    }
                                 }
                             }
          

@@ -1,10 +1,12 @@
 ﻿@page "/SortContent/{ContentId:guid}"
 
-<RadzenDataGrid @ref="Grid" AllowPaging="false" AllowSorting="true" Data="@Content">
-    <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name" />
-    </Columns>
-</RadzenDataGrid>
+<h6 @onclick="@(Sort)" style="cursor: pointer;">Name</h6>
+<RadzenStack Orientation="Orientation.Vertical" Gap="1" JustifyContent="JustifyContent.Center">
+    @foreach (var content in Content)
+    {
+    <div>@content.Name</div>
+    }    
+</RadzenStack>
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
 </RadzenStack>
@@ -13,29 +15,37 @@
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Parameter] public Guid ContentId { get; set; }
     [Parameter] public List<Content> Content { get; set; } = [];
-    private RadzenDataGrid<Content> Grid { get; set; }
+    bool _isDescending = false;
     
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
     }
 
-    private void Sort(DataGridColumnSortEventArgs<Content> eventArgs)
+    private void Sort()
     {
-        var t = eventArgs.Column;
+        if (_isDescending)
+        {
+            _isDescending = false;
+            Content = Content.OrderBy(x => x.Name).ToList();
+        }
+        else
+        {
+            _isDescending = true;
+            Content = Content.OrderByDescending(x => x.Name).ToList();
+        }
     }
     
     private void Save()
     {
-        var sortedContent = Grid.Data.ToList();
-        @for (var i = 0; i < sortedContent.Count; i++)
+        @for (var i = 0; i < Content.Count; i++)
         {
-            var content = sortedContent[i];
+            var content = Content[i];
             content.SortOrder = i + 1;
         }
 
         // TODO - Save sorted items here
         
-        DialogService.CloseSide(true);
+        DialogService.CloseSide(Content);
     }
 }
