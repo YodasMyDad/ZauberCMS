@@ -12,7 +12,17 @@
                InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select property" } })"
                Change="@OnPropertySelected">
     <Template>
-        @((context as IContentProperty)?.Name)
+        @{
+            var contentTypeProperty = context as IContentProperty;
+        }
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+            @if (contentTypeProperty?.Icon.IsNullOrWhiteSpace() == false)
+            {
+                <RadzenIcon Icon="@(contentTypeProperty.Icon)" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/>    
+            }
+             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; padding: 0;">@(contentTypeProperty?.Name)</RadzenText>
+        </RadzenStack>
+        <div><RadzenText TextStyle="TextStyle.Caption">@(contentTypeProperty?.Description)</RadzenText></div>
     </Template>
 </RadzenListBox>
 

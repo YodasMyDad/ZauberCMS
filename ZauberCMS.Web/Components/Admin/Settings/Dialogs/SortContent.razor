@@ -1,6 +1,6 @@
 ﻿@page "/SortContent/{ContentId:guid}"
 
-<RadzenDataGrid AllowPaging="false" AllowSorting="true" Data="@Content">
+<RadzenDataGrid @ref="Grid" AllowPaging="false" AllowSorting="true" Data="@Content">
     <Columns>
         <RadzenDataGridColumn Property="Name" Title="Name" />
     </Columns>
@@ -13,17 +13,24 @@
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Parameter] public Guid ContentId { get; set; }
     [Parameter] public List<Content> Content { get; set; } = [];
+    private RadzenDataGrid<Content> Grid { get; set; }
     
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
     }
+
+    private void Sort(DataGridColumnSortEventArgs<Content> eventArgs)
+    {
+        var t = eventArgs.Column;
+    }
     
     private void Save()
     {
-        @for (var i = 0; i < Content.Count; i++)
+        var sortedContent = Grid.Data.ToList();
+        @for (var i = 0; i < sortedContent.Count; i++)
         {
-            var content = Content[i];
+            var content = sortedContent[i];
             content.SortOrder = i + 1;
         }
 
