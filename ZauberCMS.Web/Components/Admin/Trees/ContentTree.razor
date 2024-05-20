@@ -77,7 +77,7 @@
                 {
                     case 1:
                         // Handle Create
-                        NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}");
+                        NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}", forceLoad: true);
                         break;
                     case 2:
                         // Confirm dialogue, say if there are children, and confirm then delete all
@@ -161,7 +161,7 @@
     {
         if (Selection is Content content)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontent/{content.Id}");
+            NavigationManager.NavigateTo($"/admin/updatecontent/{content.Id}", forceLoad: true);
         }
     }
 

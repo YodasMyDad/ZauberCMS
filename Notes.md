@@ -3,8 +3,7 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### Show off POC
-
-Add settings to datatypes, so you set the settings when you add the datatype to the contenttype (Settings string, SettingsView Component)  
+ 
 Add in settings, each as their own tree not heading (Content Types, Languages (Add TODO), ViewComponents (Just list and allow view only))  
 Refreshtree issues
 

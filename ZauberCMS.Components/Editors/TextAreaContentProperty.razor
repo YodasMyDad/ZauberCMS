@@ -11,7 +11,7 @@
     public string Alias { get; set; } = "TextArea";
     
     [Parameter] public string Value { get; set; } = string.Empty;
-
+    [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     public string Icon { get; set; } = "notes";
     public string Description { get; set; } = "Standard Text area";

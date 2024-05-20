@@ -1,10 +1,16 @@
 ﻿@using System.Text.Json
-@using Microsoft.AspNetCore.Components.Forms
 @using ZauberCMS.Core.Extensions
+@using Radzen.Blazor
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<InputText Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
-           ValueExpression="@(() => Value)" class="form-control" />
+<RadzenTextBox @ref="TextBox" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
+               ValueExpression="@(() => Value)" class="form-control" />
+@if (SettingsModel.MaxLength != null)
+{
+    <div>
+        <RadzenText TextStyle="TextStyle.Caption">Max Length: @SettingsModel.MaxLength</RadzenText>
+    </div>
+}
 
 @code {
     [Parameter] public string Value { get; set; } = string.Empty;
@@ -18,6 +24,7 @@
     public Type? SettingsComponent { get; set; } = typeof(TextContentSettings);
     
     private TextContentSettingsModel SettingsModel { get; set; } = new();
+    private RadzenTextBox? TextBox { get; set; }
     
     protected override void OnInitialized()
     {
@@ -25,6 +32,15 @@
         if (!Settings.IsNullOrWhiteSpace())
         {
             SettingsModel = JsonSerializer.Deserialize<TextContentSettingsModel>(Settings) ?? new TextContentSettingsModel();
+        }
+    }
+    
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        if (firstRender && TextBox != null && SettingsModel.MaxLength != null)
+        {
+            TextBox.MaxLength = SettingsModel.MaxLength.Value;
         }
     }
 }

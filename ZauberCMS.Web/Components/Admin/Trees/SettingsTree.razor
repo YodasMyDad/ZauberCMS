@@ -1,6 +1,4 @@
-﻿@using Microsoft.EntityFrameworkCore
-@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Data
+﻿@using ZauberCMS.Core.Content.Commands
 <div class="rz-p-4">
     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content Types</RadzenText>
 </div>
@@ -8,9 +6,13 @@
     <RadzenTreeLevel Expanded="@(_ => false)" HasChildren="@(_ => false)" TextProperty="Name"/>
 </RadzenTree>
 <div class="rz-p-4">
-    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Data Types</RadzenText>
+    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Component Views</RadzenText>
+    <p>TODO</p>
 </div>
-<p>TODO</p>
+<div class="rz-p-4">
+    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Languages</RadzenText>
+    <p>TODO</p>
+</div>
 
 @code {
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
