@@ -12,12 +12,15 @@
     [Parameter]
     public EventCallback<string> ValueChanged { get; set; }
 
+    [Parameter] public string Settings { get; set; } = string.Empty;
+
     private Dictionary<string, object> GetParameters()
     {
         return new Dictionary<string, object>
         {
             ["Value"] = Value,
-            ["ValueChanged"] = ValueChanged
+            ["ValueChanged"] = ValueChanged,
+            ["Settings"] = Settings
         };
     }
 }

@@ -269,7 +269,7 @@
 
     private async Task ChangeTab(ContentTypeProperty property)
     {
-        var result = await DialogService.OpenSideAsync<ChangeTab>("Add Tab",
+        var result = await DialogService.OpenSideAsync<ChangeTab>("Change Tab",
             new Dictionary<string, object> { { "ContentTypeId", ContentType.Id }, { "Tabs", ContentType.Tabs.OrderBy(x => x.SortOrder).ToList() } },
             new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
 
@@ -285,8 +285,9 @@
         var result = await DialogService.OpenSideAsync<ContentTypePropertySettingsEditor>("Edit Settings",
             new Dictionary<string, object> { { "ContentTypeProperty", property } },
             new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
-        if (result != null)
+        if (result is string settings)
         {
+            property.Settings = settings;
         }
     }
 

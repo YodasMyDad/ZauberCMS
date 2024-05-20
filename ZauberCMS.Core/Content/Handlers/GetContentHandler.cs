@@ -12,36 +12,44 @@ public class GetContentHandler (IServiceProvider serviceProvider)
 {
     public async Task<Models.Content?> Handle(GetContentCommand request, CancellationToken cancellationToken)
     {
-        using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var query = dbContext.Content.Include(x => x.ContentType).AsNoTracking().AsQueryable();
-        if (request.IncludeParent)
+        using (var scope = serviceProvider.CreateScope())
         {
-            query = query.Include(x => x.Parent);
-        }
+            var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+            var query = dbContext.Content.Include(x => x.ContentType).AsQueryable();
+
+            if (request.AsNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
         
-        if (request.IncludeChildren)
-        {
-            query = query.Include(x => x.Children);
-            
             if (request.IncludeParent)
             {
-                // Make it a split query if parent is also included
-                query = query.AsSplitQuery();
+                query = query.Include(x => x.Parent);
             }
-        }
-
-        if (request.Id != null)
-        {
-            return await query.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
-        }
         
-        if (!request.ContentTypeAlias.IsNullOrWhiteSpace())
-        {
-            return await query.FirstOrDefaultAsync(x => x.ContentType.Alias == request.ContentTypeAlias, cancellationToken: cancellationToken);
-        }
+            if (request.IncludeChildren)
+            {
+                query = query.Include(x => x.Children);
+            
+                if (request.IncludeParent)
+                {
+                    // Make it a split query if parent is also included
+                    query = query.AsSplitQuery();
+                }
+            }
 
-        // Should never get here
-        return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
+            if (request.Id != null)
+            {
+                return await query.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
+            }
+        
+            if (!request.ContentTypeAlias.IsNullOrWhiteSpace())
+            {
+                return await query.FirstOrDefaultAsync(x => x.ContentType.Alias == request.ContentTypeAlias, cancellationToken: cancellationToken);
+            }
+
+            // Should never get here
+            return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);   
+        }
     }
 }

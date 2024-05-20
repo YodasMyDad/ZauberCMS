@@ -1,4 +1,5 @@
 ﻿@using Microsoft.EntityFrameworkCore
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Data
 <div class="rz-p-4">
     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content Types</RadzenText>
@@ -17,15 +18,15 @@
     private List<ContentType> ContentTypes { get; set; } = [];
     private object? Selection { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
-        using var scope = ServiceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        ContentTypes = dbContext.ContentTypes
-            .AsNoTracking()
-            .OrderBy(x => x.Name)
-            .ToList();
+        await base.OnInitializedAsync();
+        var items = await Mediator.Send(new GetContentTypesCommand
+        {
+            OrderBy = GetContentTypesOrderBy.Name,
+            AmountPerPage = 1000 // Probably should have a better way of doing this
+        });
+        ContentTypes = items.Items.ToList();
     }
     
     void OnChange()

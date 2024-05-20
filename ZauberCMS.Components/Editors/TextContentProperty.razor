@@ -1,5 +1,6 @@
-﻿@using Microsoft.AspNetCore.Components.Forms
-@using ZauberCMS.Core.Content.Interfaces
+﻿@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using ZauberCMS.Core.Extensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <InputText Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
@@ -7,14 +8,23 @@
 
 @code {
     [Parameter] public string Value { get; set; } = string.Empty;
-
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Settings { get; set; } = string.Empty;
     
     public string Name { get; set; } = "Textbox";
-    
     public string Alias { get; set; } = "Textbox";
     public string Icon { get; set; } = "border_color";
     public string Description { get; set; } = "Standard text box";
-    public Type? SettingsComponent { get; set; }
-    public IContentPropertySettings? SettingsModel { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(TextContentSettings);
+    
+    private TextContentSettingsModel SettingsModel { get; set; } = new();
+    
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (!Settings.IsNullOrWhiteSpace())
+        {
+            SettingsModel = JsonSerializer.Deserialize<TextContentSettingsModel>(Settings) ?? new TextContentSettingsModel();
+        }
+    }
 }

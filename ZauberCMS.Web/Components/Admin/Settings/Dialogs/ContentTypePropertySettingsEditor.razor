@@ -1,20 +1,54 @@
 ﻿@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
-<h3>@ContentTypeProperty.Component</h3>
+
+@if (SettingsComponent != null)
+{
+    <DynamicComponent Type="@SettingsComponent" Parameters="@SettingsParams" />
+}
+else
+{
+    @Message
+}
 
 @code {
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     
     [Parameter] public ContentTypeProperty ContentTypeProperty { get; set; } = default!;
-    private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     
+    private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
+    private Type? SettingsComponent { get; set; }
+    private Dictionary<string, object> SettingsParams { get; set; } = new();
+    private string? Message { get; set; }
     
     protected override void OnInitialized()
     {
         base.OnInitialized();
         AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        var test = ContentTypeProperty.Component;
+        if(ContentTypeProperty.Component != null && AllContentTypeProperties.TryGetValue(ContentTypeProperty.Component, out var contentProperty))
+        {
+            if (contentProperty.SettingsComponent != null)
+            {
+                SettingsComponent = contentProperty.SettingsComponent;
+                SettingsParams = new Dictionary<string, object>
+                {
+                    ["SettingsModel"] = ContentTypeProperty.Settings ?? string.Empty,
+                    ["ValueChanged"] = EventCallback.Factory.Create<string>(this, OnSettingsValueChanged)
+                };   
+            }
+            else
+            {
+                Message = "No settings available for this property";
+            }
+        }
+        else
+        {
+            Message = "Can't find content property?";
+        }
     }
 
+    private async Task OnSettingsValueChanged(string newSettings)
+    {
+        DialogService.CloseSide(newSettings);
+    }
 }

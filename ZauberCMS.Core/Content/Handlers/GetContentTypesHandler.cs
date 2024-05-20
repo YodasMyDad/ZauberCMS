@@ -28,12 +28,18 @@ public class GetContentTypesHandler(IServiceProvider serviceProvider)
             query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
         }
 
+        if (request.WhereClause != null)
+        {
+            query = query.Where(request.WhereClause);
+        }
+        
         query = request.OrderBy switch
         {
             GetContentTypesOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
             GetContentTypesOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
             GetContentTypesOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
             GetContentTypesOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+            GetContentTypesOrderBy.Name => query.OrderBy(p => p.Name),
             _ => query.OrderByDescending(p => p.DateUpdated)
         };
         

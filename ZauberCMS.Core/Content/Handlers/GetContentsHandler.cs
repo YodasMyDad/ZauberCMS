@@ -17,6 +17,11 @@ public class GetContentsHandler(IServiceProvider serviceProvider)
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         var query = dbContext.Content.AsQueryable();
 
+        if (request.Query != null)
+        {
+            query = request.Query;
+        }
+        
         if (request.AsNoTracking)
         {
             query = query.AsNoTracking();
@@ -40,6 +45,11 @@ public class GetContentsHandler(IServiceProvider serviceProvider)
         {
             query = query.Where(x => x.ContentTypeId == request.ContentTypeId);
         }
+        
+        if (request.WhereClause != null)
+        {
+            query = query.Where(request.WhereClause);
+        }
 
         query = request.OrderBy switch
         {
@@ -47,6 +57,7 @@ public class GetContentsHandler(IServiceProvider serviceProvider)
             GetContentsOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
             GetContentsOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
             GetContentsOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+            GetContentsOrderBy.SortOrder => query.OrderBy(p => p.SortOrder),
             _ => query.OrderByDescending(p => p.DateUpdated)
         };
         

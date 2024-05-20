@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Linq.Expressions;
+using MediatR;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Shared.Models;
 
@@ -10,11 +11,6 @@ public class GetContentTypesCommand : IRequest<PaginatedList<ContentType>>
     {
     }
     
-    public GetContentTypesCommand(int amountPerPage)
-    {
-        AmountPerPage = amountPerPage;
-    }
-    
     public bool AsNoTracking { get; set; } = true;
     
     public List<Guid> Ids { get; set; } = [];
@@ -22,6 +18,7 @@ public class GetContentTypesCommand : IRequest<PaginatedList<ContentType>>
     public int AmountPerPage { get; set; }
     public string? SearchTerm { get; set; }
     public GetContentTypesOrderBy OrderBy { get; set; } = GetContentTypesOrderBy.DateUpdatedDescending;
+    public Expression<Func<ContentType, bool>>? WhereClause { get; set; }
 }
 
 public enum GetContentTypesOrderBy
@@ -29,5 +26,6 @@ public enum GetContentTypesOrderBy
     DateUpdated,
     DateUpdatedDescending,
     DateCreated,
-    DateCreatedDescending
+    DateCreatedDescending,
+    Name
 }

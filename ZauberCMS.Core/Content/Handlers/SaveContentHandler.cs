@@ -25,7 +25,7 @@ public class SaveContentHandler(
         
         var handlerResult = new HandlerResult<List<Models.Content>>();
 
-        if (request.Content.Any())
+        if (request.Content.Count != 0)
         {
             foreach (var requestContent in request.Content)
             {
@@ -49,9 +49,9 @@ public class SaveContentHandler(
                     // Map the updated properties
                     mapper.Map(requestContent, content);
                 }
+                
+                return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
             }
-            
-            return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
         }
 
         handlerResult.AddMessage("Content is null", ResultMessageType.Error);

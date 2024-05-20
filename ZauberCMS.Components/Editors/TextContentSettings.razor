@@ -1,7 +1,32 @@
-﻿@using Radzen.Blazor
+﻿@using System.Text.Json
+@using Radzen
+@using Radzen.Blazor
+@using ZauberCMS.Core.Extensions
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
 
-<RadzenNumeric @bind-Value="@SettingsModel.MaxLength" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter max length" }})" />
+<RadzenNumeric @bind-Value="@Settings.MaxLength" Placeholder="Max Length Allowed" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter max length" }})" />
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
 
 @code {
-    [Parameter] public TextContentSettingsModel SettingsModel { get; set; } = new();
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    private TextContentSettingsModel Settings { get; set; } = new();
+    
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        if (!SettingsModel.IsNullOrWhiteSpace())
+        {
+            Settings = JsonSerializer.Deserialize<TextContentSettingsModel>(SettingsModel) ?? new TextContentSettingsModel();
+        }
+    }
+    
+    private async Task Save()
+    {
+        var updatedSettingsModel = JsonSerializer.Serialize(Settings);
+        await ValueChanged.InvokeAsync(updatedSettingsModel);
+    }
 }

@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Linq.Expressions;
+using MediatR;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Commands;
@@ -14,6 +15,8 @@ public class GetContentsCommand : IRequest<PaginatedList<Models.Content>>
     public int AmountPerPage { get; set; } = 10;
     public string? SearchTerm { get; set; }
     public GetContentsOrderBy OrderBy { get; set; } = GetContentsOrderBy.DateUpdatedDescending;
+    public Expression<Func<Models.Content, bool>>? WhereClause { get; set; }
+    public IQueryable<Models.Content>? Query { get; set; }
 }
 
 public enum GetContentsOrderBy
@@ -21,5 +24,6 @@ public enum GetContentsOrderBy
     DateUpdated,
     DateUpdatedDescending,
     DateCreated,
-    DateCreatedDescending
+    DateCreatedDescending,
+    SortOrder
 }

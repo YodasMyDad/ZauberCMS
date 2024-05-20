@@ -1,5 +1,5 @@
 ﻿@page "/admin/settings"
-@using ZauberCMS.Core.Data
+@using ZauberCMS.Core.Content.Commands
 
 @layout AdminLayout
 
@@ -39,15 +39,15 @@
 </SectionContent>
 
 @code {
-    [Inject] public ZauberDbContext DbContext { get; set; } = default!;
-
+    
     private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
     private bool Expanded { get; set; } = true;
     
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        ContentTypes = DbContext.ContentTypes;
+        var items = await Mediator.Send(new GetContentTypesCommand{AmountPerPage = 1000});
+        ContentTypes = items.Items;
     }
     
     public void ToggleSideBar()

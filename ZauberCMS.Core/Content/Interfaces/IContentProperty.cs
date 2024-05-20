@@ -11,5 +11,4 @@ public interface IContentProperty
     string Icon { get; set; }
     EventCallback<string> ValueChanged { get; set; }
     public Type? SettingsComponent { get; set; }
-    public IContentPropertySettings? SettingsModel { get; set; }
 }

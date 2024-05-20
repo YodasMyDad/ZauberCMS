@@ -21,32 +21,33 @@
     private object? Selection { get; set; }
     private RadzenTree Tree { get; set; }
     
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
-        DataRefresh();
+        await base.OnInitializedAsync();
+        await DataRefresh();
     }
 
-    private void DataRefresh()
+    private async Task DataRefresh()
     {
-        using var scope = ServiceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        ContentItems = dbContext.Content
-            .AsNoTracking()
-            .Where(x => x.IsRootContent)
-            .OrderBy(x => x.SortOrder)
-            .ToList();
+        var items = await Mediator.Send(new GetContentsCommand
+        {
+            AmountPerPage = 1000,
+            WhereClause = x => x.IsRootContent
+        });
+        ContentItems = items.Items.ToList();
     }
 
     private bool HasChildren(object data)
     {
-        using var scope = ServiceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         if (data is Content content)
         {
-            return dbContext.Content.AsNoTracking().Count(x => x.ParentId == content.Id) > 0;
+            var items = Mediator.Send(new GetContentsCommand
+            {
+                AsNoTracking = true,
+                WhereClause = x => x.ParentId == content.Id
+            }).GetAwaiter().GetResult();
+            return items.Items.Any();
         }
-
         return false;
     }
 
@@ -76,7 +77,7 @@
                 {
                     case 1:
                         // Handle Create
-                        NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}", forceLoad: true);
+                        NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}");
                         break;
                     case 2:
                         // Confirm dialogue, say if there are children, and confirm then delete all
@@ -94,7 +95,6 @@
                                     Detail = result.Messages.MessagesAsString(), Duration = 4000 });
                                 if (result.Success)
                                 {
-                                    DataRefresh();
                                     StateHasChanged();
                                 }
                             }
@@ -122,7 +122,6 @@
                                     }
                                     else
                                     {
-                                        DataRefresh();
                                         StateHasChanged();
                                     }
                                 }
@@ -136,15 +135,15 @@
 
     void OnExpand(TreeExpandEventArgs args)
     {
-        using var scope = ServiceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         if (args.Value is Content category)
         {
-            args.Children.Data = dbContext.Content
-                .AsNoTracking()
-                .Where(x => x.ParentId == category.Id)
-                .OrderBy(x => x.SortOrder)
-                .ToList();
+            var items = Mediator.Send(new GetContentsCommand
+            {
+                AsNoTracking = true,
+                WhereClause = x => x.ParentId == category.Id,
+                OrderBy = GetContentsOrderBy.SortOrder
+            }).GetAwaiter().GetResult();
+            args.Children.Data = items.Items;
             args.Children.TextProperty = "Name";
         }
         //args.Children.HasChildren = (product) => false;
