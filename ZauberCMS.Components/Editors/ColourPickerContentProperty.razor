@@ -1,0 +1,28 @@
+﻿@using Radzen.Blazor
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenColorPicker @bind-Value="@Value" ShowHSV="@ShowHsv" ShowRGBA="@ShowRgba" ShowColors="@ShowColors" ShowButton="@ShowButton" Change="@OnChange"/>
+
+@code {
+    public string Name { get; set; } = "Colour Picker";
+    public string Alias { get; set; } = "ZauberCMS.ColourPicker";
+    public string Description { get; set; } = "Standard colour picker";
+    public string Icon { get; set; } = "palette";
+    public Type? SettingsComponent { get; set; }
+
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    private async Task OnChange(string value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private const bool ShowHsv = true;
+    private const bool ShowRgba = true;
+    private const bool ShowColors = true;
+    private const bool ShowButton = true;
+
+}

@@ -7,9 +7,10 @@ public interface IContentProperty
     string Name { get; set; }
     string Alias { get; set; }
     string Description { get; set; }
-    string Value { get; set; }
     string Icon { get; set; }
+    public Type? SettingsComponent { get; set; }
+
+    string Value { get; set; }
     EventCallback<string> ValueChanged { get; set; }
     string Settings { get; set; }
-    public Type? SettingsComponent { get; set; }
 }

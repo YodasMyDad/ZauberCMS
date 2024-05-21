@@ -3,7 +3,6 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-date+time contenttypeproperty
 coulour picker contenttypeproperty
 switch contenttypeproperty
 checkbox list contenttypeproperty
