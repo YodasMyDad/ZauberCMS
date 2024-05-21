@@ -4,12 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
--- All these use new 
-checkbox list contenttypeproperty
-radio box list contenttypeproperty
 autocomplete contenttypepproperty
-dropdownlist contentproperty
-
 numeric contenttypeproperty
 icon picker contenttypeproperty
 rating contenttypeproperty

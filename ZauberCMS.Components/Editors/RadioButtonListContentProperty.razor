@@ -1,0 +1,20 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+@using Radzen
+@using Radzen.Blazor
+@inherits ZauberCMS.Components.Editors.Models.ListPropertyBaseComponent
+
+<RadzenRadioButtonList Data="@SettingsModel.Items" 
+                       Value="@SelectedValue" 
+                       Orientation="Orientation.Vertical"
+                       TValue="string" 
+                       TextProperty="Name" 
+                       ValueProperty="Value"
+                       Change="@(args => OnChange(args))"/>
+
+@code {
+    public string Name { get; set; } = "Radio Button List";
+    public string Alias { get; set; } = "ZauberCMS.RadioButtonList";
+    public string Icon { get; set; } = "border_color";
+    public string Description { get; set; } = "Radio button list using manual or custom data";
+    public Type? SettingsComponent { get; set; } = typeof(ListPropertySettings);
+}

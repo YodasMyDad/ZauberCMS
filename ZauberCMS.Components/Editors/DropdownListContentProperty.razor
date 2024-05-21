@@ -1,0 +1,22 @@
+﻿@using Radzen.Blazor
+@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+@inherits ListPropertyBaseComponent
+
+
+<RadzenDropDown Data="@SettingsModel.Items" 
+                @bind-Value="@SelectedValues" 
+                Change="@(OnChange)"
+                TextProperty="Name"
+                ValueProperty="Value"
+                Multiple="true" AllowClear="true" Placeholder="Select items" Chips="true" Style="width: 100%;" />
+
+                    
+@code {
+    
+    public string Name { get; set; } = "Dropdown List";
+    public string Alias { get; set; } = "ZauberCMS.DropdownList";
+    public string Icon { get; set; } = "border_color";
+    public string Description { get; set; } = "Dropdown list using manual or custom data, for multiple select items";
+    public Type? SettingsComponent { get; set; } = typeof(ListPropertySettings);
+}
