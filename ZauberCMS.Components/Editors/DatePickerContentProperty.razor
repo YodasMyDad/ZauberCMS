@@ -1,0 +1,16 @@
+﻿@using Radzen.Blazor
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenDatePicker Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))" Name="RadzenDatePickerBindValue" ShowCalendarWeek />
+
+@code {
+    public string Name { get; set; } = "Datepicker";
+    public string Alias { get; set; } = "Datepicker";
+    public string Description { get; set; } = "Description is here";
+    public string Icon { get; set; } = "notes";
+    public Type? SettingsComponent { get; set; }
+    
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+}
