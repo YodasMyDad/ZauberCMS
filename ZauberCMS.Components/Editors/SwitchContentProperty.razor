@@ -1,0 +1,37 @@
+﻿@using Radzen.Blazor
+@using ZauberCMS.Core.Extensions
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenSwitch @bind-Value="@Selected" Change=@(args => OnChange(args, "Switch")) InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Switch value" }})" />
+
+@code {
+    public string Name { get; set; } = "True/False";
+    public string Alias { get; set; } = "ZauberCMS.TrueFalse";
+    public string Description { get; set; } = "True false picker (Switch)";
+    public string Icon { get; set; } = "tune";
+    public Type? SettingsComponent { get; set; }
+    private bool Selected { get; set; }
+    
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            Selected = Convert.ToBoolean(Value);   
+        }
+    }
+    
+    private async Task OnChange(bool? value, string name)
+    {
+        if (value != null)
+        {
+            Value = value.Value.ToString();
+            await ValueChanged.InvokeAsync(Value);   
+        }
+    }
+    
+}
