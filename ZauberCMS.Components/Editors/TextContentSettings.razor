@@ -1,10 +1,14 @@
 ﻿@using System.Text.Json
 @using Radzen
 @using Radzen.Blazor
+@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Extensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
 
-<RadzenNumeric @bind-Value="@Settings.MaxLength" Placeholder="Max Length Allowed" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter max length" }})" />
+<RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+    <RadzenNumeric @bind-Value="@Settings.MaxLength" Placeholder="Max Length Allowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter max length" }})" />    
+</RadzenStack>
+
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
 </RadzenStack>

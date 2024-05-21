@@ -1,6 +1,7 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Core.Extensions
 @using Radzen.Blazor
+@using ZauberCMS.Components.Editors.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenTextBox @ref="TextBox" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"

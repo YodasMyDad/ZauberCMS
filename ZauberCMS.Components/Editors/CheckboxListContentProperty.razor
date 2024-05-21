@@ -1,0 +1,22 @@
+﻿@using Radzen
+@using Radzen.Blazor
+@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+@inherits ListPropertyBaseComponent
+
+<RadzenCheckBoxList Data="@SettingsModel.Items" 
+                    Value="@SelectedValues" 
+                    TValue="string" 
+                    Change="@(args => OnChange(args))"
+                    Orientation="Orientation.Vertical"
+                    TextProperty="Name"
+                    ValueProperty="Value" />
+                    
+@code {
+    
+    public string Name { get; set; } = "Checkbox List";
+    public string Alias { get; set; } = "ZauberCMS.CheckboxList";
+    public string Icon { get; set; } = "border_color";
+    public string Description { get; set; } = "Checkbox list using manual or custom data";
+    public Type? SettingsComponent { get; set; } = typeof(ListPropertySettings);
+}

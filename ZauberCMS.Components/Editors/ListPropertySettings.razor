@@ -1,0 +1,88 @@
+﻿@using System.Text.Json
+@using Radzen
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Extensions
+@using ZauberCMS.Core.Plugins
+@using Radzen.Blazor
+@using ZauberCMS.Core.Content.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
+
+<RadzenTabs TabPosition="TabPosition.Top" RenderMode="TabRenderMode.Client">
+    <Tabs>
+        <RadzenTabsItem Text="Manual">
+            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+                @foreach (var item in Settings.Items)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+                        <RadzenTextBox @bind-Value="@item.Name" Placeholder="Name" class="w-100" aria-label="Name TextBox" />
+                        <RadzenTextBox @bind-Value="@item.Value" Placeholder="Value" class="w-100" aria-label="Value TextBox" />
+                        <RadzenButton Click=@(_ => AddItem()) Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" class="rz-border-radius-10 rz-shadow-4"/>
+                        <RadzenButton Click=@(_ => RemoveItem(item)) Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" class="rz-border-radius-10 rz-shadow-4"/>
+                    </RadzenStack>
+                }
+            </RadzenStack>            
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="Data Source">
+            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+                <RadzenLabel Text="Choose available data sources:" />
+                <RadzenDropDown @bind-Value="@Settings.DataSource" Data="@DataListSources" TextProperty="Name" ValueProperty="FullName" Style="width: 100%;" Name="DataSources"/>
+                <div style="text-decoration: underline; cursor: pointer;" @onclick="ClearDatasource">Clear</div>
+            </RadzenStack>            
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    private ListPropertySettingsModel Settings { get; set; } = new();
+    private List<IDataListSource> DataListSources { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var items = ExtensionManager.GetInstances<IDataListSource>();
+
+        DataListSources = items.Select(x => x.Value).ToList();
+        if (!SettingsModel.IsNullOrWhiteSpace())
+        {
+            Settings = JsonSerializer.Deserialize<ListPropertySettingsModel>(SettingsModel) ?? new ListPropertySettingsModel();
+        }
+        if (!Settings.Items.Any())
+        {
+            AddItem();
+        }
+    }
+
+    private void AddItem()
+    {
+        Settings.Items.Add(new DataListItem());
+    }
+    
+    private void RemoveItem(DataListItem dataListItem)
+    {
+        Settings.Items.Remove(dataListItem);
+    }
+    
+    private void ClearDatasource()
+    {
+        Settings.DataSource = string.Empty;
+    }
+
+    private async Task Save()
+    {
+        Settings.Items.RemoveWhere(x => x.Name.IsNullOrWhiteSpace());
+        var updatedSettingsModel = JsonSerializer.Serialize(Settings);
+        await ValueChanged.InvokeAsync(updatedSettingsModel);
+    }
+
+}

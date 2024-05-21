@@ -1,4 +1,4 @@
-﻿namespace ZauberCMS.Components.Editors;
+﻿namespace ZauberCMS.Components.Editors.Models;
 
 public class TextContentSettingsModel
 {

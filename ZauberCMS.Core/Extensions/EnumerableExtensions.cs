@@ -13,4 +13,14 @@ public static class EnumerableExtensions
         where T : class
         =>
             coll.Where(x => x != null)!;
+    
+    public static void RemoveWhere<T>(this List<T> list, Func<T, bool> predicate)
+    {
+        var itemsToRemove = list.Where(predicate).ToList();
+
+        foreach(var item in itemsToRemove)
+        {
+            list.Remove(item);
+        }
+    }
 }
