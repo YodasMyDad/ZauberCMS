@@ -2,12 +2,27 @@
 
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
-#### Show off POC
- 
-Add in settings, each as their own tree not heading (Content Types, Languages (Add TODO), ViewComponents (Just list and allow view only))  
-Refreshtree issues
+#### POC to finish
+date+time contenttypeproperty
+coulour picker contenttypeproperty
+switch contenttypeproperty
+checkbox list contenttypeproperty
+radio box list contenttypeproperty
+numeric contenttypeproperty
+icon picker contenttypeproperty
+rating contenttypeproperty
+select bar contenttypeproperty
+navigation contenttypeproperty
+Change trees to use own model with a type so can have folders
+Icons on ContentTypes- Show in trees (Use Icon picker)
+Make everything else pluggable (Sections, trees etc..)
+Add in settings, each as their own tree not heading (Content Types, Languages (Add TODO), ViewComponents (Just list and allow view only))
+Need to think about ContentTypes not used as pages (Think grid editor and list block)
+Settings on RTE
+Update ReadMe and add docs
 
 #### This can be done after showing off POC
+Refreshtree issues
 Move ContentTypeProperty & ContentValue to EF Core as string too big to save Lists  
 
 ### Structure

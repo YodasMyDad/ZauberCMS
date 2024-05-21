@@ -1,16 +1,37 @@
 ﻿@using Radzen.Blazor
+@using ZauberCMS.Core.Extensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenDatePicker Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))" Name="RadzenDatePickerBindValue" ShowCalendarWeek />
+<RadzenDatePicker Value="@DateValue" ValueChanged="@((DateTime? value) => SaveDate(value))" Name="RadzenDatePickerBindValue" ShowCalendarWeek />
 
 @code {
     public string Name { get; set; } = "Datepicker";
     public string Alias { get; set; } = "Datepicker";
-    public string Description { get; set; } = "Description is here";
-    public string Icon { get; set; } = "notes";
+    public string Description { get; set; } = "Standard date picker";
+    public string Icon { get; set; } = "calendar_today";
     public Type? SettingsComponent { get; set; }
+    private DateTime? DateValue { get; set; }
     
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            DateValue = DateTime.Parse(Value);   
+        }
+    }
+
+    private async Task SaveDate(DateTime? value)
+    {
+        if (value != null)
+        {
+            DateValue = value.Value;
+            Value = value.Value.ToLongDateString();
+            await ValueChanged.InvokeAsync(Value);   
+        }
+    }
 }
