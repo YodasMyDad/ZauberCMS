@@ -58,6 +58,10 @@
                                                                ValueChanged="@((string name) => { property.Name = name; property.Alias = _slugHelper.GenerateSlug(name); })"
                                                                Style="font-size: 13px; border: 0; padding-left: 0; color: #000;" Placeholder="Name" aria-label="Property Name"/>
                                                 <RadzenText Text="@property.Alias" TextStyle="TextStyle.Caption"/>
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenSwitch @bind-Value="@property.IsRequired" Name="IsRequired" />
+                                                    <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired" />
+                                                </RadzenStack>
                                                 <RadzenTextArea Style="font-size: 12px; border: 0; padding-left: 0;" @bind-Value="@property.Description" Placeholder="Description..."/>
                                             </LeftColumn>
                                             <CentreColumn>
@@ -308,9 +312,29 @@
 
     private async Task Save()
     {
-        var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
-        var result = await Mediator.Send(saveContentTypeCommand);
-        NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+        if (Validated())
+        {
+            var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
+            var result = await Mediator.Send(saveContentTypeCommand);
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });   
+        }
+    }
+
+    private bool Validated()
+    {
+        var errors = new List<string>();
+        if (ContentType.ContentProperties.Any(x => x.Name.IsNullOrWhiteSpace()))
+        {
+            errors.Add("Some properties are missing a name (and alias)");
+        }
+
+        if (errors.Any())
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Validation Errors", Detail = errors.ListToSingleString(), Duration = 4000 });
+            return false;
+        }
+
+        return true;
     }
 
     private async Task DeleteContentType()

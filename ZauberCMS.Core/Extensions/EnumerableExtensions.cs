@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace ZauberCMS.Core.Extensions;
 
 public static class EnumerableExtensions
@@ -22,5 +24,19 @@ public static class EnumerableExtensions
         {
             list.Remove(item);
         }
+    }
+    
+    public static string ListToSingleString(this List<string> list, string lineBreak = "<br />")
+    {
+        var sb = new StringBuilder();
+        for (var i = 0; i < list.Count; i++)
+        {
+            sb.Append(list[i]);
+            if (i != list.Count - 1)
+            {
+                sb.Append(lineBreak);
+            }
+        }
+        return sb.ToString();
     }
 }

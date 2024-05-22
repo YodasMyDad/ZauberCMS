@@ -222,9 +222,38 @@
 
     private async Task Save()
     {
-        var saveContentCommand = new SaveContentCommand { Content = [Content] };
-        var result = await Mediator.Send(saveContentCommand);
-        NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
+        if (Validated())
+        {
+            var saveContentCommand = new SaveContentCommand { Content = [Content] };
+            var result = await Mediator.Send(saveContentCommand);
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });   
+        }
+    }
+
+    private bool Validated()
+    {
+        var errors = new List<string>();
+        if (Content.Name.IsNullOrWhiteSpace())
+        {
+            errors.Add("You cannot leave the name empty");
+        }
+        
+        foreach (var p in ContentType!.ContentProperties.Where(x => x.IsRequired))
+        {
+            AllContentValues.TryGetValue(p.Id, out var contentValue);
+            if (contentValue != null && contentValue.Value.IsNullOrWhiteSpace())
+            {
+                errors.Add($"{p.Name} is required");
+            }
+        }
+
+        if (errors.Any())
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Validation Errors", Detail = errors.ListToSingleString(), Duration = 4000 });
+            return false;
+        }
+
+        return true;
     }
 
     private void ToggleSideBar()

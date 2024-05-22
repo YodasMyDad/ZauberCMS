@@ -10,8 +10,7 @@ public class ContentTypeProperty
     public string? Description { get; set; }
     public string? Component { get; set; }
     public string? Settings { get; set; }
-    
-    public DateTime? DateUpdated { get; set; } = DateTime.UtcNow;
+    public bool IsRequired { get; set; }
     public int SortOrder { get; set; }
     public Guid? TabId { get; set; }
 }
