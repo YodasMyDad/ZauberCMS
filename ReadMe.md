@@ -11,3 +11,10 @@ dotnet ef --startup-project ../ZauberCMS.Web/ migrations add Initial -o "Data/Mi
 // Optional - as migrations are run on startup  
 dotnet ef database update --context ZauberDbContext
 ```
+
+### Docs To Write
+
+IContentView
+IContentProperty  
+IContentPropertySettings
+IDataListSource

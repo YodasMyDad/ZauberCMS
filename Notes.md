@@ -3,12 +3,11 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-
-autocomplete contenttypepproperty
 numeric contenttypeproperty
 icon picker contenttypeproperty
-rating contenttypeproperty
+autocomplete contenttypepproperty
 select bar contenttypeproperty
+rating contenttypeproperty
 navigation contenttypeproperty
 Change trees to use own model with a type so can have folders
 Icons on ContentTypes- Show in trees (Use Icon picker)

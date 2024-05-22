@@ -1,0 +1,36 @@
+﻿@using Radzen.Blazor
+@using ZauberCMS.Core.Extensions
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenNumeric TValue="int" Value="@SavedValue" Change="@(args => OnChange(args))" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter numeric value" }})" />
+
+@code {
+    public string Name { get; set; } = "Numeric Text Field";
+    public string Alias { get; set; } = "ZauberCMS.Numeric";
+    public string Icon { get; set; } = "pin";
+    public string Description { get; set; } = "Text field that only allows numbers";
+    public Type? SettingsComponent { get; set; }
+
+    private int SavedValue { get; set; }
+    
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Settings { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        //TODO - Settings
+        //TODO - Allow formatting - But think about value being a double, so allows 
+        base.OnInitialized();
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            SavedValue = Convert.ToInt32(Value);
+        }
+    }
+    
+    private async Task OnChange(int changedValue)
+    {
+        SavedValue = changedValue;
+        await ValueChanged.InvokeAsync(SavedValue.ToString());   
+    }
+}

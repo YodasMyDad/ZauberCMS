@@ -15,14 +15,18 @@
         @{
             var contentTypeProperty = context as IContentProperty;
         }
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
-            @if (contentTypeProperty?.Icon.IsNullOrWhiteSpace() == false)
-            {
-                <RadzenIcon Icon="@(contentTypeProperty.Icon)" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/>    
-            }
-             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; padding: 0;">@(contentTypeProperty?.Name)</RadzenText>
-        </RadzenStack>
-        <div><RadzenText TextStyle="TextStyle.Caption">@(contentTypeProperty?.Description)</RadzenText></div>
+        <div style="border-bottom: 1px #e1e1e1 solid">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+                @if (contentTypeProperty?.Icon.IsNullOrWhiteSpace() == false)
+                {
+                    <RadzenIcon Icon="@(contentTypeProperty.Icon)" IconStyle="IconStyle.Info" Style="line-height: 20px; height: 20px; font-size: 20px; margin-right: 5px;"/>
+                }
+                <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; padding: 0;">@(contentTypeProperty?.Name)</RadzenText>
+            </RadzenStack>
+            <div class="rz-pb-2">
+                <RadzenText TextStyle="TextStyle.Caption">@(contentTypeProperty?.Description)</RadzenText>
+            </div>
+        </div>
     </Template>
 </RadzenListBox>
 
@@ -40,7 +44,7 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        
+
         AllContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         Properties = AllContentProperties.Select(x => x.Value);
     }
