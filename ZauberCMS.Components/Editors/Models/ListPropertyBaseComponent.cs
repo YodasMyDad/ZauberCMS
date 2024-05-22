@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Components;
+using Radzen;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Plugins;
@@ -9,6 +10,7 @@ namespace ZauberCMS.Components.Editors.Models;
 public class ListPropertyBaseComponent : ComponentBase
 {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
 
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
@@ -58,14 +60,31 @@ public class ListPropertyBaseComponent : ComponentBase
         await ValueChanged.InvokeAsync(Value);
     }
 
-    protected async Task OnChange()
+    protected async Task OnChange(bool restrictMax)
     {
-        await OnChange(SelectedValues);
+        await OnChange(SelectedValues, restrictMax);
     }
 
-    protected async Task OnChange(IEnumerable<string> args)
+    protected async Task OnChange(IEnumerable<string> args, bool restrictMax)
     {
-        SelectedValues = args;
+        var selectedValues = args.ToList();
+        if (restrictMax && SettingsModel.MaxAmount > 0 && selectedValues.Count > SettingsModel.MaxAmount)
+        {
+            NotificationService.Notify(new NotificationMessage 
+            { 
+                Severity = NotificationSeverity.Error, 
+                Summary = "Error", 
+                Detail = $"You can only select a maximum amount of {SettingsModel.MaxAmount}", 
+                Duration = 4000 
+            });
+
+            // Remove excess items
+            SelectedValues = selectedValues.Take(SettingsModel.MaxAmount).ToList();
+        }
+        else
+        {
+            SelectedValues = selectedValues;
+        }
         Value = JsonSerializer.Serialize(SelectedValues);
         await ValueChanged.InvokeAsync(Value);
     }

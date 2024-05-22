@@ -4,7 +4,6 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-List properties has Max amount
 autocomplete contenttypepproperty
 numeric contenttypeproperty
 icon picker contenttypeproperty

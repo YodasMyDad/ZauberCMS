@@ -4,10 +4,16 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 @inherits ListPropertyBaseComponent
 
+@if (SettingsModel.MaxAmount > 0)
+{
+    <div>
+        <RadzenText TextStyle="TextStyle.Caption">Max allowed: @SettingsModel.MaxAmount</RadzenText>
+    </div>
+}
 <RadzenCheckBoxList Data="@SettingsModel.Items" 
                     Value="@SelectedValues" 
                     TValue="string" 
-                    Change="@(args => OnChange(args))"
+                    Change="@(args => OnChange(args, true))"
                     Orientation="Orientation.Vertical"
                     TextProperty="Name"
                     ValueProperty="Value" />

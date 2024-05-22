@@ -10,25 +10,41 @@
 
 <RadzenTabs TabPosition="TabPosition.Top" RenderMode="TabRenderMode.Client">
     <Tabs>
-        <RadzenTabsItem Text="Manual">
-            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
-                @foreach (var item in Settings.Items)
-                {
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
-                        <RadzenTextBox @bind-Value="@item.Name" Placeholder="Name" class="w-100" aria-label="Name TextBox" />
-                        <RadzenTextBox @bind-Value="@item.Value" Placeholder="Value" class="w-100" aria-label="Value TextBox" />
-                        <RadzenButton Click=@(_ => AddItem()) Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" class="rz-border-radius-10 rz-shadow-4"/>
-                        <RadzenButton Click=@(_ => RemoveItem(item)) Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" class="rz-border-radius-10 rz-shadow-4"/>
-                    </RadzenStack>
-                }
-            </RadzenStack>            
+        <RadzenTabsItem Text="Settings">
+            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="1">
+                <RadzenNumeric @bind-Value="@Settings.MaxAmount" Style="width: 100%;" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter max amount" }})" />
+            </RadzenStack>
         </RadzenTabsItem>
-        <RadzenTabsItem Text="Data Source">
-            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
-                <RadzenLabel Text="Choose available data sources:" />
-                <RadzenDropDown @bind-Value="@Settings.DataSource" Data="@DataListSources" TextProperty="Name" ValueProperty="FullName" Style="width: 100%;" Name="DataSources"/>
-                <div style="text-decoration: underline; cursor: pointer;" @onclick="ClearDatasource">Clear</div>
-            </RadzenStack>            
+        <RadzenTabsItem Text="Data">
+            <RadzenSelectBar TValue="int" Size="ButtonSize.Small" @bind-Value="@SelectedDataSource" Style="margin-bottom: 10px;">
+                <Items>
+                    <RadzenSelectBarItem Value="1" Text="Manual Data" />
+                    <RadzenSelectBarItem Value="2" Text="Datasource" />
+                </Items>
+            </RadzenSelectBar>
+            
+            @if (SelectedDataSource == 1)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+                    @foreach (var item in Settings.Items)
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+                            <RadzenTextBox @bind-Value="@item.Name" Placeholder="Name" class="w-100" aria-label="Name TextBox"/>
+                            <RadzenTextBox @bind-Value="@item.Value" Placeholder="Value" class="w-100" aria-label="Value TextBox"/>
+                            <RadzenButton Click=@(_ => AddItem()) Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Style="width: 46px;" class="rz-border-radius-10 rz-shadow-4"/>
+                            <RadzenButton Click=@(_ => RemoveItem(item)) Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Style="width: 46px;" class="rz-border-radius-10 rz-shadow-4"/>
+                        </RadzenStack>
+                    }
+                </RadzenStack>                
+            }
+            else
+            {
+                <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+                    <RadzenLabel Text="Choose available data sources:"/>
+                    <RadzenDropDown @bind-Value="@Settings.DataSource" Data="@DataListSources" TextProperty="Name" ValueProperty="FullName" Style="width: 100%;" Name="DataSources"/>
+                    <div style="text-decoration: underline; cursor: pointer;" @onclick="ClearDatasource">Clear</div>
+                </RadzenStack>
+            }
         </RadzenTabsItem>
     </Tabs>
 </RadzenTabs>
@@ -45,6 +61,7 @@
 
     private ListPropertySettingsModel Settings { get; set; } = new();
     private List<IDataListSource> DataListSources { get; set; } = [];
+    private int SelectedDataSource { get; set; } = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -84,5 +101,4 @@
         var updatedSettingsModel = JsonSerializer.Serialize(Settings);
         await ValueChanged.InvokeAsync(updatedSettingsModel);
     }
-
 }
