@@ -1,27 +1,27 @@
 ﻿@implements ZauberCMS.Core.Content.Interfaces.IContentView
+@* This is the layout you want to use *@
 @layout MainLayout
-<PageTitle>@(Content?.GetValue<string>("PageTitle"))</PageTitle>
 
+@* This is where you set Head/Meta information *@
+<PageTitle>@(Content.GetValue<string>("PageTitle"))</PageTitle>
 <SectionContent SectionId="MainLayout.Sections.PageHeadContent">
     <meta name="description" content="TODO">
 </SectionContent>
 
-@if (Content != null)
-{
-    <h1>@(Content.GetValue<string>("Heading"))</h1>
-    <div class="lead">
-        @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
-    </div>
-    <p>&nbsp;</p>
-    <p class="lead">
-        <a href="/about-us" class="btn btn-lg btn-secondary">About Us</a>
-    </p>
-}
-else
-{
-    <p>This needs to be a 404 page</p>
-}
+@* 
+    All properties are available through Content.GetValue<string>("") if your value is saved as a type
+    then you can call Content.GetValue<MyType>("")
+*@
+<h1>@(Content.GetValue<string>("Heading"))</h1>
+<div class="lead">
+    @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
+</div>
+<p>&nbsp;</p>
+<p class="lead">
+    <a href="/about-us" class="btn btn-lg btn-secondary">About Us</a>
+</p>
 
 @code {
-    [Parameter] public Content? Content { get; set; }
+    @* This is the content page passed in that matches the url *@
+    [Parameter] public Content Content { get; set; } = default!;
 }
