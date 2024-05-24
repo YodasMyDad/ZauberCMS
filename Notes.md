@@ -3,7 +3,6 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-numeric contenttypeproperty
 icon picker contenttypeproperty
 autocomplete contenttypepproperty
 select bar contenttypeproperty
@@ -19,8 +18,14 @@ Settings on RTE
 Update ReadMe and add docs
 
 #### This can be done after showing off POC
+Media
+Members (Including admins)
 Refreshtree issues
-Move ContentTypeProperty & ContentValue to EF Core as string too big to save Lists  
+Make ContentTypeProperty list nvarchar(Max) or Text (SQL lite)
+Move ContentValue to EF Core as string too big to save Lists
+multi URL picker
+multinode treepicker
+media picker
 
 ### Structure
 
