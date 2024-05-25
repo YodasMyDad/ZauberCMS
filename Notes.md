@@ -3,10 +3,10 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Change trees to use own model with a type so can have folders
-Icons on ContentTypes- Show in trees (Use Icon picker)
-Change validated when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
-Make everything else pluggable (Sections, trees etc..)
+
+Icons on ContentTypes- Show in trees (Create Radzen Icon Picker)
+make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
+Make everything else pluggable (Sections, trees etc..) think about save events of properties too, change data before being saved and loaded
 Add in settings, each as their own tree not heading (Content Types, Languages (Add TODO), ViewComponents (Just list and allow view only))
 Need to think about ContentTypes not used as pages (Think grid editor and list block)
 autocomplete contenttypepproperty
