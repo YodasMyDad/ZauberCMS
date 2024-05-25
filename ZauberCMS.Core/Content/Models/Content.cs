@@ -21,7 +21,7 @@ public class Content : IContent
     /// ContentType ID for this content
     /// </summary>
     public Guid ContentTypeId { get; set; }
-    public ContentType ContentType { get; set; } = default!;
+    public ContentType? ContentType { get; set; }
     
     /// <summary>
     /// The sort order

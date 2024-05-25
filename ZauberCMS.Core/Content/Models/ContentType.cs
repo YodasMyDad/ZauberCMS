@@ -19,6 +19,11 @@ public class ContentType
     /// Gets or sets the alias of the content type.
     /// </summary>
     public string? Alias { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the icon for the content type
+    /// </summary>
+    public string? Icon { get; set; }
 
     /// <summary>
     /// Whether this content is used in BlockList or another modular way

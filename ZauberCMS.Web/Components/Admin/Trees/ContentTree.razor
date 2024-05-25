@@ -1,6 +1,4 @@
-﻿@using Microsoft.EntityFrameworkCore
-@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Data
+﻿@using ZauberCMS.Core.Content.Commands
 @using Content = ZauberCMS.Core.Content.Models.Content
 
 <div class="rz-p-4">
@@ -8,7 +6,16 @@
 </div>
 
 <RadzenTree @ref="Tree" Data="@ContentItems" Expand="@OnExpand" Change="@OnChange" @bind-Value="@Selection" ItemContextMenu="ItemContextMenu">
-    <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name"/>
+    <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name">
+            <Template>
+                @{ var content = context.Value as Content; }
+                @if (content?.ContentType?.Icon.IsNullOrWhiteSpace() == false)
+                {
+                    @content.ContentType.Icon
+                }
+                @content?.Name
+            </Template>
+    </RadzenTreeLevel>
 </RadzenTree>
 
 @code {

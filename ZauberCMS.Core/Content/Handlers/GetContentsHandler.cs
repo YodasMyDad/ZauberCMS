@@ -15,7 +15,7 @@ public class GetContentsHandler(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var query = dbContext.Content.AsQueryable();
+        var query = dbContext.Content.Include(x => x.ContentType).AsQueryable();
 
         if (request.Query != null)
         {
