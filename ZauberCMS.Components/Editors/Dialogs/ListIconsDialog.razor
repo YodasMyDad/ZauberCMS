@@ -1,0 +1,41 @@
+﻿@using Radzen
+@using Radzen.Blazor
+
+<RadzenTextBox Placeholder="Search Icons..." class="w-100 rz-mb-3" aria-label="Search Icons"/>
+<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+    @foreach (var icon in Icons)
+    {
+        <RadzenStack Style="border: 1px #e1e1e1 solid; border-radius: 2px; text-align: center; width: 100px; height: 100px; cursor: pointer;"
+                     Orientation="Orientation.Vertical" Gap="0" JustifyContent="JustifyContent.Center"
+                     AlignItems="AlignItems.Center" @onclick="@(() => SelectIcon(icon.Value))">
+            <img src="@icon.Value" width="50px" height="50px" alt="@icon.Key"/>
+            <div class="rz-color-base-400" style="font-size: 10px">
+                @icon.Key
+            </div>
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    [Inject] public DialogService DialogService { get; set; } = default!;
+
+    private Dictionary<string, string> Icons { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        var iconsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "icons");
+        if (Directory.Exists(iconsPath))
+        {
+            Icons = Directory.EnumerateFiles(iconsPath, "*.svg")
+                .ToDictionary(Path.GetFileNameWithoutExtension,
+                    file => $"/img/Icons/{Path.GetFileName(file)}")!;
+        }
+    }
+
+    private void SelectIcon(string icon)
+    {
+        DialogService.CloseSide(icon);
+    }
+
+}
+

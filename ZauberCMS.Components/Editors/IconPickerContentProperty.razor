@@ -1,0 +1,42 @@
+﻿@using Radzen
+@using Radzen.Blazor
+@using ZauberCMS.Components.Editors.Dialogs
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Extensions
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenStack Orientation="Orientation.Horizontal" Gap="2">
+    <RadzenButton Variant="Variant.Filled" Text="Choose Icon" Click="@(() => ChooseIcon())"/>
+    @if (!Value.IsNullOrWhiteSpace())
+    {
+        <img src="@Value" width="50px" height="50px" alt=""/>
+    }
+</RadzenStack>
+
+@code {
+    public string Name { get; set; } = "Iconoir Icon Picker";
+    public string Alias { get; set; } = "ZauberCMS.IconoirIconPicker";
+    public string Description { get; set; } = "Pick an icon from the iconoir icon package";
+    public string Icon { get; set; } = "calendar_today";
+    public Type? SettingsComponent { get; set; }
+
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+
+    [Inject] public DialogService DialogService { get; set; } = default!;
+
+    private async Task ChooseIcon()
+    {
+        var result = await DialogService.OpenSideAsync<ListIconsDialog>("Choose Icon",
+            new Dictionary<string, object>(),
+            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+        if (result is string icon)
+        {
+            Value = icon;
+            await ValueChanged.InvokeAsync(Value);
+        }
+    }
+
+}
