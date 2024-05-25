@@ -2,6 +2,7 @@
 @using ZauberCMS.Core.Extensions
 @using Radzen.Blazor
 @using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Content.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenTextBox @ref="TextBox" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
@@ -17,6 +18,7 @@
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
     
     public string Name { get; set; } = "Textbox";
     public string Alias { get; set; } = "ZauberCMS.Textbox";

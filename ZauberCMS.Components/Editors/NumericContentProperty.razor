@@ -1,4 +1,5 @@
 ﻿@using Radzen.Blazor
+@using ZauberCMS.Core.Content.Models
 @using ZauberCMS.Core.Extensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -16,6 +17,7 @@
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
 
     protected override void OnInitialized()
     {

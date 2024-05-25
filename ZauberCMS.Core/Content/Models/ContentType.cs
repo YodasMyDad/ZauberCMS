@@ -21,6 +21,16 @@ public class ContentType
     public string? Alias { get; set; }
 
     /// <summary>
+    /// Whether this content is used in BlockList or another modular way
+    /// </summary>
+    public bool IsElementType { get; set; }
+    
+    /// <summary>
+    /// Is this content type allowed at the tree route
+    /// </summary>
+    public bool AllowAtRoot { get; set; }
+    
+    /// <summary>
     /// Gets or sets the date and time when the entity was created.
     /// </summary>
     public DateTime? DateCreated { get; set; } = DateTime.UtcNow;

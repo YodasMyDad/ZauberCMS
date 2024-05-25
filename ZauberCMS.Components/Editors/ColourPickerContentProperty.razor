@@ -1,4 +1,5 @@
 ﻿@using Radzen.Blazor
+@using ZauberCMS.Core.Content.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenColorPicker @bind-Value="@Value" ShowHSV="@ShowHsv" ShowRGBA="@ShowRgba" ShowColors="@ShowColors" ShowButton="@ShowButton" Change="@OnChange"/>
@@ -13,6 +14,7 @@
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
 
     private async Task OnChange(string value)
     {

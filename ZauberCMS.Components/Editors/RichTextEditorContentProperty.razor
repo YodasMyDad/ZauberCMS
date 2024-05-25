@@ -2,6 +2,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Content.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenHtmlEditor @bind-Value="@Value" style="height: 300px;" Input="@OnInput" Change="@OnChange" Paste="@OnPaste" Execute="@OnExecute" UploadUrl="upload/image" />
@@ -36,6 +37,7 @@
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public string Settings { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
     
     public string Icon { get; set; } = "edit_note";
     public string Description { get; set; } = "Radzen's Rich Text Editor";

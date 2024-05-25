@@ -1,7 +1,9 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Plugins;
 
@@ -11,10 +13,13 @@ public class ListPropertyBaseComponent : ComponentBase
 {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
-
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+    
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
+    
     protected IEnumerable<string> SelectedValues { get; set; } = Enumerable.Empty<string>();
     protected string SelectedValue { get; set; } = string.Empty;
     protected ListPropertySettingsModel SettingsModel { get; set; } = new();
@@ -47,7 +52,10 @@ public class ListPropertyBaseComponent : ComponentBase
                 var allDataListSources = ExtensionManager.GetInstances<IDataListSource>();
                 if (allDataListSources.TryGetValue(SettingsModel.DataSource, out var listSource))
                 {
-                    SettingsModel.Items = listSource.GetItems().ToList();
+                    using (var scope = ServiceProvider.CreateScope())
+                    {
+                        SettingsModel.Items = listSource.GetItems(scope, Content).ToList();   
+                    }
                 }
             }
         }

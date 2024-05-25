@@ -3,18 +3,18 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-icon picker contenttypeproperty
-autocomplete contenttypepproperty
-select bar contenttypeproperty
-rating contenttypeproperty
-navigation contenttypeproperty
 Change trees to use own model with a type so can have folders
 Icons on ContentTypes- Show in trees (Use Icon picker)
 Change validated when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
 Make everything else pluggable (Sections, trees etc..)
 Add in settings, each as their own tree not heading (Content Types, Languages (Add TODO), ViewComponents (Just list and allow view only))
 Need to think about ContentTypes not used as pages (Think grid editor and list block)
+autocomplete contenttypepproperty
+select bar contenttypeproperty
+rating contenttypeproperty
+navigation contenttypeproperty
 Settings on RTE
+
 Update ReadMe and add docs
 
 #### This can be done after showing off POC
@@ -23,6 +23,7 @@ Members (Including admins)
 Refreshtree issues
 Make ContentTypeProperty list nvarchar(Max) or Text (SQL lite)
 Move ContentValue to EF Core as string too big to save Lists
+Block List Editor
 multi URL picker
 multinode treepicker
 media picker

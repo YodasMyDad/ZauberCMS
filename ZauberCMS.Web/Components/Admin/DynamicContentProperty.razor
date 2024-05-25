@@ -1,18 +1,17 @@
 ﻿<CascadingValue Value="this">
-    <DynamicComponent Type="@ComponentType" Parameters="@GetParameters()" />
+    <DynamicComponent Type="@ComponentType" Parameters="@GetParameters()"/>
 </CascadingValue>
 
 @code {
-    [Parameter]
-    public Type ComponentType { get; set; }
+    [Parameter] public Type ComponentType { get; set; }
 
-    [Parameter]
-    public string Value { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
 
-    [Parameter]
-    public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
 
     [Parameter] public string Settings { get; set; } = string.Empty;
+    
+    [Parameter] public Core.Content.Models.Content Content { get; set; }
 
     private Dictionary<string, object> GetParameters()
     {
@@ -20,7 +19,9 @@
         {
             ["Value"] = Value,
             ["ValueChanged"] = ValueChanged,
-            ["Settings"] = Settings
+            ["Settings"] = Settings,
+            ["Content"] = Content
         };
     }
+
 }

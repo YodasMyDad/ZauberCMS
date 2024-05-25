@@ -13,4 +13,5 @@ public interface IContentProperty
     string Value { get; set; }
     EventCallback<string> ValueChanged { get; set; }
     string Settings { get; set; }
+    Models.Content? Content { get; set; }
 }

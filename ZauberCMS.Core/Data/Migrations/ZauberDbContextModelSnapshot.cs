@@ -87,6 +87,9 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("AllowAtRoot")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("AvailableContentViews")
                         .IsRequired()
                         .HasMaxLength(4000)
@@ -104,6 +107,9 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.Property<DateTime?>("DateUpdated")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsElementType")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
