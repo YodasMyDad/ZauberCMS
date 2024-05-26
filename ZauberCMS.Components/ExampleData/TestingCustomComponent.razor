@@ -1,0 +1,9 @@
+﻿@using ZauberCMS.Core.Content.Models
+@implements ZauberCMS.Core.Content.Interfaces.ICustomContentComponent
+
+<p>This is the custom component</p>
+
+@code {
+    public string Name => "Testing Component";
+    [Parameter] public Content? Content { get; set; }
+}

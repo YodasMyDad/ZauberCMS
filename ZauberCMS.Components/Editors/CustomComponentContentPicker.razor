@@ -1,0 +1,53 @@
+﻿@using System.Text.Json
+@using Radzen.Blazor
+@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Plugins
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenDropDown 
+                Data="@Items"
+                @bind-Value="@SelectedValues"
+                Change="@(_ => OnChange())"
+                TextProperty="Name"
+                ValueProperty="Value"
+                Multiple="true" AllowClear="true" Placeholder="Select components" Chips="true" Style="width: 100%;"/>
+
+@code {
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    
+    public string Name { get; set; } = "Custom Component Picker";
+    public string Alias { get; set; } = "ZauberCMS.CustomComponentPicker";
+    public string Description { get; set; } = "Renders custom blazor components on the page";
+    public string Icon { get; set; } = "settings_ethernet";
+    public Type? SettingsComponent { get; set; }
+
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+
+    private IEnumerable<string> SelectedValues { get; set; } = Enumerable.Empty<string>();
+    private List<DataListItem> Items { get; set; } = [];
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var items = ExtensionManager.GetInstances<ICustomContentComponent>(true);
+        foreach (var item in items)
+        {
+            Items.Add(new DataListItem
+            {
+                Name = item.Value.Name,
+                Value = item.Key
+            });
+        }
+    }
+    
+    private async Task OnChange()
+    {
+        Value = JsonSerializer.Serialize(SelectedValues);
+        await ValueChanged.InvokeAsync(Value);
+    }
+}

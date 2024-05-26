@@ -2,7 +2,7 @@
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 
-namespace ZauberCMS.Components.Editors.Models;
+namespace ZauberCMS.Components.ExampleData;
 
 public class TestingDataSource : IDataListSource
 {

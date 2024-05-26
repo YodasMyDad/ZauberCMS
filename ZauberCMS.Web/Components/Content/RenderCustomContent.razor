@@ -1,0 +1,36 @@
+﻿@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Plugins
+@if (CustomComponentType != null)
+{
+    <CascadingValue Value="this">
+        <DynamicComponent Type="@CustomComponentType" Parameters="@GetParameters()"/>
+    </CascadingValue>   
+}
+
+@code {
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    
+    [Parameter] public string CustomComponent { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
+    
+    private Type? CustomComponentType { get; set; }
+
+    private Dictionary<string, object> GetParameters()
+    {
+        return new Dictionary<string, object>
+        {
+            ["Content"] = Content
+        };
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        var items = ExtensionManager.GetInstances<ICustomContentComponent>(true);
+        if (items.TryGetValue(CustomComponent, out var customContentComponent))
+        {
+            CustomComponentType = customContentComponent.GetType();
+        }
+    }
+
+}
