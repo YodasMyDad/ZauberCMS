@@ -1,7 +1,8 @@
 ﻿@using Radzen
 @using Radzen.Blazor
+@using ZauberCMS.Core.Extensions
 
-<RadzenTextBox Placeholder="Search Icons..." class="w-100 rz-mb-3" aria-label="Search Icons"/>
+<RadzenTextBox Placeholder="Search Icons..." Value="@SearchTerm" ValueChanged="@((string value) => Search(value))" @oninput="@(e => Search(e.Value?.ToString()))" class="w-100 rz-mb-3" aria-label="Search Icons"/>
 <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
     @foreach (var icon in Icons)
     {
@@ -20,6 +21,7 @@
     [Inject] public DialogService DialogService { get; set; } = default!;
 
     private Dictionary<string, string> Icons { get; set; } = [];
+    private string? SearchTerm { get; set; }
 
     protected override void OnInitialized()
     {
@@ -31,6 +33,15 @@
                     file => $"/img/Icons/{Path.GetFileName(file)}")!;
         }
     }
+    
+    private void Search(string? search)
+    {
+        if (!search.IsNullOrWhiteSpace())
+        {
+            Icons = Icons.Where(x => x.Key.StartsWith(search)).ToDictionary();   
+        }
+    }
+
 
     private void SelectIcon(string icon)
     {

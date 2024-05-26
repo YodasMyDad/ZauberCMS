@@ -1,5 +1,6 @@
 ﻿@page "/admin/createcontentype"
 @page "/admin/updatecontentype/{ContentTypeId:guid}"
+@using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
@@ -20,9 +21,14 @@
 <RadzenPanel Class="rz-mx-auto">
     <EditForm Model="ContentType" OnSubmit="Save">
         <RadzenRow class="rz-pb-6">
-            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
-                           ValueChanged="@((string name) => { ContentType.Name = name; ContentType.Alias = _slugHelper.GenerateSlug(name); })" aria-label="Name"/>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
+                    <RadzenIcon Icon="@(ContentType.Icon.IsNullOrWhiteSpace() ? "add" : ContentType.Icon)" style="font-weight: 300; color: dimgray;"/>
+                </RadzenStack>
+                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
+                               ValueChanged="@((string name) => { ContentType.Name = name; ContentType.Alias = _slugHelper.GenerateSlug(name); })" aria-label="Name"/>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="0">
                 <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
             </RadzenStack>
         </RadzenRow>
@@ -59,8 +65,8 @@
                                                                Style="font-size: 13px; border: 0; padding-left: 0; color: #000;" Placeholder="Name" aria-label="Property Name"/>
                                                 <RadzenText Text="@property.Alias" TextStyle="TextStyle.Caption"/>
                                                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                    <RadzenSwitch @bind-Value="@property.IsRequired" Name="IsRequired" />
-                                                    <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired" />
+                                                    <RadzenSwitch @bind-Value="@property.IsRequired" Name="IsRequired"/>
+                                                    <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired"/>
                                                 </RadzenStack>
                                                 <RadzenTextArea Style="font-size: 12px; border: 0; padding-left: 0;" @bind-Value="@property.Description" Placeholder="Description..."/>
                                             </LeftColumn>
@@ -71,8 +77,8 @@
                                             </CentreColumn>
                                             <RightColumn>
                                                 <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move up" Click="@(() => SortProperty(property, false))"/>
-                                                <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text"  title="Delete" Click="@(() => DeleteProperty(property))"/>
-                                                <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text"  title="Move Down" Click="@(() => SortProperty(property, true))"/>
+                                                <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Delete" Click="@(() => DeleteProperty(property))"/>
+                                                <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move Down" Click="@(() => SortProperty(property, true))"/>
                                                 <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Change Tab" Click="@(() => ChangeTab(property))"/>
                                                 <RadzenButton Icon="settings" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Edit Settings" Click="@(() => Settings(property))"/>
                                             </RightColumn>
@@ -136,6 +142,16 @@
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
 
+    private async Task SelectIcon()
+    {
+        var result = await DialogService.OpenSideAsync<ListMaterialIconsDialog>("Choose Icon",
+            new Dictionary<string, object>(),
+            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+        if (result is string icon)
+        {
+            ContentType.Icon = icon;
+        }
+    }
 
     private readonly SlugHelper _slugHelper = new(new SlugHelper.Config
     {
@@ -316,7 +332,7 @@
         {
             var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
             var result = await Mediator.Send(saveContentTypeCommand);
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });   
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
 

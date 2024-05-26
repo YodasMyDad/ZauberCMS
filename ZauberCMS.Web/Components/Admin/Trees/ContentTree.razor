@@ -11,7 +11,7 @@
                 @{ var content = context.Value as Content; }
                 @if (content?.ContentType?.Icon.IsNullOrWhiteSpace() == false)
                 {
-                    @content.ContentType.Icon
+                    <RadzenIcon Icon="@content.ContentType.Icon" style="font-weight: 300; color: dimgray;"/>
                 }
                 @content?.Name
             </Template>
