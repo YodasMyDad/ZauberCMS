@@ -20,13 +20,14 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
 
+    [Parameter] public bool RootOnly { get; set; }
+    
     private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
     private Guid SelectedContentTypeId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        
-        var items = await Mediator.Send(new GetContentTypesCommand { AmountPerPage = int.MaxValue });
+        var items = await Mediator.Send(new GetContentTypesCommand { AmountPerPage = int.MaxValue, RootOnly = RootOnly});
         ContentTypes = items.Items; 
 
         StateHasChanged();

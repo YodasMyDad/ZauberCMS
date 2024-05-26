@@ -10,7 +10,7 @@ public class GetContentTypesCommand : IRequest<PaginatedList<ContentType>>
     public GetContentTypesCommand()
     {
     }
-    
+    public bool RootOnly { get; set; }
     public bool AsNoTracking { get; set; } = true;
     
     public List<Guid> Ids { get; set; } = [];

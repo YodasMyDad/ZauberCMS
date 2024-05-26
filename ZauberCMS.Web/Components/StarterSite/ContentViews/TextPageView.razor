@@ -1,4 +1,5 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentView
+﻿@using ZauberCMS.Web.Components.StarterSite.Layouts
+@implements ZauberCMS.Core.Content.Interfaces.IContentView
 @* This is the layout you want to use *@
 @layout MainLayout
 
@@ -16,10 +17,6 @@
 <div class="lead">
     @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
 </div>
-<p>&nbsp;</p>
-<p class="lead">
-    <a href="/about-us" class="btn btn-lg btn-secondary">About Us</a>
-</p>
 
 @code {
     @* This is the content page passed in that matches the url *@

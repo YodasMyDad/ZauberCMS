@@ -27,6 +27,11 @@ public class GetContentTypesHandler(IServiceProvider serviceProvider)
         {
             query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
         }
+        
+        if (request.RootOnly)
+        {
+            query = query.Where(x => x.AllowAtRoot);
+        }
 
         if (request.WhereClause != null)
         {

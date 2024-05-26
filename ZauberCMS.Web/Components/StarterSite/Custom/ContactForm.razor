@@ -1,0 +1,8 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.ICustomContentComponent
+
+<p>This will be a contact form!</p>
+
+@code {
+    public string Name => "Contact Form";
+    [Parameter] public Content? Content { get; set; }
+}

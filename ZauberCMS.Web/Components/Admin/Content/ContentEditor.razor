@@ -74,10 +74,19 @@
                     <RadzenTabsItem Text="System">
                         <EditorRow>
                             <LeftColumn>
+                                <RadzenLabel Text="Id"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                @ContentType.Id
+                            </CentreColumn>
+                        </EditorRow>
+                        
+                        <EditorRow>
+                            <LeftColumn>
                                 <RadzenLabel Text="Url"/>
                             </LeftColumn>
                             <CentreColumn>
-                                <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
+                                <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url" />
                             </CentreColumn>
                         </EditorRow>
 
@@ -204,8 +213,9 @@
 
     private async Task ChooseContentType()
     {
+        var rootOnly = ContentId == null && ParentId == null;
         var result = await DialogService.OpenSideAsync<ListContentTypes>("Choose Content Type",
-            new Dictionary<string, object>(),
+            new Dictionary<string, object>{{"RootOnly", rootOnly}},
             new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
         if (result is Guid contentTypeId)
         {

@@ -96,17 +96,45 @@
                     </RadzenTabsItem>
                 }
                 <RadzenTabsItem Text="System">
-                    <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
-                                   Data="@ContentViews"
-                                   FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                   FilterOperator="StringFilterOperator.StartsWith"
-                                   AllowFiltering="true"
-                                   TextProperty="Name"
-                                   ValueProperty="FullName"
-                                   Multiple="true"
-                                   AllowClear="true"
-                                   Placeholder="Select Content Views" Style="width: 100%; height: 200px"
-                                   InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "select content views" } })"/>
+
+                    <EditorRow>
+                        <LeftColumn>
+                            <RadzenLabel Text="Allowed At Tree Root"/>
+                        </LeftColumn>
+                        <CentreColumn>
+                            <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Allow at root" }})" />
+                        </CentreColumn>
+                    </EditorRow>
+
+                    <EditorRow>
+                        <LeftColumn>
+                            <RadzenLabel Text="Is Element Type"/>
+                        </LeftColumn>
+                        <CentreColumn>
+                            <RadzenSwitch @bind-Value="@ContentType.IsElementType" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Is Element Type" }})" />
+                        </CentreColumn>
+                    </EditorRow>
+
+                    <EditorRow>
+                        <LeftColumn>
+                            <RadzenLabel Text="Choose Allowed Views"/>
+                        </LeftColumn>
+                        <CentreColumn>
+                            <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
+                                           Data="@ContentViews"
+                                           FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                           FilterOperator="StringFilterOperator.StartsWith"
+                                           AllowFiltering="true"
+                                           TextProperty="Name"
+                                           ValueProperty="FullName"
+                                           Multiple="true"
+                                           AllowClear="true"
+                                           Placeholder="Select Content Views" Style="width: 100%; height: 200px"
+                                           InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "select content views" } })"/>
+                        </CentreColumn>
+                    </EditorRow>
+                    
+
                 </RadzenTabsItem>
             </Tabs>
         </RadzenTabs>
