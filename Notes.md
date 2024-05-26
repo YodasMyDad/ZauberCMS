@@ -4,7 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-Need a contentproperty for picking components to render
+Make website video, and share on twitter asking people to follow along if interested
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
 Make everything else pluggable (Sections, trees etc..) think about save events of properties too, change data before being saved and loaded
 Add in settings, each as their own tree not heading (Content Types, Languages (Add TODO), ViewComponents (Just list and allow view only))
