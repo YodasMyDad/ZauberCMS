@@ -4,7 +4,7 @@
 
 <RadzenTextBox Placeholder="Search Icons..." Value="@SearchTerm" ValueChanged="@((string value) => Search(value))" @oninput="@(e => Search(e.Value?.ToString()))" class="w-100 rz-mb-3" aria-label="Search Icons"/>
 <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-    @foreach (var icon in Icons)
+    @foreach (var icon in FilteredIcons)
     {
         <RadzenStack Style="border: 1px #e1e1e1 solid; border-radius: 2px; text-align: center; width: 100px; height: 100px; cursor: pointer;"
                      Orientation="Orientation.Vertical" Gap="0" JustifyContent="JustifyContent.Center"
@@ -22,6 +22,7 @@
     [Inject] public DialogService DialogService { get; set; } = default!;
 
     private List<string> Icons { get; set; } = [];
+    private List<string> FilteredIcons { get; set; } = [];
     private string? SearchTerm { get; set; }
 
     protected override void OnInitialized()
@@ -30,6 +31,7 @@
         if (File.Exists(iconsFilePath))
         {
             Icons = File.ReadLines(iconsFilePath).ToList();
+            FilteredIcons = Icons;
         }
     }
 
@@ -37,7 +39,7 @@
     {
         if (!search.IsNullOrWhiteSpace())
         {
-            Icons = Icons.Where(x => x.StartsWith(search)).ToList();   
+            FilteredIcons = Icons.Where(x => x.StartsWith(search)).ToList();   
         }
     }
     

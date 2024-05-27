@@ -11,7 +11,7 @@
         <header class="masthead mb-auto">
             <div class="inner">
                 <h3 class="masthead-brand">ZauberCMS</h3>
-                <NavBar />
+                <NavBar Website="@Content" />
             </div>
         </header>
 
@@ -21,7 +21,7 @@
 
         <footer class="mastfoot mt-auto">
             <div class="inner">
-                <p>@(Content?.GetValue<string>("Testing"))</p>
+                <p>@(Content?.GetValue<string>("FooterText"))</p>
             </div>
         </footer>
     </div>
@@ -38,8 +38,7 @@
     {
         await base.OnInitializedAsync();
         
-        // TODO - Need to cache these calls!
-        Content = await Mediator.Send(new GetContentCommand { ContentTypeAlias = "website" });
+        Content = await Mediator.Send(new GetContentCommand { ContentTypeAlias = "website", IncludeChildren = true});
     }
 
     internal static class Sections

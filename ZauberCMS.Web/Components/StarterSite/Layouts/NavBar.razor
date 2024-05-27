@@ -1,5 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
-<nav class="nav nav-masthead justify-content-center">
+﻿<nav class="nav nav-masthead justify-content-center">
     @if (Website != null)
     {
         @foreach (var p in Website.Children.OrderBy(x => x.SortOrder))
@@ -11,12 +10,5 @@
 </nav>
 
 @code {
-    private Content? Website { get; set; }
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        
-        //TODO - This is shite, we need a better way to get content around the site
-        Website = await Mediator.Send(new GetContentBySlugCommand { IsRootContent = true, IncludeChildren = true, IgnoreInternalRedirect = true});
-    }
+    [Parameter] public Content? Website { get; set; }
 }

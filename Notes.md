@@ -4,7 +4,12 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-Make website video, and share on twitter asking people to follow along if interested
+Icon picker stops working
+Need to make a content picker, for the internal redirect as need for video (Use something with a search)
+Now make website video, and share on twitter asking people to follow along if interested
+
+EF Core Query Caching?
+Update query on content and content type to simplyfy getting data (Have QueryContent and SingleContent for commands to keep it simple?)
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
 Make everything else pluggable (Sections, trees etc..) think about save events of properties too, change data before being saved and loaded
 Add in settings, each as their own tree not heading (Content Types, Languages (Add TODO), ViewComponents (Just list and allow view only))
