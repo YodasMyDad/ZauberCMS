@@ -16,6 +16,24 @@ public static partial class StringExtensions
     public static string? IfNullOrWhiteSpace(this string? str, string? defaultValue) =>
         str.IsNullOrWhiteSpace() ? defaultValue : str;
 
+    
+    /// <summary>
+    /// Gets the end section of a string seperated by a charactor
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="seperator"></param>
+    /// <returns></returns>
+    public static string GetLastPart(this string input, char seperator = '.')
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
+
+        var parts = input.Split(seperator);
+        return parts.Length > 0 ? parts[^1] : input;
+    }
+    
     /// <summary>
     /// Takes Json from another system, and then uses the JsonSerializer
     /// </summary>

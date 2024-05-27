@@ -4,7 +4,6 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-Content view dropdown needs friendly name
 Need to make a content picker, for the internal redirect as need for video (Use something with a search)
 Now make website video, and share on twitter asking people to follow along if interested
 

@@ -95,7 +95,7 @@
                                 <RadzenLabel Text="Content View"/>
                             </LeftColumn>
                             <CentreColumn>
-                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@ContentType.AvailableContentViews" Style="width: 100%; max-width: 400px;"/>
+                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
                             </CentreColumn>
                         </EditorRow>
                     </RadzenTabsItem>
@@ -138,6 +138,7 @@
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     private Dictionary<Guid, ContentValue> AllContentValues { get; set; } = new();
+    private Dictionary<string, string> AvailableContentViews { get; set; } = new();
     private bool Expanded { get; set; } = true;
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
@@ -156,6 +157,8 @@
             Content.ParentId = ParentId;
             Content.IsRootContent = false;
         }
+        
+
     }
 
     private void TabChange(int i)
@@ -209,6 +212,7 @@
         }
 
         AllContentValues = Content.ContentPropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+        AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
     }
 
     private async Task ChooseContentType()
