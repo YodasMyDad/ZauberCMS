@@ -92,6 +92,15 @@
 
                         <EditorRow>
                             <LeftColumn>
+                                <RadzenLabel Text="Internal Redirect Id"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenTextBox Style="width: 100%;" Name="InternalRedirectId" @bind-Value="@Content.InternalRedirectIdAsString" />
+                            </CentreColumn>
+                        </EditorRow>
+
+                        <EditorRow>
+                            <LeftColumn>
                                 <RadzenLabel Text="Content View"/>
                             </LeftColumn>
                             <CentreColumn>
@@ -275,5 +284,5 @@
     {
         Expanded = !Expanded;
     }
-
+    
 }

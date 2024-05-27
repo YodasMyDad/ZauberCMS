@@ -1,4 +1,5 @@
-﻿using ZauberCMS.Core.Content.Interfaces;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Content.Models;
@@ -37,6 +38,25 @@ public class Content : IContent
     /// Redirects behind the scenes to another content node
     /// </summary>
     public Guid? InternalRedirectId { get; set; }
+    [NotMapped] // Prevents property from being mapped to a DB column
+    public string? InternalRedirectIdAsString
+    {
+        get => InternalRedirectId.ToString();
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                InternalRedirectId = Guid.Empty;
+            }
+            else
+            {
+                if (Guid.TryParse(value, out var guidValue))
+                {
+                    InternalRedirectId = guidValue;
+                }
+            }
+        }
+    }
     
     /// <summary>
     /// The id of the parent content node if there is one
