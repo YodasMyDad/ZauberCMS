@@ -4,7 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-Now make website video, and share on twitter asking people to follow along if interested
+Make video on Properties currently done (Show datasources and fix countries and do a content query)
 
 EF Core Query Caching?
 Update query on content and content type to simplyfy getting data (Have QueryContent and SingleContent for commands to keep it simple?)
