@@ -38,7 +38,7 @@
     {
         await base.OnInitializedAsync();
         
-        Content = await Mediator.Send(new GetContentCommand { ContentTypeAlias = "website", IncludeChildren = true});
+        Content = await Mediator.Send(new GetContentCommand { ContentTypeAlias = "Website", IncludeChildren = true});
     }
 
     internal static class Sections
