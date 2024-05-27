@@ -7,14 +7,14 @@
 
 <RadzenTree @ref="Tree" Data="@ContentItems" Expand="@OnExpand" Change="@OnChange" @bind-Value="@Selection" ItemContextMenu="ItemContextMenu">
     <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name">
-            <Template>
-                @{ var content = context.Value as Content; }
-                @if (content?.ContentType?.Icon.IsNullOrWhiteSpace() == false)
-                {
-                    <RadzenIcon Icon="@content.ContentType.Icon" style="font-weight: 300; color: dimgray;"/>
-                }
-                @content?.Name
-            </Template>
+        <Template>
+            @{ var content = context.Value as Content; }
+            @if (content?.ContentType?.Icon.IsNullOrWhiteSpace() == false)
+            {
+                <RadzenIcon Icon="@content.ContentType.Icon" style="font-weight: 300; color: dimgray;"/>
+            }
+            @content?.Name
+        </Template>
     </RadzenTreeLevel>
 </RadzenTree>
 
@@ -146,22 +146,21 @@
         {
             var items = Mediator.Send(new GetContentsCommand
             {
-                AsNoTracking = true,
                 WhereClause = x => x.ParentId == category.Id,
                 OrderBy = GetContentsOrderBy.SortOrder
             }).GetAwaiter().GetResult();
             args.Children.Data = items.Items;
             args.Children.TextProperty = "Name";
-        }
-        //args.Children.HasChildren = (product) => false;
+            args.Children.Template = context => builder =>
+            {
+                builder.OpenComponent<RadzenIcon>(0);
+                builder.AddAttribute(1, "Icon", (context.Value as Content).ContentType?.Icon);
+                builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                builder.CloseComponent();
 
-        /* Optional template
-        args.Children.Template = context => builder => {
-            builder.OpenElement(1, "strong");
-            builder.AddContent(2, (context.Value as Product).ProductName);
-            builder.CloseElement();
-        };
-        */
+                builder.AddContent(3, (context.Value as Content)?.Name);
+            };
+        }
     }
     
     void OnChange()
