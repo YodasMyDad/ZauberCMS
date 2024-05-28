@@ -1,20 +1,30 @@
 ﻿@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
-@if (CustomComponentType != null)
+@if (CustomContentComponents.Any())
 {
-    <CascadingValue Value="this">
-        <DynamicComponent Type="@CustomComponentType" Parameters="@GetParameters()"/>
-    </CascadingValue>   
+    @foreach (var customComponentName in CustomComponents)
+    {
+        if (CustomContentComponents.TryGetValue(customComponentName, out var customContentComponent))
+        {
+            var customComponentType = customContentComponent.GetType();
+            @if (customComponentType != null)
+            {
+                <CascadingValue Value="this">
+                    <DynamicComponent Type="@customComponentType" Parameters="@GetParameters()"/>
+                </CascadingValue>   
+            }
+        }
+    }
 }
 
 @code {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     
-    [Parameter] public string CustomComponent { get; set; } = string.Empty;
+    [Parameter] public List<string> CustomComponents { get; set; } = [];
     [Parameter] public Content? Content { get; set; }
     
-    private Type? CustomComponentType { get; set; }
-
+    Dictionary<string, ICustomContentComponent> CustomContentComponents { get; set; } = new();
+    
     private Dictionary<string, object> GetParameters()
     {
         return new Dictionary<string, object>
@@ -26,11 +36,7 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        var items = ExtensionManager.GetInstances<ICustomContentComponent>(true);
-        if (items.TryGetValue(CustomComponent, out var customContentComponent))
-        {
-            CustomComponentType = customContentComponent.GetType();
-        }
+        CustomContentComponents = ExtensionManager.GetInstances<ICustomContentComponent>(true);
     }
 
 }

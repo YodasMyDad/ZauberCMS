@@ -6,7 +6,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 Make video on Properties currently done (Show datasources and fix countries and do a content query)
 
-EF Core Query Caching?
+EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/)
 Update query on content and content type to simplyfy getting data (Have QueryContent and SingleContent for commands to keep it simple?)
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
 Make everything else pluggable (Sections, trees etc..) think about save events of properties too, change data before being saved and loaded

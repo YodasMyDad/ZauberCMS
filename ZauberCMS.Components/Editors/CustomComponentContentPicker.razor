@@ -2,6 +2,7 @@
 @using Radzen.Blazor
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Extensions
 @using ZauberCMS.Core.Plugins
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -42,6 +43,11 @@
                 Name = item.Value.Name,
                 Value = item.Key
             });
+        }
+
+        if (!Value.IsNullOrWhiteSpace())
+        {
+                SelectedValues = JsonSerializer.Deserialize<IEnumerable<string>>(Value) ?? Enumerable.Empty<string>();
         }
     }
     

@@ -13,11 +13,30 @@ public class CountriesDataSource : IDataListSource
     public string FullName => GetType().FullName ?? string.Empty;
     public IEnumerable<DataListItem> GetItems(IServiceScope scope, Content? currentContent)
     {
-        return CultureInfo.GetCultures(CultureTypes.SpecificCultures)
-            .Select(culture => new RegionInfo(culture.LCID))
-            .Distinct()
-            .OrderBy(ri => ri.EnglishName)
-            .Select(countryCode => new DataListItem { Name = countryCode.EnglishName, Value = countryCode.Name })
+        var cultures = CultureInfo.GetCultures(CultureTypes.SpecificCultures);
+        var items = new List<DataListItem>();
+
+        foreach (var culture in cultures)
+        {
+            try
+            {
+                var region = new RegionInfo(culture.LCID);
+                items.Add(new DataListItem 
+                { 
+                    Name = region.EnglishName, 
+                    Value = region.TwoLetterISORegionName 
+                });
+            }
+            catch (ArgumentException)
+            {
+                // The culture does not have associated region, ignore it
+            }
+        }
+
+        return items
+            .GroupBy(i => i.Name)
+            .Select(g => g.First())
+            .OrderBy(i => i.Name)
             .ToList();
     }
 }
