@@ -2,9 +2,22 @@
 
 public class AppState
 {
-    public event Action? OnContentChanged;
-    public event Action? OnContentTypeChanged;
+    public event Func<Task>? OnContentTreeChanged;
+    public event Func<Task>? OnContentChanged;
 
-    public void NotifyContentChanged() => OnContentChanged?.Invoke();
-    public void NotifyContentTypeChanged() => OnContentTypeChanged?.Invoke();
+    public async Task NotifyContentTreeChanged() 
+    {
+        if (OnContentTreeChanged != null)
+        {
+            await OnContentTreeChanged.Invoke();
+        }
+    }
+
+    public async Task NotifyContentChanged()
+    {
+        if (OnContentChanged != null)
+        {
+            await OnContentChanged.Invoke();
+        }
+    }
 }

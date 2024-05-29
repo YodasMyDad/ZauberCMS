@@ -36,12 +36,21 @@
     {
         await base.OnInitializedAsync();
         await DataRefresh();
-        AppState.OnContentChanged += StateHasChanged;
+        AppState.OnContentChanged += HandleContentTreeChanged;
     }
 
     public void Dispose()
     {
-        AppState.OnContentChanged -= StateHasChanged;
+        AppState.OnContentChanged -= HandleContentTreeChanged;
+    }
+    
+    private async Task HandleContentTreeChanged()
+    {
+        // Your custom logic here
+        await DataRefresh();
+        
+        // Call StateHasChanged to refresh the component
+        StateHasChanged();
     }
     
     private async Task DataRefresh()
