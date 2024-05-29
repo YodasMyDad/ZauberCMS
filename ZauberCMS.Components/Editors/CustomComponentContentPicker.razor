@@ -17,10 +17,10 @@
 @code {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     
-    public string Name { get; set; } = "Custom Component Picker";
-    public string Alias { get; set; } = "ZauberCMS.CustomComponentPicker";
-    public string Description { get; set; } = "Renders custom blazor components on the page";
-    public string Icon { get; set; } = "settings_ethernet";
+    public string Name => "Custom Component Picker";
+    public string Alias => "ZauberCMS.CustomComponentPicker";
+    public string Description => "Renders custom blazor components on the page";
+    public string Icon => "settings_ethernet";
     public Type? SettingsComponent { get; set; }
 
     [Parameter] public string Value { get; set; } = string.Empty;

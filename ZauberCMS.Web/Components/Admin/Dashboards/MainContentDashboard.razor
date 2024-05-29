@@ -1,0 +1,50 @@
+﻿@using ZauberCMS.Core.Content.Commands
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
+
+<RadzenDataGrid AllowFiltering="false"
+                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                AllowPaging="false"
+                PageSize="20"
+                AllowSorting="true"
+                Data="@Contents"
+                SelectionMode="DataGridSelectionMode.Single"
+                RowSelect="@((Content value) => OnRowSelect(value))">
+    @*@bind-Value="@SelectedContent"*@
+    <Columns>
+        <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+            <Template Context="data">
+                @data.DateUpdated.Humanize()
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    public string Name => "Latest Content";
+    public int SortOrder => 0;
+    public string SectionAlias => "ContentSection";
+    
+    private IEnumerable<Content> Contents { get; set; } = Enumerable.Empty<Content>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var items = await Mediator.Send(new GetContentsCommand
+        {
+            AmountPerPage = 20,
+            OrderBy = GetContentsOrderBy.DateUpdatedDescending
+        });
+        Contents = items.Items;
+    }
+
+    private void OnRowSelect(object value)
+    {
+        if (value is Content selectedRow)
+        {
+            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}");
+        }
+    }
+}

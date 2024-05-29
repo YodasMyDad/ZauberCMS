@@ -13,7 +13,7 @@
     {
         base.OnInitialized();
         
-        Sections = ExtensionManager.GetInstances<ISection>();
+        Sections = ExtensionManager.GetInstances<ISection>(true);
     }
 
 }

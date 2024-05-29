@@ -1,5 +1,4 @@
 ﻿@page "/admin/settings"
-@using ZauberCMS.Core.Content.Commands
 
 @layout AdminLayout
 
@@ -9,24 +8,7 @@
     <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(args => NavigationManager.NavigateTo("/admin/createcontentype"))/>
 </RadzenStack>
 
-<RadzenDataGrid AllowFiltering="true"
-                FilterPopupRenderMode="PopupRenderMode.OnDemand"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="true"
-                PageSize="20"
-                AllowSorting="true"
-                Data="@ContentTypes"
-                SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((ContentType value) => OnRowSelect(value))">
-    <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
-            <Template Context="data">
-                @data.DateUpdated.Humanize()
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+<SectionDashboards SectionAlias="SettingsSection" />
 
 <SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
     <RadzenSidebarToggle Click="@(() => ToggleSideBar())" />
@@ -39,27 +21,10 @@
 </SectionContent>
 
 @code {
-    
-    private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
     private bool Expanded { get; set; } = true;
-    
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        var items = await Mediator.Send(new GetContentTypesCommand{AmountPerPage = 1000});
-        ContentTypes = items.Items;
-    }
-    
+
     public void ToggleSideBar()
     {
         Expanded = !Expanded;
-    }
-    
-    private void OnRowSelect(object value)
-    {
-        if (value is ContentType selectedRow)
-        {
-            NavigationManager.NavigateTo($"/admin/updatecontentype/{selectedRow.Id}");
-        }
     }
 }

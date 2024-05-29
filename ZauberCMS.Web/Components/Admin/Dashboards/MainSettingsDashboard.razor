@@ -1,0 +1,44 @@
+﻿@using ZauberCMS.Core.Content.Commands
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
+
+<RadzenDataGrid AllowFiltering="true"
+                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                AllowPaging="true"
+                PageSize="20"
+                AllowSorting="true"
+                Data="@ContentTypes"
+                SelectionMode="DataGridSelectionMode.Single"
+                RowSelect="@((ContentType value) => OnRowSelect(value))">
+    <Columns>
+        <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+            <Template Context="data">
+                @data.DateUpdated.Humanize()
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    public string Name => "Latest ContentTypes";
+    public int SortOrder => 0;
+    public string SectionAlias => "SettingsSection";
+    
+    private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        var items = await Mediator.Send(new GetContentTypesCommand{AmountPerPage = 1000});
+        ContentTypes = items.Items;
+    }
+    
+    private void OnRowSelect(object value)
+    {
+        if (value is ContentType selectedRow)
+        {
+            NavigationManager.NavigateTo($"/admin/updatecontentype/{selectedRow.Id}");
+        }
+    }
+}

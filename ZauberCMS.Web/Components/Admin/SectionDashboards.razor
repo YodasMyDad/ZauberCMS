@@ -1,0 +1,31 @@
+﻿@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Sections.Interfaces
+@if (Dashboards.Any())
+{
+    <RadzenPanel Class="rz-mx-auto">
+        <RadzenTabs @bind-SelectedIndex=@SelectedIndex>
+            <Tabs>
+                @foreach (var sectionDashboard in Dashboards)
+                {
+                    <RadzenTabsItem Text="@(sectionDashboard.Value.Name)">
+                        <DynamicComponent Type="@sectionDashboard.Value.GetType()"/>
+                    </RadzenTabsItem>
+                }
+            </Tabs>
+        </RadzenTabs>
+    </RadzenPanel>
+}
+
+@code {
+    [Parameter] public string? SectionAlias { get; set; }
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    private Dictionary<string, ISectionDashboard> Dashboards { get; set; } = new();
+    private int SelectedIndex { get; set; }
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        var sectionDashboards = ExtensionManager.GetInstances<ISectionDashboard>(true);
+        Dashboards = sectionDashboards.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
+    }
+
+}

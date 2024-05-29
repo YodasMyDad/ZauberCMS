@@ -1,6 +1,5 @@
 ﻿@page "/admin/content"
 @page "/admin"
-@using ZauberCMS.Core.Content.Commands
 @layout AdminLayout
 
 <PageTitle>Content</PageTitle>
@@ -9,25 +8,7 @@
     <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/admin/createcontent"))/>
 </RadzenStack>
 
-<RadzenDataGrid AllowFiltering="false"
-                FilterPopupRenderMode="PopupRenderMode.OnDemand"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="false"
-                PageSize="20"
-                AllowSorting="true"
-                Data="@Contents"
-                SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((ZauberCMS.Core.Content.Models.Content value) => OnRowSelect(value))">
-    @*@bind-Value="@SelectedContent"*@
-    <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
-            <Template Context="data">
-                @data.DateUpdated.Humanize()
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+<SectionDashboards SectionAlias="ContentSection" />
 
 <SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
     <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
@@ -40,28 +21,7 @@
 </SectionContent>
 
 @code {
-    private IEnumerable<Content> Contents { get; set; } = Enumerable.Empty<Content>();
     private bool Expanded { get; set; } = true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-
-        var items = await Mediator.Send(new GetContentsCommand
-        {
-            AmountPerPage = 20,
-            OrderBy = GetContentsOrderBy.DateUpdatedDescending
-        });
-        Contents = items.Items;
-    }
-
-    private void OnRowSelect(object value)
-    {
-        if (value is Core.Content.Models.Content selectedRow)
-        {
-            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}");
-        }
-    }
 
     private void ToggleSideBar()
     {
