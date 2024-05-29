@@ -1,5 +1,7 @@
 ﻿@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
+@implements IDisposable
 
 <div class="rz-p-4">
     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content</RadzenText>
@@ -23,6 +25,8 @@
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = default!;
+
     
     private List<Content> ContentItems { get; set; } = [];
     private object? Selection { get; set; }
@@ -32,8 +36,14 @@
     {
         await base.OnInitializedAsync();
         await DataRefresh();
+        AppState.OnContentChanged += StateHasChanged;
     }
 
+    public void Dispose()
+    {
+        AppState.OnContentChanged -= StateHasChanged;
+    }
+    
     private async Task DataRefresh()
     {
         var items = await Mediator.Send(new GetContentsCommand

@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
 @page "/admin/createcontent"
 @page "/admin/createcontent/{ParentId:guid}"
@@ -131,7 +132,7 @@
 
 <SectionContent SectionId="AdminLayout.Sections.SideBar">
     <RadzenSidebar @bind-Expanded="@Expanded">
-        <ContentTree/>
+        <ContentTree />
     </RadzenSidebar>
 </SectionContent>
 
@@ -140,6 +141,8 @@
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = default!;
+    
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
 
@@ -250,7 +253,8 @@
         {
             var saveContentCommand = new SaveContentCommand { Content = [Content] };
             var result = await Mediator.Send(saveContentCommand);
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });   
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
+            AppState.NotifyContentChanged();
         }
     }
 

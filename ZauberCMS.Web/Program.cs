@@ -13,6 +13,7 @@ using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
+using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Web.Components;
@@ -46,6 +47,8 @@ builder.Services.AddScoped<ExtensionManager>();
 builder.Services.AddScoped<ProviderService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
+
+builder.Services.AddSingleton<AppState>();
 
 builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
 builder.Services.AddMvc();
