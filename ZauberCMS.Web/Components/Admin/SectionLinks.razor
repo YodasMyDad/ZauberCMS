@@ -1,0 +1,19 @@
+﻿@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Sections.Interfaces
+@foreach (var section in Sections.OrderBy(x => x.Value.SortOrder))
+{
+    <RadzenButton Variant="Variant.Text" Text="@(section.Value.Name)" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo(section.Value.IndexUrl))/>
+}
+
+@code {
+    
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    private Dictionary<string, ISection> Sections { get; set; } = new();
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        
+        Sections = ExtensionManager.GetInstances<ISection>();
+    }
+
+}
