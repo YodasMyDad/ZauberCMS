@@ -1,13 +1,13 @@
 ﻿@page "/admin/members"
 @using ZauberCMS.Core
-@layout SectionWithTree
+@layout SectionLayout
 
 <PageTitle>Members</PageTitle>
 
 <SectionDashboards SectionAlias="@(Constants.Sections.MembersSection)"/>
 
 @code {
-    [CascadingParameter] protected SectionWithTree? Layout { get; set; }
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     protected override void OnInitialized()
     {

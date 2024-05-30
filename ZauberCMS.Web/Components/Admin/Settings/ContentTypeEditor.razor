@@ -6,7 +6,7 @@
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared.Models
-@layout SectionWithTree
+@layout SectionLayout
 
     <PageTitle>Create Content Type</PageTitle>
 
@@ -152,7 +152,7 @@
 
     [Parameter] public Guid? ContentTypeId { get; set; }
 
-    [CascadingParameter] protected SectionWithTree? Layout { get; set; }
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
     
     private ContentType ContentType { get; set; } = new();
     private List<ContentViewName> ContentViews { get; set; } = [];

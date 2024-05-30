@@ -6,7 +6,7 @@
 @page "/admin/createcontent"
 @page "/admin/createcontent/{ParentId:guid}"
 @page "/admin/updatecontent/{ContentId:guid}"
-@layout SectionWithTree
+@layout SectionLayout
 
 <PageTitle>Create & Update Content</PageTitle>
 
@@ -138,7 +138,7 @@
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
     
-    [CascadingParameter] protected SectionWithTree? Layout { get; set; }
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     private Content Content { get; set; } = new() { IsRootContent = true };
     private ContentType? ContentType { get; set; }
@@ -148,9 +148,14 @@
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
 
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Layout?.SetSection(Constants.Sections.ContentSection);
+    }
+
     protected override async Task OnParametersSetAsync()
     {
-        Layout?.SetSection(Constants.Sections.ContentSection);
         AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (ContentId != null)
         {

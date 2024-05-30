@@ -1,7 +1,7 @@
 ﻿@page "/admin/content"
 @page "/admin"
 @using ZauberCMS.Core
-@layout SectionWithTree
+@layout SectionLayout
 
 <PageTitle>Content</PageTitle>
 
@@ -12,7 +12,7 @@
 <SectionDashboards SectionAlias="@(Constants.Sections.ContentSection)"/>
 
 @code {
-    [CascadingParameter] protected SectionWithTree? Layout { get; set; }
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     protected override void OnInitialized()
     {
