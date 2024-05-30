@@ -8,128 +8,125 @@
 @page "/admin/updatecontent/{ContentId:guid}"
 @layout SectionWithTree
 
-<CascadingValue Name="@(Constants.Sections.SectionAlias)" Value="@(Constants.Sections.ContentSection)">
+<PageTitle>Create & Update Content</PageTitle>
 
-    <PageTitle>Create &amp; Update Content</PageTitle>
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Right" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/admin/createcontent", forceLoad: true))/>
+</RadzenStack>
 
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Right" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-        <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/admin/createcontent", forceLoad: true))/>
-    </RadzenStack>
+<RadzenPanel Class="rz-mx-auto">
+    @if (ContentType != null)
+    {
+        <EditForm Model="@Content" OnSubmit="Save">
+            <RadzenRow class="rz-pb-2">
+                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content.Name" ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+                    <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last Updated: @Content.DateUpdated.Humanize()</RadzenText>
+                </RadzenStack>
+            </RadzenRow>
 
-    <RadzenPanel Class="rz-mx-auto">
-        @if (ContentType != null)
-        {
-            <EditForm Model="@Content" OnSubmit="Save">
-                <RadzenRow class="rz-pb-2">
-                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content.Name" ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
-                        <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last Updated: @Content.DateUpdated.Humanize()</RadzenText>
-                    </RadzenStack>
-                </RadzenRow>
-
-                <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
-                    <Tabs>
-                        @foreach (var tab in ContentType.Tabs.OrderBy(x => x.SortOrder))
-                        {
-                            <RadzenTabsItem>
-                                <Template Context="tabContext">
-                                    @tab.Name
-                                </Template>
-                                <ChildContent>
-                                    <RadzenStack Gap="1rem">
-                                        @foreach (var property in ContentType.ContentProperties
-                                                      .Where(x => x.TabId == tab.Id)
-                                                      .OrderBy(x => x.SortOrder))
+            <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
+                <Tabs>
+                    @foreach (var tab in ContentType.Tabs.OrderBy(x => x.SortOrder))
+                    {
+                        <RadzenTabsItem>
+                            <Template Context="tabContext">
+                                @tab.Name
+                            </Template>
+                            <ChildContent>
+                                <RadzenStack Gap="1rem">
+                                    @foreach (var property in ContentType.ContentProperties
+                                                  .Where(x => x.TabId == tab.Id)
+                                                  .OrderBy(x => x.SortOrder))
+                                    {
+                                        if (property.Component != null)
                                         {
-                                            if (property.Component != null)
+                                            AllContentTypeProperties.TryGetValue(property.Component, out var contentPropertyComponent);
+                                            if (contentPropertyComponent != null)
                                             {
-                                                AllContentTypeProperties.TryGetValue(property.Component, out var contentPropertyComponent);
-                                                if (contentPropertyComponent != null)
+                                                AllContentValues.TryGetValue(property.Id, out var contentValue);
+                                                if (contentValue != null)
                                                 {
-                                                    AllContentValues.TryGetValue(property.Id, out var contentValue);
-                                                    if (contentValue != null)
-                                                    {
-                                                        <EditorRow>
-                                                            <LeftColumn>
-                                                                <RadzenLabel Style="font-weight: 600;font-size: 14px;" Text="@property.Name"/>
-                                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
-                                                                    <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@property.Alias</RadzenText>
-                                                                </RadzenStack>
-                                                                <RadzenLabel Style="font-size: 14px;" Text="@property.Description"/>
-                                                            </LeftColumn>
-                                                            <CentreColumn>
-                                                                <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
-                                                                                        Settings="@property.Settings"
-                                                                                        Content="@Content"
-                                                                                        Value="@contentValue.Value"
-                                                                                        ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
-                                                            </CentreColumn>
-                                                        </EditorRow>
-                                                    }
+                                                    <EditorRow>
+                                                        <LeftColumn>
+                                                            <RadzenLabel Style="font-weight: 600;font-size: 14px;" Text="@property.Name"/>
+                                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+                                                                <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@property.Alias</RadzenText>
+                                                            </RadzenStack>
+                                                            <RadzenLabel Style="font-size: 14px;" Text="@property.Description"/>
+                                                        </LeftColumn>
+                                                        <CentreColumn>
+                                                            <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
+                                                                                    Settings="@property.Settings"
+                                                                                    Content="@Content"
+                                                                                    Value="@contentValue.Value"
+                                                                                    ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
+                                                        </CentreColumn>
+                                                    </EditorRow>
                                                 }
                                             }
                                         }
+                                    }
 
-                                    </RadzenStack >
-                                </ChildContent>
-                            </RadzenTabsItem>
-                        }
-
-                        <RadzenTabsItem Text="System">
-                            <EditorRow>
-                                <LeftColumn>
-                                    <RadzenLabel Text="Id"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    @Content.Id
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <RadzenLabel Text="Url"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <RadzenLabel Text="Internal Redirect Id"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenTextBox Style="width: 100%;" Name="InternalRedirectId" @bind-Value="@Content.InternalRedirectIdAsString"/>
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <RadzenLabel Text="Content View"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
-                                </CentreColumn>
-                            </EditorRow>
+                                </RadzenStack >
+                            </ChildContent>
                         </RadzenTabsItem>
-                    </Tabs>
-                </RadzenTabs>
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
-                    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
-                </RadzenStack>
+                    }
 
-            </EditForm>
-        }
-        else
-        {
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0;">
-                <RadzenButton Variant="Variant.Filled" Text="Choose Content Type" Click="@ChooseContentType"/>
+                    <RadzenTabsItem Text="System">
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Id"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                @Content.Id
+                            </CentreColumn>
+                        </EditorRow>
+
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Url"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
+                            </CentreColumn>
+                        </EditorRow>
+
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Internal Redirect Id"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenTextBox Style="width: 100%;" Name="InternalRedirectId" @bind-Value="@Content.InternalRedirectIdAsString"/>
+                            </CentreColumn>
+                        </EditorRow>
+
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Content View"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
+                            </CentreColumn>
+                        </EditorRow>
+                    </RadzenTabsItem>
+                </Tabs>
+            </RadzenTabs>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
             </RadzenStack>
-        }
 
-    </RadzenPanel>
+        </EditForm>
+    }
+    else
+    {
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0;">
+            <RadzenButton Variant="Variant.Filled" Text="Choose Content Type" Click="@ChooseContentType"/>
+        </RadzenStack>
+    }
 
-</CascadingValue>
+</RadzenPanel>
+
 
 @code {
 
@@ -140,6 +137,8 @@
 
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
+    
+    [CascadingParameter] protected SectionWithTree? Layout { get; set; }
 
     private Content Content { get; set; } = new() { IsRootContent = true };
     private ContentType? ContentType { get; set; }
@@ -151,6 +150,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        Layout?.SetSection(Constants.Sections.ContentSection);
         AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (ContentId != null)
         {

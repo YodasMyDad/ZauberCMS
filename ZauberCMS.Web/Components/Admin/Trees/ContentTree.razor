@@ -4,10 +4,6 @@
 @using Content = ZauberCMS.Core.Content.Models.Content
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-<div class="rz-p-4">
-    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content</RadzenText>
-</div>
-
 <RadzenTree @ref="Tree" Data="@ContentItems" Expand="@OnExpand" Change="@OnChange" @bind-Value="@Selection" ItemContextMenu="ItemContextMenu">
     <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name">
         <Template>
@@ -22,7 +18,6 @@
 </RadzenTree>
 
 @code {
-
     public string Heading => "Content";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.ContentSection;

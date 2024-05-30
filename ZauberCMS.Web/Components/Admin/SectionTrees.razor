@@ -18,9 +18,10 @@
     [Parameter] public string? SectionAlias { get; set; }
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     private Dictionary<string, ISectionNav> NavItems { get; set; } = new();
-    protected override void OnInitialized()
+
+    protected override void OnParametersSet()
     {
-        base.OnInitialized();
+        base.OnParametersSet();
         var sectionNavs = ExtensionManager.GetInstances<ISectionNav>(true);
         NavItems = sectionNavs.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
     }

@@ -2,15 +2,20 @@
 @using ZauberCMS.Core
 @layout SectionWithTree
 
-<CascadingValue Name="@(Constants.Sections.SectionAlias)" Value="@(Constants.Sections.SettingsSection)">
+<PageTitle>Settings</PageTitle>
 
-    <PageTitle>Settings</PageTitle>
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(args => NavigationManager.NavigateTo("/admin/createcontentype"))/>
+</RadzenStack>
 
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-        <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(args => NavigationManager.NavigateTo("/admin/createcontentype"))/>
-    </RadzenStack>
+<SectionDashboards SectionAlias="@(Constants.Sections.SettingsSection)"/>
 
-    <SectionDashboards SectionAlias="@(Constants.Sections.SettingsSection)" />
+@code {
+    [CascadingParameter] protected SectionWithTree? Layout { get; set; }
 
-</CascadingValue>
-
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Layout?.SetSection(Constants.Sections.SettingsSection);
+    }
+}

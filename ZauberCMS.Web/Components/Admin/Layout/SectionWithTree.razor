@@ -1,5 +1,4 @@
-﻿@using ZauberCMS.Core
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 
 <HeadContent>
     <style>
@@ -12,39 +11,40 @@
 </HeadContent>
 
 <RadzenComponents/>
+
 <RadzenLayout>
-    <RadzenHeader class="rz-background-color-primary-darker">
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
-            <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
-            <SectionOutlet SectionId="@Sections.HeaderBeginning"/>
-            <RadzenIcon Icon="fingerprint"/>
-            <SectionLinks/>
-        </RadzenStack>
-    </RadzenHeader>
-    <RadzenSidebar @bind-Expanded="@Expanded">
-        <SectionTrees SectionAlias="@(SectionAlias)" />
-        <SectionOutlet SectionId="@Sections.SideBar"/>
-    </RadzenSidebar>
-    <RadzenBody>
+    <CascadingValue Value="@this">
+        <RadzenHeader class="rz-background-color-primary-darker">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
+                <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
+                <RadzenIcon Icon="fingerprint"/>
+                <SectionLinks CurrentSection="@(SectionAlias)" />
+            </RadzenStack>
+        </RadzenHeader>
+        @if (!SectionAlias.IsNullOrWhiteSpace())
+        {
+            <RadzenSidebar @bind-Expanded="@Expanded">
+                <SectionTrees SectionAlias="@(SectionAlias)"/>
+            </RadzenSidebar>   
+        }
+        <RadzenBody>
             @Body
-    </RadzenBody>
-    <SectionOutlet SectionId="@Sections.Footer"/>
+        </RadzenBody>
+    </CascadingValue>
 </RadzenLayout>
 
 @code {
-    [CascadingParameter(Name = Constants.Sections.SectionAlias)] public string? SectionAlias { get; set; }
+    private string? SectionAlias { get; set; }
+    public void SetSection(string value)
+    {
+        SectionAlias = value;
+        StateHasChanged();
+    }
     
     private bool Expanded { get; set; } = true;
     private void ToggleSideBar()
     {
         Expanded = !Expanded;
-    }
-    
-    internal static class Sections
-    {
-        internal static SectionOutlet? SideBar = new();
-        internal static SectionOutlet? Footer = new();
-        internal static SectionOutlet? HeaderBeginning = new();
     }
 }
 

@@ -9,6 +9,7 @@
     
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     private Dictionary<string, ISection> Sections { get; set; } = new();
+    [Parameter] public string? CurrentSection { get; set; }
     protected override void OnInitialized()
     {
         base.OnInitialized();

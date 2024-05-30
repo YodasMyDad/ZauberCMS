@@ -8,8 +8,6 @@
 @using ZauberCMS.Core.Shared.Models
 @layout SectionWithTree
 
-<CascadingValue Name="@(Constants.Sections.SectionAlias)" Value="@(Constants.Sections.SettingsSection)">
-
     <PageTitle>Create Content Type</PageTitle>
 
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
@@ -147,9 +145,6 @@
         </EditForm>
     </RadzenPanel>
 
-
-</CascadingValue>
-
 @code {
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
@@ -157,6 +152,8 @@
 
     [Parameter] public Guid? ContentTypeId { get; set; }
 
+    [CascadingParameter] protected SectionWithTree? Layout { get; set; }
+    
     private ContentType ContentType { get; set; } = new();
     private List<ContentViewName> ContentViews { get; set; } = [];
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
@@ -164,6 +161,23 @@
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+        Layout?.SetSection(Constants.Sections.ContentSection);
+        
+        InitializeContentViews();
+        
+        if (ContentTypeId != null)
+        {
+            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
+            ShowDeleteButton = true;
+        }
+
+        InitializeTabsAndSortOrders();
+    }
+    
     private async Task SelectIcon()
     {
         var result = await DialogService.OpenSideAsync<ListMaterialIconsDialog>("Choose Icon",
@@ -180,19 +194,6 @@
         CharacterReplacements = new Dictionary<string, string> { { " ", "" } },
         UseCamelCase = true
     });
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        InitializeContentViews();
-        if (ContentTypeId != null)
-        {
-            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
-            ShowDeleteButton = true;
-        }
-
-        InitializeTabsAndSortOrders();
-    }
 
     private void TabChange(int i)
     {

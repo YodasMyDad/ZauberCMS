@@ -1,10 +1,18 @@
 ﻿@page "/admin/media"
 @using ZauberCMS.Core
 @layout SectionWithTree
-<CascadingValue Name="@(Constants.Sections.SectionAlias)" Value="@(Constants.Sections.MediaSection)">
 
-    <PageTitle>Media</PageTitle>
+<PageTitle>Media</PageTitle>
 
-    <SectionDashboards SectionAlias="@(Constants.Sections.MediaSection)" />
-    
-</CascadingValue>
+<SectionDashboards SectionAlias="@(Constants.Sections.MediaSection)"/>
+
+@code {
+    [CascadingParameter] protected SectionWithTree? Layout { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Layout?.SetSection(Constants.Sections.MediaSection);
+    }
+
+}
