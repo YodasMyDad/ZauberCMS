@@ -1,7 +1,8 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
-@implements IDisposable
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
 <div class="rz-p-4">
     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content</RadzenText>
@@ -21,12 +22,16 @@
 </RadzenTree>
 
 @code {
+
+    public string Heading => "Content";
+    public int SortOrder => 0;
+    public string SectionAlias => Constants.Sections.ContentSection;
+    
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
-
     
     private List<Content> ContentItems { get; set; } = [];
     private object? Selection { get; set; }
@@ -35,6 +40,9 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        
+        // Get all section nav items
+        
         await DataRefresh();
         AppState.OnContentChanged += HandleContentTreeChanged;
     }
@@ -189,5 +197,4 @@
             NavigationManager.NavigateTo($"/admin/updatecontent/{content.Id}", forceLoad: true);
         }
     }
-
 }

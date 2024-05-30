@@ -1,7 +1,12 @@
 ﻿@page "/admin/members"
+@using ZauberCMS.Core
 
-@layout AdminLayout
+@layout SectionWithTree
 
-<PageTitle>Members</PageTitle>
+<CascadingValue Name="@(Constants.Sections.SectionAlias)" Value="@(Constants.Sections.MembersSection)">
 
-<SectionDashboards SectionAlias="MembersSection" />
+    <PageTitle>Members</PageTitle>
+
+    <SectionDashboards SectionAlias="@(Constants.Sections.MembersSection)" />
+    
+</CascadingValue>

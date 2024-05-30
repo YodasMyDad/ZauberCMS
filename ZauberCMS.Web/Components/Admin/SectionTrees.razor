@@ -1,0 +1,27 @@
+﻿@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Sections.Interfaces
+
+@foreach (var nav in NavItems)
+{
+    <div class="rz-pb-2">
+        @if (!nav.Value.Heading.IsNullOrWhiteSpace())
+        {
+            <div class="rz-p-4">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">@nav.Value.Heading</RadzenText>
+            </div>
+        }
+        <DynamicComponent Type="@nav.Value.GetType()"/>
+    </div>
+}
+
+@code {
+    [Parameter] public string? SectionAlias { get; set; }
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    private Dictionary<string, ISectionNav> NavItems { get; set; } = new();
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        var sectionNavs = ExtensionManager.GetInstances<ISectionNav>(true);
+        NavItems = sectionNavs.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
+    }
+}

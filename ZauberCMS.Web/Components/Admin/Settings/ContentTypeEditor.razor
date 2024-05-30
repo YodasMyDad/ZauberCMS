@@ -1,159 +1,154 @@
 ﻿@page "/admin/createcontentype"
 @page "/admin/updatecontentype/{ContentTypeId:guid}"
 @using ZauberCMS.Components.Editors.Dialogs
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared.Models
-@layout AdminLayout
+@layout SectionWithTree
 
-<PageTitle>Create Content Type</PageTitle>
+<CascadingValue Name="@(Constants.Sections.SectionAlias)" Value="@(Constants.Sections.SettingsSection)">
 
-<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Add Property" Click="@(AddProperty)"/>
-    <RadzenButton Variant="Variant.Filled" Text="Add Tab" Click="@(AddTab)"/>
-    @if (ShowDeleteButton)
-    {
-        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteContentType)"/>
-    }
-</RadzenStack>
+    <PageTitle>Create Content Type</PageTitle>
 
-<RadzenPanel Class="rz-mx-auto">
-    <EditForm Model="ContentType" OnSubmit="Save">
-        <RadzenRow class="rz-pb-6">
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
-                    <RadzenIcon Icon="@(ContentType.Icon.IsNullOrWhiteSpace() ? "add" : ContentType.Icon)" style="font-weight: 300; color: dimgray;"/>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+        <RadzenButton Variant="Variant.Filled" Text="Add Property" Click="@(AddProperty)"/>
+        <RadzenButton Variant="Variant.Filled" Text="Add Tab" Click="@(AddTab)"/>
+        @if (ShowDeleteButton)
+        {
+            <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteContentType)"/>
+        }
+    </RadzenStack>
+
+    <RadzenPanel Class="rz-mx-auto">
+        <EditForm Model="ContentType" OnSubmit="Save">
+            <RadzenRow class="rz-pb-6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
+                        <RadzenIcon Icon="@(ContentType.Icon.IsNullOrWhiteSpace() ? "add" : ContentType.Icon)" style="font-weight: 300; color: dimgray;"/>
+                    </RadzenStack>
+                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
+                                   ValueChanged="@((string name) => { ContentType.Name = name; ContentType.Alias = _slugHelper.GenerateSlug(name); })" aria-label="Name"/>
                 </RadzenStack>
-                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
-                               ValueChanged="@((string name) => { ContentType.Name = name; ContentType.Alias = _slugHelper.GenerateSlug(name); })" aria-label="Name"/>
-            </RadzenStack>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="0">
-                <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
-            </RadzenStack>
-        </RadzenRow>
-        <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
-            <Tabs>
-                @{
-                    var orderedTabsList = GetTabsInOrder();
-                }
-                @for (var i = 0; i < orderedTabsList.Count; i++)
-                {
-                    var tab = orderedTabsList[i];
-                    TabIndex.TryAdd(i, tab);
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="0">
+                    <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
+                </RadzenStack>
+            </RadzenRow>
+            <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
+                <Tabs>
+                    @{
+                        var orderedTabsList = GetTabsInOrder();
+                    }
+                    @for (var i = 0; i < orderedTabsList.Count; i++)
+                    {
+                        var tab = orderedTabsList[i];
+                        TabIndex.TryAdd(i, tab);
 
-                    <RadzenTabsItem>
-                        <Template Context="tabContext">
-                            @tab.Name
-                        </Template>
-                        <ChildContent>
-                            <RadzenStack Gap="1rem">
-                                @{
-                                    var tabProperties = ContentType.ContentProperties
-                                        .Where(x => x.TabId == tab.Id)
-                                        .OrderBy(x => x.SortOrder)
-                                        .ToList();
-                                }
-                                @if (tabProperties.Any())
-                                {
-                                    @foreach (var property in tabProperties)
-                                    {
-                                        <EditorRow>
-                                            <LeftColumn>
-                                                <RadzenTextBox class="w-100 rz-mb-2" Name="Name" Value="@property.Name"
-                                                               ValueChanged="@((string name) => { property.Name = name; property.Alias = _slugHelper.GenerateSlug(name); })"
-                                                               Style="font-size: 13px; border: 0; padding-left: 0; color: #000;" Placeholder="Name" aria-label="Property Name"/>
-                                                <RadzenText Text="@property.Alias" TextStyle="TextStyle.Caption"/>
-                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                    <RadzenSwitch @bind-Value="@property.IsRequired" Name="IsRequired"/>
-                                                    <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired"/>
-                                                </RadzenStack>
-                                                <RadzenTextArea Style="font-size: 12px; border: 0; padding-left: 0;" @bind-Value="@property.Description" Placeholder="Description..."/>
-                                            </LeftColumn>
-                                            <CentreColumn>
-                                                <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center" Style="height: 100%">
-                                                    @(property.Component?.Split('.').Last())
-                                                </RadzenCard>
-                                            </CentreColumn>
-                                            <RightColumn>
-                                                <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move up" Click="@(() => SortProperty(property, false))"/>
-                                                <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Delete" Click="@(() => DeleteProperty(property))"/>
-                                                <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move Down" Click="@(() => SortProperty(property, true))"/>
-                                                <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Change Tab" Click="@(() => ChangeTab(property))"/>
-                                                <RadzenButton Icon="settings" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Edit Settings" Click="@(() => Settings(property))"/>
-                                            </RightColumn>
-                                        </EditorRow>
+                        <RadzenTabsItem>
+                            <Template Context="tabContext">
+                                @tab.Name
+                            </Template>
+                            <ChildContent>
+                                <RadzenStack Gap="1rem">
+                                    @{
+                                        var tabProperties = ContentType.ContentProperties
+                                            .Where(x => x.TabId == tab.Id)
+                                            .OrderBy(x => x.SortOrder)
+                                            .ToList();
                                     }
-                                }
-                                else
-                                {
-                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-                                        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete This Tab" Click="@(() => DeleteTab(tab))"/>
-                                    </RadzenStack>
-                                }
-                            </RadzenStack >
-                        </ChildContent>
+                                    @if (tabProperties.Any())
+                                    {
+                                        @foreach (var property in tabProperties)
+                                        {
+                                            <EditorRow>
+                                                <LeftColumn>
+                                                    <RadzenTextBox class="w-100 rz-mb-2" Name="Name" Value="@property.Name"
+                                                                   ValueChanged="@((string name) => { property.Name = name; property.Alias = _slugHelper.GenerateSlug(name); })"
+                                                                   Style="font-size: 13px; border: 0; padding-left: 0; color: #000;" Placeholder="Name" aria-label="Property Name"/>
+                                                    <RadzenText Text="@property.Alias" TextStyle="TextStyle.Caption"/>
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenSwitch @bind-Value="@property.IsRequired" Name="IsRequired"/>
+                                                        <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired"/>
+                                                    </RadzenStack>
+                                                    <RadzenTextArea Style="font-size: 12px; border: 0; padding-left: 0;" @bind-Value="@property.Description" Placeholder="Description..."/>
+                                                </LeftColumn>
+                                                <CentreColumn>
+                                                    <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center" Style="height: 100%">
+                                                        @(property.Component?.Split('.').Last())
+                                                    </RadzenCard>
+                                                </CentreColumn>
+                                                <RightColumn>
+                                                    <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move up" Click="@(() => SortProperty(property, false))"/>
+                                                    <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Delete" Click="@(() => DeleteProperty(property))"/>
+                                                    <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move Down" Click="@(() => SortProperty(property, true))"/>
+                                                    <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Change Tab" Click="@(() => ChangeTab(property))"/>
+                                                    <RadzenButton Icon="settings" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Edit Settings" Click="@(() => Settings(property))"/>
+                                                </RightColumn>
+                                            </EditorRow>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+                                            <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete This Tab" Click="@(() => DeleteTab(tab))"/>
+                                        </RadzenStack>
+                                    }
+                                </RadzenStack >
+                            </ChildContent>
+                        </RadzenTabsItem>
+                    }
+                    <RadzenTabsItem Text="System">
+
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Allowed At Tree Root"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Allow at root" } })"/>
+                            </CentreColumn>
+                        </EditorRow>
+
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Is Element Type"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenSwitch @bind-Value="@ContentType.IsElementType" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Element Type" } })"/>
+                            </CentreColumn>
+                        </EditorRow>
+
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Choose Allowed Views"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
+                                               Data="@ContentViews"
+                                               FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                               FilterOperator="StringFilterOperator.StartsWith"
+                                               AllowFiltering="true"
+                                               TextProperty="Name"
+                                               ValueProperty="FullName"
+                                               Multiple="true"
+                                               AllowClear="true"
+                                               Placeholder="Select Content Views" Style="width: 100%; height: 200px"
+                                               InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "select content views" } })"/>
+                            </CentreColumn>
+                        </EditorRow>
+
+
                     </RadzenTabsItem>
-                }
-                <RadzenTabsItem Text="System">
-
-                    <EditorRow>
-                        <LeftColumn>
-                            <RadzenLabel Text="Allowed At Tree Root"/>
-                        </LeftColumn>
-                        <CentreColumn>
-                            <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Allow at root" }})" />
-                        </CentreColumn>
-                    </EditorRow>
-
-                    <EditorRow>
-                        <LeftColumn>
-                            <RadzenLabel Text="Is Element Type"/>
-                        </LeftColumn>
-                        <CentreColumn>
-                            <RadzenSwitch @bind-Value="@ContentType.IsElementType" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Is Element Type" }})" />
-                        </CentreColumn>
-                    </EditorRow>
-
-                    <EditorRow>
-                        <LeftColumn>
-                            <RadzenLabel Text="Choose Allowed Views"/>
-                        </LeftColumn>
-                        <CentreColumn>
-                            <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
-                                           Data="@ContentViews"
-                                           FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                           FilterOperator="StringFilterOperator.StartsWith"
-                                           AllowFiltering="true"
-                                           TextProperty="Name"
-                                           ValueProperty="FullName"
-                                           Multiple="true"
-                                           AllowClear="true"
-                                           Placeholder="Select Content Views" Style="width: 100%; height: 200px"
-                                           InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "select content views" } })"/>
-                        </CentreColumn>
-                    </EditorRow>
-                    
-
-                </RadzenTabsItem>
-            </Tabs>
-        </RadzenTabs>
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
-            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
-        </RadzenStack>
-    </EditForm>
-</RadzenPanel>
+                </Tabs>
+            </RadzenTabs>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
+            </RadzenStack>
+        </EditForm>
+    </RadzenPanel>
 
 
-<SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
-    <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
-</SectionContent>
-
-<SectionContent SectionId="AdminLayout.Sections.SideBar">
-    <RadzenSidebar @bind-Expanded="@Expanded">
-        <SettingsTree/>
-    </RadzenSidebar>
-</SectionContent>
+</CascadingValue>
 
 @code {
     [Inject] public DialogService DialogService { get; set; } = default!;
@@ -162,7 +157,6 @@
 
     [Parameter] public Guid? ContentTypeId { get; set; }
 
-    private bool Expanded { get; set; } = true;
     private ContentType ContentType { get; set; } = new();
     private List<ContentViewName> ContentViews { get; set; } = [];
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
@@ -445,11 +439,6 @@
             });
             Tabs.Reload();
         }
-    }
-
-    private void ToggleSideBar()
-    {
-        Expanded = !Expanded;
     }
 
     private class ContentViewName

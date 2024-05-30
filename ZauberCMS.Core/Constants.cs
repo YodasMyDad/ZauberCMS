@@ -23,6 +23,16 @@ public static class Constants
         public const string DefaultEmailTemplate = "default.html";
     }
     
+    public static class Sections
+    {
+        public const string ContentSection = "ContentSection";
+        public const string MediaSection = "MediaSection";
+        public const string SettingsSection = "SettingsSection";
+        public const string MembersSection = "MembersSection";
+        
+        public const string SectionAlias = "SectionAlias";
+    }
+    
     public static class Urls
     {
         public static class Account

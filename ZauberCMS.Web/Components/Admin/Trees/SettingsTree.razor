@@ -1,20 +1,29 @@
-﻿@using ZauberCMS.Core.Content.Commands
-<div class="rz-p-4">
+﻿@using ZauberCMS.Core
+@using ZauberCMS.Core.Content.Commands
+
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
+
+<div class="rz-pb-4">
     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content Types</RadzenText>
 </div>
 <RadzenTree Data="@ContentTypes" Change="@OnChange" @bind-Value="@Selection">
     <RadzenTreeLevel Expanded="@(_ => false)" HasChildren="@(_ => false)" TextProperty="Name"/>
 </RadzenTree>
-<div class="rz-p-4">
+<div class="rz-pb-4">
     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Component Views</RadzenText>
     <p>TODO</p>
 </div>
-<div class="rz-p-4">
+<div class="rz-pb-4">
     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Languages</RadzenText>
     <p>TODO</p>
 </div>
 
 @code {
+    
+    public string Heading => "";
+    public int SortOrder => 0;
+    public string SectionAlias => Constants.Sections.SettingsSection;
+    
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
 
     private List<ContentType> ContentTypes { get; set; } = [];
@@ -39,4 +48,8 @@
         }
     }
 
+    public void Dispose()
+    {
+        
+    }
 }

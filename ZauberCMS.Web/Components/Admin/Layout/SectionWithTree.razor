@@ -1,4 +1,5 @@
-﻿@inherits LayoutComponentBase
+﻿@using ZauberCMS.Core
+@inherits LayoutComponentBase
 
 <HeadContent>
     <style>
@@ -14,21 +15,30 @@
 <RadzenLayout>
     <RadzenHeader class="rz-background-color-primary-darker">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
+            <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
             <SectionOutlet SectionId="@Sections.HeaderBeginning"/>
             <RadzenIcon Icon="fingerprint"/>
-            <SectionLinks />
+            <SectionLinks/>
         </RadzenStack>
     </RadzenHeader>
-    <SectionOutlet SectionId="@Sections.SideBar"/>
+    <RadzenSidebar @bind-Expanded="@Expanded">
+        <SectionTrees SectionAlias="@(SectionAlias)" />
+        <SectionOutlet SectionId="@Sections.SideBar"/>
+    </RadzenSidebar>
     <RadzenBody>
             @Body
     </RadzenBody>
     <SectionOutlet SectionId="@Sections.Footer"/>
 </RadzenLayout>
 
-
 @code {
+    [CascadingParameter(Name = Constants.Sections.SectionAlias)] public string? SectionAlias { get; set; }
     
+    private bool Expanded { get; set; } = true;
+    private void ToggleSideBar()
+    {
+        Expanded = !Expanded;
+    }
     
     internal static class Sections
     {

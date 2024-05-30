@@ -7,7 +7,7 @@
             <Tabs>
                 @foreach (var sectionDashboard in Dashboards)
                 {
-                    <RadzenTabsItem Text="@(sectionDashboard.Value.Name)">
+                    <RadzenTabsItem Text="@(sectionDashboard.Value.TabName)">
                         <DynamicComponent Type="@sectionDashboard.Value.GetType()"/>
                     </RadzenTabsItem>
                 }

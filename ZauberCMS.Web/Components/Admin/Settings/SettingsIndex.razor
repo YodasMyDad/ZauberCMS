@@ -1,30 +1,16 @@
 ﻿@page "/admin/settings"
+@using ZauberCMS.Core
+@layout SectionWithTree
 
-@layout AdminLayout
+<CascadingValue Name="@(Constants.Sections.SectionAlias)" Value="@(Constants.Sections.SettingsSection)">
 
-<PageTitle>Settings</PageTitle>
+    <PageTitle>Settings</PageTitle>
 
-<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(args => NavigationManager.NavigateTo("/admin/createcontentype"))/>
-</RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+        <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(args => NavigationManager.NavigateTo("/admin/createcontentype"))/>
+    </RadzenStack>
 
-<SectionDashboards SectionAlias="SettingsSection" />
+    <SectionDashboards SectionAlias="@(Constants.Sections.SettingsSection)" />
 
-<SectionContent SectionId="AdminLayout.Sections.HeaderBeginning">
-    <RadzenSidebarToggle Click="@(() => ToggleSideBar())" />
-</SectionContent>
+</CascadingValue>
 
-<SectionContent SectionId="AdminLayout.Sections.SideBar">
-    <RadzenSidebar @bind-Expanded="@Expanded">
-        <SettingsTree />
-    </RadzenSidebar>
-</SectionContent>
-
-@code {
-    private bool Expanded { get; set; } = true;
-
-    public void ToggleSideBar()
-    {
-        Expanded = !Expanded;
-    }
-}

@@ -1,8 +1,8 @@
 ﻿namespace ZauberCMS.Core.Sections.Interfaces;
 
-public interface ISectionDashboard
+public interface ISectionNav : IDisposable
 {
-    string TabName { get; }
+    string Heading { get; }
     int SortOrder { get; }
     string SectionAlias { get; }
 }

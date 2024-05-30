@@ -1,6 +1,10 @@
 ﻿@page "/admin/media"
-@layout AdminLayout
+@using ZauberCMS.Core
+@layout SectionWithTree
+<CascadingValue Name="@(Constants.Sections.SectionAlias)" Value="@(Constants.Sections.MediaSection)">
 
-<PageTitle>Media</PageTitle>
+    <PageTitle>Media</PageTitle>
 
-<SectionDashboards SectionAlias="MediaSection" />
+    <SectionDashboards SectionAlias="@(Constants.Sections.MediaSection)" />
+    
+</CascadingValue>
