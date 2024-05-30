@@ -11,6 +11,7 @@ public class ContentTypeProperty
     public string? Component { get; set; }
     public string? Settings { get; set; }
     public bool IsRequired { get; set; }
+    public bool FullWidth { get; set; }
     public int SortOrder { get; set; }
     public Guid? TabId { get; set; }
 }

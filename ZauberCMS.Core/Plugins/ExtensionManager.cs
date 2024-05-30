@@ -6,9 +6,10 @@ namespace ZauberCMS.Core.Plugins
 {
     /// <summary>
     /// Represents the assembly cache with the mechanism of getting implementations or instances of a given type.
-    /// This is the global access point to the ExtCore type discovering mechanism.
     /// </summary>
-    /// This Extension manager is adapted from code found in https://github.com/ExtCore/ExtCore
+    /// <para>
+    /// This Extension manager is adapted from code found in https://github.com/ExtCore/ExtCore so all credit and kudos goes to them
+    /// </para>
     public class ExtensionManager
     {
         private readonly IServiceProvider _serviceProvider;

@@ -47,7 +47,7 @@
                                                 AllContentValues.TryGetValue(property.Id, out var contentValue);
                                                 if (contentValue != null)
                                                 {
-                                                    <EditorRow>
+                                                    <EditorRow FullWidth="@(property.FullWidth)">
                                                         <LeftColumn>
                                                             <RadzenLabel Style="font-weight: 600;font-size: 14px;" Text="@property.Name"/>
                                                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
@@ -137,7 +137,7 @@
 
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
-    
+
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     private Content Content { get; set; } = new() { IsRootContent = true };

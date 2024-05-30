@@ -8,11 +8,10 @@
 <SectionDashboards SectionAlias="@(Alias)"/>
 
 @code {
-    private const string Url = "/admin/members"; // So we only have on string
+    private const string Url = "/admin/members";
     public string Name => "Members";
     public string Alias => Constants.Sections.MembersSection;
     public string IndexUrl => Url;
-
     public int SortOrder => 3;
     public string DashboardAlias => "MembersDashboards";
     public string NavigationAlias => "MembersNavigation";
@@ -22,7 +21,6 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        Layout?.SetSection(Constants.Sections.MediaSection);
+        Layout?.SetSection(Alias);
     }
-
 }

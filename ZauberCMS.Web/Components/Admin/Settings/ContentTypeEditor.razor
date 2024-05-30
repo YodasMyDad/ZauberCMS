@@ -69,6 +69,10 @@
                                                         <RadzenSwitch @bind-Value="@property.IsRequired" Name="IsRequired"/>
                                                         <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired"/>
                                                     </RadzenStack>
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenSwitch @bind-Value="@property.FullWidth" Name="FullWidth"/>
+                                                        <RadzenLabel Text="Full Width" Style="font-size: 13px;" Component="FullWidth"/>
+                                                    </RadzenStack>
                                                     <RadzenTextArea Style="font-size: 12px; border: 0; padding-left: 0;" @bind-Value="@property.Description" Placeholder="Description..."/>
                                                 </LeftColumn>
                                                 <CentreColumn>
@@ -165,7 +169,7 @@
     {
         await base.OnInitializedAsync();
         
-        Layout?.SetSection(Constants.Sections.ContentSection);
+        Layout?.SetSection(Constants.Sections.SettingsSection);
         
         InitializeContentViews();
         

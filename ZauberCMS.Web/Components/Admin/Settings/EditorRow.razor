@@ -1,23 +1,33 @@
 ﻿<RadzenRow Gap="1rem" class="rz-pb-3 rz-mb-3" Style="border-bottom: 1px solid #e3e3e3">
-    <RadzenColumn Size="@(LeftColumnSize)" class="rz-p-1">
-        <RadzenStack Gap="0.5rem">
-            @LeftColumn
-        </RadzenStack>
-    </RadzenColumn>
+    @if (LeftColumn != null && !FullWidth)
+    {
+        <RadzenColumn Size="@(LeftColumnSize)" class="rz-p-1">
+            <RadzenStack Gap="0.5rem">
+                @LeftColumn
+            </RadzenStack>
+        </RadzenColumn>
+    }
+
     <RadzenColumn class="rz-p-1" Size="@(CentreColumnSize)">
+        @*@if (FullWidth)
+        {
+            @LeftColumn
+        }*@
         @CentreColumn
     </RadzenColumn>
+
     @if (RightColumn != null)
     {
         <RadzenColumn class="rz-p-1" Size="@(RightColumnSize)">
             <RadzenStack Gap="1" JustifyContent="JustifyContent.Center">
                 @RightColumn
             </RadzenStack>
-        </RadzenColumn>   
+        </RadzenColumn>
     }
 </RadzenRow>
 
 @code {
+    [Parameter] public bool FullWidth { get; set; }
     [Parameter] public int LeftColumnSize { get; set; } = 4;
     [Parameter] public int RightColumnSize { get; set; } = 1;
     [Parameter] public int CentreColumnSize { get; set; } = 7;
@@ -32,7 +42,11 @@
         {
             CentreColumnSize += RightColumnSize;
         }
-        
+
+        if (LeftColumn == null || FullWidth)
+        {
+            CentreColumnSize += LeftColumnSize;
+        }
     }
 
 }
