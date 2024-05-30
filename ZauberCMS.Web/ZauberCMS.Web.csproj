@@ -40,10 +40,12 @@
       <_ContentIncludedByDefault Remove="Components\Layout\ContentViews\HomeView.razor" />
       <_ContentIncludedByDefault Remove="Components\Layout\ContentViews\TextPageView.razor" />
       <_ContentIncludedByDefault Remove="Components\Layout\AdminLayout.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Sections\CustomMainDashboard.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Sections\CustomSectionIndex.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Sections\CustomSectionNav.razor" />
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Components\Admin\Layout\AdminLayout.razor" />
       <AdditionalFiles Include="Components\StarterSite\ContentViews\HomeView.razor" />
       <AdditionalFiles Include="Components\StarterSite\ContentViews\TextPageView.razor" />
     </ItemGroup>

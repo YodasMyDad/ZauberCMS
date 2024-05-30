@@ -18,3 +18,10 @@ IContentView
 IContentProperty  
 IContentPropertySettings
 IDataListSource
+ICustomContentComponent
+
+ISection
+ISectionDashboard
+ISectionNav
+
+Querying for data
