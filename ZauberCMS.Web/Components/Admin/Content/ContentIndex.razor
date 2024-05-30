@@ -1,22 +1,32 @@
-﻿@page "/admin/content"
+﻿@attribute [Route(Url)]
 @page "/admin"
 @using ZauberCMS.Core
 @layout SectionLayout
+@implements ZauberCMS.Core.Sections.Interfaces.ISection
 
-<PageTitle>Content</PageTitle>
+<PageTitle>@Name</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/admin/createcontent"))/>
 </RadzenStack>
 
-<SectionDashboards SectionAlias="@(Constants.Sections.ContentSection)"/>
+<SectionDashboards SectionAlias="@(Alias)"/>
 
 @code {
+    private const string Url = "/admin/content"; // So we only have on string
+    public string Name => "Content";
+    public string Alias => Constants.Sections.ContentSection;
+    public string IndexUrl => Url;
+
+    public int SortOrder => 0;
+    public string DashboardAlias => "ContentDashboards";
+    public string NavigationAlias => "ContentNavigation";
+    
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        Layout?.SetSection(Constants.Sections.ContentSection);
+        Layout?.SetSection(Alias);
     }
 }

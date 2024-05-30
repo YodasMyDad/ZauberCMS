@@ -4,8 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-Make index pages implement the section interface instead of classes!
-Make everything else pluggable (Sections, trees, Dashboards etc..) think about save events of properties too, change data before being saved and loaded
+Think about save events of properties too, change data before being saved and loaded
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
 Need a way from core to register things in startup
 Need a default storage thing too for quick easy storage

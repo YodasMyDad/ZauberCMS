@@ -1,12 +1,22 @@
-﻿@page "/admin/media"
+﻿@attribute [Route(Url)]
 @using ZauberCMS.Core
 @layout SectionLayout
+@implements ZauberCMS.Core.Sections.Interfaces.ISection
 
-<PageTitle>Media</PageTitle>
+<PageTitle>@Name</PageTitle>
 
-<SectionDashboards SectionAlias="@(Constants.Sections.MediaSection)"/>
+<SectionDashboards SectionAlias="@(Alias)"/>
 
 @code {
+    private const string Url = "/admin/media"; // So we only have on string
+    public string Name => "Media";
+    public string Alias => Constants.Sections.MediaSection;
+    public string IndexUrl => Url;
+
+    public int SortOrder => 1;
+    public string DashboardAlias => "MediaDashboards";
+    public string NavigationAlias => "MediaNavigation";
+    
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     protected override void OnInitialized()
