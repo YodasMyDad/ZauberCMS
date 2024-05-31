@@ -16,10 +16,7 @@
     public string Name => "Settings";
     public string Alias => Constants.Sections.SettingsSection;
     public string IndexUrl => Url;
-
     public int SortOrder => 2;
-    public string DashboardAlias => "SettingsDashboards";
-    public string NavigationAlias => "SettingsNavigation";
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 

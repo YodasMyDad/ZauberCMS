@@ -12,10 +12,7 @@
     public string Name => "Media";
     public string Alias => Constants.Sections.MediaSection;
     public string IndexUrl => Url;
-
     public int SortOrder => 1;
-    public string DashboardAlias => "MediaDashboards";
-    public string NavigationAlias => "MediaNavigation";
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 

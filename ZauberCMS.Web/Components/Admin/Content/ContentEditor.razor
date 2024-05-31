@@ -137,9 +137,7 @@
 
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
-
-    [CascadingParameter] protected SectionLayout? Layout { get; set; }
-
+    
     private Content Content { get; set; } = new() { IsRootContent = true };
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
@@ -147,7 +145,8 @@
     private Dictionary<string, string> AvailableContentViews { get; set; } = new();
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
-
+    
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
     protected override void OnInitialized()
     {
         base.OnInitialized();

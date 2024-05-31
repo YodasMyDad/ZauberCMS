@@ -17,10 +17,7 @@
     public string Name => "Content";
     public string Alias => Constants.Sections.ContentSection;
     public string IndexUrl => Url;
-
     public int SortOrder => 0;
-    public string DashboardAlias => "ContentDashboards";
-    public string NavigationAlias => "ContentNavigation";
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 

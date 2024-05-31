@@ -43,6 +43,9 @@
       <_ContentIncludedByDefault Remove="Components\StarterSite\Sections\CustomMainDashboard.razor" />
       <_ContentIncludedByDefault Remove="Components\StarterSite\Sections\CustomSectionIndex.razor" />
       <_ContentIncludedByDefault Remove="Components\StarterSite\Sections\CustomSectionNav.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Section\CustomSectionIndex.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Section\TestDashboard.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Section\TestNavItem.razor" />
     </ItemGroup>
 
     <ItemGroup>

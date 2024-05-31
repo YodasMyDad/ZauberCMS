@@ -6,6 +6,4 @@ public interface ISection
     string Alias { get; }
     string IndexUrl { get; }
     int SortOrder { get; }
-    string DashboardAlias { get; }
-    string NavigationAlias { get; }
 }
