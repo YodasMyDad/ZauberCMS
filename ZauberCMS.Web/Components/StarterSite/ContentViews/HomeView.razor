@@ -13,6 +13,7 @@
     All properties are available through Content.GetValue<string>("") if your value is saved as a type
     then you can call Content.GetValue<MyType>("")
 *@
+<DeleteMe />
 <h1>@(Content.GetValue<string>("Heading"))</h1>
 <div class="lead">
     @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
