@@ -2,20 +2,40 @@
 @using ZauberCMS.Core.Content.Commands
 
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
+<div class="rz-pb-2">
+    <div class="rz-px-4 rz-pt-4 rz-pb-1">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content Types</RadzenText>
+    </div>
+    <RadzenTree Data="@ContentTypes" Change="@OnChange" @bind-Value="@Selection">
+        <RadzenTreeLevel Expanded="@ShouldBeExpanded" TextProperty="Name">
+            <Template>
+                @{ var content = context.Value as ContentType; }
+                @if (content?.Icon.IsNullOrWhiteSpace() == false)
+                {
+                <RadzenIcon Icon="@content.Icon" style="font-weight: 300; color: dimgray;"/>
+                }
+                @content?.Name
+            </Template>
+        </RadzenTreeLevel>
+    </RadzenTree>
+</div>
 
-<div class="rz-pb-4">
-    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content Types</RadzenText>
-</div>
-<RadzenTree Data="@ContentTypes" Change="@OnChange" @bind-Value="@Selection">
-    <RadzenTreeLevel Expanded="@(_ => false)" HasChildren="@(_ => false)" TextProperty="Name"/>
-</RadzenTree>
-<div class="rz-pb-4">
-    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Component Views</RadzenText>
-    <p>TODO</p>
-</div>
-<div class="rz-pb-4">
-    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Languages</RadzenText>
-    <p>TODO</p>
+<div class="rz-pb-2">
+    <div class="rz-px-4 rz-pt-4 rz-pb-1">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Element Types</RadzenText>
+    </div>
+    <RadzenTree Data="@ElementTypes" Change="@OnChange" @bind-Value="@Selection">
+        <RadzenTreeLevel Expanded="@ShouldBeExpanded" TextProperty="Name">
+            <Template>
+                @{ var content = context.Value as ContentType; }
+                @if (content?.Icon.IsNullOrWhiteSpace() == false)
+                {
+                <RadzenIcon Icon="@content.Icon" style="font-weight: 300; color: dimgray;"/>
+                }
+                @content?.Name
+            </Template>
+        </RadzenTreeLevel>
+    </RadzenTree>
 </div>
 
 @code {
@@ -27,17 +47,29 @@
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
 
     private List<ContentType> ContentTypes { get; set; } = [];
+    private List<ContentType> ElementTypes { get; set; } = [];
     private object? Selection { get; set; }
 
+    private bool ShouldBeExpanded(object data)
+    {
+        /*if (data is Content content)
+        {
+            return HasChildren(content) && content.ParentId == null;
+        }*/
+
+        return false;
+    }
+    
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
         var items = await Mediator.Send(new GetContentTypesCommand
         {
             OrderBy = GetContentTypesOrderBy.Name,
-            AmountPerPage = 1000 // Probably should have a better way of doing this
+            AmountPerPage = 1000 // Meh
         });
-        ContentTypes = items.Items.ToList();
+        ContentTypes = items.Items.Where(x => x.IsElementType != true).ToList();
+        ElementTypes = items.Items.Where(x => x.IsElementType).ToList();
     }
     
     void OnChange()

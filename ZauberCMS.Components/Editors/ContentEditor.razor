@@ -104,7 +104,7 @@
                                 <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
                             </CentreColumn>
                         </EditorRow>
-                    </RadzenTabsItem>   
+                    </RadzenTabsItem>
                 }
             </Tabs>
         </RadzenTabs>
@@ -117,8 +117,8 @@
 else
 {
     <ListContentTypes OnContentTypeSelected="@UpdateContentTypeId"
-                      RootOnly="@RootOnly" 
-                      ElementTypesOnly="@IsBlockList"/>
+                      RootOnly="@RootOnly"
+                      ElementTypesOnly="@ElementTypesOnly"/>
 }
 
 @code {
@@ -133,7 +133,7 @@ else
     [Parameter] public bool? IsBlockList { get; set; }
     [Parameter] public Content? Content { get; set; }
     [Parameter] public EventCallback<Content> ContentChangedCallback { get; set; }
-    
+
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     private Dictionary<Guid, ContentValue> AllContentValues { get; set; } = new();
@@ -141,11 +141,12 @@ else
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
     private bool RootOnly => IsBlockList != true && ContentId == null && ParentId == null;
-    
+    private bool ElementTypesOnly => IsBlockList == true;
+
     protected override async Task OnParametersSetAsync()
     {
         AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        
+
         if (Content == null)
         {
             // If no content is passed in
@@ -169,7 +170,7 @@ else
                 {
                     IsRootContent = IsBlockList != true
                 };
-            }   
+            }
         }
         else
         {
@@ -250,18 +251,19 @@ else
     {
         if (Validated())
         {
-            var saveContentCommand = new SaveContentCommand { Content = [Content] };
-            var result = await Mediator.Send(saveContentCommand);
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
-        
-            if (result.Success)
+            if (IsBlockList == true)
             {
                 await ContentChangedCallback.InvokeAsync(Content);
                 // Not sure if this will cause a problem if this component is not in a dialog!
                 //DialogService.CloseSide();
             }
-        
-            await AppState.NotifyContentChanged();
+            else
+            {
+                var saveContentCommand = new SaveContentCommand { Content = [Content] };
+                var result = await Mediator.Send(saveContentCommand);
+                NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
+                await AppState.NotifyContentChanged();
+            }
         }
     }
 
