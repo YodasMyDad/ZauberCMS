@@ -1,0 +1,40 @@
+﻿@using Radzen
+@using ZauberCMS.Core.Content.Models
+@using Radzen.Blazor
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+@foreach (var content in ContentItems)
+{
+    <p>@content.Name</p>
+}
+
+<RadzenButton Click="@(() => AddContent())">Add Content</RadzenButton>
+
+@code {
+    public string Name { get; set; } = "Block List Editor";
+    public string Alias { get; set; } = "ZauberCMS.BlockListEditor";
+    public string Description { get; set; } = "Creates a list of content blocks";
+    public string Icon { get; set; } = "format_align_justify";
+    public Type? SettingsComponent { get; set; }
+
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+
+    [Inject] public DialogService DialogService { get; set; } = default!;
+
+    private List<Content> ContentItems { get; set; } = [];
+
+    private async Task AddContent()
+    {
+        /*var result = await DialogService.OpenSideAsync<ContentE>("Change Tab",
+            new Dictionary<string, object> { { "IsBlockList", true } },
+            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+
+        if (result is Guid newTabId)
+        {
+            
+        }*/
+    }
+}

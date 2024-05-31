@@ -12,8 +12,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Humanizer" Version="2.14.1" />
+        <PackageReference Include="MediatR" Version="12.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.4" />
-        <PackageReference Include="Radzen.Blazor" Version="4.31.5" />
+        <PackageReference Include="Radzen.Blazor" Version="4.32.3" />
     </ItemGroup>
 
     <ItemGroup>

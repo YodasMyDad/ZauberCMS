@@ -1,7 +1,12 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using Humanizer
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
+@using Microsoft.AspNetCore.Components.Forms
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Extensions
+@using ZauberCMS.Components.Editors.Dialogs
 
 @if (ContentType != null)
 {
@@ -123,8 +128,9 @@ else
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public bool? IsBlockList { get; set; }
-
-    private Content Content { get; set; } = new() { IsRootContent = true };
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public EventCallback<Content> ContentChangedCallback { get; set; }
+    
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     private Dictionary<Guid, ContentValue> AllContentValues { get; set; } = new();
@@ -136,16 +142,37 @@ else
     protected override async Task OnParametersSetAsync()
     {
         AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        if (ContentId != null)
+        
+        if (Content == null)
         {
-            Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value });
+            // If no content is passed in
+            if (ContentId != null)
+            {
+                Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value });
+                ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
+                SyncProperties(Content, ContentType);
+            }
+            else if (ParentId != null)
+            {
+                Content = new Content
+                {
+                    ParentId = ParentId,
+                    IsRootContent = false
+                };
+            }
+            else
+            {
+                Content = new Content
+                {
+                    IsRootContent = true
+                };
+            }   
+        }
+        else
+        {
+            // We have a content item passed in
             ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
             SyncProperties(Content, ContentType);
-        }
-        else if (ParentId != null)
-        {
-            Content.ParentId = ParentId;
-            Content.IsRootContent = false;
         }
     }
 
@@ -223,6 +250,12 @@ else
             var saveContentCommand = new SaveContentCommand { Content = [Content] };
             var result = await Mediator.Send(saveContentCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
+        
+            if (result.Success)
+            {
+                await ContentChangedCallback.InvokeAsync(Content);
+            }
+        
             await AppState.NotifyContentChanged();
         }
     }
