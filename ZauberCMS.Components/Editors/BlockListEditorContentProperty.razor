@@ -1,14 +1,15 @@
-﻿@using Radzen
-@using ZauberCMS.Core.Content.Models
-@using Radzen.Blazor
+﻿@using ZauberCMS.Core.Content.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-@foreach (var content in ContentItems)
-{
-    <p>@content.Name</p>
-}
-
-<RadzenButton Click="@(() => AddContent())">Add Content</RadzenButton>
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+    @foreach (var content in ContentItems)
+    {
+        <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center" Style="height: 100px; width: 100%;">
+            @content.Name
+        </RadzenCard>
+    }
+    <RadzenButton Click="@(() => AddContent())">Add Content</RadzenButton>
+</RadzenStack>
 
 @code {
     public string Name { get; set; } = "Block List Editor";
@@ -28,13 +29,16 @@
 
     private async Task AddContent()
     {
-        /*var result = await DialogService.OpenSideAsync<ContentE>("Change Tab",
-            new Dictionary<string, object> { { "IsBlockList", true } },
+        var result = await DialogService.OpenSideAsync<ContentEditor>("Add Content",
+            new Dictionary<string, object> { { "IsBlockList", true }, { "ContentChangedCallback", EventCallback.Factory.Create<Content>(this, OnContentChanged) } },
             new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
-
-        if (result is Guid newTabId)
-        {
-            
-        }*/
     }
+
+    private void OnContentChanged(Content newContent)
+    {
+        // This could be an issue and close dialogs on property editors!
+        DialogService.CloseSide();
+        ContentItems.Add(newContent);
+    }
+
 }

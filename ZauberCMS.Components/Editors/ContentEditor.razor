@@ -66,43 +66,46 @@
                     </RadzenTabsItem>
                 }
 
-                <RadzenTabsItem Text="System">
-                    <EditorRow>
-                        <LeftColumn>
-                            <RadzenLabel Text="Id"/>
-                        </LeftColumn>
-                        <CentreColumn>
-                            @Content.Id
-                        </CentreColumn>
-                    </EditorRow>
+                @if (IsBlockList != true)
+                {
+                    <RadzenTabsItem Text="System">
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Id"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                @Content.Id
+                            </CentreColumn>
+                        </EditorRow>
 
-                    <EditorRow>
-                        <LeftColumn>
-                            <RadzenLabel Text="Url"/>
-                        </LeftColumn>
-                        <CentreColumn>
-                            <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
-                        </CentreColumn>
-                    </EditorRow>
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Url"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
+                            </CentreColumn>
+                        </EditorRow>
 
-                    <EditorRow>
-                        <LeftColumn>
-                            <RadzenLabel Text="Internal Redirect Id"/>
-                        </LeftColumn>
-                        <CentreColumn>
-                            <RadzenTextBox Style="width: 100%;" Name="InternalRedirectId" @bind-Value="@Content.InternalRedirectIdAsString"/>
-                        </CentreColumn>
-                    </EditorRow>
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Internal Redirect Id"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenTextBox Style="width: 100%;" Name="InternalRedirectId" @bind-Value="@Content.InternalRedirectIdAsString"/>
+                            </CentreColumn>
+                        </EditorRow>
 
-                    <EditorRow>
-                        <LeftColumn>
-                            <RadzenLabel Text="Content View"/>
-                        </LeftColumn>
-                        <CentreColumn>
-                            <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
-                        </CentreColumn>
-                    </EditorRow>
-                </RadzenTabsItem>
+                        <EditorRow>
+                            <LeftColumn>
+                                <RadzenLabel Text="Content View"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
+                            </CentreColumn>
+                        </EditorRow>
+                    </RadzenTabsItem>   
+                }
             </Tabs>
         </RadzenTabs>
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
@@ -137,7 +140,7 @@ else
     private Dictionary<string, string> AvailableContentViews { get; set; } = new();
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
-    private bool RootOnly => ContentId == null && ParentId == null;
+    private bool RootOnly => IsBlockList != true && ContentId == null && ParentId == null;
     
     protected override async Task OnParametersSetAsync()
     {
@@ -164,7 +167,7 @@ else
             {
                 Content = new Content
                 {
-                    IsRootContent = true
+                    IsRootContent = IsBlockList != true
                 };
             }   
         }
@@ -254,6 +257,8 @@ else
             if (result.Success)
             {
                 await ContentChangedCallback.InvokeAsync(Content);
+                // Not sure if this will cause a problem if this component is not in a dialog!
+                //DialogService.CloseSide();
             }
         
             await AppState.NotifyContentChanged();
