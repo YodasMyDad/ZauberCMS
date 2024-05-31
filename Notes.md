@@ -3,11 +3,8 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Set @attribute [StreamRendering] for font end pages
-@rendermode InteractiveServer FALSE rendering (remove from Routes) for all admin pages
-
-Change contenttype dialog to list only elements or contenttypes or both
 Block List Editor - Re-use contenteditor, and open in dialog, need to have parameters for Content
+
 Think about save events of properties too, change data before being saved and loaded
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
 Sort AppState events, on things like deleted etc.. Is the naming correct

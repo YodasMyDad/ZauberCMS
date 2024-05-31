@@ -21,13 +21,16 @@
     [Inject] public DialogService DialogService { get; set; } = default!;
 
     [Parameter] public bool RootOnly { get; set; }
+    [Parameter] public bool? ElementTypesOnly { get; set; }
+    [Parameter] public EventCallback<Guid> OnContentTypeSelected { get; set; } // add this line
     
     private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
     private Guid SelectedContentTypeId { get; set; }
 
+
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new GetContentTypesCommand { AmountPerPage = int.MaxValue, RootOnly = RootOnly});
+        var items = await Mediator.Send(new GetContentTypesCommand { AmountPerPage = int.MaxValue, RootOnly = RootOnly, ElementTypesOnly = ElementTypesOnly});
         ContentTypes = items.Items; 
 
         StateHasChanged();
@@ -35,7 +38,7 @@
 
     private void OnPropertySelected()
     {
-        DialogService.CloseSide(SelectedContentTypeId);
+        OnContentTypeSelected.InvokeAsync(SelectedContentTypeId);
     }
 
 }

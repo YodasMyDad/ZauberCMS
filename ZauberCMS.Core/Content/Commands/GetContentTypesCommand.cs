@@ -7,9 +7,7 @@ namespace ZauberCMS.Core.Content.Commands;
 
 public class GetContentTypesCommand : IRequest<PaginatedList<ContentType>>
 {
-    public GetContentTypesCommand()
-    {
-    }
+    public bool? ElementTypesOnly { get; set; }
     public bool RootOnly { get; set; }
     public bool AsNoTracking { get; set; } = true;
     

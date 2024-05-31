@@ -120,9 +120,8 @@
     }
     else
     {
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0;">
-            <RadzenButton Variant="Variant.Filled" Text="Choose Content Type" Click="@ChooseContentType"/>
-        </RadzenStack>
+        <ListContentTypes OnContentTypeSelected="@UpdateContentTypeId" 
+                          RootOnly="@(ContentId == null && ParentId == null)" />
     }
 
 </RadzenPanel>
@@ -222,25 +221,18 @@
         AllContentValues = Content.ContentPropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
         AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
     }
-
-    private async Task ChooseContentType()
+    
+    private async Task UpdateContentTypeId(Guid contentTypeId)
     {
-        var rootOnly = ContentId == null && ParentId == null;
-        var result = await DialogService.OpenSideAsync<ListContentTypes>("Choose Content Type",
-            new Dictionary<string, object> { { "RootOnly", rootOnly } },
-            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
-        if (result is Guid contentTypeId)
+        ContentType = await Mediator.Send(new GetContentTypeCommand { Id = contentTypeId });
+
+        // Need to set the ContentType is this is new content
+        if (ContentId == null)
         {
-            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = contentTypeId });
-
-            // Need to set the ContentType is this is new content
-            if (ContentId == null)
-            {
-                Content.ContentTypeId = ContentType.Id;
-            }
-
-            SyncProperties(Content, ContentType);
+            Content.ContentTypeId = ContentType.Id;
         }
+
+        SyncProperties(Content, ContentType);
     }
 
     private async Task Save()
