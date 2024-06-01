@@ -4,7 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 Block List Editor - Re-use contenteditor, and open in dialog, need to have parameters for Content
-
+Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
 Think about save events of properties too, change data before being saved and loaded
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
 Sort AppState events, on things like deleted etc.. Is the naming correct
@@ -24,6 +24,7 @@ Move ContentValue to EF Core as string too big to save Lists
 multi URL picker
 multinode treepicker
 media picker
+Need to delete all migrations, create one and see if it works with SQLite
 Update ReadMe and add docs
 
 
