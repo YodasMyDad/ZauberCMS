@@ -185,9 +185,7 @@
     
     private async Task SelectIcon()
     {
-        var result = await DialogService.OpenSideAsync<ListMaterialIconsDialog>("Choose Icon",
-            new Dictionary<string, object>(),
-            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+        var result = await DialogService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
         if (result is string icon)
         {
             ContentType.Icon = icon;
@@ -317,10 +315,9 @@
 
     private async Task ChangeTab(ContentTypeProperty property)
     {
-        var result = await DialogService.OpenSideAsync<ChangeTab>("Change Tab",
-            new Dictionary<string, object> { { "ContentTypeId", ContentType.Id }, { "Tabs", ContentType.Tabs.OrderBy(x => x.SortOrder).ToList() } },
-            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
-
+        
+        var result = await DialogService.OpenSidePanel<ChangeTab>("Change Tab", 
+            new Dictionary<string, object> { { "ContentTypeId", ContentType.Id }, { "Tabs", ContentType.Tabs.OrderBy(x => x.SortOrder).ToList() } });
         if (result is Guid newTabId)
         {
             property.TabId = newTabId;
@@ -330,9 +327,8 @@
 
     private async Task Settings(ContentTypeProperty property)
     {
-        var result = await DialogService.OpenSideAsync<ContentTypePropertySettingsEditor>("Edit Settings",
-            new Dictionary<string, object> { { "ContentTypeProperty", property } },
-            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+        var result = await DialogService.OpenSidePanel<ContentTypePropertySettingsEditor>("Edit Settings", 
+            new Dictionary<string, object> { { "ContentTypeProperty", property } });
         if (result is string settings)
         {
             property.Settings = settings;
@@ -404,10 +400,8 @@
 
     private async Task AddTab()
     {
-        var result = await DialogService.OpenSideAsync<AddTab>("Add Tab",
-            new Dictionary<string, object>(),
-            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
-
+        var result = await DialogService.OpenSidePanel<AddTab>("Add Tab");
+        
         if (result is string name && !string.IsNullOrWhiteSpace(name))
         {
             // Create a new tab with the provided name
@@ -430,10 +424,8 @@
 
     private async Task AddProperty()
     {
-        var result = await DialogService.OpenSideAsync<ListContentTypeProperties>("Add Property",
-            new Dictionary<string, object>(),
-            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
 
+        var result = await DialogService.OpenSidePanel<ListContentTypeProperties>("Add Property");
         if (result is IContentProperty property)
         {
             var tabToAddTo = TabIndex[SelectedTabIndex];

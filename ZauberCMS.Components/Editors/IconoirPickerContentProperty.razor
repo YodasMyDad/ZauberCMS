@@ -29,9 +29,7 @@
 
     private async Task ChooseIcon()
     {
-        var result = await DialogService.OpenSideAsync<ListIconoirDialog>("Choose Icon",
-            new Dictionary<string, object>(),
-            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+        var result = await DialogService.OpenSidePanel<ListIconoirDialog>("Choose Icon");
         if (result is string icon)
         {
             Value = icon;

@@ -1,4 +1,6 @@
-﻿@using ZauberCMS.Core.Content.Models
+﻿@using System.Text.Json
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Extensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
@@ -27,18 +29,27 @@
 
     private List<Content> ContentItems { get; set; } = [];
 
-    private async Task AddContent()
+    protected override void OnInitialized()
     {
-        var result = await DialogService.OpenSideAsync<ContentEditor>("Add Content",
-            new Dictionary<string, object> { { "IsBlockList", true }, { "ContentChangedCallback", EventCallback.Factory.Create<Content>(this, OnContentChanged) } },
-            new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
+        base.OnInitialized();
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? [];   
+        }
     }
 
-    private void OnContentChanged(Content newContent)
+    private async Task AddContent()
     {
-        // This could be an issue and close dialogs on property editors!
-        DialogService.CloseSide();
-        ContentItems.Add(newContent);
+        var result = await DialogService.OpenSidePanel<ContentEditor>("Add Content", new Dictionary<string, object> { { "IsBlockList", true } });
+        
+        if (result is Content content)
+        {
+            // This could be an issue and close dialogs on property editors!
+            DialogService.CloseSide();
+            ContentItems.Add(content);
+            Value = JsonSerializer.Serialize(ContentItems);
+            await ValueChanged.InvokeAsync(Value);
+        }
     }
 
 }

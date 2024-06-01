@@ -132,7 +132,6 @@ else
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public bool? IsBlockList { get; set; }
     [Parameter] public Content? Content { get; set; }
-    [Parameter] public EventCallback<Content> ContentChangedCallback { get; set; }
 
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
@@ -253,9 +252,7 @@ else
         {
             if (IsBlockList == true)
             {
-                await ContentChangedCallback.InvokeAsync(Content);
-                // Not sure if this will cause a problem if this component is not in a dialog!
-                //DialogService.CloseSide();
+                DialogService.CloseSide(Content);
             }
             else
             {

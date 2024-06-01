@@ -138,16 +138,15 @@
                             else
                             {
                                 // Show side panel with sorting of children (Can I use a Radzen component?)
-                                var result = await DialogService.OpenSideAsync<SortContent>("Sort Children",
-                                    new Dictionary<string, object>{ { "ContentId", dbContent.Id }, {"Content", dbContent.Children.OrderBy(x => x.SortOrder).ToList()} },
-                                    new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = DialogPosition.Right, ShowMask = true });
-        
+                                var result = await DialogService.OpenSidePanel<SortContent>("Sort Children", 
+                                    new Dictionary<string, object>{ { "ContentId", dbContent.Id }, {"Content", dbContent.Children.OrderBy(x => x.SortOrder).ToList()} });
+                                
                                 if (result is List<Content> sortedContent)
                                 {
                                     var saveResult = await Mediator.Send(new SaveContentCommand {Content = sortedContent});
                                     if (!saveResult.Success)
                                     {
-                                        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+                                        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveResult.Messages.MessagesAsString(), Duration = 4000 });
                                     }
                                     else
                                     {
