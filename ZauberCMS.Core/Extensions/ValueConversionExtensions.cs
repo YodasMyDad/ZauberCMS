@@ -8,7 +8,7 @@ namespace ZauberCMS.Core.Extensions;
 
 public static class ValueConversionExtensions
 {
-    public static void ToJsonConversion<T>(this PropertyBuilder<T> propertyBuilder, int columnSize)
+    public static void ToJsonConversion<T>(this PropertyBuilder<T> propertyBuilder, int? columnSize = null)
         where T : class, new()
     {
         // Explicitly set JsonSerializerOptions to prevent indentation
@@ -33,7 +33,23 @@ public static class ValueConversionExtensions
         propertyBuilder.HasConversion(converter);
         propertyBuilder.Metadata.SetValueConverter(converter);
         propertyBuilder.Metadata.SetValueComparer(comparer);
-        propertyBuilder.HasColumnType($"nvarchar({columnSize})");
-        propertyBuilder.HasMaxLength(columnSize);
+
+        if (columnSize == null)
+        {
+            propertyBuilder.HasColumnType("nvarchar(MAX)");
+            
+            /*// Get an instance of your context
+            var contextFactory = new ZauberContextFactory();
+            using var context = contextFactory.CreateDbContext(Array.Empty<string>());
+
+            // Determine the provider
+            var isSqlite = context.Database.ProviderName.EndsWith("Sqlite");
+            var isSqlServer = context.Database.ProviderName.EndsWith("SqlServer");*/
+        }
+        else
+        {
+            propertyBuilder.HasColumnType($"nvarchar({columnSize})");
+            propertyBuilder.HasMaxLength(columnSize.Value);   
+        }
     }
 }
