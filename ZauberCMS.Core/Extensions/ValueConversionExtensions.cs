@@ -38,6 +38,8 @@ public static class ValueConversionExtensions
 
         if (columnSize == null)
         {
+            //TODO - This is likely to be an issue for extension developers?
+            
             // Get an instance of your context
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
         

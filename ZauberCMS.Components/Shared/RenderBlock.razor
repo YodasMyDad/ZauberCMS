@@ -3,14 +3,13 @@
 
 @if (Content != null && BlockViews != null)
 {
-    var contentTypeAlias = Content.ContentType?.Alias;
+    var contentTypeAlias = Content.ContentTypeAlias;
 
     var blockViewPair = BlockViews.FirstOrDefault(pair => pair.Key.Split('.').Last() == contentTypeAlias);
     if (blockViewPair.Value != null)
     {
-        <DynamicComponent Parameters="@(new Dictionary<string, object> { { "Content", Content } })" Type="@blockViewPair.Value.GetType()"/>
+        <DynamicComponent Parameters="@(new Dictionary<string, object> { { "Content", Content } })" Type="@blockViewPair.Value.GetType()" />
     }
-}
 }
 
 @code
