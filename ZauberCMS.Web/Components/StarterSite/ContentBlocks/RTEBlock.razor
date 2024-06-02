@@ -1,0 +1,11 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+@if (Content != null)
+{
+    <div class="blockrte">
+        @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
+    </div>
+}
+
+@code {
+    [Parameter] public Content? Content { get; set; }
+}

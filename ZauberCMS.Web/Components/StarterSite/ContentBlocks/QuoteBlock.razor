@@ -1,0 +1,18 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+@if (Content != null)
+{
+    <figure class="text-center">
+        <blockquote class="blockquote">
+            <p>@(Content.GetValue<string>("Quote"))</p>
+        </blockquote>
+        @*<figcaption class="blockquote-footer">
+            Someone famous in <cite title="Source Title">Source Title</cite>
+        </figcaption>*@
+    </figure>    
+}
+
+@code{
+
+    [Parameter] public Content? Content { get; set; }
+
+}

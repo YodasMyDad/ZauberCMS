@@ -14,10 +14,7 @@ public class SaveContentTypeHandler(
     IMapper mapper)
     : IRequestHandler<SaveContentTypeCommand, HandlerResult<ContentType>>
 {
-    private readonly SlugHelper _slugHelper = new(new SlugHelper.Config
-    {
-        CharacterReplacements = new Dictionary<string, string> {{" ", "."}}
-    });
+
     
     public async Task<HandlerResult<ContentType>> Handle(SaveContentTypeCommand request, CancellationToken cancellationToken)
     {
@@ -30,7 +27,7 @@ public class SaveContentTypeHandler(
         {
             if (request.ContentType.Alias.IsNullOrWhiteSpace())
             {
-                request.ContentType.Alias = _slugHelper.GenerateSlug(request.ContentType.Name);
+                request.ContentType.Alias = request.ContentType.Name.ToAlias();
             }
             
             // Get the DB version

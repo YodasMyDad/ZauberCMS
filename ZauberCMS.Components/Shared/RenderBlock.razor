@@ -1,0 +1,26 @@
+﻿@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Plugins
+
+@if (Content != null && BlockViews != null)
+{
+    var contentTypeAlias = Content.ContentType?.Alias;
+
+    var blockViewPair = BlockViews.FirstOrDefault(pair => pair.Key.Split('.').Last() == contentTypeAlias);
+    if (blockViewPair.Value != null)
+    {
+        <DynamicComponent Parameters="@(new Dictionary<string, object> { { "Content", Content } })" Type="@blockViewPair.Value.GetType()"/>
+    }
+}
+}
+
+@code
+{
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Parameter] public Content? Content { get; set; }
+    private Dictionary<string, IContentBlockView>? BlockViews { get; set; }
+
+    protected override void OnInitialized()
+    {
+        BlockViews = ExtensionManager.GetInstances<IContentBlockView>(true);
+    }
+}

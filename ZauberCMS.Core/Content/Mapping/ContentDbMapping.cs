@@ -13,6 +13,7 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.Property(x => x.Id).IsRequired();
         builder.Property(x => x.Name).HasMaxLength(1000);
         builder.Property(x => x.Url).HasMaxLength(1000);
+        builder.Property(x => x.ContentTypeAlias).HasMaxLength(1000);
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
         builder.Property(x => x.ViewComponent).HasMaxLength(1000);

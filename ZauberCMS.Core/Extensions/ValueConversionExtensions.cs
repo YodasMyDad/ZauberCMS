@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Configuration;
+using ZauberCMS.Core.Data;
 
 namespace ZauberCMS.Core.Extensions;
 
@@ -36,15 +38,25 @@ public static class ValueConversionExtensions
 
         if (columnSize == null)
         {
-            propertyBuilder.HasColumnType("nvarchar(MAX)");
-            
-            /*// Get an instance of your context
-            var contextFactory = new ZauberContextFactory();
-            using var context = contextFactory.CreateDbContext(Array.Empty<string>());
+            // Get an instance of your context
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        
+            // Build configuration
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS.Web"))
+                .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appSettings.{environment}.json", optional: true)
+                .Build();
+        
+            // Get the connection string and provider from configuration
+            var section = configuration.GetSection("Zauber");
+            var databaseProvider = section.GetValue<string>("DatabaseProvider");
 
             // Determine the provider
-            var isSqlite = context.Database.ProviderName.EndsWith("Sqlite");
-            var isSqlServer = context.Database.ProviderName.EndsWith("SqlServer");*/
+            propertyBuilder.HasColumnType(
+                databaseProvider?.EndsWith("Sqlite", StringComparison.OrdinalIgnoreCase) == true
+                    ? "TEXT"
+                    : "nvarchar(MAX)");
         }
         else
         {
