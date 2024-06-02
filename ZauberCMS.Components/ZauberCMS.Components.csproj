@@ -26,4 +26,26 @@
       <Folder Include="wwwroot\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AdditionalFiles Include="Admin\ContentSection\ContentIndex.razor" />
+      <AdditionalFiles Include="Admin\ContentSection\EditContent.razor" />
+      <AdditionalFiles Include="Admin\Dashboards\MainContentDashboard.razor" />
+      <AdditionalFiles Include="Admin\Dashboards\MainSettingsDashboard.razor" />
+      <AdditionalFiles Include="Admin\Layout\SectionDashboards.razor" />
+      <AdditionalFiles Include="Admin\Layout\SectionLayout.razor" />
+      <AdditionalFiles Include="Admin\Layout\SectionLinks.razor" />
+      <AdditionalFiles Include="Admin\Layout\SectionTrees.razor" />
+      <AdditionalFiles Include="Admin\MediaSection\MediaIndex.razor" />
+      <AdditionalFiles Include="Admin\MembersSection\MembersIndex.razor" />
+      <AdditionalFiles Include="Admin\SettingsSection\ContentTypeEditor.razor" />
+      <AdditionalFiles Include="Admin\SettingsSection\Dialogs\AddTab.razor" />
+      <AdditionalFiles Include="Admin\SettingsSection\Dialogs\ChangeTab.razor" />
+      <AdditionalFiles Include="Admin\SettingsSection\Dialogs\ContentTypePropertySettingsEditor.razor" />
+      <AdditionalFiles Include="Admin\SettingsSection\Dialogs\ListContentTypeProperties.razor" />
+      <AdditionalFiles Include="Admin\SettingsSection\Dialogs\SortContent.razor" />
+      <AdditionalFiles Include="Admin\SettingsSection\SettingsIndex.razor" />
+      <AdditionalFiles Include="Admin\Trees\ContentTree.razor" />
+      <AdditionalFiles Include="Admin\Trees\SettingsTree.razor" />
+    </ItemGroup>
+
 </Project>

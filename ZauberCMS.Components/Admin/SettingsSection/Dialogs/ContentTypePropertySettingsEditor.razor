@@ -23,7 +23,6 @@ else
     
     protected override void OnInitialized()
     {
-        base.OnInitialized();
         AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if(ContentTypeProperty.Component != null && AllContentTypeProperties.TryGetValue(ContentTypeProperty.Component, out var contentProperty))
         {

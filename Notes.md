@@ -4,6 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 Block List Editor - Re-use contenteditor, and open in dialog, need to have parameters for Content
+
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
 Think about save events of properties too, change data before being saved and loaded
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
@@ -27,12 +28,3 @@ media picker
 Need to delete all migrations, create one and see if it works with SQLite
 Update ReadMe and add docs
 
-
-Static server-side rendering (static SSR)
-By default, components use static server-side rendering (static SSR). The component renders to the response stream and interactivity isn't enabled.
-
-In the following example, there's no designation for the component's render mode, so the component inherits its render mode from its parent. 
-Since no ancestor component specifies a render mode, the following component is statically rendered on the server. The button isn't interactive and doesn't 
-call the UpdateMessage method when selected. The value of message doesn't change, and the component isn't rerendered in response to UI events.
-
-Maybe need to change, especially in the head? 

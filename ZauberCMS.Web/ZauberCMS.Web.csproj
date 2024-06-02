@@ -8,7 +8,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
-      <ProjectReference Include="..\ZauberCMS.Core\ZauberCMS.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -46,6 +45,26 @@
       <_ContentIncludedByDefault Remove="Components\StarterSite\Section\CustomSectionIndex.razor" />
       <_ContentIncludedByDefault Remove="Components\StarterSite\Section\TestDashboard.razor" />
       <_ContentIncludedByDefault Remove="Components\StarterSite\Section\TestNavItem.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Content\ContentIndex.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Content\EditContent.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Dashboards\MainContentDashboard.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Dashboards\MainSettingsDashboard.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Layout\SectionDashboards.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Layout\SectionLayout.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Layout\SectionLinks.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Layout\SectionTrees.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Media\MediaIndex.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Members\MembersIndex.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Settings\ContentTypeEditor.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Settings\Dialogs\AddTab.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Settings\Dialogs\ChangeTab.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Settings\Dialogs\ContentTypePropertySettingsEditor.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Settings\Dialogs\ListContentTypeProperties.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Settings\Dialogs\SortContent.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Settings\SettingsIndex.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Trees\ContentTree.razor" />
+      <_ContentIncludedByDefault Remove="Components\Admin\Trees\SettingsTree.razor" />
+      <_ContentIncludedByDefault Remove="Components\Content\RenderCustomContent.razor" />
     </ItemGroup>
 
     <ItemGroup>

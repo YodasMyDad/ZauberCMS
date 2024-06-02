@@ -23,7 +23,6 @@
     private int SelectedIndex { get; set; }
     protected override void OnInitialized()
     {
-        base.OnInitialized();
         var sectionDashboards = ExtensionManager.GetInstances<ISectionDashboard>(true);
         Dashboards = sectionDashboards.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
     }

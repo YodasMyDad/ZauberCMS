@@ -31,7 +31,6 @@
 
     protected override void OnInitialized()
     {
-        base.OnInitialized();
         if (!Value.IsNullOrWhiteSpace())
         {
             ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? [];   

@@ -16,11 +16,6 @@
     [Parameter] public Guid ContentId { get; set; }
     [Parameter] public List<Content> Content { get; set; } = [];
     bool _isDescending = false;
-    
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-    }
 
     private void Sort()
     {

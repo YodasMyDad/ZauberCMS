@@ -30,10 +30,10 @@ public class DefaultAssemblyProvider
   {
     this.logger = serviceProvider.GetService<ILoggerFactory>()!.CreateLogger("ZauberCMS.Core");
     this.IsCandidateAssembly = assembly =>
-      assembly.FullName!.StartsWith("Zauber", StringComparison.OrdinalIgnoreCase);
+      assembly.FullName!.StartsWith("ZauberCMS", StringComparison.OrdinalIgnoreCase);
 
         this.IsCandidateCompilationLibrary = library =>
-      library.Name.StartsWith("Zauber", StringComparison.OrdinalIgnoreCase);
+      library.Name.StartsWith("ZauberCMS", StringComparison.OrdinalIgnoreCase);
   }
 
   /// <summary>

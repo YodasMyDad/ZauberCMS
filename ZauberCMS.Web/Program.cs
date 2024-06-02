@@ -48,6 +48,7 @@ builder.Services.AddScoped<ProviderService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
 
+builder.Services.AddSingleton<LayoutResolverService>();
 builder.Services.AddSingleton<AppState>();
 
 builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));

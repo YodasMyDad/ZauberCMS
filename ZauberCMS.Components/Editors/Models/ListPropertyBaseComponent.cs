@@ -26,8 +26,6 @@ public class ListPropertyBaseComponent : ComponentBase
 
     protected override void OnInitialized()
     {
-        base.OnInitialized();
-
         if (!Value.IsNullOrWhiteSpace())
         {
             //TODO - Must be a better way to do this :/

@@ -1,5 +1,30 @@
-﻿@using MediatR
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
-@using Radzen
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using ZauberCMS.Components
+@using ZauberCMS.Components.Shared
+@using ZauberCMS.Components.Editors
+@using ZauberCMS.Components.DataSources
+@using ZauberCMS.Components.Admin
+@using ZauberCMS.Components.Admin.SettingsSection
+@using ZauberCMS.Components.Admin.SettingsSection.Dialogs
+@using ZauberCMS.Components.Admin.ContentSection
+@using ZauberCMS.Components.Admin.MembersSection
+@using ZauberCMS.Components.Admin.MediaSection
+@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Components.Admin.Layout
+@using ZauberCMS.Core.Extensions
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Components.Editors
+@using Microsoft.AspNetCore.Components.Sections
+@using Humanizer
+@using MediatR
+@using Radzen 
 @using Radzen.Blazor
 @inject IMediator Mediator
+@inject NavigationManager NavigationManager

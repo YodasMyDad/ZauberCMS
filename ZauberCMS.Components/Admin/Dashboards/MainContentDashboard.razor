@@ -1,15 +1,16 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
-<RadzenDataGrid AllowFiltering="true"
+<RadzenDataGrid AllowFiltering="false"
                 FilterPopupRenderMode="PopupRenderMode.OnDemand"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="true"
+                AllowPaging="false"
                 PageSize="20"
                 AllowSorting="true"
-                Data="@ContentTypes"
+                Data="@Contents"
                 SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((ContentType value) => OnRowSelect(value))">
+                RowSelect="@((Content value) => OnRowSelect(value))">
+    @*@bind-Value="@SelectedContent"*@
     <Columns>
         <RadzenDataGridColumn Property="Name" Title="Name"/>
         <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
@@ -21,24 +22,27 @@
 </RadzenDataGrid>
 
 @code {
-    public string TabName => "Latest ContentTypes";
+    public string TabName => "Latest Content";
     public int SortOrder => 0;
-    public string SectionAlias => "SettingsSection";
+    public string SectionAlias => "ContentSection";
     
-    private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
-    
+    private IEnumerable<Content> Contents { get; set; } = Enumerable.Empty<Content>();
+
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
-        var items = await Mediator.Send(new GetContentTypesCommand{AmountPerPage = 1000});
-        ContentTypes = items.Items;
+        var items = await Mediator.Send(new GetContentsCommand
+        {
+            AmountPerPage = 20,
+            OrderBy = GetContentsOrderBy.DateUpdatedDescending
+        });
+        Contents = items.Items;
     }
-    
+
     private void OnRowSelect(object value)
     {
-        if (value is ContentType selectedRow)
+        if (value is Content selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontentype/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}");
         }
     }
 }

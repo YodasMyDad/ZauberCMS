@@ -31,7 +31,6 @@
     
     protected override void OnInitialized()
     {
-        base.OnInitialized();
         if (!Settings.IsNullOrWhiteSpace())
         {
             SettingsModel = JsonSerializer.Deserialize<TextContentSettingsModel>(Settings) ?? new TextContentSettingsModel();

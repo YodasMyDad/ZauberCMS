@@ -4,12 +4,19 @@
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Shared.Services
 
-@if (Content != null)
+@if (isAdminPage)
 {
-    if(ComponentView != null)
+    <!-- Render nothing for admin pages to avoid flashing text -->
+}
+else if (Content != null)
+{
+    if (ComponentView != null)
     {
-        <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />   
+        <LayoutView Layout="layoutType">
+            <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />
+        </LayoutView>
     }
     else
     {
@@ -21,32 +28,42 @@ else
 {
     <p>Whooops, we can't find that page!</p>
     <p>This needs to be a component that returns a 404 status code</p>
+    <p>Need a self contained and styled component</p>
 }
 
 @code {
-    
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public LayoutResolverService LayoutResolver { get; set; } = default!;
     
     [Parameter] public string? Slug { get; set; }
-    
+
     private Content? Content { get; set; }
     private Dictionary<string, IContentView> AllContentViews { get; set; } = new();
     private IContentView? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
-    
+    private Type layoutType;
+    private bool isAdminPage;
+
     protected override async Task OnParametersSetAsync()
     {
+        // Exclude admin paths with case-insensitive comparison
+        isAdminPage = Slug != null && Slug.StartsWith("admin", StringComparison.OrdinalIgnoreCase);
+        if (isAdminPage)
+        {
+            return;
+        }
+
         AllContentViews = ExtensionManager.GetInstances<IContentView>(true);
-        // Do this on parameters set or page won't change
         Content = await Mediator.Send(new GetContentBySlugCommand { Slug = Slug, IsRootContent = Slug == null });
+        
         if (Content != null)
         {
             if (AllContentViews.TryGetValue(Content.ViewComponent, out var contentView))
             {
                 ComponentView = contentView;
+                layoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                Parameters = new Dictionary<string, object> { ["Content"] = Content };
             }
-            Parameters = new Dictionary<string, object> { ["Content"] = Content };   
         }
     }
-    
 }

@@ -65,8 +65,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
-
         var items = ExtensionManager.GetInstances<IDataListSource>(true);
 
         DataListSources = items.Select(x => x.Value).ToList();

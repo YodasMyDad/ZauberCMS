@@ -12,8 +12,6 @@
     [Parameter] public string? CurrentSection { get; set; }
     protected override void OnInitialized()
     {
-        base.OnInitialized();
-        
         Sections = ExtensionManager.GetInstances<ISection>(true);
     }
 
