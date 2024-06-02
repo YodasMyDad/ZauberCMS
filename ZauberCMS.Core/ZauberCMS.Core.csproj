@@ -24,5 +24,9 @@
         <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
         <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.1.2" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Data\Migrations\" />
+    </ItemGroup>
     
 </Project>

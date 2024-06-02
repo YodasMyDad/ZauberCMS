@@ -12,6 +12,27 @@ namespace ZauberCMS.Core.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "ZauberContentTypes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Icon = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    IsElementType = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AllowAtRoot = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ContentProperties = table.Column<string>(type: "TEXT", nullable: false),
+                    AvailableContentViews = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
+                    Tabs = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberContentTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ZauberRoles",
                 columns: table => new
                 {
@@ -53,6 +74,41 @@ namespace ZauberCMS.Core.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ZauberUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ZauberContent",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Url = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    ContentTypeId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ContentTypeAlias = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    SortOrder = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsRootContent = table.Column<bool>(type: "INTEGER", nullable: false),
+                    InternalRedirectId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ViewComponent = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    ContentPropertyData = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberContent", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ZauberContent_ZauberContentTypes_ContentTypeId",
+                        column: x => x.ContentTypeId,
+                        principalTable: "ZauberContentTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ZauberContent_ZauberContent_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "ZauberContent",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -162,6 +218,36 @@ namespace ZauberCMS.Core.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_ZauberContent_ContentTypeId",
+                table: "ZauberContent",
+                column: "ContentTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContent_Name",
+                table: "ZauberContent",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContent_ParentId",
+                table: "ZauberContent",
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContent_Url",
+                table: "ZauberContent",
+                column: "Url");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContentTypes_Alias",
+                table: "ZauberContentTypes",
+                column: "Alias");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContentTypes_Name",
+                table: "ZauberContentTypes",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ZauberRoleClaims_RoleId",
                 table: "ZauberRoleClaims",
                 column: "RoleId");
@@ -203,6 +289,9 @@ namespace ZauberCMS.Core.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "ZauberContent");
+
+            migrationBuilder.DropTable(
                 name: "ZauberRoleClaims");
 
             migrationBuilder.DropTable(
@@ -216,6 +305,9 @@ namespace ZauberCMS.Core.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "ZauberUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "ZauberContentTypes");
 
             migrationBuilder.DropTable(
                 name: "ZauberRoles");

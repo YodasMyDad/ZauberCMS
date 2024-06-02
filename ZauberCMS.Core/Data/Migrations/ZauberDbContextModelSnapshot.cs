@@ -25,7 +25,7 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.Property<string>("ContentPropertyData")
                         .IsRequired()
-                        .HasColumnType("nvarchar(MAX)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ContentTypeAlias")
                         .HasMaxLength(1000)
@@ -100,7 +100,7 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.Property<string>("ContentProperties")
                         .IsRequired()
-                        .HasColumnType("nvarchar(MAX)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("DateCreated")
                         .IsRequired()

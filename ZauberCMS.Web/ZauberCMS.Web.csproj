@@ -72,4 +72,8 @@
       <AdditionalFiles Include="Components\StarterSite\ContentViews\TextPageView.razor" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Logs\" />
+    </ItemGroup>
+
 </Project>
