@@ -13,14 +13,14 @@
 </head>
 
 <body>
-<Routes @rendermode="InteractiveServer" />
+<Routes @rendermode="RenderModeForPage" />
 <script src="_framework/blazor.web.js"></script>
 <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
 </body>
 
 </html>
 
-@*@code {
+@code {
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
@@ -29,4 +29,4 @@
         HttpContext.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase)
             ? InteractiveServer
             : null;
-}*@
+}

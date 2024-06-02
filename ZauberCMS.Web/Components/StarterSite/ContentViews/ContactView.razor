@@ -7,7 +7,7 @@
 @* This is where you set Head/Meta information *@
 <PageTitle>@(Content.GetValue<string>("PageTitle"))</PageTitle>
 <SectionContent SectionId="MainLayout.Sections.PageHeadContent">
-    <meta name="description" content="TODO">
+    <meta name="description" content="@(Content.GetValue<string>("MetaDescription"))">
 </SectionContent>
 
 @* 

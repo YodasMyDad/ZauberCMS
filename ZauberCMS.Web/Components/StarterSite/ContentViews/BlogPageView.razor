@@ -9,16 +9,9 @@
     <meta name="description" content="@(Content.GetValue<string>("MetaDescription"))">
 </SectionContent>
 
-@* 
-    All properties are available through Content.GetValue<string>("") if your value is saved as a type
-    then you can call Content.GetValue<MyType>("")
-*@
-<h1>@(Content.GetValue<string>("Heading"))</h1>
-<div class="lead">
-    @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
-</div>
+<p>TODO - Render block list items</p>
 
 @code {
-    @* This is the content page passed in that matches the url *@
-    [Parameter] public Content Content { get; set; } = default!;
+@* This is the content page passed in that matches the url *@
+[Parameter] public Content Content { get; set; } = default!;
 }
