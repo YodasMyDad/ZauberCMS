@@ -4,6 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 Block List Editor - Re-use contenteditor, and open in dialog, need to have parameters for Content
+cache getting layout attribute
 ContentTypeAlias should be stored on Content and it should be locked when a ContentType is created, they can change name, but not alias
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
 Think about save events of properties too, change data before being saved and loaded
