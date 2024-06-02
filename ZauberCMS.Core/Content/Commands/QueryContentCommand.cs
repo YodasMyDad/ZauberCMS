@@ -4,7 +4,7 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Commands;
 
-public class GetContentsCommand : IRequest<PaginatedList<Models.Content>>
+public class QueryContentCommand : IRequest<PaginatedList<Models.Content>>
 {
     public string ContentTypeAlias { get; set; } = string.Empty;
     public Guid? ContentTypeId { get; set; }

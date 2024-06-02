@@ -56,7 +56,7 @@
     
     private async Task DataRefresh()
     {
-        var items = await Mediator.Send(new GetContentsCommand
+        var items = await Mediator.Send(new QueryContentCommand
         {
             AmountPerPage = 1000,
             WhereClause = x => x.IsRootContent
@@ -68,7 +68,7 @@
     {
         if (data is Content content)
         {
-            var items = Mediator.Send(new GetContentsCommand
+            var items = Mediator.Send(new QueryContentCommand
             {
                 AsNoTracking = true,
                 WhereClause = x => x.ParentId == content.Id
@@ -163,7 +163,7 @@
     {
         if (args.Value is Content category)
         {
-            var items = Mediator.Send(new GetContentsCommand
+            var items = Mediator.Send(new QueryContentCommand
             {
                 WhereClause = x => x.ParentId == category.Id,
                 OrderBy = GetContentsOrderBy.SortOrder

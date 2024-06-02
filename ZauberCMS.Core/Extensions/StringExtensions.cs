@@ -16,7 +16,7 @@ public static partial class StringExtensions
     public static string? IfNullOrWhiteSpace(this string? str, string? defaultValue) =>
         str.IsNullOrWhiteSpace() ? defaultValue : str;
 
-    
+
     /// <summary>
     /// Gets the end section of a string seperated by a charactor
     /// </summary>
@@ -33,7 +33,7 @@ public static partial class StringExtensions
         var parts = input.Split(seperator);
         return parts.Length > 0 ? parts[^1] : input;
     }
-    
+
     /// <summary>
     /// Takes Json from another system, and then uses the JsonSerializer
     /// </summary>
@@ -50,7 +50,7 @@ public static partial class StringExtensions
 
         return s;
     }
-    
+
     /// <summary>
     /// Gets a Type from a string
     /// </summary>
@@ -63,13 +63,47 @@ public static partial class StringExtensions
         {
             return default;
         }
-        
+
         // If T is string, return the original value
         if (typeof(T) == typeof(string))
         {
             return (T)(object)value;
         }
-    
+
+        // Writing clause for bool
+        if (typeof(T) == typeof(bool))
+        {
+            if (bool.TryParse(value, out var resultBool))
+            {
+                return (T)(object)resultBool;
+            }
+
+            var fallbackBool = JsonSerializer.Deserialize<bool>(value);
+            return (T)(object)fallbackBool;
+        }
+
+        if (typeof(T) == typeof(int))
+        {
+            if (int.TryParse(value, out var resultInt))
+            {
+                return (T)(object)resultInt;
+            }
+            
+            var fallbackInt = JsonSerializer.Deserialize<int>(value);
+            return (T)(object)fallbackInt;
+        }
+
+        if (typeof(T) == typeof(decimal))
+        {
+            if (decimal.TryParse(value, out var resultDecimal))
+            {
+                return (T)(object)resultDecimal;
+            }
+
+            var fallbackDecimal = JsonSerializer.Deserialize<decimal>(value);
+            return (T)(object)fallbackDecimal;
+        }
+
         try
         {
             return JsonSerializer.Deserialize<T>(value);
@@ -81,7 +115,7 @@ public static partial class StringExtensions
         }
     }
 
-        /// <summary>
+    /// <summary>
     /// Removes or replaces all line breaks in a string
     /// </summary>
     /// <param name="s"></param>
@@ -229,7 +263,7 @@ public static partial class StringExtensions
     {
         return string.Join(
             "/",
-            urlPath.Split(new[] {'/'}, StringSplitOptions.RemoveEmptyEntries)
+            urlPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x =>
                 {
                     var urlEncode = HttpUtility.UrlEncode(x);

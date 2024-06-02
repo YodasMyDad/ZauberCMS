@@ -30,7 +30,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new GetContentsCommand
+        var items = await Mediator.Send(new QueryContentCommand
         {
             AmountPerPage = 20,
             OrderBy = GetContentsOrderBy.DateUpdatedDescending

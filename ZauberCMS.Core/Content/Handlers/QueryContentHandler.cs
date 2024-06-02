@@ -8,10 +8,10 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
-public class GetContentsHandler(IServiceProvider serviceProvider)
-    : IRequestHandler<GetContentsCommand, PaginatedList<Models.Content>>
+public class QueryContentHandler(IServiceProvider serviceProvider)
+    : IRequestHandler<QueryContentCommand, PaginatedList<Models.Content>>
 {
-    public Task<PaginatedList<Models.Content>> Handle(GetContentsCommand request, CancellationToken cancellationToken)
+    public Task<PaginatedList<Models.Content>> Handle(QueryContentCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();

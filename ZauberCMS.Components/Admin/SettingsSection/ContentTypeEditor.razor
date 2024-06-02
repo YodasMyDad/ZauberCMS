@@ -378,7 +378,7 @@
     private async Task DeleteContentType()
     {
         // Check no content is using it first
-        var contentUsingContentType = await Mediator.Send(new GetContentsCommand { ContentTypeId = ContentType.Id });
+        var contentUsingContentType = await Mediator.Send(new QueryContentCommand { ContentTypeId = ContentType.Id });
         if (contentUsingContentType.Items.Any())
         {
             // Display error message
