@@ -13,7 +13,7 @@
 
 @foreach (var blogPage in BlogPages)
 {
-    <p>@blogPage.Name</p>
+    <p><a href="@($"/{blogPage.Url}")">@blogPage.Name</a></p>
 }
 
 @code {

@@ -9,9 +9,24 @@
     <meta name="description" content="@(Content.GetValue<string>("MetaDescription"))">
 </SectionContent>
 
-<p>TODO - Render block list items</p>
+@foreach (var block in ContentBlocks)
+{
+    <p>@block.Name</p>
+}
 
 @code {
-@* This is the content page passed in that matches the url *@
-[Parameter] public Content Content { get; set; } = default!;
+
+    @* This is the content page passed in that matches the url *@
+    [Parameter] public Content Content { get; set; } = default!;
+    private List<Content> ContentBlocks { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        var blocks = Content.GetValue<List<Content>>("Content");
+        if (blocks != null && blocks.Any())
+        {
+            ContentBlocks = blocks;
+        }
+    }
+    
 }
