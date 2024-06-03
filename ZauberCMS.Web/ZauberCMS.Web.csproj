@@ -65,6 +65,7 @@
       <_ContentIncludedByDefault Remove="Components\Admin\Trees\ContentTree.razor" />
       <_ContentIncludedByDefault Remove="Components\Admin\Trees\SettingsTree.razor" />
       <_ContentIncludedByDefault Remove="Components\Content\RenderCustomContent.razor" />
+      <_ContentIncludedByDefault Remove="wwwroot\scripts\dragDrop.js" />
     </ItemGroup>
 
     <ItemGroup>

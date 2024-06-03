@@ -1,16 +1,26 @@
 ﻿@using System.Text.Json
-@using ZauberCMS.Core.Content.Models
-@using ZauberCMS.Core.Extensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+<RadzenDropZoneContainer TItem="Content" Data="ContentItems"
+                         ItemSelector="@_itemSelector"
+                         CanDrop="@_canDrop"
+                         Drop="@OnDrop">
+
+    @*ItemRender="@OnItemRender"*@
+    <ChildContent>
+        <RadzenDropZone Class="rz-display-flex rz-flex-column" Style="flex: 1; gap: 1.5rem; width: 100%;">
+        </RadzenDropZone>
+    </ChildContent>
+    <Template>
+        <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center"
+                    Style="height: 100px; width: 100%; cursor: pointer;"
+                    @onclick="@(() => UpdateContent(context))">
+            @context.Name
+        </RadzenCard>
+    </Template>
+</RadzenDropZoneContainer>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-    @foreach (var content in ContentItems)
-    {
-        <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center" Style="height: 100px; width: 100%;">
-            @content.Name
-        </RadzenCard>
-    }
-    <RadzenButton Click="@(() => AddContent())">Add Content</RadzenButton>
+    <RadzenButton Click="@(() => UpdateContent())">Add Content</RadzenButton>
 </RadzenStack>
 
 @code {
@@ -19,33 +29,74 @@
     public string Description { get; set; } = "Creates a list of content blocks";
     public string Icon { get; set; } = "format_align_justify";
     public Type? SettingsComponent { get; set; }
-
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
-
     [Inject] public DialogService DialogService { get; set; } = default!;
-
-    private List<Content> ContentItems { get; set; } = [];
+    private List<Content> ContentItems { get; set; } = new();
 
     protected override void OnInitialized()
     {
         if (!Value.IsNullOrWhiteSpace())
         {
-            ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? [];   
+            ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? new List<Content>();
         }
     }
 
-    private async Task AddContent()
+    private async Task UpdateContent(Content? contentUpdate = null)
     {
-        var result = await DialogService.OpenSidePanel<ContentEditor>("Add Content", new Dictionary<string, object> { { "IsBlockList", true } });
-        
+        var contentParams = new Dictionary<string, object> { { "IsBlockList", true } };
+        if (contentUpdate != null)
+        {
+            contentParams.Add("Content", contentUpdate);
+        }
+
+        var result = await DialogService.OpenSidePanel<ContentEditor>("Add Content", contentParams);
         if (result is Content content)
         {
             // This could be an issue and close dialogs on property editors!
             DialogService.CloseSide();
-            ContentItems.Add(content);
+
+            if (contentUpdate != null)
+            {
+                var index = ContentItems.FindIndex(c => c.Id == contentUpdate.Id);
+                if (index != -1)
+                {
+                    ContentItems[index] = content;
+                }
+                else
+                {
+                    // Should never get here
+                    throw new Exception("Content with given id not found.");
+                }
+            }
+            else
+            {
+                ContentItems.Add(content);
+            }
+
+            Value = JsonSerializer.Serialize(ContentItems);
+            await ValueChanged.InvokeAsync(Value);
+        }
+    }
+
+    // Filter items by zone value
+    private Func<Content, RadzenDropZone<Content>, bool> _itemSelector = (item, zone) => true;
+
+    private Func<RadzenDropZoneItemEventArgs<Content>, bool> _canDrop = request => true;
+
+    /*private void OnItemRender(RadzenDropZoneItemRenderEventArgs<Content> args)
+    {
+        //args.Attributes["class"] = "rz-card rz-variant-filled rz-background-color-base-200";
+    }*/
+
+    private async Task OnDrop(RadzenDropZoneItemEventArgs<Content> args)
+    {
+        if (args.ToItem != null && args.ToItem != args.Item)
+        {
+            ContentItems.Remove(args.Item);
+            ContentItems.Insert(ContentItems.IndexOf(args.ToItem), args.Item);
             Value = JsonSerializer.Serialize(ContentItems);
             await ValueChanged.InvokeAsync(Value);
         }
