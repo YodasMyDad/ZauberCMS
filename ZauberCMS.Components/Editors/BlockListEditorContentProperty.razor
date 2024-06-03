@@ -4,22 +4,25 @@
                          ItemSelector="@_itemSelector"
                          CanDrop="@_canDrop"
                          Drop="@OnDrop">
-
-    @*ItemRender="@OnItemRender"*@
     <ChildContent>
-        <RadzenDropZone Class="rz-display-flex rz-flex-column" Style="flex: 1; gap: 1.5rem; width: 100%;">
+        <RadzenDropZone Class="rz-display-flex rz-flex-column rz-py-3" Style="flex: 1; gap: 1.5rem; width: 100%;">
         </RadzenDropZone>
     </ChildContent>
     <Template>
-        <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center"
-                    Style="height: 100px; width: 100%; cursor: pointer;"
-                    @onclick="@(() => UpdateContent(context))">
-            @context.Name
-        </RadzenCard>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+            <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center"
+                        Style="width: 100%; cursor: pointer;"
+                        @onclick="@(() => UpdateContent(context))">
+                @context.Name
+            </RadzenCard>
+            <RadzenButton Click="@(() => DeleteContent(context))">Delete</RadzenButton>
+        </RadzenStack>
+
     </Template>
 </RadzenDropZoneContainer>
 
-<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
     <RadzenButton Click="@(() => UpdateContent())">Add Content</RadzenButton>
 </RadzenStack>
 
@@ -41,6 +44,15 @@
         if (!Value.IsNullOrWhiteSpace())
         {
             ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? new List<Content>();
+        }
+    }
+
+    private void DeleteContent(Content content)
+    {
+        var index = ContentItems.FindIndex(c => c.Id == content.Id);
+        if (index != -1)
+        {
+            ContentItems.RemoveAt(index);
         }
     }
 
