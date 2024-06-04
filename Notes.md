@@ -3,7 +3,8 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Block List Editor - Re-use contenteditor, and open in dialog, need to have parameters for Content
+
+Media
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
 Think about save events of properties too, change data before being saved and loaded
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
@@ -17,7 +18,6 @@ select bar contenttypeproperty
 rating contenttypeproperty
 navigation contenttypeproperty
 Settings on RTE
-Media
 Members (Including admins)
 Make ContentTypeProperty list nvarchar(Max) or Text (SQL lite)
 Move ContentValue to EF Core as string too big to save Lists

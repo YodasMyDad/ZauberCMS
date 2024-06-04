@@ -45,8 +45,6 @@
       <AdditionalFiles Include="Admin\SettingsSection\Dialogs\ListContentTypeProperties.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\Dialogs\SortContent.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\SettingsIndex.razor" />
-      <AdditionalFiles Include="Admin\Trees\ContentTree.razor" />
-      <AdditionalFiles Include="Admin\Trees\SettingsTree.razor" />
     </ItemGroup>
 
 </Project>

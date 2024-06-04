@@ -76,6 +76,8 @@
 
     <ItemGroup>
       <Folder Include="Logs\" />
+      <Folder Include="wwwroot\media\DirectoryOne\" />
+      <Folder Include="wwwroot\media\DirectoryTwo\" />
     </ItemGroup>
 
 </Project>
