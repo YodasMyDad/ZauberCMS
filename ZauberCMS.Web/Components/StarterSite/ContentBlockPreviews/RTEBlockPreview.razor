@@ -1,0 +1,13 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
+
+@if (Content != null)
+{
+<div class="blockrte">
+    @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
+</div>
+}
+
+@code {
+    [Parameter] public Content? Content { get; set; }
+    public string ContentTypeAlias => "RTEBlock";
+}

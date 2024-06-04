@@ -1,4 +1,6 @@
 ﻿@using System.Text.Json
+@using ZauberCMS.Components.ContentComponents
+@using ZauberCMS.Core.Content.Interfaces
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 <RadzenDropZoneContainer TItem="Content" Data="ContentItems"
                          ItemSelector="@_itemSelector"
@@ -10,12 +12,11 @@
     </ChildContent>
     <Template>
 
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-            <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center"
-                        Style="width: 100%; cursor: pointer;"
-                        @onclick="@(() => UpdateContent(context))">
-                @context.Name
-            </RadzenCard>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" 
+                     @onclick="@(() => UpdateContent(context))">
+            <div style="width: 100%;">
+                <RenderBlock Content="@(context)" TView="IContentBlockPreview" FallbackComponentType="@(typeof(ContentBlockPreviewFallback))" />
+            </div>
             <RadzenButton Click="@(() => DeleteContent(context))">Delete</RadzenButton>
         </RadzenStack>
 

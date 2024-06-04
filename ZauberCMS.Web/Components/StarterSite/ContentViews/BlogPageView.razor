@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Web.Components.StarterSite.Layouts
-@using ZauberCMS.Components.Shared
+@using ZauberCMS.Components.ContentComponents
+@using ZauberCMS.Core.Content.Interfaces
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout MainLayout
 
@@ -11,7 +12,7 @@
 
 @foreach (var block in ContentBlocks)
 {
-    <RenderBlock Content="@(block)" />
+    <RenderBlock Content="@(block)" TView="IContentBlockView"  />
 }
 
 @code {

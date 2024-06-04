@@ -1,0 +1,8 @@
+﻿<RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center"
+            Style="width: 100%;">
+    @Content?.Name
+</RadzenCard>
+
+@code {
+    [Parameter] public Content? Content { get; set; }
+}

@@ -1,0 +1,16 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
+
+@if (Content != null)
+{
+<figure class="text-center">
+    <blockquote class="blockquote">
+        <p>@(Content.GetValue<string>("Quote"))</p>
+    </blockquote>
+</figure>
+}
+
+
+@code {
+    public string ContentTypeAlias => "QuoteBlock";
+    [Parameter] public Content? Content { get; set; }
+}

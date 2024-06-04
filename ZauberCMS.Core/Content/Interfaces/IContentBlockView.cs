@@ -1,6 +1,6 @@
 ﻿namespace ZauberCMS.Core.Content.Interfaces;
 
-public interface IContentBlockView
+public interface IContentBlockView : IContentBlock
 {
     
 }
