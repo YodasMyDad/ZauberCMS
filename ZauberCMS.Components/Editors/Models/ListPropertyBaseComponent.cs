@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen;
@@ -19,6 +20,7 @@ public class ListPropertyBaseComponent : ComponentBase
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public IModalService? ModalService { get; set; }
     
     protected IEnumerable<string> SelectedValues { get; set; } = Enumerable.Empty<string>();
     protected string SelectedValue { get; set; } = string.Empty;

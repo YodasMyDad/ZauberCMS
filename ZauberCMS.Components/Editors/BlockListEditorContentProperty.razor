@@ -36,7 +36,7 @@
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
-    [Inject] public IModalService DialogService { get; set; } = default!;
+    [Parameter] public IModalService? ModalService { get; set; }
     private List<Content> ContentItems { get; set; } = new();
 
     protected override void OnInitialized()
@@ -63,34 +63,37 @@
         {
             contentParams.Add("Content", contentUpdate);
         }
-        
-        var dialog = DialogService.OpenSidePanel<ContentEditor>("Add Content", contentParams);
-        var result = await dialog.Result;
-        if (result is { Confirmed: true, Data: Content content })
-        {
-            // This could be an issue and close dialogs on property editors!
-            //DialogService.CloseSide();
 
-            if (contentUpdate != null)
+        if (ModalService != null)
+        {
+            var dialog = ModalService.OpenSidePanel<ContentEditor>("Add Content", contentParams);
+            var result = await dialog.Result;
+            if (result is { Confirmed: true, Data: Content content })
             {
-                var index = ContentItems.FindIndex(c => c.Id == contentUpdate.Id);
-                if (index != -1)
+                // This could be an issue and close dialogs on property editors!
+                //DialogService.CloseSide();
+
+                if (contentUpdate != null)
                 {
-                    ContentItems[index] = content;
+                    var index = ContentItems.FindIndex(c => c.Id == contentUpdate.Id);
+                    if (index != -1)
+                    {
+                        ContentItems[index] = content;
+                    }
+                    else
+                    {
+                        // Should never get here
+                        throw new Exception("Content with given id not found.");
+                    }
                 }
                 else
                 {
-                    // Should never get here
-                    throw new Exception("Content with given id not found.");
+                    ContentItems.Add(content);
                 }
-            }
-            else
-            {
-                ContentItems.Add(content);
-            }
 
-            Value = JsonSerializer.Serialize(ContentItems);
-            await ValueChanged.InvokeAsync(Value);
+                Value = JsonSerializer.Serialize(ContentItems);
+                await ValueChanged.InvokeAsync(Value);
+            }
         }
     }
 

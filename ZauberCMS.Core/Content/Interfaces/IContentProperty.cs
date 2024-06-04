@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Blazored.Modal.Services;
+using Microsoft.AspNetCore.Components;
 
 namespace ZauberCMS.Core.Content.Interfaces;
 
@@ -14,4 +15,5 @@ public interface IContentProperty
     EventCallback<string> ValueChanged { get; set; }
     string Settings { get; set; }
     Models.Content? Content { get; set; }
+    IModalService? ModalService { get; set; }
 }

@@ -20,17 +20,19 @@
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
-
-    [Inject] public IModalService DialogService { get; set; } = default!;
+    [Parameter] public IModalService? ModalService { get; set; }
 
     private async Task ChooseIcon()
     {
-        var dialog =  DialogService.OpenSidePanel<ListIconoirDialog>("Choose Icon");
-        var result = await dialog.Result;
-        if (result is { Confirmed: true, Data: string icon })
+        var dialog =  ModalService?.OpenSidePanel<ListIconoirDialog>("Choose Icon");
+        if (dialog?.Result != null)
         {
-            Value = icon;
-            await ValueChanged.InvokeAsync(Value);
+            var result = await dialog.Result;
+            if (result is { Confirmed: true, Data: string icon })
+            {
+                Value = icon;
+                await ValueChanged.InvokeAsync(Value);
+            }
         }
     }
 

@@ -19,6 +19,7 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public IModalService? ModalService { get; set; }
     
     public string Name { get; set; } = "Textbox";
     public string Alias { get; set; } = "ZauberCMS.Textbox";

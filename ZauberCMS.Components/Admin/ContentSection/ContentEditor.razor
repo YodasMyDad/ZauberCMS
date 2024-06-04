@@ -49,6 +49,7 @@
                                                                                 Settings="@property.Settings"
                                                                                 Content="@Content"
                                                                                 Value="@contentValue.Value"
+                                                                                ModalService="@ModalService"
                                                                                 ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
                                                     </CentreColumn>
                                                 </EditorRow>
@@ -119,7 +120,8 @@ else
 
 @code {
 
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance ContentEditorModal { get; set; } = default!;
+    [CascadingParameter] IModalService ModalService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
@@ -249,7 +251,7 @@ else
             if (IsBlockList == true)
             {
                 Content.ToBlockListItem(ContentType);
-                await BlazoredModal.CloseAsync(ModalResult.Ok(Content));
+                await ContentEditorModal.CloseAsync(ModalResult.Ok(Content));
             }
             else
             {
