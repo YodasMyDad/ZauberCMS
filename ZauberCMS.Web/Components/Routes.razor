@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Core.Plugins
 @using Microsoft.AspNetCore.Components.Authorization
+<CascadingBlazoredModal>
 <Router
     AppAssembly="@typeof(App).Assembly"
     AdditionalAssemblies="@ExtensionManager.GetAssemblies(x => x.FullName!.StartsWith("ZauberCMS", StringComparison.OrdinalIgnoreCase))">
@@ -8,3 +9,4 @@
         @*<FocusOnNavigate RouteData="routeData" Selector="h1"/>*@
     </Found>
 </Router>
+</CascadingBlazoredModal>

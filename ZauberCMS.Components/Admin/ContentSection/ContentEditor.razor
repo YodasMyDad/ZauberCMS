@@ -119,7 +119,7 @@ else
 
 @code {
 
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
@@ -249,7 +249,7 @@ else
             if (IsBlockList == true)
             {
                 Content.ToBlockListItem(ContentType);
-                DialogService.CloseSide(Content);
+                await BlazoredModal.CloseAsync(ModalResult.Ok(Content));
             }
             else
             {

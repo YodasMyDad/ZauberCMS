@@ -1,8 +1,4 @@
-﻿@using Radzen
-@using Radzen.Blazor
-@using ZauberCMS.Components.Editors.Dialogs
-@using ZauberCMS.Core.Content.Models
-@using ZauberCMS.Core.Extensions
+﻿@using ZauberCMS.Components.Editors.Dialogs
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenStack Orientation="Orientation.Horizontal" Gap="2">
@@ -25,12 +21,13 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
 
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = default!;
 
     private async Task ChooseIcon()
     {
-        var result = await DialogService.OpenSidePanel<ListIconoirDialog>("Choose Icon");
-        if (result is string icon)
+        var dialog =  DialogService.OpenSidePanel<ListIconoirDialog>("Choose Icon");
+        var result = await dialog.Result;
+        if (result is { Confirmed: true, Data: string icon })
         {
             Value = icon;
             await ValueChanged.InvokeAsync(Value);

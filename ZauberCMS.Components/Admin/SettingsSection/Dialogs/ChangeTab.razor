@@ -14,13 +14,15 @@
 </RadzenListBox>
 
 @code {
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    //[Inject] public DialogService DialogService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    
     [Parameter] public Guid ContentTypeId { get; set; }
     [Parameter] public List<Tab> Tabs { get; set; } = [];
     private Guid SelectedTabId { get; set; }
 
-    private void OnPropertySelected()
+    private async Task OnPropertySelected()
     {
-        DialogService.CloseSide(SelectedTabId);
+        await BlazoredModal.CloseAsync(ModalResult.Ok(SelectedTabId));
     }
 }

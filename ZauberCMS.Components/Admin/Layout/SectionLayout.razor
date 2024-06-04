@@ -1,12 +1,9 @@
 ﻿@inherits LayoutComponentBase
 
 <HeadContent>
-    <style>
-        .rz-dialog-side-position-right {
-            width: 800px;
-            border-radius: 0;
-        }
-    </style>
+    <p>Hello</p>
+    <link rel="stylesheet" href="/admin.css"/>
+    <SectionOutlet SectionId="@Sections.PageHeadContent"/>
 </HeadContent>
 
 <RadzenComponents/>
@@ -44,6 +41,11 @@
     private void ToggleSideBar()
     {
         Expanded = !Expanded;
+    }
+    
+    internal static class Sections
+    {
+        internal static SectionOutlet? PageHeadContent = new();
     }
 }
 

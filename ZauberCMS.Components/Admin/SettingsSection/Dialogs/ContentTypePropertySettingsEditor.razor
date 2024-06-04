@@ -11,7 +11,8 @@ else
 }
 
 @code {
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    //[Inject] public DialogService DialogService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     
     [Parameter] public ContentTypeProperty ContentTypeProperty { get; set; } = default!;
@@ -48,6 +49,6 @@ else
 
     private async Task OnSettingsValueChanged(string newSettings)
     {
-        DialogService.CloseSide(newSettings);
+        await BlazoredModal.CloseAsync(ModalResult.Ok(newSettings));
     }
 }

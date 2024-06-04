@@ -32,7 +32,8 @@
 
 @code {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    //[Inject] public DialogService DialogService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
 
     [Parameter] public Guid Id { get; set; }
 
@@ -47,9 +48,9 @@
         Properties = AllContentProperties.Select(x => x.Value);
     }
 
-    private void OnPropertySelected()
+    private async Task OnPropertySelected()
     {
-        DialogService.CloseSide(Properties.FirstOrDefault(x => x.Alias == SelectedProperty));
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Properties.FirstOrDefault(x => x.Alias == SelectedProperty)));
     }
 
 }

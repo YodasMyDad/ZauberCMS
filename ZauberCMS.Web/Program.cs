@@ -1,3 +1,4 @@
+using Blazored.Modal;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -42,6 +43,8 @@ builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddImageSharp();
 builder.Services.AddAuthentication();
+
+builder.Services.AddBlazoredModal();
 
 builder.Services.AddScoped<ExtensionManager>();
 builder.Services.AddScoped<ProviderService>();

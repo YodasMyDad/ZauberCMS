@@ -18,7 +18,8 @@
 </RadzenStack>
 
 @code {
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    //[Inject] public DialogService DialogService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
 
     private Dictionary<string, string> Icons { get; set; } = [];
     private Dictionary<string, string> FilteredIcons { get; set; } = [];
@@ -45,9 +46,9 @@
     }
 
 
-    private void SelectIcon(string icon)
+    private async Task SelectIcon(string icon)
     {
-        DialogService.CloseSide(icon);
+        await BlazoredModal.CloseAsync(ModalResult.Ok(icon));
     }
 
 }

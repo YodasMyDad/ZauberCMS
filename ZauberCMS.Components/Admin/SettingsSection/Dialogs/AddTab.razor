@@ -3,10 +3,11 @@
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
 </RadzenStack>
 @code {
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    //[Inject] public DialogService DialogService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
     private string Name { get; set; } = string.Empty;
-    private void Save()
+    private async Task Save()
     {
-        DialogService.CloseSide(Name);
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Name));
     }
 }

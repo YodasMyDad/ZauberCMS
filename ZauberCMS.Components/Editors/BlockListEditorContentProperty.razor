@@ -36,7 +36,7 @@
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = default!;
     private List<Content> ContentItems { get; set; } = new();
 
     protected override void OnInitialized()
@@ -63,12 +63,13 @@
         {
             contentParams.Add("Content", contentUpdate);
         }
-
-        var result = await DialogService.OpenSidePanel<ContentEditor>("Add Content", contentParams);
-        if (result is Content content)
+        
+        var dialog = DialogService.OpenSidePanel<ContentEditor>("Add Content", contentParams);
+        var result = await dialog.Result;
+        if (result is { Confirmed: true, Data: Content content })
         {
             // This could be an issue and close dialogs on property editors!
-            DialogService.CloseSide();
+            //DialogService.CloseSide();
 
             if (contentUpdate != null)
             {
