@@ -17,10 +17,10 @@
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
-    [Parameter] public object Value { get; set; }
+    [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
-    private RadzenTree Tree { get; set; }
+    private RadzenTree Tree { get; set; } = default!;
 
     protected override async Task OnParametersSetAsync()
     {

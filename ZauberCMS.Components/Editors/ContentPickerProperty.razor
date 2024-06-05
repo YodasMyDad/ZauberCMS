@@ -50,6 +50,8 @@
 
     protected override void OnInitialized()
     {
+        // TODO - Need to serialise the content Guids saved into ContentItems
+        // TODO - Need to add settings to restrict amount allowed to be picked (Also can I restrict whats allowed to be picked by content type?)
     }
 
     private void DeleteContent(Content content)
@@ -87,6 +89,7 @@
         if (value is Content content)
         {
             ContentItems.Add(content);
+            //TODO - Need to save to Guids, serialise and call back to the content editor
         }
         Modal?.Close();
     }
