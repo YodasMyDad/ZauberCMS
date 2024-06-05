@@ -4,6 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 Make content tree into re-usable component, and use in multinode treepicker
+
 Media Tree, Section etc... (And media picker) only show folders in the tree
 Members (Including admins) and member picker
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
@@ -15,7 +16,8 @@ Need a way from core to register things in startup
 Need a default storage thing too for quick easy storage (Check BlogFodder too for other stuff!)
 EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/) - Anything else? Does this auto clear? ChatGPT?
 Update query on content and content type to simplyfy getting data (Have QueryContent and SingleContent for commands to keep it simple?)
-rating contenttypeproperty
+rating property
+material icon picker property (Use thr icon picker on contenttypes)
 Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 .. Or have ChatGPT property editor
 Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)

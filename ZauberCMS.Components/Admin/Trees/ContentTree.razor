@@ -1,4 +1,5 @@
-﻿<RadzenTree @ref="Tree" Data="@Data" Expand="@OnExpandHandler" Change="@OnChangeHandler" @bind-Value="@Value" ItemContextMenu="@OnItemContextMenuHandler">
+﻿@using ZauberCMS.Core.Content.Commands
+<RadzenTree @ref="Tree" Data="@Data" Expand="@OnExpandHandler" Change="@OnChangeHandler" @bind-Value="@Value" ItemContextMenu="@OnItemContextMenuHandler">
     <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name">
         <Template>
             @{ var content = context.Value as Content; }
@@ -21,11 +22,47 @@
 
     private RadzenTree Tree { get; set; }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Data.Any())
+        {
+            var items = await Mediator.Send(new QueryContentCommand
+            {
+                AmountPerPage = 100,
+                WhereClause = x => x.IsRootContent,
+                IncludeChildren = true
+            });
+            Data = items.Items.ToList();
+        }
+    }
+
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (OnExpand.HasDelegate)
         {
             await OnExpand.InvokeAsync(args);
+        }
+        else
+        {
+            if (args.Value is Content category)
+            {
+                var items = Mediator.Send(new QueryContentCommand
+                {
+                    WhereClause = x => x.ParentId == category.Id,
+                    OrderBy = GetContentsOrderBy.SortOrder
+                }).GetAwaiter().GetResult();
+                args.Children.Data = items.Items;
+                args.Children.TextProperty = "Name";
+                args.Children.Template = context => builder =>
+                {
+                    builder.OpenComponent<RadzenIcon>(0);
+                    builder.AddAttribute(1, "Icon", (context.Value as Content).ContentType?.Icon);
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+
+                    builder.AddContent(3, (context.Value as Content)?.Name);
+                };
+            }
         }
     }
 

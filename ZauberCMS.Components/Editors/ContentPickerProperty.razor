@@ -1,0 +1,106 @@
+﻿@using ZauberCMS.Components.Admin.Trees
+@using System.Text.Json
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+
+<RadzenDropZoneContainer TItem="Content" Data="ContentItems"
+                         ItemSelector="@_itemSelector"
+                         CanDrop="@_canDrop"
+                         Drop="@OnDrop">
+    <ChildContent>
+        <RadzenDropZone Class="rz-display-flex rz-flex-column rz-py-3" Style="flex: 1; gap: 1.5rem; width: 100%;">
+        </RadzenDropZone>
+    </ChildContent>
+    <Template>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+            <div style="width: 100%;">
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <strong>@context.Name</strong>
+                    <button type="button" class="close" @onclick="@(() => DeleteContent(context))" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </RadzenStack>
+
+    </Template>
+</RadzenDropZoneContainer>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start">
+    <RadzenButton Click="@(() => AddContent())">Add Content</RadzenButton>
+</RadzenStack>
+
+
+@code {
+    public string Name { get; set; } = "Content Picker";
+    public string Alias { get; set; } = "ZauberCMS.ContentPicker";
+    public string Description { get; set; } = "Content picker using the content tree";
+    public string Icon { get; set; } = "account_tree";
+    public Type? SettingsComponent { get; set; }
+
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public IModalService? ModalService { get; set; }
+
+    // Hold the content guid and name in the list
+    private List<Content> ContentItems { get; set; } = [];
+    private readonly Func<Content, RadzenDropZone<Content>, bool> _itemSelector = (item, zone) => true;
+    private readonly Func<RadzenDropZoneItemEventArgs<Content>, bool> _canDrop = request => true;
+    private IModalReference? Modal { get; set; }
+
+    protected override void OnInitialized()
+    {
+    }
+
+    private void DeleteContent(Content content)
+    {
+        var index = ContentItems.FindIndex(c => c.Id == content.Id);
+        if (index != -1)
+        {
+            ContentItems.RemoveAt(index);
+        }
+    }
+
+    private async Task OnDrop(RadzenDropZoneItemEventArgs<Content> args)
+    {
+        if (args.ToItem != null && args.ToItem != args.Item)
+        {
+            ContentItems.Remove(args.Item);
+            ContentItems.Insert(ContentItems.IndexOf(args.ToItem), args.Item);
+            Value = JsonSerializer.Serialize(ContentItems);
+            await ValueChanged.InvokeAsync(Value);
+        }
+    }
+    
+    private void AddContent()
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            { nameof(ContentTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) }
+        };
+
+        Modal = ModalService?.OpenSidePanel<ContentTree>("Choose Content", parameters);
+    }
+    
+    private void OnValueChangedHandler(object value)
+    {
+        if (value is Content content)
+        {
+            ContentItems.Add(content);
+        }
+        Modal?.Close();
+    }
+
+}
+
+
+
+
+
+
+
+
+

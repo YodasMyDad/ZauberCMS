@@ -1,8 +1,4 @@
-﻿@using Radzen
-@using Radzen.Blazor
-@using ZauberCMS.Core.Extensions
-
-<RadzenTextBox Placeholder="Search Icons..." Value="@SearchTerm" ValueChanged="@((string value) => Search(value))" @oninput="@(e => Search(e.Value?.ToString()))" class="w-100 rz-mb-3" aria-label="Search Icons"/>
+﻿<RadzenTextBox Placeholder="Search Icons..." Value="@SearchTerm" ValueChanged="@((string value) => Search(value))" @oninput="@(e => Search(e.Value?.ToString()))" class="w-100 rz-mb-3" aria-label="Search Icons"/>
 <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
     @foreach (var icon in FilteredIcons)
     {
