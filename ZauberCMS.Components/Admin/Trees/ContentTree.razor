@@ -1,0 +1,66 @@
+﻿<RadzenTree @ref="Tree" Data="@Data" Expand="@OnExpandHandler" Change="@OnChangeHandler" @bind-Value="@Value" ItemContextMenu="@OnItemContextMenuHandler">
+    <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name">
+        <Template>
+            @{ var content = context.Value as Content; }
+            @if (content?.ContentType?.Icon.IsNullOrWhiteSpace() == false)
+            {
+                <RadzenIcon Icon="@content.ContentType.Icon" style="font-weight: 300; color: dimgray;"/>
+            }
+            @content?.Name
+        </Template>
+    </RadzenTreeLevel>
+</RadzenTree>
+
+@code {
+    [Parameter] public IEnumerable<Content> Data { get; set; } = Enumerable.Empty<Content>();
+    [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
+    [Parameter] public EventCallback OnChange { get; set; }
+    [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
+    [Parameter] public object Value { get; set; }
+    [Parameter] public EventCallback<object> ValueChanged { get; set; }
+
+    private RadzenTree Tree { get; set; }
+
+    private async Task OnExpandHandler(TreeExpandEventArgs args)
+    {
+        if (OnExpand.HasDelegate)
+        {
+            await OnExpand.InvokeAsync(args);
+        }
+    }
+
+    private async Task OnChangeHandler()
+    {
+        await ValueChanged.InvokeAsync(Value);
+        if (OnChange.HasDelegate)
+        {
+            await OnChange.InvokeAsync();
+        }
+    }
+
+    private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
+    {
+        if (OnItemContextMenu.HasDelegate)
+        {
+            await OnItemContextMenu.InvokeAsync(args);
+        }
+    }
+
+    private bool HasChildren(object data)
+    {
+        if (data is Content content)
+        {
+            return content.Children.Any();
+        }
+        return false;
+    }
+
+    private bool ShouldBeExpanded(object data)
+    {
+        if (data is Content content)
+        {
+            return HasChildren(content) && content.ParentId == null;
+        }
+        return false;
+    }
+}

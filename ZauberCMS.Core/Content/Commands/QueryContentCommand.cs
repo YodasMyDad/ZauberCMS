@@ -14,6 +14,7 @@ public class QueryContentCommand : IRequest<PaginatedList<Models.Content>>
     public int PageIndex { get; set; } = 1;
     public int AmountPerPage { get; set; } = 10;
     public string? SearchTerm { get; set; }
+    public bool IncludeChildren { get; set; }
     public GetContentsOrderBy OrderBy { get; set; } = GetContentsOrderBy.DateUpdatedDescending;
     public Expression<Func<Models.Content, bool>>? WhereClause { get; set; }
     public IQueryable<Models.Content>? Query { get; set; }

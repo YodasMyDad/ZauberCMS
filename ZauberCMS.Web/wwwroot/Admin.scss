@@ -1,4 +1,5 @@
 ﻿.side-panel {
+  overflow: hidden;
   .blazored-modal {
     position: absolute;
     bottom: 0;
@@ -9,5 +10,6 @@
     width: 100vw;
     margin: 0 0 0 4rem;
     border-radius: 0;
+    overflow: auto;
   }
 }

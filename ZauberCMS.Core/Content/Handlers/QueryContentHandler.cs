@@ -17,6 +17,12 @@ public class QueryContentHandler(IServiceProvider serviceProvider)
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         var query = dbContext.Content.Include(x => x.ContentType).AsQueryable();
 
+        if (request.IncludeChildren)
+        {
+            query = query.Include(x => x.Children);
+            query = query.AsSplitQuery();
+        }
+        
         if (request.Query != null)
         {
             query = request.Query;

@@ -3,7 +3,6 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Does slideout panel need overflow false? Check with contenttype icon picker (Make sure everything uses it now)
 Make content tree into re-usable component, and use in multinode treepicker
 Media Tree, Section etc... (And media picker) only show folders in the tree
 Members (Including admins) and member picker
