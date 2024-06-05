@@ -13,7 +13,7 @@ make validated plugin when saving into a plugin (Where the Content and/or Conten
 Sort AppState events, on things like deleted etc.. Is the naming correct make sure everything updates (Think about tree branches closing when creating child content?)
 navigation contenttypeproperty (Copy umbNav)
 Need a way from core to register things in startup
-Need a default storage thing too for quick easy storage (Check BlogFodder too for other stuff)
+Need a default storage thing too for quick easy storage (Check BlogFodder too for other stuff!)
 EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/) - Anything else? Does this auto clear? ChatGPT?
 Update query on content and content type to simplyfy getting data (Have QueryContent and SingleContent for commands to keep it simple?)
 rating contenttypeproperty
@@ -23,5 +23,6 @@ Move ContentValue to EF Core as string too big to save Lists (What about block l
 Need to delete all migrations, create one and see if it works with SQLite & also SQLServer (look into how to ship with different migrations based on Db)
 Find someone to help with the nuget packaging. Need to install site, but have Components/Core as seperate nuget package that people reference in other projects
 Build personal site and launch
+Add languages (Check Blazor book)
 Update ReadMe and add docs
 
