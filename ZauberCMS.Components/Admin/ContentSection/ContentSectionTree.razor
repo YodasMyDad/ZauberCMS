@@ -5,8 +5,7 @@
 @using ZauberCMS.Components.Admin.Trees
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-<ContentTree Data="@ContentItems" 
-             OnExpand="OnExpand" 
+<ContentTree Data="@ContentItems"
              OnChange="OnChange" 
              @bind-Value="@Selection" 
              OnItemContextMenu="ItemContextMenu"/>
@@ -124,29 +123,6 @@
                 }
             }
         );
-    }
-
-    private void OnExpand(TreeExpandEventArgs args)
-    {
-        if (args.Value is Content category)
-        {
-            var items = Mediator.Send(new QueryContentCommand
-            {
-                WhereClause = x => x.ParentId == category.Id,
-                OrderBy = GetContentsOrderBy.SortOrder
-            }).GetAwaiter().GetResult();
-            args.Children.Data = items.Items;
-            args.Children.TextProperty = "Name";
-            args.Children.Template = context => builder =>
-            {
-                builder.OpenComponent<RadzenIcon>(0);
-                builder.AddAttribute(1, "Icon", (context.Value as Content).ContentType?.Icon);
-                builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
-                builder.CloseComponent();
-
-                builder.AddContent(3, (context.Value as Content)?.Name);
-            };
-        }
     }
 
     private void OnChange()
