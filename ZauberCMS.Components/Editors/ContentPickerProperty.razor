@@ -15,12 +15,9 @@
 
         <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
             <div style="width: 100%;">
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    <strong>@context.Name</strong>
-                    <button type="button" class="close" @onclick="@(() => DeleteContent(context))" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+                <RadzenAlert ShowIcon="false" Close="@(() => DeleteContent(context))" Style="margin: 0; padding-top: 2px; padding-bottom: 2px;">
+                    @context.Name
+                </RadzenAlert>
             </div>
         </RadzenStack>
 
