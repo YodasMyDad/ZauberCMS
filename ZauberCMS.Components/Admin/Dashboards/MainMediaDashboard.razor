@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Core
-@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Media.Models
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
 <RadzenDataGrid AllowFiltering="false"
@@ -10,7 +11,7 @@
                 AllowSorting="true"
                 Data="@Contents"
                 SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((Content value) => OnRowSelect(value))">
+                RowSelect="@((Media value) => OnRowSelect(value))">
     @*@bind-Value="@SelectedContent"*@
     <Columns>
         <RadzenDataGridColumn Property="Name" Title="Name"/>
@@ -23,27 +24,30 @@
 </RadzenDataGrid>
 
 @code {
-    public string TabName => "Latest Content";
+    public string TabName => "Latest Media";
     public int SortOrder => 0;
-    public string SectionAlias => Constants.Sections.ContentSection;
-    
-    private IEnumerable<Content> Contents { get; set; } = Enumerable.Empty<Content>();
+    public string SectionAlias => Constants.Sections.MediaSection;
+
+    private IEnumerable<Media> Contents { get; set; } = Enumerable.Empty<Media>();
 
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new QueryContentCommand
+        var items = await Mediator.Send(new QueryMediaCommand
         {
             AmountPerPage = 20,
-            OrderBy = GetContentsOrderBy.DateUpdatedDescending
+            OrderBy = GetMediaOrderBy.DateUpdatedDescending,
+            WhereClause = media => media.MediaType != MediaType.Folder
         });
+        
         Contents = items.Items;
     }
 
     private void OnRowSelect(object value)
     {
-        if (value is Content selectedRow)
+        if (value is Media selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"/admin/updatemedia/{selectedRow.Id}");
         }
     }
+
 }

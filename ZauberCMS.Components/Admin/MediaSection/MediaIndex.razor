@@ -5,6 +5,11 @@
 
 <PageTitle>@Name</PageTitle>
 
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Create" Click=@(_ => NavigationManager.NavigateTo("/admin/createmedia"))/>
+</RadzenStack>
+
+
 <SectionDashboards SectionAlias="@(Alias)"/>
 
 @code {

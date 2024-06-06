@@ -1,4 +1,6 @@
-﻿<RadzenTree @ref="Tree" 
+﻿@typeparam T
+
+<RadzenTree @ref="Tree" 
             Data="@Data" 
             Expand="@OnExpandHandler" 
             Change="@OnChangeHandler" 
@@ -15,7 +17,7 @@
 </RadzenTree>
 
 @code {
-    [Parameter] public IEnumerable<Content> Data { get; set; } = Enumerable.Empty<Content>();
+    [Parameter] public IEnumerable<T> Data { get; set; } = Enumerable.Empty<T>();
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }

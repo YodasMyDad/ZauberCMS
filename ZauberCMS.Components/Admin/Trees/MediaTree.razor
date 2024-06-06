@@ -1,6 +1,8 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Media.Models
 
-<BaseTree Data="@Data"
+<BaseTree T="Media"
+          Data="@Data"
           OnExpand="@OnExpandHandler"
           OnChange="@OnChangeHandler"
           OnItemContextMenu="@OnItemContextMenuHandler"
@@ -11,7 +13,7 @@
 </BaseTree>
 
 @code {
-    [Parameter] public IEnumerable<Content> Data { get; set; } = Enumerable.Empty<Content>();
+    [Parameter] public IEnumerable<Media> Data { get; set; } = Enumerable.Empty<Media>();
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
@@ -24,13 +26,13 @@
     {
         if (!Data.Any())
         {
-            var items = await Mediator.Send(new QueryContentCommand
+            var items = await Mediator.Send(new QueryMediaCommand
             {
                 AmountPerPage = 100,
-                WhereClause = x => x.IsRootContent,
+                WhereClause = x => x.ParentId == null && x.MediaType == MediaType.Folder,
                 IncludeChildren = true
             });
-            Data = items.Items.ToList();
+            Data = items.Items;
         }
     }
 
@@ -42,12 +44,12 @@
         }
         else
         {
-            if (args.Value is Content category)
+            if (args.Value is Media media)
             {
-                var items = Mediator.Send(new QueryContentCommand
+                var items = Mediator.Send(new QueryMediaCommand
                 {
-                    WhereClause = x => x.ParentId == category.Id,
-                    OrderBy = GetContentsOrderBy.SortOrder
+                    WhereClause = x => x.ParentId == media.Id && x.MediaType == MediaType.Folder,
+                    OrderBy = GetMediaOrderBy.Name
                 }).GetAwaiter().GetResult();
                 args.Children.Data = items.Items;
                 args.Children.TextProperty = "Name";
@@ -62,23 +64,19 @@
         return context => builder =>
         {
             var treeItem = context as RadzenTreeItem;
-            if (treeItem?.Value is Content content)
+            if (treeItem?.Value is Media media)
             {
-                if (!string.IsNullOrWhiteSpace(content.ContentType?.Icon))
-                {
-                    //TODO - Need to change icon based on type
-                    builder.OpenComponent<RadzenIcon>(0);
-                    
-                    builder.AddAttribute(1, "Icon", content.ContentType.Icon);
-                    
-                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
-                    builder.CloseComponent();
-                }
-                builder.AddContent(3, content.Name);
+                builder.OpenComponent<RadzenIcon>(0);
+                builder.AddAttribute(1, "Icon", media.MediaType.GetIcon());
+                
+                //TODO - This styling should be a constant?
+                builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                builder.CloseComponent();
+                builder.AddContent(3, media.Name);
             }
         };
     }
-    
+
     private async Task OnChangeHandler()
     {
         await ValueChanged.InvokeAsync(Value);
@@ -98,9 +96,9 @@
 
     private bool HasChildren(object data)
     {
-        if (data is Content content)
+        if (data is Media media)
         {
-            return content.Children.Any();
+            return media.Children.Any();
         }
 
         return false;
@@ -108,9 +106,9 @@
 
     private bool ShouldBeExpanded(object data)
     {
-        if (data is Content content)
+        if (data is Media media)
         {
-            return HasChildren(content) && content.ParentId == null;
+            return HasChildren(media) && media.ParentId == null;
         }
 
         return false;

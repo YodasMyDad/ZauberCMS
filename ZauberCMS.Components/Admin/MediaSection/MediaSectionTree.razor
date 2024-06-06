@@ -1,20 +1,64 @@
 ﻿@using ZauberCMS.Core
+@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-
+<MediaTree Data="@MediaItems"
+           OnChange="OnChange"
+           @bind-Value="@Selection"
+           OnItemContextMenu="ItemContextMenu"/>
 
 @code {
-    public void Dispose()
-    {
-        
-    }
+    [Inject] public AppState AppState { get; set; } = default!;
 
     public string Heading => "Media";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.MediaSection;
 
-    protected override void OnInitialized()
-    {
+    private List<Media> MediaItems { get; set; } = [];
+    private object? Selection { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await DataRefresh();
+        AppState.OnContentChanged += HandleContentTreeChanged;
     }
+
+    public void Dispose()
+    {
+        AppState.OnContentChanged -= HandleContentTreeChanged;
+    }
+
+    private async Task HandleContentTreeChanged()
+    {
+        await DataRefresh();
+        StateHasChanged();
+    }
+
+    private async Task DataRefresh()
+    {
+        var items = await Mediator.Send(new QueryMediaCommand
+        {
+            AmountPerPage = 100,
+            WhereClause = x => x.ParentId == null && x.MediaType == MediaType.Folder,
+            IncludeChildren = true
+        });
+        MediaItems = items.Items.ToList();
+    }
+
+    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
+    {
+    }
+
+    private void OnChange()
+    {
+        if (Selection is Media media)
+        {
+            NavigationManager.NavigateTo($"/admin/updatemedia/{media.Id}");
+        }
+    }
+
+
 }

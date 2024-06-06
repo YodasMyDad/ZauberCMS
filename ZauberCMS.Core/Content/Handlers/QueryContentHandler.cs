@@ -17,52 +17,54 @@ public class QueryContentHandler(IServiceProvider serviceProvider)
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         var query = dbContext.Content.Include(x => x.ContentType).AsQueryable();
 
-        if (request.IncludeChildren)
-        {
-            query = query.Include(x => x.Children);
-            query = query.AsSplitQuery();
-        }
-        
         if (request.Query != null)
         {
             query = request.Query;
         }
-        
-        if (request.AsNoTracking)
+        else
         {
-            query = query.AsNoTracking();
-        }
-        
-        if (!request.SearchTerm.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
-        }
-
-        if (!request.ContentTypeAlias.IsNullOrWhiteSpace())
-        {
-            var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == request.ContentTypeAlias);
-            if (contentType != null)
+            if (request.IncludeChildren)
             {
-                request.ContentTypeId = contentType.Id;
+                query = query.Include(x => x.Children);
+                query = query.AsSplitQuery();
             }
-        }
         
-        if(request.ContentTypeId != null)
-        {
-            query = query.Where(x => x.ContentTypeId == request.ContentTypeId);
-        }
+            if (request.AsNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+        
+            if (!request.SearchTerm.IsNullOrWhiteSpace())
+            {
+                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
+            }
 
-        var idCount = request.Ids.Count;
-        if (request.Ids.Count != 0)
-        {
-            query = query.Where(x => request.Ids.Contains(x.Id));
-            request.AmountPerPage = idCount;
+            if (!request.ContentTypeAlias.IsNullOrWhiteSpace())
+            {
+                var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == request.ContentTypeAlias);
+                if (contentType != null)
+                {
+                    request.ContentTypeId = contentType.Id;
+                }
+            }
+        
+            if(request.ContentTypeId != null)
+            {
+                query = query.Where(x => x.ContentTypeId == request.ContentTypeId);
+            }
+
+            var idCount = request.Ids.Count;
+            if (request.Ids.Count != 0)
+            {
+                query = query.Where(x => request.Ids.Contains(x.Id));
+                request.AmountPerPage = idCount;
+            }
         }
         
         if (request.WhereClause != null)
         {
             query = query.Where(request.WhereClause);
-        }
+        }   
 
         query = request.OrderBy switch
         {

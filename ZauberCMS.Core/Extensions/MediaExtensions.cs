@@ -33,7 +33,7 @@ public static class MediaExtensions
     /// </summary>
     /// <param name="mediaType"></param>
     /// <returns></returns>
-    public static string GetIcon(MediaType mediaType)
+    public static string GetIcon(this MediaType mediaType)
     {
         return Icons.TryGetValue(mediaType, out var icon) ? icon : "question_mark";
     }
