@@ -11,7 +11,7 @@
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
-    <ContentEditor ParentId="@ParentId" ContentId="@ContentId" />
+    <ContentEditor @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ParentId" ContentId="@ContentId" />
 </RadzenPanel>
 
 @code {
@@ -22,5 +22,10 @@
     protected override void OnInitialized()
     {
         Layout?.SetSection(Constants.Sections.ContentSection);
+    }
+    
+    private static string GetCompositeKey(Guid? contentId, Guid? parentId)
+    {
+        return $"{contentId?.ToString() ?? "null"}_{parentId?.ToString() ?? "null"}";
     }
 }

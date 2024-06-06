@@ -129,7 +129,8 @@
     {
         if (Selection is Content content)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontent/{content.Id}", forceLoad: true);
+            NavigationManager.NavigateTo($"/admin/updatecontent/{content.Id}");
+            StateHasChanged();
         }
     }
 
