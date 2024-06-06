@@ -1,0 +1,54 @@
+﻿<RadzenTree @ref="Tree" 
+            Data="@Data" 
+            Expand="@OnExpandHandler" 
+            Change="@OnChangeHandler" 
+            @bind-Value="@Value" 
+            ItemContextMenu="@OnItemContextMenuHandler">
+    <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name">
+        <Template>
+            @if (Template != null)
+            {
+                @Template(context)   
+            }
+        </Template>
+    </RadzenTreeLevel>
+</RadzenTree>
+
+@code {
+    [Parameter] public IEnumerable<Content> Data { get; set; } = Enumerable.Empty<Content>();
+    [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
+    [Parameter] public EventCallback OnChange { get; set; }
+    [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
+    [Parameter] public object? Value { get; set; }
+    [Parameter] public EventCallback<object> ValueChanged { get; set; }
+    [Parameter] public Func<object, bool> HasChildren { get; set; } = default!;
+    [Parameter] public Func<object, bool> ShouldBeExpanded { get; set; } = default!;
+    [Parameter] public RenderFragment<object>? Template { get; set; } = default!;
+
+    private RadzenTree Tree { get; set; } = default!;
+
+    private async Task OnExpandHandler(TreeExpandEventArgs args)
+    {
+        if (OnExpand.HasDelegate)
+        {
+            await OnExpand.InvokeAsync(args);
+        }
+    }
+
+    private async Task OnChangeHandler()
+    {
+        await ValueChanged.InvokeAsync(Value);
+        if (OnChange.HasDelegate)
+        {
+            await OnChange.InvokeAsync();
+        }
+    }
+
+    private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
+    {
+        if (OnItemContextMenu.HasDelegate)
+        {
+            await OnItemContextMenu.InvokeAsync(args);
+        }
+    }
+}
