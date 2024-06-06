@@ -3,9 +3,8 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Make content tree into re-usable component, and use in multinode treepicker
-
 Media Tree, Section etc... (And media picker) only show folders in the tree
+
 Members (Including admins) and member picker
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
 Think about save events of properties too, change data before being saved and loaded

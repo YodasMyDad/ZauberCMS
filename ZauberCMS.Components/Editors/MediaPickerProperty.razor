@@ -1,0 +1,15 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+@code {
+    public string Name { get; set; } = "Media Picker";
+    public string Alias { get; set; } = "ZauberCMS.MediaPicker";
+    public string Description { get; set; } = "Media picker using the media tree";
+    public string Icon { get; set; } = "image";
+    public Type? SettingsComponent { get; set; }
+
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public IModalService? ModalService { get; set; }
+}

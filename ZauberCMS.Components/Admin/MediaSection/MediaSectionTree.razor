@@ -1,0 +1,20 @@
+﻿@using ZauberCMS.Core
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
+
+
+
+@code {
+    public void Dispose()
+    {
+        
+    }
+
+    public string Heading => "Media";
+    public int SortOrder => 0;
+    public string SectionAlias => Constants.Sections.MediaSection;
+
+    protected override void OnInitialized()
+    {
+
+    }
+}

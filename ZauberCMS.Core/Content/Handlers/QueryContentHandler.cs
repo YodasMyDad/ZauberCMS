@@ -51,6 +51,13 @@ public class QueryContentHandler(IServiceProvider serviceProvider)
         {
             query = query.Where(x => x.ContentTypeId == request.ContentTypeId);
         }
+
+        var idCount = request.Ids.Count;
+        if (request.Ids.Count != 0)
+        {
+            query = query.Where(x => request.Ids.Contains(x.Id));
+            request.AmountPerPage = idCount;
+        }
         
         if (request.WhereClause != null)
         {

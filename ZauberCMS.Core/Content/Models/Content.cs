@@ -39,6 +39,7 @@ public class Content : IContent
     /// Redirects behind the scenes to another content node
     /// </summary>
     public Guid? InternalRedirectId { get; set; }
+    
     [NotMapped] // Prevents property from being mapped to a DB column
     public string? InternalRedirectIdAsString
     {

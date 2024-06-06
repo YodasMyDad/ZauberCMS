@@ -1,4 +1,5 @@
 ﻿@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Content.Commands
 @using System.Text.Json
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -48,18 +49,30 @@
     private readonly Func<RadzenDropZoneItemEventArgs<Content>, bool> _canDrop = request => true;
     private IModalReference? Modal { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // TODO - Need to serialise the content Guids saved into ContentItems
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            var contentIds = JsonSerializer.Deserialize<List<Guid>>(Value);
+            if (contentIds != null && contentIds.Any())
+            {
+                var contentItems = await Mediator.Send(new QueryContentCommand
+                {
+                    Ids = contentIds
+                });
+                ContentItems = contentItems.Items.ToList();
+            }
+        }
         // TODO - Need to add settings to restrict amount allowed to be picked (Also can I restrict whats allowed to be picked by content type?)
     }
 
-    private void DeleteContent(Content content)
+    private async Task DeleteContent(Content content)
     {
         var index = ContentItems.FindIndex(c => c.Id == content.Id);
         if (index != -1)
         {
             ContentItems.RemoveAt(index);
+            await SaveAndUpdate();
         }
     }
 
@@ -69,11 +82,10 @@
         {
             ContentItems.Remove(args.Item);
             ContentItems.Insert(ContentItems.IndexOf(args.ToItem), args.Item);
-            Value = JsonSerializer.Serialize(ContentItems);
-            await ValueChanged.InvokeAsync(Value);
+            await SaveAndUpdate();
         }
     }
-    
+
     private void AddContent()
     {
         var parameters = new Dictionary<string, object>
@@ -83,24 +95,22 @@
 
         Modal = ModalService?.OpenSidePanel<ContentTree>("Choose Content", parameters);
     }
-    
-    private void OnValueChangedHandler(object value)
+
+    private async Task OnValueChangedHandler(object value)
     {
         if (value is Content content)
         {
             ContentItems.Add(content);
-            //TODO - Need to save to Guids, serialise and call back to the content editor
+            await SaveAndUpdate();
         }
+
         Modal?.Close();
     }
 
+    private async Task SaveAndUpdate()
+    {
+        Value = JsonSerializer.Serialize(ContentItems.Select(x => x.Id));
+        await ValueChanged.InvokeAsync(Value);
+    }
+
 }
-
-
-
-
-
-
-
-
-
