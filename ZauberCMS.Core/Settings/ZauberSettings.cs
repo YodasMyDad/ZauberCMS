@@ -13,7 +13,7 @@ public class ZauberSettings
 
 public class PluginSettings
 {
-    //public string? StorageProvider { get; set; }
+    public string? StorageProvider { get; set; }
     public string? EmailProvider { get; set; }
 }
 

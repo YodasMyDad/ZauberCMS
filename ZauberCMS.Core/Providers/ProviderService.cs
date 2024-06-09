@@ -5,9 +5,27 @@ using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Providers;
 
-public class ProviderService(IOptions<ZauberSettings> zauberSettings, ExtensionManager extensionManager)
+public class ProviderService(IOptions<ZauberSettings> gabSettings, ExtensionManager extensionManager)
 {
-    private readonly ZauberSettings _settings = zauberSettings.Value;
+    private readonly ZauberSettings _settings = gabSettings.Value;
+
+    private IStorageProvider? _storageProvider;
+
+    public IStorageProvider? StorageProvider
+    {
+        get
+        {
+            if (_storageProvider == null)
+            {
+                var storageProviders = extensionManager.GetInstances<IStorageProvider>(true);
+                if (_settings.Plugins.StorageProvider != null)
+                {
+                    _storageProvider = storageProviders[_settings.Plugins.StorageProvider];
+                }
+            }
+            return _storageProvider;
+        }
+    }
 
     private IEmailProvider? _emailProvider;
     

@@ -1,0 +1,80 @@
+﻿
+<RadzenCard>
+    <RadzenUpload id="ddUpload" @ref="uploadDD" 
+                  ChooseText="Drag and drop here or click to choose files" 
+                  Auto="false" 
+                  Multiple="true" 
+                  Url="upload/multiple" 
+                  InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "select file" }})"
+                  Progress=@(args => OnProgress(args, "Drag and drop files to upload")) class="w-100" />
+    <RadzenButton Text="Upload" Click=@(_ => uploadDD.Upload()) class="d-block mt-4" />
+</RadzenCard>
+              
+@code{
+    RadzenUpload uploadDD;
+    RadzenUpload upload;
+    int progress;
+    bool showProgress;
+    bool showComplete;
+    string completionMessage;
+    bool cancelUpload = false;
+    
+    void CompleteUpload(UploadCompleteEventArgs args)
+    {
+        if (!args.Cancelled)
+            completionMessage = "Upload Complete!";
+        else
+            completionMessage = "Upload Cancelled!";
+
+        showProgress = false;
+        showComplete = true;
+    }
+
+    void TrackProgress(UploadProgressArgs args)
+    {
+        showProgress = true;
+        showComplete = false;
+        progress = args.Progress;
+
+        // cancel upload
+        args.Cancel = cancelUpload;
+
+        // reset cancel flag
+        cancelUpload = false;
+    }
+
+    void CancelUpload()
+    {
+        cancelUpload = true;
+    }
+
+    int customParameter = 1;
+
+    void OnChange(UploadChangeEventArgs args, string name)
+    {
+        /*foreach (var file in args.Files)
+        {
+            console.Log($"File: {file.Name} / {file.Size} bytes");
+        }
+
+        console.Log($"{name} changed");*/
+    }
+
+    void OnProgress(UploadProgressArgs args, string name)
+    {
+        /*console.Log($"{args.Progress}% '{name}' / {args.Loaded} of {args.Total} bytes.");
+
+        if (args.Progress == 100)
+        {
+            foreach (var file in args.Files)
+            {
+                console.Log($"Uploaded: {file.Name} / {file.Size} bytes");
+            }
+        }*/
+    }
+
+    void OnComplete(UploadCompleteEventArgs args)
+    {
+        //console.Log($"Server response: {args.RawResponse}");
+    }
+}

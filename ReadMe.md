@@ -24,4 +24,9 @@ ISection
 ISectionDashboard
 ISectionNav
 
+IContentBlock
+IContentBlowPreview
+
+IStorageProvider
+
 Querying for data

@@ -9,7 +9,7 @@ public static class MediaExtensions
     /// </summary>
     /// <param name="url">The URL of the media file.</param>
     /// <returns>The media type of the file.</returns>
-    public static MediaType GetMediaTypeFromUrl(string url)
+    public static MediaType GetMediaTypeFromUrl(this string url)
     {
         var extension = Path.GetExtension(url).ToLowerInvariant();
 
