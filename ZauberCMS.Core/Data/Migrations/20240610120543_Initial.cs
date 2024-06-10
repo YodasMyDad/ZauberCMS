@@ -24,12 +24,40 @@ namespace ZauberCMS.Core.Data.Migrations
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ContentProperties = table.Column<string>(type: "TEXT", nullable: false),
-                    AvailableContentViews = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
-                    Tabs = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false)
+                    AvailableContentViews = table.Column<string>(type: "TEXT", nullable: false),
+                    Tabs = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ZauberContentTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ZauberMedia",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Url = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    MediaType = table.Column<int>(type: "INTEGER", nullable: false),
+                    FileSize = table.Column<long>(type: "INTEGER", nullable: false),
+                    Width = table.Column<long>(type: "INTEGER", nullable: false),
+                    Height = table.Column<long>(type: "INTEGER", nullable: false),
+                    IsTemp = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberMedia", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ZauberMedia_ZauberMedia_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "ZauberMedia",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -39,7 +67,7 @@ namespace ZauberCMS.Core.Data.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExtendedData = table.Column<string>(type: "nvarchar(3000)", maxLength: 3000, nullable: false),
+                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true)
@@ -55,7 +83,7 @@ namespace ZauberCMS.Core.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExtendedData = table.Column<string>(type: "nvarchar(3500)", maxLength: 3500, nullable: false),
+                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
@@ -248,6 +276,21 @@ namespace ZauberCMS.Core.Data.Migrations
                 column: "Name");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ZauberMedia_Name",
+                table: "ZauberMedia",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberMedia_ParentId",
+                table: "ZauberMedia",
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberMedia_Url",
+                table: "ZauberMedia",
+                column: "Url");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ZauberRoleClaims_RoleId",
                 table: "ZauberRoleClaims",
                 column: "RoleId");
@@ -290,6 +333,9 @@ namespace ZauberCMS.Core.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ZauberContent");
+
+            migrationBuilder.DropTable(
+                name: "ZauberMedia");
 
             migrationBuilder.DropTable(
                 name: "ZauberRoleClaims");

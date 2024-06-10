@@ -95,8 +95,7 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.Property<string>("AvailableContentViews")
                         .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ContentProperties")
                         .IsRequired()
@@ -123,8 +122,7 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.Property<string>("Tabs")
                         .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -151,8 +149,7 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<long>("FileSize")
                         .HasColumnType("INTEGER");
@@ -185,6 +182,8 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.HasIndex("Name")
                         .HasDatabaseName("IX_ZauberMedia_Name");
 
+                    b.HasIndex("ParentId");
+
                     b.HasIndex("Url")
                         .HasDatabaseName("IX_ZauberMedia_Url");
 
@@ -211,8 +210,7 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
-                        .HasMaxLength(3000)
-                        .HasColumnType("nvarchar(3000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
@@ -281,8 +279,7 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
-                        .HasMaxLength(3500)
-                        .HasColumnType("nvarchar(3500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
@@ -431,6 +428,16 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Media.Models.Media", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Media.Models.Media", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.RoleClaim", b =>
                 {
                     b.HasOne("ZauberCMS.Core.Membership.Models.Role", null)
@@ -494,6 +501,11 @@ namespace ZauberCMS.Core.Data.Migrations
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>
                 {
                     b.Navigation("LinkedContent");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Media.Models.Media", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.Role", b =>

@@ -36,34 +36,38 @@ public static class ValueConversionExtensions
         propertyBuilder.Metadata.SetValueConverter(converter);
         propertyBuilder.Metadata.SetValueComparer(comparer);
 
-        if (columnSize == null)
-        {
-            //TODO - This is likely to be an issue for extension developers?
+        //TODO - This is likely to be an issue for extension developers?
             
-            // Get an instance of your context
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        // Get an instance of your context
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
         
-            // Build configuration
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS.Web"))
-                .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appSettings.{environment}.json", optional: true)
-                .Build();
+        // Build configuration
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS.Web"))
+            .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appSettings.{environment}.json", optional: true)
+            .Build();
         
-            // Get the connection string and provider from configuration
-            var section = configuration.GetSection("Zauber");
-            var databaseProvider = section.GetValue<string>("DatabaseProvider");
+        // Get the connection string and provider from configuration
+        var section = configuration.GetSection("Zauber");
+        var databaseProvider = section.GetValue<string>("DatabaseProvider");
 
-            // Determine the provider
-            propertyBuilder.HasColumnType(
-                databaseProvider?.EndsWith("Sqlite", StringComparison.OrdinalIgnoreCase) == true
-                    ? "TEXT"
-                    : "nvarchar(MAX)");
+        if (databaseProvider?.EndsWith("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            propertyBuilder.HasColumnType("TEXT");
         }
         else
         {
-            propertyBuilder.HasColumnType($"nvarchar({columnSize})");
-            propertyBuilder.HasMaxLength(columnSize.Value);   
+            if (columnSize == null)
+            {
+                // Determine the provider
+                propertyBuilder.HasColumnType("nvarchar(MAX)");
+            }
+            else
+            {
+                propertyBuilder.HasColumnType($"nvarchar({columnSize})");
+                propertyBuilder.HasMaxLength(columnSize.Value);   
+            }   
         }
     }
 }

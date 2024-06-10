@@ -59,12 +59,6 @@ public class Media
     /// Only used for Images
     /// </remarks>
     public long Height { get; set; }
-
-    /// <summary>
-    /// Whether this is a temporary file which should be deleted
-    /// TODO - Do we need this?
-    /// </summary>
-    public bool IsTemp { get; set; } = true;
     
     /// <summary>
     /// The id of the parent media node if there is one
