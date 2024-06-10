@@ -11,7 +11,7 @@ public interface IStorageProvider
     /// <param name="browserFile"></param>
     /// <param name="folderName"></param>
     /// <param name="overwrite"></param>
-    public Task<FileSaveResult> SaveFile(IBrowserFile browserFile, string folderName, bool overwrite = true);
+    public Task<FileSaveResult> SaveFile(IBrowserFile browserFile, string? folderName = null, bool overwrite = true);
     
     /// <summary>
     /// Deletes the file

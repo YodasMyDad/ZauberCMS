@@ -6,3 +6,5 @@ riderModule.iml
 .idea/*
 /Logs/*
 /ZauberCMS.Web/Logs/*
+
+/ZauberCMS.Web/wwwroot/media/*

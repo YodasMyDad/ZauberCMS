@@ -1,80 +1,129 @@
-﻿
-<RadzenCard>
-    <RadzenUpload id="ddUpload" @ref="uploadDD" 
-                  ChooseText="Drag and drop here or click to choose files" 
-                  Auto="false" 
-                  Multiple="true" 
-                  Url="upload/multiple" 
-                  InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "select file" }})"
-                  Progress=@(args => OnProgress(args, "Drag and drop files to upload")) class="w-100" />
-    <RadzenButton Text="Upload" Click=@(_ => uploadDD.Upload()) class="d-block mt-4" />
-</RadzenCard>
-              
-@code{
-    RadzenUpload uploadDD;
-    RadzenUpload upload;
-    int progress;
-    bool showProgress;
-    bool showComplete;
-    string completionMessage;
-    bool cancelUpload = false;
+﻿@using Microsoft.Extensions.Options
+@using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Settings
+@using ZauberCMS.Core.Shared.Models
+@using ZauberCMS.Core.Providers
+@implements IAsyncDisposable
+
+@if (ParentFolder is { MediaType: MediaType.Folder })
+{
+    <p>Uploading into @ParentFolder.Name</p>
+}
+<div @ref="FileDropContainer" class="file-drop-zone @HoverClass" @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondragover="OnDragEnter">
+    <InputFile OnChange="@OnChange" @ref="InputFile" multiple />
+</div>
+<RadzenButton Click="@(() => Upload())">Upload</RadzenButton>
+<RadzenButton Click="@(() => Clear())">Clear</RadzenButton>
+
+<div class="error-message-container">
+    @foreach (var error in ErrorMessages)
+    {
+        <p>@error</p>   
+    }
+</div>
+<div class="image-container">
+    @foreach(var media in FilesToUpload)
+    {
+        //TODO - Need to show icons or the actual image with remove button
+        @media.Name
+    }
+</div>
+
+@code {
+    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
+    [Inject] public ProviderService ProviderService { get; set; } = default!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
     
-    void CompleteUpload(UploadCompleteEventArgs args)
+    [Parameter] public Media? ParentFolder { get; set; }
+    [Parameter] public int MaxAllowedFiles { get; set; } = 30; // Only allow 30 max at a time, should be setting
+    [Parameter] public bool OnlyImages { get; set; }
+    [Parameter] public IModalService? ModalService { get; set; }
+    
+    private ElementReference FileDropContainer { get; set; }
+    private InputFile InputFile { get; set; } = default!;
+    private IJSObjectReference? FilePasteModule { get; set; }
+    private IJSObjectReference? FilePasteFunctionReference { get; set; }
+    private string HoverClass { get; set; } = string.Empty;
+    private List<FileSaveResult> FilesToUpload { get; set; } = [];
+    private List<string> ErrorMessages { get; set; } = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!args.Cancelled)
-            completionMessage = "Upload Complete!";
-        else
-            completionMessage = "Upload Cancelled!";
-
-        showProgress = false;
-        showComplete = true;
-    }
-
-    void TrackProgress(UploadProgressArgs args)
-    {
-        showProgress = true;
-        showComplete = false;
-        progress = args.Progress;
-
-        // cancel upload
-        args.Cancel = cancelUpload;
-
-        // reset cancel flag
-        cancelUpload = false;
-    }
-
-    void CancelUpload()
-    {
-        cancelUpload = true;
-    }
-
-    int customParameter = 1;
-
-    void OnChange(UploadChangeEventArgs args, string name)
-    {
-        /*foreach (var file in args.Files)
+        if (firstRender)
         {
-            console.Log($"File: {file.Name} / {file.Size} bytes");
+            FilePasteModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/filePaste.js");
+            FilePasteFunctionReference = await FilePasteModule.InvokeAsync<IJSObjectReference>("initializeFilePaste", FileDropContainer, InputFile.Element);
+        }
+    }
+
+    void OnDragEnter(DragEventArgs e) => HoverClass = "hover";
+    void OnDragLeave(DragEventArgs e) => HoverClass = string.Empty;
+
+    private async Task OnChange(InputFileChangeEventArgs e)
+    {
+        ErrorMessages.Clear();
+        if (e.FileCount > MaxAllowedFiles)
+        {
+            ErrorMessages.Add($"Only {MaxAllowedFiles} files can be uploaded");
+            return;
         }
 
-        console.Log($"{name} changed");*/
-    }
-
-    void OnProgress(UploadProgressArgs args, string name)
-    {
-        /*console.Log($"{args.Progress}% '{name}' / {args.Loaded} of {args.Total} bytes.");
-
-        if (args.Progress == 100)
+        foreach (var file in e.GetMultipleFiles(MaxAllowedFiles))
         {
-            foreach (var file in args.Files)
+            var result = await ProviderService.StorageProvider!.CanUseFile(file, OnlyImages);
+            if (result.Success)
             {
-                console.Log($"Uploaded: {file.Name} / {file.Size} bytes");
+                FilesToUpload.Add(result);
             }
-        }*/
+            else
+            {
+                ErrorMessages.AddRange(result.ErrorMessages);
+            }
+            /*await using var stream = file.OpenReadStream(Settings.Value.MaxUploadFileSizeInBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);*/
+            //ImageSources.Add($"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}");
+        }
+
+        HoverClass = string.Empty;
     }
 
-    void OnComplete(UploadCompleteEventArgs args)
+    private async Task Upload()
     {
-        //console.Log($"Server response: {args.RawResponse}");
+        var results = await Mediator.Send(new SaveMediaCommand
+        {
+            FilesToSave = FilesToUpload
+        });
+        
+        if (results.Any(x => x.Success == false))
+        {
+            ErrorMessages.Add("The follow files had issues");
+            foreach (var errors in results.Where(x => x.Success == false))
+            {
+                ErrorMessages.AddRange(errors.ErrorMessages);
+            }
+        }
+        //TODO - Need to show success message?
+        FilesToUpload.Clear();
+    }
+    
+    private void Clear()
+    {
+        FilesToUpload.Clear();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (FilePasteFunctionReference != null)
+        {
+            await FilePasteFunctionReference.InvokeVoidAsync("dispose");
+            await FilePasteFunctionReference.DisposeAsync();
+        }
+
+        if (FilePasteModule != null)
+        {
+            await FilePasteModule.DisposeAsync();
+        }
     }
 }

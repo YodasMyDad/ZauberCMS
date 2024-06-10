@@ -45,6 +45,9 @@ public class DiskStorageProvider(
                     }
 
                 }
+                fileSaveResult.MediaType = fileSaveResult.OriginalFile?.Name.ToFileType() ?? MediaType.Unknown;
+                fileSaveResult.Name = fileSaveResult.OriginalFile?.Name ?? "unknown";
+                fileSaveResult.OriginalFile = file;
                 return fileSaveResult;
             });
         }
@@ -68,7 +71,7 @@ public class DiskStorageProvider(
         }
 
         /// <inheritdoc />
-        public async Task<FileSaveResult> SaveFile(IBrowserFile file, string folderName, bool overwrite = true)
+        public async Task<FileSaveResult> SaveFile(IBrowserFile file, string? folderName = null, bool overwrite = true)
         {
             var fileSaveResult = await CanUseFile(file);
             fileSaveResult.OriginalFile = file;
@@ -79,7 +82,10 @@ public class DiskStorageProvider(
 
             try
             {
-                var relativePath = Path.Combine(_settings.UploadFolderName ?? "media", folderName);
+                var relativePath = folderName.IsNullOrWhiteSpace() ? 
+                    Path.Combine(_settings.UploadFolderName ?? "media") : 
+                    Path.Combine(_settings.UploadFolderName ?? "media", folderName);
+                
                 var dirToSave = Path.Combine(env.WebRootPath, relativePath);
                 var di = new DirectoryInfo(dirToSave);
                 if (!di.Exists)
