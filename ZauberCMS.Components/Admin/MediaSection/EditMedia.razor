@@ -1,7 +1,5 @@
-﻿
-@using ZauberCMS.Core.Media.Models
+﻿@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core
-@using ZauberCMS.Components.Admin.MediaSection.Buttons
 @using ZauberCMS.Core.Media.Commands
 @page "/admin/createmedia"
 @page "/admin/createfolder"
@@ -34,7 +32,7 @@
         }
         else
         {
-            <MediaUpload />
+            <MediaUpload ParentId="@ParentId" />
         }
     </RadzenPanel>   
 }
@@ -80,7 +78,7 @@
     {
         if (UpdateType == MediaUpdateType.Folder)
         {
-            var saveCommand = new SaveMediaCommand();
+            var saveCommand = new SaveMediaCommand { ParentFolderId = ParentId};
             saveCommand.MediaToSave.Add(Media!);
             var result = await Mediator.Send(saveCommand);
             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Saved", Detail = "", Duration = 4000 });

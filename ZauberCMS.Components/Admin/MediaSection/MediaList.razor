@@ -1,17 +1,14 @@
-﻿
-@using ZauberCMS.Core.Media.Models
+﻿@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Media.Commands
-@using ZauberCMS.Components.Admin.MediaSection.Buttons
 @layout SectionLayout
 @page "/admin/listmedia/{FolderId:guid}"
 
 <PageTitle>Listing Media</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-    <CreateMedia />
+    <CreateMedia ParentId="FolderId" />
 </RadzenStack>
-
 
 <RadzenDataGrid AllowFiltering="false"
                 FilterPopupRenderMode="PopupRenderMode.OnDemand"
@@ -22,7 +19,6 @@
                 Data="@Contents"
                 SelectionMode="DataGridSelectionMode.Single"
                 RowSelect="@((Media value) => OnRowSelect(value))">
-    @*@bind-Value="@SelectedContent"*@
     <Columns>
         <RadzenDataGridColumn Property="Name" Title="Name"/>
         <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
@@ -36,17 +32,27 @@
 @code {
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
-    [Parameter] public Guid? FolderId { get; set; }
-    private IEnumerable<Media> Contents { get; set; } = Enumerable.Empty<Media>();
+    [Parameter] public Guid FolderId { get; set; }
+    
+    private IEnumerable<Media> Contents { get; set; } = [];
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
+    {
+        await SetContents(FolderId);
+    }
+
+    protected override void OnInitialized()
     {
         Layout?.SetSection(Constants.Sections.MediaSection);
+    }
+
+    private async Task SetContents(Guid folderId)
+    {
         var items = await Mediator.Send(new QueryMediaCommand
         {
-            AmountPerPage = 20,
-            OrderBy = GetMediaOrderBy.DateUpdatedDescending,
-            WhereClause = media => media.ParentId == FolderId
+            AmountPerPage = 100,
+            OrderBy = GetMediaOrderBy.Name,
+            WhereClause = media => media.ParentId == folderId
         });
         
         Contents = items.Items;
@@ -54,10 +60,13 @@
     
     private void OnRowSelect(object value)
     {
-        // TODO - If it's a folder refresh data! Show breadcrumb
-        if (value is Media selectedRow)
+        if (value is Media { MediaType: MediaType.Folder } folder)
         {
-            NavigationManager.NavigateTo($"/admin/updatemedia/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"/admin/listmedia/{folder.Id}");
+        }
+        else if (value is Media media)
+        {
+            NavigationManager.NavigateTo($"/admin/updatemedia/{media.Id}");
         }
     }
 }

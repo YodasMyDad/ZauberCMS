@@ -6,7 +6,7 @@
 @using ZauberCMS.Core.Providers
 @implements IAsyncDisposable
 
-@if (ParentFolder is { MediaType: MediaType.Folder })
+@if (ParentFolder != null)
 {
     <p>Uploading into @ParentFolder.Name</p>
 }
@@ -37,8 +37,8 @@
     [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
     [Inject] public ProviderService ProviderService { get; set; } = default!;
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
-
-    [Parameter] public Media? ParentFolder { get; set; }
+    
+    [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public int MaxAllowedFiles { get; set; } = 30; // Only allow 30 max at a time, should be setting
     [Parameter] public bool OnlyImages { get; set; }
     [Parameter] public IModalService? ModalService { get; set; }
@@ -51,6 +51,19 @@
     private string HoverClass { get; set; } = string.Empty;
     private List<FileSaveResult> FilesToUpload { get; set; } = [];
     private List<string> ErrorMessages { get; set; } = [];
+    private Media? ParentFolder { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ParentId != null)
+        {
+            var media = await Mediator.Send(new GetMediaCommand { Id = ParentId.Value });
+            if (media is { MediaType: MediaType.Folder })
+            {
+                ParentFolder = media;
+            }
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

@@ -15,11 +15,11 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
     public async Task<List<FileSaveResult>> Handle(SaveMediaCommand request, CancellationToken cancellationToken)
     {
         return request.FilesToSave.Count != 0
-            ? await SaveFiles(request.FilesToSave)
-            : await SaveMedia(request.MediaToSave);
+            ? await SaveFiles(request.FilesToSave, request.ParentFolderId)
+            : await SaveMedia(request.MediaToSave, request.ParentFolderId);
     }
 
-    private async Task<List<FileSaveResult>> SaveFiles(List<FileSaveResult> files)
+    private async Task<List<FileSaveResult>> SaveFiles(List<FileSaveResult> files, Guid? parentFolderId)
     {
         var results = new List<FileSaveResult>();
         
@@ -41,6 +41,11 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                     // Create a media item to save
                     var mediaItem = await providerService.StorageProvider!.ToMedia(fileSaveResult);
                     mediaItem.Id = mediaId;
+                    
+                    if (parentFolderId != null)
+                    {
+                        mediaItem.ParentId = parentFolderId.Value;
+                    }
                     
                     // Save media to db
                     try
@@ -72,7 +77,7 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
         return results;
     }
     
-    private async Task<List<FileSaveResult>> SaveMedia(List<Models.Media> media)
+    private async Task<List<FileSaveResult>> SaveMedia(List<Models.Media> media, Guid? parentFolderId)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
@@ -87,6 +92,10 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
             var existingMedia = await dbContext.Media.FirstOrDefaultAsync(x => x.Id == m.Id);
             if (existingMedia == null)
             {
+                if (parentFolderId != null)
+                {
+                    m.ParentId = parentFolderId.Value;
+                }
                 dbContext.Media.Add(m);
             }
             else

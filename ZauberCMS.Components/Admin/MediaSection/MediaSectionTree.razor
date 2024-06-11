@@ -43,7 +43,8 @@
         {
             AmountPerPage = 100,
             WhereClause = x => x.ParentId == null,
-            IncludeChildren = true
+            IncludeChildren = true,
+            OrderBy = GetMediaOrderBy.Name
         });
         MediaItems = items.Items.ToList();
     }

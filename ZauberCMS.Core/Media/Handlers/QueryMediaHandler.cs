@@ -15,7 +15,7 @@ public class QueryMediaHandler(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var query = dbContext.Media.AsQueryable();
+        var query = dbContext.Media.Include(x => x.Parent).AsQueryable();
 
         if (request.Query != null)
         {
@@ -58,6 +58,8 @@ public class QueryMediaHandler(IServiceProvider serviceProvider)
             GetMediaOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
             GetMediaOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
             GetMediaOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+            GetMediaOrderBy.Name => query.OrderBy(p => p.Name),
+            GetMediaOrderBy.NameDescending => query.OrderByDescending(p => p.Name),
             _ => query.OrderByDescending(p => p.DateUpdated)
         };
         

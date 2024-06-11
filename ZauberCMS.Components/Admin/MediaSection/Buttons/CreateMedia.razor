@@ -1,11 +1,26 @@
-﻿<RadzenSplitButton Click=@(args => OnClick(args, "CreateMedia")) 
+﻿@using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Media.Models
+<RadzenSplitButton Click=@(args => OnClick(args, "CreateMedia"))
                    Text="Create Folder">
     <ChildContent>
-        <RadzenSplitButtonItem Text="Create File" Value="File"/>
+        @if (Media is { MediaType: MediaType.Folder })
+        {
+            <RadzenSplitButtonItem Text="Create File" Value="File"/>
+        }
     </ChildContent>
 </RadzenSplitButton>
 @code {
     [Parameter] public Guid? ParentId { get; set; }
+    private Media? Media { get; set; }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ParentId != null)
+        {
+            Media = await Mediator.Send(new GetMediaCommand { Id = ParentId.Value });
+        }
+    }
+
     private void OnClick(RadzenSplitButtonItem? item, string buttonName)
     {
         var action = item != null ? "createmedia" : "createfolder";
