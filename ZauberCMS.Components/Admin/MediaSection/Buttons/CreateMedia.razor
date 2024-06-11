@@ -1,0 +1,16 @@
+﻿<RadzenSplitButton Click=@(args => OnClick(args, "CreateMedia")) 
+                   Text="Create Folder">
+    <ChildContent>
+        <RadzenSplitButtonItem Text="Create File" Value="File"/>
+    </ChildContent>
+</RadzenSplitButton>
+@code {
+    [Parameter] public Guid? ParentId { get; set; }
+    private void OnClick(RadzenSplitButtonItem? item, string buttonName)
+    {
+        var action = item != null ? "createmedia" : "createfolder";
+        var path = ParentId != null ? $"admin/{action}/{ParentId}" : $"admin/{action}";
+
+        NavigationManager.NavigateTo(path);
+    }
+}

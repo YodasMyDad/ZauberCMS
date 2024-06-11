@@ -42,7 +42,7 @@
         var items = await Mediator.Send(new QueryMediaCommand
         {
             AmountPerPage = 100,
-            WhereClause = x => x.ParentId == null && x.MediaType == MediaType.Folder,
+            WhereClause = x => x.ParentId == null,
             IncludeChildren = true
         });
         MediaItems = items.Items.ToList();
@@ -50,13 +50,19 @@
 
     private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
+        
     }
 
     private void OnChange()
     {
-        if (Selection is Media media)
+        switch (Selection)
         {
-            NavigationManager.NavigateTo($"/admin/updatemedia/{media.Id}");
+            case Media { MediaType: MediaType.Folder } folder:
+                NavigationManager.NavigateTo($"/admin/listmedia/{folder.Id}");
+                break;
+            case Media media:
+                NavigationManager.NavigateTo($"/admin/updatemedia/{media.Id}");
+                break;
         }
     }
 

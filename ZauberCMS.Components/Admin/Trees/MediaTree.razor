@@ -29,7 +29,7 @@
             var items = await Mediator.Send(new QueryMediaCommand
             {
                 AmountPerPage = 100,
-                WhereClause = x => x.ParentId == null && x.MediaType == MediaType.Folder,
+                WhereClause = x => x.ParentId == null,
                 IncludeChildren = true
             });
             Data = items.Items;
@@ -46,6 +46,7 @@
         {
             if (args.Value is Media media)
             {
+                //TODO - Only expand if folder
                 var items = Mediator.Send(new QueryMediaCommand
                 {
                     WhereClause = x => x.ParentId == media.Id && x.MediaType == MediaType.Folder,
@@ -96,9 +97,9 @@
 
     private bool HasChildren(object data)
     {
-        if (data is Media media)
+        if (data is Media { MediaType: MediaType.Folder } media)
         {
-            return media.Children.Any();
+            return media.Children.Any();   
         }
 
         return false;
@@ -106,10 +107,12 @@
 
     private bool ShouldBeExpanded(object data)
     {
-        if (data is Media media)
+        /*
+        if (data is Media { MediaType: MediaType.Folder } media)
         {
             return HasChildren(media) && media.ParentId == null;
         }
+        */
 
         return false;
     }

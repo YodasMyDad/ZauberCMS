@@ -1,40 +1,61 @@
 ﻿
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core
+@using ZauberCMS.Components.Admin.MediaSection.Buttons
+@using ZauberCMS.Core.Media.Commands
 @page "/admin/createmedia"
+@page "/admin/createfolder"
 @page "/admin/createmedia/{ParentId:guid}"
+@page "/admin/createfolder/{ParentId:guid}"
 @page "/admin/updatemedia/{MediaId:guid}"
 @layout SectionLayout
 
 <PageTitle>Create & Update Content</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Right" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/admin/createcontent", forceLoad: true))/>
+    <CreateMedia ParentId="ParentId" />
 </RadzenStack>
 
-<RadzenPanel Class="rz-mx-auto">
-    <EditForm Model="@Media" OnSubmit="Save">
-        <RadzenRow class="rz-pb-6">
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
-                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name" aria-label="Name"/>
-            </RadzenStack>
-        </RadzenRow>
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
-            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
-        </RadzenStack>
-    </EditForm>
-</RadzenPanel>
+@if (Media != null)
+{
+    <RadzenPanel Class="rz-mx-auto">
+        @if (UpdateType == MediaUpdateType.Folder)
+        {
+            <EditForm Model="@Media" OnSubmit="Save">
+                <RadzenRow class="rz-pb-6">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
+                        <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name" aria-label="Name"/>
+                    </RadzenStack>
+                </RadzenRow>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+                    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
+                </RadzenStack>
+            </EditForm>    
+        }
+        else
+        {
+            <MediaUpload />
+        }
+    </RadzenPanel>   
+}
 
 @code {
     [Parameter] public Guid? MediaId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
+
+    [Inject] NotificationService NotificationService { get; set; } = default!;
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     private Media? Media { get; set; }
+    private MediaUpdateType UpdateType { get; set; } = MediaUpdateType.Folder;
     
     protected override void OnInitialized()
     {
+        if (NavigationManager.Uri.Contains("media", StringComparison.OrdinalIgnoreCase))
+        {
+            UpdateType = MediaUpdateType.Media;
+        }
         Layout?.SetSection(Constants.Sections.MediaSection);
         if (MediaId.HasValue)
         {
@@ -43,6 +64,10 @@
         else
         {
             Media = new Media();
+            if (UpdateType == MediaUpdateType.Folder)
+            {
+                Media.MediaType = MediaType.Folder;
+            }
         }
     }
 
@@ -53,11 +78,19 @@
     
     private async Task Save()
     {
- 
-            /*var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
-            var result = await Mediator.Send(saveContentTypeCommand);
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });*/
-       
+        if (UpdateType == MediaUpdateType.Folder)
+        {
+            var saveCommand = new SaveMediaCommand();
+            saveCommand.MediaToSave.Add(Media!);
+            var result = await Mediator.Send(saveCommand);
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Saved", Detail = "", Duration = 4000 });
+        }
+    }
+
+    private enum MediaUpdateType
+    {
+        Folder,
+        Media
     }
 
 }

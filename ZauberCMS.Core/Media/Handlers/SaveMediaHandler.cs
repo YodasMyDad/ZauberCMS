@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
@@ -73,12 +74,28 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
     
     private async Task<List<FileSaveResult>> SaveMedia(List<Models.Media> media)
     {
+        using var scope = serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        
         var results = new List<FileSaveResult>();
+        
+        // TODO - This needs radically changed!
         
         foreach (var m in media)
         {
-            //TODO - Sort the save media stuff
+            // Is this an update
+            var existingMedia = await dbContext.Media.FirstOrDefaultAsync(x => x.Id == m.Id);
+            if (existingMedia == null)
+            {
+                dbContext.Media.Add(m);
+            }
+            else
+            {
+                //TODO - Sort the save media update stuff   
+            }
         }
+
+        await dbContext.SaveChangesAsync();
 
         return results;
     }

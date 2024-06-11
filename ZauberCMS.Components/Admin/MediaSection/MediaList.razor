@@ -1,5 +1,63 @@
-﻿<p>This is to list our media in a folder</p>
+﻿
+@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core
+@using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Components.Admin.MediaSection.Buttons
+@layout SectionLayout
+@page "/admin/listmedia/{FolderId:guid}"
+
+<PageTitle>Listing Media</PageTitle>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+    <CreateMedia />
+</RadzenStack>
+
+
+<RadzenDataGrid AllowFiltering="false"
+                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                AllowPaging="false"
+                PageSize="20"
+                AllowSorting="true"
+                Data="@Contents"
+                SelectionMode="DataGridSelectionMode.Single"
+                RowSelect="@((Media value) => OnRowSelect(value))">
+    @*@bind-Value="@SelectedContent"*@
+    <Columns>
+        <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+            <Template Context="data">
+                @data.DateUpdated.Humanize()
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
 
 @code {
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
+
+    [Parameter] public Guid? FolderId { get; set; }
+    private IEnumerable<Media> Contents { get; set; } = Enumerable.Empty<Media>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Layout?.SetSection(Constants.Sections.MediaSection);
+        var items = await Mediator.Send(new QueryMediaCommand
+        {
+            AmountPerPage = 20,
+            OrderBy = GetMediaOrderBy.DateUpdatedDescending,
+            WhereClause = media => media.ParentId == FolderId
+        });
+        
+        Contents = items.Items;
+    }
     
+    private void OnRowSelect(object value)
+    {
+        // TODO - If it's a folder refresh data! Show breadcrumb
+        if (value is Media selectedRow)
+        {
+            NavigationManager.NavigateTo($"/admin/updatemedia/{selectedRow.Id}");
+        }
+    }
 }
