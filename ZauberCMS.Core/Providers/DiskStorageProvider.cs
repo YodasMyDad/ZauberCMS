@@ -45,8 +45,8 @@ public class DiskStorageProvider(
                     }
 
                 }
-                fileSaveResult.MediaType = fileSaveResult.OriginalFile?.Name.ToFileType() ?? MediaType.Unknown;
-                fileSaveResult.Name = fileSaveResult.OriginalFile?.Name ?? "unknown";
+                fileSaveResult.MediaType = file.Name.ToFileType();
+                fileSaveResult.Name = file.Name;
                 fileSaveResult.OriginalFile = file;
                 return fileSaveResult;
             });

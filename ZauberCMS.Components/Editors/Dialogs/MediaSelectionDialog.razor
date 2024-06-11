@@ -1,0 +1,15 @@
+﻿<RadzenTabs @bind-SelectedIndex="@selectedIndex">
+    <Tabs>
+        <RadzenTabsItem Text="Media">
+            Show media list here
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="Upload">
+            <MediaUpload /> @* On value change then refresh data? *@
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+
+@code {
+        
+    int selectedIndex = 0;
+}
