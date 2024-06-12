@@ -20,7 +20,13 @@
                 SelectionMode="DataGridSelectionMode.Single"
                 RowSelect="@((Media value) => OnRowSelect(value))">
     <Columns>
+        <RadzenDataGridColumn Property="MediaType" Title="Type">
+            <Template Context="data">
+                <RadzenIcon Icon="@data.MediaType.GetIcon()" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="FileSize" Title="Size"/>
         <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
             <Template Context="data">
                 @data.DateUpdated.Humanize()

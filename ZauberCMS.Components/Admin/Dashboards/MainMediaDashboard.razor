@@ -12,9 +12,14 @@
                 Data="@Contents"
                 SelectionMode="DataGridSelectionMode.Single"
                 RowSelect="@((Media value) => OnRowSelect(value))">
-    @*@bind-Value="@SelectedContent"*@
     <Columns>
+        <RadzenDataGridColumn Property="MediaType" Title="Type">
+            <Template Context="data">
+                <RadzenIcon Icon="@data.MediaType.GetIcon()" />
+            </Template>            
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="FileSize" Title="Size"/>
         <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
             <Template Context="data">
                 @data.DateUpdated.Humanize()
@@ -34,7 +39,7 @@
     {
         var items = await Mediator.Send(new QueryMediaCommand
         {
-            AmountPerPage = 20,
+            AmountPerPage = 50,
             OrderBy = GetMediaOrderBy.DateUpdatedDescending,
             WhereClause = media => media.MediaType != MediaType.Folder
         });

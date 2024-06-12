@@ -2,7 +2,7 @@
 @using ZauberCMS.Core.Sections.Interfaces
 @foreach (var section in Sections.OrderBy(x => x.Value.SortOrder))
 {
-    <RadzenButton Variant="Variant.Text" Text="@(section.Value.Name)" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo(section.Value.IndexUrl))/>
+    <RadzenButton Variant="Variant.Text" Text="@(section.Value.Name)" class="@(section.Value.Alias == CurrentSection ? "section-nav-active" : "")" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo(section.Value.IndexUrl))/>
 }
 
 @code {

@@ -19,6 +19,7 @@ rating property
 material icon picker property (Use thr icon picker on contenttypes)
 Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 .. Or have ChatGPT property editor
+Restrict admin by ip address
 Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)
 Need to delete all migrations, create one and see if it works with SQLite & also SQLServer (look into how to ship with different migrations based on Db)
 Find someone to help with the nuget packaging. Need to install site, but have Components/Core as seperate nuget package that people reference in other projects

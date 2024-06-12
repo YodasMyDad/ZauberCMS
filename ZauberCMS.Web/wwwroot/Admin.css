@@ -47,4 +47,10 @@
   text-align: center;
 }
 
+.section-nav-active {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
 /*# sourceMappingURL=Admin.css.map */
