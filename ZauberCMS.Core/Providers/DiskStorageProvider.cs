@@ -121,7 +121,7 @@ public class DiskStorageProvider(
             return fileSaveResult;
         }
 
-    public Task<Media.Models.Media> ToMedia(FileSaveResult fileSaveResult)
+    public Task<Media.Models.Media> ToMedia(FileSaveResult fileSaveResult, Guid? id = null, Guid? parentId = null)
     {
         return Task.Run(() =>
         {
@@ -130,6 +130,14 @@ public class DiskStorageProvider(
                 FileSize = fileSaveResult.OriginalFile?.Size ?? 0,
                 Name = fileSaveResult.OriginalFile?.Name
             };
+            if (id != null)
+            {
+                mediaItem.Id = id.Value;
+            }
+            if (parentId != null)
+            {
+                mediaItem.ParentId = parentId.Value;
+            }
             if (fileSaveResult.OriginalFile?.IsImage() == true)
             {
                 mediaItem.Width = fileSaveResult.Width;

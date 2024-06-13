@@ -1,9 +1,30 @@
 ﻿using ZauberCMS.Core.Media.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Extensions;
 
 public static class MediaExtensions
 {
+    /// <summary>
+    /// Converts a Media object to a FileSaveResult object.
+    /// </summary>
+    /// <param name="media">The Media object to convert.</param>
+    /// <returns>A FileSaveResult object.</returns>
+    public static FileSaveResult ToFileSaveResult(this Media.Models.Media media)
+    {
+        return new FileSaveResult
+        {
+            MediaType = media.MediaType,
+            Name = media.Name,
+            Height = media.Height,
+            Width = media.Width,
+            CurrentMediaId = media.Id,
+            SavedFileUrl = media.Url,
+            SavedMedia = media
+        };
+    }
+    
+    
     /// <summary>
     /// Gets the media type based on the URL extension.
     /// </summary>
@@ -27,7 +48,7 @@ public static class MediaExtensions
             _ => MediaType.Unknown
         };
     }
-    
+
     /// <summary>
     /// Returns an icon based on the media type
     /// </summary>
@@ -37,7 +58,7 @@ public static class MediaExtensions
     {
         return Icons.TryGetValue(mediaType, out var icon) ? icon : "question_mark";
     }
-    
+
     private static readonly Dictionary<MediaType, string> Icons = new()
     {
         { MediaType.Folder, "folder" },

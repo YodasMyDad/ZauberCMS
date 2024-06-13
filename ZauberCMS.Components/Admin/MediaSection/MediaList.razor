@@ -10,30 +10,44 @@
     <CreateMedia ParentId="FolderId" />
 </RadzenStack>
 
-<RadzenDataGrid AllowFiltering="false"
-                FilterPopupRenderMode="PopupRenderMode.OnDemand"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="false"
-                PageSize="20"
-                AllowSorting="true"
-                Data="@Contents"
-                SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((Media value) => OnRowSelect(value))">
-    <Columns>
-        <RadzenDataGridColumn Property="MediaType" Title="Type">
-            <Template Context="data">
-                <RadzenIcon Icon="@data.MediaType.GetIcon()" />
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="FileSize" Title="Size"/>
-        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
-            <Template Context="data">
-                @data.DateUpdated.Humanize()
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+<RadzenPanel Class="rz-mx-auto">
+    
+    <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
+        <Tabs>
+            <RadzenTabsItem Text="Media">
+                <RadzenDataGrid AllowFiltering="false"
+                                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                AllowPaging="false"
+                                PageSize="20"
+                                AllowSorting="true"
+                                Data="@Contents"
+                                SelectionMode="DataGridSelectionMode.Single"
+                                RowSelect="@((Media value) => OnRowSelect(value))">
+                    <Columns>
+                        <RadzenDataGridColumn Property="MediaType" Title="Type">
+                            <Template Context="data">
+                                <RadzenIcon Icon="@data.MediaType.GetIcon()" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="Name" Title="Name"/>
+                        <RadzenDataGridColumn Property="FileSize" Title="Size"/>
+                        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                            <Template Context="data">
+                                @data.DateUpdated.Humanize()
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="Upload">
+                <MediaUpload ParentId="@FolderId"/>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+    
+</RadzenPanel>
+
 
 @code {
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
@@ -41,6 +55,7 @@
     [Parameter] public Guid FolderId { get; set; }
     
     private IEnumerable<Media> Contents { get; set; } = [];
+    private int SelectedIndex { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {

@@ -26,11 +26,13 @@ public interface IStorageProvider
     /// <param name="browserFile"></param>
     /// <param name="onlyImages"></param>
     public Task<FileSaveResult> CanUseFile(IBrowserFile browserFile, bool onlyImages = false);
-    
+
     /// <summary>
     /// Method to convert a saved file into a BlogFodderFile object
     /// </summary>
     /// <param name="fileSaveResult"></param>
+    /// <param name="id"></param>
+    /// <param name="parentId"></param>
     /// <returns></returns>
-    public Task<Media.Models.Media> ToMedia(FileSaveResult fileSaveResult);
+    public Task<Media.Models.Media> ToMedia(FileSaveResult fileSaveResult, Guid? id = null, Guid? parentId = null);
 }

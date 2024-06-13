@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
@@ -9,102 +9,120 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Media.Handlers;
 
-public class SaveMediaHandler(ProviderService providerService, IServiceProvider serviceProvider) 
+public class SaveMediaHandler(ProviderService providerService, IServiceProvider serviceProvider, IMapper mapper)
     : IRequestHandler<SaveMediaCommand, List<FileSaveResult>>
 {
     public async Task<List<FileSaveResult>> Handle(SaveMediaCommand request, CancellationToken cancellationToken)
     {
-        return request.FilesToSave.Count != 0
-            ? await SaveFiles(request.FilesToSave, request.ParentFolderId)
-            : await SaveMedia(request.MediaToSave, request.ParentFolderId);
+        var results = new List<FileSaveResult>();
+        results.AddRange(await SaveFiles(request.FilesToSave, request.ParentFolderId));
+        results.AddRange(await UpdateMedia(request.MediaToSave, request.ParentFolderId));
+        return results;
     }
 
     private async Task<List<FileSaveResult>> SaveFiles(List<FileSaveResult> files, Guid? parentFolderId)
     {
         var results = new List<FileSaveResult>();
-        
+
         if (files.Count > 0)
         {
             using var scope = serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-            
+
             foreach (var file in files)
             {
                 if (file.OriginalFile != null)
                 {
                     // Set the media id manually so we can create a folder to put it in
-                    var mediaId = Guid.NewGuid().NewSequentialGuid();
-             
+                    // Use the existing id if this is an update of an existing media item
+                    var isUpdate = file.CurrentMediaId != null;
+                    var mediaId = isUpdate ? file.CurrentMediaId : Guid.NewGuid().NewSequentialGuid();
+
                     // Save the actual file to disk
-                    var fileSaveResult = await providerService.StorageProvider!.SaveFile(file.OriginalFile, mediaId.ToString());
+                    var fileSaveResult =
+                        await providerService.StorageProvider!.SaveFile(file.OriginalFile, mediaId.ToString());
                     
                     // Create a media item to save
-                    var mediaItem = await providerService.StorageProvider!.ToMedia(fileSaveResult);
-                    mediaItem.Id = mediaId;
-                    
-                    if (parentFolderId != null)
-                    {
-                        mediaItem.ParentId = parentFolderId.Value;
-                    }
-                    
+                    var mediaItem = await providerService.StorageProvider!.ToMedia(fileSaveResult, mediaId, parentFolderId);
+
                     // Save media to db
                     try
                     {
-                        dbContext.Media.Add(mediaItem);
-                        await dbContext.SaveChangesAsync();
-                        fileSaveResult.Success = true;
+                        if (isUpdate)
+                        {
+                            // Get the DB version
+                            var dbMedia = dbContext.Media
+                                .FirstOrDefault(x => x.Id == mediaItem.Id);
+                                // Map the updated properties
+                            mapper.Map(mediaItem, dbMedia);
+                            await dbContext.SaveChangesAsync(); ;
+                        }
+                        else
+                        {
+                            dbContext.Media.Add(mediaItem);
+                            await dbContext.SaveChangesAsync();
+                        }
+                        fileSaveResult.Success = true;   
                     }
                     catch (Exception e)
                     {
                         fileSaveResult.ErrorMessages.Add(e.Message);
                         fileSaveResult.Success = false;
                     }
-                    
+
                     // Add media to save result and clear browser file
                     fileSaveResult.OriginalFile = null;
                     fileSaveResult.SavedMedia = mediaItem;
-                    
+
                     results.Add(fileSaveResult);
-                }
-                else
-                {
-                    file.ErrorMessages.Add($"There is no file to upload for {file.Name}");
-                    results.Add(file);
                 }
             }
         }
 
         return results;
     }
-    
-    private async Task<List<FileSaveResult>> SaveMedia(List<Models.Media> media, Guid? parentFolderId)
+
+    private async Task<List<FileSaveResult>> UpdateMedia(List<Models.Media> media, Guid? parentFolderId)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        
+
         var results = new List<FileSaveResult>();
-        
-        // TODO - This needs radically changed!
-        
+
         foreach (var m in media)
         {
-            // Is this an update
-            var existingMedia = await dbContext.Media.FirstOrDefaultAsync(x => x.Id == m.Id);
-            if (existingMedia == null)
+            var fileSaveResult = m.ToFileSaveResult();
+            m.ParentId = parentFolderId;
+            // Save media to db
+            try
             {
-                if (parentFolderId != null)
+                // Get the DB version
+                var dbMedia = dbContext.Media
+                    .FirstOrDefault(x => x.Id == m.Id);
+                
+                
+                if (dbMedia != null)
                 {
-                    m.ParentId = parentFolderId.Value;
+                    
+                    dbContext.Media.Add(m);
                 }
-                dbContext.Media.Add(m);
-            }
-            else
-            {
-                //TODO - Sort the save media update stuff   
-            }
-        }
+                else
+                {
+                    // Map the updated properties
+                    mapper.Map(m, dbMedia);
+                }
 
-        await dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
+                fileSaveResult.Success = true;
+            }
+            catch (Exception e)
+            {
+                fileSaveResult.ErrorMessages.Add(e.Message);
+                fileSaveResult.Success = false;
+            }
+
+            results.Add(fileSaveResult);
+        }
 
         return results;
     }
