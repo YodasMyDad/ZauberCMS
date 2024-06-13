@@ -1,6 +1,7 @@
 ﻿@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Models
 @page "/admin/createmedia"
 @page "/admin/createfolder"
@@ -48,6 +49,7 @@
     [Parameter] public Guid? ParentId { get; set; }
 
     [Inject] NotificationService NotificationService { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = default!;
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
@@ -87,6 +89,7 @@
             saveCommand.MediaToSave.Add(Media!);
             var result = await Mediator.Send(saveCommand);
             NotificationService.ShowSuccessNotification("Saved");
+            await AppState.NotifyMediaChanged();
         }
     }
 

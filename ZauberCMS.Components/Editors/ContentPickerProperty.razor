@@ -9,15 +9,17 @@
                          CanDrop="@_canDrop"
                          Drop="@OnDrop">
     <ChildContent>
-        <RadzenDropZone Class="rz-display-flex rz-flex-column rz-py-3" Style="flex: 1; gap: 1.5rem; width: 100%;">
+        <RadzenDropZone Class="rz-display-flex rz-flex-column rz-py-3" Style="flex: 1; gap: 1rem; width: 100%;">
         </RadzenDropZone>
     </ChildContent>
     <Template>
 
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
             <div style="width: 100%;">
-                <RadzenAlert ShowIcon="false" Close="@(() => DeleteContent(context))" Style="margin: 0; padding-top: 2px; padding-bottom: 2px;">
-                    @context.Name
+                <RadzenAlert Icon="@context.ContentType?.Icon" Close="@(() => DeleteContent(context))" Style="margin: 0; padding-top: 3px; padding-bottom: 3px;">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+                        @context.Name
+                    </RadzenStack>
                 </RadzenAlert>
             </div>
         </RadzenStack>

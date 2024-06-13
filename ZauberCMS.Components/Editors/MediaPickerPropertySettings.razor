@@ -1,0 +1,48 @@
+﻿@using System.Text.Json
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Media.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
+
+<RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="1rem">
+    <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Placeholder="Max Items Allowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max" } })"/>
+
+    <div>
+        <div>Allowed Media Types</div>
+        <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedMediaTypes" TValue="MediaType" TextProperty="Name" ValueProperty="Value"/>
+    </div>
+    
+</RadzenStack>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    private MediaPickerSettings Settings { get; set; } = new();
+    private IEnumerable<EnumObject> Data { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        Data = Enum.GetValues(typeof(MediaType))
+            .Cast<MediaType>()
+            .Select(e => new EnumObject { Value = e, Name = e.ToString() });
+        if (!SettingsModel.IsNullOrWhiteSpace())
+        {
+            Settings = JsonSerializer.Deserialize<MediaPickerSettings>(SettingsModel) ?? new MediaPickerSettings();
+        }
+    }
+
+    private async Task Save()
+    {
+        var updatedSettingsModel = JsonSerializer.Serialize(Settings);
+        await ValueChanged.InvokeAsync(updatedSettingsModel);
+    }
+
+    public class EnumObject
+    {
+        public MediaType Value { get; set; }
+        public string? Name { get; set; }
+    }
+}
