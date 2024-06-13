@@ -39,6 +39,7 @@
     [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
     [Inject] public ProviderService ProviderService { get; set; } = default!;
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
     
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public Guid? MediaId { get; set; }
@@ -146,9 +147,16 @@
                     ErrorMessages.AddRange(errors.ErrorMessages);
                 }
             }
-        
+
             FilesToUpload.Clear();
-            await ValueChanged.InvokeAsync(results);   
+            if (ValueChanged.HasDelegate)
+            {
+                await ValueChanged.InvokeAsync(results);    
+            }
+            else
+            {
+                NotificationService.ShowSuccessNotification($"{results.Count(x => x.Success)} Media Saved");
+            }
         }
     }
 

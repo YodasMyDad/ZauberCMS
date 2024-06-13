@@ -54,14 +54,18 @@
     private Media? Media { get; set; }
     private MediaUpdateType UpdateType { get; set; } = MediaUpdateType.Folder;
 
+    protected override void OnInitialized()
+    {
+        Layout?.SetSection(Constants.Sections.MediaSection);
+    }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         if (NavigationManager.Uri.Contains("media", StringComparison.OrdinalIgnoreCase))
         {
             UpdateType = MediaUpdateType.Media;
         }
-        Layout?.SetSection(Constants.Sections.MediaSection);
+
         if (MediaId.HasValue)
         {
             Media = await Mediator.Send(new GetMediaCommand { Id = MediaId });

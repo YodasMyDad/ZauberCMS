@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Core
 @using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Shared
@@ -12,6 +13,8 @@
 
 @code {
     [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
 
     public string Heading => "Media";
     public int SortOrder => 0;
@@ -51,7 +54,73 @@
 
     private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
-        
+        ContextMenuService.Open(args,
+            new List<ContextMenuItem> {
+                new(){ Text = "Delete", Value = 1 },
+                new(){ Text = "Rename", Value = 2 }
+            }, async e =>
+            {
+                var content = (Content)args.Value;
+                var dbContent = await Mediator.Send(new GetMediaCommand { Id = content.Id, IncludeChildren = true });
+                //var text = args.Text;
+                switch(e.Value)
+                {
+                    case 1:
+                        // Handle Create
+                        NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}", forceLoad: true);
+                        break;
+                    case 2:
+                        // Confirm dialogue, say if there are children, and confirm then delete all
+                            var hasChildren = dbContent.Children.Any();
+                            /*var message = hasChildren
+                                ? "The content you are trying to delete has child content, are you sure you want to delete it?"
+                                : "Are you sure you want to delete this?";
+                            var delete = await DialogService.Confirm(message, "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+                            if (delete == true)
+                            {
+                                var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id});
+                                NotificationService.Notify(new NotificationMessage { 
+                                    Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
+                                    Summary = result.Success ? "Success" : "Error", 
+                                    Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+                                if (result.Success)
+                                {
+                                    StateHasChanged();
+                                }
+                            }*/
+            
+                        break;
+                        /*case 3:
+                            if (!dbContent.Children.Any())
+                            {
+                                // Show message if no children
+                                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Hmmmm", Detail = "Sorry, nothing to sort as this content has no children", Duration = 4000 });
+                            }
+                            else
+                            {
+                                // Show side panel with sorting of children (Can I use a Radzen component?)
+                                
+                                var dialog = ModalService.OpenSidePanel<SortContent>("Sort Children", 
+                                    new Dictionary<string, object>{ { "ContentId", dbContent.Id }, {"Content", dbContent.Children.OrderBy(x => x.SortOrder).ToList()} });
+                                var result = await dialog.Result;
+                                if (result is { Confirmed: true, Data: List<Content> sortedContent })
+                                {
+                                    var saveResult = await Mediator.Send(new SaveContentCommand {Content = sortedContent});
+                                    if (!saveResult.Success)
+                                    {
+                                        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveResult.Messages.MessagesAsString(), Duration = 4000 });
+                                    }
+                                    else
+                                    {
+                                        StateHasChanged();
+                                    }
+                                }
+                            }
+         
+                        break;*/
+                }
+            }
+        );
     }
 
     private void OnChange()
