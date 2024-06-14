@@ -67,7 +67,7 @@
                         var deleteResult = await Mediator.Send(new DeleteMediaCommand { MediaId = media.Id });
                         if (deleteResult.Success)
                         {
-                            NavigationManager.NavigateTo("/admin/media", forceLoad: true);   
+                            NavigationManager.NavigateTo("/admin/media", forceLoad: true); 
                         }
                         else
                         {

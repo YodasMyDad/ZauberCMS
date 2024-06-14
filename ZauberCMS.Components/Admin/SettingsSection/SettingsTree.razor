@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Shared
 
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 <div class="rz-pb-2">
@@ -45,6 +46,7 @@
     public string SectionAlias => Constants.Sections.SettingsSection;
     
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = default!;
 
     private List<ContentType> ContentTypes { get; set; } = [];
     private List<ContentType> ElementTypes { get; set; } = [];
@@ -61,6 +63,18 @@
     }
     
     protected override async Task OnInitializedAsync()
+    {
+        await DataRefresh();
+        AppState.OnContentTypeChanged += HandleContentTypeTreeChanged;
+    }
+    
+    private async Task HandleContentTypeTreeChanged()
+    {
+        await DataRefresh();
+        StateHasChanged();
+    }
+    
+    private async Task DataRefresh()
     {
         var items = await Mediator.Send(new QueryContentTypesCommand
         {
@@ -81,6 +95,6 @@
 
     public void Dispose()
     {
-        
+        AppState.OnContentTypeChanged -= HandleContentTypeTreeChanged;
     }
 }

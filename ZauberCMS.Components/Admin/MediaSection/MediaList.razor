@@ -1,7 +1,9 @@
 ﻿@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Shared
 @layout SectionLayout
+@implements IDisposable
 @page "/admin/listmedia/{FolderId:guid}"
 
 <PageTitle>Listing Media</PageTitle>
@@ -50,6 +52,8 @@
 
 
 @code {
+    [Inject] public AppState AppState { get; set; } = default!;
+    
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     [Parameter] public Guid FolderId { get; set; }
@@ -65,13 +69,25 @@
     protected override void OnInitialized()
     {
         Layout?.SetSection(Constants.Sections.MediaSection);
+        AppState.OnMediaChanged += HandleMediaChanged;
     }
 
+    public void Dispose()
+    {
+        AppState.OnMediaChanged -= HandleMediaChanged;
+    }
+
+    private async Task HandleMediaChanged()
+    {
+        await SetContents(FolderId);
+        StateHasChanged();
+    }
+    
     private async Task SetContents(Guid folderId)
     {
         var items = await Mediator.Send(new QueryMediaCommand
         {
-            AmountPerPage = 100,
+            AmountPerPage = 200,
             OrderBy = GetMediaOrderBy.Name,
             WhereClause = media => media.ParentId == folderId
         });

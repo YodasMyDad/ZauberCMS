@@ -5,6 +5,7 @@
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Models
 @layout SectionLayout
 
@@ -153,6 +154,7 @@
     [Inject] public IModalService DialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = default!;
 
     [Parameter] public Guid? ContentTypeId { get; set; }
 
@@ -360,6 +362,7 @@
             var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
             var result = await Mediator.Send(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            await AppState.NotifyContentTypeChanged();
         }
     }
 
@@ -399,6 +402,7 @@
                 NavigationManager.NavigateTo("/admin/settings");
             }
         }
+        NavigationManager.NavigateTo("/admin/settings", forceLoad: true); 
     }
 
     private async Task AddTab()
