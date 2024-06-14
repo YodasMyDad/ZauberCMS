@@ -1,0 +1,40 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Content.Commands
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
+
+<RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="1rem">
+    <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Placeholder="Max Items Allowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max" } })"/>
+    <div>
+        <div>Allowed Content Types</div>
+        <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedContentTypes" TValue="Guid" TextProperty="Name" ValueProperty="Id"/>
+    </div>
+</RadzenStack>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    private ContentPickerSettings Settings { get; set; } = new();
+    private IEnumerable<ContentType> Data { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var contentTypes = await Mediator.Send(new QueryContentTypesCommand
+        {
+            OrderBy = GetContentTypesOrderBy.Name,
+            ElementTypesOnly = false,
+            AmountPerPage = 200
+        });
+        Data = contentTypes.Items;
+        
+        Settings = this.GetPropertySettings<ContentPickerSettings>() ?? new ContentPickerSettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+}

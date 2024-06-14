@@ -31,7 +31,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new GetContentTypesCommand { AmountPerPage = int.MaxValue, RootOnly = RootOnly, ElementTypesOnly = ElementTypesOnly});
+        var items = await Mediator.Send(new QueryContentTypesCommand { AmountPerPage = int.MaxValue, RootOnly = RootOnly, ElementTypesOnly = ElementTypesOnly});
         ContentTypes = items.Items; 
 
         StateHasChanged();

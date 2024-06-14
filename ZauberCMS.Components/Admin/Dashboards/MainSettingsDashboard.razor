@@ -29,7 +29,7 @@
     
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new GetContentTypesCommand{AmountPerPage = 1000});
+        var items = await Mediator.Send(new QueryContentTypesCommand{AmountPerPage = 1000});
         ContentTypes = items.Items;
     }
     

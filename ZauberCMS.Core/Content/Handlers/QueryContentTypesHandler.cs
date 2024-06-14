@@ -9,35 +9,49 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
-public class GetContentTypesHandler(IServiceProvider serviceProvider)
-    : IRequestHandler<GetContentTypesCommand, PaginatedList<ContentType>>
+public class QueryContentTypesHandler(IServiceProvider serviceProvider)
+    : IRequestHandler<QueryContentTypesCommand, PaginatedList<ContentType>>
 {
-    public Task<PaginatedList<ContentType>> Handle(GetContentTypesCommand request, CancellationToken cancellationToken)
+    public Task<PaginatedList<ContentType>> Handle(QueryContentTypesCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         var query = dbContext.ContentTypes.AsQueryable();
 
-        if (request.AsNoTracking)
+        if (request.Query != null)
         {
-            query = query.AsNoTracking();
+            query = request.Query;
+        }
+        else
+        {
+            if (request.AsNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+
+            if (request.Ids.Count != 0)
+            {
+                query = query.Where(x => request.Ids.Contains(x.Id));
+            }
+        
+            if (!request.SearchTerm.IsNullOrWhiteSpace())
+            {
+#pragma warning disable CA1862
+                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
+#pragma warning restore CA1862
+            }
+
+            if (request.ElementTypesOnly != null)
+            {
+                query = query.Where(x => x.IsElementType == request.ElementTypesOnly.Value);
+            }
+        
+            if (request.RootOnly)
+            {
+                query = query.Where(x => x.AllowAtRoot);
+            }
         }
         
-        if (!request.SearchTerm.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
-        }
-
-        if (request.ElementTypesOnly != null)
-        {
-            query = query.Where(x => x.IsElementType == request.ElementTypesOnly.Value);
-        }
-        
-        if (request.RootOnly)
-        {
-            query = query.Where(x => x.AllowAtRoot);
-        }
-
         if (request.WhereClause != null)
         {
             query = query.Where(request.WhereClause);

@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Components.Editors.Settings
 @using System.Text.Json
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -37,7 +38,7 @@
     public string Alias { get; set; } = "ZauberCMS.ContentPicker";
     public string Description { get; set; } = "Content picker using the content tree";
     public string Icon { get; set; } = "account_tree";
-    public Type? SettingsComponent { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(ContentPickerPropertySettings);
 
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public string Settings { get; set; } = string.Empty;
