@@ -45,6 +45,9 @@
             <RadzenTabsItem Text="Upload">
                 <MediaUpload ParentId="@FolderId"/>
             </RadzenTabsItem>
+            <RadzenTabsItem Text="Update">
+                <EditFolder Media="@Folder" />
+            </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
     
@@ -60,10 +63,12 @@
     
     private IEnumerable<Media> Contents { get; set; } = [];
     private int SelectedIndex { get; set; }
+    private Media? Folder { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
         await SetContents(FolderId);
+        Folder = await Mediator.Send(new GetMediaCommand { Id = FolderId });
     }
 
     protected override void OnInitialized()
@@ -93,6 +98,7 @@
         });
         
         Contents = items.Items;
+        
     }
     
     private void OnRowSelect(object value)

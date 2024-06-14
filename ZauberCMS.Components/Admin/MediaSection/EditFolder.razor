@@ -1,0 +1,40 @@
+﻿@using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Shared
+
+<EditForm Model="@Media" OnSubmit="Save">
+    <RadzenRow class="rz-pb-6">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
+            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name" aria-label="Name"/>
+        </RadzenStack>
+    </RadzenRow>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
+    </RadzenStack>
+</EditForm>
+
+@code {
+
+    [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] NotificationService NotificationService { get; set; } = default!;
+    
+    [Parameter] public Media? Media { get; set; }
+    [Parameter] public Guid? ParentId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Media ??= new Media
+        {
+            MediaType = MediaType.Folder
+        };
+    }
+
+    private async Task Save()
+    {
+        var saveCommand = new SaveMediaCommand { ParentFolderId = ParentId };
+        saveCommand.MediaToSave.Add(Media!);
+        var result = await Mediator.Send(saveCommand);
+        NotificationService.ShowSuccessNotification("Saved");
+        await AppState.NotifyMediaChanged();
+    }
+}

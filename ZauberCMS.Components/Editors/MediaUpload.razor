@@ -15,26 +15,36 @@
 }
 
 <div @ref="FileDropContainer" class="file-drop-zone @HoverClass" @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondragover="OnDragEnter">
-    <InputFile OnChange="@OnChange" @ref="InputFile" multiple="@(MaxAllowedFiles > 1 ? "multiple" : null)" />
+
+    <div class="text-center">
+
+            <label for="file-upload" style="cursor: pointer; position: relative; font-weight: 600; text-decoration: underline; padding: 30px 40px;">
+                <InputFile OnChange="@OnChange" @ref="InputFile" multiple="@(MaxAllowedFiles > 1 ? "multiple" : null)" />
+            </label>
+
+    </div>
+    
+    
 </div>
-<div class="image-container">
+<RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container">
     @foreach (var media in FilesToUpload)
     {
         <RadzenAlert Icon="@(media.MediaType.GetIcon())" Close=@(o => RemoveMedia(media))>
             @media.Name
         </RadzenAlert>
     }
-</div>
+</RadzenStack>
 <RadzenButton Click="@(() => Save())">Save</RadzenButton>
 <RadzenButton Click="@(() => Clear())">Clear</RadzenButton>
-<div class="error-message-container">
+
+<RadzenStack Visible="@ErrorMessages.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="error-message-container">
     @foreach (var error in ErrorMessages)
     {
         <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
             @error
         </RadzenAlert>
     }
-</div>
+</RadzenStack>
 
 @code {
     [Inject] public IJSRuntime JsRuntime { get; set; } = default!;

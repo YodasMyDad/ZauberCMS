@@ -101,7 +101,7 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                     .FirstOrDefault(x => x.Id == m.Id);
                 
                 
-                if (dbMedia != null)
+                if (dbMedia == null)
                 {
                     
                     dbContext.Media.Add(m);

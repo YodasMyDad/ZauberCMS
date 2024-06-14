@@ -123,12 +123,13 @@
                 if (!SettingsModel.AllowedMediaTypes.Contains(media.MediaType))
                 {
                     NotificationService.ShowErrorNotification("You are not allowed to pick that media type");
+                    return;
                 }
-                return;
             }
 
             MediaItems.Add(media);
             await SaveAndUpdate();
+            Modal?.Close();
         }
     }
 

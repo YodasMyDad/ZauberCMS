@@ -18,18 +18,9 @@
 
 <RadzenPanel Class="rz-mx-auto">
     
-    @if (UpdateType == MediaUpdateType.Folder && Media != null)
+    @if (UpdateType == MediaUpdateType.Folder)
     {
-        <EditForm Model="@Media" OnSubmit="Save">
-            <RadzenRow class="rz-pb-6">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
-                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name" aria-label="Name"/>
-                </RadzenStack>
-            </RadzenRow>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
-                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
-            </RadzenStack>
-        </EditForm>
+        <EditFolder ParentId="@ParentId" Media="@Media" />
     }
     else
     {
@@ -81,18 +72,6 @@
         return $"{mediaId?.ToString() ?? "null"}_{parentId?.ToString() ?? "null"}";
     }
     
-    private async Task Save()
-    {
-        if (UpdateType == MediaUpdateType.Folder)
-        {
-            var saveCommand = new SaveMediaCommand { ParentFolderId = ParentId};
-            saveCommand.MediaToSave.Add(Media!);
-            var result = await Mediator.Send(saveCommand);
-            NotificationService.ShowSuccessNotification("Saved");
-            await AppState.NotifyMediaChanged();
-        }
-    }
-
     private enum MediaUpdateType
     {
         Folder,

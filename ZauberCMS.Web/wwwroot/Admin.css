@@ -16,16 +16,13 @@
 
 .file-drop-zone {
   width: 100%;
-  border: 3px dotted #fb275d;
+  border-radius: 0.5rem;
+  border: 3px dotted rgba(17, 24, 39, 0.2509803922);
   display: flex;
   align-items: center;
-  margin-bottom: 2px;
+  margin: 10px 0;
   min-height: 100px;
-}
-
-.hover {
-  border-style: solid;
-  background-color: #00ca71;
+  justify-content: center;
 }
 
 .image-container {
@@ -35,6 +32,22 @@
 
 .image-container img {
   width: 50%;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.text-center {
+  text-align: center;
 }
 
 ::deep input[type=file] {
