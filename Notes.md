@@ -3,7 +3,6 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Get Tailwind working without reset
 Make the single edit media much better and have an extended content editor which saves to extended content
 Get member tree's sorted (Need a TreeStub or something, look at screenshots)
 Members + Member Types (Including admins) and member picker
@@ -24,6 +23,7 @@ Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 Restrict admin by ip address
 Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)
 Need to delete all migrations, create one and see if it works with SQLite & also SQLServer (look into how to ship with different migrations based on Db)
+Sort admin UI/UX
 Find someone to help with the nuget packaging. Need to install site, but have Components/Core as seperate nuget package that people reference in other projects
 Build personal site and launch
 Add languages (Check Blazor book)

@@ -3,7 +3,7 @@ module.exports = {
     preflight: false,
   },
   mode: "jit",
-  content: ["./**/*.razor"],
+  content: ["**/*.razor"],
   theme: {
     extend: {}
   },
