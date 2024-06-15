@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
@@ -36,9 +37,19 @@ builder.Services.AddRazorComponents()
 #endif
 
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<IdentityUserAccessor>();
+builder.Services.AddScoped<IdentityRedirectManager>();
+builder.Services.AddScoped<AuthenticationStateProvider, ZauberCMS.Components.Account.IdentityRevalidatingAuthenticationStateProvider>();
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+    })
+    .AddIdentityCookies();
+
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<User>>();
-
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddImageSharp();

@@ -1,12 +1,16 @@
 ﻿@using ZauberCMS.Core.Plugins
 @using Microsoft.AspNetCore.Components.Authorization
 <CascadingBlazoredModal>
-<Router
-    AppAssembly="@typeof(App).Assembly"
-    AdditionalAssemblies="@ExtensionManager.GetAssemblies(x => x.FullName!.StartsWith("ZauberCMS", StringComparison.OrdinalIgnoreCase))">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" />
-        @*<FocusOnNavigate RouteData="routeData" Selector="h1"/>*@
-    </Found>
-</Router>
+    <Router
+        AppAssembly="@typeof(App).Assembly"
+        AdditionalAssemblies="@ExtensionManager.GetAssemblies(x => x.FullName!.StartsWith("ZauberCMS", StringComparison.OrdinalIgnoreCase))">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData">
+                <NotAuthorized>
+                    <RedirectToLogin />
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="routeData" Selector="h1"/>
+        </Found>
+    </Router>
 </CascadingBlazoredModal>

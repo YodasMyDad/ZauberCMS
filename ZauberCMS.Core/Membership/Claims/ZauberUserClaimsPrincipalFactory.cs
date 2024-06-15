@@ -8,23 +8,17 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Membership.Claims
 {
-    public class ZauberUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<User>
+    public class ZauberUserClaimsPrincipalFactory(
+        UserManager<User> userManager,
+        IOptions<IdentityOptions> optionsAccessor,
+        ZauberDbContext context)
+        : UserClaimsPrincipalFactory<User>(userManager, optionsAccessor)
     {
-        private readonly UserManager<User> _userManager;
-        private readonly ZauberDbContext _context;
-
-        public ZauberUserClaimsPrincipalFactory(
-            UserManager<User> userManager,
-            IOptions<IdentityOptions> optionsAccessor, ZauberDbContext context)
-                : base(userManager, optionsAccessor)
-        {
-            _userManager = userManager;
-            _context = context;
-        }
+        private readonly UserManager<User> _userManager = userManager;
 
         public override async Task<ClaimsPrincipal> CreateAsync(User user)
         {
-            var dbUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == user.Id);
+            var dbUser = await context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == user.Id);
             user = dbUser!;
             
             var principal = await base.CreateAsync(user);
