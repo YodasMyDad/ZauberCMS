@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "tailwindcss": "^3.4.4"
+  },
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.13"
+  },
+  "scripts": {
+    "site-css": "npx tailwindcss -i tailwind/input.css -o wwwroot/css/admin.css --watch"
+  }
+}

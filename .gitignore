@@ -8,3 +8,5 @@ riderModule.iml
 /ZauberCMS.Web/Logs/*
 
 /ZauberCMS.Web/wwwroot/media/*
+/ZauberCMS.Web/node_modules/*
+*/node_modules/*

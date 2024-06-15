@@ -3,8 +3,11 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Sort settings on media and content pickers
-Members (Including admins) and member picker
+Get Tailwind working without reset
+Make the single edit media much better and have an extended content editor which saves to extended content
+Get member tree's sorted (Need a TreeStub or something, look at screenshots)
+Members + Member Types (Including admins) and member picker
+Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
 Think about save events of properties too, change data before being saved and loaded
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned

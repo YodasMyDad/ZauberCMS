@@ -4,7 +4,7 @@
 @using ZauberCMS.Core.Shared
 @layout SectionLayout
 @implements IDisposable
-@page "/admin/listmedia/{FolderId:guid}"
+@page "/admin/folder/{FolderId:guid}"
 
 <PageTitle>Listing Media</PageTitle>
 
@@ -46,7 +46,7 @@
                 <MediaUpload ParentId="@FolderId"/>
             </RadzenTabsItem>
             <RadzenTabsItem Text="Update">
-                <EditFolder Media="@Folder" />
+                <EditFolderForm Media="@EditFolder" />
             </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
@@ -63,12 +63,12 @@
     
     private IEnumerable<Media> Contents { get; set; } = [];
     private int SelectedIndex { get; set; }
-    private Media? Folder { get; set; }
+    private Media? EditFolder { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
         await SetContents(FolderId);
-        Folder = await Mediator.Send(new GetMediaCommand { Id = FolderId });
+        EditFolder = await Mediator.Send(new GetMediaCommand { Id = FolderId });
     }
 
     protected override void OnInitialized()
@@ -98,14 +98,13 @@
         });
         
         Contents = items.Items;
-        
     }
     
     private void OnRowSelect(object value)
     {
         if (value is Media { MediaType: MediaType.Folder } folder)
         {
-            NavigationManager.NavigateTo($"/admin/listmedia/{folder.Id}");
+            NavigationManager.NavigateTo($"/admin/folder/{folder.Id}");
         }
         else if (value is Media media)
         {

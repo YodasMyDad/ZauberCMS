@@ -15,17 +15,13 @@
 }
 
 <div @ref="FileDropContainer" class="file-drop-zone @HoverClass" @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondragover="OnDragEnter">
-
     <div class="text-center">
-
-            <label for="file-upload" style="cursor: pointer; position: relative; font-weight: 600; text-decoration: underline; padding: 30px 40px;">
-                <InputFile OnChange="@OnChange" @ref="InputFile" multiple="@(MaxAllowedFiles > 1 ? "multiple" : null)" />
-            </label>
-
+        <label for="file-upload" style="cursor: pointer; position: relative; font-weight: 600; text-decoration: underline; padding: 30px 40px;">
+            <InputFile OnChange="@OnChange" @ref="InputFile" multiple="@(MaxAllowedFiles > 1 ? "multiple" : null)" />
+        </label>
     </div>
-    
-    
 </div>
+
 <RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container">
     @foreach (var media in FilesToUpload)
     {

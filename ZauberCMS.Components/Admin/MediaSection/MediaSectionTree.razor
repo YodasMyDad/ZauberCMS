@@ -84,7 +84,7 @@
         switch (Selection)
         {
             case Media { MediaType: MediaType.Folder } folder:
-                NavigationManager.NavigateTo($"/admin/listmedia/{folder.Id}");
+                NavigationManager.NavigateTo($"/admin/folder/{folder.Id}");
                 break;
             case Media media:
                 NavigationManager.NavigateTo($"/admin/updatemedia/{media.Id}");
