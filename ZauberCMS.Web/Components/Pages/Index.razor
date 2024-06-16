@@ -6,32 +6,32 @@
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared.Services
 
-@if (isAdminPage)
+@if (IsAdminPage)
 {
-    <!-- Render nothing for admin pages to avoid flashing text -->
+    @* Render nothing for admin pages to avoid flashing text *@
 }
 else if (Content != null)
 {
     if (ComponentView != null)
     {
-        <LayoutView Layout="layoutType">
+        <LayoutView Layout="LayoutType">
             <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />
         </LayoutView>
     }
     else
     {
-        <p>It looks like you haven't selected a Component View, or the Component View has been deleted.</p>
-        <p>This needs to be a component too with a 302 status?</p>
+        @* Should really make these pages and redirect to them *@
+        <MissingView />
     }
 }
 else
 {
-    <p>Whooops, we can't find that page!</p>
-    <p>This needs to be a component that returns a 404 status code</p>
-    <p>Need a self contained and styled component</p>
+    @* Should really make these pages and redirect to them *@
+    <NotFound404 />
 }
 
 @code {
+    
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public LayoutResolverService LayoutResolver { get; set; } = default!;
     
@@ -41,14 +41,14 @@ else
     private Dictionary<string, IContentView> AllContentViews { get; set; } = new();
     private IContentView? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
-    private Type layoutType;
-    private bool isAdminPage;
+    private Type LayoutType { get; set; } = default!;
+    private bool IsAdminPage { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
         // Exclude admin paths with case-insensitive comparison
-        isAdminPage = Slug != null && Slug.StartsWith("admin", StringComparison.OrdinalIgnoreCase);
-        if (isAdminPage)
+        IsAdminPage = Slug != null && Slug.StartsWith("admin", StringComparison.OrdinalIgnoreCase);
+        if (IsAdminPage)
         {
             return;
         }
@@ -61,9 +61,10 @@ else
             if (AllContentViews.TryGetValue(Content.ViewComponent, out var contentView))
             {
                 ComponentView = contentView;
-                layoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
                 Parameters = new Dictionary<string, object> { ["Content"] = Content };
             }
         }
     }
+    
 }

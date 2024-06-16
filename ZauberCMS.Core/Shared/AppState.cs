@@ -4,7 +4,7 @@ public class AppState
 {
     public event Func<Task>? OnContentTypeChanged;
     public event Func<Task>? OnContentChanged;
-    public event Func<Task>? OnMembersChanged;
+    public event Func<Task>? OnUsersChanged;
     public event Func<Task>? OnMediaChanged;
 
     public async Task NotifyMediaChanged() 
@@ -15,11 +15,11 @@ public class AppState
         }
     }
     
-    public async Task NotifyMembersChanged() 
+    public async Task NotifyUsersChanged() 
     {
-        if (OnMembersChanged != null)
+        if (OnUsersChanged != null)
         {
-            await OnMembersChanged.Invoke();
+            await OnUsersChanged.Invoke();
         }
     }
     

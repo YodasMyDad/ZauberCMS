@@ -1,8 +1,7 @@
-﻿@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Membership.Models
+﻿@using ZauberCMS.Core.Membership.Models
 
 <BaseTree
-    T="User"
+    T="UsersTreeStub"
     Data="@Data"
     OnExpand="@OnExpandHandler"
     OnChange="@OnChangeHandler"
@@ -14,7 +13,7 @@
 </BaseTree>
 
 @code {
-    [Parameter] public IEnumerable<User> Data { get; set; } = [];
+    [Parameter] public IEnumerable<UsersTreeStub> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
@@ -22,18 +21,27 @@
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
     private RadzenTree Tree { get; set; } = default!;
-
-    protected override async Task OnParametersSetAsync()
+    
+    protected override void OnParametersSet()
     {
         if (!Data.Any())
         {
-            /*var items = await Mediator.Send(new QueryContentCommand
+            var tree = new List<UsersTreeStub>();
+            var usersTree = new UsersTreeStub
             {
-                AmountPerPage = 100,
-                WhereClause = x => x.IsRootContent,
-                IncludeChildren = true
-            });
-            Data = items.Items.ToList();*/
+                Name = "Users",
+                Icon = "people",
+                SortOrder = 1
+            };
+            var rolesTree = new UsersTreeStub
+            {
+                Name = "Roles",
+                Icon = "person_add",
+                SortOrder = 2
+            };
+            tree.Add(usersTree);
+            tree.Add(rolesTree);
+            Data = tree;
         }
     }
 
@@ -45,17 +53,21 @@
         }
         else
         {
-            if (args.Value is Content category)
+            /*switch (args.Value)
             {
-                var items = Mediator.Send(new QueryContentCommand
+                case UsersTreeStub treeStub:
+                    /*var items = Mediator.Send(new QueryContentCommand
                 {
                     WhereClause = x => x.ParentId == category.Id,
                     OrderBy = GetContentsOrderBy.SortOrder
                 }).GetAwaiter().GetResult();
                 args.Children.Data = items.Items;
                 args.Children.TextProperty = "Name";
-                args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
-            }
+                args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();#1#
+                    break;
+                case UsersTreeBranch branch:
+                    break;
+            }*/
         }
     }
 
@@ -65,17 +77,21 @@
         return context => builder =>
         {
             var treeItem = context as RadzenTreeItem;
-            if (treeItem?.Value is Content content)
+            builder.OpenComponent<RadzenIcon>(0);
+            switch (treeItem?.Value)
             {
-                if (!string.IsNullOrWhiteSpace(content.ContentType?.Icon))
-                {
-                    builder.OpenComponent<RadzenIcon>(0);
-                    builder.AddAttribute(1, "Icon", content.ContentType.Icon);
+                case UsersTreeStub treeStub:
+                    builder.AddAttribute(1, "Icon", treeStub.Icon);
                     builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
                     builder.CloseComponent();
-                }
-
-                builder.AddContent(3, content.Name);
+                    builder.AddContent(3, treeStub.Name);
+                    break;
+                case UsersTreeBranch branch:
+                    builder.AddAttribute(1, "Icon", branch.Icon);
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+                    builder.AddContent(3, branch.Name);
+                    break;
             }
         };
     }
@@ -99,22 +115,21 @@
 
     private bool HasChildren(object data)
     {
-        if (data is Content content)
+        return data switch
         {
-            return content.Children.Any();
-        }
-
-        return false;
+            UsersTreeStub tree => tree.Branches.Any(),
+            UsersTreeBranch branch => branch.Branches.Any(),
+            _ => false
+        };
     }
 
     private bool ShouldBeExpanded(object data)
     {
-        if (data is Content content)
+        return data switch
         {
-            return HasChildren(content) && content.ParentId == null;
-        }
-
-        return false;
+            UsersTreeStub tree => tree.Branches.Any(),
+            _ => false
+        };
     }
 
 }

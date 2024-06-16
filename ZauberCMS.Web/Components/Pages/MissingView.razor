@@ -1,0 +1,14 @@
+﻿
+<div class="text-center">
+    <h3>Missing View</h3>
+    <p>It looks like you haven't selected a Component View, or the Component View has been deleted.</p>
+    <p>This needs to be a component too with a 302 status?</p>
+</div>
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    protected override void OnInitialized()
+    {
+        HttpContext.Response.StatusCode = StatusCodes.Status302Found;
+    }
+}

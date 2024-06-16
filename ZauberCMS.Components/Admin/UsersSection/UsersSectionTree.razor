@@ -1,0 +1,93 @@
+﻿@using ZauberCMS.Core
+@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Shared
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
+
+<UsersTree
+           OnChange="OnChange"
+           @bind-Value="@Selection"
+           OnItemContextMenu="ItemContextMenu"/>
+
+@code {
+    [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+
+    public string Heading => "User Management";
+    public int SortOrder => 0;
+    public string SectionAlias => Constants.Sections.UsersSection;
+    
+    private object? Selection { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await DataRefresh();
+        AppState.OnUsersChanged += HandleUsersChanged;
+    }
+
+    public void Dispose()
+    {
+        AppState.OnUsersChanged -= HandleUsersChanged;
+    }
+
+    private async Task HandleUsersChanged()
+    {
+        await DataRefresh();
+        StateHasChanged();
+    }
+
+    private async Task DataRefresh()
+    {
+        /*var items = await Mediator.Send(new QueryMediaCommand
+        {
+            AmountPerPage = 100,
+            WhereClause = x => x.ParentId == null,
+            IncludeChildren = true,
+            OrderBy = GetMediaOrderBy.Name
+        });
+        MediaItems = items.Items.ToList();*/
+    }
+
+    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
+    {
+        ContextMenuService.Open(args,
+            new List<ContextMenuItem> {
+                new(){ Text = "Delete", Value = 1 }
+            }, async e =>
+            {
+                var media = (Media)args.Value;
+                /*var dbContent = await Mediator.Send(new GetMediaCommand { Id = media.Id, IncludeChildren = true });*/
+                //var text = args.Text;
+                switch(e.Value)
+                {
+                    case 1:
+                        var deleteResult = await Mediator.Send(new DeleteMediaCommand { MediaId = media.Id });
+                        if (deleteResult.Success)
+                        {
+                            NavigationManager.NavigateTo("/admin/media", forceLoad: true); 
+                        }
+                        else
+                        {
+                            NotificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
+                        }
+                        break;
+                }
+            }
+        );
+    }
+
+    private void OnChange()
+    {
+        switch (Selection)
+        {
+            case UsersTreeBranch branch:
+                if (branch.Url != null) NavigationManager.NavigateTo(branch.Url);
+                break;
+        }
+    }
+
+
+}
