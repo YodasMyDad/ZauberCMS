@@ -48,7 +48,7 @@ public class ContentType
     /// <summary>
     /// The properties available on this ContentType
     /// </summary>
-    public List<ContentTypeProperty> ContentProperties { get; set; } = [];
+    public List<PropertyType> ContentProperties { get; set; } = [];
 
     /// <summary>
     /// The available Views for this ContentType that the user can select to display their content

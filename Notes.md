@@ -3,8 +3,11 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Make the single edit media much better and have an extended content editor which saves to extended content
+Members should be Users and need consistent naming
+Roles will have the types on them (So admin will have properties, standard will have properties and everyone will be standard, admin probably won't)
+    - Maybe make PropertyType that everything uses
 Get member tree's sorted (Need a TreeStub or something, look at screenshots)
+Make the single edit media much better and have an extended content editor which saves to extended content
 Members + Member Types (Including admins) and member picker
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved

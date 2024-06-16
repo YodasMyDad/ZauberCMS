@@ -265,7 +265,7 @@
         return ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
     }
 
-    private void SortProperty(ContentTypeProperty property, bool moveDown)
+    private void SortProperty(PropertyType property, bool moveDown)
     {
         var propertiesInSameTab = ContentType.ContentProperties
             .Where(p => p.TabId == property.TabId)
@@ -293,7 +293,7 @@
     }
 
 
-    private void DeleteProperty(ContentTypeProperty property)
+    private void DeleteProperty(PropertyType property)
     {
         // Remove the specified property from the list
         ContentType.ContentProperties.Remove(property);
@@ -313,7 +313,7 @@
         Tabs.Reload();
     }
 
-    private async Task ChangeTab(ContentTypeProperty property)
+    private async Task ChangeTab(PropertyType property)
     {
         var dialog = DialogService.OpenSidePanel<ChangeTab>("Change Tab",
             new Dictionary<string, object>
@@ -329,7 +329,7 @@
         }
     }
 
-    private async Task Settings(ContentTypeProperty property)
+    private async Task Settings(PropertyType property)
     {
         var dialog = DialogService.OpenSidePanel<ContentTypePropertySettingsEditor>("Edit Settings",
             new Dictionary<string, object> { { "ContentTypeProperty", property } });
@@ -439,7 +439,7 @@
         if (result is { Confirmed: true, Data: IContentProperty property })
         {
             var tabToAddTo = TabIndex[SelectedTabIndex];
-            ContentType.ContentProperties.Add(new ContentTypeProperty
+            ContentType.ContentProperties.Add(new PropertyType
             {
                 Component = property.GetType().FullName ?? string.Empty,
                 SortOrder = ContentType.ContentProperties.Count + 1,

@@ -1,8 +1,8 @@
 ﻿using ZauberCMS.Core.Extensions;
 
-namespace ZauberCMS.Core.Content.Models;
+namespace ZauberCMS.Core.Shared.Models;
 
-public class ContentTypeProperty
+public class PropertyType
 {
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
     public string? Name { get; set; }

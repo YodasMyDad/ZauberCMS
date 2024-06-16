@@ -1,4 +1,5 @@
 ﻿@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Plugins
 
 @if (SettingsComponent != null)
@@ -15,7 +16,7 @@ else
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     
-    [Parameter] public ContentTypeProperty ContentTypeProperty { get; set; } = default!;
+    [Parameter] public PropertyType PropertyType { get; set; } = default!;
     
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     private Type? SettingsComponent { get; set; }
@@ -25,14 +26,14 @@ else
     protected override void OnInitialized()
     {
         AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        if(ContentTypeProperty.Component != null && AllContentTypeProperties.TryGetValue(ContentTypeProperty.Component, out var contentProperty))
+        if(PropertyType.Component != null && AllContentTypeProperties.TryGetValue(PropertyType.Component, out var contentProperty))
         {
             if (contentProperty.SettingsComponent != null)
             {
                 SettingsComponent = contentProperty.SettingsComponent;
                 SettingsParams = new Dictionary<string, object>
                 {
-                    ["SettingsModel"] = ContentTypeProperty.Settings ?? string.Empty,
+                    ["SettingsModel"] = PropertyType.Settings ?? string.Empty,
                     ["ValueChanged"] = EventCallback.Factory.Create<string>(this, OnSettingsValueChanged)
                 };   
             }
