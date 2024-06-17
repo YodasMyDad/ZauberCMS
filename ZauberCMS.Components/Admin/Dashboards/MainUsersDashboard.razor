@@ -17,7 +17,7 @@
         <RadzenDataGridColumn Property="Name" Title="Name"/>
         <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
             <Template Context="data">
-                @data.CreateDate.Humanize()
+                @data.DateCreated.Humanize()
             </Template>
         </RadzenDataGridColumn>
     </Columns>

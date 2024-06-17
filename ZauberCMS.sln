@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{926273E0-C
 		Notes.md = Notes.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.StarterSite", "ZauberCMS.StarterSite\ZauberCMS.StarterSite.csproj", "{DF80FAFE-EB7C-4669-92D4-9CDAC03AED9A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E830A5DB-B765-4382-B4FD-9DF3CBBF934E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF80FAFE-EB7C-4669-92D4-9CDAC03AED9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF80FAFE-EB7C-4669-92D4-9CDAC03AED9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF80FAFE-EB7C-4669-92D4-9CDAC03AED9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF80FAFE-EB7C-4669-92D4-9CDAC03AED9A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

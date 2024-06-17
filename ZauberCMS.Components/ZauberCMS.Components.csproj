@@ -38,7 +38,6 @@
       <AdditionalFiles Include="Admin\Layout\SectionLinks.razor" />
       <AdditionalFiles Include="Admin\Layout\SectionTrees.razor" />
       <AdditionalFiles Include="Admin\MediaSection\MediaIndex.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\MembersIndex.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\ContentTypeEditor.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\Dialogs\AddTab.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\Dialogs\ChangeTab.razor" />

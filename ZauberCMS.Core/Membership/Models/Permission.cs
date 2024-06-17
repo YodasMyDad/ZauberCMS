@@ -1,8 +1,7 @@
-﻿namespace ZauberCMS.Core.Membership.Models
+﻿namespace ZauberCMS.Core.Membership.Models;
+
+public class Permission
 {
-    public class Permission
-    {
-        public string? Name { get; set; }
-        public bool Allowed { get; set; }
-    }
+    public string? Name { get; set; }
+    public bool Allowed { get; set; }
 }

@@ -56,9 +56,9 @@ public class QueryUsersHandler(IServiceProvider serviceProvider)
 
         query = request.OrderBy switch
         {
-            GetUsersOrderBy.DateUpdated => query.OrderBy(p => p.CreateDate),
-            GetUsersOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.CreateDate),
-            _ => query.OrderByDescending(p => p.CreateDate)
+            GetUsersOrderBy.DateUpdated => query.OrderBy(p => p.DateCreated),
+            GetUsersOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+            _ => query.OrderByDescending(p => p.DateCreated)
         };
         
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));

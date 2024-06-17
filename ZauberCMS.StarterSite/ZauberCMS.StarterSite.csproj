@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+
+    <ItemGroup>
+        <SupportedPlatform Include="browser"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.5"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="ContentBlockPreviews\QuoteBlockPreview.razor" />
+      <AdditionalFiles Include="ContentBlockPreviews\RTEBlockPreview.razor" />
+      <AdditionalFiles Include="ContentBlocks\QuoteBlock.razor" />
+      <AdditionalFiles Include="ContentBlocks\RTEBlock.razor" />
+      <AdditionalFiles Include="ContentViews\BlogPageView.razor" />
+      <AdditionalFiles Include="ContentViews\BlogView.razor" />
+      <AdditionalFiles Include="ContentViews\ContactView.razor" />
+      <AdditionalFiles Include="Custom\ContactForm.razor" />
+      <AdditionalFiles Include="Layouts\MainLayout.razor" />
+      <AdditionalFiles Include="Layouts\NavBar.razor" />
+    </ItemGroup>
+
+</Project>

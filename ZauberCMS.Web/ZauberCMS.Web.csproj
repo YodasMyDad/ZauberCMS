@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
+      <ProjectReference Include="..\ZauberCMS.StarterSite\ZauberCMS.StarterSite.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -1438,11 +1439,16 @@
       <_ContentIncludedByDefault Remove="wwwroot\img\icons\z-square.svg" />
       <_ContentIncludedByDefault Remove="wwwroot\img\icons\zoom-in.svg" />
       <_ContentIncludedByDefault Remove="wwwroot\img\icons\zoom-out.svg" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <AdditionalFiles Include="Components\StarterSite\ContentViews\HomeView.razor" />
-      <AdditionalFiles Include="Components\StarterSite\ContentViews\TextPageView.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\ContentBlocks\QuoteBlock.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\ContentBlocks\RTEBlock.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\ContentViews\BlogPageView.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\ContentViews\BlogView.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\ContentViews\ContactView.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\ContentViews\HomeView.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\ContentViews\TextPageView.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Custom\ContactForm.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Layouts\MainLayout.razor" />
+      <_ContentIncludedByDefault Remove="Components\StarterSite\Layouts\NavBar.razor" />
     </ItemGroup>
 
     <ItemGroup>
