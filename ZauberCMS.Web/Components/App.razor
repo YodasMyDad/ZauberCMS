@@ -5,28 +5,35 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="/"/>
-    <link rel="stylesheet" href="bootstrap/bootstrap.min.css"/>
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
-    <link rel="stylesheet" href="ZauberCMS.Web.styles.css"/>
-    <link rel="icon" type="image/png" href="favicon.png"/>
+    @if (Configuration.GetValue<bool>("Zauber:UseRadzen") || IsAdmin)
+    {
+        <link rel="stylesheet" href="bootstrap/bootstrap.min.css"/>
+        <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
+    }
     <HeadOutlet @rendermode="RenderModeForPage" />
 </head>
 
 <body>
-<Routes @rendermode="RenderModeForPage" />
+
+<CascadingValue Value="IsAdmin">
+    <Routes @rendermode="RenderModeForPage"/>
+</CascadingValue>
+
 <script src="_framework/blazor.web.js"></script>
-<script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
+@if (Configuration.GetValue<bool>("Zauber:UseRadzen") || IsAdmin)
+{
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
+}
 </body>
 
 </html>
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [Inject] public IConfiguration Configuration { get; set; } = default!;
+    
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    private bool IsAdmin => HttpContext.Request.Path.StartsWithSegments(Constants.Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);
 
     // Set the Admin to InteractiveServer but use SSR for rest of site
-    private IComponentRenderMode? RenderModeForPage =>
-        HttpContext.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase)
-            ? InteractiveServer
-            : null;
+    private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
 }

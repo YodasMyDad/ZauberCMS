@@ -6,7 +6,7 @@
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared.Services
 
-@if (IsAdminPage)
+@if (IsAdmin)
 {
     @* Render nothing for admin pages to avoid flashing text *@
 }
@@ -36,19 +36,21 @@ else
     [Inject] public LayoutResolverService LayoutResolver { get; set; } = default!;
     
     [Parameter] public string? Slug { get; set; }
+    
+    [CascadingParameter] public bool IsAdmin { get; set; }
 
     private Content? Content { get; set; }
     private Dictionary<string, IContentView> AllContentViews { get; set; } = new();
     private IContentView? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
     private Type LayoutType { get; set; } = default!;
-    private bool IsAdminPage { get; set; }
+    //private bool IsAdminPage { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
         // Exclude admin paths with case-insensitive comparison
-        IsAdminPage = Slug != null && Slug.StartsWith("admin", StringComparison.OrdinalIgnoreCase);
-        if (IsAdminPage)
+        //IsAdminPage = Slug != null && Slug.StartsWith(Constants.Urls.AdminBaseUrl.Replace("/", ""), StringComparison.OrdinalIgnoreCase);
+        if (IsAdmin)
         {
             return;
         }

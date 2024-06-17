@@ -3,9 +3,12 @@
 public class ZauberSettings
 {
     public string? NewUserStartingRole { get; set; }
+    public string? DatabaseProvider { get; set; }
     public string? UploadFolderName { get; set; }
+    public List<string> AdminEmailAddresses { get; set; } = [];
     public long MaxUploadFileSizeInBytes { get; set; }
     public int MaxImageSizeInPixels { get; set; }
+    public bool UseRadzen { get; set; }
     public List<string> AllowedFileTypes { get; set; } = [];
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new();
