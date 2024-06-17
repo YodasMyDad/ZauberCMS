@@ -6,6 +6,7 @@ public class ZauberSettings
     public string? DatabaseProvider { get; set; }
     public string? UploadFolderName { get; set; }
     public List<string> AdminEmailAddresses { get; set; } = [];
+    public List<string> IgnoredPaths { get; set; } = [];
     public long MaxUploadFileSizeInBytes { get; set; }
     public int MaxImageSizeInPixels { get; set; }
     public bool UseRadzen { get; set; }

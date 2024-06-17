@@ -1,16 +1,18 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.Extensions.Options
+@using ZauberCMS.Core.Settings
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="/"/>
-    @if (Configuration.GetValue<bool>("Zauber:UseRadzen") || IsAdmin)
+    @if (Settings.Value.UseRadzen || IsAdmin)
     {
         <link rel="stylesheet" href="bootstrap/bootstrap.min.css"/>
         <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
     }
-    <HeadOutlet @rendermode="RenderModeForPage" />
+    <HeadOutlet @rendermode="RenderModeForPage"/>
 </head>
 
 <body>
@@ -20,7 +22,7 @@
 </CascadingValue>
 
 <script src="_framework/blazor.web.js"></script>
-@if (Configuration.GetValue<bool>("Zauber:UseRadzen") || IsAdmin)
+@if (Settings.Value.UseRadzen || IsAdmin)
 {
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
 }
@@ -29,10 +31,31 @@
 </html>
 
 @code {
-    [Inject] public IConfiguration Configuration { get; set; } = default!;
-    
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
-    private bool IsAdmin => HttpContext.Request.Path.StartsWithSegments(Constants.Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsAdmin
+    {
+        get
+        {
+            var urlPaths = Settings.Value.IgnoredPaths;
+
+            var requestPathSpan = HttpContext.Request.Path.ToString().AsSpan();
+
+            foreach (var url in urlPaths)
+            {
+                var urlSpan = url.AsSpan();
+
+                if (requestPathSpan.StartsWith(urlSpan, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
 
     // Set the Admin to InteractiveServer but use SSR for rest of site
     private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
