@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
+      <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
       <ProjectReference Include="..\ZauberCMS.StarterSite\ZauberCMS.StarterSite.csproj" />
     </ItemGroup>
 

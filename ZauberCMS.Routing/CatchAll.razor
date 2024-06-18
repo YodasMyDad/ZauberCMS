@@ -1,5 +1,5 @@
 ﻿@*@attribute [StreamRendering]*@
-@page "/"
+@page "/{**slug}"
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
@@ -20,17 +20,19 @@ else if (Content != null)
     else
     {
         @* Should really make these pages and redirect to them *@
-        <LayoutView Layout="typeof(BlankLayout)">
+        @*<LayoutView Layout="typeof(BlankLayout)">
             <MissingView />
-        </LayoutView>
+        </LayoutView>*@
+        <p>404 Test</p>
     }
 }
 else
 {
     @* Should really make these pages and redirect to them *@
-    <LayoutView Layout="typeof(BlankLayout)">
+    @*<LayoutView Layout="typeof(BlankLayout)">
         <NotFound404 />
-    </LayoutView>
+    </LayoutView>*@
+    <p>Missing View Test</p>
 }
 
 @code {

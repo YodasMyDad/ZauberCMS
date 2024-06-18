@@ -37,22 +37,10 @@
     {
         get
         {
-            var urlPaths = Settings.Value.IgnoredPaths;
-        
             // Get the relative path from the NavigationManager's URI
             var absoluteUri = new Uri(NavigationManager.Uri);
             var requestPathSpan = absoluteUri.LocalPath.AsSpan();
-        
-            foreach (var url in urlPaths)
-            {
-                var urlSpan = url.AsSpan();
-                if (requestPathSpan.StartsWith(urlSpan, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-        
-            return false;
+            return requestPathSpan.StartsWith(Constants.Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);
         }
     }
 
