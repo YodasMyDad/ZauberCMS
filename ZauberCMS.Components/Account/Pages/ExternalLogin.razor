@@ -9,7 +9,6 @@
 @using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Membership.Models
-@using ZauberCMS.Components.Account.Shared
 
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
@@ -21,12 +20,12 @@
 
 <PageTitle>Register</PageTitle>
 
-<StatusMessage Message="@message" />
+<StatusMessage Message="@message"/>
 <h1>Register</h1>
 <h2>Associate your @ProviderDisplayName account.</h2>
-<hr />
+<hr/>
 
-<div  class="alert alert-info">
+<div class="alert alert-info">
     You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
     Please enter an email address for this site below and click the Register button to finish
     logging in.
@@ -35,12 +34,12 @@
 <div class="row">
     <div class="col-md-4">
         <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <DataAnnotationsValidator/>
+            <ValidationSummary class="text-danger" role="alert"/>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
+                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email."/>
                 <label for="email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" />
+                <ValidationMessage For="() => Input.Email"/>
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
@@ -53,20 +52,15 @@
     private string? message;
     private ExternalLoginInfo externalLoginInfo = default!;
 
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
 
-    [SupplyParameterFromQuery]
-    private string? RemoteError { get; set; }
+    [SupplyParameterFromQuery] private string? RemoteError { get; set; }
 
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
-    [SupplyParameterFromQuery]
-    private string? Action { get; set; }
+    [SupplyParameterFromQuery] private string? Action { get; set; }
 
     private string? ProviderDisplayName => externalLoginInfo.ProviderDisplayName;
 
@@ -176,7 +170,7 @@
         catch
         {
             throw new InvalidOperationException($"Can't create an instance of '{nameof(User)}'. " +
-                $"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor");
+                                                $"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor");
         }
     }
 
@@ -186,13 +180,13 @@
         {
             throw new NotSupportedException("The default UI requires a user store with email support.");
         }
+
         return (IUserEmailStore<User>)UserStore;
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = "";
+        [Required] [EmailAddress] public string Email { get; set; } = "";
     }
+
 }

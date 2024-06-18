@@ -2,8 +2,8 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
-@using ZauberCMS.Core.Membership.Models
 @using Microsoft.AspNetCore.Http
+@using ZauberCMS.Core.Membership.Models
 
 @inject UserManager<User> UserManager
 @inject SignInManager<User> SignInManager
@@ -13,21 +13,21 @@
 <PageTitle>Profile</PageTitle>
 
 <h3>Profile</h3>
-<StatusMessage />
+<StatusMessage/>
 
 <div class="row">
     <div class="col-md-6">
         <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <DataAnnotationsValidator/>
+            <ValidationSummary class="text-danger" role="alert"/>
             <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
+                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled/>
                 <label for="username" class="form-label">Username</label>
             </div>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
                 <label for="phone-number" class="form-label">Phone number</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger"/>
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </EditForm>
@@ -39,11 +39,9 @@
     private string? username;
     private string? phoneNumber;
 
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -75,4 +73,5 @@
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
     }
+
 }

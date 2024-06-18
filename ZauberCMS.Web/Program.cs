@@ -3,7 +3,6 @@ using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
@@ -19,6 +18,7 @@ using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Web.Components;
+using ZauberCMS.Components.Account;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +31,7 @@ builder.Services.AddControllersWithViews();
 builder.Services
     .AddRazorComponents(c => c.DetailedErrors = true)
     .AddInteractiveServerComponents(c => c.DetailedErrors = true);
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 #else
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -39,10 +40,10 @@ builder.Services.AddRazorComponents()
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
-builder.Services.AddScoped<AuthenticationStateProvider, ZauberCMS.Components.Account.IdentityRevalidatingAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
 builder.Services.AddRadzenComponents();
-builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<User>>();
+//builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<User>>();
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddImageSharp();
@@ -62,6 +63,9 @@ builder.Services.AddMvc();
 builder.Services.EnableZauberPlugins(builder.Configuration);
 
 var app = builder.Build();
+
+// Look into this
+//app.UseMigrationsEndPoint();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -102,6 +106,9 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
+
+// Add additional endpoints required by the Identity /Account Razor components.
+app.MapAdditionalIdentityEndpoints();
 
 app.MapControllers();
 

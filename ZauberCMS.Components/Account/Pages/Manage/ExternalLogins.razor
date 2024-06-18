@@ -2,8 +2,8 @@
 
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-@using ZauberCMS.Core.Membership.Models
 @using Microsoft.AspNetCore.Http
+@using ZauberCMS.Core.Membership.Models
 
 @inject UserManager<User> UserManager
 @inject SignInManager<User> SignInManager
@@ -13,44 +13,44 @@
 
 <PageTitle>Manage your external logins</PageTitle>
 
-<StatusMessage />
+<StatusMessage/>
 @if (currentLogins?.Count > 0)
 {
     <h3>Registered Logins</h3>
     <table class="table">
         <tbody>
-            @foreach (var login in currentLogins)
-            {
-                <tr>
-                    <td>@login.ProviderDisplayName</td>
-                    <td>
-                        @if (showRemoveButton)
-                        {
-                            <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
-                                <AntiforgeryToken />
-                                <div>
-                                    <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
-                                    <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
-                                    <button type="submit" class="btn btn-primary" title="Remove this @login.ProviderDisplayName login from your account">Remove</button>
-                                </div>
-                            </form>
-                        }
-                        else
-                        {
-                            @: &nbsp;
-                        }
-                    </td>
-                </tr>
-            }
+        @foreach (var login in currentLogins)
+        {
+            <tr>
+                <td>@login.ProviderDisplayName</td>
+                <td>
+                    @if (showRemoveButton)
+                    {
+                        <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
+                            <AntiforgeryToken/>
+                            <div>
+                                <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider"/>
+                                <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey"/>
+                                <button type="submit" class="btn btn-primary" title="Remove this @login.ProviderDisplayName login from your account">Remove</button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        @: &nbsp;
+                    }
+                </td>
+            </tr>
+        }
         </tbody>
     </table>
 }
 @if (otherLogins?.Count > 0)
 {
     <h4>Add another service to log in.</h4>
-    <hr />
+    <hr/>
     <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
-        <AntiforgeryToken />
+        <AntiforgeryToken/>
         <div>
             <p>
                 @foreach (var provider in otherLogins)
@@ -72,17 +72,13 @@
     private IList<AuthenticationScheme>? otherLogins;
     private bool showRemoveButton;
 
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromForm]
-    private string? LoginProvider { get; set; }
+    [SupplyParameterFromForm] private string? LoginProvider { get; set; }
 
-    [SupplyParameterFromForm]
-    private string? ProviderKey { get; set; }
+    [SupplyParameterFromForm] private string? ProviderKey { get; set; }
 
-    [SupplyParameterFromQuery]
-    private string? Action { get; set; }
+    [SupplyParameterFromQuery] private string? Action { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,4 +134,5 @@
 
         RedirectManager.RedirectToCurrentPageWithStatus("The external login was added.", HttpContext);
     }
+
 }

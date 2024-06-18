@@ -1,4 +1,4 @@
-﻿<StatusMessage Message="@StatusMessage" />
+﻿<StatusMessage Message="@StatusMessage"/>
 <h3>Recovery codes</h3>
 <div class="alert alert-warning" role="alert">
     <p>
@@ -20,9 +20,7 @@
 </div>
 
 @code {
-    [Parameter]
-    public string[] RecoveryCodes { get; set; } = [];
+    [Parameter] public string[] RecoveryCodes { get; set; } = [];
 
-    [Parameter]
-    public string? StatusMessage { get; set; }
+    [Parameter] public string? StatusMessage { get; set; }
 }

@@ -5,9 +5,9 @@
 @using System.Text
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
+@using ZauberCMS.Core.Membership.Models
 @using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
-@using ZauberCMS.Core.Membership.Models
 
 @inject UserManager<User> UserManager
 @inject IdentityUserAccessor UserAccessor
@@ -19,11 +19,11 @@
 
 @if (recoveryCodes is not null)
 {
-    <ShowRecoveryCodes RecoveryCodes="recoveryCodes.ToArray()" StatusMessage="@message" />
+    <ShowRecoveryCodes RecoveryCodes="recoveryCodes.ToArray()" StatusMessage="@message"/>
 }
 else
 {
-    <StatusMessage Message="@message" />
+    <StatusMessage Message="@message"/>
     <h3>Configure authenticator app</h3>
     <div>
         <p>To use an authenticator app go through the following steps:</p>
@@ -52,14 +52,14 @@ else
                 <div class="row">
                     <div class="col-md-6">
                         <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
-                            <DataAnnotationsValidator />
+                            <DataAnnotationsValidator/>
                             <div class="form-floating mb-3">
-                                <InputText @bind-Value="Input.Code" class="form-control" autocomplete="off" placeholder="Please enter the code." />
+                                <InputText @bind-Value="Input.Code" class="form-control" autocomplete="off" placeholder="Please enter the code."/>
                                 <label for="code" class="control-label form-label">Verification Code</label>
-                                <ValidationMessage For="() => Input.Code" class="text-danger" />
+                                <ValidationMessage For="() => Input.Code" class="text-danger"/>
                             </div>
                             <button type="submit" class="w-100 btn btn-lg btn-primary">Verify</button>
-                            <ValidationSummary class="text-danger" role="alert" />
+                            <ValidationSummary class="text-danger" role="alert"/>
                         </EditForm>
                     </div>
                 </div>
@@ -77,11 +77,9 @@ else
     private string? authenticatorUri;
     private IEnumerable<string>? recoveryCodes;
 
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -145,6 +143,7 @@ else
             result.Append(unformattedKey.AsSpan(currentPosition, 4)).Append(' ');
             currentPosition += 4;
         }
+
         if (currentPosition < unformattedKey.Length)
         {
             result.Append(unformattedKey.AsSpan(currentPosition));
@@ -171,4 +170,5 @@ else
         [Display(Name = "Verification Code")]
         public string Code { get; set; } = "";
     }
+
 }

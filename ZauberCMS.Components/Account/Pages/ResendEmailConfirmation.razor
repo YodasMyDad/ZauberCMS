@@ -6,7 +6,6 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using ZauberCMS.Core.Membership.Models
-@using ZauberCMS.Components.Account.Shared
 
 @inject UserManager<User> UserManager
 @inject IEmailSender<User> EmailSender
@@ -17,17 +16,17 @@
 
 <h1>Resend email confirmation</h1>
 <h2>Enter your email.</h2>
-<hr />
-<StatusMessage Message="@message" />
+<hr/>
+<StatusMessage Message="@message"/>
 <div class="row">
     <div class="col-md-4">
         <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <DataAnnotationsValidator/>
+            <ValidationSummary class="text-danger" role="alert"/>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
+                <InputText @bind-Value="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com"/>
                 <label for="email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
+                <ValidationMessage For="() => Input.Email" class="text-danger"/>
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Resend</button>
         </EditForm>
@@ -37,8 +36,7 @@
 @code {
     private string? message;
 
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
 
     private async Task OnValidSubmitAsync()
     {
@@ -62,8 +60,7 @@
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = "";
+        [Required] [EmailAddress] public string Email { get; set; } = "";
     }
+
 }

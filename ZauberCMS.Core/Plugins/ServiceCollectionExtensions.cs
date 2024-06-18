@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
             options.DefaultScheme = IdentityConstants.ApplicationScheme;
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
         });
-        //authBuilder.AddIdentityCookies();
+        authBuilder.AddIdentityCookies();
 
         // Build the service provider and get the extension manager
         var serviceProvider = services.BuildServiceProvider();

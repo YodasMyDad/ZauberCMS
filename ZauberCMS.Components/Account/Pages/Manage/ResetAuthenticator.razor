@@ -1,9 +1,9 @@
 ﻿@page "/Account/Manage/ResetAuthenticator"
 
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Membership.Models
-@using Microsoft.AspNetCore.Http
 
 @inject UserManager<User> UserManager
 @inject SignInManager<User> SignInManager
@@ -13,7 +13,7 @@
 
 <PageTitle>Reset authenticator key</PageTitle>
 
-<StatusMessage />
+<StatusMessage/>
 <h3>Reset authenticator key</h3>
 <div class="alert alert-warning" role="alert">
     <p>
@@ -27,14 +27,13 @@
 </div>
 <div>
     <form @formname="reset-authenticator" @onsubmit="OnSubmitAsync" method="post">
-        <AntiforgeryToken />
+        <AntiforgeryToken/>
         <button class="btn btn-danger" type="submit">Reset authenticator key</button>
     </form>
 </div>
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
     private async Task OnSubmitAsync()
     {
@@ -51,4 +50,5 @@
             "Your authenticator app key has been reset, you will need to configure your authenticator app using the new key.",
             HttpContext);
     }
+
 }

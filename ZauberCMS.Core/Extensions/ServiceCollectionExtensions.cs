@@ -48,7 +48,7 @@ public static class ServiceCollectionExtensions
 #endif
 
             var identitySection = configuration.GetSection("Zauber:Identity");
-            services.AddIdentity<User, Role>(options =>
+            services.AddIdentityCore<User>(options =>
                 {
                     // Password settings.
                     options.Password.RequireDigit = identitySection.GetValue<bool>("PasswordRequireDigit");
@@ -72,10 +72,12 @@ public static class ServiceCollectionExtensions
                     options.SignIn.RequireConfirmedAccount =
                         identitySection.GetValue<bool>("SignInRequireConfirmedAccount");
                 })
+                .AddRoles<Role>()
                 .AddEntityFrameworkStores<ZauberDbContext>()
                 .AddUserStore<UserStore<User, Role, ZauberDbContext, Guid, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>>()
                 .AddRoleStore<RoleStore<Role, ZauberDbContext, Guid, UserRole, RoleClaim>>()
                 .AddClaimsPrincipalFactory<ZauberUserClaimsPrincipalFactory>()
+                .AddSignInManager()
                 .AddDefaultTokenProviders();
             
             services.AddScoped<IUserEmailStore<User>, UserEmailStore>();

@@ -1,9 +1,9 @@
 ﻿@page "/Account/Manage/Disable2fa"
 
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Membership.Models
-@using Microsoft.AspNetCore.Http
 
 @inject UserManager<User> UserManager
 @inject IdentityUserAccessor UserAccessor
@@ -12,7 +12,7 @@
 
 <PageTitle>Disable two-factor authentication (2FA)</PageTitle>
 
-<StatusMessage />
+<StatusMessage/>
 <h3>Disable two-factor authentication (2FA)</h3>
 
 <div class="alert alert-warning" role="alert">
@@ -27,7 +27,7 @@
 
 <div>
     <form @formname="disable-2fa" @onsubmit="OnSubmitAsync" method="post">
-        <AntiforgeryToken />
+        <AntiforgeryToken/>
         <button class="btn btn-danger" type="submit">Disable 2FA</button>
     </form>
 </div>
@@ -35,8 +35,7 @@
 @code {
     private User user = default!;
 
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,4 +62,5 @@
             "2fa has been disabled. You can reenable 2fa when you setup an authenticator app",
             HttpContext);
     }
+
 }

@@ -4,7 +4,6 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Membership.Models
-@using ZauberCMS.Components.Account.Shared
 
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
@@ -14,24 +13,24 @@
 <PageTitle>Two-factor authentication</PageTitle>
 
 <h1>Two-factor authentication</h1>
-<hr />
-<StatusMessage Message="@message" />
+<hr/>
+<StatusMessage Message="@message"/>
 <p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
 <div class="row">
     <div class="col-md-4">
         <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <input type="hidden" name="RememberMe" value="@RememberMe" />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <input type="hidden" name="ReturnUrl" value="@ReturnUrl"/>
+            <input type="hidden" name="RememberMe" value="@RememberMe"/>
+            <DataAnnotationsValidator/>
+            <ValidationSummary class="text-danger" role="alert"/>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.TwoFactorCode" class="form-control" autocomplete="off" />
+                <InputText @bind-Value="Input.TwoFactorCode" class="form-control" autocomplete="off"/>
                 <label for="two-factor-code" class="form-label">Authenticator code</label>
-                <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
+                <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger"/>
             </div>
             <div class="checkbox mb-3">
                 <label for="remember-machine" class="form-label">
-                    <InputCheckbox @bind-Value="Input.RememberMachine" />
+                    <InputCheckbox @bind-Value="Input.RememberMachine"/>
                     Remember this machine
                 </label>
             </div>
@@ -50,20 +49,17 @@
     private string? message;
     private User user = default!;
 
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
 
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
-    [SupplyParameterFromQuery]
-    private bool RememberMe { get; set; }
+    [SupplyParameterFromQuery] private bool RememberMe { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         // Ensure the user has gone through the username & password screen first
         user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
-            throw new InvalidOperationException("Unable to load two-factor authentication user.");
+               throw new InvalidOperationException("Unable to load two-factor authentication user.");
     }
 
     private async Task OnValidSubmitAsync()
@@ -100,4 +96,5 @@
         [Display(Name = "Remember this machine")]
         public bool RememberMachine { get; set; }
     }
+
 }

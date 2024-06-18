@@ -6,8 +6,6 @@
 @using Microsoft.AspNetCore.Http
 @using ZauberCMS.Core.Membership.Models
 
-@using ZauberCMS.Components.Account.Shared
-
 @inject UserManager<User> UserManager
 @inject SignInManager<User> SignInManager
 @inject IdentityRedirectManager RedirectManager
@@ -16,22 +14,18 @@
 
 <h1>Confirm email change</h1>
 
-<StatusMessage Message="@message" />
+<StatusMessage Message="@message"/>
 
 @code {
     private string? message;
 
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromQuery]
-    private string? UserId { get; set; }
+    [SupplyParameterFromQuery] private string? UserId { get; set; }
 
-    [SupplyParameterFromQuery]
-    private string? Email { get; set; }
+    [SupplyParameterFromQuery] private string? Email { get; set; }
 
-    [SupplyParameterFromQuery]
-    private string? Code { get; set; }
+    [SupplyParameterFromQuery] private string? Code { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -68,4 +62,5 @@
         await SignInManager.RefreshSignInAsync(user);
         message = "Thank you for confirming your email change.";
     }
+
 }
