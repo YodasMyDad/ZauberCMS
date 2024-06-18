@@ -3,11 +3,7 @@
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared.Services
 
-@if (IsAdmin)
-{
-    @* Render nothing for admin pages to avoid flashing text *@
-}
-else if (Content != null)
+@if (Content != null)
 {
     if (ComponentView != null)
     {
@@ -38,24 +34,14 @@ else
     
     [Parameter] public string? Slug { get; set; }
     
-    [CascadingParameter] public bool IsAdmin { get; set; }
-
     private Content? Content { get; set; }
     private Dictionary<string, IContentView> AllContentViews { get; set; } = new();
     private IContentView? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
     private Type LayoutType { get; set; } = default!;
-    //private bool IsAdminPage { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
-        // Exclude admin paths with case-insensitive comparison
-        //IsAdminPage = Slug != null && Slug.StartsWith(Constants.Urls.AdminBaseUrl.Replace("/", ""), StringComparison.OrdinalIgnoreCase);
-        if (IsAdmin)
-        {
-            return;
-        }
-
         AllContentViews = ExtensionManager.GetInstances<IContentView>(true);
         Content = await Mediator.Send(new GetContentBySlugCommand { Slug = Slug, IsRootContent = Slug == null });
         
