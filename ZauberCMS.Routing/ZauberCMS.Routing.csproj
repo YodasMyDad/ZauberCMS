@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.3"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.4"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -20,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ZauberCMS.Core\ZauberCMS.Core.csproj" />
+      <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
     </ItemGroup>
 
 </Project>
