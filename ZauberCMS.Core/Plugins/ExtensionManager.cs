@@ -315,5 +315,29 @@ namespace ZauberCMS.Core.Plugins
 
             return AssemblyManager.Assemblies.Where(predicate!);
         }
+        
+        public static Assembly?[] GetFilteredAssemblies(Func<Assembly, bool>? predicate)
+        {
+            // Get all assemblies or filter them based on the predicate
+            var assemblies = predicate == null ? AssemblyManager.Assemblies : AssemblyManager.Assemblies.Where(predicate!);
+
+            // Filter out the assembly with the name "ZauberCMS.Web"
+            var filteredAssemblies = assemblies.Where(a => a?.GetName().Name != "ZauberCMS.Web");
+
+            // Find the assembly with the name "ZauberCMS.Routing"
+            var enumerable = filteredAssemblies as Assembly[] ?? filteredAssemblies.ToArray();
+            var routingAssembly = enumerable.FirstOrDefault(a => a?.GetName().Name == "ZauberCMS.Routing");
+
+            // Exclude the "ZauberCMS.Routing" from the filtered list
+            filteredAssemblies = enumerable.Where(a => a?.GetName().Name != "ZauberCMS.Routing");
+
+            // Add the "ZauberCMS.Routing" to the end of the list if it exists
+            if (routingAssembly != null)
+            {
+                filteredAssemblies = filteredAssemblies.Append(routingAssembly);
+            }
+
+            return filteredAssemblies.ToArray();
+        }
     }
 }

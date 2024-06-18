@@ -8,9 +8,9 @@
 </div>
 
 @code {
-    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    //[CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
     protected override void OnInitialized()
     {
-        HttpContext.Response.StatusCode = StatusCodes.Status302Found;
+        //HttpContext.Response.StatusCode = StatusCodes.Status302Found;
     }
 }
