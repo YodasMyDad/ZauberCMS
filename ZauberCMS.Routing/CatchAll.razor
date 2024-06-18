@@ -2,5 +2,13 @@
 @using ZauberCMS.Components.Pages
 <EntryPage Slug="@Slug" />
 @code{
+    @* 
+        This page is the final catch all for any routes that are not hard coded
+        usually these are the front end pages which are then fetched from the DB
+        this single page is in the project, because how the Blazor routing works
+        I need to pass this assembly in last so it loads all routes from all 
+        other assemblies first, making this the fall back and so it doesn't interfere
+        or intercept routes that is should not 
+    *@
     [Parameter] public string? Slug { get; set; }
 }
