@@ -21,13 +21,18 @@ else if (Content != null)
     else
     {
         @* Should really make these pages and redirect to them *@
-        <MissingView />
+        <LayoutView Layout="typeof(BlankLayout)">
+            <MissingView />
+        </LayoutView>
+        
     }
 }
 else
 {
     @* Should really make these pages and redirect to them *@
-    <NotFound404 />
+    <LayoutView Layout="typeof(BlankLayout)">
+        <NotFound404 />
+    </LayoutView>
 }
 
 @code {

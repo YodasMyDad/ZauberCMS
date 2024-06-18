@@ -4,7 +4,7 @@
 <CascadingBlazoredModal>
     <Router
         AppAssembly="@typeof(App).Assembly"
-        AdditionalAssemblies="@ExtensionManager.GetAssemblies(x => x.FullName!.Contains("ZauberCMS", StringComparison.OrdinalIgnoreCase))">
+        AdditionalAssemblies="@AssemblyManager.Assemblies">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="routeData">
                 <NotAuthorized>
