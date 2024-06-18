@@ -100,7 +100,8 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode()
+    .AddAdditionalAssemblies(AssemblyManager.Assemblies.Where(x => x!.FullName!.Equals("ZauberCMS.Web", StringComparison.OrdinalIgnoreCase)).ToArray()!);
 
 app.MapControllers();
 

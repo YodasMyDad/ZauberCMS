@@ -1,10 +1,8 @@
-﻿@using ZauberCMS.Core.Plugins
-@using Microsoft.AspNetCore.Components.Authorization
+﻿@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Components.Account.Shared
 <CascadingBlazoredModal>
     <Router
-        AppAssembly="@typeof(App).Assembly"
-        AdditionalAssemblies="@AssemblyManager.Assemblies">
+        AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="routeData">
                 <NotAuthorized>
