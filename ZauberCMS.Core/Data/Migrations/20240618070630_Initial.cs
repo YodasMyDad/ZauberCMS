@@ -43,7 +43,6 @@ namespace ZauberCMS.Core.Data.Migrations
                     FileSize = table.Column<long>(type: "INTEGER", nullable: false),
                     Width = table.Column<long>(type: "INTEGER", nullable: false),
                     Height = table.Column<long>(type: "INTEGER", nullable: false),
-                    IsTemp = table.Column<bool>(type: "INTEGER", nullable: false),
                     ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -66,8 +65,10 @@ namespace ZauberCMS.Core.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
+                    RoleProperties = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true)
@@ -82,7 +83,8 @@ namespace ZauberCMS.Core.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),

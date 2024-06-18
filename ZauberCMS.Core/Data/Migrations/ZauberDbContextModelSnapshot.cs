@@ -198,7 +198,10 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasMaxLength(3000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreateDate")
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateUpdated")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
@@ -215,6 +218,10 @@ namespace ZauberCMS.Core.Data.Migrations
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RoleProperties")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -264,7 +271,10 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasMaxLength(3000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreateDate")
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateUpdated")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
