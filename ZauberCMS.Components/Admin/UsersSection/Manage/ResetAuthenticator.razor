@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
+@using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Models
 
 @inject UserManager<User> UserManager
@@ -37,7 +38,7 @@
 
     private async Task OnSubmitAsync()
     {
-        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        var user = await UserAccessor.GetRequiredUserAsync();
         await UserManager.SetTwoFactorEnabledAsync(user, false);
         await UserManager.ResetAuthenticatorKeyAsync(user);
         var userId = await UserManager.GetUserIdAsync(user);

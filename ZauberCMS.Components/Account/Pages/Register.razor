@@ -1,7 +1,5 @@
 ﻿@page "/Account/Register"
-@using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Core.Membership.Commands
-@using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared.Models
 
 <PageTitle>Register</PageTitle>
@@ -44,13 +42,11 @@
 </div>
 
 @code {
-    [Inject] public SignInManager<User> SignInManager { get; set; } = default!;
-
     [SupplyParameterFromForm] public RegisterUserCommand RegisterUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
-    
+
     public async Task RegisterUser(EditContext editContext)
     {
         if (editContext.Validate())
@@ -63,14 +59,14 @@
                 {
                     NavigationManager.NavigateTo(result.NavigateToUrl, true);
                 }
-            
+
                 ResultMessages = result.Messages.SuccessMessages().ToList();
             }
             else
             {
                 ResultMessages = result.Messages.ErrorMessages().ToList();
-            }   
+            }
         }
     }
-    
+
 }

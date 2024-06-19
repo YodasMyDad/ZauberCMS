@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
+@using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Models
 
 @inject UserManager<User> UserManager
@@ -49,7 +50,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        user = await UserAccessor.GetRequiredUserAsync();
 
         var isTwoFactorEnabled = await UserManager.GetTwoFactorEnabledAsync(user);
         if (!isTwoFactorEnabled)

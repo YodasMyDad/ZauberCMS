@@ -1,23 +1,17 @@
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using ZauberCMS.Core.Membership.Models;
 
-namespace ZauberCMS.Components.Account;
+namespace ZauberCMS.Core.Membership;
 
 public sealed class IdentityUserAccessor(
     UserManager<User> userManager,
-    IdentityRedirectManager redirectManager)
+    AuthenticationStateProvider authenticationStateProvider)
 {
-    public async Task<User> GetRequiredUserAsync(HttpContext context)
+    public async Task<User?> GetRequiredUserAsync()
     {
-        var user = await userManager.GetUserAsync(context.User);
-
-        if (user is null)
-        {
-            redirectManager.RedirectToWithStatus("Account/InvalidUser",
-                $"Error: Unable to load user with ID '{userManager.GetUserId(context.User)}'.", context);
-        }
-
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         return user;
     }
 }
