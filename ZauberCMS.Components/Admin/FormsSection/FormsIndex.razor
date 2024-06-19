@@ -1,0 +1,24 @@
+﻿@attribute [Route(Url)]
+@using ZauberCMS.Core
+@layout SectionLayout
+@implements ZauberCMS.Core.Sections.Interfaces.ISection
+
+<PageTitle>@Name</PageTitle>
+
+<h4>Coming soon....</h4>
+
+@code {
+    private const string Url = "/admin/forms"; // So we only have on string
+    public string Name => "Forms";
+    public string Alias => Constants.Sections.FormsSection;
+    public string IndexUrl => Url;
+    public int SortOrder => 5;
+
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Layout?.SetSection(Alias);
+    }
+
+}

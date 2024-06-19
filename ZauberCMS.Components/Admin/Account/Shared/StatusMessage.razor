@@ -1,0 +1,46 @@
+﻿@using ZauberCMS.Core.Shared.Models
+@using Microsoft.AspNetCore.Http
+@if (!string.IsNullOrEmpty(DisplayMessage))
+{
+    var statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
+    <div class="alert alert-@statusMessageClass" role="alert">
+        @DisplayMessage
+    </div>
+}
+
+@if (ResultMessages.Any())
+{
+    foreach (var successMessage in ResultMessages.SuccessMessages())
+    {
+        <div class="alert alert-success" role="alert">
+            @successMessage.Message
+        </div>
+    }
+    foreach (var errorMessage in ResultMessages.ErrorMessages())
+    {
+        <div class="alert alert-danger" role="alert">
+            @errorMessage.Message
+        </div>
+    }
+}
+
+@code {
+    private string? _messageFromCookie;
+
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public List<ResultMessage> ResultMessages { get; set; } = [];
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    private string? DisplayMessage => Message ?? _messageFromCookie;
+
+    protected override void OnInitialized()
+    {
+        _messageFromCookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
+
+        if (_messageFromCookie is not null)
+        {
+            HttpContext.Response.Cookies.Delete(IdentityRedirectManager.StatusCookieName);
+        }
+    }
+
+}

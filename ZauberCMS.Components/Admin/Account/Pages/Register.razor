@@ -1,0 +1,73 @@
+﻿@page "/Account/Register"
+@using Microsoft.AspNetCore.Identity
+@using ZauberCMS.Core.Membership.Commands
+@using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Shared.Models
+
+<PageTitle>Register</PageTitle>
+
+<h1>Register</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <StatusMessage ResultMessages="@ResultMessages"/>
+        <EditForm Model="RegisterUserCommand" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
+            <DataAnnotationsValidator/>
+            <h2>Create a new account.</h2>
+            <hr/>
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="RegisterUserCommand.Username" class="form-control" aria-required="true" placeholder="Username"/>
+                <label for="username">Username</label>
+                <ValidationMessage For="() => RegisterUserCommand.Username" class="text-danger"/>
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="RegisterUserCommand.Email" class="form-control" aria-required="true" placeholder="name@example.com"/>
+                <label for="email">Email</label>
+                <ValidationMessage For="() => RegisterUserCommand.Email" class="text-danger"/>
+            </div>
+            <div class="form-floating mb-3">
+                <InputText type="password" @bind-Value="RegisterUserCommand.Password" class="form-control" aria-required="true" placeholder="password"/>
+                <label for="password">Password</label>
+                <ValidationMessage For="() => RegisterUserCommand.Password" class="text-danger"/>
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+        </EditForm>
+    </div>
+    <div class="col-md-6 col-md-offset-2">
+        <section>
+            <h3>Use another service to register.</h3>
+            <hr/>
+            <ExternalLoginPicker/>
+        </section>
+    </div>
+</div>
+
+@code {
+    [Inject] public SignInManager<User> SignInManager { get; set; } = default!;
+
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+
+    private List<ResultMessage> ResultMessages { get; set; } = [];
+    public RegisterUserCommand RegisterUserCommand { get; set; } = new();
+    
+    public async Task RegisterUser(EditContext editContext)
+    {
+        var result = await Mediator.Send(RegisterUserCommand);
+
+        if (result.Success)
+        {
+            if (!result.NavigateToUrl.IsNullOrWhiteSpace())
+            {
+                NavigationManager.NavigateTo(result.NavigateToUrl, true);
+            }
+            
+            ResultMessages = result.Messages.SuccessMessages().ToList();
+        }
+        else
+        {
+            ResultMessages = result.Messages.ErrorMessages().ToList();
+        }
+    }
+    
+}

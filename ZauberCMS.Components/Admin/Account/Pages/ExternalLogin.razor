@@ -8,6 +8,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Membership.Models
 
 @inject SignInManager<User> SignInManager
@@ -47,8 +48,6 @@
 </div>
 
 @code {
-    public const string LoginCallbackAction = "LoginCallback";
-
     private string? message;
     private ExternalLoginInfo externalLoginInfo = default!;
 
@@ -81,7 +80,7 @@
 
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
-            if (Action == LoginCallbackAction)
+            if (Action == Constants.Identity.LoginCallbackAction)
             {
                 await OnLoginCallbackAsync();
                 return;

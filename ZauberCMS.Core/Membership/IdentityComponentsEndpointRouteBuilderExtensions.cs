@@ -11,8 +11,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
-using ZauberCMS.Components.Account.Pages;
-using ZauberCMS.Components.Account.Pages.Manage;
+using ZauberCMS.Core;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Components.Account;
@@ -35,7 +34,7 @@ public static class IdentityComponentsEndpointRouteBuilderExtensions
             IEnumerable<KeyValuePair<string, StringValues>> query =
             [
                 new("ReturnUrl", returnUrl),
-                new("Action", ExternalLogin.LoginCallbackAction)
+                new("Action", Constants.Identity.LoginCallbackAction)
             ];
 
             var redirectUrl = UriHelper.BuildRelative(
@@ -69,7 +68,7 @@ public static class IdentityComponentsEndpointRouteBuilderExtensions
             var redirectUrl = UriHelper.BuildRelative(
                 context.Request.PathBase,
                 "/Account/Manage/ExternalLogins",
-                QueryString.Create("Action", ExternalLogins.LinkLoginCallbackAction));
+                QueryString.Create("Action", Constants.Identity.LinkLoginCallbackAction));
 
             var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl,
                 signInManager.UserManager.GetUserId(context.User));

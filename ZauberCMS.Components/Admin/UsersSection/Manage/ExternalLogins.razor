@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Http
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Membership.Models
 
 @inject UserManager<User> UserManager
@@ -65,8 +66,6 @@
 }
 
 @code {
-    public const string LinkLoginCallbackAction = "LinkLoginCallback";
-
     private User user = default!;
     private IList<UserLoginInfo>? currentLogins;
     private IList<AuthenticationScheme>? otherLogins;
@@ -96,7 +95,7 @@
 
         showRemoveButton = passwordHash is not null || currentLogins.Count > 1;
 
-        if (HttpMethods.IsGet(HttpContext.Request.Method) && Action == LinkLoginCallbackAction)
+        if (HttpMethods.IsGet(HttpContext.Request.Method) && Action == Constants.Identity.LinkLoginCallbackAction)
         {
             await OnGetLinkLoginCallbackAsync();
         }

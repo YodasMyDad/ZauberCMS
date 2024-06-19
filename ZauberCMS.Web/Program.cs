@@ -105,14 +105,12 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 app.UseAntiforgery();
-
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
-
-app.MapControllers();
 
 app.Run();

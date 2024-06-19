@@ -37,6 +37,31 @@
     </ItemGroup>
 
     <ItemGroup>
+      <AdditionalFiles Include="Admin\Account\Pages\AccessDenied.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\ConfirmEmail.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\ConfirmEmailChange.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\ExternalLogin.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\ForgotPassword.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\ForgotPasswordConfirmation.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\InvalidPasswordReset.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\InvalidUser.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\Lockout.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\Login.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\LoginWith2fa.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\LoginWithRecoveryCode.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\Register.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\RegisterConfirmation.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\ResendEmailConfirmation.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\ResetPassword.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\ResetPasswordConfirmation.razor" />
+      <AdditionalFiles Include="Admin\Account\Pages\_Imports.razor" />
+      <AdditionalFiles Include="Admin\Account\Shared\AccountLayout.razor" />
+      <AdditionalFiles Include="Admin\Account\Shared\ExternalLoginPicker.razor" />
+      <AdditionalFiles Include="Admin\Account\Shared\ManageLayout.razor" />
+      <AdditionalFiles Include="Admin\Account\Shared\ManageNavMenu.razor" />
+      <AdditionalFiles Include="Admin\Account\Shared\RedirectToLogin.razor" />
+      <AdditionalFiles Include="Admin\Account\Shared\ShowRecoveryCodes.razor" />
+      <AdditionalFiles Include="Admin\Account\Shared\StatusMessage.razor" />
       <AdditionalFiles Include="Admin\ContentSection\ContentIndex.razor" />
       <AdditionalFiles Include="Admin\ContentSection\EditContent.razor" />
       <AdditionalFiles Include="Admin\Dashboards\MainContentDashboard.razor" />
@@ -53,6 +78,19 @@
       <AdditionalFiles Include="Admin\SettingsSection\Dialogs\ListContentTypeProperties.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\Dialogs\SortContent.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\SettingsIndex.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\ChangePassword.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\DeletePersonalData.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\Disable2fa.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\Email.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\EnableAuthenticator.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\ExternalLogins.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\GenerateRecoveryCodes.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\Index.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\PersonalData.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\ResetAuthenticator.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\SetPassword.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\TwoFactorAuthentication.razor" />
+      <AdditionalFiles Include="Admin\UsersSection\Manage\_Imports.razor" />
     </ItemGroup>
 
     <ItemGroup>
@@ -80,6 +118,31 @@
       <UpToDateCheckInput Remove="Account\Pages\Manage\SetPassword.razor" />
       <UpToDateCheckInput Remove="Account\Pages\Manage\TwoFactorAuthentication.razor" />
       <UpToDateCheckInput Remove="Account\Pages\Manage\_Imports.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\Register.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\RegisterConfirmation.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\ResendEmailConfirmation.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\ResetPassword.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\ResetPasswordConfirmation.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\_Imports.razor" />
+      <UpToDateCheckInput Remove="Account\Shared\AccountLayout.razor" />
+      <UpToDateCheckInput Remove="Account\Shared\ExternalLoginPicker.razor" />
+      <UpToDateCheckInput Remove="Account\Shared\ManageLayout.razor" />
+      <UpToDateCheckInput Remove="Account\Shared\ManageNavMenu.razor" />
+      <UpToDateCheckInput Remove="Account\Shared\RedirectToLogin.razor" />
+      <UpToDateCheckInput Remove="Account\Shared\ShowRecoveryCodes.razor" />
+      <UpToDateCheckInput Remove="Account\Shared\StatusMessage.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\AccessDenied.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\ConfirmEmail.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\ConfirmEmailChange.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\ExternalLogin.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\ForgotPassword.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\ForgotPasswordConfirmation.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\InvalidPasswordReset.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\InvalidUser.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\Lockout.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\Login.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\LoginWith2fa.razor" />
+      <UpToDateCheckInput Remove="Account\Pages\LoginWithRecoveryCode.razor" />
       <UpToDateCheckInput Remove="Account\Pages\Register.razor" />
       <UpToDateCheckInput Remove="Account\Pages\RegisterConfirmation.razor" />
       <UpToDateCheckInput Remove="Account\Pages\ResendEmailConfirmation.razor" />

@@ -22,6 +22,12 @@ public static class Constants
     {
         public const string DefaultEmailTemplate = "default.html";
     }
+
+    public static class Identity
+    {
+        public const string LoginCallbackAction = "LoginCallback";
+        public const string LinkLoginCallbackAction = "LinkLoginCallback";
+    }
     
     public static class Sections
     {
@@ -29,8 +35,9 @@ public static class Constants
         public const string MediaSection = "MediaSection";
         public const string SettingsSection = "SettingsSection";
         public const string UsersSection = "UsersSection";
+        public const string FormsSection = "FormsSection";
         
-        public const string SectionAlias = "SectionAlias";
+        
     }
     
     public static class Urls

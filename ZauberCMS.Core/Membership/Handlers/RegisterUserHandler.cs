@@ -27,7 +27,6 @@ namespace ZauberCMS.Core.Membership.Handlers
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-        
             
             var newUser = new User { Id = Guid.NewGuid().NewSequentialGuid(), Email = request.Email, UserName = request.Username };
             var loginResult = new AuthenticationResult();
@@ -38,10 +37,10 @@ namespace ZauberCMS.Core.Membership.Handlers
                 logger.LogInformation("{RequestUsername} created a new account", request.Username);
 
                 var startingRoleName = settings.Value.NewUserStartingRole ?? Constants.Roles.StandardRoleName;
-                /*if (dbContext.Users.Count() == 1 || settings.Value.AdminEmailAddresses.Any() && settings.Value.AdminEmailAddresses.Contains(newUser.Email!))
+                if (dbContext.Users.Count() == 1 || settings.Value.AdminEmailAddresses.Any() && settings.Value.AdminEmailAddresses.Contains(newUser.Email!))
                 {
                     startingRoleName = Constants.Roles.AdminRoleName;
-                }*/
+                }
                 
                 // Check the starting role exists
                 var roleExist = await roleManager.RoleExistsAsync(startingRoleName);
