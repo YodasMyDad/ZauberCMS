@@ -1,4 +1,4 @@
-﻿@page "/admin/account/register"
+﻿@page "/Account/Register"
 @using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
@@ -46,10 +46,10 @@
 @code {
     [Inject] public SignInManager<User> SignInManager { get; set; } = default!;
 
+    [SupplyParameterFromForm] public RegisterUserCommand RegisterUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
-    public RegisterUserCommand RegisterUserCommand { get; set; } = new();
     
     public async Task RegisterUser(EditContext editContext)
     {
