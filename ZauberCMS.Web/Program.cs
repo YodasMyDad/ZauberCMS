@@ -2,6 +2,7 @@ using Blazored.Modal;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
 using Serilog;
@@ -19,6 +20,7 @@ using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Web.Components;
 using ZauberCMS.Components.Account;
+using ZauberCMS.Core.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +56,7 @@ builder.Services.AddScoped<ExtensionManager>();
 builder.Services.AddScoped<ProviderService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
+builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
 
 builder.Services.AddSingleton<LayoutResolverService>();
 builder.Services.AddSingleton<AppState>();
