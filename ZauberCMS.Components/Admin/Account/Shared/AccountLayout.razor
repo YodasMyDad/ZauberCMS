@@ -2,19 +2,21 @@
 @inherits LayoutComponentBase
 @layout BlankLayout
 
-@if (HttpContext is null)
+@*@if (HttpContext is null)
 {
     <p>Loading...</p>
 }
 else
 {
     @Body
-}
+}*@
+
+@Body
 
 @code {
-    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+    //[CascadingParameter] private HttpContext? HttpContext { get; set; }
 
-    protected override void OnParametersSet()
+    /*protected override void OnParametersSet()
     {
         if (HttpContext is null)
         {
@@ -23,6 +25,6 @@ else
             // must transition back from interactive mode to a server-rendered page.
             NavigationManager.Refresh(forceReload: true);
         }
-    }
+    }*/
 
 }
