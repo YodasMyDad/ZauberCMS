@@ -39,7 +39,7 @@ public static class IdentityComponentsEndpointRouteBuilderExtensions
 
             var redirectUrl = UriHelper.BuildRelative(
                 context.Request.PathBase,
-                "/Account/ExternalLogin",
+                "/admin/account/externallogin",
                 QueryString.Create(query));
 
             var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);

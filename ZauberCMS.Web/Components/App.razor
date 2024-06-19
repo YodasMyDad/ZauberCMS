@@ -12,13 +12,13 @@
         <link rel="stylesheet" href="bootstrap/bootstrap.min.css"/>
         <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
     }
-    <HeadOutlet @rendermode="InteractiveServer"/>
+    <HeadOutlet @rendermode="RenderModeForPage"/>
 </head>
 
 <body>
 
 <CascadingValue Value="IsAdmin">
-    <Routes @rendermode="InteractiveServer"/>
+    <Routes @rendermode="RenderModeForPage"/>
 </CascadingValue>
 
 <script src="_framework/blazor.web.js"></script>
@@ -40,11 +40,11 @@
             // Get the relative path from the NavigationManager's URI
             var absoluteUri = new Uri(NavigationManager.Uri);
             var requestPathSpan = absoluteUri.LocalPath.AsSpan();
-            return requestPathSpan.StartsWith(Constants.Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);
+            return requestPathSpan.StartsWith(Constants.Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase) 
+                   && !requestPathSpan.StartsWith(Constants.Urls.AdminAccountBaseUrl, StringComparison.OrdinalIgnoreCase);
         }
     }
 
     // Set the Admin to InteractiveServer but use SSR for rest of site
-    // TODO - Update this when .Net 9 comes out and use attribute to set to static
     private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
 }

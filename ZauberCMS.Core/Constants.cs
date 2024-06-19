@@ -43,8 +43,10 @@ public static class Constants
     public static class Urls
     {
         public const string AdminBaseUrl = "/admin";
+        public const string AdminAccountBaseUrl = "/admin/account";
         public static class Account
         {
+            
             public const string ConfirmEmail = "/account/confirmemail";
             public const string ConfirmEmailChange = "/account/confirmemailchange";
             public const string ExternalLogin = "/account/externallogin";
