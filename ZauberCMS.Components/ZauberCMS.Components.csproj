@@ -37,31 +37,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Admin\Account\Pages\AccessDenied.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\ConfirmEmail.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\ConfirmEmailChange.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\ExternalLogin.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\ForgotPassword.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\ForgotPasswordConfirmation.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\InvalidPasswordReset.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\InvalidUser.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\Lockout.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\Login.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\LoginWith2fa.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\LoginWithRecoveryCode.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\Register.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\RegisterConfirmation.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\ResendEmailConfirmation.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\ResetPassword.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\ResetPasswordConfirmation.razor" />
-      <AdditionalFiles Include="Admin\Account\Pages\_Imports.razor" />
-      <AdditionalFiles Include="Admin\Account\Shared\AccountLayout.razor" />
-      <AdditionalFiles Include="Admin\Account\Shared\ExternalLoginPicker.razor" />
-      <AdditionalFiles Include="Admin\Account\Shared\ManageLayout.razor" />
-      <AdditionalFiles Include="Admin\Account\Shared\ManageNavMenu.razor" />
-      <AdditionalFiles Include="Admin\Account\Shared\RedirectToLogin.razor" />
-      <AdditionalFiles Include="Admin\Account\Shared\ShowRecoveryCodes.razor" />
-      <AdditionalFiles Include="Admin\Account\Shared\StatusMessage.razor" />
       <AdditionalFiles Include="Admin\ContentSection\ContentIndex.razor" />
       <AdditionalFiles Include="Admin\ContentSection\EditContent.razor" />
       <AdditionalFiles Include="Admin\Dashboards\MainContentDashboard.razor" />

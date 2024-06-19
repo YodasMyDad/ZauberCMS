@@ -40,8 +40,7 @@
             // Get the relative path from the NavigationManager's URI
             var absoluteUri = new Uri(NavigationManager.Uri);
             var requestPathSpan = absoluteUri.LocalPath.AsSpan();
-            return requestPathSpan.StartsWith(Constants.Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase) 
-                   && !requestPathSpan.StartsWith(Constants.Urls.AdminAccountBaseUrl, StringComparison.OrdinalIgnoreCase);
+            return requestPathSpan.StartsWith(Constants.Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);
         }
     }
 
