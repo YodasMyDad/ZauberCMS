@@ -10,3 +10,4 @@ riderModule.iml
 /ZauberCMS.Web/wwwroot/media/*
 /ZauberCMS.Web/node_modules/*
 */node_modules/*
+/ZauberCMS.Web/appsettings.Development.json
