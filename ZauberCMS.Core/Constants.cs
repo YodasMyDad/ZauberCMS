@@ -67,6 +67,6 @@ public static class Constants
     public static class Roles
     {
         public const string AdminRoleName = "Admin";
-        public const string StandardRoleName = "Standard";
+        public const string StandardRoleName = "Member";
     }
 }

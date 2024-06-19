@@ -12,13 +12,13 @@
         <link rel="stylesheet" href="bootstrap/bootstrap.min.css"/>
         <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
     }
-    <HeadOutlet @rendermode="RenderModeForPage"/>
+    <HeadOutlet @rendermode="InteractiveServer"/>
 </head>
 
 <body>
 
 <CascadingValue Value="IsAdmin">
-    <Routes @rendermode="RenderModeForPage"/>
+    <Routes @rendermode="InteractiveServer"/>
 </CascadingValue>
 
 <script src="_framework/blazor.web.js"></script>
@@ -45,5 +45,6 @@
     }
 
     // Set the Admin to InteractiveServer but use SSR for rest of site
+    // TODO - Update this when .Net 9 comes out and use attribute to set to static
     private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
 }

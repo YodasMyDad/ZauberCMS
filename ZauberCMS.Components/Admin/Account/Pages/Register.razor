@@ -1,4 +1,4 @@
-﻿@page "/Account/Register"
+﻿@page "/admin/account/register"
 @using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
@@ -11,7 +11,7 @@
 <div class="row">
     <div class="col-md-4">
         <StatusMessage ResultMessages="@ResultMessages"/>
-        <EditForm Model="RegisterUserCommand" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
+        <EditForm Model="@RegisterUserCommand" asp-route-returnUrl="@ReturnUrl" OnSubmit="RegisterUser" FormName="register">
             <DataAnnotationsValidator/>
             <h2>Create a new account.</h2>
             <hr/>
@@ -49,24 +49,27 @@
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
-    public RegisterUserCommand RegisterUserCommand { get; set; } = new();
+    private RegisterUserCommand RegisterUserCommand { get; set; } = new();
     
     public async Task RegisterUser(EditContext editContext)
     {
-        var result = await Mediator.Send(RegisterUserCommand);
+        if (editContext.Validate())
+        {
+            var result = await Mediator.Send(RegisterUserCommand);
 
-        if (result.Success)
-        {
-            if (!result.NavigateToUrl.IsNullOrWhiteSpace())
+            if (result.Success)
             {
-                NavigationManager.NavigateTo(result.NavigateToUrl, true);
-            }
+                if (!result.NavigateToUrl.IsNullOrWhiteSpace())
+                {
+                    NavigationManager.NavigateTo(result.NavigateToUrl, true);
+                }
             
-            ResultMessages = result.Messages.SuccessMessages().ToList();
-        }
-        else
-        {
-            ResultMessages = result.Messages.ErrorMessages().ToList();
+                ResultMessages = result.Messages.SuccessMessages().ToList();
+            }
+            else
+            {
+                ResultMessages = result.Messages.ErrorMessages().ToList();
+            }   
         }
     }
     
