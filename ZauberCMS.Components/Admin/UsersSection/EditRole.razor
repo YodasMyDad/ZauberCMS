@@ -1,0 +1,15 @@
+﻿@page "/admin/users/editrole/{RoleId:guid}"
+@using ZauberCMS.Core
+@layout SectionLayout
+
+<p>Edit role</p>
+
+@code {
+    [Parameter] public Guid? RoleId { get; set; }
+    
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
+    protected override void OnInitialized()
+    {
+        Layout?.SetSection(Constants.Sections.UsersSection);
+    }
+}

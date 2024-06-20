@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core.Membership.Models
+﻿@using ZauberCMS.Core.Membership.Commands
+@using ZauberCMS.Core.Membership.Models
 
 <BaseTree
     T="UsersTreeStub"
@@ -22,29 +23,6 @@
 
     private RadzenTree Tree { get; set; } = default!;
     
-    protected override void OnParametersSet()
-    {
-        if (!Data.Any())
-        {
-            var tree = new List<UsersTreeStub>();
-            var usersTree = new UsersTreeStub
-            {
-                Name = "Users",
-                Icon = "people",
-                SortOrder = 1
-            };
-            var rolesTree = new UsersTreeStub
-            {
-                Name = "Roles",
-                Icon = "person_add",
-                SortOrder = 2
-            };
-            tree.Add(usersTree);
-            tree.Add(rolesTree);
-            Data = tree;
-        }
-    }
-
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (OnExpand.HasDelegate)
@@ -53,21 +31,19 @@
         }
         else
         {
-            /*switch (args.Value)
+            switch (args.Value)
             {
                 case UsersTreeStub treeStub:
-                    /*var items = Mediator.Send(new QueryContentCommand
-                {
-                    WhereClause = x => x.ParentId == category.Id,
-                    OrderBy = GetContentsOrderBy.SortOrder
-                }).GetAwaiter().GetResult();
-                args.Children.Data = items.Items;
+                args.Children.Data = treeStub.Branches;
                 args.Children.TextProperty = "Name";
-                args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();#1#
+                args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
                     break;
                 case UsersTreeBranch branch:
+                    args.Children.Data = branch.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
                     break;
-            }*/
+            }
         }
     }
 

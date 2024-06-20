@@ -5,7 +5,7 @@
     <RadzenPanel Class="rz-mx-auto">
         <RadzenTabs @bind-SelectedIndex=@SelectedIndex>
             <Tabs>
-                @foreach (var sectionDashboard in Dashboards)
+                @foreach (var sectionDashboard in Dashboards.OrderBy(x => x.Value.SortOrder))
                 {
                     <RadzenTabsItem Text="@(sectionDashboard.Value.TabName)">
                         <DynamicComponent Type="@sectionDashboard.Value.GetType()"/>

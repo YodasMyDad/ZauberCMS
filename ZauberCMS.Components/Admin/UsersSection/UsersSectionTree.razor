@@ -2,24 +2,27 @@
 @using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
 <UsersTree
-           OnChange="OnChange"
-           @bind-Value="@Selection"
-           OnItemContextMenu="ItemContextMenu"/>
+    Data="@TreeItems"
+    OnChange="OnChange"
+    @bind-Value="@Selection"
+    OnItemContextMenu="ItemContextMenu"/>
 
 @code {
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
 
+
     public string Heading => "User Management";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.UsersSection;
-    
+    private IEnumerable<UsersTreeStub> TreeItems { get; set; } = [];
     private object? Selection { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -41,38 +44,77 @@
 
     private async Task DataRefresh()
     {
-        /*var items = await Mediator.Send(new QueryMediaCommand
+        var allRoles = await Mediator.Send(new QueryRolesCommand
         {
-            AmountPerPage = 100,
-            WhereClause = x => x.ParentId == null,
-            IncludeChildren = true,
-            OrderBy = GetMediaOrderBy.Name
+            OrderBy = GetRolesOrderBy.Name,
+            AmountPerPage = 100 // Should never be more than 100 roles!
         });
-        MediaItems = items.Items.ToList();*/
+
+        var tree = new List<UsersTreeStub>();
+        var usersTree = new UsersTreeStub
+        {
+            Name = "Users",
+            Icon = "people",
+            SortOrder = 1
+        };
+
+
+        foreach (var role in allRoles.Items)
+        {
+            usersTree.Branches.Add(new UsersTreeBranch
+            {
+                Icon = "people", // Add an icon to the role
+                Name = role.Name,
+                Url = $"/admin/users/list/{role.Id}"
+            });
+        }
+
+        var rolesTree = new UsersTreeStub
+        {
+            Name = "Roles",
+            Icon = "person_add",
+            SortOrder = 2
+        };
+
+        foreach (var role in allRoles.Items)
+        {
+            rolesTree.Branches.Add(new UsersTreeBranch
+            {
+                Icon = "person_add", // Add an icon to the role
+                Name = role.Name,
+                Url = $"/admin/users/editrole/{role.Id}"
+            });
+        }
+
+        tree.Add(usersTree);
+        tree.Add(rolesTree);
+        TreeItems = tree;
     }
 
     private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
         ContextMenuService.Open(args,
-            new List<ContextMenuItem> {
-                new(){ Text = "Delete", Value = 1 }
+            new List<ContextMenuItem>
+            {
+                new() { Text = "Delete", Value = 1 }
             }, async e =>
             {
                 var media = (Media)args.Value;
                 /*var dbContent = await Mediator.Send(new GetMediaCommand { Id = media.Id, IncludeChildren = true });*/
                 //var text = args.Text;
-                switch(e.Value)
+                switch (e.Value)
                 {
                     case 1:
                         var deleteResult = await Mediator.Send(new DeleteMediaCommand { MediaId = media.Id });
                         if (deleteResult.Success)
                         {
-                            NavigationManager.NavigateTo("/admin/media", forceLoad: true); 
+                            NavigationManager.NavigateTo("/admin/media", forceLoad: true);
                         }
                         else
                         {
                             NotificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
                         }
+
                         break;
                 }
             }
