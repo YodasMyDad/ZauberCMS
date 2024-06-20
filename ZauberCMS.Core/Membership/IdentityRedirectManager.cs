@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 
-namespace ZauberCMS.Components.Account;
+namespace ZauberCMS.Core.Membership;
 
 public sealed class IdentityRedirectManager(NavigationManager navigationManager)
 {

@@ -11,10 +11,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
-using ZauberCMS.Core;
 using ZauberCMS.Core.Membership.Models;
 
-namespace ZauberCMS.Components.Account;
+namespace ZauberCMS.Core.Membership;
 
 public static class IdentityComponentsEndpointRouteBuilderExtensions
 {
