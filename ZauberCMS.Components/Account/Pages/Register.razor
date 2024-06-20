@@ -1,4 +1,5 @@
 ﻿@page "/Account/Register"
+@using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Shared.Models
 
@@ -44,6 +45,7 @@
 @code {
     [SupplyParameterFromForm] public RegisterUserCommand RegisterUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+    [Inject] public IdentityRedirectManager RedirectManager { get; set; } = default!;
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
 
@@ -57,7 +59,7 @@
             {
                 if (!result.NavigateToUrl.IsNullOrWhiteSpace())
                 {
-                    NavigationManager.NavigateTo(result.NavigateToUrl, true);
+                    RedirectManager.RedirectTo(result.NavigateToUrl);
                 }
 
                 ResultMessages = result.Messages.SuccessMessages().ToList();

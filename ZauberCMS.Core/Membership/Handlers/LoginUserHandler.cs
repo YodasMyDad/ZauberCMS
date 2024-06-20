@@ -13,20 +13,12 @@ namespace ZauberCMS.Core.Membership.Handlers
     /// <summary>
     /// Responsible for handling a user login
     /// </summary>
-    public class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthenticationResult>
+    public class LoginUserHandler(ILogger<LoginUserHandler> logger, IServiceProvider serviceProvider)
+        : IRequestHandler<LoginUserCommand, AuthenticationResult>
     {
-        private readonly ILogger<LoginUserHandler> _logger;
-        private readonly IServiceProvider _serviceProvider;
-        
-        public LoginUserHandler(ILogger<LoginUserHandler> logger, IServiceProvider serviceProvider)
-        {
-            _logger = logger;
-            _serviceProvider = serviceProvider;
-        }
-
         public async Task<AuthenticationResult> Handle(LoginUserCommand request, CancellationToken cancellationToken)
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
@@ -44,7 +36,11 @@ namespace ZauberCMS.Core.Membership.Handlers
                 if (loginResult.Success)
                 {
                     var userPrincipal = await signInManager.CreateUserPrincipalAsync(user);
-                    loginResult.NavigateToUrl = request.ReturnUrl ?? "~/";
+                    if (request.ReturnUrl.IsNullOrWhiteSpace() && userPrincipal.IsInRole(Constants.Roles.AdminRoleName))
+                    {
+                        request.ReturnUrl = Constants.Urls.AdminBaseUrl;
+                    }
+                    loginResult.NavigateToUrl = request.ReturnUrl;
                 }
                 else
                 {
@@ -72,7 +68,7 @@ namespace ZauberCMS.Core.Membership.Handlers
                     }
                     else if (signInResult.IsLockedOut)
                     {
-                        _logger.LogWarning("User {RequestEmail} account is locked out", request.Email);
+                        logger.LogWarning("User {RequestEmail} account is locked out", request.Email);
                         loginResult.AddMessage("Account is locked out.", ResultMessageType.Error);
                     }
                     else if (signInResult.RequiresTwoFactor)

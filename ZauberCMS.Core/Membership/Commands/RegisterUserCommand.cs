@@ -25,8 +25,6 @@ public class RegisterUserCommand : IRequest<AuthenticationResult>
     [Display(Name = "Remember me?")]
     public bool RememberMe { get; set; }
 
-    //public List<AuthenticationScheme> ExternalLogins { get; set; } = new();
-
     public string? ReturnUrl { get; set; }
 
     public bool AutoLogin { get; set; } = true;

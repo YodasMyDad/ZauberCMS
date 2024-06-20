@@ -35,9 +35,8 @@ namespace ZauberCMS.Core.Membership.Handlers
             if (loginResult.Success)
             {
                 logger.LogInformation("{RequestUsername} created a new account", request.Username);
-
                 var startingRoleName = settings.Value.NewUserStartingRole ?? Constants.Roles.StandardRoleName;
-                if (dbContext.Users.Count() == 1 || settings.Value.AdminEmailAddresses.Any() && settings.Value.AdminEmailAddresses.Contains(newUser.Email!))
+                if (dbContext.Users.Count() == 1 || settings.Value.AdminEmailAddresses.Count != 0 && settings.Value.AdminEmailAddresses.Contains(newUser.Email!))
                 {
                     startingRoleName = Constants.Roles.AdminRoleName;
                 }
@@ -76,10 +75,15 @@ namespace ZauberCMS.Core.Membership.Handlers
                 {
                     if (request.AutoLogin)
                     {
-                        await signInManager.SignInAsync(user, request.RememberMe);   
+                        await signInManager.SignInAsync(user, request.RememberMe);
+                        if (request.ReturnUrl.IsNullOrWhiteSpace() && startingRoleName == Constants.Roles.AdminRoleName)
+                        {
+                            request.ReturnUrl = Constants.Urls.AdminBaseUrl;
+                        }
                     }
-
-                    loginResult.NavigateToUrl = request.ReturnUrl ?? "~/";
+                    
+                    loginResult.NavigateToUrl = request.ReturnUrl;   
+                    
                 }
             }
             else
