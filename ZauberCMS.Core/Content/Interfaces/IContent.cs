@@ -15,5 +15,5 @@ public interface IContent
     DateTime DateCreated { get; set; }
     DateTime DateUpdated { get; set; }
     string ViewComponent { get; set; }
-    List<ContentValue> ContentPropertyData { get; set; }
+    List<PropertyValue> ContentPropertyData { get; set; }
 }

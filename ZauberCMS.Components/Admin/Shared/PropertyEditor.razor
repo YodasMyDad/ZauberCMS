@@ -1,0 +1,41 @@
+﻿@using ZauberCMS.Core.Shared.Models
+
+<EditorRow>
+    <LeftColumn>
+        <RadzenTextBox class="w-100 rz-mb-2" Name="Name" Value="@Property.Name"
+                       ValueChanged="@((string name) => { Property.Name = name; Property.Alias = SlugHelper.GenerateSlug(name); })"
+                       Style="font-size: 13px; border: 0; padding-left: 0; color: #000;" Placeholder="Name" aria-label="Property Name"/>
+        <RadzenText Text="@Property.Alias" TextStyle="TextStyle.Caption"/>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenSwitch @bind-Value="@Property.IsRequired" Name="IsRequired"/>
+            <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired"/>
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenSwitch @bind-Value="@Property.FullWidth" Name="FullWidth"/>
+            <RadzenLabel Text="Full Width" Style="font-size: 13px;" Component="FullWidth"/>
+        </RadzenStack>
+        <RadzenTextArea Style="font-size: 12px; border: 0; padding-left: 0;" @bind-Value="@Property.Description" Placeholder="Description..."/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center" Style="height: 100%">
+            @(Property.Component?.Split('.').Last())
+        </RadzenCard>
+    </CentreColumn>
+    <RightColumn>
+        <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move up" Click="@(() => OnSortUp.InvokeAsync(Property))"/>
+        <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Delete" Click="@(() => OnDelete.InvokeAsync(Property))"/>
+        <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move Down" Click="@(() => OnSortDown.InvokeAsync(Property))"/>
+        <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Change Tab" Click="@(() => OnChangeTab.InvokeAsync(Property))"/>
+        <RadzenButton Icon="settings" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Edit Settings" Click="@(() => OnSettings.InvokeAsync(Property))"/>
+    </RightColumn>
+</EditorRow>
+
+@code {
+    [Parameter, EditorRequired] public PropertyType Property { get; set; } = default!;
+    [Parameter, EditorRequired] public EventCallback<PropertyType> OnSortUp { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PropertyType> OnSortDown { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PropertyType> OnDelete { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PropertyType> OnChangeTab { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PropertyType> OnSettings { get; set; }
+    [Parameter, EditorRequired] public SlugHelper SlugHelper { get; set; } = default!;
+}

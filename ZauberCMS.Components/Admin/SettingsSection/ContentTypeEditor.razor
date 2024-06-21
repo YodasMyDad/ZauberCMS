@@ -104,36 +104,16 @@
                                     {
                                         @foreach (var property in tabProperties)
                                         {
-                                            <EditorRow>
-                                                <LeftColumn>
-                                                    <RadzenTextBox class="w-100 rz-mb-2" Name="Name" Value="@property.Name"
-                                                                   ValueChanged="@((string name) => { property.Name = name; property.Alias = _slugHelper.GenerateSlug(name); })"
-                                                                   Style="font-size: 13px; border: 0; padding-left: 0; color: #000;" Placeholder="Name" aria-label="Property Name"/>
-                                                    <RadzenText Text="@property.Alias" TextStyle="TextStyle.Caption"/>
-                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                        <RadzenSwitch @bind-Value="@property.IsRequired" Name="IsRequired"/>
-                                                        <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired"/>
-                                                    </RadzenStack>
-                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                        <RadzenSwitch @bind-Value="@property.FullWidth" Name="FullWidth"/>
-                                                        <RadzenLabel Text="Full Width" Style="font-size: 13px;" Component="FullWidth"/>
-                                                    </RadzenStack>
-                                                    <RadzenTextArea Style="font-size: 12px; border: 0; padding-left: 0;" @bind-Value="@property.Description" Placeholder="Description..."/>
-                                                </LeftColumn>
-                                                <CentreColumn>
-                                                    <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center" Style="height: 100%">
-                                                        @(property.Component?.Split('.').Last())
-                                                    </RadzenCard>
-                                                </CentreColumn>
-                                                <RightColumn>
-                                                    <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move up" Click="@(() => SortProperty(property, false))"/>
-                                                    <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Delete" Click="@(() => DeleteProperty(property))"/>
-                                                    <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move Down" Click="@(() => SortProperty(property, true))"/>
-                                                    <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Change Tab" Click="@(() => ChangeTab(property))"/>
-                                                    <RadzenButton Icon="settings" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Edit Settings" Click="@(() => Settings(property))"/>
-                                                </RightColumn>
-                                            </EditorRow>
+                                            <PropertyEditor Property="property"
+                                                            OnSortUp="@(prop => SortProperty(prop, false))"
+                                                            OnSortDown="@(prop => SortProperty(prop, true))"
+                                                            OnDelete="@(prop => DeleteProperty(prop))"
+                                                            OnChangeTab="@(async (prop) => await ChangeTab(prop))"
+                                                            OnSettings="@(async (prop) => await Settings(prop))" 
+                                                            SlugHelper="@_slugHelper" />
+                                            
                                         }
+                                        
                                     }
                                     else
                                     {
@@ -323,7 +303,10 @@
             new Dictionary<string, object>
             {
                 { "ContentTypeId", ContentType.Id },
-                { "Tabs", ContentType.Tabs.OrderBy(x => x.SortOrder).ToList() }
+                { "Tabs", ContentType.Tabs
+                    .Where(x => !x.IsSystemTab)
+                    .OrderBy(x => x.SortOrder)
+                    .ToList() }
             });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: Guid newTabId })

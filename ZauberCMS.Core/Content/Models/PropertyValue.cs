@@ -1,6 +1,6 @@
 ﻿namespace ZauberCMS.Core.Content.Models;
 
-public class ContentValue
+public class PropertyValue
 {
     public string Alias { get; set; } = string.Empty;
     public Guid ContentTypePropertyId { get; set; }

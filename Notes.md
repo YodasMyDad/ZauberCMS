@@ -4,8 +4,6 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-Default properties, where added manual code tab, move that into code and always added at the end as need for users and roles too (Will fix tab focus issue too)
-Rename (ContentValue) to PropertyValue as will be used for anything that has properties not just Content (i.e. Roles, Members)
 Roles will have the types on them (So admin will have properties, standard will have properties and everyone will be standard, admin probably won't)
     - Maybe make PropertyType that everything uses
 Sort Edit User - Show tabs etc... and merge, think about sort order merging

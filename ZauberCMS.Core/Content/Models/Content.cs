@@ -85,12 +85,12 @@ public class Content : IContent
     /// <summary>
     /// The content properties
     /// </summary>
-    public List<ContentValue> ContentPropertyData { get; set; } = [];
+    public List<PropertyValue> ContentPropertyData { get; set; } = [];
 
 
-    private Dictionary<string, ContentValue>? _contentValues;
+    private Dictionary<string, PropertyValue>? _contentValues;
 
-    public Dictionary<string, ContentValue> ContentValues
+    public Dictionary<string, PropertyValue> ContentValues
     {
         get { return _contentValues ??= ContentPropertyData.ToDictionary(x => x.Alias, x => x); }
     }
