@@ -1,15 +1,61 @@
 ﻿@page "/admin/users/list/{RoleId:guid}"
+@using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core
+@using ZauberCMS.Core.Membership.Commands
 @layout SectionLayout
 
-<p>list users by role!</p>
+<RadzenPanel Class="rz-mx-auto">
+
+    <RadzenDataGrid AllowFiltering="false"
+                    FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    AllowPaging="false"
+                    PageSize="20"
+                    AllowSorting="true"
+                    Data="@Users"
+                    SelectionMode="DataGridSelectionMode.Single"
+                    RowSelect="@((User value) => OnRowSelect(value))">
+        @*@bind-Value="@SelectedContent"*@
+        <Columns>
+            <RadzenDataGridColumn Property="Name" Title="Name"/>
+            <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                <Template Context="data">
+                    @data.DateCreated.Humanize()
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+    
+</RadzenPanel>
 
 @code {
     [Parameter] public Guid? RoleId { get; set; }
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
-    protected override void OnInitialized()
+    
+    private IEnumerable<User> Users { get; set; } = [];
+    protected override async Task OnInitializedAsync()
     {
         Layout?.SetSection(Constants.Sections.UsersSection);
+        if (RoleId != null)
+        {
+            var role = await Mediator.Send(new GetRoleCommand {Id = RoleId.Value});
+            var items = await Mediator.Send(new QueryUsersCommand
+            {
+                AmountPerPage = 20,
+                OrderBy = GetUsersOrderBy.DateCreatedDescending,
+                Roles = [role.Name]
+            });
+            Users = items.Items;   
+        }
+    }
+    
+    
+    private void OnRowSelect(object value)
+    {
+        if (value is User selectedRow)
+        {
+            NavigationManager.NavigateTo($"/admin/users/edit/{selectedRow.Id}");
+        }
     }
 }

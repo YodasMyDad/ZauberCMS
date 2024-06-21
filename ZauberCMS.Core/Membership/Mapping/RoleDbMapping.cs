@@ -10,6 +10,7 @@ public class RoleDbMapping : IEntityTypeConfiguration<Role>
     public void Configure(EntityTypeBuilder<Role> builder)
     {
         builder.Property(x => x.Description).HasMaxLength(200);
+        builder.Property(x => x.Icon).HasMaxLength(20);
         builder.Property(x => x.ConcurrencyStamp).HasMaxLength(3000);
         builder.Property(e => e.ExtendedData).ToJsonConversion(3000);
         builder.Property(e => e.Tabs).ToJsonConversion(4000);
