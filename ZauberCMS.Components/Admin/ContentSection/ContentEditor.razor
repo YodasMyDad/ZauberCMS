@@ -7,6 +7,7 @@
 @if (ContentType != null)
 {
     <EditForm Model="@Content" OnSubmit="Save">
+        
         <RadzenRow class="rz-pb-2">
             <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content.Name" ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
@@ -16,7 +17,7 @@
 
         <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
             <Tabs>
-                @foreach (var tab in ContentType.Tabs.Where(x=> !x.IsSystemTab).OrderBy(x => x.SortOrder))
+                @foreach (var tab in ContentType.Tabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
                 {
                     <RadzenTabsItem>
                         <Template Context="tabContext">

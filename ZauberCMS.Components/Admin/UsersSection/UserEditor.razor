@@ -1,0 +1,218 @@
+﻿@using ZauberCMS.Core
+@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Membership.Commands
+@using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
+@using ZauberCMS.Core.Plugins
+@layout SectionLayout
+@page "/admin/users/edit/{UserId:guid}"
+
+<RadzenPanel Class="rz-mx-auto">
+    @if (UserId == null)
+    {
+        <p>There is not id passed in</p>
+    }
+    else if (User != null)
+    {
+        <EditForm Model="@User" OnSubmit="Save">
+
+            <RadzenRow class="rz-pb-2">
+                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@User.UserName" ValueChanged="@((string name) => { User.UserName = name; })" aria-label="Name"/>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+                    <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last Updated: @User.DateUpdated.Humanize()</RadzenText>
+                </RadzenStack>
+            </RadzenRow>
+
+            <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
+                <Tabs>
+                    @foreach (var tab in AllTabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
+                    {
+                        <RadzenTabsItem>
+                            <Template Context="tabContext">
+                                @tab.Name
+                            </Template>
+                            <ChildContent>
+                                <RadzenStack Gap="1rem">
+                                    @foreach (var property in AllContentProperties
+                                                  .Where(x => x.TabId == tab.Id)
+                                                  .OrderBy(x => x.SortOrder))
+                                    {
+                                        if (property.Component != null)
+                                        {
+                                            AllProperties.TryGetValue(property.Component, out var contentPropertyComponent);
+                                            if (contentPropertyComponent != null)
+                                            {
+                                                AllContentValues.TryGetValue(property.Id, out var contentValue);
+                                                if (contentValue != null)
+                                                {
+                                                    <EditorRow FullWidth="@(property.FullWidth)">
+                                                        <LeftColumn>
+                                                            <RadzenLabel Style="font-weight: 600;font-size: 14px;" Text="@property.Name"/>
+                                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+                                                                <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@property.Alias</RadzenText>
+                                                            </RadzenStack>
+                                                            <RadzenLabel Style="font-size: 14px;" Text="@property.Description"/>
+                                                        </LeftColumn>
+                                                        <CentreColumn>
+                                                            <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
+                                                                                    Settings="@property.Settings"
+                                                                                    Value="@contentValue.Value"
+                                                                                    ModalService="@ModalService"
+                                                                                    ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
+                                                        </CentreColumn>
+                                                    </EditorRow>
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                </RadzenStack >
+                            </ChildContent>
+                        </RadzenTabsItem>
+                    }
+                </Tabs>
+            </RadzenTabs>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
+            </RadzenStack>
+
+        </EditForm>
+    }
+</RadzenPanel>
+
+
+@code {
+
+    [CascadingParameter] BlazoredModalInstance ContentEditorModal { get; set; } = default!;
+    [CascadingParameter] IModalService ModalService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = default!;
+
+    [Parameter] public Guid? UserId { get; set; }
+
+    private User? User { get; set; } = default!;
+    private Dictionary<string, IContentProperty> AllProperties { get; set; } = new();
+    private Dictionary<Guid, PropertyValue> AllContentValues { get; set; } = new();
+    private int SelectedTabIndex { get; set; }
+    private RadzenTabs Tabs { get; set; }
+    private List<Tab> AllTabs { get; set; } = [];
+    private List<PropertyType> AllContentProperties { get; set; } = [];
+
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Layout?.SetSection(Constants.Sections.UsersSection);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        AllProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+        if (UserId != null)
+        {
+            // TODO - Need to get all tabs from all roles user is in
+            // TODO - Need to get all properties from tabs too!
+            //
+            User = await Mediator.Send(new GetUserCommand { Id = UserId.Value });
+            SyncProperties();
+        }
+    }
+
+    private void TabChange(int i)
+    {
+        SelectedTabIndex = i;
+    }
+
+    private void UpdateProperty(Guid ctpId, string value)
+    {
+        var property = User.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
+        if (property != null)
+        {
+            property.Value = value;
+            property.DateUpdated = DateTime.UtcNow;
+        }
+    }
+
+    private void SyncProperties()
+    {
+        var roles = User!.UserRoles.Select(x => x.Role);
+        var enumerable = roles as Role[] ?? roles.ToArray();
+        AllTabs = enumerable.SelectMany(x => x.Tabs).OrderBy(x => x.SortOrder).ToList();
+        AllContentProperties = enumerable.SelectMany(x => x.Properties).ToList();
+
+        var toRemove = new List<PropertyValue>();
+        // Check for properties that were removed
+        foreach (var cpd in User.PropertyData)
+        {
+            var existsInContentType = AllContentProperties.Any(x => x.Id == cpd.ContentTypePropertyId);
+            if (!existsInContentType)
+            {
+                // Mark for removal
+                toRemove.Add(cpd);
+            }
+        }
+
+        // Remove the properties
+        foreach (var tr in toRemove)
+        {
+            User.PropertyData.Remove(tr);
+        }
+
+        // Check for properties to add
+        foreach (var ctp in AllContentProperties)
+        {
+            var exists = User.PropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
+            if (exists == null)
+            {
+                // Add it
+                User.PropertyData.Add(new PropertyValue
+                {
+                    ContentTypePropertyId = ctp.Id,
+                    Alias = ctp.Alias
+                });
+            }
+        }
+
+        AllContentValues = User.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+    }
+
+    private async Task Save()
+    {
+        if (Validated())
+        {
+            /*var saveUserCommand = new SaveUserCommand { User = User };
+            var result = await Mediator.Send(saveUserCommand);
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
+            await AppState.NotifyContentChanged();*/
+        }
+    }
+
+    private bool Validated()
+    {
+        var errors = new List<string>();
+        if (User.UserName.IsNullOrWhiteSpace())
+        {
+            errors.Add("You cannot leave the name empty");
+        }
+
+        foreach (var p in AllContentProperties.Where(x => x.IsRequired))
+        {
+            AllContentValues.TryGetValue(p.Id, out var contentValue);
+            if (contentValue != null && contentValue.Value.IsNullOrWhiteSpace())
+            {
+                errors.Add($"{p.Name} is required");
+            }
+        }
+
+        if (errors.Any())
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Validation Errors", Detail = errors.ListToSingleString(), Duration = 4000 });
+            return false;
+        }
+
+        return true;
+    }
+
+}

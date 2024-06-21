@@ -110,10 +110,13 @@
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         Layout?.SetSection(Constants.Sections.UsersSection);
-        
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
         if (RoleId != null)
         {
             Role = await Mediator.Send(new GetRoleCommand { Id = RoleId.Value });

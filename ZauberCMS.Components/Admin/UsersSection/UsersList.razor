@@ -34,9 +34,9 @@
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
     
     private IEnumerable<User> Users { get; set; } = [];
-    protected override async Task OnInitializedAsync()
+
+    protected override async Task OnParametersSetAsync()
     {
-        Layout?.SetSection(Constants.Sections.UsersSection);
         if (RoleId != null)
         {
             var role = await Mediator.Send(new GetRoleCommand {Id = RoleId.Value});
@@ -49,7 +49,11 @@
             Users = items.Items;   
         }
     }
-    
+
+    protected override void OnInitialized()
+    {
+        Layout?.SetSection(Constants.Sections.UsersSection);
+    }
     
     private void OnRowSelect(object value)
     {

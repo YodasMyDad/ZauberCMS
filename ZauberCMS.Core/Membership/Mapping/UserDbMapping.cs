@@ -15,6 +15,7 @@ namespace ZauberCMS.Core.Membership.Mapping
             builder.Property(x => x.ConcurrencyStamp).HasMaxLength(3000);
             builder.Property(x => x.PhoneNumber).HasMaxLength(100);
             builder.Property(x => x.UserName).HasMaxLength(150);
+            builder.Property(x => x.PropertyData).ToJsonConversion();
             //builder.HasOne(x => x.ProfileImage);
         }
     }
