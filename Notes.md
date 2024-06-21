@@ -3,10 +3,12 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Members should be Users and need consistent naming
+Default properties, where added manual code tab, move that into code and always added at the end as need for users and roles too (Will fix tab focus issue too)
+Rename (ContentValue) to PropertyValue as will be used for anything that has properties not just Content (i.e. Roles, Members)
 Roles will have the types on them (So admin will have properties, standard will have properties and everyone will be standard, admin probably won't)
     - Maybe make PropertyType that everything uses
-Get member tree's sorted (Need a TreeStub or something, look at screenshots)
+Sort Edit User - Show tabs etc... and merge, think about sort order merging
+Make manage and account it's own section, with Layout added programatically from appSettings? Or have a settings section and from there?
 Make the single edit media much better and have an extended content editor which saves to extended content
 Members + Member Types (Including admins) and member picker
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
