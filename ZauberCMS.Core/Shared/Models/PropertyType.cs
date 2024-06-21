@@ -14,4 +14,5 @@ public class PropertyType
     public bool FullWidth { get; set; }
     public int SortOrder { get; set; }
     public Guid? TabId { get; set; }
+    public bool ShowAlias { get; set; } = true;
 }

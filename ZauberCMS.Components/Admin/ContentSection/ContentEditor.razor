@@ -16,7 +16,7 @@
 
         <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
             <Tabs>
-                @foreach (var tab in ContentType.Tabs.OrderBy(x => x.SortOrder))
+                @foreach (var tab in ContentType.Tabs.Where(x=> !x.IsSystemTab).OrderBy(x => x.SortOrder))
                 {
                     <RadzenTabsItem>
                         <Template Context="tabContext">

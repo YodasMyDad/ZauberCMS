@@ -62,7 +62,7 @@ public class ContentType
     /// Tabs are used to organize the properties of a content type into separate sections.
     /// Each tab represents a logical grouping of properties.
     /// </remarks>
-    public List<Tab> Tabs { get; set; } = [];
+    public List<Tab> Tabs { get; set; } = [new Tab{Id = Constants.Guids.ContentTypeSystemTabId, IsSystemTab = true, SortOrder = 100, Name = "System"}];
     
     // ReSharper disable once CollectionNeverUpdated.Global
     /// <summary>

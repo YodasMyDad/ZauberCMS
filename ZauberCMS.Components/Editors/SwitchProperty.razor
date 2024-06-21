@@ -1,7 +1,4 @@
-﻿@using Radzen.Blazor
-@using ZauberCMS.Core.Content.Models
-@using ZauberCMS.Core.Extensions
-@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenSwitch @bind-Value="@Selected" Change=@(args => OnChange(args, "Switch")) InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Switch value" }})" />
 

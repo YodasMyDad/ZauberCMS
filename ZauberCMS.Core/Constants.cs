@@ -4,6 +4,11 @@ public static class Constants
 {
     public const string SettingsConfigName = "Zauber";
     
+    public static class Guids
+    {
+        public static readonly Guid ContentTypeSystemTabId = new("8282a912-408f-49dd-ab84-b19600d55aef");
+    }
+    
     public static class Claims
     {
         public const string ProfileImage = "ProfileImage";
