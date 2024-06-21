@@ -10,13 +10,20 @@
         <RadzenText TextStyle="TextStyle.Caption">Max allowed: @SettingsModel.MaxAmount</RadzenText>
     </div>
 }
-<RadzenCheckBoxList Data="@SettingsModel.Items" 
-                    Value="@SelectedValues" 
-                    TValue="string" 
-                    Change="@(args => OnChange(args, true))"
-                    Orientation="Orientation.Vertical"
-                    TextProperty="Name"
-                    ValueProperty="Value" />
+
+<RadzenListBox Data="@SettingsModel.Items" 
+               Value="@SelectedValues" 
+               TValue="DataListItem"
+               FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+               FilterOperator="StringFilterOperator.StartsWith"
+               AllowFiltering="true"
+               TextProperty="Name"
+               ValueProperty="Value"
+               Multiple="true"
+               AllowClear="true"
+               Change="@(args => Changed(args))"
+               Placeholder="Search" 
+               Style="width: 100%; max-height: 400px" />
                     
 @code {
     
@@ -26,4 +33,10 @@
     public string Description { get; set; } = "Checkbox list using manual or custom data";
     public Type? SettingsComponent { get; set; } = typeof(ListPropertySettings);
 
+    private async Task Changed(object args)
+    {
+        var list = args as IEnumerable<string>;
+        await OnChange(list!, true);
+    }
+    
 }

@@ -332,7 +332,7 @@
     private async Task Settings(PropertyType property)
     {
         var dialog = DialogService.OpenSidePanel<ContentTypePropertySettingsEditor>("Edit Settings",
-            new Dictionary<string, object> { { "ContentTypeProperty", property } });
+            new Dictionary<string, object> { { "PropertyType", property } });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: string settings })
         {
