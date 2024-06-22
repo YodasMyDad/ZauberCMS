@@ -1,13 +1,28 @@
-﻿<RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Tab Name" @bind-Value="@Name" aria-label="Tab Name"/>
+﻿@using ZauberCMS.Core.Shared.Models
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center">
+    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Tab Name" @bind-Value="@Tab!.Name" aria-label="Tab Name"/>
+    <RadzenNumeric Style="width: 100%;" TValue="int" @bind-Value="@Tab!.SortOrder" aria-label="Tab Sort Order" />
+</RadzenStack>
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
 </RadzenStack>
 @code {
     //[Inject] public DialogService DialogService { get; set; } = default!;
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
-    private string Name { get; set; } = string.Empty;
+    [Parameter] public Tab? Tab { get; set; }
+    [Parameter] public int DefaultSortOrder { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // New tab
+        Tab ??= new Tab
+        {
+            SortOrder = DefaultSortOrder
+        };
+    }
+
     private async Task Save()
     {
-        await BlazoredModal.CloseAsync(ModalResult.Ok(Name));
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Tab));
     }
 }
