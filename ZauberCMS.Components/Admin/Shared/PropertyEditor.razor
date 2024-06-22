@@ -1,10 +1,11 @@
-﻿@using ZauberCMS.Core.Shared.Models
+﻿@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Shared.Models
 
 <EditorRow>
     <LeftColumn>
         <RadzenTextBox class="w-100 rz-mb-2" Name="Name" Value="@Property.Name"
                        ValueChanged="@((string name) => { Property.Name = name; Property.Alias = SlugHelper.GenerateSlug(name); })"
-                       Style="font-size: 13px; border: 0; padding-left: 0; color: #000;" Placeholder="Name" aria-label="Property Name"/>
+                       Style="font-size: 13px; color: #000;" Placeholder="Name" aria-label="Property Name"/>
         <RadzenText Text="@Property.Alias" TextStyle="TextStyle.Caption"/>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
             <RadzenSwitch @bind-Value="@Property.IsRequired" Name="IsRequired"/>
@@ -14,11 +15,20 @@
             <RadzenSwitch @bind-Value="@Property.FullWidth" Name="FullWidth"/>
             <RadzenLabel Text="Full Width" Style="font-size: 13px;" Component="FullWidth"/>
         </RadzenStack>
-        <RadzenTextArea Style="font-size: 12px; border: 0; padding-left: 0;" @bind-Value="@Property.Description" Placeholder="Description..."/>
+        <RadzenTextArea Style="font-size: 12px;" @bind-Value="@Property.Description" Placeholder="Description..."/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center" Style="height: 100%">
-            @(Property.Component?.Split('.').Last())
+        <RadzenCard class="rz-background-color-base-200" Style="height: 100%; display: flex; justify-content: center; align-items: center;">
+            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Gap="0.2rem">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.2rem">
+                    @if (ContentProperty.Icon.IsNullOrWhiteSpace() == false)
+                    {
+                        <RadzenIcon Icon="@(ContentProperty.Icon)" IconStyle="IconStyle.Info" Style="line-height: 20px; height: 20px; font-size: 20px; margin-right: 5px;"/>
+                    }
+                    <div style="font-weight: 600;">@(ContentProperty.Name)</div>
+                </RadzenStack>
+                <div style="font-style: italic">@ContentProperty.Description</div>
+            </RadzenStack>
         </RadzenCard>
     </CentreColumn>
     <RightColumn>
@@ -32,6 +42,7 @@
 
 @code {
     [Parameter, EditorRequired] public PropertyType Property { get; set; } = default!;
+    [Parameter, EditorRequired] public IContentProperty ContentProperty { get; set; } = default!;
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnSortUp { get; set; }
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnSortDown { get; set; }
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnDelete { get; set; }

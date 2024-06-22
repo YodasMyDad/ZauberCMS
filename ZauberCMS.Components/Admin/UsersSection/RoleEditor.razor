@@ -16,7 +16,7 @@
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Add Property" Click="@(AddProperty)"/>
     <RadzenButton Variant="Variant.Filled" Text="Add Tab" Click="@(() => AddEditTab(null))"/>
-    @if (TabIndex.Count > 1)
+    @if (TabIndex.Count > 1 && !TabIndex[SelectedTabIndex].IsSystemTab)
     {
         <RadzenButton Variant="Variant.Filled" Text="Edit Tab" Click="@(() => AddEditTab(TabIndex[SelectedTabIndex]))"/>
     }
@@ -71,6 +71,7 @@
                                             @foreach (var property in tabProperties)
                                             {
                                                 <PropertyEditor Property="property"
+                                                                ContentProperty="@(ContentProperties[property.Component])"
                                                                 OnSortUp="@(prop => SortProperty(prop, false))"
                                                                 OnSortDown="@(prop => SortProperty(prop, true))"
                                                                 OnDelete="@(prop => DeleteProperty(prop))"
@@ -113,11 +114,13 @@
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
     private bool ShowDeleteButton { get; set; }
     private int SelectedTabIndex { get; set; }
-    private RadzenTabs Tabs { get; set; }
+    private RadzenTabs Tabs { get; set; } = default!;
+    private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
 
     protected override void OnInitialized()
     {
         Layout?.SetSection(Constants.Sections.UsersSection);
+        ContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
     }
 
     protected override async Task OnParametersSetAsync()
@@ -154,29 +157,6 @@
 
     private void InitializeTabsAndSortOrders()
     {
-        /*if (Role.Tabs.All(x => x.IsSystemTab))
-        {
-            // If no tabs, then create initial tabs and put all properties in the content and reset sort order
-            var defaultTab = new Tab
-            {
-                Name = "Content",
-                SortOrder = 1
-            };
-            Role.Tabs.Add(defaultTab);
-
-            // Now set all the properties to be in this tab
-            for (var index = 0; index < Role.Properties.Count; index++)
-            {
-                var property = Role.Properties[index];
-                property.TabId = defaultTab.Id;
-                property.SortOrder = index + 1;
-            }
-        }
-        else
-        {
-
-        }*/
-
         // Now reset sort orders to be correct
         foreach (var tab in Role.Tabs.Where(x => !x.IsSystemTab))
         {

@@ -16,7 +16,7 @@
             var contentTypeProperty = context as IContentProperty;
         }
         <div style="border-bottom: 1px #e1e1e1 solid">
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.2rem">
                 @if (contentTypeProperty?.Icon.IsNullOrWhiteSpace() == false)
                 {
                     <RadzenIcon Icon="@(contentTypeProperty.Icon)" IconStyle="IconStyle.Info" Style="line-height: 20px; height: 20px; font-size: 20px; margin-right: 5px;"/>

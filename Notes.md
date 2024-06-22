@@ -3,7 +3,6 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-
 Roles will have the types on them (So admin will have properties, standard will have properties and everyone will be standard, admin probably won't)
     - Maybe make PropertyType that everything uses
 Sort Edit User - Show tabs etc... and merge, think about sort order merging
