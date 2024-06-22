@@ -261,14 +261,24 @@
         // Remove the specified tab from the list of tabs
         Role.Tabs.Remove(tab);
 
-        // Re-adjust the sort orders of the remaining tabs
+        // The index will be the total count
+        TabIndex.Clear();
+
+        var tabs = GetTabsInOrder();
+
+        for (var index = 0; index < tabs.Count; index++)
+        {
+            TabIndex.TryAdd(index, tabs[index]);
+        }
+        
+        /*// Re-adjust the sort orders of the remaining tabs
         for (var i = 0; i < Role.Tabs.Count; i++)
         {
             Role.Tabs[i].SortOrder = i + 1;
         }
 
         // Reload the tabs and update the UI state
-        Tabs.Reload();
+        Tabs.Reload();*/
     }
 
     private async Task Save()

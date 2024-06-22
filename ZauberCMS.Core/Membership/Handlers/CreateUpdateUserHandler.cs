@@ -16,36 +16,25 @@ using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Membership.Handlers;
 
-public class CreateUpdateUserHandler : IRequestHandler<CreateUpdateUserCommand, HandlerResult<User>>
+public class CreateUpdateUserHandler(
+    ProviderService providerService,
+    ILogger<CreateUpdateUserHandler> logger,
+    AuthenticationStateProvider authenticationStateProvider,
+    IServiceProvider serviceProvider,
+    IMapper mapper,
+    ICacheService cacheService)
+    : IRequestHandler<CreateUpdateUserCommand, HandlerResult<User>>
 {
-    private readonly ProviderService _providerService;
-    private readonly ILogger<CreateUpdateUserHandler> _logger;
-    private readonly AuthenticationStateProvider _authenticationStateProvider;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IMapper _mapper;
-    private readonly ICacheService _cacheService;
-
-    public CreateUpdateUserHandler(
-        ProviderService providerService,
-        ILogger<CreateUpdateUserHandler> logger, AuthenticationStateProvider authenticationStateProvider, IServiceProvider serviceProvider, IMapper mapper, ICacheService cacheService)
-    {
-        _providerService = providerService;
-        _logger = logger;
-        _authenticationStateProvider = authenticationStateProvider;
-        _serviceProvider = serviceProvider;
-        _mapper = mapper;
-        _cacheService = cacheService;
-    }
-
+    
     public async Task<HandlerResult<User>> Handle(CreateUpdateUserCommand request, CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
+        using var scope = serviceProvider.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
         // Get the current user first via the authstate
-        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var handlerResult = new HandlerResult<User>();
 
         var user = await dbContext.Users
@@ -61,7 +50,7 @@ public class CreateUpdateUserHandler : IRequestHandler<CreateUpdateUserCommand, 
 
         //var oldProfileImageId = user.ProfileImageId;
         
-        _mapper.Map(request.User, user);
+        mapper.Map(request.User, user);
         
         /*
         if (request.ProfileImageUpload != null)
@@ -108,7 +97,7 @@ public class CreateUpdateUserHandler : IRequestHandler<CreateUpdateUserCommand, 
                 {
                     handlerResult.Success = userNameResult.Succeeded;
                     handlerResult.AddMessage(userNameResult.ToErrorsList(), ResultMessageType.Error);
-                    userNameResult.LogErrors(_logger);
+                    userNameResult.LogErrors(logger);
                     return handlerResult;
                 }
             }
@@ -152,7 +141,7 @@ public class CreateUpdateUserHandler : IRequestHandler<CreateUpdateUserCommand, 
                     {
                         handlerResult.Success = emailResult.Succeeded;
                         handlerResult.AddMessage(emailResult.ToErrorsList(), ResultMessageType.Error);
-                        emailResult.LogErrors(_logger);
+                        emailResult.LogErrors(logger);
                         return handlerResult;
                     }
                 }
@@ -173,7 +162,7 @@ public class CreateUpdateUserHandler : IRequestHandler<CreateUpdateUserCommand, 
                 {
                     handlerResult.Success = changePasswordResult.Succeeded;
                     handlerResult.AddMessage(changePasswordResult.ToErrorsList(), ResultMessageType.Error);
-                    changePasswordResult.LogErrors(_logger);
+                    changePasswordResult.LogErrors(logger);
                     return handlerResult;
                 }
             }
@@ -186,7 +175,7 @@ public class CreateUpdateUserHandler : IRequestHandler<CreateUpdateUserCommand, 
                 var tempUiUpdateResult = await userManager.UpdateAsync(managerUser);
                 if (!tempUiUpdateResult.Succeeded)
                 {
-                    tempUiUpdateResult.LogErrors(_logger);
+                    tempUiUpdateResult.LogErrors(logger);
                 }
             }
         }
@@ -197,7 +186,7 @@ public class CreateUpdateUserHandler : IRequestHandler<CreateUpdateUserCommand, 
         }
 
         // Clear user caches
-        _cacheService.ClearCachedItemsWithPrefix(nameof(User));
+        cacheService.ClearCachedItemsWithPrefix(nameof(User));
 
         return handlerResult;
     }

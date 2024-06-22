@@ -12,23 +12,21 @@ public class GetRoleHandler(IServiceProvider serviceProvider)
 {
     public async Task<Role?> Handle(GetRoleCommand request, CancellationToken cancellationToken)
     {
-        using (var scope = serviceProvider.CreateScope())
+        using var scope = serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var query = dbContext.Roles.AsQueryable();
+
+        if (request.AsNoTracking)
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-            var query = dbContext.Roles.AsQueryable();
-
-            if (request.AsNoTracking)
-            {
-                query = query.AsNoTracking();
-            }
-
-            if (request.Id != null)
-            {
-                return await query.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
-            }
-
-            // Should never get here
-            return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
+            query = query.AsNoTracking();
         }
+
+        if (request.Id != null)
+        {
+            return await query.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
+        }
+
+        // Should never get here
+        return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 }

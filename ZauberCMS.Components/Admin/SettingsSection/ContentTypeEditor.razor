@@ -317,14 +317,15 @@
         // Remove the specified tab from the list of tabs
         ContentType.Tabs.Remove(tab);
 
-        // Re-adjust the sort orders of the remaining tabs
-        for (var i = 0; i < ContentType.Tabs.Count; i++)
-        {
-            ContentType.Tabs[i].SortOrder = i + 1;
-        }
+        // The index will be the total count
+        TabIndex.Clear();
 
-        // Reload the tabs and update the UI state
-        Tabs.Reload();
+        var tabs = GetTabsInOrder();
+
+        for (var index = 0; index < tabs.Count; index++)
+        {
+            TabIndex.TryAdd(index, tabs[index]);
+        }
     }
 
     private async Task Save()

@@ -11,7 +11,7 @@
 <RadzenPanel Class="rz-mx-auto">
     @if (UserId == null)
     {
-        <p>There is not id passed in</p>
+        <p>There is no user id passed in</p>
     }
     else if (User != null)
     {
@@ -182,10 +182,10 @@
     {
         if (Validated())
         {
-            /*var saveUserCommand = new SaveUserCommand { User = User };
-            var result = await Mediator.Send(saveUserCommand);
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
-            await AppState.NotifyContentChanged();*/
+            var saveUserCommand = new SaveUserCommand { User = User };
+             var result = await Mediator.Send(saveUserCommand);
+             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{User?.UserName} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{User?.UserName} Error", Detail = "", Duration = 4000 });
+            await AppState.NotifyContentChanged();
         }
     }
 

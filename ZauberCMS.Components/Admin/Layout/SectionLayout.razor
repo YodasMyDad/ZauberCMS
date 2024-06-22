@@ -9,11 +9,14 @@
 
 <RadzenLayout>
     <CascadingValue Value="@this">
-        <RadzenHeader class="rz-background-color-primary-darker">
+        <RadzenHeader class="rz-background-color-primary-darker d-flex justify-content-between">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
-                <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
-                <RadzenIcon Icon="fingerprint"/>
-                <SectionLinks CurrentSection="@(SectionAlias)" />
+                    <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
+                    <RadzenIcon Icon="fingerprint"/>
+                    <SectionLinks CurrentSection="@(SectionAlias)"/>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
+                <UserProfile />
             </RadzenStack>
         </RadzenHeader>
         @if (!SectionAlias.IsNullOrWhiteSpace())
