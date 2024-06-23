@@ -55,6 +55,7 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                                 .FirstOrDefault(x => x.Id == mediaItem.Id);
                                 // Map the updated properties
                             mapper.Map(mediaItem, dbMedia);
+                            if (dbMedia != null) dbMedia.DateUpdated = DateTime.UtcNow;
                             await dbContext.SaveChangesAsync(); ;
                         }
                         else

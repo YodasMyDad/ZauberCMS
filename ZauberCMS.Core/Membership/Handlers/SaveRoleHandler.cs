@@ -39,6 +39,7 @@ public class SaveRoleHandler(
             {
                 // Map the updated properties
                 mapper.Map(request.Role, role);   
+                role.DateUpdated = DateTime.UtcNow;
             }
             
             return await dbContext.SaveChangesAndLog(role, handlerResult, cancellationToken);

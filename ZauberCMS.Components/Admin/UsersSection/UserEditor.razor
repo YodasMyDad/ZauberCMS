@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Components.Admin.UsersSection.Dialogs
+﻿@using Microsoft.AspNetCore.Identity
+@using ZauberCMS.Components.Admin.UsersSection.Dialogs
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Membership.Commands
@@ -11,8 +12,8 @@
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Update Roles" Click="@(UpdateRoles)"/>
+    <RadzenButton Variant="Variant.Filled" Text="Change Password" Click="@(ChangePassword)"/>
     <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteUser)"/>
-
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
@@ -24,11 +25,17 @@
     {
         <EditForm Model="@User" OnSubmit="Save">
 
-            <RadzenRow class="rz-pb-2">
+            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.5rem">
                 <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@User.UserName" ValueChanged="@((string name) => { User.UserName = name; })" aria-label="Name"/>
+                <RadzenTextBox Style="width: 100%;" Name="Email" Placeholder="Email" Value="@User.Email" ValueChanged="@((string name) => { User.Email = name; })" aria-label="Name"/>
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
                     <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last Updated: @User.DateUpdated.Humanize()</RadzenText>
                 </RadzenStack>
+
+            </RadzenStack>
+            
+            <RadzenRow class="rz-pb-2">
+                
             </RadzenRow>
 
             <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
@@ -97,10 +104,13 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public UserManager<User> UserManager { get; set; } = default!;
 
     [Parameter] public Guid? UserId { get; set; }
 
     private User? User { get; set; } = default!;
+    private string? InitialUsername { get; set; }
+    private string? InitialEmail { get; set; }
     private Dictionary<string, IContentProperty> AllProperties { get; set; } = new();
     private Dictionary<Guid, PropertyValue> AllContentValues { get; set; } = new();
     private int SelectedTabIndex { get; set; }
@@ -120,14 +130,44 @@
         AllProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (UserId != null)
         {
-            // TODO - Need to get all tabs from all roles user is in
-            // TODO - Need to get all properties from tabs too!
-            //
             User = await Mediator.Send(new GetUserCommand { Id = UserId.Value });
+            InitialUsername = User?.UserName;
+            InitialEmail = User?.Email;
             SyncProperties();
         }
     }
 
+    private async Task ChangePassword()
+    {
+        var dialog = ModalService.OpenSidePanel<ChangePassword>("Change Password",
+            new Dictionary<string, object>
+            {
+                {
+                    "UserId", User.Id
+                }
+            });
+        var result = await dialog.Result;
+        if (result is { Confirmed: true, Data: IdentityResult identityResult })
+        {
+            if (identityResult.Succeeded)
+            {
+                // Handle success
+                var user = await UserManager.FindByIdAsync(User.Id.ToString());
+                if (user != null) await UserManager.UpdateSecurityStampAsync(user);
+                NotificationService.ShowSuccessNotification("Password Updated");
+            }
+            else
+            {
+                // Handle errors
+                foreach (var error in identityResult.Errors)
+                {
+                    NotificationService.ShowErrorNotification(error.Description);
+                }
+            }
+        }
+        await AppState.NotifyUsersChanged();
+    }
+    
     private async Task UpdateRoles()
     {
         var dialog = ModalService.OpenSidePanel<UpdateRoles>("Update Users Roles",
@@ -144,6 +184,12 @@
             if (!roleUpdateResult.Success)
             {
                 NotificationService.ShowErrorNotification(roleUpdateResult.Messages.MessagesAsString());
+            }
+            else
+            {
+                var user = await UserManager.FindByIdAsync(User.Id.ToString());
+                if (user != null) await UserManager.UpdateSecurityStampAsync(user);
+                NotificationService.ShowSuccessNotification("Roles Updated");
             }
         }
         await AppState.NotifyUsersChanged();
@@ -232,6 +278,11 @@
             var result = await Mediator.Send(saveUserCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{User?.UserName} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{User?.UserName} Error", Detail = "", Duration = 4000 });
             await AppState.NotifyContentChanged();
+            if (InitialUsername != User?.UserName || InitialEmail != User?.Email)
+            {
+                var user = await UserManager.FindByIdAsync(User.Id.ToString());
+                if (user != null) await UserManager.UpdateSecurityStampAsync(user);
+            }
         }
     }
 

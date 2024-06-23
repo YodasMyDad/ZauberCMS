@@ -42,7 +42,8 @@ public class SaveContentTypeHandler(
             else
             {
                 // Map the updated properties
-                mapper.Map(request.ContentType, contentType);   
+                mapper.Map(request.ContentType, contentType);  
+                contentType.DateUpdated = DateTime.UtcNow;
             }
             
             return await dbContext.SaveChangesAndLog(contentType, handlerResult, cancellationToken);

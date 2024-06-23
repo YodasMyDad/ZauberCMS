@@ -53,6 +53,7 @@ public class SaveContentHandler(
                 {
                     // Map the updated properties
                     mapper.Map(requestContent, content);
+                    content.DateUpdated = DateTime.UtcNow;
                 }
                 
                 return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
