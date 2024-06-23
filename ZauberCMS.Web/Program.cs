@@ -26,7 +26,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
-builder.Services.AddControllersWithViews(); 
+builder.Services.AddControllers();
 
 // Add services to the container.
 #if DEBUG
