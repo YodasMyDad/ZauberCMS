@@ -1,0 +1,36 @@
+﻿@using ZauberCMS.Core.Membership.Commands
+@using ZauberCMS.Core.Membership.Models
+
+@if (User != null)
+{
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start">
+        <RadzenCheckBoxList Data="@Roles" Orientation="Orientation.Vertical" @bind-Value=@UsersRoles TValue="Guid" TextProperty="Name" ValueProperty="Id" />
+    </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    </RadzenStack>
+}
+                    
+@code
+{
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [Parameter, EditorRequired] public Guid UserId { get; set; }
+    private User? User { get; set; }
+    private IEnumerable<Role> Roles { get; set; } = [];
+    private IEnumerable<Guid> UsersRoles { get; set; } = [];
+    protected override async Task OnInitializedAsync()
+    {
+        User = await Mediator.Send(new GetUserCommand
+        {
+            Id = UserId
+        });
+        if (User != null) UsersRoles = User.UserRoles.Select(x => x.Role.Id);
+        var roles = await Mediator.Send(new QueryRolesCommand { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200});
+        Roles = roles.Items;
+    }
+
+    private async Task Save()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(UsersRoles));
+    }
+}

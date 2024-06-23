@@ -12,7 +12,7 @@
 <SectionDashboards SectionAlias="@(Alias)"/>
 
 @code {
-    private const string Url = "/admin/users";
+    private const string Url = Constants.Urls.AdminUsersBaseUrl;
     public string Name => "Users";
     public string Alias => Constants.Sections.UsersSection;
     public string IndexUrl => Url;

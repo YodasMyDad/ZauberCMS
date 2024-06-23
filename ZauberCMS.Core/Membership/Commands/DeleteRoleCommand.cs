@@ -4,8 +4,7 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Commands;
 
-public class SaveUserCommand : IRequest<HandlerResult<User>>
+public class DeleteRoleCommand: IRequest<HandlerResult<Role>>
 {
-    public User? User { get; set; }
-    public List<Guid> Roles { get; set; } = [];
+    public Guid RoleId { get; set; }
 }

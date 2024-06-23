@@ -8,7 +8,7 @@
 <SectionDashboards SectionAlias="@(Alias)"/>
 
 @code {
-    private const string Url = "/admin/forms"; // So we only have on string
+    private const string Url = Constants.Urls.AdminFormsBaseUrl; // So we only have on string
     public string Name => "Forms";
     public string Alias => Constants.Sections.FormsSection;
     public string IndexUrl => Url;

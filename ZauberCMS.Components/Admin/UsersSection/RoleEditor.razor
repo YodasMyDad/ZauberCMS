@@ -110,7 +110,7 @@
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
-    private Role Role { get; set; } = new();
+    private Role? Role { get; set; } = new();
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
     private bool ShowDeleteButton { get; set; }
     private int SelectedTabIndex { get; set; }
@@ -157,19 +157,22 @@
 
     private void InitializeTabsAndSortOrders()
     {
-        // Now reset sort orders to be correct
-        foreach (var tab in Role.Tabs.Where(x => !x.IsSystemTab))
+        if (Role != null)
         {
-            var contentProperties = Role.Properties
-                .Where(x => x.TabId == tab.Id)
-                .OrderBy(x => x.SortOrder)
-                .ToList();
-
-            for (var i = 0; i < contentProperties.Count; i++)
+            // Now reset sort orders to be correct
+            foreach (var tab in Role.Tabs.Where(x => !x.IsSystemTab))
             {
-                var contentProperty = contentProperties[i];
-                contentProperty.SortOrder = i + 1;
-            }
+                var contentProperties = Role.Properties
+                    .Where(x => x.TabId == tab.Id)
+                    .OrderBy(x => x.SortOrder)
+                    .ToList();
+
+                for (var i = 0; i < contentProperties.Count; i++)
+                {
+                    var contentProperty = contentProperties[i];
+                    contentProperty.SortOrder = i + 1;
+                }
+            }   
         }
     }
 
@@ -270,15 +273,6 @@
         {
             TabIndex.TryAdd(index, tabs[index]);
         }
-        
-        /*// Re-adjust the sort orders of the remaining tabs
-        for (var i = 0; i < Role.Tabs.Count; i++)
-        {
-            Role.Tabs[i].SortOrder = i + 1;
-        }
-
-        // Reload the tabs and update the UI state
-        Tabs.Reload();*/
     }
 
     private async Task Save()
@@ -313,22 +307,15 @@
     private async Task DeleteRole()
     {
         // Check no content is using it first
-        var usersInThisRole = await Mediator.Send(new QueryUsersCommand { Roles = [Role.Name!] });
-        if (usersInThisRole.Items.Any())
+        var result = await Mediator.Send(new DeleteRoleCommand { RoleId = Role.Id });
+        if (result.Success)
         {
-            // Display error message
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Delete Error", Detail = "Unable to delete, because this role is being used", Duration = 4000 });
+            await AppState.NotifyUsersChanged();
+            NavigationManager.NavigateTo(Constants.Urls.AdminUsersBaseUrl);
         }
         else
         {
-            var result = await Mediator.Send(new DeleteContentTypeCommand { ContentTypeId = Role.Id });
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Role.Name} Deleted", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
-
-            if (result.Success)
-            {
-                await AppState.NotifyUsersChanged();
-                NavigationManager.NavigateTo("/admin/users");
-            }
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
 

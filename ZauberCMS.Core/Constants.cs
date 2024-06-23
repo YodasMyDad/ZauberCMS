@@ -48,7 +48,12 @@ public static class Constants
     public static class Urls
     {
         public const string AdminBaseUrl = "/admin";
-        public const string AdminAccountBaseUrl = "/admin/account";
+        public const string AdminUsersBaseUrl = AdminBaseUrl + "/users";
+        public const string AdminMediaBaseUrl = AdminBaseUrl + "/media";
+        public const string AdminContentBaseUrl = AdminBaseUrl + "/content";
+        public const string AdminSettingsBaseUrl = AdminBaseUrl + "/settings";
+        public const string AdminFormsBaseUrl = AdminBaseUrl + "/forms";
+        
         public static class Account
         {
             

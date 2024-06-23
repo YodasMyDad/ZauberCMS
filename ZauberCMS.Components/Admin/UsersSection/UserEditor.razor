@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core
+﻿@using ZauberCMS.Components.Admin.UsersSection.Dialogs
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
@@ -7,6 +8,12 @@
 @using ZauberCMS.Core.Plugins
 @layout SectionLayout
 @page "/admin/users/edit/{UserId:guid}"
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Update Roles" Click="@(UpdateRoles)"/>
+    <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteUser)"/>
+
+</RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
     @if (UserId == null)
@@ -89,6 +96,7 @@
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
 
     [Parameter] public Guid? UserId { get; set; }
 
@@ -120,6 +128,41 @@
         }
     }
 
+    private async Task UpdateRoles()
+    {
+        var dialog = ModalService.OpenSidePanel<UpdateRoles>("Update Users Roles",
+            new Dictionary<string, object>
+            {
+                {
+                    "UserId", User.Id
+                }
+            });
+        var result = await dialog.Result;
+        if (result is { Confirmed: true, Data: List<Guid> roles })
+        {
+            var roleUpdateResult = await Mediator.Send(new SaveUserCommand { User = User, Roles = roles });
+            if (!roleUpdateResult.Success)
+            {
+                NotificationService.ShowErrorNotification(roleUpdateResult.Messages.MessagesAsString());
+            }
+        }
+        await AppState.NotifyUsersChanged();
+    }
+
+    private async Task DeleteUser()
+    {
+        var delete = await DialogService.Confirm("Do you really want to delete this user?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (delete == true)
+        {
+            var roleUpdateResult = await Mediator.Send(new DeleteUserCommand { UserId = User.Id });
+            if (!roleUpdateResult.Success)
+            {
+                await AppState.NotifyUsersChanged();
+                NavigationManager.NavigateTo(Constants.Urls.AdminUsersBaseUrl);
+            }
+        }
+    }
+
     private void TabChange(int i)
     {
         SelectedTabIndex = i;
@@ -137,45 +180,48 @@
 
     private void SyncProperties()
     {
-        var roles = User!.UserRoles.Select(x => x.Role);
-        var enumerable = roles as Role[] ?? roles.ToArray();
-        AllTabs = enumerable.SelectMany(x => x.Tabs).OrderBy(x => x.SortOrder).ToList();
-        AllContentProperties = enumerable.SelectMany(x => x.Properties).ToList();
-
-        var toRemove = new List<PropertyValue>();
-        // Check for properties that were removed
-        foreach (var cpd in User.PropertyData)
+        if (User != null)
         {
-            var existsInContentType = AllContentProperties.Any(x => x.Id == cpd.ContentTypePropertyId);
-            if (!existsInContentType)
+            var roles = User!.UserRoles.Select(x => x.Role);
+            var enumerable = roles as Role[] ?? roles.ToArray();
+            AllTabs = enumerable.SelectMany(x => x.Tabs).OrderBy(x => x.SortOrder).ToList();
+            AllContentProperties = enumerable.SelectMany(x => x.Properties).ToList();
+
+            var toRemove = new List<PropertyValue>();
+            // Check for properties that were removed
+            foreach (var cpd in User.PropertyData)
             {
-                // Mark for removal
-                toRemove.Add(cpd);
-            }
-        }
-
-        // Remove the properties
-        foreach (var tr in toRemove)
-        {
-            User.PropertyData.Remove(tr);
-        }
-
-        // Check for properties to add
-        foreach (var ctp in AllContentProperties)
-        {
-            var exists = User.PropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
-            if (exists == null)
-            {
-                // Add it
-                User.PropertyData.Add(new PropertyValue
+                var existsInContentType = AllContentProperties.Any(x => x.Id == cpd.ContentTypePropertyId);
+                if (!existsInContentType)
                 {
-                    ContentTypePropertyId = ctp.Id,
-                    Alias = ctp.Alias
-                });
+                    // Mark for removal
+                    toRemove.Add(cpd);
+                }
             }
-        }
 
-        AllContentValues = User.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+            // Remove the properties
+            foreach (var tr in toRemove)
+            {
+                User.PropertyData.Remove(tr);
+            }
+
+            // Check for properties to add
+            foreach (var ctp in AllContentProperties)
+            {
+                var exists = User.PropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
+                if (exists == null)
+                {
+                    // Add it
+                    User.PropertyData.Add(new PropertyValue
+                    {
+                        ContentTypePropertyId = ctp.Id,
+                        Alias = ctp.Alias
+                    });
+                }
+            }
+
+            AllContentValues = User.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+        }
     }
 
     private async Task Save()
@@ -183,8 +229,8 @@
         if (Validated())
         {
             var saveUserCommand = new SaveUserCommand { User = User };
-             var result = await Mediator.Send(saveUserCommand);
-             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{User?.UserName} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{User?.UserName} Error", Detail = "", Duration = 4000 });
+            var result = await Mediator.Send(saveUserCommand);
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{User?.UserName} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{User?.UserName} Error", Detail = "", Duration = 4000 });
             await AppState.NotifyContentChanged();
         }
     }
