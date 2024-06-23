@@ -1,5 +1,6 @@
 using Blazored.Modal;
 using MediatR;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -39,6 +40,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 #endif
 
+builder.Services.AddHttpClient();
+
+builder.Services.AddScoped(sp =>
+{
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+    return new HttpClient { BaseAddress = new Uri(navigationManager.BaseUri) };
+});
+
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -49,7 +58,8 @@ builder.Services.AddRadzenComponents();
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddImageSharp();
-
+builder.Services.AddAntiforgery();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddBlazoredModal();
 
 builder.Services.AddScoped<ExtensionManager>();
