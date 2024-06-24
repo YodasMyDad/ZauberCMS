@@ -14,10 +14,11 @@
                 RowSelect="@((User value) => OnRowSelect(value))">
     @*@bind-Value="@SelectedContent"*@
     <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="Username" Title="Username"/>
+        <RadzenDataGridColumn Property="Email" Title="Email"/>
         <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
             <Template Context="data">
-                @data.DateCreated.Humanize()
+                @data.DateUpdated.Humanize()
             </Template>
         </RadzenDataGridColumn>
     </Columns>

@@ -17,6 +17,9 @@ public static class ServiceCollectionExtensions
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
         });
         authBuilder.AddIdentityCookies();
+        
+        /*services.AddAuthorizationBuilder()
+                    .AddPolicy("AdminOnly", policy => policy.RequireRole(Constants.Roles.AdminRoleName));*/
 
         // Build the service provider and get the extension manager
         var serviceProvider = services.BuildServiceProvider();

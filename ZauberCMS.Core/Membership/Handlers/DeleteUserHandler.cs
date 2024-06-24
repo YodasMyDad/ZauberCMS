@@ -10,7 +10,7 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Handlers;
 
-public class DeleteUserHandler(IServiceProvider serviceProvider, IMapper mapper)
+public class DeleteUserHandler(IServiceProvider serviceProvider)
     : IRequestHandler<DeleteUserCommand, HandlerResult<User>>
 {
     public async Task<HandlerResult<User>> Handle(DeleteUserCommand request, CancellationToken cancellationToken)

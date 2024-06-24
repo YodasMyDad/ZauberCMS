@@ -1,5 +1,7 @@
-﻿@inherits LayoutComponentBase
-@*@attribute [Microsoft.AspNetCore.Authorization.Authorize]*@
+﻿@using Microsoft.AspNetCore.Authorization
+@using ZauberCMS.Core
+@inherits LayoutComponentBase
+
 <HeadContent>
     <link rel="stylesheet" href="_content/ZauberCMS.Components/css/admin.css">
     <SectionOutlet SectionId="@Sections.PageHeadContent"/>

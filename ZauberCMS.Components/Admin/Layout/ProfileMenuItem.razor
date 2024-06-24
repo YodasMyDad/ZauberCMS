@@ -1,0 +1,22 @@
+﻿<li class="rz-navigation-item">
+    <div class="rz-navigation-item-wrapper">
+        <div class="rz-navigation-item-link" @onclick="HandleClick">
+            <i class="rzi rz-navigation-item-icon">@Icon</i>
+            <span class="rz-navigation-item-text">@Name</span>
+        </div>
+    </div>
+</li>
+
+@code {
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(e);
+        }
+    }
+}
