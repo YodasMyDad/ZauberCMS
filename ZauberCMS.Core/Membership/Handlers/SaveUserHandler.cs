@@ -1,83 +1,116 @@
 ﻿using AutoMapper;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using ZauberCMS.Core.Data;
-using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Handlers;
 
-public class SaveUserHandler : IRequestHandler<SaveUserCommand, HandlerResult<User>>
+public class SaveUserHandler(
+    IServiceProvider serviceProvider,
+    IMapper mapper)
+    : IRequestHandler<SaveUserCommand, HandlerResult<User>>
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IMapper _mapper;
-
-    public SaveUserHandler(IServiceProvider serviceProvider, IMapper mapper)
-    {
-        _serviceProvider = serviceProvider;
-        _mapper = mapper;
-    }
-
     public async Task<HandlerResult<User>> Handle(SaveUserCommand request, CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-
+        using var scope = serviceProvider.CreateScope();
+        //var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        
         var handlerResult = new HandlerResult<User>();
-
         if (request.User != null)
         {
-            // Get the DB version
-            var user = dbContext.Users
-                .Include(u => u.UserRoles)
-                .ThenInclude(x => x.Role)// Include UserRoles
-                .FirstOrDefault(x => x.Id == request.User.Id);
+            var user = await userManager.FindByIdAsync(request.User.Id.ToString());
 
             if (user == null)
             {
                 user = request.User;
-                dbContext.Users.Add(user);
-
-                // Assign the passed-in roles to the new user
-                user.UserRoles = request.Roles.Select(roleId => new UserRole { RoleId = roleId, UserId = user.Id }).ToList();
+                var result = await userManager.CreateAsync(user, request.User.PasswordHash); // TODO Assume PasswordHash is the plain password for simplicity
+                if (!result.Succeeded)
+                {
+                    handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
+                    return handlerResult;
+                }
             }
             else
             {
-                // Preserve current roles
-                var currentRoles = user.UserRoles.ToList();
-
-                // Map the updated properties (excluding UserRoles)
-                _mapper.Map(request.User, user);
-
-                // Restore current roles
-                user.UserRoles = currentRoles;
-
-                user.DateUpdated = DateTime.UtcNow;
-
-                // Update the user's roles
-                var currentRoleIds = user.UserRoles.Select(ur => ur.RoleId).ToList();
-                var newRoleIds = request.Roles;
-
-                // Remove roles that are no longer assigned
-                var rolesToRemove = user.UserRoles.Where(ur => !newRoleIds.Contains(ur.RoleId)).ToList();
-                foreach (var roleToRemove in rolesToRemove)
+                if (user.UserName != request.User.UserName)
                 {
-                    dbContext.Entry(roleToRemove).State = EntityState.Deleted;
+                    var result = await userManager.SetUserNameAsync(user, request.User.UserName);
+                    if (!result.Succeeded)
+                    {
+                        handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
+                        return handlerResult;
+                    }
                 }
 
-                // Add new roles that are assigned
-                var rolesToAdd = newRoleIds.Where(roleId => !currentRoleIds.Contains(roleId))
-                    .Select(roleId => new UserRole { RoleId = roleId, UserId = user.Id }).ToList();
-                user.UserRoles.AddRange(rolesToAdd);
+                if (user.Email != request.User.Email)
+                {
+                    var result = await userManager.SetEmailAsync(user, request.User.Email);
+                    if (!result.Succeeded)
+                    {
+                        handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
+                        return handlerResult;
+                    }
+                }
+
+                // Update other properties
+                mapper.Map(request.User, user);
+                user.DateUpdated = DateTime.UtcNow;
+
+                var updateResult = await userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    handlerResult.Messages.AddRange(updateResult.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
+                    return handlerResult;
+                }
             }
 
-            return await dbContext.SaveChangesAndLog(user, handlerResult, cancellationToken);
+            // Handle roles
+            if (request.Roles != null)
+            {
+                var currentRoles = await userManager.GetRolesAsync(user);
+                var rolesToAdd = request.Roles.Except(currentRoles).ToList();
+                var rolesToRemove = currentRoles.Except(request.Roles).ToList();
+
+                if (rolesToAdd.Count != 0)
+                {
+                    var result = await userManager.AddToRolesAsync(user, rolesToAdd);
+                    if (!result.Succeeded)
+                    {
+                        handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
+                        return handlerResult;
+                    }
+                }
+
+                if (rolesToRemove.Count != 0)
+                {
+                    var result = await userManager.RemoveFromRolesAsync(user, rolesToRemove);
+                    if (!result.Succeeded)
+                    {
+                        handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
+                        return handlerResult;
+                    }
+                }
+            }
+
+            // Update security stamp if needed
+            if (userManager.SupportsUserSecurityStamp)
+            {
+                await userManager.UpdateSecurityStampAsync(user);
+                handlerResult.RefreshSignIn = true;
+            }
+
+            handlerResult.Entity = user;
+            handlerResult.Success = true;
+        }
+        else
+        {
+            handlerResult.Messages.Add(new ResultMessage("User is null", ResultMessageType.Error));
         }
 
-        handlerResult.AddMessage("User is null", ResultMessageType.Error);
         return handlerResult;
     }
 }

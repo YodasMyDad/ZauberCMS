@@ -180,7 +180,9 @@
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: List<Guid> roles })
         {
-            var roleUpdateResult = await Mediator.Send(new SaveUserCommand { User = User, Roles = roles });
+            var allRoles = await Mediator.Send(new QueryRolesCommand { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200});
+            var roleNames = allRoles.Items.Where(x => roles.Contains(x.Id)).Select(x => x.Name).ToList();
+            var roleUpdateResult = await Mediator.Send(new SaveUserCommand { User = User, Roles = roleNames! });
             if (!roleUpdateResult.Success)
             {
                 NotificationService.ShowErrorNotification(roleUpdateResult.Messages.MessagesAsString());
