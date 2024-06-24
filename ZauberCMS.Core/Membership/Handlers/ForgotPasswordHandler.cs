@@ -14,24 +14,17 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Handlers
 {
-    public class ForgotPasswordHandler : IRequestHandler<ForgotPasswordCommand, AuthenticationResult>
+    public class ForgotPasswordHandler(
+        IHttpContextAccessor httpContextAccessor,
+        ProviderService providerService,
+        IServiceProvider serviceProvider)
+        : IRequestHandler<ForgotPasswordCommand, AuthenticationResult>
     {
-        private readonly ProviderService _providerService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IServiceProvider _serviceProvider;
-        
-        public ForgotPasswordHandler(IHttpContextAccessor httpContextAccessor, ProviderService providerService, IServiceProvider serviceProvider)
-        {
-            _httpContextAccessor = httpContextAccessor;
-            _providerService = providerService;
-            _serviceProvider = serviceProvider;
-        }
-
         public async Task<AuthenticationResult> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
         {
             var result = new AuthenticationResult();
 
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
@@ -52,10 +45,10 @@ namespace ZauberCMS.Core.Membership.Handlers
                 // visit https://go.microsoft.com/fwlink/?LinkID=532713
                 var code = await userManager.GeneratePasswordResetTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                var callbackUrl = _httpContextAccessor.ToAbsoluteUrl(Constants.Urls.Account.ResetPassword, new { code = code, email = request.Email });
+                var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Constants.Urls.Account.ResetPassword, new { code = code, email = request.Email });
 
                 var paragraphs = new List<string> { $"Please reset your password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>." };
-                await _providerService.EmailProvider!.SendEmailWithTemplateAsync(request.Email, "Reset Password", paragraphs);
+                await providerService.EmailProvider!.SendEmailWithTemplateAsync(request.Email, "Reset Password", paragraphs);
             }
 
             result.Success = true;

@@ -53,6 +53,7 @@
     {
         if (editContext.Validate())
         {
+            RegisterUserCommand.AutoLogin = true;
             var result = await Mediator.Send(RegisterUserCommand);
 
             if (result.Success)

@@ -7,17 +7,13 @@
                 <RadzenGravatar Email="@AuthState.User.GetUserEmail()" />
             </Template>
             <ChildContent>
-                <RadzenProfileMenuItem Text="Buttons" Path="buttons" Icon="account_circle"></RadzenProfileMenuItem>
-                <RadzenProfileMenuItem Text="Menu" Path="menu" Icon="line_weight"></RadzenProfileMenuItem>
-                <RadzenProfileMenuItem Text="FileInput" Path="fileinput" Icon="attach_file"></RadzenProfileMenuItem>
-                <RadzenProfileMenuItem Text="Dialog" Path="dialog" Icon="perm_media"></RadzenProfileMenuItem>
-                <RadzenProfileMenuItem Text="Notification" Path="notification" Icon="announcement"></RadzenProfileMenuItem>
+                <ProfileMenuItem Icon="account_circle" Name="Logout" OnClick="() => Logout()" />
             </ChildContent>
         </RadzenProfileMenu>
     } 
     else
     {
-        <p>Huh? Help</p>
+        <p>Huh?</p>
     }   
 
 
@@ -26,6 +22,11 @@
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     private AuthenticationState AuthState { get; set; } = default!;
 
+    private void Logout()
+    {
+        NavigationManager.NavigateTo("/api/auth/logout", true);
+    }
+    
     protected override async Task OnInitializedAsync()
     {
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();

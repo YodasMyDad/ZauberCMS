@@ -10,20 +10,12 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Handlers
 {
-    public class ExternalLoginHandler : IRequestHandler<ExternalLoginCommand, AuthenticationResult>
+    public class ExternalLoginHandler(ILogger<ExternalLoginHandler> logger, IServiceProvider serviceProvider)
+        : IRequestHandler<ExternalLoginCommand, AuthenticationResult>
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<ExternalLoginHandler> _logger;
-
-        public ExternalLoginHandler(ILogger<ExternalLoginHandler> logger, IServiceProvider serviceProvider)
-        {
-            _logger = logger;
-            _serviceProvider = serviceProvider;
-        }
-
         public async Task<AuthenticationResult> Handle(ExternalLoginCommand request, CancellationToken cancellationToken)
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
             var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<User>>();
@@ -92,7 +84,7 @@ namespace ZauberCMS.Core.Membership.Handlers
                         authenticationResult.Success = false;
                         foreach (var error in confirmResult.Errors)
                         {
-                            _logger.LogError("Failure to confirm email address - {Error}", error.Description);
+                            logger.LogError("Failure to confirm email address - {Error}", error.Description);
                             authenticationResult.AddMessage(error.Description, ResultMessageType.Error);
                         }
                     }
@@ -107,7 +99,7 @@ namespace ZauberCMS.Core.Membership.Handlers
                     authenticationResult.Success = false;
                     foreach (var error in result.Errors)
                     {
-                        _logger.LogError("Failure to login using external provider - {Error}", error.Description);
+                        logger.LogError("Failure to login using external provider - {Error}", error.Description);
                         authenticationResult.AddMessage(error.Description, ResultMessageType.Error);
                     }
                 }
@@ -117,7 +109,7 @@ namespace ZauberCMS.Core.Membership.Handlers
                 authenticationResult.Success = false;
                 foreach (var error in result.Errors)
                 {
-                    _logger.LogError("Failure to login using external provider - {Error}", error.Description);
+                    logger.LogError("Failure to login using external provider - {Error}", error.Description);
                     authenticationResult.AddMessage(error.Description, ResultMessageType.Error);
                 }
             }

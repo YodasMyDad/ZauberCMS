@@ -6,7 +6,7 @@
         AppAssembly="@typeof(App).Assembly"
         AdditionalAssemblies="@ExtensionManager.GetFilteredAssemblies(null)">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="routeData">
+            <AuthorizeRouteView Resource="routeData" RouteData="routeData">
                 <NotAuthorized>
                     <RedirectToLogin />
                 </NotAuthorized>

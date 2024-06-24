@@ -3,7 +3,7 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Check all usermnager etc.. done with scope
+Add user to content/media etc... and make sure it saves on the item (Not the admin is secured)
 Sort Edit User - Show tabs etc... and merge, think about sort order merging
 Make manage and account it's own section, with Layout added programatically from appSettings? Or have a settings section and from there?
 Make the single edit media much better and have an extended content editor which saves to extended content

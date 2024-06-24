@@ -8,19 +8,13 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Handlers
 {
-    public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, AuthenticationResult>
+    public class ResetPasswordHandler(IServiceProvider serviceProvider)
+        : IRequestHandler<ResetPasswordCommand, AuthenticationResult>
     {
-        private readonly IServiceProvider _serviceProvider;
-
-        public ResetPasswordHandler(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
         public async Task<AuthenticationResult> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
         {
             var result = new AuthenticationResult();
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var user = await userManager.FindByEmailAsync(request.Email);
             if (user != null)

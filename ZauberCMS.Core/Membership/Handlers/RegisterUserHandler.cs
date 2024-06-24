@@ -75,7 +75,9 @@ public class RegisterUserHandler(
             {
                 if (request.AutoLogin)
                 {
-                    await signInManager.SignInAsync(user, request.RememberMe);
+                    var signInResult = await signInManager.PasswordSignInAsync(user, request.Password, request.RememberMe, false);
+                    loginResult.Success = signInResult.Succeeded;
+                    //await signInManager.SignInAsync(user, request.RememberMe);
                     if (request.ReturnUrl.IsNullOrWhiteSpace() && startingRoleName == Constants.Roles.AdminRoleName)
                     {
                         request.ReturnUrl = Constants.Urls.AdminBaseUrl;

@@ -23,7 +23,15 @@ public class AuthController(
         return Redirect(redirectUrl ?? "/account/manage/profile?refresh=true");
     }
     
-    [HttpPost("register")]
+    [HttpGet("logout")]
+    // /api/auth/logout
+    public async Task<IActionResult> Logout(string? redirectUrl = null)
+    {
+        await signInManager.SignOutAsync();
+        return Redirect(redirectUrl ?? "/"); // Redirect to the home page after logout
+    }
+    
+    /*[HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterUserCommand command)
     {
         if (!ModelState.IsValid)
@@ -33,7 +41,7 @@ public class AuthController(
         
         var result = await mediator.Send(command);
         return Ok(result);
-    }
+    }*/
     
     //await _userManager.UpdateSecurityStampAsync(user);
 }

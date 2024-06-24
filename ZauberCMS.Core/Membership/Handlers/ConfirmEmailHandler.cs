@@ -10,18 +10,12 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Handlers
 {
-    public class ConfirmEmailHandler : IRequestHandler<ConfirmEmailCommand, AuthenticationResult>
+    public class ConfirmEmailHandler(IServiceProvider serviceProvider)
+        : IRequestHandler<ConfirmEmailCommand, AuthenticationResult>
     {
-        private readonly IServiceProvider _serviceProvider;
-
-        public ConfirmEmailHandler(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
         public async Task<AuthenticationResult> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
 

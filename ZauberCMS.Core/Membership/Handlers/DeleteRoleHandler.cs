@@ -10,7 +10,7 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Handlers;
 
-public class DeleteRoleHandler(IServiceProvider serviceProvider, IMapper mapper, IMediator mediator)
+public class DeleteRoleHandler(IServiceProvider serviceProvider, IMediator mediator)
     : IRequestHandler<DeleteRoleCommand, HandlerResult<Role>>
 {
 
