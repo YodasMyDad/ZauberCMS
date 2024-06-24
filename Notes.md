@@ -15,9 +15,7 @@ Sort AppState events, on things like deleted etc.. Is the naming correct make su
 navigation contenttypeproperty (Like umbNav package)
 Need a way from core to register things in startup
 Need a default storage thing too for quick easy storage (Check BlogFodder too for other stuff!)
-EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/) - Anything else? Does this auto clear? ChatGPT?
-Update query on content and content type to simplyfy getting data (Have QueryContent and SingleContent for commands to keep it simple?)
-rating property
+rating property with stars
 material icon picker property (Use thr icon picker on contenttypes)
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
 Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
@@ -32,3 +30,5 @@ Add languages (Check Blazor book)
 Build personal site and launch
 Update ReadMe and add docs
 
+### Future
+EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/) - Anything else? Does this auto clear? ChatGPT?
