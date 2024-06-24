@@ -186,13 +186,14 @@ else
         SelectedTabIndex = i;
     }
 
-    private void UpdateProperty(Guid ctpId, string value)
+    private async Task UpdateProperty(Guid ctpId, string value)
     {
         var property = Content?.ContentPropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
         {
-            property.Value = value;
+            property.Value = await Mediator.Send(new PropertySavedCommand{ PropertyValue = value, PropertyAlias = property.Alias, DocumentType = typeof(Content)});
             property.DateUpdated = DateTime.UtcNow;
+            
         }
     }
 

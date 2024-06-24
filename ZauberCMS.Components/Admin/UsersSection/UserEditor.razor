@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Components.Admin.UsersSection.Dialogs
 @using ZauberCMS.Core
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
@@ -220,12 +221,12 @@
         SelectedTabIndex = i;
     }
 
-    private void UpdateProperty(Guid ctpId, string value)
+    private async Task UpdateProperty(Guid ctpId, string value)
     {
         var property = User.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
         {
-            property.Value = value;
+            property.Value = await Mediator.Send(new PropertySavedCommand{ PropertyValue = value, PropertyAlias = property.Alias, DocumentType = typeof(User)});
             property.DateUpdated = DateTime.UtcNow;
         }
     }

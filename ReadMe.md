@@ -37,10 +37,14 @@ ISectionNav
 IContentBlock
 IContentBlowPreview
 
+IPropertySaved
+AppState
+
 IStorageProvider
 
 Querying for data
 Saving data
+
 
 ### Entity Framework
 
