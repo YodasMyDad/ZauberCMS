@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZauberCMS.Core.Data;
 
@@ -10,9 +11,11 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations
 {
     [DbContext(typeof(ZauberDbContext))]
-    partial class ZauberDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240624172611_Audits")]
+    partial class Audits
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
@@ -27,7 +30,7 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(4000)
+                        .HasMaxLength(3000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Username")

@@ -14,8 +14,9 @@ public class ZauberDbContext : IdentityDbContext<User, Role, Guid, UserClaim, Us
     }
     
     public DbSet<ContentType> ContentTypes => Set<ContentType>();
-    public DbSet<Content.Models.Content> Content => Set<Content.Models.Content>();
-    public DbSet<Media.Models.Media> Media => Set<Media.Models.Media>();
+    public DbSet<Content.Models.Content> Contents => Set<Content.Models.Content>();
+    public DbSet<Media.Models.Media> Medias => Set<Media.Models.Media>();
+    public DbSet<Audit.Models.Audit> Audits => Set<Audit.Models.Audit>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

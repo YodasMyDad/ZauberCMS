@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core.Media.Commands
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Shared
 
@@ -17,12 +18,14 @@
 
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] NotificationService NotificationService { get; set; } = default!;
-    
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Parameter] public Media? Media { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
-
-    protected override void OnInitialized()
+    private AuthenticationState AuthState { get; set; } = default!;
+    
+    protected override async Task OnInitializedAsync()
     {
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         Media ??= new Media
         {
             MediaType = MediaType.Folder
@@ -35,6 +38,6 @@
         saveCommand.MediaToSave.Add(Media!);
         var result = await Mediator.Send(saveCommand);
         NotificationService.ShowSuccessNotification("Saved");
-        await AppState.NotifyMediaChanged();
+        await AppState.NotifyMediaSaved(Media!, AuthState.User.Identity?.Name!);
     }
 }

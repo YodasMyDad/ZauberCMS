@@ -43,7 +43,7 @@ namespace ZauberCMS.Core.Extensions;
             var file = await providerService.StorageProvider.ToMedia(fileSaveResult);
 
             // Save the file first
-            dbContext.Media.Add(file);
+            dbContext.Medias.Add(file);
 
             // Set the file to the user
             return file;

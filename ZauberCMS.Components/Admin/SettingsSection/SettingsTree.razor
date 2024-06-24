@@ -68,7 +68,7 @@
         AppState.OnContentTypeChanged += HandleContentTypeTreeChanged;
     }
     
-    private async Task HandleContentTypeTreeChanged()
+    private async Task HandleContentTypeTreeChanged(ContentType? contentType, string username)
     {
         await DataRefresh();
         StateHasChanged();

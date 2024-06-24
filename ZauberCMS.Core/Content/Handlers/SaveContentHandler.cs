@@ -41,13 +41,13 @@ public class SaveContentHandler(
                 }
             
                 // Get the DB version
-                var content = dbContext.Content
+                var content = dbContext.Contents
                     .FirstOrDefault(x => x.Id == requestContent.Id);
 
                 if (content == null)
                 {
                     content = requestContent;
-                    dbContext.Content.Add(content);
+                    dbContext.Contents.Add(content);
                 }
                 else
                 {

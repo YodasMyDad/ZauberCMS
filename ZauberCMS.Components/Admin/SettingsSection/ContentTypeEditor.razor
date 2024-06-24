@@ -1,5 +1,6 @@
 ﻿@page "/admin/createcontentype"
 @page "/admin/updatecontentype/{ContentTypeId:guid}"
+@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Commands
@@ -142,7 +143,8 @@
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
-
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    
     [Parameter] public Guid? ContentTypeId { get; set; }
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
@@ -154,10 +156,12 @@
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; } = default!;
     private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
+    private AuthenticationState AuthState { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
         Layout?.SetSection(Constants.Sections.SettingsSection);
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         ContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         InitializeContentViews();
 
@@ -335,7 +339,7 @@
             var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
             var result = await Mediator.Send(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
-            await AppState.NotifyContentTypeChanged();
+            await AppState.NotifyContentTypeSaved(ContentType, AuthState.User.Identity?.Name!);
         }
     }
 
@@ -373,11 +377,11 @@
 
             if (result.Success)
             {
-                await AppState.NotifyContentChanged();
+                await AppState.NotifyContentTypeDeleted(null, AuthState.User.Identity?.Name!);
                 NavigationManager.NavigateTo("/admin/settings");
             }
         }
-
+        
         NavigationManager.NavigateTo("/admin/settings", forceLoad: true);
     }
 

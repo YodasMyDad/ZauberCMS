@@ -1,7 +1,7 @@
 ﻿@page "/admin/users/addrole"
 @page "/admin/users/editrole/{RoleId:guid}"
+@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Components.Editors.Dialogs
-@using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
@@ -104,7 +104,8 @@
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
-
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    
     [Parameter] public Guid? RoleId { get; set; }
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
@@ -115,6 +116,7 @@
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; } = default!;
     private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
+    private AuthenticationState AuthState { get; set; } = default!;
 
     protected override void OnInitialized()
     {
@@ -124,6 +126,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (RoleId != null)
         {
             Role = await Mediator.Send(new GetRoleCommand { Id = RoleId.Value });
@@ -281,7 +284,6 @@
             var saveContentTypeCommand = new SaveRoleCommand { Role = Role };
             var result = await Mediator.Send(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Role.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
-            await AppState.NotifyUsersChanged();
         }
     }
 
@@ -309,7 +311,6 @@
         var result = await Mediator.Send(new DeleteRoleCommand { RoleId = Role.Id });
         if (result.Success)
         {
-            await AppState.NotifyUsersChanged();
             NavigationManager.NavigateTo(Constants.Urls.AdminUsersBaseUrl);
         }
         else

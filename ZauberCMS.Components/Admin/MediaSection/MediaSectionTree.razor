@@ -33,7 +33,7 @@
         AppState.OnMediaChanged -= HandleMediaChanged;
     }
 
-    private async Task HandleMediaChanged()
+    private async Task HandleMediaChanged(Media media, string username)
     {
         await DataRefresh();
         StateHasChanged();

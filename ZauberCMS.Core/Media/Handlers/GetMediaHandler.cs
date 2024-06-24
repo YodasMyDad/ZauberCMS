@@ -14,7 +14,7 @@ public class GetMediaHandler(IServiceProvider serviceProvider)
         using (var scope = serviceProvider.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-            var query = dbContext.Media.AsQueryable();
+            var query = dbContext.Medias.AsQueryable();
 
             if (request.AsNoTracking)
             {

@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Identity
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Components.Admin.UsersSection.Dialogs
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Interfaces
@@ -105,6 +106,7 @@
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public UserManager<User> UserManager { get; set; } = default!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     [Parameter] public Guid? UserId { get; set; }
 
@@ -117,6 +119,7 @@
     private RadzenTabs Tabs { get; set; }
     private List<Tab> AllTabs { get; set; } = [];
     private List<PropertyType> AllContentProperties { get; set; } = [];
+    private AuthenticationState AuthState { get; set; } = default!;
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
@@ -127,6 +130,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         AllProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (UserId != null)
         {
@@ -165,7 +169,7 @@
                 }
             }
         }
-        await AppState.NotifyUsersChanged();
+        await AppState.NotifyUserChanged(User, AuthState.User.Identity?.Name!);
     }
     
     private async Task UpdateRoles()
@@ -194,7 +198,7 @@
                 NotificationService.ShowSuccessNotification("Roles Updated");
             }
         }
-        await AppState.NotifyUsersChanged();
+        await AppState.NotifyUserChanged(User, AuthState.User.Identity?.Name!);
     }
 
     private async Task DeleteUser()
@@ -205,7 +209,7 @@
             var roleUpdateResult = await Mediator.Send(new DeleteUserCommand { UserId = User.Id });
             if (!roleUpdateResult.Success)
             {
-                await AppState.NotifyUsersChanged();
+                await AppState.NotifyUserDeleted(User, AuthState.User.Identity?.Name!);
                 NavigationManager.NavigateTo(Constants.Urls.AdminUsersBaseUrl);
             }
         }
@@ -279,7 +283,7 @@
             var saveUserCommand = new SaveUserCommand { User = User };
             var result = await Mediator.Send(saveUserCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{User?.UserName} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{User?.UserName} Error", Detail = "", Duration = 4000 });
-            await AppState.NotifyContentChanged();
+            await AppState.NotifyUserSaved(User, AuthState.User.Identity?.Name!);
             if (InitialUsername != User?.UserName || InitialEmail != User?.Email)
             {
                 var user = await UserManager.FindByIdAsync(User.Id.ToString());

@@ -16,7 +16,7 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider)
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         
         // If is RootContent we just get the first one we can find
-        var query = dbContext.Content
+        var query = dbContext.Contents
             .AsNoTracking()
             .Include(x => x.Parent)
             .Include(x => x.ContentType)

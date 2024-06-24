@@ -3,15 +3,15 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
+Issue with Logging in and ZauberUserClaimsPrincipalFactory? Issue with Login!!
+Think about save events of properties too, change data before being saved and loaded
+make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
+
 Add user to content/media etc... and make sure it saves on the item (Now the admin is secured)
 Sort Edit User - Show tabs etc... and merge, think about sort order merging
 Make manage and account it's own section, with Layout added programatically from appSettings? Or have a settings section and from there?
 Make the single edit media much better and have an extended content editor which saves to extended content
-(RenderMode) Try removing rendermode completely and then adding it just to the admin manually?
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
-Think about save events of properties too, change data before being saved and loaded
-make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
-Sort AppState events, on things like deleted etc.. Is the naming correct make sure everything updates (Think about tree branches closing when creating child content?)
 navigation contenttypeproperty (Like umbNav package)
 Need a way from core to register things in startup
 Need a default storage thing too for quick easy storage (Check BlogFodder too for other stuff!)

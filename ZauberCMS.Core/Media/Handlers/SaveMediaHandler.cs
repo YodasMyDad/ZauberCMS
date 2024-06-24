@@ -1,15 +1,17 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Providers;
+using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Media.Handlers;
 
-public class SaveMediaHandler(ProviderService providerService, IServiceProvider serviceProvider, IMapper mapper)
+public class SaveMediaHandler(ProviderService providerService, IServiceProvider serviceProvider, IMapper mapper, AppState appState, AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveMediaCommand, List<FileSaveResult>>
 {
     public async Task<List<FileSaveResult>> Handle(SaveMediaCommand request, CancellationToken cancellationToken)
@@ -23,7 +25,7 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
     private async Task<List<FileSaveResult>> SaveFiles(List<FileSaveResult> files, Guid? parentFolderId)
     {
         var results = new List<FileSaveResult>();
-
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         if (files.Count > 0)
         {
             using var scope = serviceProvider.CreateScope();
@@ -51,7 +53,7 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                         if (isUpdate)
                         {
                             // Get the DB version
-                            var dbMedia = dbContext.Media
+                            var dbMedia = dbContext.Medias
                                 .FirstOrDefault(x => x.Id == mediaItem.Id);
                                 // Map the updated properties
                             mapper.Map(mediaItem, dbMedia);
@@ -60,8 +62,9 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                         }
                         else
                         {
-                            dbContext.Media.Add(mediaItem);
+                            dbContext.Medias.Add(mediaItem);
                             await dbContext.SaveChangesAsync();
+                            await appState.NotifyMediaSaved(mediaItem, authState.User.Identity?.Name!);
                         }
                         fileSaveResult.Success = true;   
                     }
@@ -98,14 +101,14 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
             try
             {
                 // Get the DB version
-                var dbMedia = dbContext.Media
+                var dbMedia = dbContext.Medias
                     .FirstOrDefault(x => x.Id == m.Id);
                 
                 
                 if (dbMedia == null)
                 {
                     
-                    dbContext.Media.Add(m);
+                    dbContext.Medias.Add(m);
                 }
                 else
                 {

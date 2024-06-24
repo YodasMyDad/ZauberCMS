@@ -28,15 +28,15 @@
     protected override async Task OnInitializedAsync()
     {
         await DataRefresh();
-        AppState.OnUsersChanged += HandleUsersChanged;
+        AppState.OnUserChanged += HandleUsersChanged;
     }
 
     public void Dispose()
     {
-        AppState.OnUsersChanged -= HandleUsersChanged;
+        AppState.OnUserChanged -= HandleUsersChanged;
     }
 
-    private async Task HandleUsersChanged()
+    private async Task HandleUsersChanged(User? user, string username)
     {
         await DataRefresh();
         StateHasChanged();

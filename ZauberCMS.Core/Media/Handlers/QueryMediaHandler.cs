@@ -15,7 +15,7 @@ public class QueryMediaHandler(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var query = dbContext.Media.Include(x => x.Parent).AsQueryable();
+        var query = dbContext.Medias.Include(x => x.Parent).AsQueryable();
 
         if (request.Query != null)
         {
