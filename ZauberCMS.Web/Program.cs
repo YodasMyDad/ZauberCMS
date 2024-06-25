@@ -79,19 +79,6 @@ builder.Services.EnableZauberPlugins(builder.Configuration);
 // Add localization services
 builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
 
-// Configure supported cultures
-var supportedCultures = new List<CultureInfo>
-{
-    new CultureInfo("en"),
-    //new CultureInfo("es")
-};
-builder.Services.Configure<RequestLocalizationOptions>(opts =>
-{
-    opts.DefaultRequestCulture = new RequestCulture("en");
-    opts.SupportedCultures = supportedCultures;
-    opts.SupportedUICultures = supportedCultures;
-});
-
 var app = builder.Build();
 
 // Look into this
@@ -129,7 +116,13 @@ app.UseImageSharp();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseRequestLocalization();
+
+var supportedCultures = new[] { "en" };
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
+app.UseRequestLocalization(localizationOptions);
 app.UseRouting();
 app.UseAntiforgery();
 app.MapControllers();

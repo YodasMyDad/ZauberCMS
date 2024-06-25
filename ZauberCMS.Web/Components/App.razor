@@ -1,5 +1,8 @@
 ﻿@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Settings
+@using System.Globalization
+@using Microsoft.AspNetCore.Localization
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -24,6 +27,12 @@
 </CascadingValue>
 
 <script src="_framework/blazor.web.js"></script>
+<script>
+    window.blazorCulture = {
+        get: () => window.localStorage['BlazorCulture'],
+        set: (value) => window.localStorage['BlazorCulture'] = value
+    };
+</script>
 @if (Settings.Value.UseRadzen || IsAdmin)
 {
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
@@ -48,4 +57,17 @@
 
     // Set the Admin to InteractiveServer but use SSR for rest of site
     private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
+    
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        HttpContext?.Response.Cookies.Append(
+            CookieRequestCultureProvider.DefaultCookieName,
+            CookieRequestCultureProvider.MakeCookieValue(
+                new RequestCulture(
+                    CultureInfo.CurrentCulture,
+                    CultureInfo.CurrentUICulture)));
+    }
 }
