@@ -8,64 +8,63 @@
 @using ZauberCMS.Core.Shared.Models
 <LayoutView Layout="LayoutType">
     <PageTitle>Log in</PageTitle>
-    <h1>Log in</h1>
-    <div class="row">
-        <div class="col-md-4">
-            <section>
-                <StatusMessage ResultMessages="@ResultMessages"/>
-                <EditForm Model="LoginUserCommand" method="post" asp-route-returnUrl="@ReturnUrl" OnValidSubmit="LoginUser" FormName="login">
-                    <DataAnnotationsValidator/>
-                    <h2>Log in.</h2>
-                    <hr/>
-                    <ValidationSummary class="text-danger" role="alert"/>
-                    <div class="form-floating mb-3">
-                        <InputText @bind-Value="LoginUserCommand.Email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
-                        <label for="email" class="form-label">Email</label>
-                        <ValidationMessage For="() => LoginUserCommand.Email" class="text-danger"/>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="LoginUserCommand.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password"/>
-                        <label for="password" class="form-label">Password</label>
-                        <ValidationMessage For="() => LoginUserCommand.Password" class="text-danger"/>
-                    </div>
-                    <div class="checkbox mb-3">
-                        <label class="form-label">
-                            <InputCheckbox @bind-Value="LoginUserCommand.RememberMe" class="darker-border-checkbox form-check-input"/>
-                            Remember me
-                        </label>
-                    </div>
-                    <div>
-                        <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                    </div>
-                    <div>
-                        <p>
-                            <a href="/Account/ForgotPassword/">Forgot your password?</a>
-                        </p>
-                        <p>
-                            <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                        </p>
-                        <p>
-                            <a href="/Account/ResendEmailConfirmation">Resend email confirmation</a>
-                        </p>
-                    </div>
-                </EditForm>
-            </section>
-        </div>
-        <div class="col-md-6 col-md-offset-2">
-            <section>
-                <h3>Use another service to log in.</h3>
-                <hr/>
+    <div style="display: flex; justify-content: center; padding: 20px; align-items: center; height: 100vh; width: 100vw; overflow: hidden;">
+
+        <div style="width: 100%; max-width: 700px;">
+
+                <section>
+                    <StatusMessage ResultMessages="@ResultMessages"/>
+                    <EditForm Model="LoginUserCommand" method="post" asp-route-returnUrl="@ReturnUrl" OnValidSubmit="LoginUser" FormName="login">
+                        <DataAnnotationsValidator/>
+                        <h3>Log in.</h3>
+        
+                        <ValidationSummary class="text-danger" role="alert"/>
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="LoginUserCommand.Email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
+                            <label for="email" class="form-label">Email</label>
+                            <ValidationMessage For="() => LoginUserCommand.Email" class="text-danger"/>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <InputText type="password" @bind-Value="LoginUserCommand.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password"/>
+                            <label for="password" class="form-label">Password</label>
+                            <ValidationMessage For="() => LoginUserCommand.Password" class="text-danger"/>
+                        </div>
+                        <div class="checkbox mb-3">
+                            <label class="form-label">
+                                <InputCheckbox @bind-Value="LoginUserCommand.RememberMe" class="darker-border-checkbox form-check-input"/>
+                                Remember me
+                            </label>
+                        </div>
+                        <div>
+                            <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                        </div>
+                        <div>
+                            <p>
+                                <a href="/Account/ForgotPassword/">Forgot your password?</a>
+                            </p>
+                            <p>
+                                <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
+                            </p>
+                            <p>
+                                <a href="/Account/ResendEmailConfirmation">Resend email confirmation</a>
+                            </p>
+                        </div>
+                    </EditForm>
+                </section>
+
                 <ExternalLoginPicker/>
-            </section>
+
+       
         </div>
     </div>
+
 </LayoutView>
 
 @code {
     [Inject] public IdentityRedirectManager RedirectManager { get; set; } = default!;
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    
+
     [SupplyParameterFromForm] private LoginUserCommand LoginUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
