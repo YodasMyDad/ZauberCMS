@@ -27,7 +27,8 @@
                     }
                     <div style="font-weight: 600;">@(ContentProperty.Name)</div>
                 </RadzenStack>
-                <div style="font-style: italic">@ContentProperty.Description</div>
+                <div style="font-style: italic">@(ContentProperty.Alias)</div>
+                <div style="font-size: 14px">@ContentProperty.Description</div>
             </RadzenStack>
         </RadzenCard>
     </CentreColumn>

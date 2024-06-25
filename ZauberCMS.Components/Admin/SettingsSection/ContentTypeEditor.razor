@@ -7,6 +7,7 @@
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Shared.Models
 @layout SectionLayout
 
@@ -144,6 +145,7 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] public ValidateService<ContentType> ValidateService { get; set; } = default!;
     
     [Parameter] public Guid? ContentTypeId { get; set; }
 
@@ -334,31 +336,13 @@
 
     private async Task Save()
     {
-        if (Validated())
+        if (await ValidateService.CanSave(ContentType))
         {
             var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
             var result = await Mediator.Send(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             await AppState.NotifyContentTypeSaved(ContentType, AuthState.User.Identity?.Name!);
         }
-    }
-
-    //TODO - Needs to be a pluggable OnSaving() thing!!
-    private bool Validated()
-    {
-        var errors = new List<string>();
-        if (ContentType.ContentProperties.Any(x => x.Name.IsNullOrWhiteSpace()))
-        {
-            errors.Add("Some properties are missing a name (and alias)");
-        }
-
-        if (errors.Any())
-        {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Validation Errors", Detail = errors.ListToSingleString(), Duration = 4000 });
-            return false;
-        }
-
-        return true;
     }
 
     private async Task DeleteContentType()

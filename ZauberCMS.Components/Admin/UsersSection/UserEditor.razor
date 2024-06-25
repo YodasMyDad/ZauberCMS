@@ -8,6 +8,7 @@
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Models
+@using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Plugins
 @layout SectionLayout
 @page "/admin/users/edit/{UserId:guid}"
@@ -108,7 +109,8 @@
     [Inject] public DialogService DialogService { get; set; } = default!;
     [Inject] public UserManager<User> UserManager { get; set; } = default!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-
+    [Inject] public ValidateService<User> ValidateService { get; set; } = default!;
+    
     [Parameter] public Guid? UserId { get; set; }
 
     private User? User { get; set; } = default!;
@@ -226,7 +228,7 @@
         var property = User.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
         {
-            property.Value = await Mediator.Send(new PropertySavedCommand{ PropertyValue = value, PropertyAlias = property.Alias, DocumentType = typeof(User)});
+            property.Value = value;
             property.DateUpdated = DateTime.UtcNow;
         }
     }
@@ -279,7 +281,7 @@
 
     private async Task Save()
     {
-        if (Validated())
+        if (await ValidateService.CanSave(User!))
         {
             var saveUserCommand = new SaveUserCommand { User = User };
             var result = await Mediator.Send(saveUserCommand);
@@ -291,32 +293,6 @@
                 if (user != null) await UserManager.UpdateSecurityStampAsync(user);
             }
         }
-    }
-
-    private bool Validated()
-    {
-        var errors = new List<string>();
-        if (User.UserName.IsNullOrWhiteSpace())
-        {
-            errors.Add("You cannot leave the name empty");
-        }
-
-        foreach (var p in AllContentProperties.Where(x => x.IsRequired))
-        {
-            AllContentValues.TryGetValue(p.Id, out var contentValue);
-            if (contentValue != null && contentValue.Value.IsNullOrWhiteSpace())
-            {
-                errors.Add($"{p.Name} is required");
-            }
-        }
-
-        if (errors.Any())
-        {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Validation Errors", Detail = errors.ListToSingleString(), Duration = 4000 });
-            return false;
-        }
-
-        return true;
     }
 
 }

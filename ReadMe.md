@@ -37,7 +37,8 @@ ISectionNav
 IContentBlock
 IContentBlowPreview
 
-IPropertySaved
+IValidate
+
 AppState
 
 IStorageProvider

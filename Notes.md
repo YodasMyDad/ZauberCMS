@@ -3,8 +3,8 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Think about save events of properties too, change data before being saved and loaded
 make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
+Think about save events of properties too, change data before being saved and loaded
 
 Add user to content/media etc... and make sure it saves on the item (Now the admin is secured)
 Sort Edit User - Show tabs etc... and merge, think about sort order merging

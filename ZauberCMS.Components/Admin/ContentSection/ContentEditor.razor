@@ -4,6 +4,8 @@
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Components.Editors.Dialogs
+@using ZauberCMS.Core.Shared.Services
+@using ZauberCMS.Core.Shared.Validation.Interfaces
 
 @if (ContentType != null)
 {
@@ -128,6 +130,7 @@ else
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] public ValidateService<Content> ValidateService { get; set; } = default!;
     
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
@@ -191,7 +194,7 @@ else
         var property = Content?.ContentPropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
         {
-            property.Value = await Mediator.Send(new PropertySavedCommand{ PropertyValue = value, PropertyAlias = property.Alias, DocumentType = typeof(Content)});
+            property.Value = value;
             property.DateUpdated = DateTime.UtcNow;
             
         }
@@ -251,10 +254,11 @@ else
 
     private async Task Save()
     {
-        if (Validated())
+        if (await ValidateService.CanSave(Content!))
         {
             if (IsBlockList == true)
             {
+                //TODO - We need to think about validating Content in blocklists!
                 Content.ToBlockListItem(ContentType);
                 await ContentEditorModal.CloseAsync(ModalResult.Ok(Content));
             }
@@ -267,31 +271,5 @@ else
             }
         }
     }
-
-    private bool Validated()
-    {
-        var errors = new List<string>();
-        if (Content.Name.IsNullOrWhiteSpace())
-        {
-            errors.Add("You cannot leave the name empty");
-        }
-
-        foreach (var p in ContentType!.ContentProperties.Where(x => x.IsRequired))
-        {
-            AllContentValues.TryGetValue(p.Id, out var contentValue);
-            if (contentValue != null && contentValue.Value.IsNullOrWhiteSpace())
-            {
-                errors.Add($"{p.Name} is required");
-            }
-        }
-
-        if (errors.Any())
-        {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Validation Errors", Detail = errors.ListToSingleString(), Duration = 4000 });
-            return false;
-        }
-
-        return true;
-    }
-
+    
 }
