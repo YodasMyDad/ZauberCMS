@@ -1,69 +1,85 @@
 ﻿@page "/Account/Login"
+@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Commands
+@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
-
-<PageTitle>Log in</PageTitle>
-
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
-            <StatusMessage ResultMessages="@ResultMessages"/>
-            <EditForm Model="LoginUserCommand" method="post" asp-route-returnUrl="@ReturnUrl" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator/>
-                <h2>Log in.</h2>
+<LayoutView Layout="LayoutType">
+    <PageTitle>Log in</PageTitle>
+    <h1>Log in</h1>
+    <div class="row">
+        <div class="col-md-4">
+            <section>
+                <StatusMessage ResultMessages="@ResultMessages"/>
+                <EditForm Model="LoginUserCommand" method="post" asp-route-returnUrl="@ReturnUrl" OnValidSubmit="LoginUser" FormName="login">
+                    <DataAnnotationsValidator/>
+                    <h2>Log in.</h2>
+                    <hr/>
+                    <ValidationSummary class="text-danger" role="alert"/>
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="LoginUserCommand.Email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
+                        <label for="email" class="form-label">Email</label>
+                        <ValidationMessage For="() => LoginUserCommand.Email" class="text-danger"/>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText type="password" @bind-Value="LoginUserCommand.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password"/>
+                        <label for="password" class="form-label">Password</label>
+                        <ValidationMessage For="() => LoginUserCommand.Password" class="text-danger"/>
+                    </div>
+                    <div class="checkbox mb-3">
+                        <label class="form-label">
+                            <InputCheckbox @bind-Value="LoginUserCommand.RememberMe" class="darker-border-checkbox form-check-input"/>
+                            Remember me
+                        </label>
+                    </div>
+                    <div>
+                        <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                    </div>
+                    <div>
+                        <p>
+                            <a href="/Account/ForgotPassword/">Forgot your password?</a>
+                        </p>
+                        <p>
+                            <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
+                        </p>
+                        <p>
+                            <a href="/Account/ResendEmailConfirmation">Resend email confirmation</a>
+                        </p>
+                    </div>
+                </EditForm>
+            </section>
+        </div>
+        <div class="col-md-6 col-md-offset-2">
+            <section>
+                <h3>Use another service to log in.</h3>
                 <hr/>
-                <ValidationSummary class="text-danger" role="alert"/>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="LoginUserCommand.Email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
-                    <label for="email" class="form-label">Email</label>
-                    <ValidationMessage For="() => LoginUserCommand.Email" class="text-danger"/>
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="LoginUserCommand.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password"/>
-                    <label for="password" class="form-label">Password</label>
-                    <ValidationMessage For="() => LoginUserCommand.Password" class="text-danger"/>
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="LoginUserCommand.RememberMe" class="darker-border-checkbox form-check-input"/>
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a href="/Account/ForgotPassword/">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="/Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </EditForm>
-        </section>
+                <ExternalLoginPicker/>
+            </section>
+        </div>
     </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr/>
-            <ExternalLoginPicker/>
-        </section>
-    </div>
-</div>
+</LayoutView>
 
 @code {
     [Inject] public IdentityRedirectManager RedirectManager { get; set; } = default!;
-    private List<ResultMessage> ResultMessages { get; set; } = [];
-
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    
     [SupplyParameterFromForm] private LoginUserCommand LoginUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
+    private List<ResultMessage> ResultMessages { get; set; } = [];
+    private Type LayoutType { get; set; } = default!;
+
+    protected override void OnParametersSet()
+    {
+        var allLayouts = ExtensionManager.GetInstances<IAccountLayout>();
+        if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
+        {
+            LayoutType = accountLayout.GetType();
+        }
+    }
 
     public async Task LoginUser(EditContext editContext)
     {

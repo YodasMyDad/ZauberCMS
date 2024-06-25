@@ -3,7 +3,7 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Make manage and account it's own section, with Layout added programatically from appSettings? Or have a settings section and from there?
+Make login and front end account have layout from appSettings? Or have a settings section and from there?
 
 Make the single edit media much better and have an extended content editor which saves to extended content
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved

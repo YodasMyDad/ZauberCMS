@@ -11,7 +11,7 @@ public class FacebookAuthentication : IExternalAuthenticationProvider
     public void Add(IServiceCollection servicesCollection, AuthenticationBuilder authenticationBuilder,
         IConfiguration configuration)
     {
-        var facebookId = configuration.GetValue<string>("BlogFodder:Identity:ExternalProviders:Facebook:AppId");
+        var facebookId = configuration.GetValue<string>("Zauber:Identity:ExternalProviders:Facebook:AppId");
         if (!facebookId.IsNullOrWhiteSpace())
         {
             // https://docs.microsoft.com/en-us/aspnet/core/security/authentication/social/facebook-logins?view=aspnetcore-5.0
@@ -19,7 +19,7 @@ public class FacebookAuthentication : IExternalAuthenticationProvider
             {
                 facebookOptions.AppId = facebookId;
                 facebookOptions.AppSecret =
-                    configuration.GetValue<string>("BlogFodder:Identity:ExternalProviders:Facebook:AppSecret") ?? "";
+                    configuration.GetValue<string>("Zauber:Identity:ExternalProviders:Facebook:AppSecret") ?? "";
             });
         }
     }

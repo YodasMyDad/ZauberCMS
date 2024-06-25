@@ -5,9 +5,9 @@ using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Providers;
 
-public class ProviderService(IOptions<ZauberSettings> gabSettings, ExtensionManager extensionManager)
+public class ProviderService(IOptions<ZauberSettings> settings, ExtensionManager extensionManager)
 {
-    private readonly ZauberSettings _settings = gabSettings.Value;
+    private readonly ZauberSettings _settings = settings.Value;
 
     private IStorageProvider? _storageProvider;
 

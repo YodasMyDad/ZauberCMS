@@ -4,26 +4,44 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.AspNetCore.Http
+@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Membership
+@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Settings
+@using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Membership.Models
 
 @inject UserManager<User> UserManager
 @inject IdentityRedirectManager RedirectManager
-
+<LayoutView Layout="LayoutType">
 <PageTitle>Confirm email</PageTitle>
 
 <h1>Confirm email</h1>
 <StatusMessage Message="@statusMessage"/>
-
+</LayoutView>
 @code {
     private string? statusMessage;
 
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
     [SupplyParameterFromQuery] private string? UserId { get; set; }
 
     [SupplyParameterFromQuery] private string? Code { get; set; }
 
+    private Type LayoutType { get; set; } = default!;
+
+    protected override void OnParametersSet()
+    {
+        var allLayouts = ExtensionManager.GetInstances<IAccountLayout>();
+        if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
+        {
+            LayoutType = accountLayout.GetType();
+        }
+    }
+    
     protected override async Task OnInitializedAsync()
     {
         if (UserId is null || Code is null)

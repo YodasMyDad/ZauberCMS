@@ -10,14 +10,14 @@ public class MicrosoftAuthentication : IExternalAuthenticationProvider
 {
     public void Add(IServiceCollection servicesCollection, AuthenticationBuilder authenticationBuilder, IConfiguration configuration)
     {
-        var microsoftId = configuration.GetValue<string>("BlogFodder:Identity:ExternalProviders:Microsoft:ClientId");
+        var microsoftId = configuration.GetValue<string>("Zauber:Identity:ExternalProviders:Microsoft:ClientId");
         if (!microsoftId.IsNullOrWhiteSpace())
         {
             // https://docs.microsoft.com/en-us/aspnet/core/security/authentication/social/microsoft-logins?view=aspnetcore-5.0
             authenticationBuilder.AddMicrosoftAccount(microsoftOptions =>
             {
                 microsoftOptions.ClientId = microsoftId;
-                microsoftOptions.ClientSecret = configuration.GetValue<string>("BlogFodder:Identity:ExternalProviders:Microsoft:ClientSecret") ?? "";
+                microsoftOptions.ClientSecret = configuration.GetValue<string>("Zauber:Identity:ExternalProviders:Microsoft:ClientSecret") ?? "";
             });
         }
     }

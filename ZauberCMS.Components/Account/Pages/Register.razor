@@ -1,8 +1,12 @@
 ﻿@page "/Account/Register"
+@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Commands
+@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
-
+<LayoutView Layout="LayoutType">
 <PageTitle>Register</PageTitle>
 
 <h1>Register</h1>
@@ -41,14 +45,27 @@
         </section>
     </div>
 </div>
-
+</LayoutView>
 @code {
     [SupplyParameterFromForm] public RegisterUserCommand RegisterUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+    
     [Inject] public IdentityRedirectManager RedirectManager { get; set; } = default!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
+    private Type LayoutType { get; set; } = default!;
 
+    protected override void OnParametersSet()
+    {
+        var allLayouts = ExtensionManager.GetInstances<IAccountLayout>();
+        if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
+        {
+            LayoutType = accountLayout.GetType();
+        }
+    }
+    
     public async Task RegisterUser(EditContext editContext)
     {
         if (editContext.Validate())

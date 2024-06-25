@@ -13,6 +13,12 @@ public class ZauberSettings
     public List<string> AllowedFileTypes { get; set; } = [];
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new();
+    public Identity Identity { get; set; } = new();
+}
+
+public class Identity
+{
+    public string? AccountLayout { get; set; }
 }
 
 public class PluginSettings

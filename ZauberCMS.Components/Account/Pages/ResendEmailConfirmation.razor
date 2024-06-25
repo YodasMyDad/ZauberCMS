@@ -5,14 +5,18 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Membership
+@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Membership.Models
 
 @inject UserManager<User> UserManager
 @inject IEmailSender<User> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
-
+<LayoutView Layout="LayoutType">
 <PageTitle>Resend email confirmation</PageTitle>
 
 <h1>Resend email confirmation</h1>
@@ -33,12 +37,22 @@
         </EditForm>
     </div>
 </div>
-
+</LayoutView>
 @code {
     private string? message;
-
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
+    private Type LayoutType { get; set; } = default!;
 
+    protected override void OnParametersSet()
+    {
+        var allLayouts = ExtensionManager.GetInstances<IAccountLayout>();
+        if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
+        {
+            LayoutType = accountLayout.GetType();
+        }
+    }
     private async Task OnValidSubmitAsync()
     {
         var user = await UserManager.FindByEmailAsync(Input.Email!);
