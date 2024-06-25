@@ -25,9 +25,29 @@
 <RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container">
     @foreach (var media in FilesToUpload)
     {
-        <RadzenAlert Icon="@(media.MediaType.GetIcon())" Close=@(o => RemoveMedia(media))>
-            @media.Name
-        </RadzenAlert>
+        if (media.MediaType == MediaType.Image)
+        {
+            <RadzenAlert Close=@(o => RemoveMedia(media)) ShowIcon="false">
+     
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <img src="@media.SavedFileUrl?width=100&height=100&rmode=max" class="rounded" alt=""/>
+                        <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.2rem">
+                            <div>@media.Name</div>
+                            <div class="fw-light" style="font-size: 14px;">Height: @(media.Height)px</div>
+                            <div class="fw-light" style="font-size: 14px;">Width: @(media.Width)px</div>
+                        </RadzenStack>
+                    </RadzenStack>
+         
+            </RadzenAlert>   
+        }
+        else
+        {
+            <RadzenAlert Icon="@(media.MediaType.GetIcon())" Close=@(o => RemoveMedia(media))>
+                <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.2rem">
+                    <div>@media.Name</div>
+                </RadzenStack>
+            </RadzenAlert>   
+        }
     }
 </RadzenStack>
 <RadzenButton Click="@(() => Save())">Save</RadzenButton>

@@ -48,6 +48,16 @@ public static class ResultExtensions
     }
     
     /// <summary>
+    /// Gets only the info messages
+    /// </summary>
+    /// <param name="messages"></param>
+    /// <returns></returns>
+    public static IEnumerable<ResultMessage> InfoMessages(this List<ResultMessage> messages)
+    {
+        return messages.Where(x => x.MessageType == ResultMessageType.Info);
+    }
+    
+    /// <summary>
     /// Returns list of messages as string
     /// </summary>
     /// <param name="messages"></param>

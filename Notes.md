@@ -3,11 +3,9 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Make sure status messages are showing on login with new HTml raw
-Make the single edit media much better and have an extended content editor which saves to extended content
+Media tree replace icon with tree if image!
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
 navigation contenttypeproperty (Like umbNav package)
-Need a way from core to register things in startup
 Need a default storage thing too for quick easy storage (Check BlogFodder too for other stuff!)
 rating property with stars
 material icon picker property (Use thr icon picker on contenttypes)

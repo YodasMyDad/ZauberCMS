@@ -14,13 +14,25 @@
     foreach (var successMessage in ResultMessages.SuccessMessages())
     {
         <div class="alert alert-success" role="alert">
-            @(new MarkupString(successMessage.Message))
+            @((MarkupString)successMessage.Message)
         </div>
     }
     foreach (var errorMessage in ResultMessages.ErrorMessages())
     {
         <div class="alert alert-danger" role="alert">
-            @(new MarkupString(errorMessage.Message))
+            @((MarkupString)errorMessage.Message)
+        </div>
+    }
+    foreach (var errorMessage in ResultMessages.WarningMessages())
+    {
+        <div class="alert alert-warning" role="alert">
+            @((MarkupString)errorMessage.Message)
+        </div>
+    }
+    foreach (var errorMessage in ResultMessages.InfoMessages())
+    {
+        <div class="alert alert-info" role="alert">
+            @((MarkupString)errorMessage.Message)
         </div>
     }
 }

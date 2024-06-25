@@ -10,11 +10,11 @@
 <PageTitle>Listing Media</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-    <CreateMedia ParentId="FolderId" />
+    <CreateMedia ParentId="FolderId"/>
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
-    
+
     <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
         <Tabs>
             <RadzenTabsItem Text="Media">
@@ -30,10 +30,21 @@
                     <Columns>
                         <RadzenDataGridColumn Property="MediaType" Title="Type">
                             <Template Context="data">
-                                <RadzenIcon Icon="@data.MediaType.GetIcon()" />
+                                @if (data.MediaType == MediaType.Image)
+                                {
+                                    <img src="@data.Url?width=40&height=40&rmode=max" class="rounded" alt=""/>
+                                }
+                                else
+                                {
+                                    <RadzenIcon Icon="@data.MediaType.GetIcon()"/>
+                                }
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn Property="Name" Title="Name"/>
+                        <RadzenDataGridColumn Property="Name" Title="Name">
+                            <Template Context="data">
+                                <div>@data.Name</div>
+                            </Template>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn Property="FileSize" Title="Size"/>
                         <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
                             <Template Context="data">
@@ -47,11 +58,11 @@
                 <MediaUpload ParentId="@FolderId"/>
             </RadzenTabsItem>
             <RadzenTabsItem Text="Update">
-                <EditFolderForm Media="@EditFolder" />
+                <EditFolderForm Media="@EditFolder"/>
             </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
-    
+
 </RadzenPanel>
 
 
@@ -61,12 +72,12 @@
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     [Parameter] public Guid FolderId { get; set; }
-    
+
     private IEnumerable<Media> Contents { get; set; } = [];
     private int SelectedIndex { get; set; }
     private Media? EditFolder { get; set; }
     private AuthenticationState AuthState { get; set; } = default!;
-    
+
     protected override async Task OnParametersSetAsync()
     {
         await SetContents(FolderId);
@@ -90,7 +101,7 @@
         await SetContents(FolderId);
         StateHasChanged();
     }
-    
+
     private async Task SetContents(Guid folderId)
     {
         var items = await Mediator.Send(new QueryMediaCommand
@@ -99,10 +110,10 @@
             OrderBy = GetMediaOrderBy.Name,
             WhereClause = media => media.ParentId == folderId
         });
-        
+
         Contents = items.Items;
     }
-    
+
     private void OnRowSelect(object value)
     {
         if (value is Media { MediaType: MediaType.Folder } folder)
@@ -114,4 +125,5 @@
             NavigationManager.NavigateTo($"/admin/updatemedia/{media.Id}");
         }
     }
+
 }

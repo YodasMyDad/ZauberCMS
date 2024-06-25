@@ -15,8 +15,15 @@
     <Columns>
         <RadzenDataGridColumn Property="MediaType" Title="Type">
             <Template Context="data">
-                <RadzenIcon Icon="@data.MediaType.GetIcon()" />
-            </Template>            
+                @if (data.MediaType == MediaType.Image)
+                {
+                    <img src="@data.Url?width=40&height=40&rmode=max" class="rounded" alt=""/>
+                }
+                else
+                {
+                    <RadzenIcon Icon="@data.MediaType.GetIcon()"/>
+                }
+            </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn Property="Name" Title="Name"/>
         <RadzenDataGridColumn Property="FileSize" Title="Size"/>
@@ -43,7 +50,7 @@
             OrderBy = GetMediaOrderBy.DateUpdatedDescending,
             WhereClause = media => media.MediaType != MediaType.Folder
         });
-        
+
         Contents = items.Items;
     }
 

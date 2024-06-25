@@ -11,3 +11,4 @@ riderModule.iml
 /ZauberCMS.Web/node_modules/*
 */node_modules/*
 /ZauberCMS.Web/appsettings.Development.json
+/ZauberCMS.Web/wwwroot/is-cache/*
