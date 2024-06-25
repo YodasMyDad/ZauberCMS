@@ -31,7 +31,7 @@ namespace ZauberCMS.Core.Membership.Handlers
             var user = await userManager.FindByEmailAsync(request.Email);
             if (user != null)
             {
-                if (await userManager.IsEmailConfirmedAsync(user) == false)
+                if (userManager.Options.SignIn.RequireConfirmedAccount && await userManager.IsEmailConfirmedAsync(user) == false)
                 {
                     result.Success = false;
                     result.AddMessage("Please check your email to confirm your account", ResultMessageType.Success);

@@ -1,10 +1,8 @@
-using System.Globalization;
 using Blazored.Modal;
 using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
 using Serilog;

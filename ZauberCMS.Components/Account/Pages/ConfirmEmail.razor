@@ -7,9 +7,12 @@
 @using ZauberCMS.Core.Shared.Models
 
 <LayoutView Layout="LayoutType">
-<PageTitle>Confirm email</PageTitle>
-<StatusMessage ResultMessages="@ResultMessages"/>
+    <PageTitle>Confirm email</PageTitle>
+    <div style="width: 100%; max-width: 700px;">
+        <StatusMessage ResultMessages="@ResultMessages"/>
+    </div>
 </LayoutView>
+
 @code {
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
@@ -29,7 +32,7 @@
             LayoutType = accountLayout.GetType();
         }
     }
-    
+
     protected override async Task OnInitializedAsync()
     {
         if (UserId == null || Code == null)

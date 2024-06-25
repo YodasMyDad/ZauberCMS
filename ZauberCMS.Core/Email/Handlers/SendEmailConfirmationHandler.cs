@@ -22,9 +22,7 @@ public class SendEmailConfirmationHandler(
     ProviderService providerService)
     : IRequestHandler<SendEmailConfirmationCommand>
 {
-    private readonly ILogger<SendEmailConfirmationHandler> _logger = logger;
-    private readonly ZauberSettings _settings = gabSettings.Value;
-
+    
     public async Task Handle(SendEmailConfirmationCommand request, CancellationToken cancellationToken)
         {
             var userId = await userManager.GetUserIdAsync(request.User);

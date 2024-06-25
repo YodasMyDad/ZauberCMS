@@ -54,7 +54,7 @@ public static class IdentityComponentsEndpointRouteBuilderExtensions
             return TypedResults.LocalRedirect($"~/{returnUrl}");
         });
 
-        var manageGroup = accountGroup.MapGroup("/Manage").RequireAuthorization();
+        /*var manageGroup = accountGroup.MapGroup("/Manage").RequireAuthorization();
 
         manageGroup.MapPost("/LinkExternalLogin", async (
             HttpContext context,
@@ -72,12 +72,12 @@ public static class IdentityComponentsEndpointRouteBuilderExtensions
             var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl,
                 signInManager.UserManager.GetUserId(context.User));
             return TypedResults.Challenge(properties, [provider]);
-        });
+        });*/
 
-        var loggerFactory = endpoints.ServiceProvider.GetRequiredService<ILoggerFactory>();
-        var downloadLogger = loggerFactory.CreateLogger("DownloadPersonalData");
+        //var loggerFactory = endpoints.ServiceProvider.GetRequiredService<ILoggerFactory>();
+        //var downloadLogger = loggerFactory.CreateLogger("DownloadPersonalData");
 
-        manageGroup.MapPost("/DownloadPersonalData", async (
+        /*manageGroup.MapPost("/DownloadPersonalData", async (
             HttpContext context,
             [FromServices] UserManager<User> userManager,
             [FromServices] AuthenticationStateProvider authenticationStateProvider) =>
@@ -111,7 +111,7 @@ public static class IdentityComponentsEndpointRouteBuilderExtensions
 
             context.Response.Headers.TryAdd("Content-Disposition", "attachment; filename=PersonalData.json");
             return TypedResults.File(fileBytes, contentType: "application/json", fileDownloadName: "PersonalData.json");
-        });
+        });*/
 
         return accountGroup;
     }
