@@ -1,9 +1,10 @@
+using System.Globalization;
 using Blazored.Modal;
 using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
 using Serilog;
@@ -20,7 +21,6 @@ using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Web.Components;
-using ZauberCMS.Components.Account;
 using ZauberCMS.Core.Email;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,6 +76,22 @@ builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Cons
 builder.Services.AddMvc();
 builder.Services.EnableZauberPlugins(builder.Configuration);
 
+// Add localization services
+builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
+
+// Configure supported cultures
+var supportedCultures = new List<CultureInfo>
+{
+    new CultureInfo("en"),
+    //new CultureInfo("es")
+};
+builder.Services.Configure<RequestLocalizationOptions>(opts =>
+{
+    opts.DefaultRequestCulture = new RequestCulture("en");
+    opts.SupportedCultures = supportedCultures;
+    opts.SupportedUICultures = supportedCultures;
+});
+
 var app = builder.Build();
 
 // Look into this
@@ -113,6 +129,7 @@ app.UseImageSharp();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRequestLocalization();
 app.UseRouting();
 app.UseAntiforgery();
 app.MapControllers();

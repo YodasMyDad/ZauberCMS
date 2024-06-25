@@ -3,11 +3,6 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-make validated plugin when saving into a plugin (Where the Content and/or ContentType is passed in) and the result is returned
-Think about save events of properties too, change data before being saved and loaded
-
-Add user to content/media etc... and make sure it saves on the item (Now the admin is secured)
-Sort Edit User - Show tabs etc... and merge, think about sort order merging
 Make manage and account it's own section, with Layout added programatically from appSettings? Or have a settings section and from there?
 Make the single edit media much better and have an extended content editor which saves to extended content
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
@@ -19,13 +14,13 @@ material icon picker property (Use thr icon picker on contenttypes)
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
 Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 .. Or have ChatGPT property editor
-Restrict admin by ip address
+Restrict admin by ip address (Do in parameters set on SectionLayout then send to logout)
 Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)
 Go through all TODO comments and try to fix all warnings
+Add languages (Check Blazor book)
 Need to delete all migrations, create one and see if it works with SQLite & also SQLServer (look into how to ship with different migrations based on Db)
 Sort admin UI/UX
 Find someone to help with the nuget packaging. Need to install site, but have Components/Core as seperate nuget package that people reference in other projects
-Add languages (Check Blazor book)
 Build personal site and launch
 Update ReadMe and add docs
 
