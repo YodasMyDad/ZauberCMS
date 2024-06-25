@@ -18,7 +18,6 @@ Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 Restrict admin by ip address (Do in parameters set on SectionLayout then send to logout)
 Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)
 Go through all TODO comments and try to fix all warnings
-Add languages (Check videos)
 Need to delete all migrations, create one and see if it works with SQLite & also SQLServer (look into how to ship with different migrations based on Db)
 Sort admin UI/UX
 Find someone to help with the nuget packaging. Need to install site, but have Components/Core as seperate nuget package that people reference in other projects
@@ -26,4 +25,5 @@ Build personal site and launch
 Update ReadMe and add docs
 
 ### Future
+Add languages (Check videos)
 EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/) - Anything else? Does this auto clear? ChatGPT?

@@ -1,37 +1,25 @@
 ﻿@page "/Account/ConfirmEmail"
-
-@using System.Text
-@using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
-@using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Options
-@using ZauberCMS.Core.Membership
+@using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Interfaces
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Plugins
-@using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Shared.Models
 
-@inject UserManager<User> UserManager
-@inject IdentityRedirectManager RedirectManager
 <LayoutView Layout="LayoutType">
 <PageTitle>Confirm email</PageTitle>
-
-<h1>Confirm email</h1>
-<StatusMessage Message="@statusMessage"/>
+<StatusMessage ResultMessages="@ResultMessages"/>
 </LayoutView>
 @code {
-    private string? statusMessage;
-
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    
-    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
     [SupplyParameterFromQuery] private string? UserId { get; set; }
-
     [SupplyParameterFromQuery] private string? Code { get; set; }
+    [SupplyParameterFromQuery] private bool? Change { get; set; }
 
     private Type LayoutType { get; set; } = default!;
+    private List<ResultMessage> ResultMessages { get; set; } = [];
 
     protected override void OnParametersSet()
     {
@@ -44,22 +32,21 @@
     
     protected override async Task OnInitializedAsync()
     {
-        if (UserId is null || Code is null)
+        if (UserId == null || Code == null)
         {
-            RedirectManager.RedirectTo("");
-        }
-
-        var user = await UserManager.FindByIdAsync(UserId);
-        if (user is null)
-        {
-            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            statusMessage = $"Error loading user with ID {UserId}";
+            ResultMessages.Add(new ResultMessage("Unable to check User Id or Confirmation Code", ResultMessageType.Error));
         }
         else
         {
-            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(Code));
-            var result = await UserManager.ConfirmEmailAsync(user, code);
-            statusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
+            var confirmEmailCommand = new ConfirmEmailCommand
+            {
+                Code = Code,
+                UserId = UserId,
+                IsEmailUpdate = Change ?? false
+            };
+
+            var result = await Mediator.Send(confirmEmailCommand);
+            ResultMessages = result.Messages;
         }
     }
 

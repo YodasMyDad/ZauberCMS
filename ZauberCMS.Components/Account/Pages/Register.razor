@@ -9,39 +9,33 @@
 <LayoutView Layout="LayoutType">
     <PageTitle>Register</PageTitle>
 
-    <div style="display: flex; justify-content: center; padding: 20px; align-items: center; height: 100vh; width: 100vw; overflow: hidden;">
-     
-            <div style="width: 100%; max-width: 700px;">
+    <div style="width: 100%; max-width: 700px;">
+        <StatusMessage ResultMessages="@ResultMessages"/>
+        <EditForm Model="RegisterUserCommand" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register" style="width: 100%;">
+            <DataAnnotationsValidator/>
+            <h3>Create a new account.</h3>
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="RegisterUserCommand.Username" class="form-control" aria-required="true" placeholder="Username"/>
+                <label for="username">Username</label>
+                <ValidationMessage For="() => RegisterUserCommand.Username" class="text-danger"/>
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="RegisterUserCommand.Email" class="form-control" aria-required="true" placeholder="name@example.com"/>
+                <label for="email">Email</label>
+                <ValidationMessage For="() => RegisterUserCommand.Email" class="text-danger"/>
+            </div>
+            <div class="form-floating mb-3">
+                <InputText type="password" @bind-Value="RegisterUserCommand.Password" class="form-control" aria-required="true" placeholder="password"/>
+                <label for="password">Password</label>
+                <ValidationMessage For="() => RegisterUserCommand.Password" class="text-danger"/>
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+        </EditForm>
 
-                
-                    <StatusMessage ResultMessages="@ResultMessages"/>
-                    <EditForm Model="RegisterUserCommand" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register" style="width: 100%;">
-                        <DataAnnotationsValidator/>
-                        <h3>Create a new account.</h3>
-                        <ValidationSummary class="text-danger" role="alert"/>
-                        <div class="form-floating mb-3">
-                            <InputText @bind-Value="RegisterUserCommand.Username" class="form-control" aria-required="true" placeholder="Username"/>
-                            <label for="username">Username</label>
-                            <ValidationMessage For="() => RegisterUserCommand.Username" class="text-danger"/>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <InputText @bind-Value="RegisterUserCommand.Email" class="form-control" aria-required="true" placeholder="name@example.com"/>
-                            <label for="email">Email</label>
-                            <ValidationMessage For="() => RegisterUserCommand.Email" class="text-danger"/>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <InputText type="password" @bind-Value="RegisterUserCommand.Password" class="form-control" aria-required="true" placeholder="password"/>
-                            <label for="password">Password</label>
-                            <ValidationMessage For="() => RegisterUserCommand.Password" class="text-danger"/>
-                        </div>
-                        <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-                    </EditForm>
-                </div>
-
-                <ExternalLoginPicker/>
-                
-     
+        <ExternalLoginPicker/>
     </div>
+
 
 </LayoutView>
 

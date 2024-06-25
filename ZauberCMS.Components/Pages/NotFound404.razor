@@ -1,4 +1,5 @@
-﻿@layout BlankLayout
+﻿@using Microsoft.AspNetCore.Http
+@layout BlankLayout
 
 <PageTitle>404 Missing Page</PageTitle>
 
@@ -8,9 +9,12 @@
 </div>
 
 @code {
-    //[CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext? HttpContext { get; set; } = default!;
     protected override void OnInitialized()
     {
-        //HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+        if (HttpContext != null)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;    
+        }
     }
 }
