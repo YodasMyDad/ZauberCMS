@@ -13,6 +13,7 @@
                     
 @code
 {
+    [Inject] NotificationService NotificationService { get; set; } = default!;
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
     [Parameter, EditorRequired] public Guid UserId { get; set; }
     private User? User { get; set; }
@@ -31,6 +32,13 @@
 
     private async Task Save()
     {
-        await BlazoredModal.CloseAsync(ModalResult.Ok(UsersRoles));
+        if (UsersRoles.Any())
+        {
+            await BlazoredModal.CloseAsync(ModalResult.Ok(UsersRoles));  
+        }
+        else
+        {
+            NotificationService.ShowErrorNotification("User must be in at least one role");
+        }
     }
 }

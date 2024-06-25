@@ -1,35 +1,34 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 
-    @if (AuthState.User.Identity?.IsAuthenticated == true)
-    {
-        <RadzenProfileMenu class="rz-background-color-primary-darker">
-            <Template>
-                <RadzenGravatar Email="@AuthState.User.GetUserEmail()" />
-            </Template>
-            <ChildContent>
-                <ProfileMenuItem Icon="account_circle" Name="Logout" OnClick="() => Logout()" />
-            </ChildContent>
-        </RadzenProfileMenu>
-    } 
-    else
-    {
-        <p>Huh?</p>
-    }   
-
+<RadzenProfileMenu class="rz-background-color-primary-darker">
+    <Template>
+        <RadzenGravatar Email="@AuthState.User.GetUserEmail()"/>
+    </Template>
+    <ChildContent>
+        <ProfileMenuItem Icon="edit" Name="Edit" OnClick="() => Edit()"/>
+        <ProfileMenuItem Icon="logout" Name="Logout" OnClick="() => Logout()"/>
+    </ChildContent>
+</RadzenProfileMenu>
 
 @code {
-    
+
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     private AuthenticationState AuthState { get; set; } = default!;
+
+    private void Edit()
+    {
+        NavigationManager.NavigateTo($"/admin/users/edit/{AuthState.User.GetUserId()}");
+    }
 
     private void Logout()
     {
         NavigationManager.NavigateTo("/api/auth/logout", true);
     }
-    
+
     protected override async Task OnInitializedAsync()
     {
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
     }
 
 }
+

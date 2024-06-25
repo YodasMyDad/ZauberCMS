@@ -1,12 +1,11 @@
-﻿using MediatR;
-using ZauberCMS.Core.Extensions;
+﻿using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Validation.Interfaces;
 using ZauberCMS.Core.Shared.Validation.Models;
 
 namespace ZauberCMS.Core.Membership.Validation;
 
-public class ValidateUser(IMediator mediator) : IValidate<User>
+public class ValidateUser : IValidate<User>
 {
     public Task<ValidateResult> Validate(User item)
     {

@@ -20,7 +20,7 @@ public class AuthController(
     {
         var user = await userManager.GetUserAsync(User);
         if (user != null) await signInManager.RefreshSignInAsync(user);
-        return Redirect(redirectUrl ?? "/account/manage/profile?refresh=true");
+        return Redirect(redirectUrl ?? "/");
     }
     
     [HttpGet("logout")]

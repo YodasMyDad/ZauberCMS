@@ -195,10 +195,13 @@
                 NotificationService.ShowErrorNotification(roleUpdateResult.Messages.MessagesAsString());
             }
             else
-            {
-                var user = await UserManager.FindByIdAsync(User.Id.ToString());
-                if (user != null) await UserManager.UpdateSecurityStampAsync(user);
+            {                
                 NotificationService.ShowSuccessNotification("Roles Updated");
+                if (roleUpdateResult.RefreshSignIn)
+                {
+                    var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.Uri);
+                    NavigationManager.NavigateTo($"{Constants.Urls.RefreshSignIn}?redirectUrl={currentUrl}", true);
+                }
             }
         }
         await AppState.NotifyUserChanged(User, AuthState.User.Identity?.Name!);
@@ -287,10 +290,10 @@
             var result = await Mediator.Send(saveUserCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{User?.UserName} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{User?.UserName} Error", Detail = "", Duration = 4000 });
             await AppState.NotifyUserSaved(User, AuthState.User.Identity?.Name!);
-            if (InitialUsername != User?.UserName || InitialEmail != User?.Email)
+            if (result is { Success: true, RefreshSignIn: true })
             {
-                var user = await UserManager.FindByIdAsync(User.Id.ToString());
-                if (user != null) await UserManager.UpdateSecurityStampAsync(user);
+                var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.Uri);
+                NavigationManager.NavigateTo($"{Constants.Urls.RefreshSignIn}?redirectUrl={currentUrl}", true);
             }
         }
     }

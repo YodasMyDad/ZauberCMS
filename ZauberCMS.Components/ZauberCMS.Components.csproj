@@ -54,19 +54,6 @@
       <AdditionalFiles Include="Admin\SettingsSection\Dialogs\ListContentTypeProperties.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\Dialogs\SortContent.razor" />
       <AdditionalFiles Include="Admin\SettingsSection\SettingsIndex.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\ChangePassword.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\DeletePersonalData.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\Disable2fa.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\Email.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\EnableAuthenticator.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\ExternalLogins.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\GenerateRecoveryCodes.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\Index.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\PersonalData.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\ResetAuthenticator.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\SetPassword.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\TwoFactorAuthentication.razor" />
-      <AdditionalFiles Include="Admin\UsersSection\Manage\_Imports.razor" />
     </ItemGroup>
 
     <ItemGroup>

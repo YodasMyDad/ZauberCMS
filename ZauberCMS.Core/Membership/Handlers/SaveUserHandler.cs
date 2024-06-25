@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
@@ -10,15 +12,16 @@ namespace ZauberCMS.Core.Membership.Handlers;
 
 public class SaveUserHandler(
     IServiceProvider serviceProvider,
-    IMapper mapper)
+    IMapper mapper,
+    AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveUserCommand, HandlerResult<User>>
 {
     public async Task<HandlerResult<User>> Handle(SaveUserCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        //var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var refreshCurrentUser = false;
         var handlerResult = new HandlerResult<User>();
         if (request.User != null)
         {
@@ -27,12 +30,15 @@ public class SaveUserHandler(
             if (user == null)
             {
                 user = request.User;
-                var result = await userManager.CreateAsync(user, request.User.PasswordHash); // TODO Assume PasswordHash is the plain password for simplicity
+                var result = await userManager.CreateAsync(user, request.Password);
                 if (!result.Succeeded)
                 {
                     handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                     return handlerResult;
                 }
+
+                // set the default starting role if no roles are set
+                request.Roles ??= [Constants.Roles.StandardRoleName];
             }
             else
             {
@@ -44,6 +50,11 @@ public class SaveUserHandler(
                         handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                         return handlerResult;
                     }
+                    if (authState.User.Identity?.IsAuthenticated == true
+                        && authState.User.GetUserId() == user.Id)
+                    {
+                        refreshCurrentUser = true;   
+                    }
                 }
 
                 if (user.Email != request.User.Email)
@@ -53,6 +64,11 @@ public class SaveUserHandler(
                     {
                         handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                         return handlerResult;
+                    }
+                    if (authState.User.Identity?.IsAuthenticated == true
+                        && authState.User.GetUserId() == user.Id)
+                    {
+                        refreshCurrentUser = true;   
                     }
                 }
 
@@ -83,6 +99,12 @@ public class SaveUserHandler(
                         handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                         return handlerResult;
                     }
+
+                    if (authState.User.Identity?.IsAuthenticated == true
+                        && authState.User.GetUserId() == user.Id)
+                    {
+                        refreshCurrentUser = true;   
+                    }
                 }
 
                 if (rolesToRemove.Count != 0)
@@ -93,18 +115,24 @@ public class SaveUserHandler(
                         handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                         return handlerResult;
                     }
+                    
+                    if (authState.User.Identity?.IsAuthenticated == true
+                        && authState.User.GetUserId() == user.Id)
+                    {
+                        refreshCurrentUser = true;   
+                    }
                 }
             }
 
             // Update security stamp if needed
-            if (userManager.SupportsUserSecurityStamp)
+            if (refreshCurrentUser == false && userManager.SupportsUserSecurityStamp)
             {
                 await userManager.UpdateSecurityStampAsync(user);
-                handlerResult.RefreshSignIn = true;
             }
 
             handlerResult.Entity = user;
             handlerResult.Success = true;
+            handlerResult.RefreshSignIn = refreshCurrentUser;
         }
         else
         {

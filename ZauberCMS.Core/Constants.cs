@@ -53,6 +53,7 @@ public static class Constants
         public const string AdminContentBaseUrl = AdminBaseUrl + "/content";
         public const string AdminSettingsBaseUrl = AdminBaseUrl + "/settings";
         public const string AdminFormsBaseUrl = AdminBaseUrl + "/forms";
+        public const string RefreshSignIn = "/api/auth/refreshsignin";
         
         public static class Account
         {
@@ -71,7 +72,6 @@ public static class Constants
             public const string ResendEmailConfirmation = "/account/resendemailconfirmation";
             public const string ResetPassword = "/account/resetpassword";
             public const string ResetPasswordConfirmation = "/account/resetpasswordconfirmation";
-            public const string RefreshSignIn = "/account/refreshsignin";
             public const string UserProfile = "/account/manage/profile";
         }
     }
