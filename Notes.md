@@ -3,6 +3,7 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
+Hide From Navigation (umbracoNaviHide) - Think about added to content
 navigation contenttypeproperty (Like umbNav package)
 rating property with stars
 material icon picker property (Use thr icon picker on contenttypes)
@@ -21,5 +22,6 @@ Update ReadMe and add docs
 Find someone to help with the nuget packaging. Need to install site, but have Components/Core as seperate nuget package that people reference in other projects
 
 ### Future
-Add languages (Check videos)
-EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/) - Anything else? Does this auto clear? ChatGPT?
+Add languages for admin
+Rework the media editing/UI it's awful
+EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/) - Anything else? Does this auto clear?

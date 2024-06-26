@@ -25,6 +25,9 @@ public class Content : IContent
     public ContentType? ContentType { get; set; }
     public string? ContentTypeAlias { get; set; }
 
+    /// <summary>
+    /// The path for this content in the content tree
+    /// </summary>
     public List<Guid> Path { get; set; } = [];
     
     /// <summary>
@@ -36,6 +39,11 @@ public class Content : IContent
     /// Is this content allowed in the root of the tree
     /// </summary>
     public bool IsRootContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the content should be hidden from navigation.
+    /// </summary>
+    public bool HideFromNavigation { get; set; }
     
     /// <summary>
     /// Redirects behind the scenes to another content node

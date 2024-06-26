@@ -27,7 +27,7 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(4000)
+                        .HasMaxLength(3000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Username")
@@ -65,6 +65,9 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("HideFromNavigation")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid?>("InternalRedirectId")
                         .HasColumnType("TEXT");
 
@@ -76,6 +79,10 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("ParentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SortOrder")
@@ -158,6 +165,31 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasDatabaseName("IX_ZauberContentTypes_Name");
 
                     b.ToTable("ZauberContentTypes", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Data.Models.GlobalData", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Alias")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Data")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Alias")
+                        .HasDatabaseName("IX_GlobalDataAlias");
+
+                    b.ToTable("ZauberGlobalData", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Media.Models.Media", b =>

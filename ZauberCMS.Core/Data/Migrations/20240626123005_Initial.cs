@@ -12,6 +12,20 @@ namespace ZauberCMS.Core.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "ZauberAudits",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true),
+                    Username = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberAudits", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ZauberContentTypes",
                 columns: table => new
                 {
@@ -30,6 +44,20 @@ namespace ZauberCMS.Core.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ZauberContentTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ZauberGlobalData",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Data = table.Column<string>(type: "TEXT", nullable: true),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberGlobalData", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -65,10 +93,12 @@ namespace ZauberCMS.Core.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Icon = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
-                    RoleProperties = table.Column<string>(type: "TEXT", nullable: false),
+                    Properties = table.Column<string>(type: "TEXT", nullable: false),
+                    Tabs = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true)
@@ -85,6 +115,7 @@ namespace ZauberCMS.Core.Data.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    PropertyData = table.Column<string>(type: "TEXT", nullable: false),
                     ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
@@ -115,8 +146,10 @@ namespace ZauberCMS.Core.Data.Migrations
                     Url = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
                     ContentTypeId = table.Column<Guid>(type: "TEXT", nullable: false),
                     ContentTypeAlias = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Path = table.Column<string>(type: "TEXT", nullable: false),
                     SortOrder = table.Column<int>(type: "INTEGER", nullable: false),
                     IsRootContent = table.Column<bool>(type: "INTEGER", nullable: false),
+                    HideFromNavigation = table.Column<bool>(type: "INTEGER", nullable: false),
                     InternalRedirectId = table.Column<Guid>(type: "TEXT", nullable: true),
                     ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -248,6 +281,11 @@ namespace ZauberCMS.Core.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_ZauberAudits_Username",
+                table: "ZauberAudits",
+                column: "Username");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ZauberContent_ContentTypeId",
                 table: "ZauberContent",
                 column: "ContentTypeId");
@@ -276,6 +314,11 @@ namespace ZauberCMS.Core.Data.Migrations
                 name: "IX_ZauberContentTypes_Name",
                 table: "ZauberContentTypes",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GlobalDataAlias",
+                table: "ZauberGlobalData",
+                column: "Alias");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberMedia_Name",
@@ -334,7 +377,13 @@ namespace ZauberCMS.Core.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "ZauberAudits");
+
+            migrationBuilder.DropTable(
                 name: "ZauberContent");
+
+            migrationBuilder.DropTable(
+                name: "ZauberGlobalData");
 
             migrationBuilder.DropTable(
                 name: "ZauberMedia");
