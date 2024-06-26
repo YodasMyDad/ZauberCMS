@@ -8,46 +8,32 @@ can be built in whatever you want, static, server, WASM. The CMS is heavily insp
 _Core tech used is: .Net 8, Blazor, EF Core, Identity, Mediatr, Radzen Components_
 
 The video below shows the starter site being built. It covers building a site from nothing, to complete finished site. Currently, the starter site 
-comes as part of the CMS, but this will move to it's own Nuget component once the CMS moves from POC to Alpha.
+comes as part of the CMS, but this will move to it's own Nuget component once the CMS moves from POC to Alpha (When .NET 9 is released).
 
-TODO - ADD Start Site Video
+**Add Starter Site Build Video**
 
 ### Getting Started
 
-Choose your DB. Comes with SQL Express OOTB, but supports MS SQL.
-
-### Built In Property Editors
-
-sss
-ss
-s
+Choose your DB. Comes with SQL Express OOTB, but supports MS SQL. TODO
 
 ### Docs To Write
 
 IContentView  
-IContentProperty  
-IContentPropertySettings
-IDataListSource
-ICustomContentComponent
-
-ISection
-ISectionDashboard
-ISectionNav
-
-IContentBlock
-IContentBlowPreview
-
-GlobalData
-
-IValidate
-
-AppState
-
-IStorageProvider
-
-Querying for data
-Saving data
-
+IContentProperty    
+IContentPropertySettings  
+IDataListSource  
+ICustomContentComponent  
+ISection  
+ISectionDashboard  
+ISectionNav  
+IContentBlock  
+IContentBlowPreview  
+GlobalData  
+IValidate  
+AppState  
+IStorageProvider  
+Querying for data  
+Saving data  
 
 ### Entity Framework
 
