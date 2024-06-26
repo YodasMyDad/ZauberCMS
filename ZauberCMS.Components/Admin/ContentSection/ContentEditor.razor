@@ -90,6 +90,15 @@
 
                         <EditorRow>
                             <LeftColumn>
+                                <RadzenLabel Text="Hide From Navigation"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenSwitch Name="HideFromNavigation" @bind-Value="@Content.HideFromNavigation"  />
+                            </CentreColumn>
+                        </EditorRow>
+                        
+                        <EditorRow>
+                            <LeftColumn>
                                 <RadzenLabel Text="Internal Redirect Id"/>
                             </LeftColumn>
                             <CentreColumn>

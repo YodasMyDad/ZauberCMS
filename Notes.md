@@ -3,10 +3,9 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Hide From Navigation (umbracoNaviHide) - Think about added to content
+material icon picker property (Use thr icon picker on contenttypes)
 navigation contenttypeproperty (Like umbNav package)
 rating property with stars
-material icon picker property (Use thr icon picker on contenttypes)
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
 Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 .. Or have ChatGPT property editor

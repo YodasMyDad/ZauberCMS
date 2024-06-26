@@ -33,10 +33,7 @@
 
     private void Search(string? search)
     {
-        if (!search.IsNullOrWhiteSpace())
-        {
-            FilteredIcons = Icons.Where(x => x.StartsWith(search)).ToList();   
-        }
+        FilteredIcons = !search.IsNullOrWhiteSpace() ? Icons.Where(x => x.StartsWith(search)).ToList() : Icons;
     }
     
     private async Task SelectIcon(string icon)
