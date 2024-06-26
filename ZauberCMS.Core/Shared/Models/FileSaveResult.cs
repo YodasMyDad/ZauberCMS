@@ -11,8 +11,10 @@ public class FileSaveResult
     public Media.Models.Media? SavedMedia { get; set; }
     public bool Success { get; set; } = true;
     public List<string> ErrorMessages { get; set; } = [];
-    public MediaType MediaType { get; set; }
+    public MediaType? MediaType { get; set; }
     public string? Name { get; set; }
     public long Height { get; set; }
     public long Width { get; set; }
+    
+    public long? FileSize { get; set; }
 }

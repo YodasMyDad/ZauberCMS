@@ -33,17 +33,25 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
 
             foreach (var file in files)
             {
-                if (file.OriginalFile != null)
-                {
                     // Set the media id manually so we can create a folder to put it in
                     // Use the existing id if this is an update of an existing media item
                     var isUpdate = file.CurrentMediaId != null;
                     var mediaId = isUpdate ? file.CurrentMediaId : Guid.NewGuid().NewSequentialGuid();
-
-                    // Save the actual file to disk
-                    var fileSaveResult =
-                        await providerService.StorageProvider!.SaveFile(file.OriginalFile, mediaId.ToString());
                     
+                    FileSaveResult fileSaveResult;
+                    if (file.OriginalFile != null)
+                    {
+                        // Save the actual file to disk
+                        fileSaveResult =
+                            await providerService.StorageProvider!.SaveFile(file.OriginalFile, file.Name, mediaId.ToString());
+                        
+                    }
+                    else
+                    {
+                        // The file wasn't changed but update other properties
+                        fileSaveResult = file;
+                    }
+
                     // Create a media item to save
                     var mediaItem = await providerService.StorageProvider!.ToMedia(fileSaveResult, mediaId, parentFolderId);
 
@@ -55,10 +63,11 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                             // Get the DB version
                             var dbMedia = dbContext.Medias
                                 .FirstOrDefault(x => x.Id == mediaItem.Id);
-                                // Map the updated properties
+                            // Map the updated properties
                             mapper.Map(mediaItem, dbMedia);
                             if (dbMedia != null) dbMedia.DateUpdated = DateTime.UtcNow;
-                            await dbContext.SaveChangesAsync(); ;
+                            await dbContext.SaveChangesAsync();
+                            if (dbMedia != null) await appState.NotifyMediaSaved(dbMedia, authState.User.Identity?.Name!);
                         }
                         else
                         {
@@ -79,7 +88,6 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                     fileSaveResult.SavedMedia = mediaItem;
 
                     results.Add(fileSaveResult);
-                }
             }
         }
 

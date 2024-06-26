@@ -9,6 +9,11 @@
         <div>Allowed Media Types</div>
         <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedMediaTypes" TValue="MediaType" TextProperty="Name" ValueProperty="Value"/>
     </div>
+
+    <div>
+        <div>Allowed Media Types</div>
+        <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedMediaTypes" TValue="MediaType" TextProperty="Name" ValueProperty="Value"/>
+    </div>
     
 </RadzenStack>
 
@@ -19,6 +24,8 @@
 @code {
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public IModalService? ModalService { get; set; }
+    
     private MediaPickerSettings Settings { get; set; } = new();
     private IEnumerable<EnumObject> Data { get; set; } = [];
 

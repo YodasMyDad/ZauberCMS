@@ -16,18 +16,14 @@
 </EditForm>
 
 @code {
-
-    [Inject] public AppState AppState { get; set; } = default!;
     [Inject] NotificationService NotificationService { get; set; } = default!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] public ValidateService<Media> ValidateService { get; set; } = default!;
     [Parameter] public Media? Media { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
-    private AuthenticationState AuthState { get; set; } = default!;
     
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         Media ??= new Media
         {
             MediaType = MediaType.Folder
@@ -41,8 +37,14 @@
             var saveCommand = new SaveMediaCommand { ParentFolderId = ParentId };
             saveCommand.MediaToSave.Add(Media!);
             var result = await Mediator.Send(saveCommand);
-            NotificationService.ShowSuccessNotification("Saved");
-            await AppState.NotifyMediaSaved(Media!, AuthState.User.Identity?.Name!);
+            if (result.All(x => x.Success))
+            {
+                NotificationService.ShowSuccessNotification("Saved");   
+            }
+            else
+            {
+                NotificationService.ShowNotifications("There was an issue", NotificationSeverity.Error, result.SelectMany(x => x.ErrorMessages).ToList());
+            }
         }
     }
 }

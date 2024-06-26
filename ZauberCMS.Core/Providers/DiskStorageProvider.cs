@@ -16,7 +16,7 @@ public class DiskStorageProvider(
     private readonly ZauberSettings _settings = settings.Value;
 
         /// <inheritdoc />
-        public Task<FileSaveResult> CanUseFile(IBrowserFile file, bool onlyImages = false)
+        public Task<FileSaveResult> CanUseFile(IBrowserFile file, string? fileName = null, bool onlyImages = false)
         {
             return Task.Run(() =>
             {
@@ -46,7 +46,7 @@ public class DiskStorageProvider(
 
                 }
                 fileSaveResult.MediaType = file.Name.ToFileType();
-                fileSaveResult.Name = file.Name;
+                fileSaveResult.Name = fileName ?? file.Name;
                 fileSaveResult.OriginalFile = file;
                 return fileSaveResult;
             });
@@ -71,9 +71,9 @@ public class DiskStorageProvider(
         }
 
         /// <inheritdoc />
-        public async Task<FileSaveResult> SaveFile(IBrowserFile file, string? folderName = null, bool overwrite = true)
+        public async Task<FileSaveResult> SaveFile(IBrowserFile file, string? fileName = null, string? folderName = null, bool overwrite = true)
         {
-            var fileSaveResult = await CanUseFile(file);
+            var fileSaveResult = await CanUseFile(file, fileName);
             fileSaveResult.OriginalFile = file;
             if (!fileSaveResult.Success)
             {
@@ -127,8 +127,8 @@ public class DiskStorageProvider(
         {
             var mediaItem = new Media.Models.Media
             {
-                FileSize = fileSaveResult.OriginalFile?.Size ?? 0,
-                Name = fileSaveResult.OriginalFile?.Name
+                FileSize = fileSaveResult.FileSize ?? fileSaveResult.OriginalFile?.Size ?? 0,
+                Name = fileSaveResult.Name ?? fileSaveResult.OriginalFile?.Name
             };
             if (id != null)
             {
@@ -138,12 +138,9 @@ public class DiskStorageProvider(
             {
                 mediaItem.ParentId = parentId.Value;
             }
-            if (fileSaveResult.OriginalFile?.IsImage() == true)
-            {
-                mediaItem.Width = fileSaveResult.Width;
-                mediaItem.Height = fileSaveResult.Height;
-            }
-            mediaItem.MediaType = fileSaveResult.OriginalFile?.Name.ToFileType() ?? MediaType.Unknown;
+            mediaItem.Width = fileSaveResult.Width;
+            mediaItem.Height = fileSaveResult.Height;
+            mediaItem.MediaType = fileSaveResult.MediaType ?? fileSaveResult.OriginalFile?.Name.ToFileType() ?? MediaType.Unknown;
             mediaItem.DateCreated = DateTime.UtcNow;
             mediaItem.Url = fileSaveResult.SavedFileUrl;
             return mediaItem;

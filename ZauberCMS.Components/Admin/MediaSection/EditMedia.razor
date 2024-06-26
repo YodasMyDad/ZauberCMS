@@ -42,7 +42,6 @@
     [Parameter] public Guid? ParentId { get; set; }
 
     [Inject] NotificationService NotificationService { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 

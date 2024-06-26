@@ -9,9 +9,10 @@ public interface IStorageProvider
     /// Saves the file
     /// </summary>
     /// <param name="browserFile"></param>
+    /// <param name="fileName"></param>
     /// <param name="folderName"></param>
     /// <param name="overwrite"></param>
-    public Task<FileSaveResult> SaveFile(IBrowserFile browserFile, string? folderName = null, bool overwrite = true);
+    public Task<FileSaveResult> SaveFile(IBrowserFile browserFile, string? fileName = null, string? folderName = null, bool overwrite = true);
     
     /// <summary>
     /// Deletes the file
@@ -24,8 +25,9 @@ public interface IStorageProvider
     /// Checks to determine if a file can be used
     /// </summary>
     /// <param name="browserFile"></param>
+    /// <param name="fileName"></param>
     /// <param name="onlyImages"></param>
-    public Task<FileSaveResult> CanUseFile(IBrowserFile browserFile, bool onlyImages = false);
+    public Task<FileSaveResult> CanUseFile(IBrowserFile browserFile, string? fileName = null, bool onlyImages = false);
 
     /// <summary>
     /// Method to convert a saved file into a BlogFodderFile object

@@ -14,6 +14,37 @@
     </RadzenStack>
 }
 
+<RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container">
+    @foreach (var media in FilesToUpload)
+    {
+    if (media.MediaType == MediaType.Image)
+    {
+    <RadzenAlert Close=@(o => RemoveMedia(media)) ShowIcon="false">
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <img src="@media.SavedFileUrl?width=112&height=112&rmode=max" class="rounded" alt=""/>
+            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.2rem" Style="flex-grow: 1;">
+                <RadzenTextBox @bind-Value="@media.Name" Style="width: 300px;" />
+                <div class="fw-light" style="font-size: 14px;">Height: @(media.Height)px</div>
+                <div class="fw-light" style="font-size: 14px;">Width: @(media.Width)px</div>
+                <div class="fw-light" style="font-size: 14px;">Size: @(media.FileSize)</div>
+            </RadzenStack>
+        </RadzenStack>
+
+    </RadzenAlert>
+    }
+    else
+    {
+    <RadzenAlert Icon="@(media.MediaType!.Value.GetIcon())" Close=@(o => RemoveMedia(media))>
+        <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.2rem" Style="flex-grow: 1;">
+            <RadzenTextBox @bind-Value="@media.Name" class="w-100"  />
+            <div class="fw-light" style="font-size: 14px;">Size: @(media.FileSize)</div>
+        </RadzenStack>
+    </RadzenAlert>
+    }
+    }
+</RadzenStack>
+
 <div @ref="FileDropContainer" class="file-drop-zone @HoverClass" @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondragover="OnDragEnter">
     <div class="text-center">
         <label for="file-upload" style="cursor: pointer; position: relative; font-weight: 600; text-decoration: underline; padding: 30px 40px;">
@@ -22,34 +53,7 @@
     </div>
 </div>
 
-<RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container">
-    @foreach (var media in FilesToUpload)
-    {
-        if (media.MediaType == MediaType.Image)
-        {
-            <RadzenAlert Close=@(o => RemoveMedia(media)) ShowIcon="false">
-     
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <img src="@media.SavedFileUrl?width=100&height=100&rmode=max" class="rounded" alt=""/>
-                        <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.2rem">
-                            <div>@media.Name</div>
-                            <div class="fw-light" style="font-size: 14px;">Height: @(media.Height)px</div>
-                            <div class="fw-light" style="font-size: 14px;">Width: @(media.Width)px</div>
-                        </RadzenStack>
-                    </RadzenStack>
-         
-            </RadzenAlert>   
-        }
-        else
-        {
-            <RadzenAlert Icon="@(media.MediaType.GetIcon())" Close=@(o => RemoveMedia(media))>
-                <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.2rem">
-                    <div>@media.Name</div>
-                </RadzenStack>
-            </RadzenAlert>   
-        }
-    }
-</RadzenStack>
+
 <RadzenButton Click="@(() => Save())">Save</RadzenButton>
 <RadzenButton Click="@(() => Clear())">Clear</RadzenButton>
 
@@ -131,7 +135,7 @@
 
         foreach (var file in e.GetMultipleFiles(MaxAllowedFiles))
         {
-            var result = await ProviderService.StorageProvider!.CanUseFile(file, OnlyImages);
+            var result = await ProviderService.StorageProvider!.CanUseFile(file, null, OnlyImages);
             if (result.Success)
             {
                 if (MediaId != null)
@@ -185,7 +189,6 @@
             {
                 NotificationService.ShowSuccessNotification($"{results.Count(x => x.Success)} Media Saved");
             }
-        
         }
     }
 

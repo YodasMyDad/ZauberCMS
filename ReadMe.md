@@ -37,6 +37,8 @@ ISectionNav
 IContentBlock
 IContentBlowPreview
 
+GlobalData
+
 IValidate
 
 AppState

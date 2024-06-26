@@ -20,7 +20,8 @@ public static class MediaExtensions
             Width = media.Width,
             CurrentMediaId = media.Id,
             SavedFileUrl = media.Url,
-            SavedMedia = media
+            SavedMedia = media,
+            FileSize = media.FileSize
         };
     }
     

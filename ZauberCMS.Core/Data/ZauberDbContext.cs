@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Data.Models;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Data;
@@ -17,6 +18,7 @@ public class ZauberDbContext : IdentityDbContext<User, Role, Guid, UserClaim, Us
     public DbSet<Content.Models.Content> Contents => Set<Content.Models.Content>();
     public DbSet<Media.Models.Media> Medias => Set<Media.Models.Media>();
     public DbSet<Audit.Models.Audit> Audits => Set<Audit.Models.Audit>();
+    public DbSet<GlobalData> GlobalDatas => Set<GlobalData>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

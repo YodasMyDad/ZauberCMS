@@ -24,6 +24,8 @@ public class Content : IContent
     public Guid ContentTypeId { get; set; }
     public ContentType? ContentType { get; set; }
     public string? ContentTypeAlias { get; set; }
+
+    public List<Guid> Path { get; set; } = [];
     
     /// <summary>
     /// The sort order
