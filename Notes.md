@@ -4,6 +4,7 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 Media tree replace icon with tree if image!
+Media picker set a start folder
 Paths (For breadcrumbs etc...) - Think about what happens if a page is moved
 navigation contenttypeproperty (Like umbNav package)
 Need a default storage thing too for quick easy storage (Check BlogFodder too for other stuff!)
