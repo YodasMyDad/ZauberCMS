@@ -1,9 +1,5 @@
-﻿@using System.Text.Json
-@using ZauberCMS.Core.Extensions
-@using Radzen.Blazor
-@using ZauberCMS.Components.Editors.Models
+﻿@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
-@using ZauberCMS.Core.Content.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenTextBox @ref="TextBox" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
@@ -33,10 +29,7 @@
     
     protected override void OnInitialized()
     {
-        if (!Settings.IsNullOrWhiteSpace())
-        {
-            SettingsModel = JsonSerializer.Deserialize<TextContentSettingsModel>(Settings) ?? new TextContentSettingsModel();
-        }
+        SettingsModel = this.GetPropertySettings<TextContentSettingsModel>();
     }
     
     protected override void OnAfterRender(bool firstRender)

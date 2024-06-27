@@ -1,14 +1,24 @@
 ﻿@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Content.Commands
-@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ContentPickerSettings>
 
-<RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="1rem">
-    <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Placeholder="Max Items Allowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max" } })"/>
-    <div>
-        <div>Allowed Content Types</div>
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Max Allowed Items" Description="The maximum allowed items to be picked"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max allowed" } })"/>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Content Types" Description="Select the allowed content types for this picker"/>
+    </LeftColumn>
+    <CentreColumn>
         <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedContentTypes" TValue="Guid" TextProperty="Name" ValueProperty="Id"/>
-    </div>
-</RadzenStack>
+    </CentreColumn>
+</EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
@@ -17,7 +27,7 @@
 @code {
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
-    private ContentPickerSettings Settings { get; set; } = new();
+    public ContentPickerSettings Settings { get; set; } = new();
     private IEnumerable<ContentType> Data { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
@@ -29,8 +39,8 @@
             AmountPerPage = 200
         });
         Data = contentTypes.Items;
-        
-        Settings = this.GetPropertySettings<ContentPickerSettings>() ?? new ContentPickerSettings();
+
+        Settings = this.GetPropertySettings();
     }
 
     private async Task Save()

@@ -1,0 +1,20 @@
+﻿@if (!Name.IsNullOrWhiteSpace())
+{
+    <RadzenLabel Style="font-weight: 600;font-size: 14px;" Text="@Name"/>   
+}
+@if (!Alias.IsNullOrWhiteSpace())
+{
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+        <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@Alias</RadzenText>
+    </RadzenStack>   
+}
+@if (!Description.IsNullOrWhiteSpace())
+{
+    <RadzenLabel Style="font-size: 14px;" Text="@Description"/>    
+}
+
+@code {
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public string? Alias { get; set; }
+    [Parameter] public string? Description { get; set; }
+}

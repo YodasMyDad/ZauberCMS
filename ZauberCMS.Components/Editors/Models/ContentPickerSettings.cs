@@ -1,6 +1,4 @@
-﻿using ZauberCMS.Core.Content.Models;
-
-namespace ZauberCMS.Components.Editors.Models;
+﻿namespace ZauberCMS.Components.Editors.Models;
 
 public class ContentPickerSettings
 {

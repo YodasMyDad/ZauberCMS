@@ -71,10 +71,7 @@
             }
         }
 
-        if (!Settings.IsNullOrWhiteSpace())
-        {
-            SettingsModel = JsonSerializer.Deserialize<MediaPickerSettings>(Settings) ?? new MediaPickerSettings();
-        }
+        SettingsModel = this.GetPropertySettings<MediaPickerSettings>();
     }
 
     private async Task DeleteMedia(Media media)

@@ -1,21 +1,24 @@
 ﻿@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Media.Models
-@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<MediaPickerSettings>
 
-<RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="1rem">
-    <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Placeholder="Max Items Allowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max" } })"/>
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Max Allowed Items" Description="The maximum allowed items to be picked"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max allowed" } })"/>
+    </CentreColumn>
+</EditorRow>
 
-    <div>
-        <div>Allowed Media Types</div>
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Media Types" Description="Select the allowed media types for this picker"/>
+    </LeftColumn>
+    <CentreColumn>
         <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedMediaTypes" TValue="MediaType" TextProperty="Name" ValueProperty="Value"/>
-    </div>
-
-    <div>
-        <div>Allowed Media Types</div>
-        <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedMediaTypes" TValue="MediaType" TextProperty="Name" ValueProperty="Value"/>
-    </div>
-    
-</RadzenStack>
+    </CentreColumn>
+</EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
@@ -26,7 +29,7 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public IModalService? ModalService { get; set; }
     
-    private MediaPickerSettings Settings { get; set; } = new();
+    public MediaPickerSettings Settings { get; set; } = new();
     private IEnumerable<EnumObject> Data { get; set; } = [];
 
     protected override void OnInitialized()
@@ -35,7 +38,7 @@
             .Cast<MediaType>()
             .Select(e => new EnumObject { Value = e, Name = e.ToString() });
 
-        Settings = this.GetPropertySettings<MediaPickerSettings>() ?? new MediaPickerSettings();
+        Settings = this.GetPropertySettings();
     }
 
     private async Task Save()

@@ -1,10 +1,14 @@
-﻿@using System.Text.Json
-@using ZauberCMS.Components.Editors.Models
-@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<TextContentSettingsModel>
 
-<RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
-    <RadzenNumeric @bind-Value="@Settings.MaxLength" Placeholder="Max Length Allowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter max length" }})" />    
-</RadzenStack>
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Max Length" Description="The maximum allowed length in the textbox"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.MaxLength" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max length" } })"/>
+    </CentreColumn>
+</EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
@@ -13,19 +17,16 @@
 @code {
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
-    private TextContentSettingsModel Settings { get; set; } = new();
-    
+    public TextContentSettingsModel Settings { get; set; } = new();
+
     protected override void OnInitialized()
     {
-        if (!SettingsModel.IsNullOrWhiteSpace())
-        {
-            Settings = JsonSerializer.Deserialize<TextContentSettingsModel>(SettingsModel) ?? new TextContentSettingsModel();
-        }
+        Settings = this.GetPropertySettings();
     }
-    
+
     private async Task Save()
     {
-        var updatedSettingsModel = JsonSerializer.Serialize(Settings);
-        await ValueChanged.InvokeAsync(updatedSettingsModel);
+        await this.SavePropertySettings(Settings);
     }
+
 }

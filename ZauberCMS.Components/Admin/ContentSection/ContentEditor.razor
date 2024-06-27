@@ -42,11 +42,7 @@
                                             {
                                                 <EditorRow FullWidth="@(property.FullWidth)">
                                                     <LeftColumn>
-                                                        <RadzenLabel Style="font-weight: 600;font-size: 14px;" Text="@property.Name"/>
-                                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
-                                                            <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@property.Alias</RadzenText>
-                                                        </RadzenStack>
-                                                        <RadzenLabel Style="font-size: 14px;" Text="@property.Description"/>
+                                                        <PropertyInfo Name="@property.Name" Alias="@property.Alias" Description="@property.Description" />
                                                     </LeftColumn>
                                                     <CentreColumn>
                                                         <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"

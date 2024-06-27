@@ -1,6 +1,7 @@
 ﻿@using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Components.Editors.Settings
+@using ZauberCMS.Components.Editors.Models
 @using System.Text.Json
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -34,6 +35,8 @@
 
 
 @code {
+    [Inject] NotificationService NotificationService { get; set; } = default!;
+    
     public string Name { get; set; } = "Content Picker";
     public string Alias { get; set; } = "ZauberCMS.ContentPicker";
     public string Description { get; set; } = "Content picker using the content tree";
@@ -51,7 +54,8 @@
     private readonly Func<Content, RadzenDropZone<Content>, bool> _itemSelector = (item, zone) => true;
     private readonly Func<RadzenDropZoneItemEventArgs<Content>, bool> _canDrop = request => true;
     private IModalReference? Modal { get; set; }
-
+    private ContentPickerSettings SettingsModel { get; set; } = new();
+    
     protected override async Task OnInitializedAsync()
     {
         if (!Value.IsNullOrWhiteSpace())
@@ -66,7 +70,8 @@
                 ContentItems = contentItems.Items.ToList();
             }
         }
-        // TODO - Need to add settings to restrict amount allowed to be picked (Also can I restrict whats allowed to be picked by content type?)
+        
+        SettingsModel = this.GetPropertySettings<ContentPickerSettings>();
     }
 
     private async Task DeleteContent(Content content)
@@ -101,13 +106,28 @@
 
     private async Task OnValueChangedHandler(object value)
     {
-        if (value is Content content)
+        if (SettingsModel.MaxAllowed != null && ContentItems.Count > SettingsModel.MaxAllowed)
         {
-            ContentItems.Add(content);
-            await SaveAndUpdate();
+            Modal?.Close();
+            NotificationService.ShowErrorNotification($"You can only pick {SettingsModel.MaxAllowed}");
+            return;
         }
 
-        Modal?.Close();
+        if (value is Content content)
+        {
+            if (SettingsModel.AllowedContentTypes != null)
+            {
+                if (!SettingsModel.AllowedContentTypes.Contains(content.ContentTypeId))
+                {
+                    NotificationService.ShowErrorNotification("You are not allowed to pick that content type");
+                    return;
+                }
+            }
+
+            ContentItems.Add(content);
+            await SaveAndUpdate();
+            Modal?.Close();
+        }
     }
 
     private async Task SaveAndUpdate()

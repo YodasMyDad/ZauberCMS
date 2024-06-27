@@ -1,12 +1,7 @@
-﻿@using System.Text.Json
-@using Radzen
-@using ZauberCMS.Components.Editors.Models
+﻿@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Extensions
 @using ZauberCMS.Core.Plugins
-@using Radzen.Blazor
-@using ZauberCMS.Core.Content.Models
-@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ListPropertySettingsModel>
 
 <RadzenTabs TabPosition="TabPosition.Top" RenderMode="TabRenderMode.Client">
     <Tabs>
@@ -59,19 +54,15 @@
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
 
-    private ListPropertySettingsModel Settings { get; set; } = new();
+    public ListPropertySettingsModel Settings { get; set; } = new();
     private List<IDataListSource> DataListSources { get; set; } = [];
     private int SelectedDataSource { get; set; } = 1;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         var items = ExtensionManager.GetInstances<IDataListSource>(true);
-
         DataListSources = items.Select(x => x.Value).ToList();
-        if (!SettingsModel.IsNullOrWhiteSpace())
-        {
-            Settings = JsonSerializer.Deserialize<ListPropertySettingsModel>(SettingsModel) ?? new ListPropertySettingsModel();
-        }
+        Settings = this.GetPropertySettings();
         if (!Settings.Items.Any())
         {
             AddItem();
@@ -96,7 +87,6 @@
     private async Task Save()
     {
         Settings.Items.RemoveWhere(x => x.Name.IsNullOrWhiteSpace());
-        var updatedSettingsModel = JsonSerializer.Serialize(Settings);
-        await ValueChanged.InvokeAsync(updatedSettingsModel);
+        await this.SavePropertySettings(Settings);
     }
 }
