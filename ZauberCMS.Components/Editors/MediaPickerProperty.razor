@@ -70,8 +70,11 @@
                 MediaItems = contentItems.Items.ToList();
             }
         }
-
-        SettingsModel = this.GetPropertySettings<MediaPickerSettings>();
+        
+        if (!Settings.IsNullOrWhiteSpace())
+        {
+            SettingsModel = JsonSerializer.Deserialize<MediaPickerSettings>(Settings) ?? new MediaPickerSettings();
+        }
     }
 
     private async Task DeleteMedia(Media media)

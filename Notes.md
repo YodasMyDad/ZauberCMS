@@ -3,8 +3,11 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Tidy up settings on property editors (USe property editor UI) and auto serialise etc... Make everything simple as possible
+
 Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)
+https://stackoverflow.com/questions/55600500/sharing-a-table-using-entity-framework-core
+
+
 can we have a carousel view for block list editor?
 material icon picker property (Use thr icon picker on contenttypes)
 navigation contenttypeproperty (Like umbNav package)

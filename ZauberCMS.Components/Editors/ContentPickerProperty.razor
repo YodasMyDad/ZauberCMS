@@ -71,7 +71,10 @@
             }
         }
         
-        SettingsModel = this.GetPropertySettings<ContentPickerSettings>();
+        if (!Settings.IsNullOrWhiteSpace())
+        {
+            SettingsModel = JsonSerializer.Deserialize<ContentPickerSettings>(Settings) ?? new ContentPickerSettings();
+        }
     }
 
     private async Task DeleteContent(Content content)

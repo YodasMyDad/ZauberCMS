@@ -18,7 +18,6 @@ public class User : IdentityUser<Guid>
     /// </summary>
     public List<PropertyValue> PropertyData { get; set; } = [];
 
-
     private Dictionary<string, PropertyValue>? _contentValues;
 
     public Dictionary<string, PropertyValue> ContentValues

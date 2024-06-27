@@ -17,11 +17,16 @@ namespace ZauberCMS.Core.Membership.Handlers
         {
             using var scope = serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-            return await dbContext.Users.Include(x => x.UserRoles)
+            return await dbContext.Users
+                .Include(x => x.UserRoles)
                 .ThenInclude(x => x.Role)
                 .AsNoTracking()
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
 
+            //TODO
+            //.Include(x => x.PropertyData)
+            
             /*return await _cacheService.GetSetCachedItemAsync(typeof(User).ToCacheKey(request.Id.ToString()), async () =>
             {
                 return await dbContext.Users

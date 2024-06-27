@@ -19,9 +19,6 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.Property(x => x.ViewComponent).HasMaxLength(1000);
         builder.Property(e => e.Path).ToJsonConversion(3000);
         
-        //TODO - This needs to be in another table!
-        builder.Property(e => e.ContentPropertyData).ToJsonConversion();
-        
         builder.HasOne(d => d.ContentType)
             .WithMany(p => p.LinkedContent)
             .HasForeignKey(d => d.ContentTypeId)
@@ -31,6 +28,11 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
             .WithMany(p => p.Children)
             .HasForeignKey(d => d.ParentId)
             .OnDelete(DeleteBehavior.SetNull);
+        
+        builder.HasMany(c => c.PropertyData)
+            .WithOne()
+            .HasForeignKey(p => p.ParentId)
+            .OnDelete(DeleteBehavior.NoAction);
         
         builder.HasIndex(x => x.Url).HasDatabaseName("IX_ZauberContent_Url");
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberContent_Name");

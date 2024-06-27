@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Components.Editors.Models
+﻿@using System.Text.Json
+@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -29,7 +30,10 @@
     
     protected override void OnInitialized()
     {
-        SettingsModel = this.GetPropertySettings<TextContentSettingsModel>();
+        if (!Settings.IsNullOrWhiteSpace())
+        {
+            SettingsModel = JsonSerializer.Deserialize<TextContentSettingsModel>(Settings) ?? new TextContentSettingsModel();
+        }
     }
     
     protected override void OnAfterRender(bool firstRender)

@@ -196,12 +196,11 @@ else
 
     private async Task UpdateProperty(Guid ctpId, string value)
     {
-        var property = Content?.ContentPropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
+        var property = Content?.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
         {
             property.Value = value;
             property.DateUpdated = DateTime.UtcNow;
-            
         }
     }
 
@@ -209,7 +208,7 @@ else
     {
         var toRemove = new List<PropertyValue>();
         // Check for properties that were removed
-        foreach (var cpd in content.ContentPropertyData)
+        foreach (var cpd in content.PropertyData)
         {
             var existsInContentType = contentType.ContentProperties.Any(x => x.Id == cpd.ContentTypePropertyId);
             if (!existsInContentType)
@@ -222,25 +221,26 @@ else
         // Remove the properties
         foreach (var tr in toRemove)
         {
-            content.ContentPropertyData.Remove(tr);
+            content.PropertyData.Remove(tr);
         }
 
         // Check for properties to add
         foreach (var ctp in contentType.ContentProperties)
         {
-            var exists = content.ContentPropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
+            var exists = content.PropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
             if (exists == null)
             {
                 // Add it
-                content.ContentPropertyData.Add(new PropertyValue
+                content.PropertyData.Add(new PropertyValue
                 {
                     ContentTypePropertyId = ctp.Id,
-                    Alias = ctp.Alias
+                    Alias = ctp.Alias,
+                    ParentId = Content.Id
                 });
             }
         }
 
-        AllContentValues = Content.ContentPropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+        AllContentValues = Content.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
         AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
     }
 
