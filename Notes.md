@@ -3,6 +3,9 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
+Tidy up settings on property editors (USe property editor UI) and auto serialise etc... Make everything simple as possible
+Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)
+can we have a carousel view for block list editor?
 material icon picker property (Use thr icon picker on contenttypes)
 navigation contenttypeproperty (Like umbNav package)
 rating property with stars
@@ -10,7 +13,6 @@ Add TinyMCE editor - Need to think where to store the API key globally? Add sett
 Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 .. Or have ChatGPT property editor
 Restrict admin by ip address (Do in parameters set on SectionLayout then send to logout, store these in appsettings?)
-Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)
 Show Audit data in a dashboard? Or a tree for settings
 Go through all TODO comments and try to fix all warnings
 Need to delete all migrations, create one and see if it works with SQLite & also SQLServer (look into how to ship with different migrations based on Db)
