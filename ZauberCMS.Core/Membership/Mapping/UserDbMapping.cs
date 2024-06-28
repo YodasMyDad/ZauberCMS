@@ -16,11 +16,7 @@ public class UserDbMapping : IEntityTypeConfiguration<User>
         builder.Property(x => x.PhoneNumber).HasMaxLength(100);
         builder.Property(x => x.UserName).HasMaxLength(150);
         
-        builder.HasMany(c => c.PropertyData)
-            .WithOne()
-            .HasForeignKey(p => p.ParentId)
-            .OnDelete(DeleteBehavior.NoAction);
-        
+        builder.Ignore(x => x.PropertyData);
         //builder.HasOne(x => x.ProfileImage);
     }
 }

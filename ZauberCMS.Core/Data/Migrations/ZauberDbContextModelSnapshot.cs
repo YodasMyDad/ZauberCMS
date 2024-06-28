@@ -108,6 +108,41 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.ToTable("ZauberContent", (string)null);
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentPropertyValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Alias")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ContentTypePropertyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ParentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Alias")
+                        .HasDatabaseName("IX_ZauberContentPropertyValue_Alias");
+
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("IX_ZauberContentPropertyValue_ParentId");
+
+                    b.ToTable("ZauberContentPropertyValues", (string)null);
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -161,41 +196,6 @@ namespace ZauberCMS.Core.Data.Migrations
                         .HasDatabaseName("IX_ZauberContentTypes_Name");
 
                     b.ToTable("ZauberContentTypes", (string)null);
-                });
-
-            modelBuilder.Entity("ZauberCMS.Core.Content.Models.PropertyValue", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Alias")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ContentTypePropertyId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ParentId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Alias")
-                        .HasDatabaseName("IX_ZauberPropertyValues_Alias");
-
-                    b.HasIndex("ParentId")
-                        .HasDatabaseName("IX_ZauberPropertyValues_ParentId");
-
-                    b.ToTable("ZauberPropertyValues", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Data.Models.GlobalData", b =>
@@ -478,6 +478,41 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.ToTable("ZauberUserLogins", (string)null);
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.UserPropertyValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Alias")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ContentTypePropertyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ParentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Alias")
+                        .HasDatabaseName("IX_ZauberUserPropertyValue_Alias");
+
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("IX_ZauberUserPropertyValue_ParentId");
+
+                    b.ToTable("ZauberUserPropertyValues", (string)null);
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.UserRole", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -529,21 +564,6 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.Navigation("ContentType");
 
                     b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("ZauberCMS.Core.Content.Models.PropertyValue", b =>
-                {
-                    b.HasOne("ZauberCMS.Core.Content.Models.Content", null)
-                        .WithMany("PropertyData")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ZauberCMS.Core.Membership.Models.User", null)
-                        .WithMany("PropertyData")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Media.Models.Media", b =>
@@ -614,8 +634,6 @@ namespace ZauberCMS.Core.Data.Migrations
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Content", b =>
                 {
                     b.Navigation("Children");
-
-                    b.Navigation("PropertyData");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>
@@ -635,8 +653,6 @@ namespace ZauberCMS.Core.Data.Migrations
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.User", b =>
                 {
-                    b.Navigation("PropertyData");
-
                     b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618

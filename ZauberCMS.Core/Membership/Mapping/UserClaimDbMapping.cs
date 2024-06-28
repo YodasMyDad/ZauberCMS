@@ -2,14 +2,13 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ZauberCMS.Core.Membership.Models;
 
-namespace ZauberCMS.Core.Membership.Mapping
+namespace ZauberCMS.Core.Membership.Mapping;
+
+public class UserClaimDbMapping : IEntityTypeConfiguration<UserClaim>
 {
-    public class UserClaimDbMapping : IEntityTypeConfiguration<UserClaim>
+    public void Configure(EntityTypeBuilder<UserClaim> builder)
     {
-        public void Configure(EntityTypeBuilder<UserClaim> builder)
-        {
-            builder.Property(x => x.ClaimValue).HasMaxLength(3000);
-            builder.Property(x => x.ClaimType).HasMaxLength(3000);
-        }
+        builder.Property(x => x.ClaimValue).HasMaxLength(3000);
+        builder.Property(x => x.ClaimType).HasMaxLength(3000);
     }
 }

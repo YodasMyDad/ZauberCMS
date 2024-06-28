@@ -144,7 +144,7 @@ else
 
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
-    private Dictionary<Guid, PropertyValue> AllContentValues { get; set; } = new();
+    private Dictionary<Guid, ContentPropertyValue> AllContentValues { get; set; } = new();
     private Dictionary<string, string> AvailableContentViews { get; set; } = new();
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
@@ -206,7 +206,7 @@ else
 
     private void SyncProperties(Content content, ContentType contentType)
     {
-        var toRemove = new List<PropertyValue>();
+        var toRemove = new List<ContentPropertyValue>();
         // Check for properties that were removed
         foreach (var cpd in content.PropertyData)
         {
@@ -231,7 +231,7 @@ else
             if (exists == null)
             {
                 // Add it
-                content.PropertyData.Add(new PropertyValue
+                content.PropertyData.Add(new ContentPropertyValue
                 {
                     ContentTypePropertyId = ctp.Id,
                     Alias = ctp.Alias,

@@ -26,6 +26,22 @@ namespace ZauberCMS.Core.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ZauberContentPropertyValues",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ParentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ContentTypePropertyId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberContentPropertyValues", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ZauberContentTypes",
                 columns: table => new
                 {
@@ -109,13 +125,28 @@ namespace ZauberCMS.Core.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ZauberUserPropertyValues",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ParentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ContentTypePropertyId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberUserPropertyValues", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ZauberUsers",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    PropertyData = table.Column<string>(type: "TEXT", nullable: false),
                     ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
@@ -154,8 +185,7 @@ namespace ZauberCMS.Core.Data.Migrations
                     ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ViewComponent = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
-                    ContentPropertyData = table.Column<string>(type: "TEXT", nullable: false)
+                    ViewComponent = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -306,6 +336,16 @@ namespace ZauberCMS.Core.Data.Migrations
                 column: "Url");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ZauberContentPropertyValue_Alias",
+                table: "ZauberContentPropertyValues",
+                column: "Alias");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContentPropertyValue_ParentId",
+                table: "ZauberContentPropertyValues",
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ZauberContentTypes_Alias",
                 table: "ZauberContentTypes",
                 column: "Alias");
@@ -357,6 +397,16 @@ namespace ZauberCMS.Core.Data.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ZauberUserPropertyValue_Alias",
+                table: "ZauberUserPropertyValues",
+                column: "Alias");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberUserPropertyValue_ParentId",
+                table: "ZauberUserPropertyValues",
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ZauberUserRoles_RoleId",
                 table: "ZauberUserRoles",
                 column: "RoleId");
@@ -383,6 +433,9 @@ namespace ZauberCMS.Core.Data.Migrations
                 name: "ZauberContent");
 
             migrationBuilder.DropTable(
+                name: "ZauberContentPropertyValues");
+
+            migrationBuilder.DropTable(
                 name: "ZauberGlobalData");
 
             migrationBuilder.DropTable(
@@ -396,6 +449,9 @@ namespace ZauberCMS.Core.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "ZauberUserLogins");
+
+            migrationBuilder.DropTable(
+                name: "ZauberUserPropertyValues");
 
             migrationBuilder.DropTable(
                 name: "ZauberUserRoles");

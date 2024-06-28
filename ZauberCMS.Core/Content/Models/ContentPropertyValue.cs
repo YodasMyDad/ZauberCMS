@@ -2,7 +2,7 @@
 
 namespace ZauberCMS.Core.Content.Models;
 
-public class PropertyValue
+public class ContentPropertyValue
 {
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
     public Guid ParentId { get; set; }

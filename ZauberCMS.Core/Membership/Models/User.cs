@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using ZauberCMS.Core.Content.Models;
 
 namespace ZauberCMS.Core.Membership.Models;
 
@@ -15,12 +14,13 @@ public class User : IdentityUser<Guid>
 
     /// <summary>
     /// The content properties
-    /// </summary>
-    public List<PropertyValue> PropertyData { get; set; } = [];
+    /// </summary>n
+    public List<UserPropertyValue> PropertyData { get; set; } = [];
 
-    private Dictionary<string, PropertyValue>? _contentValues;
 
-    public Dictionary<string, PropertyValue> ContentValues
+    private Dictionary<string, UserPropertyValue>? _contentValues;
+
+    public Dictionary<string, UserPropertyValue> ContentValues
     {
         get { return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x); }
     }

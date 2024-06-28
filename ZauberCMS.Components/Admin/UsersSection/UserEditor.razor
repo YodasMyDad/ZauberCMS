@@ -117,7 +117,7 @@
     private string? InitialUsername { get; set; }
     private string? InitialEmail { get; set; }
     private Dictionary<string, IContentProperty> AllProperties { get; set; } = new();
-    private Dictionary<Guid, PropertyValue> AllContentValues { get; set; } = new();
+    private Dictionary<Guid, UserPropertyValue> AllContentValues { get; set; } = new();
     private int SelectedTabIndex { get; set; }
     private RadzenTabs Tabs { get; set; }
     private List<Tab> AllTabs { get; set; } = [];
@@ -245,7 +245,7 @@
             AllTabs = enumerable.SelectMany(x => x.Tabs).OrderBy(x => x.SortOrder).ToList();
             AllContentProperties = enumerable.SelectMany(x => x.Properties).ToList();
 
-            var toRemove = new List<PropertyValue>();
+            var toRemove = new List<UserPropertyValue>();
             // Check for properties that were removed
             foreach (var cpd in User.PropertyData)
             {
@@ -270,7 +270,7 @@
                 if (exists == null)
                 {
                     // Add it
-                    User.PropertyData.Add(new PropertyValue
+                    User.PropertyData.Add(new UserPropertyValue
                     {
                         ContentTypePropertyId = ctp.Id,
                         Alias = ctp.Alias

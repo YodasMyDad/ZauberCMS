@@ -4,7 +4,7 @@ using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Content.Models;
 
-    public class Content : IContent
+    public class Content : IContent<ContentPropertyValue>
     {
         public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
         
@@ -95,16 +95,16 @@ namespace ZauberCMS.Core.Content.Models;
         /// <summary>
         /// The content properties
         /// </summary>
-        public List<PropertyValue> PropertyData { get; set; } = [];
+        public List<ContentPropertyValue> PropertyData { get; set; } = [];
 
 
-        private Dictionary<string, PropertyValue>? _contentValues;
+        private Dictionary<string, ContentPropertyValue>? _contentValues;
 
-        public Dictionary<string, PropertyValue> ContentValues
+        public Dictionary<string, ContentPropertyValue> ContentValues
         {
             get { return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x); }
         }
-
+        
         /// <summary>
         /// If parent ids are set this could have children
         /// </summary>

@@ -2,7 +2,7 @@
 
 namespace ZauberCMS.Core.Content.Interfaces;
 
-public interface IContent
+public interface IContent<T>
 {
     Guid Id { get; set; }
     string? Name { get; set; }
@@ -15,5 +15,5 @@ public interface IContent
     DateTime DateCreated { get; set; }
     DateTime DateUpdated { get; set; }
     string ViewComponent { get; set; }
-    List<PropertyValue> PropertyData { get; set; }
+    List<T> PropertyData { get; set; }
 }
