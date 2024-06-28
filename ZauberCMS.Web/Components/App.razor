@@ -36,6 +36,11 @@
 @if (Settings.Value.UseRadzen || IsAdmin)
 {
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
+
+}
+@if (IsAdmin)
+{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 }
 </body>
 
