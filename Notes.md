@@ -5,12 +5,13 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 #### POC to finish
 
 navigation contenttypeproperty (Like umbNav package)
+Copy the blocks-ui.png for the block list editor (Desktop)
 rating property with stars
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
 Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 .. Or have ChatGPT property editor
 Restrict admin by ip address (Do in parameters set on SectionLayout then send to logout, store these in appsettings?)
-Show Audit data in a dashboard? Or a tree for settings
+Show Audit data in a dashboard? Or a tree for settings (Settings tree headings on Umb, Structure, Templating, Advanced)
 Go through all TODO comments and try to fix all warnings
 Need to delete all migrations, create one and see if it works with SQLite & also SQLServer (look into how to ship with different migrations based on Db)
 Sort admin UI/UX
