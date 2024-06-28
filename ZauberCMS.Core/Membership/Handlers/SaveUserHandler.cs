@@ -2,7 +2,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
@@ -21,6 +23,7 @@ public class SaveUserHandler(
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         var refreshCurrentUser = false;
         var handlerResult = new HandlerResult<User>();
         if (request.User != null)
@@ -75,13 +78,16 @@ public class SaveUserHandler(
                 // Update other properties
                 mapper.Map(request.User, user);
                 user.DateUpdated = DateTime.UtcNow;
-
+                
                 var updateResult = await userManager.UpdateAsync(user);
                 if (!updateResult.Succeeded)
                 {
                     handlerResult.Messages.AddRange(updateResult.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                     return handlerResult;
                 }
+                
+                // Finally update property data
+                handlerResult = await UpdateUserPropertyValues(dbContext, request.User, handlerResult, cancellationToken);
             }
 
             // Handle roles
@@ -140,5 +146,36 @@ public class SaveUserHandler(
         }
 
         return handlerResult;
+    }
+    
+    private async Task<HandlerResult<User>> UpdateUserPropertyValues(ZauberDbContext dbContext, User requestUser, HandlerResult<User> handlerResult, CancellationToken cancellationToken)
+    {
+
+        var user = dbContext.Users.Include(x => x.PropertyData).FirstOrDefault(x => x.Id == requestUser.Id);
+
+        // Remove deleted items
+        var deletedItems = user!.PropertyData.Where(epv => requestUser.PropertyData.All(npv => npv.Id != epv.Id)).ToList();
+        foreach (var deletedItem in deletedItems)
+        {
+            dbContext.UserPropertyValues.Remove(deletedItem);
+        }
+
+        // Add or update items
+        foreach (var newPropertyValue in requestUser.PropertyData)
+        {
+            var existingPropertyValue = user!.PropertyData.FirstOrDefault(epv => epv.Id == newPropertyValue.Id);
+            if (existingPropertyValue == null)
+            {
+                // New property value
+                dbContext.UserPropertyValues.Add(newPropertyValue);
+            }
+            else
+            {
+                // Existing property value, update its properties
+                mapper.Map(newPropertyValue, existingPropertyValue);
+            }
+        }
+        
+        return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
     }
 }

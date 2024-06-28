@@ -20,12 +20,11 @@ namespace ZauberCMS.Core.Membership.Handlers
             return await dbContext.Users
                 .Include(x => x.UserRoles)
                 .ThenInclude(x => x.Role)
+                .Include(x => x.PropertyData)
                 .AsNoTracking()
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
-
-            //TODO
-            //.Include(x => x.PropertyData)
+            
             
             /*return await _cacheService.GetSetCachedItemAsync(typeof(User).ToCacheKey(request.Id.ToString()), async () =>
             {
