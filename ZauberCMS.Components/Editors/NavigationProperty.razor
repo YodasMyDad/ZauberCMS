@@ -1,0 +1,183 @@
+﻿@using System.Text.Json
+@using ZauberCMS.Components.Admin.Trees
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Add Navigation Item" Click="AddNavigationItem" />
+</RadzenStack>
+
+
+<BaseTree
+    T="NavigationItem"
+    Data="@Data"
+    OnExpand="@OnExpandHandler"
+    OnChange="@OnChange"
+    OnItemContextMenu="@ItemContextMenu"
+    @bind-Value="@Selection"
+    HasChildren="@(e => HasChildren(e))"
+    ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+    Template="@(CreateTreeTemplate<object>())">
+</BaseTree>
+
+
+
+@code {
+    public string Name { get; set; } = "Navigation Tree";
+    public string Alias { get; set; } = "ZauberCMS.NavigationTree";
+    public string Icon { get; set; } = "account_tree";
+    public string Description { get; set; } = "A navigation builder in a tree";
+    public Type? SettingsComponent { get; set; }
+    
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public IModalService? ModalService { get; set; }
+
+    private object Selection { get; set; } = new();
+    private IEnumerable<NavigationItem> Data { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            Data = JsonSerializer.Deserialize<List<NavigationItem>>(Value) ?? [];
+        }
+    }
+
+    private void AddNavigationItem()
+    {
+        //TODO - Open editor
+    }
+    
+    private void OnExpandHandler(TreeExpandEventArgs args)
+    {
+        if (args.Value is NavigationItem item)
+        {
+            args.Children.Data = item.Children;
+            args.Children.TextProperty = "Name";
+            args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();            
+        }
+    }
+    
+    private RenderFragment<T> CreateTreeTemplate<T>() where T : class
+    {
+        return context => builder =>
+        {
+            var treeItem = context as RadzenTreeItem;
+            if (treeItem?.Value is NavigationItem item)
+            {
+                builder.AddContent(1, item.Name);
+            }
+        };
+    }
+    
+    private bool HasChildren(object data)
+    {
+        if (data is NavigationItem item)
+        {
+            return item.Children.Any();
+        }
+
+        return false;
+    }
+    
+    private bool ShouldBeExpanded(object data)
+    {
+        if (data is NavigationItem item)
+        {
+            return HasChildren(item);
+        }
+
+        return false;
+    }
+    
+        private void ItemContextMenu(TreeItemContextMenuEventArgs args)
+    {
+        /*ContextMenuService.Open(args,
+            new List<ContextMenuItem> {
+                new(){ Text = "Create", Value = 1 },
+                new(){ Text = "Delete", Value = 2 },
+                new(){ Text = "Sort", Value = 3 }
+            }, async e =>
+            {
+                var content = (Content)args.Value;
+                var dbContent = await Mediator.Send(new GetContentCommand { Id = content.Id, IncludeChildren = true });
+                //var text = args.Text;
+                switch(e.Value)
+                {
+                    case 1:
+                        // Handle Create
+                        NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}", forceLoad: true);
+                        break;
+                    case 2:
+                        // Confirm dialogue, say if there are children, and confirm then delete all
+                            var hasChildren = dbContent.Children.Any();
+                            var message = hasChildren
+                                ? "The content you are trying to delete has child content, are you sure you want to delete it?"
+                                : "Are you sure you want to delete this?";
+                            var delete = await DialogService.Confirm(message, "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+                            if (delete == true)
+                            {
+                                var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id});
+                                NotificationService.Notify(new NotificationMessage { 
+                                    Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
+                                    Summary = result.Success ? "Success" : "Error", 
+                                    Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+                                if (result.Success)
+                                {
+                                    NavigationManager.NavigateTo("/admin", forceLoad: true); 
+                                }
+                            }
+            
+                        break;
+                    case 3:
+                            if (!dbContent.Children.Any())
+                            {
+                                // Show message if no children
+                                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Hmmmm", Detail = "Sorry, nothing to sort as this content has no children", Duration = 4000 });
+                            }
+                            else
+                            {
+                                // Show side panel with sorting of children (Can I use a Radzen component?)
+                                
+                                var dialog = ModalService.OpenSidePanel<SortContent>("Sort Children", 
+                                    new Dictionary<string, object>{ { "ContentId", dbContent.Id }, {"Content", dbContent.Children.OrderBy(x => x.SortOrder).ToList()} });
+                                var result = await dialog.Result;
+                                if (result is { Confirmed: true, Data: List<Content> sortedContent })
+                                {
+                                    var saveResult = await Mediator.Send(new SaveContentCommand {Content = sortedContent});
+                                    if (!saveResult.Success)
+                                    {
+                                        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveResult.Messages.MessagesAsString(), Duration = 4000 });
+                                    }
+                                    else
+                                    {
+                                        StateHasChanged();
+                                    }
+                                }
+                            }
+         
+                        break;
+                }
+            }
+        );*/
+    }
+    
+    private void OnChange()
+    {
+        if (Selection is NavigationItem item)
+        {
+            //TODO - Open editor
+        }
+    }
+
+    public class NavigationItem
+    {
+        public string? Name { get; set; }
+        public string? Url { get; set; }
+        public List<NavigationItem> Children { get; set; } = [];
+        public Guid ContentId { get; set; }
+        public int SortOrder { get; set; }
+    }
+}

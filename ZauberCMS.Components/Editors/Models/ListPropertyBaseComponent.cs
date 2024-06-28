@@ -16,13 +16,13 @@ public class ListPropertyBaseComponent : ComponentBase
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     
-    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
-    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
     [Parameter] public IModalService? ModalService { get; set; }
     
-    protected IEnumerable<string> SelectedValues { get; set; } = Enumerable.Empty<string>();
+    protected IEnumerable<string> SelectedValues { get; set; } = [];
     protected string SelectedValue { get; set; } = string.Empty;
     protected ListPropertySettingsModel SettingsModel { get; set; } = new();
 
@@ -33,7 +33,7 @@ public class ListPropertyBaseComponent : ComponentBase
             //TODO - Must be a better way to do this :/
             try
             {
-                SelectedValues = JsonSerializer.Deserialize<IEnumerable<string>>(Value) ?? Enumerable.Empty<string>();
+                SelectedValues = JsonSerializer.Deserialize<IEnumerable<string>>(Value) ?? [];
             }
             catch (JsonException) // If exception is thrown then it is not valid JSON
             {

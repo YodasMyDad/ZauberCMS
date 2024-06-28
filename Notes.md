@@ -4,8 +4,6 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-Can we have a carousel view for block list editor?
-material icon picker property (Use the icon picker on contenttypes)
 navigation contenttypeproperty (Like umbNav package)
 rating property with stars
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform

@@ -1,7 +1,4 @@
-﻿@using Radzen.Blazor
-@using ZauberCMS.Core.Content.Models
-@using ZauberCMS.Core.Extensions
-@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenNumeric TValue="int" Value="@SavedValue" Change="@(args => OnChange(args))" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter numeric value" }})" />
 

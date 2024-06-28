@@ -37,7 +37,7 @@
     {
         if (!Value.IsNullOrWhiteSpace())
         {
-            ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? new List<Content>();
+            ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? [];
         }
     }
 
