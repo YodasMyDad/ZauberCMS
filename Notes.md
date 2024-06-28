@@ -3,13 +3,10 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-
-Move ContentValue to EF Core as string too big to save Lists (What about block list editor?)
-https://stackoverflow.com/questions/55600500/sharing-a-table-using-entity-framework-core
-
+Move ContentValue to EF Core as string too big to save Lists
 
 can we have a carousel view for block list editor?
-material icon picker property (Use thr icon picker on contenttypes)
+material icon picker property (Use the icon picker on contenttypes)
 navigation contenttypeproperty (Like umbNav package)
 rating property with stars
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform

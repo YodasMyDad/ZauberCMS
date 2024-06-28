@@ -13,7 +13,6 @@ public class UserPropertyValueDbMapping : IEntityTypeConfiguration<UserPropertyV
         builder.Property(x => x.Alias).IsRequired().HasMaxLength(500);
         builder.Property(x => x.Value);
         
-        builder.HasIndex(x => x.ParentId).HasDatabaseName("IX_ZauberUserPropertyValue_ParentId");
         builder.HasIndex(x => x.Alias).HasDatabaseName("IX_ZauberUserPropertyValue_Alias");
     }
 }

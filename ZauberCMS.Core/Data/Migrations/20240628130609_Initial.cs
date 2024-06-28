@@ -26,22 +26,6 @@ namespace ZauberCMS.Core.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ZauberContentPropertyValues",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ParentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Alias = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    ContentTypePropertyId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ZauberContentPropertyValues", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ZauberContentTypes",
                 columns: table => new
                 {
@@ -122,22 +106,6 @@ namespace ZauberCMS.Core.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ZauberRoles", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ZauberUserPropertyValues",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ParentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Alias = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    ContentTypePropertyId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ZauberUserPropertyValues", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -267,6 +235,27 @@ namespace ZauberCMS.Core.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ZauberUserPropertyValues",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ContentTypePropertyId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberUserPropertyValues", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ZauberUserPropertyValues_ZauberUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "ZauberUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ZauberUserRoles",
                 columns: table => new
                 {
@@ -310,6 +299,27 @@ namespace ZauberCMS.Core.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "ZauberContentPropertyValues",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ContentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ContentTypePropertyId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberContentPropertyValues", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ZauberContentPropertyValues_ZauberContent_ContentId",
+                        column: x => x.ContentId,
+                        principalTable: "ZauberContent",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberAudits_Username",
                 table: "ZauberAudits",
@@ -341,9 +351,9 @@ namespace ZauberCMS.Core.Data.Migrations
                 column: "Alias");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ZauberContentPropertyValue_ParentId",
+                name: "IX_ZauberContentPropertyValues_ContentId",
                 table: "ZauberContentPropertyValues",
-                column: "ParentId");
+                column: "ContentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberContentTypes_Alias",
@@ -402,9 +412,9 @@ namespace ZauberCMS.Core.Data.Migrations
                 column: "Alias");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ZauberUserPropertyValue_ParentId",
+                name: "IX_ZauberUserPropertyValues_UserId",
                 table: "ZauberUserPropertyValues",
-                column: "ParentId");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberUserRoles_RoleId",
@@ -428,9 +438,6 @@ namespace ZauberCMS.Core.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ZauberAudits");
-
-            migrationBuilder.DropTable(
-                name: "ZauberContent");
 
             migrationBuilder.DropTable(
                 name: "ZauberContentPropertyValues");
@@ -460,13 +467,16 @@ namespace ZauberCMS.Core.Data.Migrations
                 name: "ZauberUserTokens");
 
             migrationBuilder.DropTable(
-                name: "ZauberContentTypes");
+                name: "ZauberContent");
 
             migrationBuilder.DropTable(
                 name: "ZauberRoles");
 
             migrationBuilder.DropTable(
                 name: "ZauberUsers");
+
+            migrationBuilder.DropTable(
+                name: "ZauberContentTypes");
         }
     }
 }

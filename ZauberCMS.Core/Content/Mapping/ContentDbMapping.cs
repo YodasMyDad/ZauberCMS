@@ -29,11 +29,15 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
             .HasForeignKey(d => d.ParentId)
             .OnDelete(DeleteBehavior.SetNull);
         
+        builder.HasMany(c => c.PropertyData)
+            .WithOne(x => x.Content)
+            .HasForeignKey(p => p.ContentId)
+            .OnDelete(DeleteBehavior.NoAction);
+        
         builder.HasIndex(x => x.Url).HasDatabaseName("IX_ZauberContent_Url");
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberContent_Name");
 
         builder.Ignore(x => x.ContentValues);
-        builder.Ignore(x => x.PropertyData);
         builder.Ignore(x => x.InternalRedirectIdAsString);
     }
 }

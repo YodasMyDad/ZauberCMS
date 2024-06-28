@@ -13,7 +13,6 @@ public class ContentPropertyValueDbMapping : IEntityTypeConfiguration<ContentPro
         builder.Property(x => x.Alias).IsRequired().HasMaxLength(500);
         builder.Property(x => x.Value);
         
-        builder.HasIndex(x => x.ParentId).HasDatabaseName("IX_ZauberContentPropertyValue_ParentId");
         builder.HasIndex(x => x.Alias).HasDatabaseName("IX_ZauberContentPropertyValue_Alias");
     }
 }

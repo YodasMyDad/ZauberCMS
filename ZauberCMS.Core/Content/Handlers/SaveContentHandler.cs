@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Models;
@@ -54,6 +55,9 @@ public class SaveContentHandler(
                     // Map the updated properties
                     mapper.Map(requestContent, content);
                     content.DateUpdated = DateTime.UtcNow;
+                    
+                    // Update ContentPropertyValues
+                    UpdateContentPropertyValues(dbContext, content, requestContent.PropertyData);
                 }
                 
                 // Calculate and set the Path property
@@ -67,6 +71,34 @@ public class SaveContentHandler(
         return handlerResult;
     }
 
+    private void UpdateContentPropertyValues(ZauberDbContext dbContext, Models.Content content, List<ContentPropertyValue> newPropertyValues)
+    {
+        var existingPropertyValues = content.PropertyData;
+
+        // Remove deleted items
+        var deletedItems = existingPropertyValues.Where(epv => newPropertyValues.All(npv => npv.Id != epv.Id)).ToList();
+        foreach (var deletedItem in deletedItems)
+        {
+            dbContext.ContentPropertyValues.Remove(deletedItem);
+        }
+
+        // Add or update items
+        foreach (var newPropertyValue in newPropertyValues)
+        {
+            var existingPropertyValue = existingPropertyValues.FirstOrDefault(epv => epv.Id == newPropertyValue.Id);
+            if (existingPropertyValue == null)
+            {
+                // New property value
+                content.PropertyData.Add(newPropertyValue);
+            }
+            else
+            {
+                // Existing property value, update its properties
+                mapper.Map(newPropertyValue, existingPropertyValue);
+            }
+        }
+    }
+    
     private static List<Guid> BuildPath(Models.Content content, ZauberDbContext dbContext)
     {
         var path = new List<Guid>();
