@@ -43,6 +43,7 @@ public class SaveContentHandler(
             
                 // Get the DB version
                 var content = dbContext.Contents
+                    .Include(x => x.PropertyData)
                     .FirstOrDefault(x => x.Id == requestContent.Id);
 
                 if (content == null)
@@ -73,10 +74,9 @@ public class SaveContentHandler(
 
     private void UpdateContentPropertyValues(ZauberDbContext dbContext, Models.Content content, List<ContentPropertyValue> newPropertyValues)
     {
-        var existingPropertyValues = content.PropertyData;
-
+        
         // Remove deleted items
-        var deletedItems = existingPropertyValues.Where(epv => newPropertyValues.All(npv => npv.Id != epv.Id)).ToList();
+        var deletedItems = content.PropertyData.Where(epv => newPropertyValues.All(npv => npv.Id != epv.Id)).ToList();
         foreach (var deletedItem in deletedItems)
         {
             dbContext.ContentPropertyValues.Remove(deletedItem);
@@ -85,11 +85,11 @@ public class SaveContentHandler(
         // Add or update items
         foreach (var newPropertyValue in newPropertyValues)
         {
-            var existingPropertyValue = existingPropertyValues.FirstOrDefault(epv => epv.Id == newPropertyValue.Id);
+            var existingPropertyValue = content.PropertyData.FirstOrDefault(epv => epv.Id == newPropertyValue.Id);
             if (existingPropertyValue == null)
             {
                 // New property value
-                content.PropertyData.Add(newPropertyValue);
+                dbContext.ContentPropertyValues.Add(newPropertyValue);
             }
             else
             {

@@ -2,26 +2,19 @@
 @using ZauberCMS.Components.ContentComponents
 @using ZauberCMS.Core.Content.Interfaces
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
-<RadzenDropZoneContainer TItem="Content" Data="ContentItems"
-                         ItemSelector="@_itemSelector"
-                         CanDrop="@_canDrop"
-                         Drop="@OnDrop">
-    <ChildContent>
-        <RadzenDropZone Class="rz-display-flex rz-flex-column rz-py-3" Style="flex: 1; gap: 1.5rem; width: 100%;">
-        </RadzenDropZone>
-    </ChildContent>
-    <Template>
 
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" 
-                     @onclick="@(() => UpdateContent(context))">
+
+<SortableList Id="sortable" Items="@ContentItems" OnUpdate="@SortList" Context="item">
+    <SortableItemTemplate>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="margin: 15px 0;"
+                     @onclick="@(() => UpdateContent(item))">
             <div style="width: 100%;">
-                <RenderBlock Content="@(context)" TView="IContentBlockPreview" FallbackComponentType="@(typeof(ContentBlockPreviewFallback))" />
+                <RenderBlock Content="@(item)" TView="IContentBlockPreview" FallbackComponentType="@(typeof(ContentBlockPreviewFallback))" />
             </div>
-            <RadzenButton Click="@(() => DeleteContent(context))">Delete</RadzenButton>
+            <RadzenButton Click="@(() => DeleteContent(item))">Delete</RadzenButton>
         </RadzenStack>
-
-    </Template>
-</RadzenDropZoneContainer>
+    </SortableItemTemplate>
+</SortableList>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
     <RadzenButton Click="@(() => UpdateContent())">Add Content</RadzenButton>
@@ -97,25 +90,27 @@
             }
         }
     }
-
-    // Filter items by zone value
-    private Func<Content, RadzenDropZone<Content>, bool> _itemSelector = (item, zone) => true;
-    private Func<RadzenDropZoneItemEventArgs<Content>, bool> _canDrop = request => true;
-
-    /*private void OnItemRender(RadzenDropZoneItemRenderEventArgs<Content> args)
+    
+    private async Task SortList((int oldIndex, int newIndex) indices)
     {
-        //args.Attributes["class"] = "rz-card rz-variant-filled rz-background-color-base-200";
-    }*/
+        var (oldIndex, newIndex) = indices;
+        
+        var itemToMove = ContentItems[oldIndex];
+        ContentItems.RemoveAt(oldIndex);
 
-    private async Task OnDrop(RadzenDropZoneItemEventArgs<Content> args)
-    {
-        if (args.ToItem != null && args.ToItem != args.Item)
+        if (newIndex < ContentItems.Count)
         {
-            ContentItems.Remove(args.Item);
-            ContentItems.Insert(ContentItems.IndexOf(args.ToItem), args.Item);
-            Value = JsonSerializer.Serialize(ContentItems);
-            await ValueChanged.InvokeAsync(Value);
+            ContentItems.Insert(newIndex, itemToMove);
         }
+        else
+        {
+            ContentItems.Add(itemToMove);
+        }
+        
+        Value = JsonSerializer.Serialize(ContentItems);
+        await ValueChanged.InvokeAsync(Value);
+
+        StateHasChanged();
     }
 
 }
