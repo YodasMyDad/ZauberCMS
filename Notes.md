@@ -3,9 +3,8 @@
 IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
-Move ContentValue to EF Core as string too big to save Lists
 
-can we have a carousel view for block list editor?
+Can we have a carousel view for block list editor?
 material icon picker property (Use the icon picker on contenttypes)
 navigation contenttypeproperty (Like umbNav package)
 rating property with stars
