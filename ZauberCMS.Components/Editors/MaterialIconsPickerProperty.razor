@@ -1,0 +1,38 @@
+﻿@using ZauberCMS.Components.Editors.Dialogs
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+    @if (!Value.IsNullOrWhiteSpace())
+    {
+        <RadzenIcon Icon="@Value" style="font-size: 3rem !important;" />
+    }
+    <RadzenButton Click="@(() => PickIcon())">Pick Icon</RadzenButton>
+</RadzenStack>
+
+@code {
+    public string Name { get; set; } = "Material Icon Picker";
+    public string Alias { get; set; } = "ZauberCMS.MaterialIconPicker";
+    public string Description { get; set; } = "Pick an icon from the Material icons list";
+    public string Icon { get; set; } = "insert_emoticon";
+    public Type? SettingsComponent { get; set; }
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public IModalService? ModalService { get; set; }
+    
+    private async Task PickIcon()
+    {
+        if (ModalService != null)
+        {
+            var dialog = ModalService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
+            var result = await dialog.Result;
+            if (result is { Confirmed: true, Data: string icon })
+            {
+                Value = icon;
+                await ValueChanged.InvokeAsync(Value);
+            }
+        }
+    }
+    
+}
