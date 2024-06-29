@@ -77,7 +77,7 @@
     [Parameter] public Guid? MediaId { get; set; }
     [Parameter] public int MaxAllowedFiles { get; set; } = 30; // Only allow 30 max at a time, should be setting
     [Parameter] public bool OnlyImages { get; set; }
-    [Parameter] public IModalService? ModalService { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
     [Parameter] public EventCallback<List<FileSaveResult>> ValueChanged { get; set; }
     [Parameter] public EventCallback<List<FileSaveResult>> OnSave { get; set; }
     [Parameter] public List<FileSaveResult> FilesToUpload { get; set; } = [];

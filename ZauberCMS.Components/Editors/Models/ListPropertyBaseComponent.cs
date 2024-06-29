@@ -20,7 +20,7 @@ public class ListPropertyBaseComponent : ComponentBase
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
-    [Parameter] public IModalService? ModalService { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
     
     protected IEnumerable<string> SelectedValues { get; set; } = [];
     protected string SelectedValue { get; set; } = string.Empty;

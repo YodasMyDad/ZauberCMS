@@ -5,8 +5,10 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 #### POC to finish
 
 navigation contenttypeproperty (Like umbNav package)
+sort the 404 component and missing view from the appSettings
 Copy the blocks-ui.png for the block list editor (Desktop)
 rating property with stars
+Have an API keys dictionary in appSettings (and editor to pick the keys)
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
 Settings on RTE (Check Umbraco) also ChatGPT add in and media picker add in
 .. Or have ChatGPT property editor

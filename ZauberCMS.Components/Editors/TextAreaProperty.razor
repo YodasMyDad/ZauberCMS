@@ -1,7 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Forms
-@using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Content.Models
-@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <InputTextArea Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
                ValueExpression="@(() => Value)" class="form-control" />
@@ -17,5 +14,5 @@
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
-    [Parameter] public IModalService? ModalService { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
 }

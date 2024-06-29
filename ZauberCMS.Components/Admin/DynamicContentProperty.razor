@@ -8,7 +8,6 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
-    [Parameter] public IModalService? ModalService { get; set; }
 
     private Dictionary<string, object> GetParameters()
     {
@@ -17,9 +16,7 @@
             ["Value"] = Value,
             ["ValueChanged"] = ValueChanged,
             ["Settings"] = Settings,
-            ["Content"] = Content,
-            ["ModalService"] = ModalService,
+            ["Content"] = Content
         };
     }
-
 }

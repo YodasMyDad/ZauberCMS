@@ -1,11 +1,12 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Components.Editors.Dialogs
+@using ZauberCMS.Components.Editors.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Add Navigation Item" Click="AddNavigationItem" />
+    <RadzenButton Variant="Variant.Text" Text="Add Navigation Item" Click="AddNavigationItem"/>
 </RadzenStack>
-
 
 <BaseTree
     T="NavigationItem"
@@ -19,23 +20,21 @@
     Template="@(CreateTreeTemplate<object>())">
 </BaseTree>
 
-
-
 @code {
     public string Name { get; set; } = "Navigation Tree";
     public string Alias { get; set; } = "ZauberCMS.NavigationTree";
     public string Icon { get; set; } = "account_tree";
     public string Description { get; set; } = "A navigation builder in a tree";
     public Type? SettingsComponent { get; set; }
-    
+
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
-    [Parameter] public IModalService? ModalService { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
 
     private object Selection { get; set; } = new();
-    private IEnumerable<NavigationItem> Data { get; set; } = [];
+    private List<NavigationItem> Data { get; set; } = [];
 
     protected override void OnInitialized()
     {
@@ -45,21 +44,50 @@
         }
     }
 
-    private void AddNavigationItem()
+    private async Task AddNavigationItem()
     {
-        //TODO - Open editor
+        if (ModalService != null)
+        {
+            var dialog = ModalService.OpenSidePanel<NavigationItemEditor>("Navigation Item");
+            var result = await dialog.Result;
+            if (result is { Confirmed: true, Data: NavigationItem item })
+            {
+                Data.Add(item);
+                //TODO - Serialise items and add to value
+                await ValueChanged.InvokeAsync(Value);
+            }
+        }
     }
-    
+
+    private async Task UpdateNavigationItem(NavigationItem item)
+    {
+        if (ModalService != null)
+        {
+            var dialog = ModalService.OpenSidePanel<NavigationItemEditor>("Navigation Item",
+                new Dictionary<string, object>
+                {
+                    { "NavigationItem", item }
+                });
+            var result = await dialog.Result;
+            if (result is { Confirmed: true, Data: NavigationItem savedItem })
+            {
+                // Do I need to fish and update the existing item
+                //TODO - Serialise items and add to value
+                await ValueChanged.InvokeAsync(Value);
+            }
+        }
+    }
+
     private void OnExpandHandler(TreeExpandEventArgs args)
     {
         if (args.Value is NavigationItem item)
         {
             args.Children.Data = item.Children;
             args.Children.TextProperty = "Name";
-            args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();            
+            args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
         }
     }
-    
+
     private RenderFragment<T> CreateTreeTemplate<T>() where T : class
     {
         return context => builder =>
@@ -67,11 +95,15 @@
             var treeItem = context as RadzenTreeItem;
             if (treeItem?.Value is NavigationItem item)
             {
+                builder.OpenComponent<RadzenIcon>(0);
+                builder.AddAttribute(1, "Icon", item.ContentId != null ? "note_add" : "description");
+                builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                builder.CloseComponent();
                 builder.AddContent(1, item.Name);
             }
         };
     }
-    
+
     private bool HasChildren(object data)
     {
         if (data is NavigationItem item)
@@ -81,7 +113,7 @@
 
         return false;
     }
-    
+
     private bool ShouldBeExpanded(object data)
     {
         if (data is NavigationItem item)
@@ -91,8 +123,8 @@
 
         return false;
     }
-    
-        private void ItemContextMenu(TreeItemContextMenuEventArgs args)
+
+    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
         /*ContextMenuService.Open(args,
             new List<ContextMenuItem> {
@@ -120,16 +152,16 @@
                             if (delete == true)
                             {
                                 var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id});
-                                NotificationService.Notify(new NotificationMessage { 
-                                    Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
-                                    Summary = result.Success ? "Success" : "Error", 
+                                NotificationService.Notify(new NotificationMessage {
+                                    Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error,
+                                    Summary = result.Success ? "Success" : "Error",
                                     Detail = result.Messages.MessagesAsString(), Duration = 4000 });
                                 if (result.Success)
                                 {
-                                    NavigationManager.NavigateTo("/admin", forceLoad: true); 
+                                    NavigationManager.NavigateTo("/admin", forceLoad: true);
                                 }
                             }
-            
+
                         break;
                     case 3:
                             if (!dbContent.Children.Any())
@@ -140,8 +172,8 @@
                             else
                             {
                                 // Show side panel with sorting of children (Can I use a Radzen component?)
-                                
-                                var dialog = ModalService.OpenSidePanel<SortContent>("Sort Children", 
+
+                                var dialog = ModalService.OpenSidePanel<SortContent>("Sort Children",
                                     new Dictionary<string, object>{ { "ContentId", dbContent.Id }, {"Content", dbContent.Children.OrderBy(x => x.SortOrder).ToList()} });
                                 var result = await dialog.Result;
                                 if (result is { Confirmed: true, Data: List<Content> sortedContent })
@@ -157,27 +189,19 @@
                                     }
                                 }
                             }
-         
+
                         break;
                 }
             }
         );*/
     }
-    
-    private void OnChange()
+
+    private async Task OnChange()
     {
         if (Selection is NavigationItem item)
         {
-            //TODO - Open editor
+            await UpdateNavigationItem(item);
         }
     }
 
-    public class NavigationItem
-    {
-        public string? Name { get; set; }
-        public string? Url { get; set; }
-        public List<NavigationItem> Children { get; set; } = [];
-        public Guid ContentId { get; set; }
-        public int SortOrder { get; set; }
-    }
 }

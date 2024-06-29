@@ -1,5 +1,70 @@
-﻿<h3>NavigationItemEditor</h3>
+﻿@using ZauberCMS.Components.Editors.Models
 
-@code {
+@if (NavigationItem?.ContentId != null)
+{
+    <p>Picked content</p>
+}
+else
+{
+    <EditorRow>
+        <LeftColumn>
+            <PropertyInfo Name="Name" Description="The name of the navigation item"/>
+        </LeftColumn>
+        <CentreColumn>
+            <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-100" aria-label="Name" />
+        </CentreColumn>
+    </EditorRow>
+
+    <EditorRow>
+        <LeftColumn>
+            <PropertyInfo Name="Url" Description="The url of the navigation item"/>
+        </LeftColumn>
+        <CentreColumn>
+            <RadzenTextBox @bind-Value="@NavigationItem!.Url" class="w-100" aria-label="Url" />
+        </CentreColumn>
+    </EditorRow>
+}
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Sort Order" Description="The position in the tree this item is"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@NavigationItem!.SortOrder" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Open In New Window" Description="Open this url in a new window"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@NavigationItem!.OpenInNewWindow" />
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code
+{
+    [Parameter] public NavigationItem? NavigationItem { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    [CascadingParameter] BlazoredModalInstance NavigationItemEditorModal { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        NavigationItem ??= new NavigationItem();
+    }
+
+    private void OpenContentPicker()
+    {
+        
+    }
     
+    private async Task Save()
+    {
+        await NavigationItemEditorModal.CloseAsync(ModalResult.Ok(NavigationItem));
+    }
 }
