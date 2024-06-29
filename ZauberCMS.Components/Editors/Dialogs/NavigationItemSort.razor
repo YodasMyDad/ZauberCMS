@@ -1,0 +1,41 @@
+﻿@using ZauberCMS.Components.Editors.Models
+
+<SortableList Id="sortable" Items="@Parent.Children" OnUpdate="@SortList" Context="item">
+    <SortableItemTemplate>
+        <div>@item.Name</div>
+    </SortableItemTemplate>
+</SortableList>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter, EditorRequired] public NavigationItem Parent { get; set; } = default!;
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    [CascadingParameter] BlazoredModalInstance NavigationItemEditorModal { get; set; } = default!;
+    
+    private void SortList((int oldIndex, int newIndex) indices)
+    {
+        var (oldIndex, newIndex) = indices;
+        
+        var itemToMove = Parent.Children[oldIndex];
+        Parent.Children.RemoveAt(oldIndex);
+
+        if (newIndex < Parent.Children.Count)
+        {
+            Parent.Children.Insert(newIndex, itemToMove);
+        }
+        else
+        {
+            Parent.Children.Add(itemToMove);
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        await NavigationItemEditorModal.CloseAsync(ModalResult.Ok(Parent));
+    }
+}

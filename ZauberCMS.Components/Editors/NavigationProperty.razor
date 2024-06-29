@@ -72,6 +72,21 @@
             }
         }
     }
+    
+    private async Task SortChildren(NavigationItem parent)
+    {
+        if (ModalService != null)
+        {
+            var dict = new Dictionary<string, object> { { "Parent", parent } };
+            var dialog = ModalService.OpenSidePanel<NavigationItemSort>("Sort Items", dict);
+            var result = await dialog.Result;
+            if (result is { Confirmed: true })
+            {
+                Value = JsonSerializer.Serialize(Data);
+                await ValueChanged.InvokeAsync(Value);
+            }
+        }
+    }
 
     private async Task UpdateNavigationItem(NavigationItem item)
     {
@@ -152,6 +167,9 @@
                 {
                     case 1:
                         await AddNavigationItem(navigationItem);
+                        break;
+                    case 3:
+                        await SortChildren(navigationItem);
                         break;
                 }
             }
