@@ -9,7 +9,7 @@
         </LeftColumn>
         <CentreColumn>
             <div class="flex justify-between items-center">
-                <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-100" aria-label="Name" ReadOnly="@(NavigationItem?.ContentId != null)"/>
+                <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-100" aria-label="Name" />
                 @if (NavigationItem?.ContentId != null)
                 {
                     <RadzenButton Icon="remove_circle_outline" Variant="Variant.Text" Click="RemoveContent" class="ml-1"/>
