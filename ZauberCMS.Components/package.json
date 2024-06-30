@@ -6,6 +6,6 @@
     "@tailwindcss/typography": "^0.5.13"
   },
   "scripts": {
-    "site-css": "npx tailwindcss -i tailwind/input.css -o wwwroot/css/admin.css --watch"
+    "site-css": "npx tailwindcss -i tailwind/input.css -o wwwroot/css/admin.css --minify --watch"
   }
 }
