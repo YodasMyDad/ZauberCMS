@@ -2,7 +2,7 @@
 
 <SortableList Id="sortable" Items="@Parent.Children" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
-        <div>@item.Name</div>
+        <PickerItem Text="@item.Name" />
     </SortableItemTemplate>
 </SortableList>
 

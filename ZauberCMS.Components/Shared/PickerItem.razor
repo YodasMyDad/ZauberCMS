@@ -1,0 +1,71 @@
+﻿<div class="pickeritem notextselection flex items-center justify-between my-0.5">
+    @if (ShowDragIcon)
+    {
+        <div class="pr-1 cursor-grab @DragIconCssSelector">
+            <RadzenIcon Icon="drag_handle"/>
+        </div>
+    }
+
+    <div class="flex flex-1 items-center justify-between border p-2 rounded hover:bg-slate-50 @CustomClasses">
+        @if (!HideLeftSection)
+        {
+            <div class="pr-3">
+                @if (HasImage)
+                {
+                    <img src="@($"{Image}?{DefaultImageSize}")" alt="@Text"/>
+                }
+                else if (HasIcon)
+                {
+                    <RadzenIcon Icon="@Icon" Style="@IconStyle"/>
+                }
+            </div>
+        }
+        <div class="flex-1 text-left">
+            @Text
+        </div>  
+        @if (Close.HasDelegate)
+        {
+            <div>
+                <RadzenButton Click="Close" Icon="close"/>
+            </div>
+        }
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Image { get; set; }
+    [Parameter] public string DefaultImageSize { get; set; } = "width=15&height=15";
+    [Parameter] public string DefaultIconFontSize { get; set; } = "1.5rem";
+    [Parameter] public EventCallback Close { get; set; }
+    [Parameter] public string? CustomClasses { get; set; }
+    [Parameter] public bool ShowDragIcon { get; set; }
+    [Parameter] public string? DragIconCssSelector { get; set; } = "dragme";
+    private bool HideLeftSection { get; set; }
+    private bool HasIcon { get; set; }
+    private bool HasImage { get; set; }
+    private string IconStyle => $"font-size: {DefaultIconFontSize}";
+
+    private async Task OnClose()
+    {
+        if (Close.HasDelegate)
+        {
+            await Close.InvokeAsync();
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        HasIcon = !Icon.IsNullOrWhiteSpace();
+        HasImage = !Image.IsNullOrWhiteSpace();
+        HideLeftSection = !HasIcon && !HasImage;
+
+        if (!ShowDragIcon)
+        {
+            CustomClasses += " cursor-grab";
+        }
+    }
+
+}
