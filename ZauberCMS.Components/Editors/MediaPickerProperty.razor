@@ -4,35 +4,21 @@
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
+@using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenDropZoneContainer TItem="Media" Data="MediaItems"
-                         ItemSelector="@_itemSelector"
-                         CanDrop="@_canDrop"
-                         Drop="@OnDrop">
-    <ChildContent>
-        <RadzenDropZone Class="rz-display-flex rz-flex-column rz-py-3" Style="flex: 1; gap: 1rem; width: 100%;">
-        </RadzenDropZone>
-    </ChildContent>
-    <Template>
-
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-            <div style="width: 100%;">
-                <RadzenAlert Icon="@context.MediaType.GetIcon()" Close="@(() => DeleteMedia(context))" Style="margin: 0; padding-top: 3px; padding-bottom: 3px;">
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
-                        @context.Name
-                    </RadzenStack>
-                </RadzenAlert>
-            </div>
-        </RadzenStack>
-
-    </Template>
-</RadzenDropZoneContainer>
+<SortableList Id="sortable" Items="@MediaItems" OnUpdate="@SortList" Context="item">
+    <SortableItemTemplate>
+        <PickerItem Text="@item.Name" 
+                    Icon="@item.MediaType.GetIcon()"
+                    Image="@(item.MediaType == MediaType.Image ? item.Url : string.Empty)"
+                    Close="@(() => DeleteMedia(item))" />
+    </SortableItemTemplate>
+</SortableList>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start">
     <RadzenButton Click="@(() => AddMedia())">Add Media</RadzenButton>
 </RadzenStack>
-
 
 @code {
     [Inject] NotificationService NotificationService { get; set; } = default!;
@@ -51,8 +37,6 @@
 
     // Hold the content guid and name in the list
     private List<Media> MediaItems { get; set; } = [];
-    private readonly Func<Media, RadzenDropZone<Media>, bool> _itemSelector = (item, zone) => true;
-    private readonly Func<RadzenDropZoneItemEventArgs<Media>, bool> _canDrop = request => true;
     private IModalReference? Modal { get; set; }
     private MediaPickerSettings SettingsModel { get; set; } = new();
 
@@ -75,6 +59,12 @@
         {
             SettingsModel = JsonSerializer.Deserialize<MediaPickerSettings>(Settings) ?? new MediaPickerSettings();
         }
+    }
+    
+    private void SortList((int oldIndex, int newIndex) indices)
+    {
+        TupleExtensions.SortList(indices, MediaItems);
+        StateHasChanged();
     }
 
     private async Task DeleteMedia(Media media)

@@ -158,7 +158,7 @@
             new List<ContextMenuItem> {
                 new(){ Text = "Create", Value = 1 },
                 new(){ Text = "Delete", Value = 2 },
-                new(){ Text = "Sort", Value = 3 }
+                new(){ Text = "Sort Children", Value = 3 }
             }, async e =>
             {
                 var navigationItem = (NavigationItem)args.Value;
@@ -166,9 +166,15 @@
                 switch(e.Value)
                 {
                     case 1:
+                        ContextMenuService.Close();
                         await AddNavigationItem(navigationItem);
                         break;
+                    case 2:
+                        ContextMenuService.Close();
+                        await Delete(navigationItem, Data);
+                        break;
                     case 3:
+                        ContextMenuService.Close();
                         await SortChildren(navigationItem);
                         break;
                 }
@@ -176,6 +182,29 @@
         );
     }
 
+    private async Task Delete(NavigationItem item, List<NavigationItem> list)
+    {
+        // Direct delete from list - Check on current level
+        var toBeDeleted = list.FirstOrDefault(i => i.Id == item.Id);
+
+        if (toBeDeleted != null)
+        {
+            // Remove item and return
+            list.Remove(toBeDeleted);
+        }
+        else
+        {
+            // If not at current level, go through children
+            foreach (var child in list)
+            {
+               await Delete(item, child.Children);
+            }
+        }
+        
+        Value = JsonSerializer.Serialize(Data);
+        await ValueChanged.InvokeAsync(Value);
+    }
+    
     private async Task OnChange()
     {
         if (Selection is NavigationItem item)

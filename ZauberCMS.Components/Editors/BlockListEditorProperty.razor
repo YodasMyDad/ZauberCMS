@@ -1,6 +1,7 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.ContentComponents
 @using ZauberCMS.Core.Content.Interfaces
+@using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 
@@ -93,20 +94,7 @@
     
     private async Task SortList((int oldIndex, int newIndex) indices)
     {
-        var (oldIndex, newIndex) = indices;
-        
-        var itemToMove = ContentItems[oldIndex];
-        ContentItems.RemoveAt(oldIndex);
-
-        if (newIndex < ContentItems.Count)
-        {
-            ContentItems.Insert(newIndex, itemToMove);
-        }
-        else
-        {
-            ContentItems.Add(itemToMove);
-        }
-        
+        TupleExtensions.SortList(indices, ContentItems);
         Value = JsonSerializer.Serialize(ContentItems);
         await ValueChanged.InvokeAsync(Value);
 

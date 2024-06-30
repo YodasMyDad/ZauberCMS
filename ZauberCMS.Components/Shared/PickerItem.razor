@@ -9,7 +9,7 @@
     <div class="flex flex-1 items-center justify-between border p-2 rounded hover:bg-slate-50 @CustomClasses">
         @if (!HideLeftSection)
         {
-            <div class="pr-3">
+            <div class="pr-3 flex items-center">
                 @if (HasImage)
                 {
                     <img src="@($"{Image}?{DefaultImageSize}")" alt="@Text"/>

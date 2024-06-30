@@ -1,4 +1,5 @@
 ﻿@using ZauberCMS.Components.Editors.Models
+@using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 
 <SortableList Id="sortable" Items="@Parent.Children" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
@@ -17,20 +18,8 @@
     
     private void SortList((int oldIndex, int newIndex) indices)
     {
-        var (oldIndex, newIndex) = indices;
         
-        var itemToMove = Parent.Children[oldIndex];
-        Parent.Children.RemoveAt(oldIndex);
-
-        if (newIndex < Parent.Children.Count)
-        {
-            Parent.Children.Insert(newIndex, itemToMove);
-        }
-        else
-        {
-            Parent.Children.Add(itemToMove);
-        }
-        
+        TupleExtensions.SortList(indices, Parent.Children);
         StateHasChanged();
     }
 
