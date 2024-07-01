@@ -9,9 +9,7 @@
     <SortableItemTemplate>
         <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="margin: 15px 0;"
                      @onclick="@(() => UpdateContent(item))">
-            <div style="width: 100%;">
                 <RenderBlock Content="@(item)" TView="IContentBlockPreview" FallbackComponentType="@(typeof(ContentBlockPreviewFallback))" />
-            </div>
             <RadzenButton Click="@(() => DeleteContent(item))">Delete</RadzenButton>
         </RadzenStack>
     </SortableItemTemplate>

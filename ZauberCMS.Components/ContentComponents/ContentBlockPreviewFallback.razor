@@ -1,7 +1,16 @@
-﻿<RadzenCard class="p-5 rz-background-color-base-200 rz-text-align-center"
-            Style="width: 100%;">
-    @Content?.Name
-</RadzenCard>
+﻿
+<div class="w-100 grid grid-cols-12">
+    <div class="p-3 flex items-center justify-center border border-r-0 col-span-2">
+        <RadzenIcon Icon="@Content?.ContentType?.Icon" IconStyle="IconStyle.Light" />
+    </div>
+    <div class="p-3 flex-1 border col-span-8">
+        <div class="font-semibold">@Content?.Name</div>
+        <div class="text-slate-500 text-sm">@Content?.ContentType?.Name</div>
+    </div>
+    <div class="p-3 flex items-center justify-center border border-l-0 col-span-2">
+        <RadzenIcon Icon="@Content?.ContentType?.Icon" IconStyle="IconStyle.Light" />
+    </div>
+</div>
 
 @code {
     [Parameter] public Content? Content { get; set; }
