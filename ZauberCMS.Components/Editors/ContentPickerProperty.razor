@@ -6,14 +6,14 @@
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<SortableList Id="sortable" Items="@ContentItems" OnUpdate="@SortList" Context="item">
+<SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
         <PickerItem Text="@item.Name" Icon="@item.ContentType?.Icon" Close="@(() => DeleteContent(item))" />
     </SortableItemTemplate>
 </SortableList>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start">
-    <RadzenButton Click="@(() => AddContent())">Add Content</RadzenButton>
+    <RadzenButton Variant="Variant.Text" Click="@(() => AddContent())">Add Content</RadzenButton>
 </RadzenStack>
 
 @code {

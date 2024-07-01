@@ -5,7 +5,7 @@
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<SortableList Id="sortable" Items="@ContentItems" OnUpdate="@SortList" Context="item">
+<SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
 
         <div class="w-100 flex justify-between items-start border my-1 notextselection cursor-grab">
@@ -30,7 +30,7 @@
 </SortableList>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-    <RadzenButton Click="@(() => UpdateContent())">Add Content</RadzenButton>
+    <RadzenButton Icon="add" Size="ButtonSize.Medium" Click="@(() => UpdateContent())" class="rz-border-radius-10" />
 </RadzenStack>
 
 @code {

@@ -2,7 +2,7 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-    <RadzenButton Click="@(() => PickIcon())">Pick Icon</RadzenButton>
+    <RadzenButton Click="@(() => PickIcon())" Icon="add"  />
     @if (!Value.IsNullOrWhiteSpace())
     {
         <RadzenIcon Icon="@Value" style="font-size: 3rem !important;"/>

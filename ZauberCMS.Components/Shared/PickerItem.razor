@@ -26,7 +26,7 @@
         @if (Close.HasDelegate)
         {
             <div>
-                <RadzenButton Click="Close" Icon="close"/>
+                <RadzenButton Click="Close" Size="ButtonSize.Small" Icon="close" class="rz-border-radius-10" />
             </div>
         }
     </div>
@@ -37,8 +37,8 @@
     [Parameter] public string? Text { get; set; }
     [Parameter] public string? Icon { get; set; }
     [Parameter] public string? Image { get; set; }
-    [Parameter] public string DefaultImageSize { get; set; } = "width=15&height=15";
-    [Parameter] public string DefaultIconFontSize { get; set; } = "1.5rem";
+    [Parameter] public string DefaultImageSize { get; set; } = "width=27&height=27";
+    [Parameter] public string DefaultIconFontSize { get; set; } = "1.7rem";
     [Parameter] public EventCallback Close { get; set; }
     [Parameter] public string? CustomClasses { get; set; }
     [Parameter] public bool ShowDragIcon { get; set; }

@@ -78,7 +78,11 @@
     {
         if (ModalService != null)
         {
-            var dict = new Dictionary<string, object> { { "Items", items } };
+            var dict = new Dictionary<string, object>
+            {
+                { "Items", items },
+                {"PropertyAlias", Alias}
+            };
             var dialog = ModalService.OpenSidePanel<NavigationItemSort>("Sort Items", dict);
             var result = await dialog.Result;
             if (result is { Confirmed: true })

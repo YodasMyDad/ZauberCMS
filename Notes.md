@@ -4,7 +4,6 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-Copy the blocks-ui.png for the block list editor (Desktop)
 Check media picker display now using sortable
 rating property with stars
 Have an API keys dictionary in appSettings (and editor to pick the keys)

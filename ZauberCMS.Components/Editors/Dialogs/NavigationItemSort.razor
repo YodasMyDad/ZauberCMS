@@ -13,6 +13,7 @@
 
 @code {
     [Parameter, EditorRequired] public List<NavigationItem> Items { get; set; } = default!;
+    [Parameter] public string PropertyAlias { get; set; } = "NavigationItemSort";
     [CascadingParameter] public IModalService? ModalService { get; set; }
     [CascadingParameter] BlazoredModalInstance NavigationItemEditorModal { get; set; } = default!;
     

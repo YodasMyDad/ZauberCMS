@@ -98,7 +98,7 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var results = new List<FileSaveResult>();
 
         foreach (var m in media)
@@ -125,6 +125,7 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                 }
 
                 await dbContext.SaveChangesAsync();
+                await appState.NotifyMediaSaved(dbMedia, authState.User.Identity?.Name!);
                 fileSaveResult.Success = true;
             }
             catch (Exception e)
