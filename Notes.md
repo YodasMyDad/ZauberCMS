@@ -4,8 +4,6 @@ IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-navigation contenttypeproperty (Like umbNav package)
-sort the 404 component and missing view from the appSettings
 Copy the blocks-ui.png for the block list editor (Desktop)
 Use sortable on content and media picker items
 rating property with stars

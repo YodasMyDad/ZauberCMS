@@ -1,7 +1,13 @@
-﻿
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentView
+@layout BlankLayout
+
 <PageTitle>Missing View</PageTitle>
 
 <div class="text-center">
     <h3>Missing View</h3>
-    <p>It looks like you haven't selected a Component View, or the Component View has been deleted.</p>
+    <p>It looks like you haven't selected a Component View for the @Content?.Name page, or the Component View has been deleted.</p>
 </div>
+
+@code {
+    [Parameter] public Content? Content { get; set; }
+}

@@ -1,11 +1,11 @@
 ﻿@using Microsoft.AspNetCore.Http
+@implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout BlankLayout
 
 <PageTitle>404 Missing Page</PageTitle>
 
 <div class="text-center">
     <h3>Whooops, we can't find that page!</h3>
-    <p>Have a 404 component in appSettings</p>
 </div>
 
 @code {
@@ -17,4 +17,6 @@
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;    
         }
     }
+
+    public Content? Content { get; set; }
 }

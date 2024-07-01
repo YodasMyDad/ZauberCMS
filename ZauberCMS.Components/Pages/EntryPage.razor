@@ -1,29 +1,14 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using Microsoft.Extensions.Options
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Services
 
-@if (Content != null)
+@if (ComponentView != null)
 {
-    if (ComponentView != null)
-    {
-        <LayoutView Layout="LayoutType">
-            <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />
-        </LayoutView>
-    }
-    else
-    {
-        @* Should really make these pages and redirect to them *@
-        <LayoutView Layout="typeof(BlankLayout)">
-            <MissingView />
-        </LayoutView>
-    }
-}
-else
-{
-    @* Should really make these pages and redirect to them *@
-    <LayoutView Layout="typeof(BlankLayout)">
-        <NotFound404 />
+    <LayoutView Layout="LayoutType">
+        <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />
     </LayoutView>
 }
 
@@ -31,6 +16,7 @@ else
     
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public LayoutResolverService LayoutResolver { get; set; } = default!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
     
     [Parameter] public string? Slug { get; set; }
     
@@ -47,11 +33,31 @@ else
         
         if (Content != null)
         {
+            //Found content, now find the view to display it
             if (AllContentViews.TryGetValue(Content.ViewComponent, out var contentView))
             {
                 ComponentView = contentView;
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
                 Parameters = new Dictionary<string, object> { ["Content"] = Content };
+            }
+            else
+            {
+                // No view selected, let the user know
+                if(AllContentViews.TryGetValue(Settings.Value.MissingView!, out var missing))
+                {
+                    ComponentView = missing;
+                    LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                    Parameters = new Dictionary<string, object> { ["Content"] = Content };
+                }
+            }
+        }
+        else 
+        {
+            // No content (404) Show not found component
+            if(AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
+            {
+                ComponentView = notFound;
+                LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
             }
         }
     }

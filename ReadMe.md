@@ -34,6 +34,8 @@ AppState
 IStorageProvider  
 Querying for data  
 Saving data  
+AccountLayout
+404Component
 
 ### Entity Framework
 

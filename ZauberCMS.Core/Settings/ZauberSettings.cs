@@ -14,6 +14,8 @@ public class ZauberSettings
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new();
     public Identity Identity { get; set; } = new();
+    public string? NotFoundComponent { get; set; }
+    public string? MissingView { get; set; }
 }
 
 public class Identity
