@@ -8,8 +8,12 @@
             <PropertyInfo Name="Name" Description="The name of the navigation item"/>
         </LeftColumn>
         <CentreColumn>
+            @if (NavigationItem?.ContentId != null)
+            {
+                <div class="text-xs font-extralight text-slate-300">ID: @NavigationItem.Id</div>
+            }
             <div class="flex justify-between items-center">
-                <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-100" aria-label="Name" />
+                <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-100" aria-label="Name"/>
                 @if (NavigationItem?.ContentId != null)
                 {
                     <RadzenButton Icon="remove_circle_outline" Variant="Variant.Text" Click="RemoveContent" class="ml-1"/>

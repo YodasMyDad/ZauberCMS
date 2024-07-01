@@ -4,10 +4,6 @@
 @using ZauberCMS.Components.Editors.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Text" Text="Add Navigation Item" Click="@(() => AddNavigationItem())"/>
-</RadzenStack>
-
 <BaseTree
     T="NavigationItem"
     Data="@Data"
@@ -19,6 +15,11 @@
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
     Template="@(CreateTreeTemplate<object>())">
 </BaseTree>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Gap="5" Style="margin-top: 0; padding-bottom: 0; padding-top: 10px;">
+    <RadzenButton Variant="Variant.Text" Text="Add Item" Click="@(() => AddNavigationItem())"/>
+    <RadzenButton Variant="Variant.Text" Text="Sort Items" Click="@(() => SortChildren(Data))"/>
+</RadzenStack>
 
 @code {
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
@@ -73,11 +74,11 @@
         }
     }
     
-    private async Task SortChildren(NavigationItem parent)
+    private async Task SortChildren(List<NavigationItem> items)
     {
         if (ModalService != null)
         {
-            var dict = new Dictionary<string, object> { { "Parent", parent } };
+            var dict = new Dictionary<string, object> { { "Items", items } };
             var dialog = ModalService.OpenSidePanel<NavigationItemSort>("Sort Items", dict);
             var result = await dialog.Result;
             if (result is { Confirmed: true })
@@ -152,14 +153,29 @@
         return false;
     }
 
+    private List<ContextMenuItem> InlineMethod(TreeItemContextMenuEventArgs args)
+    {
+        var items = new List<ContextMenuItem>();
+        // Some logic here
+        if (args.Value is NavigationItem navigationItem)
+        {
+            items.Add(new ContextMenuItem { Text = "Create", Value = 1 });
+            items.Add(new ContextMenuItem { Text = "Delete", Value = 2 });
+            
+            if (navigationItem.Children.Any())
+            {
+                items.Add(new ContextMenuItem { Text = "Sort", Value = 3 });   
+            }
+        }
+        
+        return items;
+    }
+    
     private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
         ContextMenuService.Open(args,
-            new List<ContextMenuItem> {
-                new(){ Text = "Create", Value = 1 },
-                new(){ Text = "Delete", Value = 2 },
-                new(){ Text = "Sort Children", Value = 3 }
-            }, async e =>
+            InlineMethod(args), 
+            async e =>
             {
                 var navigationItem = (NavigationItem)args.Value;
                 //var text = args.Text;
@@ -175,7 +191,7 @@
                         break;
                     case 3:
                         ContextMenuService.Close();
-                        await SortChildren(navigationItem);
+                        await SortChildren(navigationItem.Children);   
                         break;
                 }
             }
