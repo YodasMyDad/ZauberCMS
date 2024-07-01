@@ -24,7 +24,7 @@ Update ReadMe and add docs
 Find someone to help with the nuget packaging. Need to install site, but have Components/Core as seperate nuget package that people reference in other projects
 
 ### Future
-Add languages for admin
+
 Rework the media editing/UI it's awful
 EF Core Query Caching? (https://www.nuget.org/packages/Z.EntityFramework.Plus.EFCore/) - Anything else? Does this auto clear?
 look into how to ship with different migrations based on Db

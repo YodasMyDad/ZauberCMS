@@ -11,7 +11,6 @@ public class ContentMapper : Profile
             .ForMember(x => x.Children, opt => opt.Ignore())
             .ForMember(x => x.Parent, opt => opt.Ignore())
             .ForMember(x => x.PropertyData, opt => opt.Ignore())
-            .ForMember(x => x.ContentValues, opt => opt.Ignore())
             .ForMember(x => x.InternalRedirectIdAsString, opt => opt.Ignore());
     }
 }

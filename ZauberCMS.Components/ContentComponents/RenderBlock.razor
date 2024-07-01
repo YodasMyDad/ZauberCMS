@@ -9,11 +9,11 @@
     
     if (blockViewPair.Value != null)
     {
-        <DynamicComponent Parameters="@(new Dictionary<string, object> { { "Content", Content } })" Type="@blockViewPair.Value.GetType()" />
+        <DynamicComponent Parameters="@(Parameters)" Type="@blockViewPair.Value.GetType()" />
     }
     else if (FallbackComponentType != null)
     {
-        <DynamicComponent Parameters="@(new Dictionary<string, object> { { "Content", Content } })" Type="@FallbackComponentType" />
+        <DynamicComponent Parameters="@(Parameters)" Type="@FallbackComponentType" />
     }
 }
 
@@ -22,10 +22,13 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Type? FallbackComponentType { get; set; }
+    [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
+    
     private Dictionary<string, TView>? BlockViews { get; set; }
 
     protected override void OnInitialized()
     {
+        Parameters.Add("Content", Content );
         BlockViews = ExtensionManager.GetInstances<TView>(true);
     }
 }

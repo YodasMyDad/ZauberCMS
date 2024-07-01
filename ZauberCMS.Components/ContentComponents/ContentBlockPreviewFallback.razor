@@ -1,17 +1,8 @@
 ﻿
-<div class="w-100 grid grid-cols-12">
-    <div class="p-3 flex items-center justify-center border border-r-0 col-span-2">
-        <RadzenIcon Icon="@Content?.ContentType?.Icon" IconStyle="IconStyle.Light" />
-    </div>
-    <div class="p-3 flex-1 border col-span-8">
-        <div class="font-semibold">@Content?.Name</div>
-        <div class="text-slate-500 text-sm">@Content?.ContentType?.Name</div>
-    </div>
-    <div class="p-3 flex items-center justify-center border border-l-0 col-span-2">
-        <RadzenIcon Icon="@Content?.ContentType?.Icon" IconStyle="IconStyle.Light" />
-    </div>
-</div>
-
+<div class="font-semibold">@Content?.Name</div>
+<div class="text-slate-500 text-sm">@ContentType?.Name</div>
+        
 @code {
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public ContentType? ContentType { get; set; }
 }

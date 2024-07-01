@@ -1,17 +1,31 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.ContentComponents
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-
 <SortableList Id="sortable" Items="@ContentItems" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="margin: 15px 0;"
-                     @onclick="@(() => UpdateContent(item))">
-                <RenderBlock Content="@(item)" TView="IContentBlockPreview" FallbackComponentType="@(typeof(ContentBlockPreviewFallback))" />
-            <RadzenButton Click="@(() => DeleteContent(item))">Delete</RadzenButton>
-        </RadzenStack>
+
+        <div class="w-100 flex justify-between items-start border my-1 notextselection cursor-grab">
+            <div class="p-3 flex items-center justify-center">
+                <RadzenIcon Icon="@(ContentTypes[item!.ContentTypeId].Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600" />
+            </div>
+            <div class="p-3 flex-1 col-span-8 border-l border-r">
+                <RenderBlock Content="@(item)"
+                             TView="IContentBlockPreview"
+                             FallbackComponentType="@(typeof(ContentBlockPreviewFallback))" 
+                             Parameters="@(new Dictionary<string, object> { { nameof(IContentBlockPreview.ContentType), ContentTypes[item!.ContentTypeId]} })"/>
+            </div>
+            <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => UpdateContent(item))">
+                <RadzenIcon Icon="settings" Style="font-size: 2rem" class="text-slate-600" />
+            </div>
+            <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => DeleteContent(item))">
+                <RadzenIcon Icon="delete" Style="font-size: 2rem" class="text-slate-600" />
+            </div>
+        </div>
+     
     </SortableItemTemplate>
 </SortableList>
 
@@ -31,15 +45,23 @@
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
     private List<Content> ContentItems { get; set; } = new();
+    private Dictionary<Guid, ContentType> ContentTypes { get; set; } = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await PopulateContentTypes();
         if (!Value.IsNullOrWhiteSpace())
         {
             ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? [];
         }
     }
 
+    private async Task PopulateContentTypes()
+    {
+        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { AmountPerPage = 300});
+        ContentTypes = contentTypes.Items.ToDictionary(x => x.Id, x => x);
+    }
+    
     private void DeleteContent(Content content)
     {
         var index = ContentItems.FindIndex(c => c.Id == content.Id);
@@ -84,19 +106,30 @@
                     ContentItems.Add(content);
                 }
 
-                Value = JsonSerializer.Serialize(ContentItems);
-                await ValueChanged.InvokeAsync(Value);
+                await SaveItems();
             }
         }
+    }
+
+    private async Task SaveItems()
+    {
+        foreach (var content in ContentItems)
+        {
+            // Remove content type and content values as don't want to serialise this
+            content.ContentType = null;
+            content.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
+        }
+        
+        Value = JsonSerializer.Serialize(ContentItems);
+        await ValueChanged.InvokeAsync(Value);
     }
     
     private async Task SortList((int oldIndex, int newIndex) indices)
     {
         TupleExtensions.SortList(indices, ContentItems);
-        Value = JsonSerializer.Serialize(ContentItems);
-        await ValueChanged.InvokeAsync(Value);
-
+        await SaveItems();
         StateHasChanged();
     }
+
 
 }

@@ -262,8 +262,6 @@ else
         {
             if (IsBlockList == true)
             {
-                //TODO - We need to think about validating Content in blocklists!
-                Content.ToBlockListItem(ContentType);
                 await ContentEditorModal.CloseAsync(ModalResult.Ok(Content));
             }
             else
