@@ -16,6 +16,7 @@ public class ZauberSettings
     public Identity Identity { get; set; } = new();
     public string? NotFoundComponent { get; set; }
     public string? MissingView { get; set; }
+    public Dictionary<string, string> ApiKeys { get; set; } = [];
 }
 
 public class Identity
