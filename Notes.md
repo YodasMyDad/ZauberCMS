@@ -1,8 +1,6 @@
 
 #### POC to finish
 
-Have an API keys dictionary in appSettings (and editor to pick the keys)
-Restrict admin by ip address (Do in parameters set on SectionLayout then send to logout, store these in appsettings?)
 Need a copy content type menu (Append Copy of to name and alias)
 ContentType alias needs to be unique, need to check before new one created
 Show Audit data in a dashboard? Or a tree for settings (Settings tree headings on Umb, Structure, Templating, Advanced)

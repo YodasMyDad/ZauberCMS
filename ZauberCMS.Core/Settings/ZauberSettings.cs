@@ -17,6 +17,7 @@ public class ZauberSettings
     public string? NotFoundComponent { get; set; }
     public string? MissingView { get; set; }
     public Dictionary<string, string> ApiKeys { get; set; } = [];
+    public List<string> AllowedAdminIpAddress { get; set; } = [];
 }
 
 public class Identity

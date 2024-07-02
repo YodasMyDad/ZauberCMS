@@ -1,5 +1,6 @@
-﻿@using Microsoft.AspNetCore.Authorization
-@using ZauberCMS.Core
+﻿@using Microsoft.AspNetCore.Http
+@using ZauberCMS.Core.Settings
+@using Microsoft.Extensions.Options
 @inherits LayoutComponentBase
 
 <HeadContent>
@@ -34,6 +35,26 @@
 </RadzenLayout>
 
 @code {
+    [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
+    [CascadingParameter] public HttpContext? HttpContext { get; set; }
+    
+    protected override void OnParametersSet()
+    {
+        if (ZauberSettings.Value.AllowedAdminIpAddress.Any() && HttpContext != null)
+        {
+            // Someone has set an ip address, so check this persons IP
+            var usersIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            if (!usersIp.IsNullOrWhiteSpace())
+            {
+                if (!ZauberSettings.Value.AllowedAdminIpAddress.Contains(usersIp))
+                {
+                    // Log them out and redirect
+                    NavigationManager.NavigateTo("/api/auth/logout", true);
+                }
+            }
+        }
+    }
+
     private string? SectionAlias { get; set; }
     public void SetSection(string value)
     {
