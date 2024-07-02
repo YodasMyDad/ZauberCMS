@@ -1,17 +1,13 @@
-### TODO
-
-IMPORTANT!! DO NOT WORRY ABOUT UI/UX!!! JUST MAKE WORK, THIS IS A POC!
 
 #### POC to finish
 
-rating property with stars
 Have an API keys dictionary in appSettings (and editor to pick the keys)
 Restrict admin by ip address (Do in parameters set on SectionLayout then send to logout, store these in appsettings?)
 Need a copy content type menu (Append Copy of to name and alias)
 ContentType alias needs to be unique, need to check before new one created
 Show Audit data in a dashboard? Or a tree for settings (Settings tree headings on Umb, Structure, Templating, Advanced)
  -- Think Content Types should be a tree with different branches
-Re-style media, it's awful (Need to re-do provider to save media not files)
+Re-do media, it's awful (Need to re-do provider to save media not files)
 Go through all TODO comments and try to fix all warnings
 Need to delete all migrations, create one and see if it works with SQLite & also SQLServer
 Update ReadMe and add docs (How do other sites do it?)
