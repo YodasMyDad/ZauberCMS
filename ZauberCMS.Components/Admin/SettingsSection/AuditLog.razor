@@ -1,0 +1,38 @@
+﻿@page "/admin/settings/auditlog"
+@using ZauberCMS.Core.Audit.Commands
+@using ZauberCMS.Core.Audit.Models
+@layout SectionLayout
+
+<PageTitle>Audit Log</PageTitle>
+
+<RadzenDataGrid AllowFiltering="true"
+                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                AllowPaging="true"
+                PageSize="20"
+                AllowSorting="true"
+                Data="@AuditLogs"
+                SelectionMode="DataGridSelectionMode.Single">
+    <Columns>
+        <RadzenDataGridColumn Property="Username" Title="Username"/>
+        <RadzenDataGridColumn Property="Description" Title="Description"/>
+        <RadzenDataGridColumn Property="DateCreated" Title="Created">
+            <Template Context="data">
+                @data.DateCreated.Humanize()
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
+
+    private IEnumerable<Audit> AuditLogs { get; set; } = [];
+    
+    protected override async Task OnInitializedAsync()
+    {
+        Layout?.SetSection(Constants.Sections.SettingsSection);
+        var items = await Mediator.Send(new QueryAuditsCommand{AmountPerPage = 1000});
+        AuditLogs = items.Items;
+    }
+}
