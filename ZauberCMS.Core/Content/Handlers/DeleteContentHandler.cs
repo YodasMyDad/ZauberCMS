@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data;
@@ -21,6 +22,14 @@ public class DeleteContentHandler(IServiceProvider serviceProvider, AppState app
         var content = dbContext.Contents.FirstOrDefault(x => x.Id == request.ContentId);
         if (content != null)
         {
+            //Check if it has children
+            var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
+            if (children.Any())
+            {
+                handlerResult.AddMessage("Unable to delete as this content has child content, delete or move those items first", ResultMessageType.Error);
+                return handlerResult;
+            }
+
             dbContext.Contents.Remove(content);
             await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
             return await dbContext.SaveChangesAndLog(content, handlerResult, cancellationToken);

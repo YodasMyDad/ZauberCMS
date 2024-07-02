@@ -20,7 +20,7 @@ public class MediaDbMapping : IEntityTypeConfiguration<Models.Media>
         builder.HasOne(d => d.Parent)
             .WithMany(p => p.Children)
             .HasForeignKey(d => d.ParentId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.HasIndex(x => x.Url).HasDatabaseName("IX_ZauberMedia_Url");
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberMedia_Name");

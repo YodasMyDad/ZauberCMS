@@ -11,7 +11,7 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations
 {
     [DbContext(typeof(ZauberDbContext))]
-    [Migration("20240628130609_Initial")]
+    [Migration("20240702154547_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -560,7 +560,7 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.HasOne("ZauberCMS.Core.Content.Models.Content", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ContentType");
 
@@ -583,7 +583,7 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.HasOne("ZauberCMS.Core.Media.Models.Media", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Parent");
                 });

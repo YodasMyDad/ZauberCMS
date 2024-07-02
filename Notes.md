@@ -1,7 +1,6 @@
 
 #### POC Release TODO
 
-Need to delete all migrations, create one and see if it works with SQLite & also SQLServer
 Re-do media, it's awful (Need to re-do provider to save media not files)
 Go through all TODO comments and try to fix all warnings
 Update ReadMe and add docs (How do other sites do it?)

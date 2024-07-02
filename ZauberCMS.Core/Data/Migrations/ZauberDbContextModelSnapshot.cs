@@ -557,7 +557,7 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.HasOne("ZauberCMS.Core.Content.Models.Content", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ContentType");
 
@@ -580,7 +580,7 @@ namespace ZauberCMS.Core.Data.Migrations
                     b.HasOne("ZauberCMS.Core.Media.Models.Media", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Parent");
                 });

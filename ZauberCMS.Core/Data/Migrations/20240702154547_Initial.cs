@@ -83,8 +83,7 @@ namespace ZauberCMS.Core.Data.Migrations
                         name: "FK_ZauberMedia_ZauberMedia_ParentId",
                         column: x => x.ParentId,
                         principalTable: "ZauberMedia",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -168,8 +167,7 @@ namespace ZauberCMS.Core.Data.Migrations
                         name: "FK_ZauberContent_ZauberContent_ParentId",
                         column: x => x.ParentId,
                         principalTable: "ZauberContent",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
