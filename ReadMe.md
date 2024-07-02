@@ -11,7 +11,7 @@ You can see what items are left to do before this becomes an alpha release here
 
 _Core tech used is: .Net 8, Blazor, EF Core, Identity, Mediatr, Radzen Components_
 
-The video below shows the starter site being built. It covers building a site from nothing, to complete finished site.
+The video below shows the starter site being built. It covers building a site from nothing, to complete finished site. If you have never used, Umbraco then I highly recommend watching it.
 
 **Add Starter Site Build Video**
 
