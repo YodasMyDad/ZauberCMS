@@ -157,7 +157,7 @@
         return false;
     }
 
-    private List<ContextMenuItem> InlineMethod(TreeItemContextMenuEventArgs args)
+    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
     {
         var items = new List<ContextMenuItem>();
         // Some logic here
@@ -178,7 +178,7 @@
     private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
         ContextMenuService.Open(args,
-            InlineMethod(args), 
+            MenuItems(args), 
             async e =>
             {
                 var navigationItem = (NavigationItem)args.Value;

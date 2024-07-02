@@ -14,8 +14,6 @@ public class SaveContentTypeHandler(
     IMapper mapper)
     : IRequestHandler<SaveContentTypeCommand, HandlerResult<ContentType>>
 {
-
-    
     public async Task<HandlerResult<ContentType>> Handle(SaveContentTypeCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
@@ -36,6 +34,15 @@ public class SaveContentTypeHandler(
 
             if (contentType == null)
             {
+                // Check if the ContentType.Alias is unique
+                var containsAlias = dbContext.ContentTypes.Any(x => x.Alias == request.ContentType.Alias);
+                if (containsAlias)
+                {
+                    // If the ContentType.Alias is not unique
+                    handlerResult.AddMessage("Content Type Alias already exists, change the content type name", ResultMessageType.Error);
+                    return handlerResult;
+                }
+                
                 contentType = request.ContentType;
                 dbContext.ContentTypes.Add(contentType);
             }

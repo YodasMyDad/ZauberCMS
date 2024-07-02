@@ -1,95 +1,267 @@
-﻿@using ZauberCMS.Core
-@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared
+@using ZauberCMS.Components.Admin.Trees
 
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 <div class="rz-pb-2">
     <div class="rz-px-4 rz-pt-4 rz-pb-1">
-        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Content Types</RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Structure</RadzenText>
     </div>
-    <RadzenTree Data="@ContentTypes" Change="@OnChange" @bind-Value="@Selection">
-        <RadzenTreeLevel Expanded="@ShouldBeExpanded" TextProperty="Name">
-            <Template>
-                @{ var content = context.Value as ContentType; }
-                @if (content?.Icon.IsNullOrWhiteSpace() == false)
-                {
-                <RadzenIcon Icon="@content.Icon" style="font-weight: 300; color: dimgray;"/>
-                }
-                @content?.Name
-            </Template>
-        </RadzenTreeLevel>
-    </RadzenTree>
+    <BaseTree
+        T="TreeStub"
+        Data="@StructureData"
+        OnExpand="@OnExpandHandler"
+        OnChange="@OnChange"
+        @bind-Value="@Selection"
+        HasChildren="@(e => HasChildren(e))"
+        ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+        OnItemContextMenu="@ItemContextMenu"
+        Template="@(CreateTreeTemplate<object>())">
+    </BaseTree>
 </div>
 
 <div class="rz-pb-2">
     <div class="rz-px-4 rz-pt-4 rz-pb-1">
-        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Element Types</RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Advanced</RadzenText>
     </div>
-    <RadzenTree Data="@ElementTypes" Change="@OnChange" @bind-Value="@Selection">
-        <RadzenTreeLevel Expanded="@ShouldBeExpanded" TextProperty="Name">
-            <Template>
-                @{ var content = context.Value as ContentType; }
-                @if (content?.Icon.IsNullOrWhiteSpace() == false)
-                {
-                <RadzenIcon Icon="@content.Icon" style="font-weight: 300; color: dimgray;"/>
-                }
-                @content?.Name
-            </Template>
-        </RadzenTreeLevel>
-    </RadzenTree>
+    <BaseTree
+        T="TreeStub"
+        Data="@AdvancedData"
+        OnExpand="@OnExpandHandler"
+        OnChange="@OnChange"
+        @bind-Value="@Selection"
+        HasChildren="@(e => HasChildren(e))"
+        ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+        Template="@(CreateTreeTemplate<object>())">
+    </BaseTree>
 </div>
 
 @code {
-    
+
     public string Heading => "";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.SettingsSection;
-    
+
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
 
-    private List<ContentType> ContentTypes { get; set; } = [];
-    private List<ContentType> ElementTypes { get; set; } = [];
+    private IEnumerable<TreeStub> StructureData { get; set; } = [];
+    private IEnumerable<TreeStub> AdvancedData { get; set; } = [];
     private object? Selection { get; set; }
 
     private bool ShouldBeExpanded(object data)
     {
-        /*if (data is Content content)
-        {
-            return HasChildren(content) && content.ParentId == null;
-        }*/
-
         return false;
     }
-    
+
     protected override async Task OnInitializedAsync()
     {
         await DataRefresh();
         AppState.OnContentTypeChanged += HandleContentTypeTreeChanged;
     }
     
+    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
+    {
+        var items = new List<ContextMenuItem>();
+        // Some logic here
+        if (args.Value is TreeBranch treeBranch)
+        {
+            if (treeBranch.BranchType == typeof(ContentType))
+            {
+                items.Add(new ContextMenuItem { Text = "Copy", Value = 1 });   
+            }
+        }
+        
+        return items;
+    }
+    
+    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
+    {
+        ContextMenuService.Open(args,
+            MenuItems(args), 
+            async e =>
+            {
+                if (args.Value is TreeBranch treeBranch)
+                {
+                    if (treeBranch.BranchType == typeof(ContentType))
+                    {
+                        switch(e.Value)
+                        {
+                            case 1:
+                                NavigationManager.NavigateTo($"/admin/copycontentype/{treeBranch.Id}", true);
+                                break;
+                        }     
+                    }
+                }
+            }
+        );
+    }
+    
+
     private async Task HandleContentTypeTreeChanged(ContentType? contentType, string username)
     {
         await DataRefresh();
         StateHasChanged();
     }
-    
+
     private async Task DataRefresh()
+    {
+        await PrepareStructureTree();
+        PrepareAdvancedTree();
+    }
+
+    private bool HasChildren(object data)
+    {
+        return data switch
+        {
+            TreeStub tree => tree.Branches.Any(),
+            TreeBranch branch => branch.Branches.Any(),
+            _ => false
+        };
+    }
+
+    private static void OnExpandHandler(TreeExpandEventArgs args)
+    {
+        switch (args.Value)
+        {
+            case TreeStub treeStub:
+                if (treeStub.Branches.Any())
+                {
+                    args.Children.Data = treeStub.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                }
+                break;
+            case TreeBranch branch:
+                if (branch.Branches.Any())
+                {
+                    args.Children.Data = branch.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();   
+                }
+                break;
+        }
+    }
+
+    private static RenderFragment<T> CreateTreeTemplate<T>() where T : class
+    {
+        return context => builder =>
+        {
+            var treeItem = context as RadzenTreeItem;
+            switch (treeItem?.Value)
+            {
+                case TreeStub treeStub:
+                    builder.OpenComponent<RadzenIcon>(0);
+                    builder.AddAttribute(1, "Icon", treeStub.Icon);
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+                    builder.AddContent(3, treeStub.Name);
+                    break;
+                case TreeBranch branch:
+                    builder.OpenComponent<RadzenIcon>(0);
+                    builder.AddAttribute(1, "Icon", branch.Icon);
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+                    builder.AddContent(3, branch.Name);
+                    break;
+            }
+        };
+    }
+
+    private async Task PrepareStructureTree()
     {
         var items = await Mediator.Send(new QueryContentTypesCommand
         {
             OrderBy = GetContentTypesOrderBy.Name,
             AmountPerPage = 1000 // Meh
         });
-        ContentTypes = items.Items.Where(x => x.IsElementType != true).ToList();
-        ElementTypes = items.Items.Where(x => x.IsElementType).ToList();
+        var contentTypes = items.Items.Where(x => x.IsElementType != true).ToList();
+        var elementTypes = items.Items.Where(x => x.IsElementType).ToList();
+
+        var tree = new List<TreeStub>();
+
+        var contentTypeTree = new TreeStub
+        {
+            Name = "Content Types",
+            Icon = "content_copy",
+            SortOrder = 1
+        };
+
+        foreach (var contentType in contentTypes)
+        {
+            contentTypeTree.Branches.Add(new TreeBranch
+            {
+                Id = contentType.Id,
+                Icon = contentType.Icon,
+                Name = contentType.Name,
+                BranchType = typeof(ContentType)
+            });
+        }
+
+        var elementTypeTree = new TreeStub
+        {
+            Name = "Element Types",
+            Icon = "explicit",
+            SortOrder = 2
+        };
+
+        foreach (var contentType in elementTypes)
+        {
+            elementTypeTree.Branches.Add(new TreeBranch
+            {
+                Id = contentType.Id,
+                Icon = contentType.Icon,
+                Name = contentType.Name,
+                BranchType = typeof(ContentType)
+            });
+        }
+
+        tree.Add(contentTypeTree);
+        tree.Add(elementTypeTree);
+
+        StructureData = tree;
     }
-    
+
+    private void PrepareAdvancedTree()
+    {
+        var tree = new List<TreeStub>();
+
+        var auditTree = new TreeStub
+        {
+            Name = "Audit Log",
+            Icon = "sync_alt",
+            SortOrder = 1,
+            Url = "/admin/settings/auditlog"
+        };
+
+        tree.Add(auditTree);
+        AdvancedData = tree;
+    }
+
     void OnChange()
     {
-        if (Selection is ContentType contentType)
+        switch (Selection)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontentype/{contentType.Id}", forceLoad:true);
+            case TreeStub treeStub:
+            {
+                if (!treeStub.Url.IsNullOrWhiteSpace())
+                {
+                    NavigationManager.NavigateTo(treeStub.Url);
+                }
+
+                break;
+            }
+            case TreeBranch treeBranch:
+            {
+                if (treeBranch.BranchType == typeof(ContentType))
+                {
+                    NavigationManager.NavigateTo($"/admin/updatecontentype/{treeBranch.Id}");
+                }
+
+                break;
+            }
         }
     }
 
@@ -97,4 +269,5 @@
     {
         AppState.OnContentTypeChanged -= HandleContentTypeTreeChanged;
     }
+
 }

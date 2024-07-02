@@ -1,8 +1,8 @@
 ﻿@page "/admin/createcontentype"
 @page "/admin/updatecontentype/{ContentTypeId:guid}"
+@page "/admin/copycontentype/{CopyContentTypeId:guid}"
 @using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Components.Editors.Dialogs
-@using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
@@ -148,6 +148,7 @@
     [Inject] public ValidateService<ContentType> ValidateService { get; set; } = default!;
     
     [Parameter] public Guid? ContentTypeId { get; set; }
+    [Parameter] public Guid? CopyContentTypeId { get; set; }
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
@@ -160,9 +161,8 @@
     private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
     private AuthenticationState AuthState { get; set; } = default!;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        Layout?.SetSection(Constants.Sections.SettingsSection);
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         ContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         InitializeContentViews();
@@ -173,7 +173,22 @@
             ShowDeleteButton = true;
         }
 
+        if (CopyContentTypeId != null)
+        {
+            // Should this be done here?
+            var contentTypeToCopy = await Mediator.Send(new GetContentTypeCommand { Id = CopyContentTypeId.Value });
+            ContentType = contentTypeToCopy;
+            ContentType.Name = string.Concat("Copy Of ", contentTypeToCopy.Name);
+            ContentType.Alias = string.Concat("CopyOf", contentTypeToCopy.Alias);
+            ContentType.Id = Guid.NewGuid().NewSequentialGuid();
+        }
+
         InitializeTabsAndSortOrders();
+    }
+
+    protected override void OnInitialized()
+    {
+        Layout?.SetSection(Constants.Sections.SettingsSection);
     }
 
     private async Task SelectIcon()

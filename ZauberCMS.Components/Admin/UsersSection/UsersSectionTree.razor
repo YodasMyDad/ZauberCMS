@@ -4,6 +4,7 @@
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
@@ -22,7 +23,7 @@
     public string Heading => "User Management";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.UsersSection;
-    private IEnumerable<UsersTreeStub> TreeItems { get; set; } = [];
+    private IEnumerable<TreeStub> TreeItems { get; set; } = [];
     private object? Selection { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -50,8 +51,8 @@
             AmountPerPage = 100 // Should never be more than 100 roles!
         });
 
-        var tree = new List<UsersTreeStub>();
-        var usersTree = new UsersTreeStub
+        var tree = new List<TreeStub>();
+        var usersTree = new TreeStub
         {
             Name = "Users",
             Icon = "people",
@@ -61,15 +62,15 @@
 
         foreach (var role in allRoles.Items)
         {
-            usersTree.Branches.Add(new UsersTreeBranch
+            usersTree.Branches.Add(new TreeBranch
             {
-                Icon = "people", // Add an icon to the role
+                Icon = "people",
                 Name = role.Name,
                 Url = $"/admin/users/list/{role.Id}"
             });
         }
 
-        var rolesTree = new UsersTreeStub
+        var rolesTree = new TreeStub
         {
             Name = "Roles",
             Icon = "person_add",
@@ -78,9 +79,9 @@
 
         foreach (var role in allRoles.Items)
         {
-            rolesTree.Branches.Add(new UsersTreeBranch
+            rolesTree.Branches.Add(new TreeBranch
             {
-                Icon = "person_add", // Add an icon to the role
+                Icon = "person_add",
                 Name = role.Name,
                 Url = $"/admin/users/editrole/{role.Id}"
             });
@@ -125,7 +126,7 @@
     {
         switch (Selection)
         {
-            case UsersTreeBranch branch:
+            case TreeBranch branch:
                 if (branch.Url != null) NavigationManager.NavigateTo(branch.Url);
                 break;
         }

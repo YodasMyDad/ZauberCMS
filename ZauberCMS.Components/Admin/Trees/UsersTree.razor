@@ -1,8 +1,7 @@
-﻿@using ZauberCMS.Core.Membership.Commands
-@using ZauberCMS.Core.Membership.Models
+﻿@using ZauberCMS.Core.Shared.Models
 
 <BaseTree
-    T="UsersTreeStub"
+    T="TreeStub"
     Data="@Data"
     OnExpand="@OnExpandHandler"
     OnChange="@OnChangeHandler"
@@ -14,7 +13,7 @@
 </BaseTree>
 
 @code {
-    [Parameter] public IEnumerable<UsersTreeStub> Data { get; set; } = [];
+    [Parameter] public IEnumerable<TreeStub> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
@@ -33,12 +32,12 @@
         {
             switch (args.Value)
             {
-                case UsersTreeStub treeStub:
+                case TreeStub treeStub:
                 args.Children.Data = treeStub.Branches;
                 args.Children.TextProperty = "Name";
                 args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
                     break;
-                case UsersTreeBranch branch:
+                case TreeBranch branch:
                     args.Children.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
@@ -56,13 +55,13 @@
             builder.OpenComponent<RadzenIcon>(0);
             switch (treeItem?.Value)
             {
-                case UsersTreeStub treeStub:
+                case TreeStub treeStub:
                     builder.AddAttribute(1, "Icon", treeStub.Icon);
                     builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
                     builder.CloseComponent();
                     builder.AddContent(3, treeStub.Name);
                     break;
-                case UsersTreeBranch branch:
+                case TreeBranch branch:
                     builder.AddAttribute(1, "Icon", branch.Icon);
                     builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
                     builder.CloseComponent();
@@ -93,8 +92,8 @@
     {
         return data switch
         {
-            UsersTreeStub tree => tree.Branches.Any(),
-            UsersTreeBranch branch => branch.Branches.Any(),
+            TreeStub tree => tree.Branches.Any(),
+            TreeBranch branch => branch.Branches.Any(),
             _ => false
         };
     }
@@ -103,7 +102,7 @@
     {
         return data switch
         {
-            UsersTreeStub tree => tree.Branches.Any(),
+            TreeStub tree => tree.Branches.Any(),
             _ => false
         };
     }

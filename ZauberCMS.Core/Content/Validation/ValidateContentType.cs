@@ -1,11 +1,12 @@
-﻿using ZauberCMS.Core.Content.Models;
+﻿using MediatR;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Validation.Interfaces;
 using ZauberCMS.Core.Shared.Validation.Models;
 
 namespace ZauberCMS.Core.Content.Validation;
 
-public class ValidateContentType : IValidate<ContentType>
+public class ValidateContentType(IMediator mediator) : IValidate<ContentType>
 {
     public Task<ValidateResult> Validate(ContentType item)
     {
