@@ -1,0 +1,40 @@
+﻿@using System.Text.Json
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenRating TValue="int" Value="@SavedValue" Change="@(args => Changed(args))" Stars="@RatingPropertySettingsModel.AmountOfStars" />
+
+@code {
+    public string Name => "Rating";
+    public string Alias => "ZauberCMS.Rating";
+    public string Description => "A property that allows star ratings";
+    public string Icon => "star_half";
+    public Type? SettingsComponent { get; set; } = typeof(RatingPropertySettings);
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    
+    private int SavedValue { get; set; }
+    private RatingPropertySettingsModel RatingPropertySettingsModel { get; set; } = new();
+    
+    protected override void OnInitialized()
+    {
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            SavedValue = int.Parse(Value);
+        }
+        
+        RatingPropertySettingsModel = Settings.FromJson<RatingPropertySettingsModel>();
+    }
+
+    private async Task Changed(int newValue)
+    {
+        SavedValue = newValue;
+        await ValueChanged.InvokeAsync(SavedValue.ToString());
+    }
+
+}

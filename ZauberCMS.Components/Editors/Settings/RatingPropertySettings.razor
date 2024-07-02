@@ -1,0 +1,31 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ZauberCMS.Components.Editors.Models.RatingPropertySettingsModel>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Amount Of Stars" Description="The amount of stars to display"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.AmountOfStars" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter amount" } })"/>
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string? SettingsModel { get; set; }
+    public RatingPropertySettingsModel Settings { get; set; } = new();
+    
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+}

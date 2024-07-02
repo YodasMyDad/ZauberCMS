@@ -15,13 +15,13 @@ public class ListPropertyBaseComponent : ComponentBase
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
-    
+
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
-    [Parameter] public string? Settings { get; set; } = string.Empty;
+    [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-    
+
     protected IEnumerable<string> SelectedValues { get; set; } = [];
     protected string SelectedValue { get; set; } = string.Empty;
     protected ListPropertySettingsModel SettingsModel { get; set; } = new();
@@ -41,21 +41,17 @@ public class ListPropertyBaseComponent : ComponentBase
             }
         }
 
-        if (!Settings.IsNullOrWhiteSpace())
-        {
-            SettingsModel = JsonSerializer.Deserialize<ListPropertySettingsModel>(Settings) ??
-                            new ListPropertySettingsModel();
+        SettingsModel = Settings.FromJson<ListPropertySettingsModel>();
 
-            if (!SettingsModel.DataSource.IsNullOrWhiteSpace())
+        if (!SettingsModel.DataSource.IsNullOrWhiteSpace())
+        {
+            // We have a datasource
+            var allDataListSources = ExtensionManager.GetInstances<IDataListSource>();
+            if (allDataListSources.TryGetValue(SettingsModel.DataSource, out var listSource))
             {
-                // We have a datasource
-                var allDataListSources = ExtensionManager.GetInstances<IDataListSource>();
-                if (allDataListSources.TryGetValue(SettingsModel.DataSource, out var listSource))
+                using (var scope = ServiceProvider.CreateScope())
                 {
-                    using (var scope = ServiceProvider.CreateScope())
-                    {
-                        SettingsModel.Items = listSource.GetItems(scope, Content).ToList();   
-                    }
+                    SettingsModel.Items = listSource.GetItems(scope, Content).ToList();
                 }
             }
         }
@@ -78,12 +74,12 @@ public class ListPropertyBaseComponent : ComponentBase
         var selectedValues = args.ToList();
         if (restrictMax && SettingsModel.MaxAmount > 0 && selectedValues.Count > SettingsModel.MaxAmount)
         {
-            NotificationService.Notify(new NotificationMessage 
-            { 
-                Severity = NotificationSeverity.Error, 
-                Summary = "Error", 
-                Detail = $"You can only select a maximum amount of {SettingsModel.MaxAmount}", 
-                Duration = 4000 
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"You can only select a maximum amount of {SettingsModel.MaxAmount}",
+                Duration = 4000
             });
 
             // Remove excess items
@@ -93,6 +89,7 @@ public class ListPropertyBaseComponent : ComponentBase
         {
             SelectedValues = selectedValues;
         }
+
         Value = JsonSerializer.Serialize(SelectedValues);
         await ValueChanged.InvokeAsync(Value);
     }

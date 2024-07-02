@@ -31,4 +31,14 @@ public static class PropertyExtensions
         return new T();
     }
     
+    public static T FromJson<T>(this string s)
+        where T : class, new()
+    {
+        if (!s.IsNullOrWhiteSpace())
+        {
+            return JsonSerializer.Deserialize<T>(s) ?? new T();
+        }
+        return new T();
+    }
+    
 }

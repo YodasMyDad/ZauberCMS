@@ -51,10 +51,7 @@
             }
         }
         
-        if (!Settings.IsNullOrWhiteSpace())
-        {
-            SettingsModel = JsonSerializer.Deserialize<ContentPickerSettings>(Settings) ?? new ContentPickerSettings();
-        }
+        SettingsModel = Settings.FromJson<ContentPickerSettings>();
     }
     
     private void SortList((int oldIndex, int newIndex) indices)

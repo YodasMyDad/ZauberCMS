@@ -55,10 +55,7 @@
             }
         }
         
-        if (!Settings.IsNullOrWhiteSpace())
-        {
-            SettingsModel = JsonSerializer.Deserialize<MediaPickerSettings>(Settings) ?? new MediaPickerSettings();
-        }
+        SettingsModel = Settings.FromJson<MediaPickerSettings>();
     }
     
     private void SortList((int oldIndex, int newIndex) indices)

@@ -4,7 +4,8 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenTextBox @ref="TextBox" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
-               ValueExpression="@(() => Value)" class="form-control" />
+               ValueExpression="@(() => Value)" class="form-control"/>
+
 @if (SettingsModel.MaxLength != null)
 {
     <div>
@@ -18,24 +19,22 @@
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-    
+
     public string Name { get; set; } = "Textbox";
     public string Alias { get; set; } = "ZauberCMS.Textbox";
     public string Icon { get; set; } = "border_color";
     public string Description { get; set; } = "Standard text box";
     public Type? SettingsComponent { get; set; } = typeof(TextContentSettings);
-    
+
     private TextContentSettingsModel SettingsModel { get; set; } = new();
     private RadzenTextBox? TextBox { get; set; }
-    
+    int value;
+
     protected override void OnInitialized()
     {
-        if (!Settings.IsNullOrWhiteSpace())
-        {
-            SettingsModel = JsonSerializer.Deserialize<TextContentSettingsModel>(Settings) ?? new TextContentSettingsModel();
-        }
+        SettingsModel = Settings.FromJson<TextContentSettingsModel>();
     }
-    
+
     protected override void OnAfterRender(bool firstRender)
     {
         base.OnAfterRender(firstRender);
@@ -44,4 +43,5 @@
             TextBox.MaxLength = SettingsModel.MaxLength.Value;
         }
     }
+
 }
