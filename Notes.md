@@ -1,10 +1,10 @@
 
 #### POC Release TODO
 
-Re-do media, it's awful (Need to re-do provider to save media not files)
+Re-do media, it's shit (Need to re-do provider to save media not files)
 Go through all TODO comments and try to fix all warnings
 Update ReadMe and add docs (How do other sites do it?)
-Build Starter site and record video (How deal with media in repo so users can see)
+Build Starter site and record video (How deal with test media in repo so users can see it?)
 
 ### Videos to do
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform
