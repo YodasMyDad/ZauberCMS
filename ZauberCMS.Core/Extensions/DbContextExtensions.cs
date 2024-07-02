@@ -30,7 +30,7 @@ public static class DbContextExtensions
             crudResult.Success = true;
             if (entity != null)
             {
-                crudResult.Entity = entity;   
+                crudResult.Entity = entity;
             }
             if (isSaved <= 0)
             {

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Settings;
@@ -16,16 +17,20 @@ public class DiskStorageProvider(
     private readonly ZauberSettings _settings = settings.Value;
 
         /// <inheritdoc />
-        public Task<FileSaveResult> CanUseFile(IBrowserFile file, string? fileName = null, bool onlyImages = false)
+        public Task<HandlerResult<Media.Models.Media>> CanUseFile(IBrowserFile file, bool onlyImages = false)
         {
             return Task.Run(() =>
             {
-                var fileSaveResult = new FileSaveResult();
+                var result = new HandlerResult<Media.Models.Media>{Success = true};
 
                 if (onlyImages && !file.IsImage())
                 {
-                    fileSaveResult.ErrorMessages.Add("File must be an image only");
-                    fileSaveResult.Success = false;
+                    result.Messages.Add(new ResultMessage
+                    {
+                        Message = "File must be an image only",
+                        MessageType = ResultMessageType.Error
+                    });
+                    result.Success = false;
                 }
                 else
                 {
@@ -34,26 +39,31 @@ public class DiskStorageProvider(
                     {
                         if (file.Size > _settings.MaxUploadFileSizeInBytes)
                         {
-                            fileSaveResult.ErrorMessages.Add("File is too large");
-                            fileSaveResult.Success = false;
+                            result.Messages.Add(new ResultMessage
+                            {
+                                Message = "File is too large",
+                                MessageType = ResultMessageType.Error
+                            });
+                            result.Success = false;
                         }
                     }
                     else
                     {
-                        fileSaveResult.ErrorMessages.Add("File not allowed");
-                        fileSaveResult.Success = false;
+                        result.Messages.Add(new ResultMessage
+                        {
+                            Message = "File not allowed",
+                            MessageType = ResultMessageType.Error
+                        });
+                        result.Success = false;
                     }
-
                 }
-                fileSaveResult.MediaType = file.Name.ToFileType();
-                fileSaveResult.Name = fileName ?? file.Name;
-                fileSaveResult.OriginalFile = file;
-                return fileSaveResult;
+
+                return result;
             });
         }
 
         /// <inheritdoc />
-        public Task<bool> DeleteFile(string? url, string? fileId = null)
+        public Task<bool> DeleteFile(string? url)
         {
             return Task.Run(() =>
             {
@@ -71,57 +81,73 @@ public class DiskStorageProvider(
         }
 
         /// <inheritdoc />
-        public async Task<FileSaveResult> SaveFile(IBrowserFile file, string? fileName = null, string? folderName = null, bool overwrite = true)
+        public async Task<HandlerResult<Media.Models.Media>> SaveFile(IBrowserFile file, Media.Models.Media? existingMedia = null, string? folderName = null, bool overwrite = true)
         {
-            var fileSaveResult = await CanUseFile(file, fileName);
-            fileSaveResult.OriginalFile = file;
-            if (!fileSaveResult.Success)
+            var result = await CanUseFile(file);
+            if (result.Success)
             {
-                return fileSaveResult;
-            }
-
-            try
-            {
-                var relativePath = folderName.IsNullOrWhiteSpace() ? 
-                    Path.Combine(_settings.UploadFolderName ?? "media") : 
-                    Path.Combine(_settings.UploadFolderName ?? "media", folderName);
+                // Clear any messages
+                result.Messages.Clear();
                 
-                var dirToSave = Path.Combine(env.WebRootPath, relativePath);
-                var di = new DirectoryInfo(dirToSave);
-                if (!di.Exists)
+                try
                 {
-                    di.Create();
+                    var media = new Media.Models.Media();
+                    if (existingMedia != null)
+                    {
+                        media = existingMedia;
+                    }
+
+                    if (media.Name.IsNullOrEmpty())
+                    {
+                        media.Name = file.Name;
+                    }
+                    
+                    var relativePath = folderName.IsNullOrWhiteSpace() ? 
+                        Path.Combine(_settings.UploadFolderName ?? "media", media.Id.ToString()) : 
+                        Path.Combine(_settings.UploadFolderName ?? "media", folderName);
+                
+                    var dirToSave = Path.Combine(env.WebRootPath, relativePath);
+                    var di = new DirectoryInfo(dirToSave);
+                    if (!di.Exists)
+                    {
+                        di.Create();
+                    }
+                    var filePath = Path.Combine(dirToSave, file.Name);
+                    await using (var stream = file.OpenReadStream(_settings.MaxUploadFileSizeInBytes))
+                    {
+                        if (file.IsImage())
+                        {
+                            using var image = await Image.LoadAsync(stream);
+                            image.OverMaxSizeCheck(_settings.MaxImageSizeInPixels);
+                            await image.SaveAsync(filePath);
+                            media.Width = image.Width;
+                            media.Height = image.Height;
+                        }
+                        else
+                        {
+                            using var mstream = new MemoryStream();
+                            await stream.CopyToAsync(mstream);
+                            await File.WriteAllBytesAsync(filePath, mstream.ToArray());
+                        }
+                    }
+                    media.Url = Path.Combine(relativePath, file.Name).Replace("\\", "/");
+                    media.FileSize = file.Size;
+                    media.MediaType = file.Name.ToFileType();
+                    result.Entity = media;
                 }
-                var filePath = Path.Combine(dirToSave, file.Name);
-                await using (var stream = file.OpenReadStream(_settings.MaxUploadFileSizeInBytes))
+                catch (Exception ex)
                 {
-                    if (file.IsImage())
-                    {
-                        using var image = await Image.LoadAsync(stream);
-                        image.OverMaxSizeCheck(_settings.MaxImageSizeInPixels);
-                        await image.SaveAsync(filePath);
-                        fileSaveResult.Width = image.Width;
-                        fileSaveResult.Height = image.Height;
-                    }
-                    else
-                    {
-                        using var mstream = new MemoryStream();
-                        await stream.CopyToAsync(mstream);
-                        await File.WriteAllBytesAsync(filePath, mstream.ToArray());
-                    }
+                    result.AddMessage(ex.Message, ResultMessageType.Error);
+                    result.Success = false;
                 }
-                fileSaveResult.SavedFileUrl = Path.Combine(relativePath, file.Name).Replace("\\", "/");
-            }
-            catch (Exception ex)
-            {
-                fileSaveResult.ErrorMessages.Add(ex.Message);
-                fileSaveResult.Success = false;
+
+                return result;
             }
 
-            return fileSaveResult;
+            return result;
         }
 
-    public Task<Media.Models.Media> ToMedia(FileSaveResult fileSaveResult, Guid? id = null, Guid? parentId = null)
+    /*public Task<Media.Models.Media> ToMedia(FileSaveResult fileSaveResult, Guid? id = null, Guid? parentId = null)
     {
         return Task.Run(() =>
         {
@@ -145,5 +171,5 @@ public class DiskStorageProvider(
             mediaItem.Url = fileSaveResult.SavedFileUrl;
             return mediaItem;
         });
-    }
+    }*/
 }

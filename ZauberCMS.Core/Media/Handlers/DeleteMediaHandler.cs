@@ -4,12 +4,17 @@ using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
+using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Media.Handlers;
 
-public class DeleteMediaHandler(IServiceProvider serviceProvider, AppState appState, AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteMediaCommand, HandlerResult<Models.Media>>
+public class DeleteMediaHandler(IServiceProvider serviceProvider, 
+    AppState appState, 
+    AuthenticationStateProvider authenticationStateProvider,
+    ProviderService providerService) 
+    : IRequestHandler<DeleteMediaCommand, HandlerResult<Models.Media>>
 {
     public async Task<HandlerResult<Models.Media>> Handle(DeleteMediaCommand request, CancellationToken cancellationToken)
     {
@@ -21,10 +26,16 @@ public class DeleteMediaHandler(IServiceProvider serviceProvider, AppState appSt
         var media = dbContext.Medias.FirstOrDefault(x => x.Id == request.MediaId);
         if (media != null)
         {
+            var filePathToDelete = media.Url;
             dbContext.Medias.Remove(media);
             await appState.NotifyMediaDeleted(null, authState.User.Identity?.Name!);
-            return await dbContext.SaveChangesAndLog(media, handlerResult, cancellationToken);
-            
+            var result = await dbContext.SaveChangesAndLog(media, handlerResult, cancellationToken);
+            if (result.Success && request.DeleteFile)
+            {
+                await providerService.StorageProvider!.DeleteFile(filePathToDelete);
+            }
+
+            return result;
         }
 
         handlerResult.AddMessage("Unable to delete, as no Media with that id exists", ResultMessageType.Warning);

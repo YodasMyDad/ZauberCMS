@@ -7,6 +7,6 @@ public class HandlerResult<T>
     public bool Success { get; set; }
 
     public List<ResultMessage> Messages { get; set; } = new();
-
+    
     public bool RefreshSignIn { get; set; }
 }

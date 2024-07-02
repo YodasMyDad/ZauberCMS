@@ -74,20 +74,19 @@
     [Inject] public AppState AppState { get; set; } = default!;
     
     [Parameter] public Guid? ParentId { get; set; }
-    [Parameter] public Guid? MediaId { get; set; }
     [Parameter] public int MaxAllowedFiles { get; set; } = 30; // Only allow 30 max at a time, should be setting
     [Parameter] public bool OnlyImages { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-    [Parameter] public EventCallback<List<FileSaveResult>> ValueChanged { get; set; }
-    [Parameter] public EventCallback<List<FileSaveResult>> OnSave { get; set; }
-    [Parameter] public List<FileSaveResult> FilesToUpload { get; set; } = [];
+    [Parameter] public EventCallback<List<IBrowserFile>> ValueChanged { get; set; }
+    [Parameter] public EventCallback<List<IBrowserFile>> OnSave { get; set; }
+    [Parameter] public List<IBrowserFile> FilesToUpload { get; set; } = [];
     
     private ElementReference FileDropContainer { get; set; }
     private InputFile InputFile { get; set; } = default!;
     private IJSObjectReference? FilePasteModule { get; set; }
     private IJSObjectReference? FilePasteFunctionReference { get; set; }
     private string HoverClass { get; set; } = string.Empty;
-    private List<string> ErrorMessages { get; set; } = [];
+    private List<ResultMessage> ErrorMessages { get; set; } = [];
     private Media? ParentFolder { get; set; }
 
     protected override async Task OnParametersSetAsync()
@@ -129,24 +128,20 @@
         
         if ((e.FileCount + FilesToUpload.Count) > MaxAllowedFiles)
         {
-            ErrorMessages.Add($"Only {MaxAllowedFiles} files can be uploaded");
+            ErrorMessages.Add(new ResultMessage{Message = $"Only {MaxAllowedFiles} files can be uploaded", MessageType = ResultMessageType.Error});
             return;
         }
 
         foreach (var file in e.GetMultipleFiles(MaxAllowedFiles))
         {
-            var result = await ProviderService.StorageProvider!.CanUseFile(file, null, OnlyImages);
+            var result = await ProviderService.StorageProvider!.CanUseFile(file, OnlyImages);
             if (result.Success)
             {
-                if (MediaId != null)
-                {
-                    result.CurrentMediaId = MediaId;
-                }
-                FilesToUpload.Add(result);
+                FilesToUpload.Add(file);
             }
             else
             {
-                ErrorMessages.AddRange(result.ErrorMessages);
+                ErrorMessages.AddRange(result.Messages.ErrorMessages());
             }
             /*await using var stream = file.OpenReadStream(Settings.Value.MaxUploadFileSizeInBytes);
             using var ms = new MemoryStream();
@@ -167,7 +162,7 @@
         {
             var results = await Mediator.Send(new SaveMediaCommand
             {
-                FilesToSave = FilesToUpload,
+                FileToSave = FilesToUpload,
                 ParentFolderId = ParentFolder?.Id
             });
 
