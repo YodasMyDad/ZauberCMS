@@ -84,7 +84,7 @@
                 </RadzenStack>
 
             </RadzenTabsItem>
-            @if (!IsUpdate)
+            @if (IsUpdate)
             {
                 <RadzenTabsItem Text="Info">
                     <EditorRow>
@@ -102,7 +102,9 @@
                                 <PropertyInfo Name="File Url"/>
                             </LeftColumn>
                             <CentreColumn>
-                                /@Media.Url
+                                <a href="/@Media.Url" target="_blank" alt="@Media.AltTag">
+                                    /@Media.Url
+                                </a>
                             </CentreColumn>
                         </EditorRow>
                         <EditorRow>
