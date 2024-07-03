@@ -1,4 +1,7 @@
-﻿namespace ZauberCMS.Core.Extensions;
+﻿using MediatR;
+using ZauberCMS.Core.Media.Commands;
+
+namespace ZauberCMS.Core.Extensions;
 
 public static class ContentExtensions
 {
@@ -12,6 +15,30 @@ public static class ContentExtensions
     public static T? GetValue<T>(this Content.Models.Content content, string alias)
     {
         return content.ContentValues().TryGetValue(alias, out var contentValue) ? contentValue.Value.ToValue<T>() : default;
+    }
+    
+    /// <summary>
+    /// Gets 
+    /// </summary>
+    /// <param name="content"></param>
+    /// <param name="alias"></param>
+    /// <param name="mediator"></param>
+    /// <returns></returns>
+    public static async Task<IEnumerable<Media.Models.Media?>> GetMedia(this Content.Models.Content content, string alias, IMediator mediator)
+    {
+        var mediaIds = content.GetValue<List<Guid>?>(alias);
+        if (mediaIds != null)
+        {
+            var mediaCount = mediaIds.Count;
+            if (mediaCount > 0)
+            {
+                // TODO - Look at caching these
+                var mediaItems=  await mediator.Send(new QueryMediaCommand{Ids = mediaIds, AmountPerPage = mediaCount});
+                return mediaItems.Items;
+            }
+        }
+
+        return [];
     }
 
     private static readonly SlugHelper SlugHelper = new(new SlugHelper.Config

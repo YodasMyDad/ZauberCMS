@@ -103,6 +103,17 @@ public static partial class StringExtensions
             var fallbackDecimal = JsonSerializer.Deserialize<decimal>(value);
             return (T)(object)fallbackDecimal;
         }
+        
+        if (typeof(T) == typeof(Guid))
+        {
+            if (Guid.TryParse(value, out var resultGuid))
+            {
+                return (T)(object)resultGuid;
+            }
+
+            var fallbackGuid = JsonSerializer.Deserialize<Guid>(value);
+            return (T)(object)fallbackGuid;
+        }
 
         try
         {

@@ -1,10 +1,9 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
+﻿@using ZauberCMS.StarterSite.ContentBlocks
+@implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
 
 @if (Content != null)
 {
-<div class="blockrte">
-    @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
-</div>
+    <RTEBlock Content="@Content" />
 }
 
 @code {

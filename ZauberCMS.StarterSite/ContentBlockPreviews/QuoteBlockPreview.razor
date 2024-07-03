@@ -1,12 +1,9 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
+﻿@using ZauberCMS.StarterSite.ContentBlocks
+@implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
 
 @if (Content != null)
 {
-<figure class="text-center">
-    <blockquote class="blockquote">
-        <p>@(Content.GetValue<string>("Quote"))</p>
-    </blockquote>
-</figure>
+    <QuoteBlock Content="@Content" />
 }
 
 

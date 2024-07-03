@@ -22,7 +22,7 @@
         <h1>@(Content!.GetValue<string>("Heading"))</h1>
         @foreach (var block in ContentBlocks)
         {
-            <div class="py-1">
+            <div class="py-3">
                 <RenderBlock Content="@(block)" TView="IContentBlockView"/>
             </div>
         }
