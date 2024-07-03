@@ -23,7 +23,7 @@
 
     [Parameter] public bool RootOnly { get; set; }
     [Parameter] public bool? ElementTypesOnly { get; set; }
-    [Parameter] public EventCallback<Guid> OnContentTypeSelected { get; set; } // add this line
+    [Parameter] public EventCallback<Guid> ContentTypeSelected { get; set; } // add this line
     
     private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
     private Guid SelectedContentTypeId { get; set; }
@@ -39,7 +39,7 @@
 
     private void OnPropertySelected()
     {
-        OnContentTypeSelected.InvokeAsync(SelectedContentTypeId);
+        ContentTypeSelected.InvokeAsync(SelectedContentTypeId);
     }
 
 }

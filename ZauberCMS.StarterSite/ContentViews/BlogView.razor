@@ -1,13 +1,13 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.StarterSite.Layouts
-
+@implements ZauberCMS.Core.Content.Interfaces.IContentView
 @* This is the layout you want to use *@
 @layout MainLayout
 
 @* This is where you set Head/Meta information *@
-<PageTitle>@(Content.GetValue<string>("PageTitle"))</PageTitle>
+<PageTitle>@(Content!.GetValue<string>("PageTitle"))</PageTitle>
 <SectionContent SectionId="MainLayout.Sections.PageHeadContent">
-    <meta name="description" content="@(Content.GetValue<string>("MetaDescription"))">
+    <meta name="description" content="@(Content!.GetValue<string>("MetaDescription"))">
 </SectionContent>
 
 
@@ -17,18 +17,18 @@
 }
 
 @code {
-    [Parameter] public Content Content { get; set; } = default!;
+    [Parameter] public Content? Content { get; set; }
     
     private List<Content> BlogPages { get; set; } = [];
     
     protected override async Task OnInitializedAsync()
     {
-        var amountPerPage = Content.GetValue<int>("PostsToShow");
+        var amountPerPage = Content!.GetValue<int>("AmountPerPage");
         var pages = await Mediator.Send(new QueryContentCommand
         {
             OrderBy = GetContentsOrderBy.DateCreated,
             AmountPerPage = amountPerPage,
-            WhereClause = content => content.ParentId == Content.Id 
+            WhereClause = content => content.ParentId == Content!.Id 
         });
         BlogPages = pages.Items.ToList();
     }

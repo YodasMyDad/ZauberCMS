@@ -1,0 +1,11 @@
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+
+@if (Content != null)
+{
+    <p>TODO IMAGE</p>
+}
+
+@code {
+    public string ContentTypeAlias => "ImageBlock";
+    [Parameter] public Content? Content { get; set; }
+}

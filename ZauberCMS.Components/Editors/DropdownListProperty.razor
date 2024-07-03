@@ -15,7 +15,8 @@
                 Change="@(args => OnChange(true))"
                 TextProperty="Name"
                 ValueProperty="Value"
-                Multiple="true" AllowClear="true" Placeholder="Select items" Chips="true" Style="width: 100%;"/>
+                Multiple="true" AllowClear="true" Placeholder="Select items" Chips="true" Style="width: 100%;"
+                @attributes="GetAdditionalAttributes()" />
 
 @code {
     //MaxSelectedLabels="" 
@@ -27,13 +28,16 @@
     
     private RadzenDropDown<IEnumerable<string>>? DropDown { get; set; }
     
-    protected override void OnAfterRender(bool firstRender)
+    private IEnumerable<KeyValuePair<string, object?>> GetAdditionalAttributes()
     {
-        if (firstRender && DropDown != null && SettingsModel.MaxAmount > 0)
+        var attributes = new List<KeyValuePair<string, object?>>();
+
+        if (SettingsModel.MaxAmount > 0)
         {
-            DropDown.MaxSelectedLabels = SettingsModel.MaxAmount;
+            attributes.Add(new KeyValuePair<string, object?>("MaxSelectedLabels", SettingsModel.MaxAmount));
         }
-        base.OnAfterRender(firstRender);
+
+        return attributes;
     }
 
 }

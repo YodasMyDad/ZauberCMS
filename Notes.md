@@ -1,8 +1,9 @@
 
 #### POC Release TODO
 
+Build Starter site
 Update ReadMe and add docs (How do other sites do it?)
-Build Starter site and record video (How deal with test media in repo so users can see it?)
+RE-Build Starter site and record video (How deal with test media in repo so users can see it?)
 
 ### Videos to do
 Add TinyMCE editor - Need to think where to store the API key globally? Add settings and make settings UI uniform

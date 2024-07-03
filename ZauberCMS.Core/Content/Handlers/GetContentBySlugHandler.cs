@@ -18,14 +18,15 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider)
         // If is RootContent we just get the first one we can find
         var query = dbContext.Contents
             .AsNoTracking()
+            .Include(x => x.PropertyData)
             .Include(x => x.Parent)
             .Include(x => x.ContentType)
+            .AsSplitQuery()
             .AsQueryable();
         
         if (request.IncludeChildren)
         {
-            query = query.Include(x => x.Children)
-                .AsSplitQuery();
+            query = query.Include(x => x.Children);
         }
         
         // If this is root content, get the first one

@@ -16,7 +16,7 @@
 
 @code {
     
-    [Parameter] public Content? Content { get; set; } = default!;
+    [Parameter] public Content? Content { get; set; }
     private List<Content> ContentBlocks { get; set; } = [];
 
     protected override void OnInitialized()

@@ -2,8 +2,8 @@
 @using ZauberCMS.Components.Editors.Settings
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenTextBox @ref="TextBox" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
-               ValueExpression="@(() => Value ?? string.Empty)" class="form-control"/>
+<RadzenTextBox @ref="TextBoxReference" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
+               ValueExpression="@(() => Value)" class="form-control" @attributes="GetAdditionalAttributes()"/>
 
 @if (SettingsModel.MaxLength != null)
 {
@@ -13,6 +13,7 @@
 }
 
 @code {
+    
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string? Settings { get; set; } = string.Empty;
@@ -26,20 +27,23 @@
     public Type? SettingsComponent { get; set; } = typeof(TextContentSettings);
 
     private TextContentSettingsModel SettingsModel { get; set; } = new();
-    private RadzenTextBox? TextBox { get; set; }
+    private RadzenTextBox? TextBoxReference { get; set; }
 
     protected override void OnInitialized()
     {
         SettingsModel = Settings.FromJson<TextContentSettingsModel>();
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    private IEnumerable<KeyValuePair<string, object?>> GetAdditionalAttributes()
     {
-        if (firstRender && TextBox != null && SettingsModel.MaxLength != null)
+        var attributes = new List<KeyValuePair<string, object?>>();
+
+        if (SettingsModel.MaxLength.HasValue)
         {
-            TextBox.MaxLength = SettingsModel.MaxLength.Value;
+            attributes.Add(new KeyValuePair<string, object?>("MaxLength", SettingsModel.MaxLength.Value));
         }
-        base.OnAfterRender(firstRender);
+
+        return attributes;
     }
 
 }
