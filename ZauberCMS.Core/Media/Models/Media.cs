@@ -14,7 +14,7 @@ public class Media
     /// The ID property is used to uniquely identify a Media object.
     /// </remarks>
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
-
+    
     /// <summary>
     /// Represents the URL property of a Media object.
     /// </summary>
@@ -30,6 +30,17 @@ public class Media
     /// Name of the media item
     /// </summary>
     public string? Name { get; set; }
+
+    /// <summary>
+    /// Represents the alternate text (AltTag) property of a Media object.
+    /// </summary>
+    /// <value>
+    /// The alternate text for the media.
+    /// </value>
+    /// <remarks>
+    /// The AltTag property is used to provide alternate text for media objects such as images. It describes the content of the media in a textual format, which can be useful for accessibility purposes or when the media cannot be displayed.
+    /// </remarks>
+    public string? AltTag { get; set; }
 
     /// <summary>
     /// Represents the type of media.

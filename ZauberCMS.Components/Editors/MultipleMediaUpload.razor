@@ -37,7 +37,7 @@
     @foreach (var error in ErrorMessages)
     {
         <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
-            @error
+            @error.Message
         </RadzenAlert>
     }
 </RadzenStack>

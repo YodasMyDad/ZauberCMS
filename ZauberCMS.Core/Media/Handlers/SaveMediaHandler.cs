@@ -27,6 +27,10 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
         if (request.FileToSave != null)
         {
             result = await providerService.StorageProvider!.SaveFile(request.FileToSave, request.MediaToSave);
+            if (!result.Success)
+            {
+                return result;
+            }
         }
         else if (request.MediaToSave != null)
         {
@@ -49,6 +53,13 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                 // Map the updated properties
                 mapper.Map(result.Entity, dbMedia);
                 if (dbMedia != null) dbMedia.DateUpdated = DateTime.UtcNow;
+
+                if (result.Entity.Url.IsNullOrWhiteSpace())
+                {
+                    result.AddMessage("Url cannot be empty", ResultMessageType.Error);
+                    return result;
+                }
+                
                 result = await dbContext.SaveChangesAndLog(result.Entity, result, cancellationToken);
                 if (dbMedia != null) await appState.NotifyMediaSaved(dbMedia, authState.User.Identity?.Name!);
             }

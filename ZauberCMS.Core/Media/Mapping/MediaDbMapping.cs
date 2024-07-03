@@ -13,6 +13,7 @@ public class MediaDbMapping : IEntityTypeConfiguration<Models.Media>
         builder.Property(x => x.Id).IsRequired();
         builder.Property(x => x.Name).HasMaxLength(1000);
         builder.Property(x => x.Url).HasMaxLength(1000);
+        builder.Property(x => x.AltTag).HasMaxLength(1000);
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
         builder.Property(e => e.ExtendedData).ToJsonConversion(4000);
