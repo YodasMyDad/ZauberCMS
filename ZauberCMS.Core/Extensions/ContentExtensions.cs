@@ -1,6 +1,4 @@
-﻿using ZauberCMS.Core.Content.Models;
-
-namespace ZauberCMS.Core.Extensions;
+﻿namespace ZauberCMS.Core.Extensions;
 
 public static class ContentExtensions
 {

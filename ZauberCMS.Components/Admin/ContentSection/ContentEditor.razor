@@ -243,6 +243,11 @@ else
 
         AllContentValues = Content!.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
         AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
+
+        if (Content.ViewComponent.IsNullOrWhiteSpace())
+        {
+            Content.ViewComponent = contentType.AvailableContentViews.FirstOrDefault()!;
+        }
     }
 
     private async Task UpdateContentTypeId(Guid contentTypeId)

@@ -76,8 +76,7 @@ public class Content : IContent<ContentPropertyValue>
     /// The id of the parent content node if there is one
     /// </summary>
     public Guid? ParentId { get; set; }
-
-    [JsonIgnore]
+    
     public Content? Parent { get; set; }
 
     /// <summary>

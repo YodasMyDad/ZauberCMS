@@ -11,10 +11,32 @@
 </SectionContent>
 
 
-@foreach (var blogPage in BlogPages)
-{
-    <p><a href="@($"/{blogPage.Url}")">@blogPage.Name</a></p>
-}
+<div class="container px-4 py-5" id="featured-3">
+    <h2 class="pb-2 border-bottom">
+        Our Blog
+    </h2>
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-2">
+
+        @foreach (var blogPage in BlogPages)
+        {
+            <div class="feature col">
+                <h3 class="fs-2 text-body-emphasis">
+                    <a href="@($"/{blogPage.Url}")" class="icon-link text-black">
+                        @blogPage.Name
+                    </a>
+                </h3>
+                <p>@(blogPage.GetValue<string>("Summary"))</p>
+                <a href="@($"/{blogPage.Url}")" class="icon-link">
+                    View Blog Post
+                    <svg class="bi"><use xlink:href="#chevron-right"></use></svg>
+                </a>
+            </div>
+        }
+        
+    </div>
+</div>
+
+
 
 @code {
     [Parameter] public Content? Content { get; set; }

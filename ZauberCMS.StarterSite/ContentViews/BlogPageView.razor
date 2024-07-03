@@ -9,15 +9,28 @@
     <meta name="description" content="@(Content!.GetValue<string>("MetaDescription"))">
 </SectionContent>
 
-@foreach (var block in ContentBlocks)
-{
-    <div>
-        <RenderBlock Content="@(block)" TView="IContentBlockView"  />
+<SectionContent SectionId="MainLayout.Sections.PageBreadcrumbContent">
+    <div class="container">
+        <div class="col-lg-8 col-md-8 mx-auto">
+        <BootstrapBreadcrumb Path="Content?.Path"/>
+        </div>
     </div>
-}
+</SectionContent>
+
+<section class="py-5 container">
+    <div class="col-lg-8 col-md-8 mx-auto">
+        <h1>@(Content!.GetValue<string>("Heading"))</h1>
+        @foreach (var block in ContentBlocks)
+        {
+            <div class="py-1">
+                <RenderBlock Content="@(block)" TView="IContentBlockView"/>
+            </div>
+        }
+    </div>
+</section>
 
 @code {
-    
+
     [Parameter] public Content? Content { get; set; }
     private List<Content> ContentBlocks { get; set; } = [];
 
@@ -29,5 +42,5 @@
             ContentBlocks = blocks;
         }
     }
-    
+
 }

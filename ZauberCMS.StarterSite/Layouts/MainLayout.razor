@@ -20,7 +20,8 @@
 </nav>
 
 <main>
-    @Body    
+    <SectionOutlet SectionId="@Sections.PageBreadcrumbContent"/>
+    @Body
 </main>
 
 <footer class="footer mt-auto py-3 bg-light">
@@ -48,5 +49,6 @@
     internal static class Sections
     {
         internal static SectionOutlet? PageHeadContent = new();
+        internal static SectionOutlet? PageBreadcrumbContent = new();
     }
 }
