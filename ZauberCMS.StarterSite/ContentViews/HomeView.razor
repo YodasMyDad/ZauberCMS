@@ -13,15 +13,21 @@
     All properties are available through Content.GetValue<string>("") if your value is saved as a type
     then you can call Content.GetValue<MyType>("")
 *@
-
-<h1>@(Content!.GetValue<string>("Heading"))</h1>
-<div class="lead">
-    @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
-</div>
-<p>&nbsp;</p>
-<p class="lead">
-    <a href="/about-us" class="btn btn-lg btn-secondary">About Us</a>
-</p>
+<Testing />
+<section class="py-5 text-center container">
+    <div class="row py-lg-5">
+        <div class="col-lg-6 col-md-8 mx-auto">
+            <h1>@(Content!.GetValue<string>("Heading"))</h1>
+            <div class="lead text-muted">
+                @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
+            </div>
+            <p>
+                <a href="/about" class="btn btn-primary my-2">About Us</a>
+                <a href="/contact-us" class="btn btn-secondary my-2">Contact</a>
+            </p>
+        </div>
+    </div>
+</section>
 
 @code {
     @* This is the content page passed in that matches the url *@

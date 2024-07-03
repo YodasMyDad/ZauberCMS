@@ -1,5 +1,6 @@
 ﻿@using System.ComponentModel.DataAnnotations
 @implements ZauberCMS.Core.Content.Interfaces.ICustomContentComponent
+@rendermode InteractiveServer
 
 <div class="pt-2">
 @if (Sent)
@@ -39,7 +40,7 @@ else
     
     [Parameter] public Content? Content { get; set; }
     
-    [SupplyParameterFromForm] private ContactFormModel? ContactModel { get; set; }
+    private ContactFormModel? ContactModel { get; set; }
     
     private bool Sent { get; set; }
 

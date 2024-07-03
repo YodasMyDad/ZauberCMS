@@ -1,14 +1,24 @@
-﻿<nav class="nav nav-masthead justify-content-center">
+﻿<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
     @if (Website != null)
     {
         @foreach (var p in Website.Children.Where(x => !x.HideFromNavigation).OrderBy(x => x.SortOrder))
         {
-            @*active*@
-            <a class="nav-link" href="/@p.Url">@p.Name</a>        
-        }   
+            var navLinkClass = "nav-link" + (IsPageActive(p.Url) ? " active" : "");
+            
+            <li class="nav-item">
+                <a class="@navLinkClass" aria-current="page" href="/@p.Url">@p.Name</a>
+            </li>
+        }
     }
-</nav>
+
+</ul>
 
 @code {
     [Parameter] public Content? Website { get; set; }
+    bool IsPageActive(string? pageUrl)
+    {
+        var uri = NavigationManager.ToAbsoluteUri($"/{pageUrl}");
+        return uri.AbsolutePath == NavigationManager.Uri;
+    }
 }

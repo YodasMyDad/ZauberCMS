@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 
@@ -76,6 +77,7 @@ public class Content : IContent<ContentPropertyValue>
     /// </summary>
     public Guid? ParentId { get; set; }
 
+    [JsonIgnore]
     public Content? Parent { get; set; }
 
     /// <summary>
@@ -110,5 +112,6 @@ public class Content : IContent<ContentPropertyValue>
     /// <summary>
     /// If parent ids are set this could have children
     /// </summary>
+    [JsonIgnore]
     public List<Content> Children { get; set; } = [];
 }

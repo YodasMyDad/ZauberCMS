@@ -11,7 +11,9 @@
 
 @foreach (var block in ContentBlocks)
 {
-    <RenderBlock Content="@(block)" TView="IContentBlockView"  />
+    <div>
+        <RenderBlock Content="@(block)" TView="IContentBlockView"  />
+    </div>
 }
 
 @code {

@@ -1,15 +1,13 @@
 ﻿@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
+
 @if (CustomContentComponents.Any())
 {
     @foreach (var customComponentName in CustomComponents)
     {
         if (CustomContentComponents.TryGetValue(customComponentName, out var customContentComponent))
         {
-            var customComponentType = customContentComponent.GetType();
-            <CascadingValue Value="this">
-                <DynamicComponent Type="@customComponentType" Parameters="@GetParameters()"/>
-            </CascadingValue>
+            @RenderCustomComponent(customContentComponent)
         }
     }
 }
@@ -35,5 +33,14 @@
         CustomContentComponents = ExtensionManager.GetInstances<ICustomContentComponent>(true);
     }
 
+    private RenderFragment RenderCustomComponent(ICustomContentComponent customContentComponent) => builder =>
+    {
+        var customComponentType = customContentComponent.GetType();
+        builder.OpenComponent(0, customComponentType);
+        foreach (var parameter in GetParameters())
+        {
+            builder.AddAttribute(1, parameter.Key, parameter.Value);
+        }
+        builder.CloseComponent();
+    };
 }
-

@@ -1,4 +1,5 @@
-﻿using ZauberCMS.Core.Extensions;
+﻿using System.Text.Json.Serialization;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Models;
@@ -68,5 +69,6 @@ public class ContentType
     /// <summary>
     /// The Content items using this ContentType
     /// </summary>
+    [JsonIgnore]
     public List<Content> LinkedContent { get; set; } = [];
 }
