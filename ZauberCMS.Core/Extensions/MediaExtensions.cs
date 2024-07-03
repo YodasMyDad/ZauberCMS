@@ -6,27 +6,6 @@ namespace ZauberCMS.Core.Extensions;
 public static class MediaExtensions
 {
     /// <summary>
-    /// Converts a Media object to a FileSaveResult object.
-    /// </summary>
-    /// <param name="media">The Media object to convert.</param>
-    /// <returns>A FileSaveResult object.</returns>
-    public static FileSaveResult ToFileSaveResult(this Media.Models.Media media)
-    {
-        return new FileSaveResult
-        {
-            MediaType = media.MediaType,
-            Name = media.Name,
-            Height = media.Height,
-            Width = media.Width,
-            CurrentMediaId = media.Id,
-            SavedFileUrl = media.Url,
-            SavedMedia = media,
-            FileSize = media.FileSize
-        };
-    }
-    
-    
-    /// <summary>
     /// Gets the media type based on the URL extension.
     /// </summary>
     /// <param name="url">The URL of the media file.</param>

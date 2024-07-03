@@ -26,11 +26,11 @@
     {
         if (UpdateType != MediaUpdateType.Folder && Media != null)
         {
-            <MediaUpload @key="@GetCompositeKey(MediaId, ParentId)" ParentId="@ParentId" MediaId="@Media.Id" MaxAllowedFiles="1" FilesToUpload="@(new List<FileSaveResult> { Media.ToFileSaveResult() })"/>
+            <p>TODO</p>
         }
         else
         {
-            <MediaUpload @key="@GetCompositeKey(MediaId, ParentId)" ParentId="@ParentId"/>
+            <MultipleMediaUpload @key="@GetCompositeKey(MediaId, ParentId)" ParentId="@ParentId"/>
         }
     }
     
@@ -78,5 +78,4 @@
         Folder,
         Media
     }
-
 }

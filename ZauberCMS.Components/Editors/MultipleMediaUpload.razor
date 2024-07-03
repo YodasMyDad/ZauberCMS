@@ -9,39 +9,15 @@
 
 @if (ParentFolder != null)
 {
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0" class="pb-1">
         <RadzenIcon Icon="@ParentFolder.MediaType.GetIcon()" /> @ParentFolder.Name
     </RadzenStack>
 }
 
-<RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container">
+<RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container w-100">
     @foreach (var media in FilesToUpload)
     {
-    if (media.MediaType == MediaType.Image)
-    {
-    <RadzenAlert Close=@(o => RemoveMedia(media)) ShowIcon="false">
-
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.5rem">
-            <img src="@media.SavedFileUrl?width=112&height=112&rmode=max" class="rounded" alt=""/>
-            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.2rem" Style="flex-grow: 1;">
-                <RadzenTextBox @bind-Value="@media.Name" Style="width: 300px;" />
-                <div class="fw-light" style="font-size: 14px;">Height: @(media.Height)px</div>
-                <div class="fw-light" style="font-size: 14px;">Width: @(media.Width)px</div>
-                <div class="fw-light" style="font-size: 14px;">Size: @(media.FileSize)</div>
-            </RadzenStack>
-        </RadzenStack>
-
-    </RadzenAlert>
-    }
-    else
-    {
-    <RadzenAlert Icon="@(media.MediaType!.Value.GetIcon())" Close=@(o => RemoveMedia(media))>
-        <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.2rem" Style="flex-grow: 1;">
-            <RadzenTextBox @bind-Value="@media.Name" class="w-100"  />
-            <div class="fw-light" style="font-size: 14px;">Size: @(media.FileSize)</div>
-        </RadzenStack>
-    </RadzenAlert>
-    }
+        <PickerItem Icon="@media.Name.ToFileType().GetIcon()" Text="@media.Name" Close="@(() => RemoveMedia(media))" />
     }
 </RadzenStack>
 
@@ -77,7 +53,7 @@
     [Parameter] public int MaxAllowedFiles { get; set; } = 30; // Only allow 30 max at a time, should be setting
     [Parameter] public bool OnlyImages { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-    [Parameter] public EventCallback<List<IBrowserFile>> ValueChanged { get; set; }
+    [Parameter] public EventCallback<List<Media>> ValueChanged { get; set; }
     [Parameter] public EventCallback<List<IBrowserFile>> OnSave { get; set; }
     [Parameter] public List<IBrowserFile> FilesToUpload { get; set; } = [];
     
@@ -105,7 +81,7 @@
     {
         if (firstRender)
         {
-            FilePasteModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/filePaste.js");
+            FilePasteModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/ZauberCMS.Components/Editors/MultipleMediaUpload.razor.js");
             FilePasteFunctionReference = await FilePasteModule.InvokeAsync<IJSObjectReference>("initializeFilePaste", FileDropContainer, InputFile.Element);
         }
     }
@@ -113,7 +89,7 @@
     void OnDragEnter(DragEventArgs e) => HoverClass = "hover";
     void OnDragLeave(DragEventArgs e) => HoverClass = string.Empty;
 
-    private void RemoveMedia(FileSaveResult media)
+    private void RemoveMedia(IBrowserFile media)
     {
         var index = FilesToUpload.FindIndex(c => c.Name == media.Name);
         if (index != -1)
@@ -160,29 +136,33 @@
         }
         else
         {
-            var results = await Mediator.Send(new SaveMediaCommand
+            var savedMediaItems = new List<Media>();
+            foreach (var browserFile in FilesToUpload)
             {
-                FileToSave = FilesToUpload,
-                ParentFolderId = ParentFolder?.Id
-            });
-
-            if (results.Any(x => x.Success == false))
-            {
-                ErrorMessages.Add("The following files had issues");
-                foreach (var errors in results.Where(x => x.Success == false))
+                var result = await Mediator.Send(new SaveMediaCommand
                 {
-                    ErrorMessages.AddRange(errors.ErrorMessages);
+                    FileToSave = browserFile,
+                    ParentFolderId = ParentFolder?.Id
+                });
+
+                if (!result.Success)
+                {
+                    ErrorMessages.AddRange(result.Messages);
+                }
+                else
+                {
+                    savedMediaItems.Add(result.Entity);
                 }
             }
-
+            
             FilesToUpload.Clear();
             if (ValueChanged.HasDelegate)
             {
-                await ValueChanged.InvokeAsync(results);
+                await ValueChanged.InvokeAsync(savedMediaItems);
             }
             else
             {
-                NotificationService.ShowSuccessNotification($"{results.Count(x => x.Success)} Media Saved");
+                NotificationService.ShowSuccessNotification($"{savedMediaItems.Count} Media Saved");
             }
         }
     }

@@ -2,7 +2,7 @@ namespace ZauberCMS.Core.Shared.Models;
 
 public class HandlerResult<T>
 {
-    public T Entity { get; set; } = default!;
+    public T? Entity { get; set; }
 
     public bool Success { get; set; }
 

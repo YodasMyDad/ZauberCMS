@@ -1451,6 +1451,7 @@
       <_ContentIncludedByDefault Remove="Components\StarterSite\Custom\ContactForm.razor" />
       <_ContentIncludedByDefault Remove="Components\StarterSite\Layouts\MainLayout.razor" />
       <_ContentIncludedByDefault Remove="Components\StarterSite\Layouts\NavBar.razor" />
+      <_ContentIncludedByDefault Remove="wwwroot\js\filePaste.js" />
     </ItemGroup>
 
     <ItemGroup>
