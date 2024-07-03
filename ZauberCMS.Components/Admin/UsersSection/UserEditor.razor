@@ -119,7 +119,7 @@
     private Dictionary<string, IContentProperty> AllProperties { get; set; } = new();
     private Dictionary<Guid, UserPropertyValue> AllContentValues { get; set; } = new();
     private int SelectedTabIndex { get; set; }
-    private RadzenTabs Tabs { get; set; }
+    private RadzenTabs? Tabs { get; set; }
     private List<Tab> AllTabs { get; set; } = [];
     private List<PropertyType> AllContentProperties { get; set; } = [];
     private AuthenticationState AuthState { get; set; } = default!;
@@ -150,7 +150,7 @@
             new Dictionary<string, object>
             {
                 {
-                    "UserId", User.Id
+                    "UserId", User!.Id
                 }
             });
         var result = await dialog.Result;
@@ -181,7 +181,7 @@
             new Dictionary<string, object>
             {
                 {
-                    "UserId", User.Id
+                    "UserId", User!.Id
                 }
             });
         var result = await dialog.Result;
@@ -212,7 +212,7 @@
         var delete = await DialogService.Confirm("Do you really want to delete this user?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
         if (delete == true)
         {
-            var roleUpdateResult = await Mediator.Send(new DeleteUserCommand { UserId = User.Id });
+            var roleUpdateResult = await Mediator.Send(new DeleteUserCommand { UserId = User!.Id });
             if (!roleUpdateResult.Success)
             {
                 await AppState.NotifyUserDeleted(User, AuthState.User.Identity?.Name!);
@@ -226,14 +226,16 @@
         SelectedTabIndex = i;
     }
 
-    private async Task UpdateProperty(Guid ctpId, string value)
+    private Task UpdateProperty(Guid ctpId, string value)
     {
-        var property = User.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
+        var property = User!.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
         {
             property.Value = value;
             property.DateUpdated = DateTime.UtcNow;
         }
+
+        return Task.CompletedTask;
     }
 
     private void SyncProperties()
@@ -273,7 +275,7 @@
                     User.PropertyData.Add(new UserPropertyValue
                     {
                         ContentTypePropertyId = ctp.Id,
-                        Alias = ctp.Alias,
+                        Alias = ctp.Alias!,
                         UserId = User!.Id
                     });
                 }

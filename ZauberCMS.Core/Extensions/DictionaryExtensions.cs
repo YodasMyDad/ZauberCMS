@@ -10,7 +10,7 @@ namespace ZauberCMS.Core.Extensions;
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public static Dictionary<string, string> ToDictionary(this object obj)
+        public static Dictionary<string, string>? ToDictionary(this object obj)
         {
             var json = JsonSerializer.Serialize(obj);
             return JsonSerializer.Deserialize<Dictionary<string, string>>(json);

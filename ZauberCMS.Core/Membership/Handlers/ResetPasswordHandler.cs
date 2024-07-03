@@ -16,10 +16,10 @@ namespace ZauberCMS.Core.Membership.Handlers
             var result = new AuthenticationResult();
             using var scope = serviceProvider.CreateScope();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-            var user = await userManager.FindByEmailAsync(request.Email);
+            var user = await userManager.FindByEmailAsync(request.Email!);
             if (user != null)
             {
-                var resetResult = await userManager.ResetPasswordAsync(user, request.Code, request.Password);
+                var resetResult = await userManager.ResetPasswordAsync(user, request.Code!, request.Password!);
                 if (resetResult.Succeeded == false)
                 {
                     result.Success = false;

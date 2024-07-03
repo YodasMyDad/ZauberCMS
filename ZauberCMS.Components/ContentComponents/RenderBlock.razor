@@ -28,7 +28,7 @@
 
     protected override void OnInitialized()
     {
-        Parameters.Add("Content", Content );
+        Parameters.Add("Content", Content! );
         BlockViews = ExtensionManager.GetInstances<TView>(true);
     }
 }

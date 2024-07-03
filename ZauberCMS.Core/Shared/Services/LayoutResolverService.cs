@@ -9,7 +9,7 @@ public class LayoutResolverService
     public Type GetLayoutType(Type componentType)
     {
         // Check if the layout type is already cached
-        if (_layoutCache.TryGetValue(componentType.FullName, out var layoutType))
+        if (_layoutCache.TryGetValue(componentType.FullName ?? throw new InvalidOperationException(), out var layoutType))
         {
             return layoutType;
         }
@@ -20,7 +20,7 @@ public class LayoutResolverService
 
         // Cache the layout type
         layoutType = layoutAttribute?.LayoutType;
-        _layoutCache[componentType.FullName] = layoutType;
+        _layoutCache[componentType.FullName] = layoutType ?? throw new InvalidOperationException();
 
         // Return the layout type or a default layout if none is specified
         return layoutType;

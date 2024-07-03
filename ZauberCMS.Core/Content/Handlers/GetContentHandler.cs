@@ -43,7 +43,7 @@ public class GetContentHandler (IServiceProvider serviceProvider)
         
             if (!request.ContentTypeAlias.IsNullOrWhiteSpace())
             {
-                return await query.FirstOrDefaultAsync(x => x.ContentType.Alias == request.ContentTypeAlias, cancellationToken: cancellationToken);
+                return await query.FirstOrDefaultAsync(x => x.ContentType != null && x.ContentType.Alias == request.ContentTypeAlias, cancellationToken: cancellationToken);
             }
 
             // Should never get here

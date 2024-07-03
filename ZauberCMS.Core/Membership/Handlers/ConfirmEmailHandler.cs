@@ -35,7 +35,7 @@ namespace ZauberCMS.Core.Membership.Handlers
                 return result;
             }
 
-            request.Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Code));
+            request.Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Code!));
 
             if (request.IsEmailUpdate)
             {

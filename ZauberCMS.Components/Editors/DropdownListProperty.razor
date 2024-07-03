@@ -29,11 +29,11 @@
     
     protected override void OnAfterRender(bool firstRender)
     {
-        base.OnAfterRender(firstRender);
         if (firstRender && DropDown != null && SettingsModel.MaxAmount > 0)
         {
             DropDown.MaxSelectedLabels = SettingsModel.MaxAmount;
         }
+        base.OnAfterRender(firstRender);
     }
 
 }

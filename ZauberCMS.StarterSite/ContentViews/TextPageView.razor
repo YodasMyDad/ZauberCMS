@@ -5,21 +5,21 @@
 @layout MainLayout
 
 @* This is where you set Head/Meta information *@
-<PageTitle>@(Content.GetValue<string>("PageTitle"))</PageTitle>
+<PageTitle>@(Content!.GetValue<string>("PageTitle"))</PageTitle>
 <SectionContent SectionId="MainLayout.Sections.PageHeadContent">
-    <meta name="description" content="@(Content.GetValue<string>("MetaDescription"))">
+    <meta name="description" content="@(Content!.GetValue<string>("MetaDescription"))">
 </SectionContent>
 
 @* 
     All properties are available through Content.GetValue<string>("") if your value is saved as a type
     then you can call Content.GetValue<MyType>("")
 *@
-<h1>@(Content.GetValue<string>("Heading"))</h1>
+<h1>@(Content!.GetValue<string>("Heading"))</h1>
 <div class="lead">
-    @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
+    @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
 </div>
 
 @code {
     @* This is the content page passed in that matches the url *@
-    [Parameter] public Content Content { get; set; } = default!;
+    [Parameter] public Content? Content { get; set; }
 }

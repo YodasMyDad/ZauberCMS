@@ -1,10 +1,9 @@
-﻿@using System.Text.Json
-@using ZauberCMS.Components.Editors.Models
+﻿@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenTextBox @ref="TextBox" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
-               ValueExpression="@(() => Value)" class="form-control"/>
+               ValueExpression="@(() => Value ?? string.Empty)" class="form-control"/>
 
 @if (SettingsModel.MaxLength != null)
 {
@@ -14,9 +13,9 @@
 }
 
 @code {
-    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
-    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
 
@@ -28,7 +27,6 @@
 
     private TextContentSettingsModel SettingsModel { get; set; } = new();
     private RadzenTextBox? TextBox { get; set; }
-    int value;
 
     protected override void OnInitialized()
     {
@@ -37,11 +35,11 @@
 
     protected override void OnAfterRender(bool firstRender)
     {
-        base.OnAfterRender(firstRender);
         if (firstRender && TextBox != null && SettingsModel.MaxLength != null)
         {
             TextBox.MaxLength = SettingsModel.MaxLength.Value;
         }
+        base.OnAfterRender(firstRender);
     }
 
 }

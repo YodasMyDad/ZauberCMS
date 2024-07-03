@@ -33,7 +33,7 @@ public class SaveUserHandler(
             if (user == null)
             {
                 user = request.User;
-                var result = await userManager.CreateAsync(user, request.Password);
+                var result = await userManager.CreateAsync(user, request.Password!);
                 if (!result.Succeeded)
                 {
                     handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));

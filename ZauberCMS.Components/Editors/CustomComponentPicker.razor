@@ -23,8 +23,8 @@
     public string Icon => "settings_ethernet";
     public Type? SettingsComponent { get; set; }
 
-    [Parameter] public string Value { get; set; } = string.Empty;
-    [Parameter] public string Settings { get; set; } = string.Empty;
+    [Parameter] public string? Value { get; set; } = string.Empty;
+    [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
@@ -32,7 +32,7 @@
     private IEnumerable<string> SelectedValues { get; set; } = Enumerable.Empty<string>();
     private List<DataListItem> Items { get; set; } = [];
     
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         var items = ExtensionManager.GetInstances<ICustomContentComponent>(true);
         foreach (var item in items)
@@ -48,6 +48,8 @@
         {
                 SelectedValues = JsonSerializer.Deserialize<IEnumerable<string>>(Value) ?? Enumerable.Empty<string>();
         }
+
+        return Task.CompletedTask;
     }
     
     private async Task OnChange()

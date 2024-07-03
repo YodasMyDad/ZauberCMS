@@ -17,7 +17,6 @@ using ZauberCMS.Core.Shared.Services;
 namespace ZauberCMS.Core.Membership.Handlers;
 
 public class CreateUpdateUserHandler(
-    ProviderService providerService,
     ILogger<CreateUpdateUserHandler> logger,
     AuthenticationStateProvider authenticationStateProvider,
     IServiceProvider serviceProvider,

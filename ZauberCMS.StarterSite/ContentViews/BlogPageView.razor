@@ -3,10 +3,10 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout MainLayout
 
-<PageTitle>@(Content.GetValue<string>("PageTitle"))</PageTitle>
+<PageTitle>@(Content!.GetValue<string>("PageTitle"))</PageTitle>
 
 <SectionContent SectionId="MainLayout.Sections.PageHeadContent">
-    <meta name="description" content="@(Content.GetValue<string>("MetaDescription"))">
+    <meta name="description" content="@(Content!.GetValue<string>("MetaDescription"))">
 </SectionContent>
 
 @foreach (var block in ContentBlocks)
@@ -16,12 +16,12 @@
 
 @code {
     
-    [Parameter] public Content Content { get; set; } = default!;
+    [Parameter] public Content? Content { get; set; } = default!;
     private List<Content> ContentBlocks { get; set; } = [];
 
     protected override void OnInitialized()
     {
-        var blocks = Content.GetValue<List<Content>>("Content");
+        var blocks = Content!.GetValue<List<Content>>("Content");
         if (blocks != null && blocks.Any())
         {
             ContentBlocks = blocks;

@@ -7,29 +7,26 @@
         if (CustomContentComponents.TryGetValue(customComponentName, out var customContentComponent))
         {
             var customComponentType = customContentComponent.GetType();
-            @if (customComponentType != null)
-            {
-                <CascadingValue Value="this">
-                    <DynamicComponent Type="@customComponentType" Parameters="@GetParameters()"/>
-                </CascadingValue>   
-            }
+            <CascadingValue Value="this">
+                <DynamicComponent Type="@customComponentType" Parameters="@GetParameters()"/>
+            </CascadingValue>
         }
     }
 }
 
 @code {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    
+
     [Parameter] public List<string> CustomComponents { get; set; } = [];
     [Parameter] public Content? Content { get; set; }
-    
+
     Dictionary<string, ICustomContentComponent> CustomContentComponents { get; set; } = new();
-    
+
     private Dictionary<string, object> GetParameters()
     {
         return new Dictionary<string, object>
         {
-            ["Content"] = Content
+            ["Content"] = Content!
         };
     }
 
@@ -39,3 +36,4 @@
     }
 
 }
+

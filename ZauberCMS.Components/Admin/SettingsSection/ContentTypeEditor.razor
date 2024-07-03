@@ -111,7 +111,7 @@
                                         @foreach (var property in tabProperties)
                                         {
                                             <PropertyEditor Property="property"
-                                                            ContentProperty="@(ContentProperties[property.Component])"
+                                                            ContentProperty="@(ContentProperties[property.Component!])"
                                                             OnSortUp="@(prop => SortProperty(prop, false))"
                                                             OnSortDown="@(prop => SortProperty(prop, true))"
                                                             OnDelete="@(prop => DeleteProperty(prop))"
@@ -241,7 +241,7 @@
                     // Get the name of the component
                     Name = type.Name,
                     // Get the full name of the component
-                    FullName = type.FullName
+                    FullName = type.FullName!
                 };
             })
             .OrderBy(x => x.Name)
@@ -389,7 +389,7 @@
         var dialog = DialogService.OpenSidePanel<AddTab>("Update Tab",
             new Dictionary<string, object>
             {
-                { "Tab", tab },
+                { "Tab", tab! },
                 { "DefaultSortOrder", ContentType.Tabs.Count(x => !x.IsSystemTab) + 1 }
             });
         var result = await dialog.Result;

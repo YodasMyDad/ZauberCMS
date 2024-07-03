@@ -37,7 +37,7 @@ public class QueryUsersHandler(IServiceProvider serviceProvider)
 
             if (request.Roles.Count != 0)
             {
-                query = query.Where(x => x.UserRoles.Any(ur => request.Roles.Contains(ur.Role.Name)));
+                query = query.Where(x => x.UserRoles.Any(ur => ur.Role.Name != null && request.Roles.Contains(ur.Role.Name)));
             }
             
 

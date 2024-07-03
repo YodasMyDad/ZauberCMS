@@ -17,7 +17,7 @@ public static class ClaimsPrincipalExtensions
 
     public static Guid GetUserId(this ClaimsPrincipal principal)
     {
-        return Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier));
+        return Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException());
     }
 
     public static string? GetUserName(this ClaimsPrincipal principal)

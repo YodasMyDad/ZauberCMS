@@ -1,7 +1,6 @@
 
 #### POC Release TODO
 
-Re-do media, it's shit (Need to re-do provider to save media not files)
 Update ReadMe and add docs (How do other sites do it?)
 Build Starter site and record video (How deal with test media in repo so users can see it?)
 

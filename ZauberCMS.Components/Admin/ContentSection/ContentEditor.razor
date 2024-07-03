@@ -7,12 +7,12 @@
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Shared.Validation.Interfaces
 
-@if (ContentType != null)
+@if (ContentType != null && Content != null)
 {
     <EditForm Model="@Content" OnSubmit="Save">
         
         <RadzenRow class="rz-pb-2">
-            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content.Name" ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
+            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content!.Name" ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
                 <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last Updated: @Content.DateUpdated.Humanize()</RadzenText>
             </RadzenStack>
@@ -146,7 +146,7 @@ else
     private Dictionary<Guid, ContentPropertyValue> AllContentValues { get; set; } = new();
     private Dictionary<string, string> AvailableContentViews { get; set; } = new();
     private int SelectedTabIndex { get; set; }
-    private RadzenTabs Tabs { get; set; }
+    private RadzenTabs? Tabs { get; set; }
     private bool RootOnly => IsBlockList != true && ContentId == null && ParentId == null;
     private bool ElementTypesOnly => IsBlockList == true;
     private AuthenticationState AuthState { get; set; } = default!;
@@ -193,7 +193,7 @@ else
         SelectedTabIndex = i;
     }
 
-    private async Task UpdateProperty(Guid ctpId, string value)
+    private Task UpdateProperty(Guid ctpId, string value)
     {
         var property = Content?.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
@@ -201,6 +201,8 @@ else
             property.Value = value;
             property.DateUpdated = DateTime.UtcNow;
         }
+
+        return Task.CompletedTask;
     }
 
     private void SyncProperties(Content content, ContentType contentType)
@@ -233,13 +235,13 @@ else
                 content.PropertyData.Add(new ContentPropertyValue
                 {
                     ContentTypePropertyId = ctp.Id,
-                    Alias = ctp.Alias,
-                    ContentId = Content.Id
+                    Alias = ctp.Alias!,
+                    ContentId = Content!.Id
                 });
             }
         }
 
-        AllContentValues = Content.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+        AllContentValues = Content!.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
         AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
     }
 
@@ -250,10 +252,10 @@ else
         // Need to set the ContentType is this is new content
         if (ContentId == null)
         {
-            Content.ContentTypeId = ContentType.Id;
+            Content!.ContentTypeId = ContentType.Id;
         }
 
-        SyncProperties(Content, ContentType);
+        SyncProperties(Content!, ContentType);
     }
 
     private async Task Save()
@@ -266,10 +268,10 @@ else
             }
             else
             {
-                var saveContentCommand = new SaveContentCommand { Content = [Content] };
+                var saveContentCommand = new SaveContentCommand { Content = [Content!] };
                 var result = await Mediator.Send(saveContentCommand);
-                NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content.Name} Error", Detail = "", Duration = 4000 });
-                await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName());
+                NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = "", Duration = 4000 });
+                await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
             }
         }
     }

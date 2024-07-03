@@ -17,7 +17,7 @@ public class MultiQueryHandler(IServiceProvider serviceProvider)
         foreach (var query in request.Queries)
         {
             var queryResult = await query.ExecuteQuery(dbContext, cancellationToken);
-            results.Add(query.Name, queryResult);
+            if (query.Name != null) results.Add(query.Name, queryResult);
         }
 
         return results;

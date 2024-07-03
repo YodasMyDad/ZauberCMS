@@ -94,7 +94,7 @@
         AppState.OnMediaChanged -= HandleMediaChanged;
     }
 
-    private async Task HandleMediaChanged(Media media, string username)
+    private async Task HandleMediaChanged(Media? media, string username)
     {
         await SetContents(FolderId);
         StateHasChanged();

@@ -16,8 +16,6 @@ namespace ZauberCMS.Core.Email.Handlers;
 
 public class SendEmailConfirmationHandler(
     UserManager<User> userManager,
-    ILogger<SendEmailConfirmationHandler> logger,
-    IOptions<ZauberSettings> gabSettings,
     IHttpContextAccessor httpContextAccessor,
     ProviderService providerService)
     : IRequestHandler<SendEmailConfirmationCommand>
@@ -25,7 +23,7 @@ public class SendEmailConfirmationHandler(
     
     public async Task Handle(SendEmailConfirmationCommand request, CancellationToken cancellationToken)
         {
-            var userId = await userManager.GetUserIdAsync(request.User);
+            var userId = await userManager.GetUserIdAsync(request.User!);
 
             string code;
             string email;
@@ -34,13 +32,13 @@ public class SendEmailConfirmationHandler(
             var isChange = "false";
             if (request.NewEmailAddress.IsNullOrWhiteSpace())
             {
-                code = await userManager.GenerateEmailConfirmationTokenAsync(request.User);
-                email = request.User.Email;
+                code = await userManager.GenerateEmailConfirmationTokenAsync(request.User!);
+                email = request.User!.Email!;
             }
             else
             {
                 isChange = "true";
-                code = await userManager.GenerateChangeEmailTokenAsync(request.User, request.NewEmailAddress);
+                code = await userManager.GenerateChangeEmailTokenAsync(request.User!, request.NewEmailAddress);
                 email = request.NewEmailAddress;
             }
   

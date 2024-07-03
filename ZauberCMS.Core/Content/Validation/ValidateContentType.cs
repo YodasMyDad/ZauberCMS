@@ -6,7 +6,7 @@ using ZauberCMS.Core.Shared.Validation.Models;
 
 namespace ZauberCMS.Core.Content.Validation;
 
-public class ValidateContentType(IMediator mediator) : IValidate<ContentType>
+public class ValidateContentType : IValidate<ContentType>
 {
     public Task<ValidateResult> Validate(ContentType item)
     {

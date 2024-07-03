@@ -3,7 +3,7 @@
 </CascadingValue>
 
 @code {
-    [Parameter] public Type ComponentType { get; set; }
+    [Parameter] public Type? ComponentType { get; set; }
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
@@ -16,7 +16,7 @@
             ["Value"] = Value,
             ["ValueChanged"] = ValueChanged,
             ["Settings"] = Settings,
-            ["Content"] = Content
+            ["Content"] = Content!
         };
     }
 }

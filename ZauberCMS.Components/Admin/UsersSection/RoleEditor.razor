@@ -26,79 +26,83 @@
     }
 </RadzenStack>
 
-<RadzenPanel Class="rz-mx-auto">
-    <EditForm Model="Role" OnSubmit="Save">
-        <RadzenRow class="rz-pb-6">
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
-                    <RadzenIcon Icon="@(Role.Icon.IsNullOrWhiteSpace() ? "add" : Role.Icon)" style="font-weight: 300; color: dimgray;"/>
+@if (Role != null)
+{
+    <RadzenPanel Class="rz-mx-auto">
+        <EditForm Model="Role" OnSubmit="Save">
+            <RadzenRow class="rz-pb-6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
+                        <RadzenIcon Icon="@(Role.Icon.IsNullOrWhiteSpace() ? "add" : Role.Icon)" style="font-weight: 300; color: dimgray;"/>
+                    </RadzenStack>
+                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="@Role.Name" aria-label="Name"/>
                 </RadzenStack>
-                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="@Role.Name" aria-label="Name"/>
-            </RadzenStack>
-        </RadzenRow>
-        @if (Role.Tabs.Count > 0)
-        {
-            <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
-                <Tabs>
-                    @{
-                        var orderedTabsList = GetTabsInOrder();
-                    }
-                    @for (var i = 0; i < orderedTabsList.Count; i++)
-                    {
-                        var tab = orderedTabsList[i];
-                        TabIndex.TryAdd(i, tab);
+            </RadzenRow>
+            @if (Role.Tabs.Count > 0)
+            {
+                <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
+                    <Tabs>
+                        @{
+                            var orderedTabsList = GetTabsInOrder();
+                        }
+                        @for (var i = 0; i < orderedTabsList.Count; i++)
+                        {
+                            var tab = orderedTabsList[i];
+                            TabIndex.TryAdd(i, tab);
 
-                        if (tab.IsSystemTab)
-                        {
-                            @* No system tab yet on Roles *@
-                        }
-                        else
-                        {
-                            <RadzenTabsItem>
-                                <Template Context="tabContext">
-                                    @tab.Name
-                                </Template>
-                                <ChildContent>
-                                    <RadzenStack Gap="1rem">
-                                        @{
-                                            var tabProperties = Role.Properties
-                                                .Where(x => x.TabId == tab.Id)
-                                                .OrderBy(x => x.SortOrder)
-                                                .ToList();
-                                        }
-                                        @if (tabProperties.Any())
-                                        {
-                                            @foreach (var property in tabProperties)
-                                            {
-                                                <PropertyEditor Property="property"
-                                                                ContentProperty="@(ContentProperties[property.Component])"
-                                                                OnSortUp="@(prop => SortProperty(prop, false))"
-                                                                OnSortDown="@(prop => SortProperty(prop, true))"
-                                                                OnDelete="@(prop => DeleteProperty(prop))"
-                                                                OnChangeTab="@(async (prop) => await ChangeTab(prop))"
-                                                                OnSettings="@(async (prop) => await Settings(prop))"
-                                                                SlugHelper="@_slugHelper"/>
+                            if (tab.IsSystemTab)
+                            {
+                                @* No system tab yet on Roles *@
+                            }
+                            else
+                            {
+                                <RadzenTabsItem>
+                                    <Template Context="tabContext">
+                                        @tab.Name
+                                    </Template>
+                                    <ChildContent>
+                                        <RadzenStack Gap="1rem">
+                                            @{
+                                                var tabProperties = Role.Properties
+                                                    .Where(x => x.TabId == tab.Id)
+                                                    .OrderBy(x => x.SortOrder)
+                                                    .ToList();
                                             }
-                                        }
-                                        else
-                                        {
-                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-                                                <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete This Tab" Click="@(() => DeleteTab(tab))"/>
-                                            </RadzenStack>
-                                        }
-                                    </RadzenStack >
-                                </ChildContent>
-                            </RadzenTabsItem>
+                                            @if (tabProperties.Any())
+                                            {
+                                                @foreach (var property in tabProperties)
+                                                {
+                                                    <PropertyEditor Property="property"
+                                                                    ContentProperty="@(ContentProperties[property.Component!])"
+                                                                    OnSortUp="@(prop => SortProperty(prop, false))"
+                                                                    OnSortDown="@(prop => SortProperty(prop, true))"
+                                                                    OnDelete="@(prop => DeleteProperty(prop))"
+                                                                    OnChangeTab="@(async (prop) => await ChangeTab(prop))"
+                                                                    OnSettings="@(async (prop) => await Settings(prop))"
+                                                                    SlugHelper="@_slugHelper"/>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+                                                    <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete This Tab" Click="@(() => DeleteTab(tab))"/>
+                                                </RadzenStack>
+                                            }
+                                        </RadzenStack >
+                                    </ChildContent>
+                                </RadzenTabsItem>
+                            }
                         }
-                    }
-                </Tabs>
-            </RadzenTabs>
-        }
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
-            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
-        </RadzenStack>
-    </EditForm>
-</RadzenPanel>
+                    </Tabs>
+                </RadzenTabs>
+            }
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
+            </RadzenStack>
+        </EditForm>
+    </RadzenPanel>
+}
+
 
 @code {
     [Inject] public IModalService DialogService { get; set; } = default!;
@@ -107,7 +111,7 @@
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] public ValidateService<Role> ValidateService { get; set; } = default!;
-    
+
     [Parameter] public Guid? RoleId { get; set; }
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
@@ -144,7 +148,7 @@
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: string icon })
         {
-            Role.Icon = icon;
+            Role!.Icon = icon;
         }
     }
 
@@ -176,18 +180,18 @@
                     var contentProperty = contentProperties[i];
                     contentProperty.SortOrder = i + 1;
                 }
-            }   
+            }
         }
     }
 
     private List<Tab> GetTabsInOrder()
     {
-        return Role.Tabs.OrderBy(x => x.SortOrder).ToList();
+        return Role!.Tabs.OrderBy(x => x.SortOrder).ToList();
     }
 
     private void SortProperty(PropertyType property, bool moveDown)
     {
-        var propertiesInSameTab = Role.Properties
+        var propertiesInSameTab = Role!.Properties
             .Where(p => p.TabId == property.TabId)
             .OrderBy(p => p.SortOrder)
             .ToList();
@@ -215,7 +219,7 @@
     private void DeleteProperty(PropertyType property)
     {
         // Remove the specified property from the list
-        Role.Properties.Remove(property);
+        Role!.Properties.Remove(property);
 
         // Get properties in the same tab and re-adjust their sort orders
         var propertiesInSameTab = Role.Properties
@@ -238,7 +242,7 @@
             new Dictionary<string, object>
             {
                 {
-                    "Tabs", Role.Tabs
+                    "Tabs", Role!.Tabs
                         .Where(x => !x.IsSystemTab)
                         .OrderBy(x => x.SortOrder)
                         .ToList()
@@ -266,7 +270,7 @@
     private void DeleteTab(Tab tab)
     {
         // Remove the specified tab from the list of tabs
-        Role.Tabs.Remove(tab);
+        Role!.Tabs.Remove(tab);
 
         // The index will be the total count
         TabIndex.Clear();
@@ -285,14 +289,14 @@
         {
             var saveContentTypeCommand = new SaveRoleCommand { Role = Role };
             var result = await Mediator.Send(saveContentTypeCommand);
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Role.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Role?.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role?.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
-    
+
     private async Task DeleteRole()
     {
         // Check no content is using it first
-        var result = await Mediator.Send(new DeleteRoleCommand { RoleId = Role.Id });
+        var result = await Mediator.Send(new DeleteRoleCommand { RoleId = Role!.Id });
         if (result.Success)
         {
             NavigationManager.NavigateTo(Constants.Urls.AdminUsersBaseUrl);
@@ -308,8 +312,8 @@
         var dialog = DialogService.OpenSidePanel<AddTab>("Update Tab",
             new Dictionary<string, object>
             {
-                { "Tab", tab },
-                { "DefaultSortOrder", Role.Tabs.Count(x => !x.IsSystemTab) + 1 }
+                { "Tab", tab! },
+                { "DefaultSortOrder", Role!.Tabs.Count(x => !x.IsSystemTab) + 1 }
             });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: Tab newTab })
@@ -346,7 +350,7 @@
 
     private async Task AddProperty()
     {
-        if (Role.Tabs.All(x => x.IsSystemTab))
+        if (Role!.Tabs.All(x => x.IsSystemTab))
         {
             NotificationService.ShowNotification("You need to add a tab", NotificationSeverity.Info);
         }
