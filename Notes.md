@@ -1,7 +1,7 @@
 
 #### POC Release TODO
 
-Build Starter site
+Build Starter site - https://startbootstrap.com/previews/clean-blog
 Update ReadMe and add docs (How do other sites do it?)
 RE-Build Starter site and record video (How deal with test media in repo so users can see it?)
 
