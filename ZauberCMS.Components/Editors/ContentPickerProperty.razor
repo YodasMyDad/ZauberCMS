@@ -40,14 +40,29 @@
     {
         if (!Value.IsNullOrWhiteSpace())
         {
-            var contentIds = JsonSerializer.Deserialize<List<Guid>>(Value);
-            if (contentIds != null && contentIds.Any())
+            if (Guid.TryParse(Value, out var singleId)) 
             {
-                var contentItems = await Mediator.Send(new QueryContentCommand
+                // Value is a single guid
+                var contentItem = await Mediator.Send(new QueryContentCommand
                 {
-                    Ids = contentIds
+                    Ids = [singleId]
                 });
-                ContentItems = contentItems.Items.ToList();
+
+                ContentItems = contentItem.Items.ToList();
+            } 
+            else 
+            {
+                // Value might be a list of guids
+                var contentIds = JsonSerializer.Deserialize<List<Guid>>(Value);
+                if (contentIds != null && contentIds.Any())
+                {
+                    var contentItems = await Mediator.Send(new QueryContentCommand
+                    {
+                        Ids = contentIds
+                    });
+
+                    ContentItems = contentItems.Items.ToList();
+                }
             }
         }
         
@@ -82,7 +97,7 @@
 
     private async Task OnValueChangedHandler(object value)
     {
-        if (SettingsModel.MaxAllowed != null && ContentItems.Count > SettingsModel.MaxAllowed)
+        if (SettingsModel.MaxAllowed != null && ContentItems.Count >= SettingsModel.MaxAllowed)
         {
             Modal?.Close();
             NotificationService.ShowErrorNotification($"You can only pick {SettingsModel.MaxAllowed}");
@@ -108,7 +123,16 @@
 
     private async Task SaveAndUpdate()
     {
-        Value = JsonSerializer.Serialize(ContentItems.Select(x => x.Id));
+        if (ContentItems.Count <= 0)
+        {
+            Value = string.Empty;
+        }
+        else
+        {
+            Value = ContentItems.Count == 1 ?
+                ContentItems[0].Id.ToString() : 
+                JsonSerializer.Serialize(ContentItems.Select(x => x.Id));   
+        }
         await ValueChanged.InvokeAsync(Value);
     }
 

@@ -1,9 +1,11 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Components.Editors.Dialogs
+@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Shared.Validation.Interfaces
 
@@ -97,7 +99,10 @@
                                 <RadzenLabel Text="Internal Redirect Id"/>
                             </LeftColumn>
                             <CentreColumn>
-                                <RadzenTextBox Style="width: 100%;" Name="InternalRedirectId" @bind-Value="@Content.InternalRedirectIdAsString"/>
+                                <ContentPickerProperty 
+                                    Value="@Content.InternalRedirectIdAsString"
+                                    Settings="@(JsonSerializer.Serialize(new ContentPickerSettings { MaxAllowed = 1 }))"
+                                    ValueChanged="@(e => Content.InternalRedirectIdAsString = e.ToString())" />
                             </CentreColumn>
                         </EditorRow>
 
@@ -244,7 +249,7 @@ else
         AllContentValues = Content!.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
         AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
 
-        if (Content.ViewComponent.IsNullOrWhiteSpace())
+        if (Content.ViewComponent.IsNullOrWhiteSpace() && contentType.AvailableContentViews.Any())
         {
             Content.ViewComponent = contentType.AvailableContentViews.FirstOrDefault()!;
         }
