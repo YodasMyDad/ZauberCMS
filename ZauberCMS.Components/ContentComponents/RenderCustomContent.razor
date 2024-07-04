@@ -3,7 +3,7 @@
 
 @if (CustomContentComponents.Any())
 {
-    @foreach (var customComponentName in CustomComponents)
+    @foreach (var customComponentName in CustomComponents.Where(x => !x.IsNullOrWhiteSpace()))
     {
         if (CustomContentComponents.TryGetValue(customComponentName, out var customContentComponent))
         {

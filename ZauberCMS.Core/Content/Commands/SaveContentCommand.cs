@@ -6,4 +6,5 @@ namespace ZauberCMS.Core.Content.Commands;
 public class SaveContentCommand : IRequest<HandlerResult<Models.Content>>
 {
     public Models.Content? Content { get; set; }
+    public bool ExcludePropertyData { get; set; }
 }

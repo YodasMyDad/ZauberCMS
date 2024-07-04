@@ -100,6 +100,7 @@
                             }
                             else
                             {
+                                ContextMenuService.Close();
                                 var dialog = ModalService.OpenSidePanel<SortContent>("Sort Children", 
                                     new Dictionary<string, object>{ { "ContentId", dbContent.Id }, {"Content", dbContent.Children.OrderBy(x => x.SortOrder).ToList()} });
                                 var result = await dialog.Result;
@@ -107,13 +108,14 @@
                                 {
                                     foreach (var c in sortedContent)
                                     {
-                                        var saveResult = await Mediator.Send(new SaveContentCommand {Content = c});
+                                        var saveResult = await Mediator.Send(new SaveContentCommand {Content = c, ExcludePropertyData = true});
                                         if (!saveResult.Success)
                                         {
                                             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveResult.Messages.MessagesAsString(), Duration = 4000 });
                                         }
                                     }
                                     await DataRefresh();
+                                    StateHasChanged();
                                 }
                             }
          

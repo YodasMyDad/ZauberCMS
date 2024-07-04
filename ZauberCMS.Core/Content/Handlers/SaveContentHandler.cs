@@ -56,8 +56,11 @@ public class SaveContentHandler(
                 mapper.Map(request.Content, content);
                 content.DateUpdated = DateTime.UtcNow;
 
-                // Update ContentPropertyValues
-                UpdateContentPropertyValues(dbContext, content, request.Content.PropertyData);
+                if (!request.ExcludePropertyData)
+                {
+                    // Update ContentPropertyValues
+                    UpdateContentPropertyValues(dbContext, content, request.Content.PropertyData);   
+                }
             }
 
             // Calculate and set the Path property
