@@ -15,16 +15,28 @@
     then you can call Content.GetValue<MyType>("")
 *@
 
-<section class="py-5 text-center container">
-    <div class="row py-lg-5">
-        <div class="col-lg-6 col-md-8 mx-auto">
-            <h1>@(Content!.GetValue<string>("Heading"))</h1>
-            <div class="lead text-muted">
-                @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
+<header class="masthead" style="background-image: url('_content/ZauberCMS.StarterSite/assets/img/home-bg.jpg')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="site-heading">
+                    <h1>@(Content!.GetValue<string>("Heading"))</h1>
+                    <span class="subheading">TODO</span>
+                </div>
             </div>
         </div>
     </div>
-</section>
+</header>
+
+<div class="container px-4 px-lg-5">
+
+    <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+
+            @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
+        </div>
+    </div>
+</div>
 
 
 @code {

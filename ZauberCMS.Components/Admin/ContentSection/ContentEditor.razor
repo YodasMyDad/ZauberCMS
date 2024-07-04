@@ -7,7 +7,6 @@
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Shared.Services
-@using ZauberCMS.Core.Shared.Validation.Interfaces
 
 @if (ContentType != null && Content != null)
 {
@@ -278,7 +277,7 @@ else
             }
             else
             {
-                var saveContentCommand = new SaveContentCommand { Content = [Content!] };
+                var saveContentCommand = new SaveContentCommand { Content = Content };
                 var result = await Mediator.Send(saveContentCommand);
                 NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = "", Duration = 4000 });
                 await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);

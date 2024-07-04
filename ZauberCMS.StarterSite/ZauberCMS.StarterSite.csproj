@@ -34,4 +34,8 @@
       <AdditionalFiles Include="Layouts\NavBar.razor" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\" />
+    </ItemGroup>
+
 </Project>

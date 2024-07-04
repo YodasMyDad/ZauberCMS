@@ -27,7 +27,7 @@
 @code {
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
-    [Parameter] public IModalService? ModalService { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
     
     public MediaPickerSettings Settings { get; set; } = new();
     private IEnumerable<EnumObject> Data { get; set; } = [];

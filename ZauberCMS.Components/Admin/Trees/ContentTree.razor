@@ -30,7 +30,8 @@
             {
                 AmountPerPage = 100,
                 WhereClause = x => x.IsRootContent,
-                IncludeChildren = true
+                IncludeChildren = true,
+                OrderBy = GetContentsOrderBy.SortOrder
             });
             Data = items.Items.ToList();
         }

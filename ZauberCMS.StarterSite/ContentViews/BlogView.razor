@@ -11,32 +11,34 @@
 </SectionContent>
 
 
-<div class="container px-4 py-5" id="featured-3">
-    <h2 class="pb-2 border-bottom">
-        Our Blog
-    </h2>
-    <div class="row g-4 py-5 row-cols-1 row-cols-lg-2">
-
-        @foreach (var blogPage in BlogPages)
-        {
-            <div class="feature col">
-                <h3 class="fs-2 text-body-emphasis">
-                    <a href="@($"/{blogPage.Url}")" class="icon-link text-black">
-                        @blogPage.Name
-                    </a>
-                </h3>
-                <p>@(blogPage.GetValue<string>("Summary"))</p>
-                <a href="@($"/{blogPage.Url}")" class="icon-link">
-                    View Blog Post
-                    <svg class="bi"><use xlink:href="#chevron-right"></use></svg>
-                </a>
+<header class="masthead" style="background-image: url('_content/ZauberCMS.StarterSite/assets/img/home-bg.jpg')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="site-heading">
+                    <h1>@(Content!.GetValue<string>("Heading"))</h1>
+                    <span class="subheading">TODO</span>
+                </div>
             </div>
-        }
-        
+        </div>
+    </div>
+</header>
+
+<div class="container px-4 px-lg-5">
+
+    <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+            
+            @foreach (var post in BlogPages)
+            {
+            <BlogPostPreview Content="@post"/>
+            <hr class="my-4"/>
+            }
+
+            @*<div class="d-flex justify-content-end mb-4"><a class="btn btn-primary text-uppercase" href="#!">Older Posts →</a></div>*@
+        </div>
     </div>
 </div>
-
-
 
 @code {
     [Parameter] public Content? Content { get; set; }

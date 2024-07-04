@@ -1,46 +1,35 @@
 ﻿@page "/SortContent/{ContentId:guid}"
+@using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 
-<h6 @onclick="@(Sort)" style="cursor: pointer;">Name</h6>
-<RadzenStack Orientation="Orientation.Vertical" Gap="1" JustifyContent="JustifyContent.Center">
-    @foreach (var content in Content)
-    {
-    <div>@content.Name</div>
-    }    
-</RadzenStack>
+<SortableList Id="SortContentItems" Items="@Content" OnUpdate="@SortList" Context="item">
+    <SortableItemTemplate>
+        <PickerItem Text="@item.Name" />
+    </SortableItemTemplate>
+</SortableList>
+
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
 </RadzenStack>
 
 @code {
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
     [Parameter] public Guid ContentId { get; set; }
     [Parameter] public List<Content> Content { get; set; } = [];
-    bool _isDescending = false;
-
-    private void Sort()
-    {
-        if (_isDescending)
-        {
-            _isDescending = false;
-            Content = Content.OrderBy(x => x.Name).ToList();
-        }
-        else
-        {
-            _isDescending = true;
-            Content = Content.OrderByDescending(x => x.Name).ToList();
-        }
-    }
     
-    private void Save()
+    private void SortList((int oldIndex, int newIndex) indices)
+    {
+        TupleExtensions.SortList(indices, Content);
+        StateHasChanged();
+    }
+
+    private async Task Save()
     {
         @for (var i = 0; i < Content.Count; i++)
         {
             var content = Content[i];
             content.SortOrder = i + 1;
         }
-
-        // TODO - Save sorted items here
         
-        DialogService.CloseSide(Content);
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Content));
     }
 }

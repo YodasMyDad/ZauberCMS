@@ -1,7 +1,7 @@
 
 #### POC Release TODO
 
-Make the redirect id a content picker (make content picker save a guid using Guid.ToString() if one)
+
 Build Starter site - https://startbootstrap.com/previews/clean-blog (https://www.youtube.com/watch?v=tzcSNHg77fo)
 Update ReadMe (Inc license) and add docs (How do other sites do it?)
 RE-Build Starter site and record video (How deal with test media in repo so users can see it?)
