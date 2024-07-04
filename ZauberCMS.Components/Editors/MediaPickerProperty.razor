@@ -74,16 +74,6 @@
         }
     }
 
-    private async Task OnDrop(RadzenDropZoneItemEventArgs<Media> args)
-    {
-        if (args.ToItem != null && args.ToItem != args.Item)
-        {
-            MediaItems.Remove(args.Item);
-            MediaItems.Insert(MediaItems.IndexOf(args.ToItem), args.Item);
-            await SaveAndUpdate();
-        }
-    }
-
     private void AddMedia()
     {
         var parameters = new Dictionary<string, object>
@@ -96,7 +86,7 @@
 
     private async Task OnValueChangedHandler(object value)
     {
-        if (SettingsModel.MaxAllowed != null && MediaItems.Count > SettingsModel.MaxAllowed)
+        if (SettingsModel.MaxAllowed != null && MediaItems.Count >= SettingsModel.MaxAllowed)
         {
             Modal?.Close();
             NotificationService.ShowErrorNotification($"You can only pick {SettingsModel.MaxAllowed}");

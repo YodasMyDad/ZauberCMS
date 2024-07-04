@@ -1,4 +1,5 @@
 ﻿@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.StarterSite.Layouts
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 @* This is the layout you want to use *@
@@ -11,13 +12,13 @@
 </SectionContent>
 
 
-<header class="masthead" style="background-image: url('_content/ZauberCMS.StarterSite/assets/img/home-bg.jpg')">
+<header class="masthead" style="background-image: url('@(HeaderImage.Url)')">
     <div class="container position-relative px-4 px-lg-5">
         <div class="row gx-4 gx-lg-5 justify-content-center">
             <div class="col-md-10 col-lg-8 col-xl-7">
                 <div class="site-heading">
                     <h1>@(Content!.GetValue<string>("Heading"))</h1>
-                    <span class="subheading">TODO</span>
+                    <span class="subheading">@(Content!.GetValue<string>("SubHeading"))</span>
                 </div>
             </div>
         </div>
@@ -44,6 +45,7 @@
     [Parameter] public Content? Content { get; set; }
     
     private List<Content> BlogPages { get; set; } = [];
+    private Media HeaderImage { get; set; } = new();
     
     protected override async Task OnInitializedAsync()
     {
@@ -55,5 +57,8 @@
             WhereClause = content => content.ParentId == Content!.Id 
         });
         BlogPages = pages.Items.ToList();
+        HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "_content/ZauberCMS.StarterSite/assets/img/about-bg.jpg")).FirstOrDefault()!;
     }
+    
+    
 }

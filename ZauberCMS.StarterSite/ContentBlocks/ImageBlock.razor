@@ -4,7 +4,7 @@
 @if (Content != null && Media != null)
 {
     <img src="@(Media.Url)?width=875" alt="@Media.AltTag" class="img-thumbnail img-fluid" />
-    <p class="text-center"><small>@(Content.GetValue<string>("Summary"))</small></p>
+    <span class="caption text-muted">@(Content.GetValue<string>("Summary"))</span>
 }
 
 @code {

@@ -16,15 +16,16 @@ public static class ContentExtensions
     {
         return content.ContentValues().TryGetValue(alias, out var contentValue) ? contentValue.Value.ToValue<T>() : default;
     }
-    
+
     /// <summary>
     /// Gets 
     /// </summary>
-    /// <param name="content"></param>
-    /// <param name="alias"></param>
-    /// <param name="mediator"></param>
+    /// <param name="content">The content to get the media item from</param>
+    /// <param name="alias">The property alias</param>
+    /// <param name="mediator">An injected IMediatr</param>
+    /// <param name="fallBackUrl">Fallback url in case the media item is null</param>
     /// <returns></returns>
-    public static async Task<IEnumerable<Media.Models.Media?>> GetMedia(this Content.Models.Content content, string alias, IMediator mediator)
+    public static async Task<IEnumerable<Media.Models.Media?>> GetMedia(this Content.Models.Content content, string alias, IMediator mediator, string? fallBackUrl = null)
     {
         var mediaIds = content.GetValue<List<Guid>?>(alias);
         if (mediaIds != null)
@@ -38,6 +39,11 @@ public static class ContentExtensions
             }
         }
 
+        if (!fallBackUrl.IsNullOrWhiteSpace())
+        {
+            return [new Media.Models.Media{Name = fallBackUrl, Url = fallBackUrl}];
+        }
+        
         return [];
     }
 

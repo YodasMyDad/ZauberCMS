@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.StarterSite.Layouts
+﻿@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.StarterSite.Layouts
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 
 @* This is the layout you want to use *@
@@ -15,13 +16,13 @@
     then you can call Content.GetValue<MyType>("")
 *@
 
-<header class="masthead" style="background-image: url('_content/ZauberCMS.StarterSite/assets/img/home-bg.jpg')">
+<header class="masthead" style="background-image: url('@(HeaderImage.Url)')">
     <div class="container position-relative px-4 px-lg-5">
         <div class="row gx-4 gx-lg-5 justify-content-center">
             <div class="col-md-10 col-lg-8 col-xl-7">
                 <div class="site-heading">
                     <h1>@(Content!.GetValue<string>("Heading"))</h1>
-                    <span class="subheading">TODO</span>
+                    <span class="subheading">@(Content!.GetValue<string>("SubHeading"))</span>
                 </div>
             </div>
         </div>
@@ -37,7 +38,9 @@
             @* 
                 This renders any custom components you have selected on the page
             *@
-            <RenderCustomContent Content="@(Content)" CustomComponents="@(Content!.GetValue<List<string>>("ContactForm"))" />
+            <div class="mb-4">
+                <RenderCustomContent Content="@(Content)" CustomComponents="@(Content!.GetValue<List<string>>("ContactForm"))" />
+            </div>
         </div>
     </div>
 </div>
@@ -45,4 +48,10 @@
 @code {
     @* This is the content page passed in that matches the url *@
     [Parameter] public Content? Content { get; set; }
+    private Media HeaderImage { get; set; } = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "_content/ZauberCMS.StarterSite/assets/img/contact-bg.jpg")).FirstOrDefault()!;
+    }
 }
