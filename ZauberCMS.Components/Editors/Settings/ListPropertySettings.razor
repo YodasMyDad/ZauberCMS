@@ -6,9 +6,14 @@
 <RadzenTabs TabPosition="TabPosition.Top" RenderMode="TabRenderMode.Client">
     <Tabs>
         <RadzenTabsItem Text="Settings">
-            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="1">
-                <RadzenNumeric @bind-Value="@Settings.MaxAmount" Style="width: 100%;" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter max amount" }})" />
-            </RadzenStack>
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Amount Allowed" Description="The maximum allowed items to be picked"/>
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenNumeric @bind-Value="@Settings.MaxAmount" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max allowed" } })"/>
+                </CentreColumn>
+            </EditorRow>
         </RadzenTabsItem>
         <RadzenTabsItem Text="Data">
             <RadzenSelectBar TValue="int" Size="ButtonSize.Small" @bind-Value="@SelectedDataSource" Style="margin-bottom: 10px;">
