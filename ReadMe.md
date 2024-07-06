@@ -2,7 +2,7 @@
 
 ### Important! This project is a proof of concept and still a work in progress
 
-ZauberCMS is a CMS built on Blazor. The admin is built in Blazor InteractiveServer (Majority of the admin components are using Razden components) and 
+ZauberCMS is a CMS built on Blazor. The admin is built using InteractiveServer and 
 the front end (Your site/content) can be built in whatever you want, static, server, WASM. The CMS is inspired by Umbraco, and follows many of the 
 same concepts.
 
