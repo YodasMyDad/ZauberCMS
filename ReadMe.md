@@ -1,6 +1,6 @@
-# ZauberCMS - A Blazor CMS
+# ZauberCMS - The Blazor CMS
 
-### Important! This project is a proof of concept and still a work in progress
+### Important! ZauberCMS is still currently a proof of concept, and I am working to get it to an alpha state
 
 ZauberCMS is a CMS built on **Blazor**. The admin is built using InteractiveServer and 
 the front end (Your site/content) can be built in whatever you want, static, server, WASM. The CMS is [inspired by Umbraco](https://umbraco.com/), and follows many of the 
