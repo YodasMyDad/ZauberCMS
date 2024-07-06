@@ -20,9 +20,9 @@ public class User : IdentityUser<Guid>
 
     private Dictionary<string, UserPropertyValue>? _contentValues;
 
-    public Dictionary<string, UserPropertyValue> ContentValues
+    public Dictionary<string, UserPropertyValue> ContentValues()
     {
-        get { return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x); }
+        return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x);
     }
     
     public Dictionary<string, object> ExtendedData { get; set; } = new();

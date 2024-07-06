@@ -10,7 +10,6 @@ public class UserMapper : Profile
         CreateMap<User, User>()
             .ForMember(x => x.UserRoles, opt => opt.Ignore())
             .ForMember(x => x.PropertyData, opt => opt.Ignore())
-            .ForMember(x => x.ContentValues, opt => opt.Ignore())
             ;
     }
 }

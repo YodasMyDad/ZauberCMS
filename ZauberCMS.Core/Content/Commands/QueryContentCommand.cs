@@ -9,7 +9,6 @@ public class QueryContentCommand : IRequest<PaginatedList<Models.Content>>
     public string ContentTypeAlias { get; set; } = string.Empty;
     public Guid? ContentTypeId { get; set; }
     public bool AsNoTracking { get; set; } = true;
-    
     public List<Guid> Ids { get; set; } = [];
     public int PageIndex { get; set; } = 1;
     public int AmountPerPage { get; set; } = 10;

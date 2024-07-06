@@ -16,8 +16,14 @@ then I highly recommend watching it.
 
 ### Full Starter Site Build Video Coming Soon
 
-## Documention
+## Documentation
 
 For full documentation click the link below
 
 https://aptitude.gitbook.io/zaubercms
+
+## Progress & Issues
+
+Looking for anyone that has Blazor experience and interested in getting involved. You can view the Alpha progress here
+
+https://github.com/users/YodasMyDad/projects/5
