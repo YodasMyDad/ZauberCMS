@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
@@ -26,6 +25,15 @@ public class DeleteUserHandler(IServiceProvider serviceProvider)
 
         if (user != null)
         {
+            // Now delete the PropertyData
+            var propertyDataToDelete = dbContext.UserPropertyValues.Where(x => x.UserId == user.Id);
+            foreach (var propertyValue in propertyDataToDelete)
+            {
+                dbContext.UserPropertyValues.Remove(propertyValue);
+            }
+
+            user.PropertyData.Clear();
+            
             dbContext.Users.Remove(user);
             await dbContext.SaveChangesAsync(cancellationToken);
             handlerResult.Messages.Add(new ResultMessage("User deleted successfully", ResultMessageType.Success));

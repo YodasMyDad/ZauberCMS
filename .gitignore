@@ -7,7 +7,23 @@ riderModule.iml
 /Logs/*
 /ZauberCMS.Web/Logs/*
 
+# Exclude all files in /ZauberCMS.Web/wwwroot/media
 /ZauberCMS.Web/wwwroot/media/*
+
+# Allow specific media folders
+!/ZauberCMS.Web/wwwroot/media/1ef4bcf8-079c-426b-9cbe-b1a300da0888
+!/ZauberCMS.Web/wwwroot/media/57215f3c-fb2b-46f6-ad15-b1a300da0904
+!/ZauberCMS.Web/wwwroot/media/a0d5853b-487d-4022-bbff-b1a300da08ac
+!/ZauberCMS.Web/wwwroot/media/ed93c084-498f-4eab-b146-b1a300da0810
+!/ZauberCMS.Web/wwwroot/media/f2626056-19a2-41b3-b139-b1a300da08d3
+
+# Ensure all files within these allowed folders are also tracked
+!/ZauberCMS.Web/wwwroot/media/1ef4bcf8-079c-426b-9cbe-b1a300da0888/*
+!/ZauberCMS.Web/wwwroot/media/57215f3c-fb2b-46f6-ad15-b1a300da0904/*
+!/ZauberCMS.Web/wwwroot/media/a0d5853b-487d-4022-bbff-b1a300da08ac/*
+!/ZauberCMS.Web/wwwroot/media/ed93c084-498f-4eab-b146-b1a300da0810/*
+!/ZauberCMS.Web/wwwroot/media/f2626056-19a2-41b3-b139-b1a300da08d3/*
+
 /ZauberCMS.Web/node_modules/*
 */node_modules/*
 /ZauberCMS.Web/appsettings.Development.json

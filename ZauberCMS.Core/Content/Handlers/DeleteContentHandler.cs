@@ -30,6 +30,14 @@ public class DeleteContentHandler(IServiceProvider serviceProvider, AppState app
                 return handlerResult;
             }
 
+            // Now delete the PropertyData
+            var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
+            foreach (var contentPropertyValue in propertyDataToDelete)
+            {
+                dbContext.ContentPropertyValues.Remove(contentPropertyValue);
+            }
+
+            content.PropertyData.Clear();
             dbContext.Contents.Remove(content);
             await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
             return await dbContext.SaveChangesAndLog(content, handlerResult, cancellationToken);
