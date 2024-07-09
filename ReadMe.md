@@ -3,7 +3,7 @@
 ### Important! ZauberCMS is still currently a proof of concept, and I am working to get it to an alpha state
 
 ZauberCMS is a CMS built on **Blazor**. The admin is built using InteractiveServer and 
-the front end (Your site/content) can be built in whatever you want, static, server, WASM. The CMS is [inspired by Umbraco](https://umbraco.com/), and follows many of the 
+the front end (Your website) is built using the [new static rendering](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-modes?view=aspnetcore-8.0) (But you can build it in Server or WASM if you want). The CMS is [inspired by Umbraco](https://umbraco.com/), and follows many of the 
 same concepts.
 
 I wanted a CMS that was aimed towards .Net Developers who wanted to use Blazor and also a CMS that is easily extendable and customisable without 
