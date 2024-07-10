@@ -9,10 +9,12 @@
 
 <SortableList Id="@Alias" Items="@MediaItems" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
-        <PickerItem Text="@item.Name" 
-                    Icon="@item.MediaType.GetIcon()"
-                    Image="@(item.MediaType == MediaType.Image ? item.Url : string.Empty)"
-                    Close="@(() => DeleteMedia(item))" />
+        <div>
+            <PickerItem Text="@item.Name"
+                        Icon="@item.MediaType.GetIcon()"
+                        Image="@(item.MediaType == MediaType.Image ? item.Url : string.Empty)"
+                        Close="@(() => DeleteMedia(item))"/>
+        </div>
     </SortableItemTemplate>
 </SortableList>
 

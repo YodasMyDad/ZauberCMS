@@ -3,7 +3,9 @@
 
 <SortableList Id="sortable" Items="@Items" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
-        <PickerItem Text="@item.Name" />
+        <div>
+            <PickerItem Text="@item.Name"/>
+        </div>
     </SortableItemTemplate>
 </SortableList>
 

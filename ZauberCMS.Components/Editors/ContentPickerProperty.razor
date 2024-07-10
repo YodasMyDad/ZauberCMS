@@ -8,7 +8,9 @@
 
 <SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
-        <PickerItem Text="@item.Name" Icon="@item.ContentType?.Icon" Close="@(() => DeleteContent(item))" />
+        <div>
+            <PickerItem Text="@item.Name" Icon="@item.ContentType?.Icon" Close="@(() => DeleteContent(item))"/>
+        </div>
     </SortableItemTemplate>
 </SortableList>
 
