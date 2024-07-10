@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
+using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
@@ -54,7 +55,7 @@ public class SaveMediaHandler(ProviderService providerService, IServiceProvider 
                 mapper.Map(result.Entity, dbMedia);
                 if (dbMedia != null) dbMedia.DateUpdated = DateTime.UtcNow;
 
-                if (result.Entity.Url.IsNullOrWhiteSpace())
+                if (result.Entity.Url.IsNullOrWhiteSpace() && result.Entity.MediaType != MediaType.Folder)
                 {
                     result.AddMessage("Url cannot be empty", ResultMessageType.Error);
                     return result;
