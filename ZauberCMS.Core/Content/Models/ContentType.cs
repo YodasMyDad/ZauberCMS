@@ -37,6 +37,16 @@ public class ContentType
     public bool AllowAtRoot { get; set; }
     
     /// <summary>
+    /// Enables the list view of child content instead of them showing as child items in the tree
+    /// </summary>
+    public bool EnableListView { get; set; }
+    
+    /// <summary>
+    /// A flag to return children when this page is rendered to save multiple content queries
+    /// </summary>
+    public bool IncludeChildren { get; set; }
+    
+    /// <summary>
     /// Gets or sets the date and time when the entity was created.
     /// </summary>
     public DateTime? DateCreated { get; set; } = DateTime.UtcNow;

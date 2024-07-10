@@ -46,7 +46,7 @@ public class Content : IContent<ContentPropertyValue>
     /// Gets or sets a value indicating whether the content should be hidden from navigation.
     /// </summary>
     public bool HideFromNavigation { get; set; }
-
+    
     /// <summary>
     /// Redirects behind the scenes to another content node
     /// </summary>

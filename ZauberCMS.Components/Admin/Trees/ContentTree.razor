@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using System.Collections.Concurrent
+@using ZauberCMS.Core.Content.Commands
 
 <BaseTree
     T="Content"
@@ -13,15 +14,22 @@
 </BaseTree>
 
 @code {
-    [Parameter] public IEnumerable<Content> Data { get; set; } = Enumerable.Empty<Content>();
+    [Parameter] public IEnumerable<Content> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
-    private RadzenTree Tree { get; set; } = default!;
-
+    // Dictionary to cache HasChildren results
+    private ConcurrentDictionary<Guid, bool>? _hasChildrenCache;
+    
+    protected override void OnInitialized()
+    {
+        // Initialize the cache
+        _hasChildrenCache = new ConcurrentDictionary<Guid, bool>();
+    }
+    
     protected override async Task OnParametersSetAsync()
     {
         if (!Data.Any())
@@ -45,16 +53,17 @@
         }
         else
         {
-            if (args.Value is Content category)
+            if (args.Value is Content content)
             {
                 var items = Mediator.Send(new QueryContentCommand
                 {
-                    WhereClause = x => x.ParentId == category.Id,
+                    WhereClause = x => x.ParentId == content.Id,
                     OrderBy = GetContentsOrderBy.SortOrder
                 }).GetAwaiter().GetResult();
                 args.Children.Data = items.Items;
                 args.Children.TextProperty = "Name";
                 args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                args.Children.HasChildren = HasChildren;
             }
         }
     }
@@ -101,7 +110,17 @@
     {
         if (data is Content content)
         {
-            return content.Children.Any();
+            // Check if result is cached
+            if (_hasChildrenCache!.TryGetValue(content.Id, out var hasChildren))
+            {
+                return !content.ContentType!.EnableListView && hasChildren;
+            }
+
+            // Calculate result and cache it
+            hasChildren = Task.Run(() => Mediator.Send(new HasChildContentCommand { ParentId = content.Id })).GetAwaiter().GetResult();
+            _hasChildrenCache[content.Id] = hasChildren;
+
+            return !content.ContentType!.EnableListView && hasChildren;
         }
 
         return false;

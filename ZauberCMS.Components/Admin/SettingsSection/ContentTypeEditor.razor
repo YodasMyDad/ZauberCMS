@@ -56,25 +56,7 @@
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <RadzenLabel Text="Allowed At Tree Root"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Allow at root" } })"/>
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <RadzenLabel Text="Is Element Type"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenSwitch @bind-Value="@ContentType.IsElementType" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Element Type" } })"/>
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <RadzenLabel Text="Choose Allowed Views"/>
+                                    <PropertyInfo Name="Choose Allowed Views" Description="The views the user can pick to display their content"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
@@ -86,10 +68,47 @@
                                                    ValueProperty="FullName"
                                                    Multiple="true"
                                                    AllowClear="true"
-                                                   Placeholder="Select Content Views" Style="width: 100%; height: 200px"
+                                                   Placeholder="Select Content Views" Style="width: 100%; height: 250px"
                                                    InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "select content views" } })"/>
                                 </CentreColumn>
                             </EditorRow>
+                            
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Allowed At Tree Root" Description="Whether this content can be created at the root of the content tree"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Allow at root" } })"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Is Element Type" Description="Allows this content type to be used in the Block List Editor"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenSwitch @bind-Value="@ContentType.IsElementType" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Element Type" } })"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Enable List View" Description="Show list view of child content instead of them showing as child items in the tree"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenSwitch Name="EnableListView" @bind-Value="@ContentType.EnableListView"  />
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Include Child Content" Description="Return children when this page is rendered to save multiple content queries"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenSwitch Name="IncludeChildren" @bind-Value="@ContentType.IncludeChildren"  />
+                                </CentreColumn>
+                            </EditorRow>
+                            
                         </RadzenTabsItem>
                     }
                     else

@@ -6,7 +6,9 @@
             Change="@OnChangeHandler" 
             @bind-Value="@Value" 
             ItemContextMenu="@OnItemContextMenuHandler">
-    <RadzenTreeLevel Expanded="@ShouldBeExpanded" HasChildren="@(e => HasChildren(e))" TextProperty="Name">
+    <RadzenTreeLevel Expanded="@ShouldBeExpanded" 
+                     HasChildren="@(e => HasChildren(e))"
+                     TextProperty="Name">
         <Template>
             @if (Template != null)
             {

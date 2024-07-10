@@ -52,6 +52,11 @@ public class QueryContentHandler(IServiceProvider serviceProvider)
             {
                 query = query.Where(x => x.ContentTypeId == request.ContentTypeId);
             }
+            
+            if(request.ParentId != null)
+            {
+                query = query.Where(x => x.ParentId == request.ParentId);
+            }
 
             var idCount = request.Ids.Count;
             if (request.Ids.Count != 0)

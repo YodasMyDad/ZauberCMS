@@ -21,7 +21,7 @@
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
     private RadzenTree Tree { get; set; } = default!;
-    
+
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (OnExpand.HasDelegate)
@@ -33,14 +33,16 @@
             switch (args.Value)
             {
                 case TreeStub treeStub:
-                args.Children.Data = treeStub.Branches;
-                args.Children.TextProperty = "Name";
-                args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.Data = treeStub.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.HasChildren = HasChildren;
                     break;
                 case TreeBranch branch:
                     args.Children.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.HasChildren = HasChildren;
                     break;
             }
         }

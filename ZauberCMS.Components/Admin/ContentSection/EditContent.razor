@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core
+﻿@using ZauberCMS.Core.Content.Commands
 @page "/admin/createcontent"
 @page "/admin/createcontent/{ParentId:guid}"
 @page "/admin/updatecontent/{ContentId:guid}"
@@ -11,7 +11,14 @@
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
-    <ContentEditor @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ParentId" ContentId="@ContentId" />
+    @if (ShowListView)
+    {
+        <ContentListView @key="GetCompositeKey(ContentId, ParentId)" Content="@Content" ContentId="@ContentId" ParentId="@ParentId" />
+    }
+    else
+    {
+        <ContentEditor @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ParentId" ContentId="@ContentId"/>   
+    }
 </RadzenPanel>
 
 @code {
@@ -19,13 +26,27 @@
     [Parameter] public Guid? ParentId { get; set; }
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
+    private Content? Content { get; set; }
+    private bool ShowListView { get; set; }
+
     protected override void OnInitialized()
     {
         Layout?.SetSection(Constants.Sections.ContentSection);
     }
-    
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ContentId != null)
+        {
+            // Have to get the content to see which view to show
+            Content = await Mediator.Send(new GetContentCommand {Id = ContentId});
+            ShowListView = Content.ContentType?.EnableListView ?? false;
+        }
+    }
+
     private static string GetCompositeKey(Guid? contentId, Guid? parentId)
     {
         return $"{contentId?.ToString() ?? "null"}_{parentId?.ToString() ?? "null"}";
     }
+    
 }

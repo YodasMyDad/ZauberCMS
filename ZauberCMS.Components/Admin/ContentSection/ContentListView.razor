@@ -1,0 +1,24 @@
+﻿@using ZauberCMS.Components.Admin.Dashboards
+<RadzenTabs RenderMode="TabRenderMode.Client">
+    <Tabs>
+        <RadzenTabsItem Text="Child Content">
+            <MainContentDashboard @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ContentId" RefreshPage="true" />
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="Edit">
+            <ContentEditor @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ParentId" ContentId="@ContentId"/>
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+
+
+@code {
+
+    [Parameter] public Guid? ContentId { get; set; }
+    [Parameter] public Guid? ParentId { get; set; }
+    [Parameter] public Content? Content { get; set; }
+
+    private static string GetCompositeKey(Guid? contentId, Guid? parentId)
+    {
+        return $"{contentId?.ToString() ?? "null"}_{parentId?.ToString() ?? "null"}";
+    }
+}

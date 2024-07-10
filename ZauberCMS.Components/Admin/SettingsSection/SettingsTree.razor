@@ -122,7 +122,7 @@
         };
     }
 
-    private static void OnExpandHandler(TreeExpandEventArgs args)
+    private void OnExpandHandler(TreeExpandEventArgs args)
     {
         switch (args.Value)
         {
@@ -132,6 +132,7 @@
                     args.Children.Data = treeStub.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.HasChildren = HasChildren;
                 }
                 break;
             case TreeBranch branch:
@@ -140,6 +141,7 @@
                     args.Children.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();   
+                    args.Children.HasChildren = HasChildren;
                 }
                 break;
         }

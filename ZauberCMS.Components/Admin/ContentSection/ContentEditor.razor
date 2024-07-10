@@ -68,7 +68,7 @@
                     <RadzenTabsItem Text="System">
                         <EditorRow>
                             <LeftColumn>
-                                <RadzenLabel Text="Id"/>
+                                <PropertyInfo Name="Id"/>
                             </LeftColumn>
                             <CentreColumn>
                                 @Content.Id
@@ -77,16 +77,25 @@
 
                         <EditorRow>
                             <LeftColumn>
-                                <RadzenLabel Text="Url"/>
+                                <PropertyInfo Name="Content View" Description="The views available to render this content in the front end"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
+                            </CentreColumn>
+                        </EditorRow>
+                        
+                        <EditorRow>
+                            <LeftColumn>
+                                <PropertyInfo Name="Url" Description="The url in the browser bar to show this page"/>
                             </LeftColumn>
                             <CentreColumn>
                                 <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
                             </CentreColumn>
                         </EditorRow>
-
+                        
                         <EditorRow>
                             <LeftColumn>
-                                <RadzenLabel Text="Hide From Navigation"/>
+                                <PropertyInfo Name="Hide From Navigation" Description="Optional: Hides this page from any navigation if the developer has integrated it"/>
                             </LeftColumn>
                             <CentreColumn>
                                 <RadzenSwitch Name="HideFromNavigation" @bind-Value="@Content.HideFromNavigation"  />
@@ -95,7 +104,7 @@
                         
                         <EditorRow>
                             <LeftColumn>
-                                <RadzenLabel Text="Internal Redirect Id"/>
+                                <PropertyInfo Name="Internal Redirect" Description="Choose a different page to show when the user browses to this pages url"/>
                             </LeftColumn>
                             <CentreColumn>
                                 <ContentPickerProperty 
@@ -104,15 +113,7 @@
                                     ValueChanged="@(e => Content.InternalRedirectIdAsString = e.ToString())" />
                             </CentreColumn>
                         </EditorRow>
-
-                        <EditorRow>
-                            <LeftColumn>
-                                <RadzenLabel Text="Content View"/>
-                            </LeftColumn>
-                            <CentreColumn>
-                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
-                            </CentreColumn>
-                        </EditorRow>
+                        
                     </RadzenTabsItem>
                 }
             </Tabs>

@@ -1,5 +1,4 @@
-﻿@using ZauberCMS.Core
-@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Commands
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
 <RadzenDataGrid AllowFiltering="false"
@@ -29,13 +28,22 @@
     
     private IEnumerable<Content> Contents { get; set; } = Enumerable.Empty<Content>();
 
+    [Parameter] public Guid? ParentId { get; set; }
+    [Parameter] public int AmountPerPage { get; set; } = 20;
+    [Parameter] public bool RefreshPage { get; set; }
+    
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new QueryContentCommand
+        var queryContentCommand = new QueryContentCommand
         {
-            AmountPerPage = 20,
+            AmountPerPage = AmountPerPage,
             OrderBy = GetContentsOrderBy.DateUpdatedDescending
-        });
+        };
+        if (ParentId != null)
+        {
+            queryContentCommand.ParentId = ParentId;
+        }
+        var items = await Mediator.Send(queryContentCommand);
         Contents = items.Items;
     }
 
@@ -43,7 +51,7 @@
     {
         if (value is Content selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}", RefreshPage);
         }
     }
 }
