@@ -11,10 +11,12 @@ having to learn a front end framework.
 
 _Core tech used is: .Net 8, Blazor, EF Core, Identity, Mediatr, [Radzen Components](https://www.radzen.com/blazor-components/)_
 
+## Starter Site Build
+
 The video below shows the starter site being built. It covers building a site from nothing, to complete finished site. If you have never used Umbraco 
 then I highly recommend watching it.
 
-### Full Starter Site Build Video Coming Soon
+[![Starter Site Build YouTube Video](https://aptitude.gitbook.io/~gitbook/image?url=https%3A%2F%2F417697475-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FVr2cbdfxDGZK1u2Fd59w%252Fuploads%252FQslhSO0S2IBKP3k7v0Qx%252Fyoutube-cover-2.png%3Falt%3Dmedia%26token%3Db4b0d4d1-35e7-4f72-a6a0-84a57ff49095&width=768&dpr=4&quality=100&sign=4611e2ee&sv=1)](https://www.youtube.com/watch?v=BvULaHbiIEU)
 
 ## Documentation
 
