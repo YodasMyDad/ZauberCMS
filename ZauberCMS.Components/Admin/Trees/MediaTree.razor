@@ -1,6 +1,8 @@
 ﻿@using System.Collections.Concurrent
 @using ZauberCMS.Core.Media.Commands
+@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Media.Models
+@implements IDisposable
 
 <BaseTree T="Media"
           Data="@Data"
@@ -14,6 +16,8 @@
 </BaseTree>
 
 @code {
+    [Inject] public AppState AppState { get; set; } = default!;
+    
     [Parameter] public IEnumerable<Media> Data { get; set; } = Enumerable.Empty<Media>();
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
@@ -21,13 +25,12 @@
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
-    private RadzenTree Tree { get; set; } = default!;
-
     // Dictionary to cache HasChildren results
     private ConcurrentDictionary<Guid, bool>? _hasChildrenCache;
     
     protected override void OnInitialized()
     {
+        AppState.OnMediaChanged += HandleMediaChanged;
         // Initialize the cache
         _hasChildrenCache = new ConcurrentDictionary<Guid, bool>();
     }
@@ -36,17 +39,36 @@
     {
         if (!Data.Any())
         {
-            var items = await Mediator.Send(new QueryMediaCommand
-            {
-                AmountPerPage = 100,
-                WhereClause = x => x.ParentId == null,
-                IncludeChildren = true,
-                OrderBy = GetMediaOrderBy.Name
-            });
-            Data = items.Items;
+            await DataRefresh();
+        }
+    }
+    
+    private async Task HandleMediaChanged(Media? media, string username)
+    {
+        _hasChildrenCache?.Clear();
+        
+        // If on change hasn't got a delegate,
+        // it's likely this is being used as a standalone tree
+        // so need to handle data refresh (This needs thinking about a bit more)
+        if (!OnChange.HasDelegate)
+        {
+            await DataRefresh();
+            StateHasChanged();   
         }
     }
 
+    private async Task DataRefresh()
+    {
+        var items = await Mediator.Send(new QueryMediaCommand
+        {
+            AmountPerPage = 100,
+            WhereClause = x => x.ParentId == null,
+            IncludeChildren = true,
+            OrderBy = GetMediaOrderBy.Name
+        });
+        Data = items.Items;
+    }
+    
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (OnExpand.HasDelegate)
@@ -147,6 +169,11 @@
         */
 
         return false;
+    }
+
+    public void Dispose()
+    {
+        AppState.OnMediaChanged -= HandleMediaChanged;
     }
 
 }

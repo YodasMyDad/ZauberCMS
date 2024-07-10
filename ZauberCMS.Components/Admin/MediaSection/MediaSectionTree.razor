@@ -7,7 +7,7 @@
 <MediaTree Data="@MediaItems"
            OnChange="OnChange"
            @bind-Value="@Selection"
-           OnItemContextMenu="ItemContextMenu"/>
+           OnItemContextMenu="ItemContextMenu" />
 
 @code {
     [Inject] public AppState AppState { get; set; } = default!;

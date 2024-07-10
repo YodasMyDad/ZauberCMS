@@ -26,7 +26,7 @@ public class DeleteContentHandler(IServiceProvider serviceProvider, AppState app
             var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
             if (children.Any())
             {
-                handlerResult.AddMessage("Unable to delete as this content has child content, delete or move those items first", ResultMessageType.Error);
+                handlerResult.AddMessage("Unable to delete content with child content, delete or move those items first", ResultMessageType.Error);
                 return handlerResult;
             }
 

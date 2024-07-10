@@ -1,5 +1,8 @@
 ﻿@using System.Collections.Concurrent
 @using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Shared
+@implements IDisposable
+
 
 <BaseTree
     T="Content"
@@ -14,6 +17,8 @@
 </BaseTree>
 
 @code {
+    [Inject] public AppState AppState { get; set; } = default!;
+    
     [Parameter] public IEnumerable<Content> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
@@ -26,6 +31,7 @@
     
     protected override void OnInitialized()
     {
+        AppState.OnContentChanged += HandleContentChanged;
         // Initialize the cache
         _hasChildrenCache = new ConcurrentDictionary<Guid, bool>();
     }
@@ -43,6 +49,12 @@
             });
             Data = items.Items.ToList();
         }
+    }
+    
+    private Task HandleContentChanged(Content? media, string username)
+    {
+        _hasChildrenCache?.Clear();
+        return Task.CompletedTask;
     }
 
     private async Task OnExpandHandler(TreeExpandEventArgs args)
@@ -136,4 +148,8 @@
         return false;
     }
 
+    public void Dispose()
+    {
+        AppState.OnContentChanged -= HandleContentChanged;
+    }
 }

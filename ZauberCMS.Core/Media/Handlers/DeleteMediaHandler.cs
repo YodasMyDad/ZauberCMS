@@ -1,5 +1,7 @@
-﻿using MediatR;
+﻿using System.Linq.Dynamic.Core;
+using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
@@ -26,6 +28,15 @@ public class DeleteMediaHandler(IServiceProvider serviceProvider,
         var media = dbContext.Medias.FirstOrDefault(x => x.Id == request.MediaId);
         if (media != null)
         {
+            //Check if it has children
+            var children = dbContext.Medias.AsNoTracking().Where(x => x.ParentId == media.Id);
+            if (children.Any())
+            {
+                handlerResult.AddMessage("Unable to delete media with child content, delete or move those items first", ResultMessageType.Error);
+                return handlerResult;
+            }
+
+            
             var filePathToDelete = media.Url;
             dbContext.Medias.Remove(media);
             await appState.NotifyMediaDeleted(null, authState.User.Identity?.Name!);
