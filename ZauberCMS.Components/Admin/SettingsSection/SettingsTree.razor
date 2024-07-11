@@ -51,7 +51,7 @@
     private IEnumerable<TreeStub> AdvancedData { get; set; } = [];
     private object? Selection { get; set; }
 
-    private bool ShouldBeExpanded(object data)
+    private static bool ShouldBeExpanded(object data)
     {
         return false;
     }
@@ -65,12 +65,21 @@
     private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
     {
         var items = new List<ContextMenuItem>();
+        
         // Some logic here
         if (args.Value is TreeBranch treeBranch)
         {
             if (treeBranch.BranchType == typeof(ContentType))
             {
                 items.Add(new ContextMenuItem { Text = "Copy", Value = 1 });   
+            }
+        }
+        
+        if (args.Value is TreeStub treeStub)
+        {
+            if (treeStub.StubType == typeof(ContentType))
+            {
+                items.Add(new ContextMenuItem { Text = "Create", Value = 1 });   
             }
         }
         
@@ -90,7 +99,22 @@
                         switch(e.Value)
                         {
                             case 1:
-                                NavigationManager.NavigateTo($"/admin/copycontentype/{treeBranch.Id}", true);
+                                ContextMenuService.Close();
+                                NavigationManager.NavigateTo($"/admin/copycontentype/{treeBranch.Id}");
+                                ContextMenuService.Close();
+                                break;
+                        }     
+                    }
+                }
+                if (args.Value is TreeStub treeStub)
+                {
+                    if (treeStub.StubType == typeof(ContentType))
+                    {
+                        switch(e.Value)
+                        {
+                            case 1:
+                                ContextMenuService.Close();
+                                NavigationManager.NavigateTo("/admin/createcontentype");
                                 break;
                         }     
                     }
@@ -188,7 +212,8 @@
         {
             Name = "Content Types",
             Icon = "content_copy",
-            SortOrder = 1
+            SortOrder = 1,
+            StubType = typeof(ContentType)
         };
 
         foreach (var contentType in contentTypes)
@@ -206,7 +231,8 @@
         {
             Name = "Element Types",
             Icon = "explicit",
-            SortOrder = 2
+            SortOrder = 2,
+            StubType = typeof(ContentType)
         };
 
         foreach (var contentType in elementTypes)
