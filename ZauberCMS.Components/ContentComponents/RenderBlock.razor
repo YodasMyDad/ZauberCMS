@@ -26,7 +26,7 @@
     
     private Dictionary<string, TView>? BlockViews { get; set; }
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
         Parameters.Add("Content", Content! );
         BlockViews = ExtensionManager.GetInstances<TView>(true);

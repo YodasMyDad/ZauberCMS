@@ -9,6 +9,7 @@ using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Data;
+using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Models;
@@ -85,12 +86,19 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-    var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
+    var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
     try
     {
         if (dbContext.Database.GetPendingMigrations().Any())
         {
             dbContext.Database.Migrate();
+        }
+        
+        // Get any seed data
+        var seedData = extensionManager.GetInstances<ISeedData>();
+        foreach (var data in seedData)
+        {
+            data.Value.Initialise(dbContext);
         }
     }
     catch (Exception ex)

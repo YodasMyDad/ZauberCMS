@@ -2,17 +2,20 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
 public class SaveContentHandler(
     IServiceProvider serviceProvider,
-    IMapper mapper)
+    IMapper mapper,
+    IOptions<ZauberSettings> settings)
     : IRequestHandler<SaveContentCommand, HandlerResult<Models.Content>>
 {
     private readonly SlugHelper _slugHelper = new();
@@ -22,7 +25,7 @@ public class SaveContentHandler(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-
+        var isUpdate = true;
         var handlerResult = new HandlerResult<Models.Content>();
 
         if (request.Content != null)
@@ -47,6 +50,7 @@ public class SaveContentHandler(
 
             if (content == null)
             {
+                isUpdate = false;
                 content = request.Content;
                 dbContext.Contents.Add(content);
             }
@@ -64,7 +68,7 @@ public class SaveContentHandler(
             }
 
             // Calculate and set the Path property
-            content.Path = BuildPath(content, dbContext);
+            content.Path = BuildPath(content, dbContext, isUpdate);
 
             return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
         }
@@ -100,18 +104,29 @@ public class SaveContentHandler(
         }
     }
 
-    private static List<Guid> BuildPath(Models.Content content, ZauberDbContext dbContext)
+    private List<Guid> BuildPath(Models.Content content, ZauberDbContext dbContext, bool isUpdate)
     {
         var path = new List<Guid>();
+        var urls = new List<string>();
         var currentContent = content;
         while (currentContent != null)
         {
             path.Insert(0, currentContent.Id);
-            currentContent = currentContent.ParentId.HasValue
+            if (currentContent.Url != null) urls.Insert(0, currentContent.Url);
+            var parentItem = currentContent.ParentId.HasValue
                 ? dbContext.Contents.FirstOrDefault(c => c.Id == currentContent.ParentId.Value)
                 : null;
+            currentContent = parentItem;
         }
 
+        if (isUpdate == false && settings.Value.EnablePathUrls)
+        {
+            // New content item and path urls are enabled so make them from the path
+            // Firstly remove the root (Usually website)
+            urls.RemoveAt(0);
+            // Now concat the urls with a / in between to make the url 
+            content.Url = string.Join("/", urls);
+        }
         return path;
     }
 

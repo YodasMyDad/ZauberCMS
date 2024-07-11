@@ -10,6 +10,7 @@ public class ZauberSettings
     public long MaxUploadFileSizeInBytes { get; set; }
     public int MaxImageSizeInPixels { get; set; }
     public bool UseRadzen { get; set; }
+    public bool EnablePathUrls { get; set; }
     public List<string> AllowedFileTypes { get; set; } = [];
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new();
