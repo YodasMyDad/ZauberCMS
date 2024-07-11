@@ -24,7 +24,7 @@
       <PackageReference Include="Microsoft.Extensions.Localization" Version="8.0.6" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
       <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" />
-      <PackageReference Include="Radzen.Blazor" Version="4.33.3" />
+      <PackageReference Include="Radzen.Blazor" Version="4.34.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">
           <PrivateAssets>all</PrivateAssets>
