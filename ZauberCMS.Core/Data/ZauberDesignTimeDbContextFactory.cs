@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace ZauberCMS.Core.Data;
 
-public class ZauberContextFactory : IDesignTimeDbContextFactory<ZauberDbContext>
+public class ZauberDesignTimeDbContextFactory : IDesignTimeDbContextFactory<ZauberDbContext>
 {
     public ZauberDbContext CreateDbContext(string[] args)
     {
