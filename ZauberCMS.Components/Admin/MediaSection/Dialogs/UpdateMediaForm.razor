@@ -4,11 +4,11 @@
 @using ZauberCMS.Core.Shared.Services
 <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
     <Tabs>
-        <RadzenTabsItem Text="Update">
+        <RadzenTabsItem Text="@(IsUpdate ? "Update" : "Create")">
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Name" Description="The name shown in the tree only"/>
+                    <PropertyInfo Name="Name" Description="The name shown in the tree"/>
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name" aria-label="Name"/>

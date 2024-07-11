@@ -1,4 +1,5 @@
 ﻿@using System.Collections.Concurrent
+@using ZauberCMS.Components.Admin.MediaSection.Dialogs
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Media.Models
@@ -17,7 +18,9 @@
 
 @code {
     [Inject] public AppState AppState { get; set; } = default!;
-    
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+
     [Parameter] public IEnumerable<Media> Data { get; set; } = Enumerable.Empty<Media>();
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
@@ -25,16 +28,20 @@
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+
     // Dictionary to cache HasChildren results
     private ConcurrentDictionary<Guid, bool>? _hasChildrenCache;
-    
+    private IModalReference? CreateFolderModal { get; set; }
+    private IModalReference? UpdateMediaModal { get; set; }
+
     protected override void OnInitialized()
     {
         AppState.OnMediaChanged += HandleMediaChanged;
         // Initialize the cache
         _hasChildrenCache = new ConcurrentDictionary<Guid, bool>();
     }
-    
+
     protected override async Task OnParametersSetAsync()
     {
         if (!Data.Any())
@@ -42,18 +49,18 @@
             await DataRefresh();
         }
     }
-    
+
     private async Task HandleMediaChanged(Media? media, string username)
     {
         _hasChildrenCache?.Clear();
-        
+
         // If on change hasn't got a delegate,
         // it's likely this is being used as a standalone tree
         // so need to handle data refresh (This needs thinking about a bit more)
         if (!OnChange.HasDelegate)
         {
             await DataRefresh();
-            StateHasChanged();   
+            StateHasChanged();
         }
     }
 
@@ -68,7 +75,7 @@
         });
         Data = items.Items;
     }
-    
+
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (OnExpand.HasDelegate)
@@ -114,9 +121,9 @@
                     builder.OpenComponent<RadzenIcon>(0);
                     builder.AddAttribute(1, "Icon", media.MediaType.GetIcon());
                     builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
-                    builder.CloseComponent();   
+                    builder.CloseComponent();
                 }
-                
+
                 builder.AddContent(3, media.Name);
             }
         };
@@ -131,14 +138,87 @@
         }
     }
 
+    private static List<ContextMenuItem> MediaContextMenuItems(TreeItemContextMenuEventArgs args)
+    {
+        var items = new List<ContextMenuItem>();
+        // Some logic here
+        if (args.Value is Media { MediaType: MediaType.Folder })
+        {
+            items.Add(new ContextMenuItem { Text = "Create Folder", Value = 1 });
+            items.Add(new ContextMenuItem { Text = "Upload Media", Value = 2 });
+        }
+
+        items.Add(new ContextMenuItem { Text = "Delete", Value = 3 });
+
+        return items;
+    }
+
     private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
     {
         if (OnItemContextMenu.HasDelegate)
         {
             await OnItemContextMenu.InvokeAsync(args);
         }
+        else
+        {
+            // Add all of them
+            ContextMenuService.Open(args,
+                MediaContextMenuItems(args),
+                async e =>
+                {
+                    var media = (Media)args.Value;
+                    /*var dbContent = await Mediator.Send(new GetMediaCommand { Id = media.Id, IncludeChildren = true });*/
+                    //var text = args.Text;
+                    switch (e.Value)
+                    {
+                        case 1:
+                            var createParams = new Dictionary<string, object>
+                            {
+                                { nameof(UpdateMediaForm.ParentId), media.Id },
+                                { nameof(UpdateMediaForm.ValueChanged), EventCallback.Factory.Create<Media>(this, OnFolderCreate) }
+                            };
+                            ContextMenuService.Close();
+                            CreateFolderModal = ModalService?.OpenSidePanel<UpdateMediaForm>("Create Folder", createParams);
+                            break;
+                        case 2:
+                            var uploadParams = new Dictionary<string, object>
+                            {
+                                { nameof(MultipleMediaUpload.ParentId), media.Id },
+                                { nameof(MultipleMediaUpload.ValueChanged), EventCallback.Factory.Create<List<Media>>(this, OnUploadMedia) }
+                            };
+                            ContextMenuService.Close();
+                            UpdateMediaModal = ModalService?.OpenSidePanel<MultipleMediaUpload>("Upload Media", uploadParams);
+                            break;
+                        case 3:
+                            var deleteResult = await Mediator.Send(new DeleteMediaCommand { MediaId = media.Id });
+                            if (deleteResult.Success)
+                            {
+                                // Only redirect if on item being deleted? How do we check that?
+                                //NavigationManager.NavigateTo("/admin/media", forceLoad: true);
+                                NotificationService.ShowSuccessNotification("Media deleted");
+                            }
+                            else
+                            {
+                                NotificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
+                            }
+
+                            break;
+                    }
+                }
+            );
+        }
     }
-    
+
+    private void OnFolderCreate(Media value)
+    {
+        CreateFolderModal?.Close();
+    }
+
+    private void OnUploadMedia(List<Media> value)
+    {
+        UpdateMediaModal?.Close();
+    }
+
     private bool HasChildren(object data)
     {
         if (data is Media { MediaType: MediaType.Folder } media)
@@ -150,7 +230,7 @@
             }
 
             // Calculate result and cache it
-            hasChildren = Task.Run(() => Mediator.Send(new HasChildMediaCommand{ParentId = media.Id })).GetAwaiter().GetResult();
+            hasChildren = Task.Run(() => Mediator.Send(new HasChildMediaCommand { ParentId = media.Id })).GetAwaiter().GetResult();
             _hasChildrenCache[media.Id] = hasChildren;
 
             return hasChildren;

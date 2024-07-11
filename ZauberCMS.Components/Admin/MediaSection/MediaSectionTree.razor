@@ -6,13 +6,10 @@
 
 <MediaTree Data="@MediaItems"
            OnChange="OnChange"
-           @bind-Value="@Selection"
-           OnItemContextMenu="ItemContextMenu" />
+           @bind-Value="@Selection" />
 
 @code {
     [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
 
     public string Heading => "Media";
     public int SortOrder => 0;
@@ -49,35 +46,7 @@
         });
         MediaItems = items.Items.ToList();
     }
-
-    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
-    {
-        ContextMenuService.Open(args,
-            new List<ContextMenuItem> {
-                new(){ Text = "Delete", Value = 1 }
-            }, async e =>
-            {
-                var media = (Media)args.Value;
-                /*var dbContent = await Mediator.Send(new GetMediaCommand { Id = media.Id, IncludeChildren = true });*/
-                //var text = args.Text;
-                switch(e.Value)
-                {
-                    case 1:
-                        var deleteResult = await Mediator.Send(new DeleteMediaCommand { MediaId = media.Id });
-                        if (deleteResult.Success)
-                        {
-                            NavigationManager.NavigateTo("/admin/media", forceLoad: true); 
-                        }
-                        else
-                        {
-                            NotificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
-                        }
-                        break;
-                }
-            }
-        );
-    }
-
+    
     private void OnChange()
     {
         switch (Selection)

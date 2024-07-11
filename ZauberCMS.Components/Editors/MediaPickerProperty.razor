@@ -42,7 +42,6 @@
     // Hold the content guid and name in the list
     private List<Media> MediaItems { get; set; } = [];
     private IModalReference? Modal { get; set; }
-    private IModalReference? CreateFolderModal { get; set; }
     private MediaPickerSettings SettingsModel { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
@@ -83,56 +82,12 @@
     {
         var parameters = new Dictionary<string, object>
         {
-            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) },
-            { nameof(MediaTree.OnItemContextMenu), EventCallback.Factory.Create<TreeItemContextMenuEventArgs>(this, ItemContextMenu) }
+            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) }
         };
 
         Modal = ModalService?.OpenSidePanel<MediaTree>("Choose Media", parameters);
     }
-
-    private static List<ContextMenuItem> MediaContextMenuItems(TreeItemContextMenuEventArgs args)
-    {
-        var items = new List<ContextMenuItem>();
-        // Some logic here
-        if (args.Value is Media { MediaType: MediaType.Folder })
-        {
-            items.Add(new ContextMenuItem { Text = "Create Folder", Value = 1 });
-            items.Add(new ContextMenuItem { Text = "Upload Media", Value = 1 });
-        }
-
-        return items;
-    }
-
-    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
-    {
-        ContextMenuService.Open(args,
-            MediaContextMenuItems(args),
-            e =>
-            {
-                var media = (Media)args.Value;
-                switch (e.Value)
-                {
-                    case 1:
-                        var parameters = new Dictionary<string, object>
-                        {
-                            { nameof(UpdateMediaForm.ParentId), media.Id },
-                            { nameof(UpdateMediaForm.ValueChanged), EventCallback.Factory.Create<Media>(this, OnFolderCreate) }
-                        };
-                        ContextMenuService.Close();
-                        CreateFolderModal = ModalService?.OpenSidePanel<UpdateMediaForm>("Create Folder", parameters);
-                        break;
-                    case 2:
-                        NotificationService.ShowErrorNotification("deleteResult.Messages.MessagesAsString()");
-                        break;
-                }
-            }
-        );
-    }
-
-    private void OnFolderCreate(Media value)
-    {
-        CreateFolderModal?.Close();
-    }
+    
 
     private async Task OnValueChangedHandler(object value)
     {
