@@ -1,15 +1,19 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
-<RadzenDataGrid AllowFiltering="false"
-                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+<RadzenDataGrid AllowFiltering="true"
+                FilterPopupRenderMode="PopupRenderMode.Initial"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="false"
-                PageSize="20"
+                AllowPaging="true"
+                PageSize="@AmountPerPage"
                 AllowSorting="true"
+                LoadData="@LoadData"
+                IsLoading="@IsLoading"
+                Count="@Count"
                 Data="@Contents"
                 SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((Content value) => OnRowSelect(value))">
+                RowSelect="@((Content value) => OnRowSelect(value))"
+                PagerHorizontalAlign="HorizontalAlign.Center">
     @*@bind-Value="@SelectedContent"*@
     <Columns>
         <RadzenDataGridColumn Property="Name" Title="Name"/>
@@ -22,29 +26,63 @@
 </RadzenDataGrid>
 
 @code {
+    [Parameter] public Guid? ParentId { get; set; }
+    [Parameter] public int AmountPerPage { get; set; } = 2;
+    [Parameter] public bool RefreshPage { get; set; }
+    
     public string TabName => "Latest Content";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.ContentSection;
     
-    private IEnumerable<Content> Contents { get; set; } = Enumerable.Empty<Content>();
+    private int Count { get; set; } 
+    private IEnumerable<Content> Contents { get; set; } = [];
+    private bool IsLoading { get; set; } = false;
 
-    [Parameter] public Guid? ParentId { get; set; }
-    [Parameter] public int AmountPerPage { get; set; } = 20;
-    [Parameter] public bool RefreshPage { get; set; }
-    
-    protected override async Task OnInitializedAsync()
+    async Task LoadData(LoadDataArgs args)
     {
-        var queryContentCommand = new QueryContentCommand
-        {
-            AmountPerPage = AmountPerPage,
-            OrderBy = GetContentsOrderBy.DateUpdatedDescending
-        };
+        IsLoading = true;
+
+        await Task.Yield();
+
+        var command = new DataGridCommand<Content>();
+
         if (ParentId != null)
         {
-            queryContentCommand.ParentId = ParentId;
+            command.ParentId = ParentId;
         }
-        var items = await Mediator.Send(queryContentCommand);
-        Contents = items.Items;
+        
+        if (args.Top != null)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            command.Filter = args.Filter;
+        }
+
+        if (!string.IsNullOrEmpty(args.OrderBy))
+        {
+            // Sort via the OrderBy method
+            command.OrderBy = args.OrderBy;
+        }
+
+        var result = await Mediator.Send(command);
+        Count = result.Count;
+        Contents = result.Items;
+
+        IsLoading = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData(new LoadDataArgs {Top = AmountPerPage});
     }
 
     private void OnRowSelect(object value)
@@ -54,4 +92,5 @@
             NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}", RefreshPage);
         }
     }
+
 }
