@@ -37,7 +37,7 @@
 
     [Parameter] public Guid Id { get; set; }
 
-    private IEnumerable<IContentProperty> Properties { get; set; } = Enumerable.Empty<IContentProperty>();
+    private IEnumerable<IContentProperty> Properties { get; set; } = [];
     private string SelectedProperty { get; set; } = string.Empty;
 
     private Dictionary<string, IContentProperty> AllContentProperties { get; set; } = new();
@@ -45,7 +45,7 @@
     protected override void OnInitialized()
     {
         AllContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        Properties = AllContentProperties.Select(x => x.Value);
+        Properties = AllContentProperties.Select(x => x.Value).OrderBy(x => x.Name);
     }
 
     private async Task OnPropertySelected()

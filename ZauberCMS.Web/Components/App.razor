@@ -13,7 +13,7 @@
     @if (Settings.Value.UseRadzen || IsAdmin)
     {
         <link rel="stylesheet" href="bootstrap/bootstrap.min.css"/>
-        
+
         <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
     }
     <link href="ZauberCMS.Web.styles.css" rel="stylesheet">
@@ -36,11 +36,11 @@
 @if (Settings.Value.UseRadzen || IsAdmin)
 {
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
-
 }
 @if (IsAdmin)
 {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <script src="_content/TinyMCE.Blazor/tinymce-blazor.js"></script>
 }
 </body>
 
@@ -62,9 +62,8 @@
 
     // Set the Admin to InteractiveServer but use SSR for rest of site
     private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
-    
-    [CascadingParameter]
-    public HttpContext? HttpContext { get; set; }
+
+    [CascadingParameter] public HttpContext? HttpContext { get; set; }
 
     protected override void OnInitialized()
     {
@@ -75,4 +74,5 @@
                     CultureInfo.CurrentCulture,
                     CultureInfo.CurrentUICulture)));
     }
+
 }

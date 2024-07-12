@@ -1,0 +1,70 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ZauberCMS.Components.Editors.Models.TinyMcePropertySettingsModel>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Show Menu Bar" Description="Show the top drop down menus"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.ShowMenuBar" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Show menu bar" }})" />
+    </CentreColumn>
+</EditorRow>
+
+@if (Settings.ShowMenuBar)
+{
+    <EditorRow>
+        <LeftColumn>
+            <PropertyInfo Name="Choose Menu Bar" Description="Choose which menu items to show"/>
+        </LeftColumn>
+        <CentreColumn>
+            <RadzenListBox @bind-Value="@Settings.SelectedMenuBar"
+                           Data="@Settings.MenuBarList"
+                           FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                           FilterOperator="StringFilterOperator.StartsWith"
+                           AllowFiltering="true"
+                           Multiple="true"
+                           AllowClear="true"
+                           Style="width: 100%; height: 350px"
+                           InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select menu bar" } })"/>
+        </CentreColumn>
+    </EditorRow>   
+}
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Choose Toolbar Items" Description="Choose which buttons to show in the toolbar"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenListBox @bind-Value="@Settings.SelectedToolBar"
+                       Data="@Settings.ToolBarList"
+                       FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                       FilterOperator="StringFilterOperator.StartsWith"
+                       AllowFiltering="true"
+                       Multiple="true"
+                       AllowClear="true"
+                       Style="width: 100%; height: 350px"
+                       InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select tool bar items" } })"/>
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    public TinyMcePropertySettingsModel Settings { get; set; } = new();
+    
+
+    
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+}

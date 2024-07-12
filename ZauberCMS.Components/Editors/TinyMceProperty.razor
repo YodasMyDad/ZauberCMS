@@ -1,5 +1,7 @@
 ﻿@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Settings
+@using ZauberCMS.Components.Editors.Settings
+@using ZauberCMS.Components.Editors.Models
 @using TinyMCE.Blazor
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -26,16 +28,27 @@
     public string Alias { get; set; } = "ZauberCMS.TinyMce";
     public string Icon { get; set; } = "edit_note";
     public string Description { get; set; } = "TinyMCE Rich Text Editor";
-    public Type? SettingsComponent { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(TinyMcePropertySettings);
     
+    private TinyMcePropertySettingsModel SettingsModel { get; set; } = new();
     private string? ApiKey { get; set; }
+    
+    private Dictionary<string, object> EditorConf { get; set; } = new()
+    {
+        { "plugins", "preview searchreplace autolink directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor advlist lists wordcount charmap emoticons" },
+        { "image_advtab", true }
+    };
 
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
     {
         if (ZauberSettings.Value.ApiKeys.TryGetValue("TinyMCE", out var apiKey))
         {
             ApiKey = apiKey;    
         }
+        
+        SettingsModel = Settings.FromJson<TinyMcePropertySettingsModel>();
+        EditorConf.Add("menubar", SettingsModel.ShowMenuBar ? string.Join(" ", SettingsModel.SelectedMenuBar) : "false");
+        EditorConf.Add("toolbar", string.Join(" ", SettingsModel.SelectedToolBar));
     }
 
     void OnChange(string html)
@@ -43,13 +56,5 @@
         Value = html;
         ValueChanged.InvokeAsync(html);
     }
-    
-    private Dictionary<string, object> EditorConf { get; set; } = new()
-    {
-        { "plugins", "preview searchreplace autolink directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor advlist lists wordcount charmap emoticons" },
-        { "menubar", "edit insert view format table tools help"},   
-        { "toolbar", "undo redo | fontfamily fontsize | bold italic underline strikethrough | align numlist bullist | link image | table | lineheight outdent indent| forecolor backcolor removeformat | charmap emoticons | code fullscreen preview | anchor codesample | ltr rtl" },
-        { "image_advtab", true }
-    };
 }
 
