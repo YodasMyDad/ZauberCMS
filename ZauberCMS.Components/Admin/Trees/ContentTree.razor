@@ -3,13 +3,12 @@
 @using ZauberCMS.Core.Shared
 @implements IDisposable
 
-
 <BaseTree
     T="Content"
     Data="@Data"
-    OnExpand="@OnExpandHandler"
-    OnChange="@OnChangeHandler"
-    OnItemContextMenu="@OnItemContextMenuHandler"
+    Expand="@OnExpandHandler"
+    Change="@OnChangeHandler"
+    ItemContextMenu="@OnItemContextMenuHandler"
     @bind-Value="@Value"
     HasChildren="@(e => HasChildren(e))"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
@@ -18,6 +17,7 @@
 
 @code {
     [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = default!;
     
     [Parameter] public IEnumerable<Content> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
@@ -76,6 +76,8 @@
                 args.Children.TextProperty = "Name";
                 args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
                 args.Children.HasChildren = HasChildren;
+                
+                TreeState.NodeExpanded(content.Id);
             }
         }
     }
@@ -142,7 +144,7 @@
     {
         if (data is Content content)
         {
-            return HasChildren(content) && content.ParentId == null;
+            return (HasChildren(content) && content.ParentId == null) || TreeState.IsNodeExpanded(content.Id);
         }
 
         return false;

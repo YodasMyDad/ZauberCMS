@@ -1,11 +1,12 @@
-﻿@using ZauberCMS.Core.Shared.Models
+﻿@using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
 
 <BaseTree
     T="TreeStub"
     Data="@Data"
-    OnExpand="@OnExpandHandler"
-    OnChange="@OnChangeHandler"
-    OnItemContextMenu="@OnItemContextMenuHandler"
+    Expand="@OnExpandHandler"
+    Change="@OnChangeHandler"
+    ItemContextMenu="@OnItemContextMenuHandler"
     @bind-Value="@Value"
     HasChildren="@(e => HasChildren(e))"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
@@ -20,6 +21,8 @@
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
+    [Inject] public TreeState TreeState { get; set; } = default!;
+    
     private RadzenTree Tree { get; set; } = default!;
 
     private async Task OnExpandHandler(TreeExpandEventArgs args)
@@ -37,18 +40,19 @@
                     args.Children.TextProperty = "Name";
                     args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(treeStub.Id);
                     break;
                 case TreeBranch branch:
                     args.Children.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(branch.Id);
                     break;
             }
         }
     }
-
-
+    
     private RenderFragment<T> CreateTreeTemplate<T>() where T : class
     {
         return context => builder =>
@@ -104,7 +108,8 @@
     {
         return data switch
         {
-            TreeStub tree => tree.Branches.Any(),
+            TreeStub tree => TreeState.IsNodeExpanded(tree.Id) || tree.Branches.Any(),
+            TreeBranch branch => TreeState.IsNodeExpanded(branch.Id),
             _ => false
         };
     }

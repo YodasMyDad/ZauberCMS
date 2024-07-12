@@ -1,8 +1,9 @@
 ﻿using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Media.Models;
 
-public class Media
+public class Media : ITreeItem
 {
     /// <summary>
     /// Represents the unique identifier (ID) property of a Media object.

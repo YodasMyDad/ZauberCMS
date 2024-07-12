@@ -62,11 +62,13 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddBlazoredModal();
 
 builder.Services.AddScoped<ExtensionManager>();
+builder.Services.AddScoped<ExtensionManager>();
 builder.Services.AddScoped<ProviderService>();
 builder.Services.AddScoped(typeof(ValidateService<>));
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
 builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
+builder.Services.AddScoped<TreeState>();
 
 builder.Services.AddSingleton<LayoutResolverService>();
 builder.Services.AddSingleton<AppState>();

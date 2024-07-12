@@ -7,9 +7,9 @@
 
 <BaseTree T="Media"
           Data="@Data"
-          OnExpand="@OnExpandHandler"
-          OnChange="@OnChangeHandler"
-          OnItemContextMenu="@OnItemContextMenuHandler"
+          Expand="@OnExpandHandler"
+          Change="@OnChangeHandler"
+          ItemContextMenu="@OnItemContextMenuHandler"
           @bind-Value="@Value"
           HasChildren="@(e => HasChildren(e))"
           ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
@@ -18,10 +18,11 @@
 
 @code {
     [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
 
-    [Parameter] public IEnumerable<Media> Data { get; set; } = Enumerable.Empty<Media>();
+    [Parameter] public IEnumerable<Media> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
@@ -95,6 +96,7 @@
                 args.Children.TextProperty = "Name";
                 args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
                 args.Children.HasChildren = HasChildren;
+                TreeState.NodeExpanded(media.Id);
             }
         }
     }
@@ -241,13 +243,10 @@
 
     private bool ShouldBeExpanded(object data)
     {
-        /*
         if (data is Media { MediaType: MediaType.Folder } media)
         {
-            return HasChildren(media) && media.ParentId == null;
+            return TreeState.IsNodeExpanded(media.Id);
         }
-        */
-
         return false;
     }
 

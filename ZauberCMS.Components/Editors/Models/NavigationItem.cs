@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Components.Editors.Models;
 
-public class NavigationItem
+public class NavigationItem : ITreeItem
 {
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
     

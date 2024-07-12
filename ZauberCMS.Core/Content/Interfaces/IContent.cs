@@ -1,11 +1,9 @@
-﻿using ZauberCMS.Core.Content.Models;
+﻿using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Content.Interfaces;
 
-public interface IContent<T>
+public interface IContent<T> : ITreeItem
 {
-    Guid Id { get; set; }
-    string? Name { get; set; }
     string? Url { get; set; }
     Guid ContentTypeId { get; set; }
     int SortOrder { get; set; }

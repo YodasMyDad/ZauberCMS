@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using ZauberCMS.Core.Shared.Interfaces;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership.Models;
 
-public class Role : IdentityRole<Guid>
+public class Role : IdentityRole<Guid>, ITreeItem
 {
     public string? Description { get; set; }
     public string? Icon { get; set; }

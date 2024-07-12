@@ -1,8 +1,11 @@
-﻿namespace ZauberCMS.Core.Shared.Models;
+﻿using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Shared.Interfaces;
 
-public class TreeStub
+namespace ZauberCMS.Core.Shared.Models;
+
+public class TreeStub : ITreeItem
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
     public string? Name { get; set; }
     public string? Icon { get; set; }
     public int SortOrder { get; set; }

@@ -1,10 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Shared.Interfaces;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Models;
 
-public class ContentType
+public class ContentType : ITreeItem
 {
     /// <summary>
     /// Gets or sets the unique identifier of the content type.

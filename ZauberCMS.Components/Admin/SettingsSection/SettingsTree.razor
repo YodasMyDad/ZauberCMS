@@ -11,12 +11,12 @@
     <BaseTree
         T="TreeStub"
         Data="@StructureData"
-        OnExpand="@OnExpandHandler"
-        OnChange="@OnChange"
+        Expand="@OnExpandHandler"
+        Change="@OnChange"
         @bind-Value="@Selection"
         HasChildren="@(e => HasChildren(e))"
         ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
-        OnItemContextMenu="@ItemContextMenu"
+        ItemContextMenu="@ItemContextMenu"
         Template="@(CreateTreeTemplate<object>())">
     </BaseTree>
 </div>
@@ -28,8 +28,8 @@
     <BaseTree
         T="TreeStub"
         Data="@AdvancedData"
-        OnExpand="@OnExpandHandler"
-        OnChange="@OnChange"
+        Expand="@OnExpandHandler"
+        Change="@OnChange"
         @bind-Value="@Selection"
         HasChildren="@(e => HasChildren(e))"
         ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
@@ -46,14 +46,23 @@
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = default!;
 
     private IEnumerable<TreeStub> StructureData { get; set; } = [];
     private IEnumerable<TreeStub> AdvancedData { get; set; } = [];
     private object? Selection { get; set; }
 
-    private static bool ShouldBeExpanded(object data)
+    private bool ShouldBeExpanded(object data)
     {
-        return false;
+        switch (data)
+        {
+            case TreeStub tree:
+                return TreeState.IsNodeExpanded(tree.Id);
+            case TreeBranch branch:
+                return TreeState.IsNodeExpanded(branch.Id);
+            default:
+                return false;
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -157,6 +166,7 @@
                     args.Children.TextProperty = "Name";
                     args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(treeStub.Id);
                 }
                 break;
             case TreeBranch branch:
@@ -166,6 +176,7 @@
                     args.Children.TextProperty = "Name";
                     args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();   
                     args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(branch.Id);
                 }
                 break;
         }
@@ -210,6 +221,7 @@
 
         var contentTypeTree = new TreeStub
         {
+            Id = Constants.Guids.ContentTypeTreeRootId,
             Name = "Content Types",
             Icon = "content_copy",
             SortOrder = 1,
@@ -229,6 +241,7 @@
 
         var elementTypeTree = new TreeStub
         {
+            Id = Constants.Guids.ElementTypeTreeRootId,
             Name = "Element Types",
             Icon = "explicit",
             SortOrder = 2,
@@ -258,6 +271,7 @@
 
         var auditTree = new TreeStub
         {
+            Id = Constants.Guids.AuditTreeRootId,
             Name = "Audit Log",
             Icon = "sync_alt",
             SortOrder = 1,

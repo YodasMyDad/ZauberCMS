@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Membership.Models;
 
-public class User : IdentityUser<Guid>
+public class User : IdentityUser<Guid>, ITreeItem
 {
     public List<UserRole> UserRoles { get; set; } = [];
 
@@ -26,4 +27,10 @@ public class User : IdentityUser<Guid>
     }
     
     public Dictionary<string, object> ExtendedData { get; set; } = new();
+    
+    public string? Name
+    {
+        get => this.UserName;
+        set => this.UserName = value;
+    }
 }

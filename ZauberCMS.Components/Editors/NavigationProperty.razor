@@ -2,14 +2,15 @@
 @using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <BaseTree
     T="NavigationItem"
     Data="@Data"
-    OnExpand="@OnExpandHandler"
-    OnChange="@OnChange"
-    OnItemContextMenu="@ItemContextMenu"
+    Expand="@OnExpandHandler"
+    Change="@OnChange"
+    ItemContextMenu="@ItemContextMenu"
     @bind-Value="@Selection"
     HasChildren="@(e => HasChildren(e))"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
@@ -23,6 +24,7 @@
 
 @code {
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = default!;
     
     public string Name { get; set; } = "Navigation Tree";
     public string Alias { get; set; } = "ZauberCMS.NavigationTree";
@@ -34,6 +36,7 @@
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
+    
     [CascadingParameter] public IModalService? ModalService { get; set; }
 
     private object Selection { get; set; } = new();
@@ -118,6 +121,8 @@
             args.Children.Data = item.Children;
             args.Children.TextProperty = "Name";
             args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+            
+            TreeState.NodeExpanded(item.Id);
         }
     }
 

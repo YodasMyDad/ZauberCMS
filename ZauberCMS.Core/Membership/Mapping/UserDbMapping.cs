@@ -20,5 +20,7 @@ public class UserDbMapping : IEntityTypeConfiguration<User>
             .WithOne(x => x.User)
             .HasForeignKey(p => p.UserId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Ignore(x => x.Name);
     }
 }
