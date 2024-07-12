@@ -1,15 +1,20 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Data.Commands
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
 <RadzenDataGrid AllowFiltering="true"
-                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                FilterPopupRenderMode="PopupRenderMode.Initial"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                 AllowPaging="true"
-                PageSize="20"
+                PageSize="@AmountPerPage"
                 AllowSorting="true"
+                LoadData="@LoadData"
+                IsLoading="@IsLoading"
+                Count="@Count"
                 Data="@ContentTypes"
                 SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((ContentType value) => OnRowSelect(value))">
+                RowSelect="@((ContentType value) => OnRowSelect(value))"
+                PagerHorizontalAlign="HorizontalAlign.Center">
+    @*@bind-Value="@SelectedContent"*@
     <Columns>
         <RadzenDataGridColumn Property="Name" Title="Name"/>
         <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
@@ -21,23 +26,61 @@
 </RadzenDataGrid>
 
 @code {
+    [Parameter] public int AmountPerPage { get; set; } = 20;
+    [Parameter] public bool RefreshPage { get; set; }
+    
     public string TabName => "Latest ContentTypes";
     public int SortOrder => 0;
     public string SectionAlias => "SettingsSection";
     
-    private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
+    private IEnumerable<ContentType> ContentTypes { get; set; } = [];
+    private int Count { get; set; } 
+    private bool IsLoading { get; set; }
     
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new QueryContentTypesCommand{AmountPerPage = 1000});
-        ContentTypes = items.Items;
+        await LoadData(new LoadDataArgs {Top = AmountPerPage});
+    }
+    
+    async Task LoadData(LoadDataArgs args)
+    {
+        IsLoading = true;
+
+        await Task.Yield();
+
+        var command = new DataGridCommand<ContentType>();
+        
+        if (args.Top != null)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            command.Filter = args.Filter;
+        }
+
+        // Sort via the OrderBy method
+        command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateUpdated desc";
+
+        var result = await Mediator.Send(command);
+        Count = result.Count;
+        ContentTypes = result.Items;
+
+        IsLoading = false;
     }
     
     private void OnRowSelect(object value)
     {
         if (value is ContentType selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontentype/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"/admin/updatecontentype/{selectedRow.Id}", RefreshPage);
         }
     }
 }

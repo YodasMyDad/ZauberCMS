@@ -1,17 +1,20 @@
-﻿@using ZauberCMS.Core
-@using ZauberCMS.Core.Media.Commands
+﻿@using ZauberCMS.Core.Data.Commands
 @using ZauberCMS.Core.Media.Models
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
-<RadzenDataGrid AllowFiltering="false"
-                FilterPopupRenderMode="PopupRenderMode.OnDemand"
+<RadzenDataGrid AllowFiltering="true"
+                FilterPopupRenderMode="PopupRenderMode.Initial"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="false"
-                PageSize="20"
+                AllowPaging="true"
+                PageSize="@AmountPerPage"
                 AllowSorting="true"
-                Data="@Contents"
+                LoadData="@LoadData"
+                IsLoading="@IsLoading"
+                Count="@Count"
+                Data="@MediaItems"
                 SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((Media value) => OnRowSelect(value))">
+                RowSelect="@((Media value) => OnRowSelect(value))"
+                PagerHorizontalAlign="HorizontalAlign.Center">
     <Columns>
         <RadzenDataGridColumn Property="MediaType" Title="Type">
             <Template Context="data">
@@ -36,29 +39,58 @@
 </RadzenDataGrid>
 
 @code {
+    [Parameter] public int AmountPerPage { get; set; } = 20;
+    [Parameter] public bool RefreshPage { get; set; }
+    
     public string TabName => "Latest Media";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.MediaSection;
 
-    private IEnumerable<Media> Contents { get; set; } = Enumerable.Empty<Media>();
+    private IEnumerable<Media> MediaItems { get; set; } = [];
+    private int Count { get; set; } 
+    private bool IsLoading { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new QueryMediaCommand
-        {
-            AmountPerPage = 50,
-            OrderBy = GetMediaOrderBy.DateUpdatedDescending,
-            WhereClause = media => media.MediaType != MediaType.Folder
-        });
+        await LoadData(new LoadDataArgs {Top = AmountPerPage});
+    }
+    
+    async Task LoadData(LoadDataArgs args)
+    {
+        IsLoading = true;
 
-        Contents = items.Items;
+        await Task.Yield();
+
+        var command = new DataGridCommand<Media>();
+        
+        if (args.Top != null)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        // Filter via the Where method
+        command.Filter = !string.IsNullOrEmpty(args.Filter) ? args.Filter : "MediaType != 0";
+
+        // Sort via the OrderBy method
+        command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateUpdated desc";
+
+        var result = await Mediator.Send(command);
+        Count = result.Count;
+        MediaItems = result.Items;
+
+        IsLoading = false;
     }
 
     private void OnRowSelect(object value)
     {
         if (value is Media selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatemedia/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"/admin/updatemedia/{selectedRow.Id}", RefreshPage);
         }
     }
 

@@ -27,7 +27,7 @@
 
 @code {
     [Parameter] public Guid? ParentId { get; set; }
-    [Parameter] public int AmountPerPage { get; set; } = 2;
+    [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
     
     public string TabName => "Latest Content";
@@ -35,8 +35,8 @@
     public string SectionAlias => Constants.Sections.ContentSection;
     
     private int Count { get; set; } 
-    private IEnumerable<Content> Contents { get; set; } = [];
     private bool IsLoading { get; set; } = false;
+    private IEnumerable<Content> Contents { get; set; } = [];
 
     async Task LoadData(LoadDataArgs args)
     {
@@ -44,7 +44,7 @@
 
         await Task.Yield();
 
-        var command = new DataGridCommand<Content>();
+        var command = new DataGridContentCommand();
 
         if (ParentId != null)
         {
@@ -70,7 +70,7 @@
         if (!string.IsNullOrEmpty(args.OrderBy))
         {
             // Sort via the OrderBy method
-            command.OrderBy = args.OrderBy;
+            command.Order = args.OrderBy;
         }
 
         var result = await Mediator.Send(command);

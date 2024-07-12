@@ -4,23 +4,8 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Commands;
 
-public class QueryContentCommand : IRequest<PaginatedList<Models.Content>>
+public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedList<Models.Content>>
 {
-    /// <summary>
-    /// Return all items using this content type alias
-    /// </summary>
-    public string ContentTypeAlias { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// Return all items using this content type id
-    /// </summary>
-    public Guid? ContentTypeId { get; set; }
-    
-    /// <summary>
-    /// Make the query AsNoTracking, true by default
-    /// </summary>
-    public bool AsNoTracking { get; set; } = true;
-    
     /// <summary>
     /// Return content items by id
     /// </summary>
@@ -42,6 +27,34 @@ public class QueryContentCommand : IRequest<PaginatedList<Models.Content>>
     public string? SearchTerm { get; set; }
     
     /// <summary>
+    /// Where clause builder
+    /// </summary>
+    public Expression<Func<Models.Content, bool>>? WhereClause { get; set; }
+    
+    /// <summary>
+    /// Optional direct query
+    /// </summary>
+    public IQueryable<Models.Content>? Query { get; set; }
+}
+
+public class BaseQueryContentCommand
+{
+    /// <summary>
+    /// Return all items using this content type alias
+    /// </summary>
+    public string ContentTypeAlias { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Return all items using this content type id
+    /// </summary>
+    public Guid? ContentTypeId { get; set; }
+    
+    /// <summary>
+    /// Make the query AsNoTracking, true by default
+    /// </summary>
+    public bool AsNoTracking { get; set; } = true;
+    
+    /// <summary>
     /// Include all child items on the content you are querying
     /// </summary>
     public bool IncludeChildren { get; set; }
@@ -50,9 +63,11 @@ public class QueryContentCommand : IRequest<PaginatedList<Models.Content>>
     /// Show items that have a parent id matching this
     /// </summary>
     public Guid? ParentId { get; set; }
+    
+    /// <summary>
+    /// How to order the content
+    /// </summary>
     public GetContentsOrderBy OrderBy { get; set; } = GetContentsOrderBy.DateUpdatedDescending;
-    public Expression<Func<Models.Content, bool>>? WhereClause { get; set; }
-    public IQueryable<Models.Content>? Query { get; set; }
 }
 
 public enum GetContentsOrderBy

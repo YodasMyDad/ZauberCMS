@@ -1,12 +1,11 @@
-﻿using MediatR;
+﻿using System.Linq.Dynamic.Core;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using ZauberCMS.Core.Content.Commands;
-using ZauberCMS.Core.Data;
+using ZauberCMS.Core.Data.Commands;
 using ZauberCMS.Core.Shared.Models;
-using System.Linq.Dynamic.Core;
 
-namespace ZauberCMS.Core.Content.Handlers;
+namespace ZauberCMS.Core.Data.Handlers;
 
 public class DataGridHandler<T>(IServiceProvider serviceProvider) : IRequestHandler<DataGridCommand<T>, DataGridResult<T>> where T : class
 {
