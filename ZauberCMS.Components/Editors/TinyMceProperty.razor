@@ -1,0 +1,55 @@
+﻿@using Microsoft.Extensions.Options
+@using ZauberCMS.Core.Settings
+@using TinyMCE.Blazor
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<Editor
+    Field="@(() => Value)"
+    Conf="@EditorConf"
+    Value="@Value"
+    ApiKey="@ApiKey"
+    ValueChanged="@(s => OnChange(s))"
+/>
+
+@code {
+    //https://www.tiny.cloud/docs/tinymce/latest/menus-configuration-options/
+    [Inject] IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
+    
+    [Parameter] public string? Value { get; set; } = string.Empty;
+    [Parameter] public string? Settings { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+    
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    
+    public string Name { get; set; } = "Text Editor (TinyMCE)";
+    public string Alias { get; set; } = "ZauberCMS.TinyMce";
+    public string Icon { get; set; } = "edit_note";
+    public string Description { get; set; } = "TinyMCE Rich Text Editor";
+    public Type? SettingsComponent { get; set; }
+    
+    private string? ApiKey { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (ZauberSettings.Value.ApiKeys.TryGetValue("TinyMCE", out var apiKey))
+        {
+            ApiKey = apiKey;    
+        }
+    }
+
+    void OnChange(string html)
+    {
+        Value = html;
+        ValueChanged.InvokeAsync(html);
+    }
+    
+    private Dictionary<string, object> EditorConf { get; set; } = new()
+    {
+        { "plugins", "preview searchreplace autolink directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor advlist lists wordcount charmap emoticons" },
+        { "menubar", "edit insert view format table tools help"},   
+        { "toolbar", "undo redo | fontfamily fontsize | bold italic underline strikethrough | align numlist bullist | link image | table | lineheight outdent indent| forecolor backcolor removeformat | charmap emoticons | code fullscreen preview | anchor codesample | ltr rtl" },
+        { "image_advtab", true }
+    };
+}
+

@@ -1,9 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Forms
-@using Radzen
-@using Radzen.Blazor
-@using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Content.Models
-@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenHtmlEditor @bind-Value="@Value" style="height: 300px;" Input="@OnInput" Change="@OnChange" Paste="@OnPaste" Execute="@OnExecute" UploadUrl="upload/image" />
 
@@ -30,7 +25,7 @@
     }    
     
     
-    public string Name { get; set; } = "Rich Text Editor";
+    public string Name { get; set; } = "Text Editor (Radzen)";
 
     public string Alias { get; set; } = "ZauberCMS.RichTextEditor";
 

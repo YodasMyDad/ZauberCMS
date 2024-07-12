@@ -27,6 +27,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.1.2" />
+        <PackageReference Include="TinyMCE.Blazor" Version="1.0.4" />
     </ItemGroup>
 
     <ItemGroup>
