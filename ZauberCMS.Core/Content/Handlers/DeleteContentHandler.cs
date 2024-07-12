@@ -7,10 +7,14 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
-public class DeleteContentHandler(IServiceProvider serviceProvider, AppState appState, AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteContentCommand, HandlerResult<Models.Content>>
+public class DeleteContentHandler(IServiceProvider serviceProvider, 
+    AppState appState, 
+    AuthenticationStateProvider authenticationStateProvider,
+    ICacheService cacheService) : IRequestHandler<DeleteContentCommand, HandlerResult<Models.Content>>
 {
     public async Task<HandlerResult<Models.Content>> Handle(DeleteContentCommand request, CancellationToken cancellationToken)
     {
@@ -39,6 +43,7 @@ public class DeleteContentHandler(IServiceProvider serviceProvider, AppState app
 
             content.PropertyData.Clear();
             dbContext.Contents.Remove(content);
+            cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
             await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
             return await dbContext.SaveChangesAndLog(content, handlerResult, cancellationToken);
         }

@@ -9,13 +9,15 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
 public class SaveContentHandler(
     IServiceProvider serviceProvider,
     IMapper mapper,
-    IOptions<ZauberSettings> settings)
+    IOptions<ZauberSettings> settings,
+    ICacheService cacheService)
     : IRequestHandler<SaveContentCommand, HandlerResult<Models.Content>>
 {
     private readonly SlugHelper _slugHelper = new();
@@ -69,7 +71,7 @@ public class SaveContentHandler(
 
             // Calculate and set the Path property
             content.Path = BuildPath(content, dbContext, isUpdate);
-
+            cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
             return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
         }
 

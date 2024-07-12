@@ -54,7 +54,8 @@
         {
             OrderBy = GetContentsOrderBy.DateCreated,
             AmountPerPage = amountPerPage,
-            WhereClause = content => content.ParentId == Content!.Id 
+            WhereClause = content => content.ParentId == Content!.Id,
+            Cached = true
         });
         BlogPages = pages.Items.ToList();
         HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "_content/ZauberCMS.StarterSite/assets/img/about-bg.jpg")).FirstOrDefault()!;

@@ -61,7 +61,8 @@
         {
             AmountPerPage = 4,
             ContentTypeAlias = "BlogPage",
-            OrderBy = GetContentsOrderBy.DateUpdatedDescending
+            OrderBy = GetContentsOrderBy.DateUpdatedDescending,
+            Cached = true
         });
 
         BlogPosts = posts.Items;

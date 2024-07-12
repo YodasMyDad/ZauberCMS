@@ -1,20 +1,43 @@
-﻿using MediatR;
+﻿using System.Security.Cryptography;
+using System.Text;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
-public class QueryContentHandler(IServiceProvider serviceProvider)
+public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService cacheService)
     : IRequestHandler<QueryContentCommand, PaginatedList<Models.Content>>
 {
-    public Task<PaginatedList<Models.Content>> Handle(QueryContentCommand request, CancellationToken cancellationToken)
+    public async Task<PaginatedList<Models.Content>> Handle(QueryContentCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var cacheKey = GenerateCacheKey(request, dbContext);
+        
+        if (request.Cached)
+        {
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(request, dbContext, cancellationToken)))!;
+        }
+
+        return await FetchContentAsync(request, dbContext, cancellationToken);
+    }
+
+    private string GenerateCacheKey(QueryContentCommand request, ZauberDbContext dbContext)
+    {
+        var query = BuildQuery(request, dbContext);
+        var queryString = query.ToQueryString();
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
+        return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+    }
+
+    private IQueryable<Models.Content> BuildQuery(QueryContentCommand request, ZauberDbContext dbContext)
+    {
         var query = dbContext.Contents.Include(x => x.ContentType).Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
 
         if (request.Query != null)
@@ -28,18 +51,18 @@ public class QueryContentHandler(IServiceProvider serviceProvider)
                 query = query.Include(x => x.Children);
                 query = query.AsSplitQuery();
             }
-        
+
             if (request.AsNoTracking)
             {
                 query = query.AsNoTracking();
             }
-        
-            if (!request.SearchTerm.IsNullOrWhiteSpace())
+
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
             }
 
-            if (!request.ContentTypeAlias.IsNullOrWhiteSpace())
+            if (!string.IsNullOrWhiteSpace(request.ContentTypeAlias))
             {
                 var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == request.ContentTypeAlias);
                 if (contentType != null)
@@ -47,29 +70,29 @@ public class QueryContentHandler(IServiceProvider serviceProvider)
                     request.ContentTypeId = contentType.Id;
                 }
             }
-        
-            if(request.ContentTypeId != null)
+
+            if (request.ContentTypeId != null)
             {
                 query = query.Where(x => x.ContentTypeId == request.ContentTypeId);
             }
-            
-            if(request.ParentId != null)
+
+            if (request.ParentId != null)
             {
                 query = query.Where(x => x.ParentId == request.ParentId);
             }
 
             var idCount = request.Ids.Count;
-            if (request.Ids.Count != 0)
+            if (idCount != 0)
             {
                 query = query.Where(x => request.Ids.Contains(x.Id));
                 request.AmountPerPage = idCount;
             }
         }
-        
+
         if (request.WhereClause != null)
         {
             query = query.Where(request.WhereClause);
-        }   
+        }
 
         query = request.OrderBy switch
         {
@@ -80,7 +103,13 @@ public class QueryContentHandler(IServiceProvider serviceProvider)
             GetContentsOrderBy.SortOrder => query.OrderBy(p => p.SortOrder),
             _ => query.OrderByDescending(p => p.DateUpdated)
         };
-        
+
+        return query;
+    }
+
+    private Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));
     }
 }

@@ -11,7 +11,7 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider)
 {
     public async Task<Models.Content?> Handle(GetContentBySlugCommand request, CancellationToken cancellationToken)
     {
-        // TODO - Need to sanitize and check slug
+        //  Do we need to sanitize and check slug? Or will EF core parameter query deal with it?
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
 

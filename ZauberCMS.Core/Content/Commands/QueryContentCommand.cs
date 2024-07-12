@@ -7,6 +7,11 @@ namespace ZauberCMS.Core.Content.Commands;
 public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedList<Models.Content>>
 {
     /// <summary>
+    /// Whether this query is to be cached
+    /// </summary>
+    public bool Cached { get; set; } 
+    
+    /// <summary>
     /// Return content items by id
     /// </summary>
     public List<Guid> Ids { get; set; } = [];
