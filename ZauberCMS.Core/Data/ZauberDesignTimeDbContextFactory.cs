@@ -25,13 +25,14 @@ public class ZauberDesignTimeDbContextFactory : IDesignTimeDbContextFactory<Zaub
 
         // Configure the DbContext based on the provider
         var optionsBuilder = new DbContextOptionsBuilder<ZauberDbContext>();
-        if (databaseProvider == "Sqlite")
+        switch (databaseProvider)
         {
-            optionsBuilder.UseSqlite(connectionString);
-        }
-        else if (databaseProvider == "SqlServer")
-        {
-            optionsBuilder.UseSqlServer(connectionString);
+            case "Sqlite":
+                optionsBuilder.UseSqlite(connectionString);
+                break;
+            case "SqlServer":
+                optionsBuilder.UseSqlServer(connectionString);
+                break;
         }
 
         return new ZauberDbContext(optionsBuilder.Options);

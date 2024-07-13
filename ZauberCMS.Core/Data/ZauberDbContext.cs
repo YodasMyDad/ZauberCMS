@@ -7,13 +7,9 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Data;
 
-public class ZauberDbContext : IdentityDbContext<User, Role, Guid, UserClaim, UserRole, UserLogin, RoleClaim, UserToken>
+public class ZauberDbContext(DbContextOptions<ZauberDbContext> options)
+    : IdentityDbContext<User, Role, Guid, UserClaim, UserRole, UserLogin, RoleClaim, UserToken>(options)
 {
-    public ZauberDbContext(DbContextOptions<ZauberDbContext> options) : base(options)
-    {
-        
-    }
-    
     public DbSet<ContentType> ContentTypes => Set<ContentType>();
     public DbSet<Content.Models.Content> Contents => Set<Content.Models.Content>();
     public DbSet<Media.Models.Media> Medias => Set<Media.Models.Media>();
@@ -26,10 +22,8 @@ public class ZauberDbContext : IdentityDbContext<User, Role, Guid, UserClaim, Us
     {
         base.OnModelCreating(modelBuilder);
         
+        //TODO - need to pull in configurations from other assemblies
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-        
-        //TODO - Loop through found assemblies
-        //modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         
         // The apply configurations from assembly isn't working for the identity models
         modelBuilder.Entity<User>().ToTable("ZauberUsers");

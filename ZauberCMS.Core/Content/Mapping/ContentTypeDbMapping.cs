@@ -17,6 +17,7 @@ public class ContentTypeDbMapping : IEntityTypeConfiguration<ContentType>
         builder.Property(x => x.Icon).HasMaxLength(100);
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
+        builder.Property(e => e.AllowedChildContentTypes).ToJsonConversion(2000);
         builder.Property(e => e.AvailableContentViews).ToJsonConversion(4000);
         builder.Property(e => e.Tabs).ToJsonConversion(4000);
         

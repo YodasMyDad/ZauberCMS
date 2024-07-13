@@ -66,6 +66,11 @@ public class ContentType : ITreeItem
     /// The available Views for this ContentType that the user can select to display their content
     /// </summary>
     public List<string> AvailableContentViews { get; set; } = [];
+    
+    /// <summary>
+    /// List of optionally allowed child content types
+    /// </summary>
+    public List<Guid> AllowedChildContentTypes { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of tabs associated with the content type.
