@@ -29,3 +29,5 @@ riderModule.iml
 /ZauberCMS.Web/appsettings.Development.json
 /ZauberCMS.Web/wwwroot/is-cache/*
 /.vs/*
+/ZauberCMS.Web/app.db-wal
+/ZauberCMS.Web/app.db-shm

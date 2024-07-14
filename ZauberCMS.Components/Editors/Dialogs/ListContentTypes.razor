@@ -23,6 +23,7 @@
 
     [Parameter] public bool RootOnly { get; set; }
     [Parameter] public bool? ElementTypesOnly { get; set; }
+    [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public EventCallback<Guid> ContentTypeSelected { get; set; } // add this line
     
     private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
@@ -32,8 +33,15 @@
     protected override async Task OnInitializedAsync()
     {
         var items = await Mediator.Send(new QueryContentTypesCommand { AmountPerPage = int.MaxValue, RootOnly = RootOnly, ElementTypesOnly = ElementTypesOnly});
-        ContentTypes = items.Items; 
-
+        ContentTypes = items.Items;
+        if (ParentId != null)
+        {
+            var content = await Mediator.Send(new GetContentCommand { Id = ParentId.Value });
+            if (content.ContentType?.AllowedChildContentTypes.Any() == true)
+            {
+                ContentTypes = ContentTypes.Where(x => content.ContentType.AllowedChildContentTypes.Contains(x.Id));
+            }
+        }
         StateHasChanged();
     }
 

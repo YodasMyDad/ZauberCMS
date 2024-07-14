@@ -56,7 +56,7 @@
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Choose Allowed Views" Description="The views the user can pick to display their content"/>
+                                    <PropertyInfo Name="Allowed Views" Description="The views the user can pick to display their content"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
@@ -69,7 +69,26 @@
                                                    Multiple="true"
                                                    AllowClear="true"
                                                    Placeholder="Select Content Views" Style="width: 100%; height: 250px"
-                                                   InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "select content views" } })"/>
+                                                   InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select content views" } })"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Allowed Child Content Types" Description="Optionally limit what child content types can be created"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenListBox @bind-Value="@ContentType.AllowedChildContentTypes"
+                                                   Data="@ContentTypes"
+                                                   FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                   FilterOperator="StringFilterOperator.StartsWith"
+                                                   AllowFiltering="true"
+                                                   TextProperty="Name"
+                                                   ValueProperty="Id"
+                                                   Multiple="true"
+                                                   AllowClear="true"
+                                                   Placeholder="Select Content Types" Style="width: 100%; height: 250px"
+                                                   InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select child types" } })"/>
                                 </CentreColumn>
                             </EditorRow>
                             
@@ -173,6 +192,7 @@
 
     private ContentType ContentType { get; set; } = new();
     private List<ContentViewName> ContentViews { get; set; } = [];
+    private List<ContentType> ContentTypes { get; set; } = [];
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
     private bool ShowDeleteButton { get; set; }
     private int SelectedTabIndex { get; set; }
@@ -184,8 +204,7 @@
     {
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         ContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        InitializeContentViews();
-
+        
         if (ContentTypeId != null)
         {
             ContentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
@@ -205,8 +224,11 @@
         InitializeTabsAndSortOrders();
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        InitializeContentViews();
+        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { ElementTypesOnly = false, OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000});
+        ContentTypes.AddRange(contentTypes.Items);
         Layout?.SetSection(Constants.Sections.SettingsSection);
     }
     
