@@ -65,10 +65,8 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
             if (!string.IsNullOrWhiteSpace(request.ContentTypeAlias))
             {
                 var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == request.ContentTypeAlias);
-                if (contentType != null)
-                {
-                    request.ContentTypeId = contentType.Id;
-                }
+                // Bit hacky, but it will return content if we don't do this
+                request.ContentTypeId = contentType?.Id ?? Guid.Empty;
             }
 
             if (request.ContentTypeId != null)
