@@ -1,15 +1,26 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data.Models;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Data;
 
-public class ZauberDbContext(DbContextOptions<ZauberDbContext> options)
+public class ZauberDbContext(DbContextOptions<ZauberDbContext> options, IConfiguration configuration)
     : IdentityDbContext<User, Role, Guid, UserClaim, UserRole, UserLogin, RoleClaim, UserToken>(options)
 {
+    protected override void OnConfiguring(DbContextOptionsBuilder options)
+    {
+        var section = configuration.GetSection("Zauber");
+        var connectionString = section.GetValue<string>("ConnectionString");
+        options.UseSqlServer(connectionString);
+        #if DEBUG
+                options.EnableSensitiveDataLogging();
+        #endif
+    }
+    
     public DbSet<ContentType> ContentTypes => Set<ContentType>();
     public DbSet<Content.Models.Content> Contents => Set<Content.Models.Content>();
     public DbSet<Media.Models.Media> Medias => Set<Media.Models.Media>();
@@ -23,6 +34,10 @@ public class ZauberDbContext(DbContextOptions<ZauberDbContext> options)
         base.OnModelCreating(modelBuilder);
         
         //TODO - need to pull in configurations from other assemblies
+        /*foreach (var assembly in AssemblyManager.Assemblies)
+        {
+            if (assembly != null) modelBuilder.ApplyConfigurationsFromAssembly(assembly);
+        }*/
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         
         // The apply configurations from assembly isn't working for the identity models

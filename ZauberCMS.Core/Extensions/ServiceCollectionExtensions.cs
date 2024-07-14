@@ -19,29 +19,27 @@ public static class ServiceCollectionExtensions
         var databaseProvider = section.GetValue<string>("DatabaseProvider");
         if (databaseProvider != null)
         {
-            if (databaseProvider.Equals("Sqlite"))
+            switch (databaseProvider)
             {
-                services.AddDbContextFactory<ZauberDbContext>(opt =>
-                {
-                    opt.UseSqlite(connectionString);
+                case "Sqlite":
+                    services.AddDbContext<ZauberDbContext, SqliteZauberDbContext>(opt =>
+                    {
+                        opt.UseSqlite(connectionString);
 #if DEBUG
-                    opt.EnableSensitiveDataLogging();
+                        opt.EnableSensitiveDataLogging();
 #endif
-                });
-            }
-
-            if (databaseProvider.Equals("SqlServer"))
-            {
-                services.AddDbContextFactory<ZauberDbContext>(opt =>
-                {
-                    opt.UseSqlServer(connectionString);
+                    });
+                    break;
+                case "SqlServer":
+                    services.AddDbContext<ZauberDbContext>(opt =>
+                    {
+                        opt.UseSqlServer(connectionString);
 #if DEBUG
-                    opt.EnableSensitiveDataLogging();
+                        opt.EnableSensitiveDataLogging();
 #endif
-                });
+                    });
+                    break;
             }
-
-            // TODO - Need to test and try other providers like MySql
 
 #if DEBUG
             services.AddDatabaseDeveloperPageExceptionFilter();

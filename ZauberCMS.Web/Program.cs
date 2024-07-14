@@ -62,7 +62,6 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddBlazoredModal();
 
 builder.Services.AddScoped<ExtensionManager>();
-builder.Services.AddScoped<ExtensionManager>();
 builder.Services.AddScoped<ProviderService>();
 builder.Services.AddScoped(typeof(ValidateService<>));
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
