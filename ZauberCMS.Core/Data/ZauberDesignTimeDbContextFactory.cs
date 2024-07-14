@@ -41,7 +41,7 @@ public class ZauberSqliteDesignTimeDbContextFactory : IDesignTimeDbContextFactor
             .Build();
 
         // Configure the DbContext based on the provider
-        var optionsBuilder = new DbContextOptionsBuilder<ZauberDbContext>();
+        var optionsBuilder = new DbContextOptionsBuilder<SqliteZauberDbContext>();
 
 
         return new SqliteZauberDbContext(optionsBuilder.Options, configuration);

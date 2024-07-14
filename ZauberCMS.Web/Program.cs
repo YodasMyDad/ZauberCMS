@@ -90,8 +90,10 @@ using (var scope = app.Services.CreateScope())
     var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
     try
     {
-        // Apply conditional migrations
-        extensionManager.ApplyMigrations(dbContext);
+        if (dbContext.Database.GetPendingMigrations().Any())
+        {
+            dbContext.Database.Migrate();
+        }
         
         // Get any seed data
         var seedData = extensionManager.GetInstances<ISeedData>();

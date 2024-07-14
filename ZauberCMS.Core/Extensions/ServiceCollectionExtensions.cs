@@ -15,29 +15,16 @@ public static class ServiceCollectionExtensions
     public static void AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
         var section = configuration.GetSection("Zauber");
-        var connectionString = section.GetValue<string>("ConnectionString");
         var databaseProvider = section.GetValue<string>("DatabaseProvider");
         if (databaseProvider != null)
         {
             switch (databaseProvider)
             {
                 case "Sqlite":
-                    services.AddDbContext<ZauberDbContext, SqliteZauberDbContext>(opt =>
-                    {
-                        opt.UseSqlite(connectionString);
-#if DEBUG
-                        opt.EnableSensitiveDataLogging();
-#endif
-                    });
+                    services.AddDbContext<ZauberDbContext, SqliteZauberDbContext>();
                     break;
                 case "SqlServer":
-                    services.AddDbContext<ZauberDbContext>(opt =>
-                    {
-                        opt.UseSqlServer(connectionString);
-#if DEBUG
-                        opt.EnableSensitiveDataLogging();
-#endif
-                    });
+                    services.AddDbContext<ZauberDbContext>();
                     break;
             }
 

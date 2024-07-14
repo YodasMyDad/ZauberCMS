@@ -1,0 +1,10 @@
+SQL Server Migrations
+dotnet ef --startup-project ../ZauberCMS.Web/ migrations add InitialCreate --context ZauberDbContext -o "Data/Migrations/SqlServer"
+
+"ConnectionString": "Server=MORPHEUS;Database=ZauberCMS;Trusted_Connection=True;Connect Timeout=200;TrustServerCertificate=True;",
+
+
+SQLite Migrations
+dotnet ef --startup-project ../ZauberCMS.Web/ migrations add InitialCreate --context SqliteZauberDbContext -o "Data/Migrations/SqLite"
+
+"ConnectionString": "DataSource=app.db;Cache=Shared",

@@ -9,6 +9,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{926273E0-C534-4703-A483-0B32CCB57516}"
 	ProjectSection(SolutionItems) = preProject
 		ReadMe.md = ReadMe.md
+		misc.txt = misc.txt
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.StarterSite", "ZauberCMS.StarterSite\ZauberCMS.StarterSite.csproj", "{DF80FAFE-EB7C-4669-92D4-9CDAC03AED9A}"

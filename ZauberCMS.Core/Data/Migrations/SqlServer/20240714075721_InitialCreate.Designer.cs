@@ -12,7 +12,7 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqlServer
 {
     [DbContext(typeof(ZauberDbContext))]
-    [Migration("20240714074044_InitialCreate")]
+    [Migration("20240714075721_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

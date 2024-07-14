@@ -11,7 +11,7 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqLite
 {
     [DbContext(typeof(SqliteZauberDbContext))]
-    [Migration("20240714074005_InitialCreate")]
+    [Migration("20240714075644_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

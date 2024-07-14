@@ -8,7 +8,7 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Data;
 
-public class ZauberDbContext(DbContextOptions<ZauberDbContext> options, IConfiguration configuration)
+public class ZauberDbContext(DbContextOptions options, IConfiguration configuration)
     : IdentityDbContext<User, Role, Guid, UserClaim, UserRole, UserLogin, RoleClaim, UserToken>(options)
 {
     protected override void OnConfiguring(DbContextOptionsBuilder options)
