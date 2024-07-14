@@ -11,18 +11,18 @@ riderModule.iml
 /ZauberCMS.Web/wwwroot/media/*
 
 # Allow specific media folders
-!/ZauberCMS.Web/wwwroot/media/1ef4bcf8-079c-426b-9cbe-b1a300da0888
-!/ZauberCMS.Web/wwwroot/media/57215f3c-fb2b-46f6-ad15-b1a300da0904
-!/ZauberCMS.Web/wwwroot/media/a0d5853b-487d-4022-bbff-b1a300da08ac
-!/ZauberCMS.Web/wwwroot/media/ed93c084-498f-4eab-b146-b1a300da0810
-!/ZauberCMS.Web/wwwroot/media/f2626056-19a2-41b3-b139-b1a300da08d3
+!/ZauberCMS.Web/wwwroot/media/1f096611-621e-4c23-b483-b1ad008b4aa3
+!/ZauberCMS.Web/wwwroot/media/078dfd90-1b11-4585-ab00-b1ad008b4b79
+!/ZauberCMS.Web/wwwroot/media/498d0c43-d78f-4c9a-9fe0-b1ad008b4b27
+!/ZauberCMS.Web/wwwroot/media/754be272-b250-4c6c-8d6f-b1ad008b4b51
+!/ZauberCMS.Web/wwwroot/media/aa7f0690-7c39-43a8-a9a4-b1ad008b4ba1
 
 # Ensure all files within these allowed folders are also tracked
-!/ZauberCMS.Web/wwwroot/media/1ef4bcf8-079c-426b-9cbe-b1a300da0888/*
-!/ZauberCMS.Web/wwwroot/media/57215f3c-fb2b-46f6-ad15-b1a300da0904/*
-!/ZauberCMS.Web/wwwroot/media/a0d5853b-487d-4022-bbff-b1a300da08ac/*
-!/ZauberCMS.Web/wwwroot/media/ed93c084-498f-4eab-b146-b1a300da0810/*
-!/ZauberCMS.Web/wwwroot/media/f2626056-19a2-41b3-b139-b1a300da08d3/*
+!/ZauberCMS.Web/wwwroot/media/1f096611-621e-4c23-b483-b1ad008b4aa3/*
+!/ZauberCMS.Web/wwwroot/media/078dfd90-1b11-4585-ab00-b1ad008b4b79/*
+!/ZauberCMS.Web/wwwroot/media/498d0c43-d78f-4c9a-9fe0-b1ad008b4b27/*
+!/ZauberCMS.Web/wwwroot/media/754be272-b250-4c6c-8d6f-b1ad008b4b51/*
+!/ZauberCMS.Web/wwwroot/media/aa7f0690-7c39-43a8-a9a4-b1ad008b4ba1/*
 
 /ZauberCMS.Web/node_modules/*
 */node_modules/*

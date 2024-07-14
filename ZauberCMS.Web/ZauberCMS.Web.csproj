@@ -1452,10 +1452,13 @@
       <_ContentIncludedByDefault Remove="Components\StarterSite\Layouts\MainLayout.razor" />
       <_ContentIncludedByDefault Remove="Components\StarterSite\Layouts\NavBar.razor" />
       <_ContentIncludedByDefault Remove="wwwroot\js\filePaste.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\media\1ef4bcf8-079c-426b-9cbe-b1a300da0888\contact-bg.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\media\a0d5853b-487d-4022-bbff-b1a300da08ac\home-bg.jpg" />
     </ItemGroup>
 
     <ItemGroup>
       <Folder Include="Logs\" />
+      <Folder Include="wwwroot\media\" />
     </ItemGroup>
 
 </Project>
