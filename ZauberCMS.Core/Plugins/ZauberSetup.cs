@@ -30,7 +30,7 @@ namespace ZauberCMS.Core.Plugins;
 
 public static class ZauberSetup
 {
-    public static void AddZauberCms(this WebApplication app)
+    public static void AddZauberCms<T>(this WebApplication app)
     {
         using (var scope = app.Services.CreateScope())
         {
@@ -65,7 +65,22 @@ public static class ZauberSetup
             .AddSupportedCultures(supportedCultures)
             .AddSupportedUICultures(supportedCultures);
         app.UseRequestLocalization(localizationOptions);
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();
+        app.UseRouting();
+        app.UseAntiforgery();
+        app.MapControllers();
 
+        // Add authentication and authorization middleware
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapRazorComponents<T>()
+            .AddInteractiveServerRenderMode()
+            .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
+
+        // Add additional endpoints required by the Identity /Account Razor components.
+        app.MapAdditionalIdentityEndpoints();
     }
 
     public static void AddZauberCms(this WebApplicationBuilder builder, IConfiguration configuration)

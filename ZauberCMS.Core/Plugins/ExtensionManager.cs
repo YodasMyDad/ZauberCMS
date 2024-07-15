@@ -321,8 +321,8 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         // Get all assemblies or filter them based on the predicate
         var assemblies = predicate == null ? AssemblyManager.Assemblies : AssemblyManager.Assemblies.Where(predicate!);
 
-        // Filter out the assembly with the name "ZauberCMS.Web"
-        var filteredAssemblies = assemblies.Where(a => a?.GetName().Name != "ZauberCMS.Web");
+        // Filter out the assembly with the name "ZauberCMS"
+        var filteredAssemblies = assemblies.Where(a => a?.GetName().Name != "ZauberCMS");
 
         // Find the assembly with the name "ZauberCMS.Routing"
         var enumerable = filteredAssemblies as Assembly[] ?? filteredAssemblies.ToArray();

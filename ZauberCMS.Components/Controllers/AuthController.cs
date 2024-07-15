@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ZauberCMS.Core.Membership.Models;
 
-namespace ZauberCMS.Web.Controllers;
+namespace ZauberCMS.Components.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]

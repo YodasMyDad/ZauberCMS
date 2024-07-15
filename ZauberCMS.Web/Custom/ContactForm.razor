@@ -1,0 +1,69 @@
+﻿@using System.ComponentModel.DataAnnotations
+@implements ZauberCMS.Core.Content.Interfaces.ICustomContentComponent
+@rendermode InteractiveServer
+
+<div class="pt-2">
+@if (Sent)
+{
+    <div class="alert alert-primary" role="alert">
+        Contact form sent
+    </div>
+}
+else
+{
+    <EditForm Model="ContactModel" OnValidSubmit="Submit" FormName="ContactForm">
+        <DataAnnotationsValidator />
+        @*<ValidationSummary />*@
+        <div class="row g-3">
+            <div class="col">
+                <label class="form-label">Name</label>
+                <InputText @bind-Value="ContactModel!.Name" DisplayName="Name" class="form-control"/>
+                <ValidationMessage For="@(() => ContactModel.Name)" class="text-danger"/>
+            </div>
+            <div class="col">
+                <label class="form-label">Email</label>
+                <InputText @bind-Value="ContactModel!.Email" DisplayName="Email" class="form-control"/>
+                <ValidationMessage For="@(() => ContactModel.Email)" class="text-danger"/>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Message</label>
+                <InputTextArea @bind-Value="ContactModel!.Message" DisplayName="Message" class="form-control"/>
+                <ValidationMessage For="@(() => ContactModel.Message)" class="text-danger"/>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </EditForm>
+}
+</div>
+
+@code {
+    public string Name => "Contact Form";
+    
+    [Parameter] public Content? Content { get; set; }
+    
+    private ContactFormModel? ContactModel { get; set; }
+    
+    private bool Sent { get; set; }
+
+    protected override void OnInitialized() => ContactModel ??= new ContactFormModel();
+
+    private void Submit()
+    {
+        Sent = true;
+    }
+    
+    public class ContactFormModel
+    {
+        [Required] 
+        public string Name { get; set; } = string.Empty;
+        
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+        
+        [Required] 
+        public string Message { get; set; } = string.Empty;
+    }
+}
