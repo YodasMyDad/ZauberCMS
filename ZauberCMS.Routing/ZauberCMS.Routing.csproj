@@ -4,6 +4,14 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>ZauberCMS.Routing</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Lee Messenger</Authors>
+        <Description>ZauberCMS routing package</Description>
+        <PackageTags>Web</PackageTags>
+        <LocalNugetSource>$(MSBuildProjectDirectory)\..\NugetSource</LocalNugetSource>
     </PropertyGroup>
 
 
@@ -22,5 +30,16 @@
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="ZauberCMS.Components" Version="1.0.0" />
+    </ItemGroup>
 
+    <Target Name="CopyNuGetPackage" AfterTargets="Pack">
+        <PropertyGroup>
+            <PackageOutputDir>$(OutputPath)..\</PackageOutputDir>
+            <GeneratedPackage>$(PackageOutputDir)\$(PackageId).$(Version).nupkg</GeneratedPackage>
+        </PropertyGroup>
+        <Copy SourceFiles="$(GeneratedPackage)" DestinationFolder="$(LocalNugetSource)" />
+    </Target>
+    
 </Project>

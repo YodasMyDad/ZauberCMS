@@ -31,3 +31,4 @@ riderModule.iml
 /.vs/*
 /ZauberCMS.Web/app.db-wal
 /ZauberCMS.Web/app.db-shm
+/NugetSource/*

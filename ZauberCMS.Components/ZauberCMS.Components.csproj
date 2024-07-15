@@ -4,9 +4,17 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>ZauberCMS.Components</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Lee Messenger</Authors>
+        <Description>ZauberCMS components package</Description>
+        <PackageTags>Web</PackageTags>
+        <!-- Specify the local NuGet folder -->
+        <LocalNugetSource>$(MSBuildProjectDirectory)\..\NugetSource</LocalNugetSource>
     </PropertyGroup>
-
-
+    
     <ItemGroup>
         <SupportedPlatform Include="browser"/>
     </ItemGroup>
@@ -35,7 +43,19 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="ZauberCMS.Core" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
       <Folder Include="wwwroot\css\" />
     </ItemGroup>
 
+    <Target Name="CopyNuGetPackage" AfterTargets="Pack">
+        <PropertyGroup>
+            <PackageOutputDir>$(OutputPath)..\</PackageOutputDir>
+            <GeneratedPackage>$(PackageOutputDir)\$(PackageId).$(Version).nupkg</GeneratedPackage>
+        </PropertyGroup>
+        <Copy SourceFiles="$(GeneratedPackage)" DestinationFolder="$(LocalNugetSource)" />
+    </Target>
+    
 </Project>

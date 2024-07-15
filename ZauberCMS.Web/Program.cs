@@ -1,5 +1,4 @@
 using Blazored.Modal;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,8 +18,8 @@ using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
-using ZauberCMS.Web.Components;
 using ZauberCMS.Core.Email;
+using ZauberCMS.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
