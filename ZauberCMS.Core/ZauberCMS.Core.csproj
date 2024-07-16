@@ -12,6 +12,9 @@
         <Description>ZauberCMS core package</Description>
         <PackageTags>Web</PackageTags>
         <LocalNugetSource>$(MSBuildProjectDirectory)\..\NugetSource</LocalNugetSource>
+        <PackageProjectUrl>https://github.com/YodasMyDad/ZauberCMS</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
