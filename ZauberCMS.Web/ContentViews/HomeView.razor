@@ -68,7 +68,7 @@
 
         BlogPosts = posts.Items;
 
-        HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "_content/ZauberCMS.StarterSite/assets/img/home-bg.jpg")).FirstOrDefault()!;
+        HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "/assets/img/home-bg.jpg")).FirstOrDefault()!;
     }
 
 }

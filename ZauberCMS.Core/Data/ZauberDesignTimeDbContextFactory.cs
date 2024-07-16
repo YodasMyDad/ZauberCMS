@@ -13,7 +13,7 @@ public class ZauberDesignTimeDbContextFactory : IDesignTimeDbContextFactory<Zaub
         
         // Build configuration
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS.Web"))
+            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
             .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appSettings.{environment}.json", optional: true)
             .Build();
@@ -35,7 +35,7 @@ public class ZauberSqliteDesignTimeDbContextFactory : IDesignTimeDbContextFactor
         
         // Build configuration
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS.Web"))
+            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
             .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appSettings.{environment}.json", optional: true)
             .Build();

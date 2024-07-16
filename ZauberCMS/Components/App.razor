@@ -1,6 +1,4 @@
-﻿@using Microsoft.Extensions.Options
-@using ZauberCMS.Core.Settings
-@using System.Globalization
+﻿@using System.Globalization
 @using Microsoft.AspNetCore.Http
 @using Microsoft.AspNetCore.Localization
 
@@ -11,13 +9,15 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="/"/>
-    @if (Settings.Value.UseRadzen || IsAdmin)
+    @if (IsAdmin)
     {
         <link rel="stylesheet" href="bootstrap/bootstrap.min.css"/>
-
         <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
+        @* Need to figure out how we can get these a better way *@
+        <link rel="stylesheet" href="_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css">
+        <link rel="stylesheet" href="_content/ZauberCMS.Components/css/admin.css">
+        <link rel="stylesheet" href="_content/Blazored.Modal/Blazored.Modal.bundle.scp.css">
     }
-    <link href="ZauberCMS.Web.styles.css" rel="stylesheet">
     <HeadOutlet @rendermode="RenderModeForPage"/>
 </head>
 
@@ -34,12 +34,9 @@
         set: (value) => window.localStorage['BlazorCulture'] = value
     };
 </script>
-@if (Settings.Value.UseRadzen || IsAdmin)
-{
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
-}
 @if (IsAdmin)
 {
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script src="_content/TinyMCE.Blazor/tinymce-blazor.js"></script>
 }
@@ -48,7 +45,6 @@
 </html>
 
 @code {
-    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
 
     private bool IsAdmin
     {
