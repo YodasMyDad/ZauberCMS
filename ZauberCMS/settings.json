@@ -1,4 +1,4 @@
-{
+﻿{
   "Serilog": {
     "Using": ["Serilog.Sinks.File", "Serilog.Sinks.Console", "Serilog.Sinks.Async"],
     "MinimumLevel": {

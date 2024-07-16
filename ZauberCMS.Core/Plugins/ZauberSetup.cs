@@ -23,7 +23,6 @@ using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared;
-using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Plugins;
@@ -56,7 +55,6 @@ public static class ZauberSetup
             }
         }
         
-        app.UseMiddleware<MissingImageMiddleware>();
         app.UseImageSharp();
         app.UseSerilogRequestLogging();
         var supportedCultures = new[] { "en" };

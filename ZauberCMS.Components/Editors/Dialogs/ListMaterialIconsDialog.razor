@@ -5,16 +5,17 @@
         <RadzenStack Style="border: 1px #e1e1e1 solid; border-radius: 2px; text-align: center; width: 100px; height: 100px; cursor: pointer;"
                      Orientation="Orientation.Vertical" Gap="0" JustifyContent="JustifyContent.Center"
                      AlignItems="AlignItems.Center" @onclick="@(() => SelectIcon(icon))">
-            <RadzenIcon Icon="@icon" Style="width: 50px; height: 50px; font-size: 50px; color: #2c3034;" />
+            <RadzenIcon Icon="@icon" Style="width: 50px; height: 50px; font-size: 50px; color: #2c3034;"/>
             <div class="rz-color-base-400" style="font-size: 9px">
                 @icon
             </div>
-            
+
         </RadzenStack>
     }
 </RadzenStack>
 
 @code {
+
     //[Inject] public DialogService DialogService { get; set; } = default!;
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
     private List<string> Icons { get; set; } = [];
@@ -23,21 +24,18 @@
 
     protected override void OnInitialized()
     {
-        var iconsFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "files", "materialicons.txt");
-        if (File.Exists(iconsFilePath))
-        {
-            Icons = File.ReadLines(iconsFilePath).ToList();
-            FilteredIcons = Icons;
-        }
+        Icons = MaterialIcons.All();
+        FilteredIcons = Icons;
     }
 
     private void Search(string? search)
     {
         FilteredIcons = !search.IsNullOrWhiteSpace() ? Icons.Where(x => x.StartsWith(search)).ToList() : Icons;
     }
-    
+
     private async Task SelectIcon(string icon)
     {
         await BlazoredModal.CloseAsync(ModalResult.Ok(icon));
     }
+
 }

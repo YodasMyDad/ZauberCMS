@@ -45,7 +45,6 @@
 
 
     <ItemGroup>
-        <Folder Include="NugetFiles\www\"/>
         <Folder Include="wwwroot\**"/>
     </ItemGroup>
 
@@ -63,19 +62,18 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="install.ps1">
+        <Content Include="ZauberCMS.targets">
             <Pack>true</Pack>
-            <PackagePath>tools/install.ps1</PackagePath>
+            <PackagePath>build/ZauberCMS.targets</PackagePath>
         </Content>
-        <Content Include="NugetFiles\www\**\*">
-            <Pack>true</Pack>
-            <PackagePath>contentFiles\any\any\www\</PackagePath>
-        </Content>
-        <Content Update="NugetFiles\appsettings.json">
-            <Pack>true</Pack>
-            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-            <PackagePath>contentFiles\any\any\</PackagePath>
-        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="settings.json" />
+      <None Include="settings.json">
+          <Pack>true</Pack>
+          <PackagePath>contentItems/any/any/settings.json</PackagePath>
+      </None>
     </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
