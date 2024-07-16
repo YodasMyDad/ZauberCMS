@@ -1,17 +1,24 @@
-﻿# Path to the directory of the target project
-$projectDir = $installPath
+﻿param($installPath, $toolsPath, $package, $project)
 
-# Path to the source files in the NuGet package
-$sourceDir = Join-Path $PSScriptRoot '..\content'
+# Path to the NuGetFiles\wwwroot in the NuGet package
+$nugetFilesWwwroot = Join-Path $installPath "contentFiles\any\any\www"
 
-# Copy appsettings.json to the target project
-Copy-Item -Path "$sourceDir\appsettings.json" -Destination $projectDir -Force
+# Path to the target project's wwwroot
+$targetWwwroot = Join-Path $project "wwwroot"
 
-# Copy wwwroot folder contents to the target project's wwwroot folder
-$wwwrootDest = Join-Path $projectDir 'wwwroot'
-if (-Not (Test-Path -Path $wwwrootDest)) {
-    New-Item -ItemType Directory -Path $wwwrootDest
+# Ensure target wwwroot exists
+if (!(Test-Path $targetWwwroot)) {
+    New-Item -ItemType Directory -Force -Path $targetWwwroot
 }
-Copy-Item -Path "$sourceDir\wwwroot\*" -Destination $wwwrootDest -Recurse -Force
 
-Write-Host "appsettings.json and wwwroot contents have been copied to $projectDir"
+# Copy files and directories recursively
+Copy-Item -Path (Join-Path $nugetFilesWwwroot "*") -Destination $targetWwwroot -Recurse -Force
+
+# Path to the appsettings.json in the NuGet package
+$nugetAppSettings = Join-Path $installPath "contentFiles\any\any\NugetFiles\appsettings.json"
+
+# Path to the target project's appsettings.json
+$targetAppSettings = Join-Path $project "appsettings.json"
+
+# Copy and overwrite appsettings.json
+Copy-Item -Path $nugetAppSettings -Destination $targetAppSettings -Force

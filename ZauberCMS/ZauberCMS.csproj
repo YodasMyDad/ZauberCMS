@@ -20,63 +20,62 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AutoMapper" Version="13.0.1" />
-        <PackageReference Include="Blazored.Modal" Version="7.3.1" />
-        <PackageReference Include="Humanizer" Version="2.14.1" />
-        <PackageReference Include="MailKit" Version="4.7.0" />
-        <PackageReference Include="MediatR" Version="12.3.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.6" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
-        <PackageReference Include="Microsoft.Extensions.Localization" Version="8.0.6" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
-        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" />
-        <PackageReference Include="Radzen.Blazor" Version="4.34.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6" />
+        <PackageReference Include="AutoMapper" Version="13.0.1"/>
+        <PackageReference Include="Blazored.Modal" Version="7.3.1"/>
+        <PackageReference Include="Humanizer" Version="2.14.1"/>
+        <PackageReference Include="MailKit" Version="4.7.0"/>
+        <PackageReference Include="MediatR" Version="12.3.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.6"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.6"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.Localization" Version="8.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2"/>
+        <PackageReference Include="Radzen.Blazor" Version="4.34.0"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.6" />
-        <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
-        <PackageReference Include="Serilog.Sinks.Async" Version="2.0.0" />
-        <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.1.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.6"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.1"/>
+        <PackageReference Include="Serilog.Sinks.Async" Version="2.0.0"/>
+        <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.1.2"/>
     </ItemGroup>
 
 
     <ItemGroup>
-      <Folder Include="wwwroot\**" />
+        <Folder Include="NugetFiles\www\"/>
+        <Folder Include="wwwroot\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Components\**" />
+        <AdditionalFiles Include="Components\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
-      <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
+        <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj"/>
+        <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Components" Version="1.0.0" />
-        <PackageReference Include="ZauberCMS.Routing" Version="1.0.0" />
+        <PackageReference Include="ZauberCMS.Components" Version="1.0.0"/>
+        <PackageReference Include="ZauberCMS.Routing" Version="1.0.0"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <!-- Include appsettings.json and wwwroot content in the NuGet package -->
         <Content Include="install.ps1">
             <Pack>true</Pack>
             <PackagePath>tools/install.ps1</PackagePath>
         </Content>
-    </ItemGroup>
-    
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\media\078dfd90-1b11-4585-ab00-b1ad008b4b79\post-bg.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\media\1f096611-621e-4c23-b483-b1ad008b4aa3\about-bg.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\media\498d0c43-d78f-4c9a-9fe0-b1ad008b4b27\contact-bg.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\media\754be272-b250-4c6c-8d6f-b1ad008b4b51\home-bg.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\media\aa7f0690-7c39-43a8-a9a4-b1ad008b4ba1\post-sample-image.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\bootstrap\bootstrap.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\bootstrap\bootstrap.min.css.map" />
+        <Content Include="NugetFiles\www\**\*">
+            <Pack>true</Pack>
+            <PackagePath>contentFiles\any\any\www\</PackagePath>
+        </Content>
+        <Content Update="NugetFiles\appsettings.json">
+            <Pack>true</Pack>
+            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+            <PackagePath>contentFiles\any\any\</PackagePath>
+        </Content>
     </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
@@ -84,7 +83,7 @@
             <PackageOutputDir>$(OutputPath)..\</PackageOutputDir>
             <GeneratedPackage>$(PackageOutputDir)\$(PackageId).$(Version).nupkg</GeneratedPackage>
         </PropertyGroup>
-        <Copy SourceFiles="$(GeneratedPackage)" DestinationFolder="$(LocalNugetSource)" />
+        <Copy SourceFiles="$(GeneratedPackage)" DestinationFolder="$(LocalNugetSource)"/>
     </Target>
 
 </Project>
