@@ -79,6 +79,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<string>("Path")
                         .IsRequired()
+                        .HasMaxLength(3000)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SortOrder")
@@ -157,10 +158,12 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<string>("AllowedChildContentTypes")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AvailableContentViews")
                         .IsRequired()
+                        .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ContentProperties")
@@ -194,6 +197,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<string>("Tabs")
                         .IsRequired()
+                        .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -250,6 +254,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
+                        .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
                     b.Property<long>("FileSize")
@@ -311,6 +316,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
+                        .HasMaxLength(3000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Icon")
@@ -331,6 +337,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<string>("Tabs")
                         .IsRequired()
+                        .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -395,6 +402,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
+                        .HasMaxLength(3500)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("LockoutEnabled")

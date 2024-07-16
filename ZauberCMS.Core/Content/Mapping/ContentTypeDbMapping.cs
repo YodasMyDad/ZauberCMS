@@ -21,7 +21,7 @@ public class ContentTypeDbMapping : IEntityTypeConfiguration<ContentType>
         builder.Property(e => e.AvailableContentViews).ToJsonConversion(4000);
         builder.Property(e => e.Tabs).ToJsonConversion(4000);
         
-        builder.Property(e => e.ContentProperties).ToJsonConversion();
+        builder.Property(e => e.ContentProperties).ToJsonConversion(null);
         
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberContentTypes_Name");
         builder.HasIndex(x => x.Alias).HasDatabaseName("IX_ZauberContentTypes_Alias");

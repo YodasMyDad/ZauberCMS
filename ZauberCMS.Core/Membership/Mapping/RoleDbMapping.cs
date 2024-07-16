@@ -14,6 +14,6 @@ public class RoleDbMapping : IEntityTypeConfiguration<Role>
         builder.Property(x => x.ConcurrencyStamp).HasMaxLength(3000);
         builder.Property(e => e.ExtendedData).ToJsonConversion(3000);
         builder.Property(e => e.Tabs).ToJsonConversion(4000);
-        builder.Property(e => e.Properties).ToJsonConversion();
+        builder.Property(e => e.Properties).ToJsonConversion(null);
     }
 }

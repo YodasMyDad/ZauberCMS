@@ -84,7 +84,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Property<string>("Path")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
@@ -162,15 +163,17 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Property<string>("AllowedChildContentTypes")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<string>("AvailableContentViews")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<string>("ContentProperties")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DateCreated")
                         .IsRequired()
@@ -199,7 +202,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Property<string>("Tabs")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.HasKey("Id");
 
@@ -255,7 +259,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
@@ -316,7 +321,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(20)
@@ -332,11 +338,12 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Property<string>("Properties")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Tabs")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.HasKey("Id");
 
@@ -403,7 +410,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(3500)
+                        .HasColumnType("nvarchar(3500)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");

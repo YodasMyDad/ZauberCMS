@@ -40,9 +40,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ContentProperties = table.Column<string>(type: "TEXT", nullable: false),
-                    AvailableContentViews = table.Column<string>(type: "TEXT", nullable: false),
-                    AllowedChildContentTypes = table.Column<string>(type: "TEXT", nullable: false),
-                    Tabs = table.Column<string>(type: "TEXT", nullable: false)
+                    AvailableContentViews = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false),
+                    AllowedChildContentTypes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    Tabs = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -78,7 +78,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false)
+                    ExtendedData = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -99,9 +99,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     Icon = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
+                    ExtendedData = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: false),
                     Properties = table.Column<string>(type: "TEXT", nullable: false),
-                    Tabs = table.Column<string>(type: "TEXT", nullable: false),
+                    Tabs = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true)
@@ -118,7 +118,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
+                    ExtendedData = table.Column<string>(type: "TEXT", maxLength: 3500, nullable: false),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
@@ -148,7 +148,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     Url = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
                     ContentTypeId = table.Column<Guid>(type: "TEXT", nullable: false),
                     ContentTypeAlias = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    Path = table.Column<string>(type: "TEXT", nullable: false),
+                    Path = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: false),
                     SortOrder = table.Column<int>(type: "INTEGER", nullable: false),
                     IsRootContent = table.Column<bool>(type: "INTEGER", nullable: false),
                     HideFromNavigation = table.Column<bool>(type: "INTEGER", nullable: false),

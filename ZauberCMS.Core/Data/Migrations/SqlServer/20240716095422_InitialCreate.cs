@@ -39,10 +39,10 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     IncludeChildren = table.Column<bool>(type: "bit", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ContentProperties = table.Column<string>(type: "TEXT", nullable: false),
-                    AvailableContentViews = table.Column<string>(type: "TEXT", nullable: false),
-                    AllowedChildContentTypes = table.Column<string>(type: "TEXT", nullable: false),
-                    Tabs = table.Column<string>(type: "TEXT", nullable: false)
+                    ContentProperties = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AvailableContentViews = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
+                    AllowedChildContentTypes = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    Tabs = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -78,7 +78,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false)
+                    ExtendedData = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -99,9 +99,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     Icon = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
-                    Properties = table.Column<string>(type: "TEXT", nullable: false),
-                    Tabs = table.Column<string>(type: "TEXT", nullable: false),
+                    ExtendedData = table.Column<string>(type: "nvarchar(3000)", maxLength: 3000, nullable: false),
+                    Properties = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Tabs = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(3000)", maxLength: 3000, nullable: true)
@@ -118,7 +118,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExtendedData = table.Column<string>(type: "TEXT", nullable: false),
+                    ExtendedData = table.Column<string>(type: "nvarchar(3500)", maxLength: 3500, nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -148,7 +148,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     Url = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     ContentTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ContentTypeAlias = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    Path = table.Column<string>(type: "TEXT", nullable: false),
+                    Path = table.Column<string>(type: "nvarchar(3000)", maxLength: 3000, nullable: false),
                     SortOrder = table.Column<int>(type: "int", nullable: false),
                     IsRootContent = table.Column<bool>(type: "bit", nullable: false),
                     HideFromNavigation = table.Column<bool>(type: "bit", nullable: false),

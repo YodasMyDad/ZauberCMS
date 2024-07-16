@@ -1,16 +1,13 @@
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Extensions.Configuration;
-using ZauberCMS.Core.Data;
 
 namespace ZauberCMS.Core.Extensions;
 
 public static class ValueConversionExtensions
 {
-    public static void ToJsonConversion<T>(this PropertyBuilder<T> propertyBuilder, int? columnSize = null)
+    public static void ToJsonConversion<T>(this PropertyBuilder<T> propertyBuilder, int? columnSize)
         where T : class, new()
     {
         // Explicitly set JsonSerializerOptions to prevent indentation
@@ -36,38 +33,9 @@ public static class ValueConversionExtensions
         propertyBuilder.Metadata.SetValueConverter(converter);
         propertyBuilder.Metadata.SetValueComparer(comparer);
 
-        //TODO - This is likely to be an issue for extension developers?
-            
-        // Get an instance of your context
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-        
-        // Build configuration
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
-            .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appSettings.{environment}.json", optional: true)
-            .Build();
-        
-        // Get the connection string and provider from configuration
-        var section = configuration.GetSection("Zauber");
-        var databaseProvider = section.GetValue<string>("DatabaseProvider");
-
-        if (databaseProvider?.EndsWith("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+        if (columnSize != null)
         {
-            propertyBuilder.HasColumnType("TEXT");
-        }
-        else
-        {
-            if (columnSize == null)
-            {
-                // Determine the provider
-                propertyBuilder.HasColumnType("nvarchar(MAX)");
-            }
-            else
-            {
-                propertyBuilder.HasColumnType($"nvarchar({columnSize})");
-                propertyBuilder.HasMaxLength(columnSize.Value);   
-            }   
+            propertyBuilder.HasMaxLength(columnSize.Value);
         }
     }
 }
