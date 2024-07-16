@@ -3,7 +3,7 @@ using ZauberCMS.Core.Plugins;;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddZauberCms(builder.Configuration);
+builder.AddZauberCms();
 
 var app = builder.Build();
 

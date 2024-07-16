@@ -81,7 +81,7 @@ public static class ZauberSetup
         app.MapAdditionalIdentityEndpoints();
     }
 
-    public static void AddZauberCms(this WebApplicationBuilder builder, IConfiguration configuration)
+    public static void AddZauberCms(this WebApplicationBuilder builder)
     {
         builder.Host.UseSerilog((context, configuration) =>
             configuration.ReadFrom.Configuration(context.Configuration));
@@ -114,7 +114,7 @@ builder.Services.AddRazorComponents()
 
         builder.Services.AddRadzenComponents();
 
-        var section = configuration.GetSection("Zauber");
+        var section = builder.Configuration.GetSection("Zauber");
         var databaseProvider = section.GetValue<string>("DatabaseProvider");
         if (databaseProvider != null)
         {
@@ -132,7 +132,7 @@ builder.Services.AddRazorComponents()
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 #endif
 
-            var identitySection = configuration.GetSection("Zauber:Identity");
+            var identitySection = builder.Configuration.GetSection("Zauber:Identity");
             builder.Services.AddIdentityCore<User>(options =>
                 {
                     // Password settings.
@@ -226,14 +226,14 @@ builder.Services.AddRazorComponents()
         {
             foreach (var startUpItem in startUpItems)
             {
-                startUpItem.Value.Register(builder.Services, configuration);
+                startUpItem.Value.Register(builder.Services, builder.Configuration);
             }
         }
 
         // Add external authentication providers
         foreach (var provider in extensionManager?.GetInstances<IExternalAuthenticationProvider>()!)
         {
-            provider.Value.Add(builder.Services, authBuilder, configuration);
+            provider.Value.Add(builder.Services, authBuilder, builder.Configuration);
         }
 
         // Add localization services

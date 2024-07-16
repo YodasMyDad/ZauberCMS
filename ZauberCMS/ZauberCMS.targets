@@ -1,8 +1,8 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <Target Name="CopySettingsFile" AfterTargets="Build">
+    <Target Name="CopySettingsFile" BeforeTargets="Build">
         <Message Importance="high" Text="Copying settings.json to appsettings.json..." />
-        <Copy SourceFiles="$(MSBuildThisFileDirectory)contentItems/any/any/settings.json"
-              DestinationFiles="$(MSBuildProjectDirectory)appsettings.json"
-              Condition="!Exists('$(MSBuildProjectDirectory)appsettings.json')" />
+        <Copy SourceFiles="$(MSBuildThisFileDirectory)settings.json"
+              DestinationFiles="$(MSBuildProjectDirectory)/appsettings.json"
+              Condition="!Exists('$(MSBuildProjectDirectory)/appsettings.json')" />
     </Target>
 </Project>

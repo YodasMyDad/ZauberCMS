@@ -72,7 +72,7 @@
       <Content Remove="settings.json" />
       <None Include="settings.json">
           <Pack>true</Pack>
-          <PackagePath>contentItems/any/any/settings.json</PackagePath>
+          <PackagePath>build/settings.json</PackagePath>
       </None>
     </ItemGroup>
 
