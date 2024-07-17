@@ -1,6 +1,6 @@
 # ZauberCMS - The Blazor CMS
 
-### Important! ZauberCMS is still currently a proof of concept, and I am working to get it to an alpha state
+### Important! ZauberCMS is currently in alpha and I'm working to get it to beta
 
 ZauberCMS is a CMS built on **Blazor**. The admin is built using InteractiveServer and 
 the front end (Your website) is built using the [new static rendering](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-modes?view=aspnetcore-8.0) (But you can build it in Server or WASM if you want). The CMS is [inspired by Umbraco](https://umbraco.com/), and follows many of the 
@@ -11,10 +11,16 @@ having to learn a front end framework.
 
 _Core tech used is: .Net 8, Blazor, EF Core, Identity, Mediatr, [Radzen Components](https://www.radzen.com/blazor-components/)_
 
+## Getting Started
+
+Fastest way to get started is using the Nuget package, full instructions on how to use it are below
+
+https://aptitude.gitbook.io/zaubercms/getting-started/quick-start#using-nuget-alpha
+
 ## Starter Site Build
 
 The video below shows the starter site being built. It covers building a site from nothing, to complete finished site. If you have never used Umbraco 
-then I highly recommend watching it.
+then I highly recommend watching it as it covers a lot of concepts.
 
 [![Starter Site Build YouTube Video](https://aptitude.gitbook.io/~gitbook/image?url=https%3A%2F%2F417697475-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FVr2cbdfxDGZK1u2Fd59w%252Fuploads%252FQslhSO0S2IBKP3k7v0Qx%252Fyoutube-cover-2.png%3Falt%3Dmedia%26token%3Db4b0d4d1-35e7-4f72-a6a0-84a57ff49095&width=768&dpr=4&quality=100&sign=4611e2ee&sv=1)](https://www.youtube.com/watch?v=BvULaHbiIEU)
 
