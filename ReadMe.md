@@ -1,6 +1,6 @@
 # ZauberCMS - The Blazor CMS
 
-### Important! ZauberCMS is currently in alpha and I'm working to get it to beta
+### ZauberCMS is currently in alpha and I'm working to get it to beta
 
 ZauberCMS is a CMS built on **Blazor**. The admin is built using InteractiveServer and 
 the front end (Your website) is built using the [new static rendering](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-modes?view=aspnetcore-8.0) (But you can build it in Server or WASM if you want). The CMS is [inspired by Umbraco](https://umbraco.com/), and follows many of the 
@@ -34,9 +34,9 @@ https://aptitude.gitbook.io/zaubercms
 
 Looking for anyone that has Blazor experience and interested in getting involved. 
 
-You can view the **Alpha** release progress here
+You can view the **Beta** release progress here
 
-https://github.com/users/YodasMyDad/projects/5
+https://github.com/users/YodasMyDad/projects/6
 
 And issues found here
 
