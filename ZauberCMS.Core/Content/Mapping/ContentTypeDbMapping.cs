@@ -23,6 +23,11 @@ public class ContentTypeDbMapping : IEntityTypeConfiguration<ContentType>
         
         builder.Property(e => e.ContentProperties).ToJsonConversion(null);
         
+        builder.HasOne(d => d.LastUpdatedBy)
+            .WithMany()
+            .HasForeignKey(d => d.LastUpdatedById)
+            .OnDelete(DeleteBehavior.NoAction);
+        
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberContentTypes_Name");
         builder.HasIndex(x => x.Alias).HasDatabaseName("IX_ZauberContentTypes_Alias");
     }

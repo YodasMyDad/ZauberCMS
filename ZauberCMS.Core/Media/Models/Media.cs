@@ -1,4 +1,5 @@
 ﻿using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Media.Models;
@@ -77,6 +78,12 @@ public class Media : ITreeItem
     /// </summary>
     public Guid? ParentId { get; set; }
     public Media? Parent { get; set; }
+    
+    /// <summary>
+    /// The id of the last person to update the media 
+    /// </summary>
+    public Guid? LastUpdatedById { get; set; }
+    public User? LastUpdatedBy { get; set; }
     
     /// <summary>
     /// Date the file is created.

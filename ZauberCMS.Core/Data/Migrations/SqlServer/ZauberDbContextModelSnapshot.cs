@@ -75,6 +75,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<bool>("IsRootContent")
                         .HasColumnType("bit");
 
+                    b.Property<Guid?>("LastUpdatedById")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -86,6 +89,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .IsRequired()
                         .HasMaxLength(3000)
                         .HasColumnType("nvarchar(3000)");
+
+                    b.Property<bool>("Published")
+                        .HasColumnType("bit");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
@@ -102,6 +108,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.HasKey("Id");
 
                     b.HasIndex("ContentTypeId");
+
+                    b.HasIndex("LastUpdatedById");
 
                     b.HasIndex("Name")
                         .HasDatabaseName("IX_ZauberContent_Name");
@@ -196,6 +204,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<bool>("IsElementType")
                         .HasColumnType("bit");
 
+                    b.Property<Guid?>("LastUpdatedById")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -209,6 +220,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.HasIndex("Alias")
                         .HasDatabaseName("IX_ZauberContentTypes_Alias");
+
+                    b.HasIndex("LastUpdatedById");
 
                     b.HasIndex("Name")
                         .HasDatabaseName("IX_ZauberContentTypes_Name");
@@ -268,6 +281,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<long>("Height")
                         .HasColumnType("bigint");
 
+                    b.Property<Guid?>("LastUpdatedById")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("MediaType")
                         .HasColumnType("int");
 
@@ -286,6 +302,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LastUpdatedById");
 
                     b.HasIndex("Name")
                         .HasDatabaseName("IX_ZauberMedia_Name");
@@ -587,12 +605,19 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ZauberCMS.Core.Membership.Models.User", "LastUpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("LastUpdatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("ZauberCMS.Core.Content.Models.Content", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ContentType");
+
+                    b.Navigation("LastUpdatedBy");
 
                     b.Navigation("Parent");
                 });
@@ -608,12 +633,29 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Navigation("Content");
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Membership.Models.User", "LastUpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("LastUpdatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("LastUpdatedBy");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Media.Models.Media", b =>
                 {
+                    b.HasOne("ZauberCMS.Core.Membership.Models.User", "LastUpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("LastUpdatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("ZauberCMS.Core.Media.Models.Media", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("LastUpdatedBy");
 
                     b.Navigation("Parent");
                 });

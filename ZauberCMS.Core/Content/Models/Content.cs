@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Content.Models;
 
@@ -27,6 +28,13 @@ public class Content : IContent<ContentPropertyValue>
     public ContentType? ContentType { get; set; }
     public string? ContentTypeAlias { get; set; }
 
+    
+    /// <summary>
+    /// The id of the last person to update the content 
+    /// </summary>
+    public Guid? LastUpdatedById { get; set; }
+    public User? LastUpdatedBy { get; set; }
+    
     /// <summary>
     /// The path for this content in the content tree
     /// </summary>
@@ -41,6 +49,11 @@ public class Content : IContent<ContentPropertyValue>
     /// Is this content allowed in the root of the tree
     /// </summary>
     public bool IsRootContent { get; set; }
+    
+    /// <summary>
+    /// Whether this content item is published or not
+    /// </summary>
+    public bool Published { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the content should be hidden from navigation.

@@ -65,18 +65,18 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Content Remove="appsettings.json" />
+        <None Include="appsettings.json">
+            <Pack>true</Pack>
+            <PackagePath>build/settings.json</PackagePath>
+        </None>
+    </ItemGroup>
+    
+    <ItemGroup>
         <Content Include="ZauberCMS.targets">
             <Pack>true</Pack>
             <PackagePath>build/ZauberCMS.targets</PackagePath>
         </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Remove="settings.json" />
-      <None Include="settings.json">
-          <Pack>true</Pack>
-          <PackagePath>build/settings.json</PackagePath>
-      </None>
     </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">

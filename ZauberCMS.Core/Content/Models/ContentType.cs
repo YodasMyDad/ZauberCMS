@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Interfaces;
 using ZauberCMS.Core.Shared.Models;
 
@@ -46,6 +47,12 @@ public class ContentType : ITreeItem
     /// A flag to return children when this page is rendered to save multiple content queries
     /// </summary>
     public bool IncludeChildren { get; set; }
+    
+    /// <summary>
+    /// The id of the last person to update the content type 
+    /// </summary>
+    public Guid? LastUpdatedById { get; set; }
+    public User? LastUpdatedBy { get; set; }
     
     /// <summary>
     /// Gets or sets the date and time when the entity was created.

@@ -29,6 +29,11 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
             .HasForeignKey(d => d.ParentId)
             .OnDelete(DeleteBehavior.NoAction);
         
+        builder.HasOne(d => d.LastUpdatedBy)
+            .WithMany()
+            .HasForeignKey(d => d.LastUpdatedById)
+            .OnDelete(DeleteBehavior.NoAction);
+        
         builder.HasMany(c => c.PropertyData)
             .WithOne(x => x.Content)
             .HasForeignKey(p => p.ContentId)
