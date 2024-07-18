@@ -2,20 +2,28 @@
 
 public class ZauberSettings
 {
-    public string? NewUserStartingRole { get; set; }
-    public string? DatabaseProvider { get; set; }
-    public string? UploadFolderName { get; set; }
+    public string? NewUserStartingRole { get; set; } = "Member";
+    public string? DatabaseProvider { get; set; } = "Sqlite";
+    public string? ConnectionString { get; set; } = "DataSource=app.db;Cache=Shared";
+    public string? UploadFolderName { get; set; } = "media";
     public List<string> AdminEmailAddresses { get; set; } = [];
-    public List<string> IgnoredPaths { get; set; } = [];
-    public long MaxUploadFileSizeInBytes { get; set; }
-    public int MaxImageSizeInPixels { get; set; }
+    public long MaxUploadFileSizeInBytes { get; set; } = 5242880;
+    public int MaxImageSizeInPixels { get; set; } = 1500;
     public bool EnablePathUrls { get; set; }
-    public List<string> AllowedFileTypes { get; set; } = [];
+    public List<string> AllowedFileTypes { get; set; } = [".jpg", ".jpeg", ".png", ".gif", ".svg"];
     public EmailSettings Email { get; set; } = new();
-    public PluginSettings Plugins { get; set; } = new();
-    public Identity Identity { get; set; } = new();
-    public string? NotFoundComponent { get; set; }
-    public string? MissingView { get; set; }
+    public PluginSettings Plugins { get; set; } = new()
+    {
+        EmailProvider = "ZauberCMS.Core.Providers.SmtpEmailProvider",
+        StorageProvider = "ZauberCMS.Core.Providers.DiskStorageProvider"
+    };
+    public Identity Identity { get; set; } = new()
+    {
+        AccountLayout = "ZauberCMS.Components.Pages.BlankLayout"
+    };
+
+    public string? NotFoundComponent { get; set; } = "ZauberCMS.Components.Pages.NotFound404";
+    public string? MissingView { get; set; } = "ZauberCMS.Components.Pages.MissingView";
     public Dictionary<string, string> ApiKeys { get; set; } = [];
     public List<string> AllowedAdminIpAddress { get; set; } = [];
 }
