@@ -17,11 +17,8 @@ public class ZauberSettings
         EmailProvider = "ZauberCMS.Core.Providers.SmtpEmailProvider",
         StorageProvider = "ZauberCMS.Core.Providers.DiskStorageProvider"
     };
-    public Identity Identity { get; set; } = new()
-    {
-        AccountLayout = "ZauberCMS.Components.Pages.BlankLayout"
-    };
 
+    public Identity Identity { get; set; } = new();
     public string? NotFoundComponent { get; set; } = "ZauberCMS.Components.Pages.NotFound404";
     public string? MissingView { get; set; } = "ZauberCMS.Components.Pages.MissingView";
     public Dictionary<string, string> ApiKeys { get; set; } = [];
@@ -30,7 +27,14 @@ public class ZauberSettings
 
 public class Identity
 {
-    public string? AccountLayout { get; set; }
+    public bool PasswordRequireDigit { get; set; } = true;
+    public bool PasswordRequireLowercase { get; set; } = true;
+    public bool PasswordRequireNonAlphanumeric { get; set; }
+    public bool PasswordRequireUppercase { get; set; } = true;
+    public int PasswordRequiredLength { get; set; } = 8;
+    public int PasswordRequiredUniqueChars { get; set; } = 1;
+    public bool SignInRequireConfirmedAccount { get; set; }
+    public string? AccountLayout { get; set; } = "ZauberCMS.Components.Pages.BlankLayout";
 }
 
 public class PluginSettings

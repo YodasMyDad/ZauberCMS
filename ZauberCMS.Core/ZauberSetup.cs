@@ -25,6 +25,7 @@ using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Services;
 
+// ReSharper disable once CheckNamespace
 namespace ZauberCMS.Core.Plugins;
 
 public static class ZauberSetup
@@ -108,14 +109,19 @@ builder.Services.AddRazorComponents()
         });
 
         builder.Services.AddCascadingAuthenticationState();
+        
+        // Bind configuration to ZauberSettings instance
+        var zauberSettings = new ZauberSettings();
+        builder.Configuration.GetSection(Constants.SettingsConfigName).Bind(zauberSettings);
+        
+        builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
         builder.Services.AddRadzenComponents();
 
-        var section = builder.Configuration.GetSection("Zauber");
-        var databaseProvider = section.GetValue<string>("DatabaseProvider");
+        var databaseProvider = zauberSettings.DatabaseProvider;
         if (databaseProvider != null)
         {
             switch (databaseProvider)
@@ -131,18 +137,16 @@ builder.Services.AddRazorComponents()
 #if DEBUG
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 #endif
-
-            var identitySection = builder.Configuration.GetSection("Zauber:Identity");
+            
             builder.Services.AddIdentityCore<User>(options =>
                 {
                     // Password settings.
-                    options.Password.RequireDigit = identitySection.GetValue<bool>("PasswordRequireDigit");
-                    options.Password.RequireLowercase = identitySection.GetValue<bool>("PasswordRequireLowercase");
-                    options.Password.RequireNonAlphanumeric =
-                        identitySection.GetValue<bool>("PasswordRequireNonAlphanumeric");
-                    options.Password.RequireUppercase = identitySection.GetValue<bool>("PasswordRequireUppercase");
-                    options.Password.RequiredLength = identitySection.GetValue<int>("PasswordRequiredLength");
-                    options.Password.RequiredUniqueChars = identitySection.GetValue<int>("PasswordRequiredUniqueChars");
+                    options.Password.RequireDigit = zauberSettings.Identity.PasswordRequireDigit;
+                    options.Password.RequireLowercase = zauberSettings.Identity.PasswordRequireLowercase;
+                    options.Password.RequireNonAlphanumeric = zauberSettings.Identity.PasswordRequireNonAlphanumeric;
+                    options.Password.RequireUppercase = zauberSettings.Identity.PasswordRequireUppercase;
+                    options.Password.RequiredLength = zauberSettings.Identity.PasswordRequiredLength;
+                    options.Password.RequiredUniqueChars = zauberSettings.Identity.PasswordRequiredUniqueChars;
 
                     // Lockout settings.
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
@@ -154,8 +158,7 @@ builder.Services.AddRazorComponents()
                     options.User.AllowedUserNameCharacters += " ";
 
                     // Email
-                    options.SignIn.RequireConfirmedAccount =
-                        identitySection.GetValue<bool>("SignInRequireConfirmedAccount");
+                    options.SignIn.RequireConfirmedAccount = zauberSettings.Identity.SignInRequireConfirmedAccount;
                 })
                 .AddRoles<Role>()
                 .AddEntityFrameworkStores<ZauberDbContext>()
@@ -189,8 +192,7 @@ builder.Services.AddRazorComponents()
 
         builder.Services.AddSingleton<LayoutResolverService>();
         builder.Services.AddSingleton<AppState>();
-
-        builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
+        
         builder.Services.AddMvc();
 
         // Add Authentication
