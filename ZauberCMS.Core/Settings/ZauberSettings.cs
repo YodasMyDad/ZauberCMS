@@ -20,6 +20,7 @@ public class ZauberSettings
 
     public Identity Identity { get; set; } = new();
     public string? NotFoundComponent { get; set; } = "ZauberCMS.Components.Pages.NotFound404";
+    public string? StarterComponent { get; set; } = "ZauberCMS.Components.Pages.NewSite";
     public string? MissingView { get; set; } = "ZauberCMS.Components.Pages.MissingView";
     public Dictionary<string, string> ApiKeys { get; set; } = [];
     public List<string> AllowedAdminIpAddress { get; set; } = [];

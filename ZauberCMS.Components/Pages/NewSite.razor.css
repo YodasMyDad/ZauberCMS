@@ -1,0 +1,23 @@
+﻿
+.full-page {
+    background-image: url('img/branches.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5); /* For slight transparency */
+}
+
+.centered-div {
+    background-color: rgba(255, 255, 255, 0.9); /* White background with slight transparency */
+    max-width: 600px;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}

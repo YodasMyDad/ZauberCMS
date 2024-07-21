@@ -53,11 +53,25 @@
         }
         else 
         {
-            // No content (404) Show not found component
-            if(AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
+            // Before we show the 404, we want to check if there is any content at all, if not show the starter page
+            var hasContent = await Mediator.Send(new AnyContentCommand());
+            if (hasContent)
             {
-                ComponentView = notFound;
-                LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                // No content found on slug (404) Show not found component
+                if(AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
+                {
+                    ComponentView = notFound;
+                    LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                }   
+            }
+            else
+            {
+                // No content found on slug (404) Show not found component
+                if(AllContentViews.TryGetValue(Settings.Value.StarterComponent!, out var starter))
+                {
+                    ComponentView = starter;
+                    LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                }   
             }
         }
     }
