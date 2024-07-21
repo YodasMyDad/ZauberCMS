@@ -1,24 +1,30 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
 public class SaveContentTypeHandler(
     IServiceProvider serviceProvider,
-    IMapper mapper)
+    IMapper mapper,
+    AuthenticationStateProvider authenticationStateProvider,
+    UserManager<User> userManager)
     : IRequestHandler<SaveContentTypeCommand, HandlerResult<ContentType>>
 {
     public async Task<HandlerResult<ContentType>> Handle(SaveContentTypeCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
 
         if (request.ContentType != null)
@@ -44,12 +50,14 @@ public class SaveContentTypeHandler(
                 }
                 
                 contentType = request.ContentType;
+                contentType.LastUpdatedById = user!.Id;
                 dbContext.ContentTypes.Add(contentType);
             }
             else
             {
                 // Map the updated properties
                 mapper.Map(request.ContentType, contentType);  
+                contentType.LastUpdatedById = user!.Id;
                 contentType.DateUpdated = DateTime.UtcNow;
             }
             

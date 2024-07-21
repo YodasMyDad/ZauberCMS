@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -7,6 +9,7 @@ using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -17,7 +20,9 @@ public class SaveContentHandler(
     IServiceProvider serviceProvider,
     IMapper mapper,
     IOptions<ZauberSettings> settings,
-    ICacheService cacheService)
+    ICacheService cacheService,
+    AuthenticationStateProvider authenticationStateProvider,
+    UserManager<User> userManager)
     : IRequestHandler<SaveContentCommand, HandlerResult<Models.Content>>
 {
     private readonly SlugHelper _slugHelper = new();
@@ -27,6 +32,8 @@ public class SaveContentHandler(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var isUpdate = true;
         var handlerResult = new HandlerResult<Models.Content>();
 
@@ -49,17 +56,19 @@ public class SaveContentHandler(
             var content = dbContext.Contents
                 .Include(x => x.PropertyData)
                 .FirstOrDefault(x => x.Id == request.Content.Id);
-
+            
             if (content == null)
             {
                 isUpdate = false;
                 content = request.Content;
+                content.LastUpdatedById = user!.Id;
                 dbContext.Contents.Add(content);
             }
             else
             {
                 // Map the updated properties
                 mapper.Map(request.Content, content);
+                content.LastUpdatedById = user!.Id;
                 content.DateUpdated = DateTime.UtcNow;
 
                 if (!request.ExcludePropertyData)
