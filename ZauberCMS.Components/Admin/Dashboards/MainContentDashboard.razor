@@ -22,6 +22,11 @@
                 @data.DateUpdated.Humanize()
             </Template>
         </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="LastUpdatedBy" Title="Updated By">
+            <Template Context="data">
+                <RadzenGravatar Email="@data.LastUpdatedBy?.Email" Style="width: 25px; height: 25px;"/>
+            </Template>
+        </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
 

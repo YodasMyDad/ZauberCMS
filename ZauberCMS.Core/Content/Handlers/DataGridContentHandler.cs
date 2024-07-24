@@ -22,6 +22,7 @@ public class DataGridContentHandler(IServiceProvider serviceProvider) : IRequest
         // Now you have the DbSet<T> and can query it
         var query = dbContext.Contents
             .Include(x => x.ContentType)
+            .Include(x => x.LastUpdatedBy)
             .AsQueryable();
         
         if (request.IncludeChildren)
