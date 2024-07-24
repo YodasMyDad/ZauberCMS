@@ -42,10 +42,15 @@ public class GetContentHandler(IServiceProvider serviceProvider, ICacheService c
             .Include(x => x.PropertyData)
             .AsSplitQuery()
             .AsQueryable();
-
+        
         if (request.AsNoTracking)
         {
             query = query.AsNoTracking();
+        }
+        
+        if (!request.IncludeUnpublished)
+        {
+            query = query.Where(x => x.Published);
         }
         
         if (request.IncludeParent)
@@ -55,7 +60,9 @@ public class GetContentHandler(IServiceProvider serviceProvider, ICacheService c
         
         if (request.IncludeChildren)
         {
-            query = query.Include(x => x.Children);
+            query = request.IncludeUnpublished ? query.Include(x => x.Children) 
+                : query.Include(x => x.Children.Where(c => c.Published));
+            query = query.AsSplitQuery();
         }
 
         if (request.Id != null)

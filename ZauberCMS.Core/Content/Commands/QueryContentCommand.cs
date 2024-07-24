@@ -32,6 +32,11 @@ public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedLi
     public string? SearchTerm { get; set; }
     
     /// <summary>
+    /// Where or not to include unpublished content in this query
+    /// </summary>
+    public bool IncludeUnpublished { get; set; }
+    
+    /// <summary>
     /// Where clause builder
     /// </summary>
     public Expression<Func<Models.Content, bool>>? WhereClause { get; set; }

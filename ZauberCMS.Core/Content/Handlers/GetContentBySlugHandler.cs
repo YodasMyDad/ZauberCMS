@@ -20,13 +20,13 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider)
             ? await dbContext.Contents
                 .AsNoTracking()
                 .Include(x => x.ContentType)
-                .Where(c => c.IsRootContent)
+                .Where(c => c.IsRootContent && c.Published)
                 .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren })
                 .FirstOrDefaultAsync(cancellationToken: cancellationToken)
             : await dbContext.Contents
                 .AsNoTracking()
                 .Include(x => x.ContentType)
-                .Where(c => c.Url == request.Slug)
+                .Where(c => c.Url == request.Slug && c.Published)
                 .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren })
                 .FirstOrDefaultAsync(cancellationToken: cancellationToken);
 

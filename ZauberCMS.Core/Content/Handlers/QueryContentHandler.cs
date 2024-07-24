@@ -1,8 +1,10 @@
-﻿using System.Security.Cryptography;
+﻿using System.Linq.Dynamic.Core;
+using System.Security.Cryptography;
 using System.Text;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Radzen;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
@@ -46,12 +48,18 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
         }
         else
         {
+            if (!request.IncludeUnpublished)
+            {
+                query = query.Where(x => x.Published);
+            }
+            
             if (request.IncludeChildren)
             {
-                query = query.Include(x => x.Children);
+                query = request.IncludeUnpublished ? query.Include(x => x.Children) 
+                    : query.Include(x => x.Children.Where(c => c.Published));
                 query = query.AsSplitQuery();
             }
-
+            
             if (request.AsNoTracking)
             {
                 query = query.AsNoTracking();

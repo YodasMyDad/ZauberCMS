@@ -69,6 +69,7 @@
             {
                 var items = Mediator.Send(new QueryContentCommand
                 {
+                    IncludeUnpublished = true,
                     WhereClause = x => x.ParentId == content.Id,
                     OrderBy = GetContentsOrderBy.SortOrder
                 }).GetAwaiter().GetResult();
@@ -94,7 +95,9 @@
                 {
                     builder.OpenComponent<RadzenIcon>(0);
                     builder.AddAttribute(1, "Icon", content.ContentType.Icon);
-                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    // Also need to think about unsaved changes and how to show to user
+                    var textColor = content.Published ? "dimgray" : "salmon";
+                    builder.AddAttribute(2, "style", $"font-weight: 300; color: {textColor};");
                     builder.CloseComponent();
                 }
 

@@ -47,6 +47,7 @@
         {
             AmountPerPage = 1000,
             WhereClause = x => x.IsRootContent,
+            IncludeUnpublished = true,
             IncludeChildren = true,
             OrderBy = GetContentsOrderBy.SortOrder
         });
