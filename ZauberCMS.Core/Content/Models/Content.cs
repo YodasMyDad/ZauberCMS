@@ -124,6 +124,11 @@ public class Content : IContent<ContentPropertyValue>
     public string ViewComponent { get; set; } = string.Empty;
 
     /// <summary>
+    /// Language of the page
+    /// </summary>
+    public string? Language { get; set; }
+    
+    /// <summary>
     /// The content properties
     /// </summary>
     public List<ContentPropertyValue> PropertyData { get; set; } = [];

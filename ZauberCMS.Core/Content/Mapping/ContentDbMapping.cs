@@ -18,6 +18,7 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.Property(x => x.DateUpdated).IsRequired();
         builder.Property(x => x.ViewComponent).HasMaxLength(1000);
         builder.Property(e => e.Path).ToJsonConversion(3000);
+        builder.Property(e => e.Language).HasMaxLength(7);
         
         builder.HasOne(d => d.ContentType)
             .WithMany(p => p.LinkedContent)
