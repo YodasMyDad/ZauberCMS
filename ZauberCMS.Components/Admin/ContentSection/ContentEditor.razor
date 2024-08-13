@@ -1,4 +1,5 @@
 ﻿@using System.Text.Json
+@using AutoMapper
 @using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
@@ -149,6 +150,7 @@ else
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] public ValidateService<Content> ValidateService { get; set; } = default!;
+    [Inject] public IMapper Mapper { get; set; } = default!;
 
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
@@ -175,8 +177,16 @@ else
             // If no content is passed in
             if (ContentId != null)
             {
-                Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value, IncludeUnpublished = true});
+                Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true});
                 ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
+
+                if (Content.UnpublishedContent != null)
+                {
+                    // Replace the Content with the Json one
+                    Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
+                    Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
+                }
+                
                 SyncProperties(Content, ContentType);
             }
             else if (ParentId != null)
@@ -288,6 +298,8 @@ else
             }
             else
             {
+                var saveContentCommand = new SaveContentCommand();
+                
                 if (unpublish)
                 {
                     Content!.Published = false;
@@ -300,13 +312,12 @@ else
                     }
                     else if (ContentId != null && Content!.Published)
                     {
-                        // Save the changes to the un published changes
-                        // as this is existing content that is being updated
-                        // TODO - How to do this?
+                        // Content exists and is already published, so need to save the unpublished changes only
+                        saveContentCommand.SaveUnpublishedOnly = true;
                     }
                 }
 
-                var saveContentCommand = new SaveContentCommand { Content = Content };
+                saveContentCommand.Content = Content;
                 var result = await Mediator.Send(saveContentCommand);
                 NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = "", Duration = 4000 });
                 await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);

@@ -53,6 +53,12 @@ public class GetContentHandler(IServiceProvider serviceProvider, ICacheService c
             query = query.Where(x => x.Published);
         }
         
+        // Maybe need to rethink the naming convention here
+        if (request.IncludeUnpublishedContent)
+        {
+            query = query.Include(x => x.UnpublishedContent);
+        }
+        
         if (request.IncludeParent)
         {
             query = query.Include(x => x.Parent);

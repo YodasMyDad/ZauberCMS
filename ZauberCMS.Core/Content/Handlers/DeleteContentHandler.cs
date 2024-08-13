@@ -40,6 +40,13 @@ public class DeleteContentHandler(IServiceProvider serviceProvider,
             {
                 dbContext.ContentPropertyValues.Remove(contentPropertyValue);
             }
+            
+            // Now delete any unpublished content
+            if (content.UnpublishedContentId != null)
+            {
+                var unpublishedContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == content.UnpublishedContentId);
+                if (unpublishedContent != null) dbContext.UnpublishedContent.Remove(unpublishedContent);
+            }
 
             content.PropertyData.Clear();
             dbContext.Contents.Remove(content);

@@ -33,7 +33,22 @@ public class Content : IContent<ContentPropertyValue>
     /// The id of the last person to update the content 
     /// </summary>
     public Guid? LastUpdatedById { get; set; }
+    
+    /// <summary>
+    /// Last updated by User object
+    /// </summary>
     public User? LastUpdatedBy { get; set; }
+    
+    /// <summary>
+    /// Id of any unpublished content
+    /// </summary>
+    public Guid? UnpublishedContentId { get; set; }
+    
+    /// <summary>
+    /// The unpublished content object
+    /// </summary>
+    [JsonIgnore]
+    public UnpublishedContent? UnpublishedContent { get; set; }
     
     /// <summary>
     /// The path for this content in the content tree

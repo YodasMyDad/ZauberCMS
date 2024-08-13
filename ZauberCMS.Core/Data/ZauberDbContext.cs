@@ -27,6 +27,7 @@ public class ZauberDbContext(DbContextOptions options, IConfiguration configurat
     public DbSet<Audit.Models.Audit> Audits => Set<Audit.Models.Audit>();
     public DbSet<GlobalData> GlobalDatas => Set<GlobalData>();
     public DbSet<ContentPropertyValue> ContentPropertyValues => Set<ContentPropertyValue>();
+    public DbSet<UnpublishedContent> UnpublishedContent => Set<UnpublishedContent>();
     public DbSet<UserPropertyValue> UserPropertyValues => Set<UserPropertyValue>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)

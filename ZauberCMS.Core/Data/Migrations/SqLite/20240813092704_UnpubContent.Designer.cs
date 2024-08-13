@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZauberCMS.Core.Data;
 
@@ -10,9 +11,11 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqLite
 {
     [DbContext(typeof(SqliteZauberDbContext))]
-    partial class SqliteZauberDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240813092704_UnpubContent")]
+    partial class UnpubContent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
@@ -91,9 +94,6 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid?>("UnpublishedContentId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Url")
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
@@ -113,8 +113,6 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasDatabaseName("IX_ZauberContent_Name");
 
                     b.HasIndex("ParentId");
-
-                    b.HasIndex("UnpublishedContentId");
 
                     b.HasIndex("Url")
                         .HasDatabaseName("IX_ZauberContent_Url");
@@ -235,17 +233,23 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("JsonContent")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("ContentId")
+                        .HasDatabaseName("IX_ZauberUnpublishedContent_ContentId");
 
                     b.ToTable("ZauberUnpublishedContent", (string)null);
                 });
@@ -630,18 +634,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("ZauberCMS.Core.Content.Models.UnpublishedContent", "UnpublishedContent")
-                        .WithMany()
-                        .HasForeignKey("UnpublishedContentId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.Navigation("ContentType");
 
                     b.Navigation("LastUpdatedBy");
 
                     b.Navigation("Parent");
-
-                    b.Navigation("UnpublishedContent");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentPropertyValue", b =>

@@ -96,6 +96,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("UnpublishedContentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Url")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -115,6 +118,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .HasDatabaseName("IX_ZauberContent_Name");
 
                     b.HasIndex("ParentId");
+
+                    b.HasIndex("UnpublishedContentId");
 
                     b.HasIndex("Url")
                         .HasDatabaseName("IX_ZauberContent_Url");
@@ -227,6 +232,27 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .HasDatabaseName("IX_ZauberContentTypes_Name");
 
                     b.ToTable("ZauberContentTypes", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.UnpublishedContent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("JsonContent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ZauberUnpublishedContent", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Data.Models.GlobalData", b =>
@@ -615,11 +641,18 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("ZauberCMS.Core.Content.Models.UnpublishedContent", "UnpublishedContent")
+                        .WithMany()
+                        .HasForeignKey("UnpublishedContentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("ContentType");
 
                     b.Navigation("LastUpdatedBy");
 
                     b.Navigation("Parent");
+
+                    b.Navigation("UnpublishedContent");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentPropertyValue", b =>

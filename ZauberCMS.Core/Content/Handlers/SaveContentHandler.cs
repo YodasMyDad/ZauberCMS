@@ -39,6 +39,38 @@ public class SaveContentHandler(
 
         if (request.Content != null)
         {
+            // ReSharper disable once EntityFramework.NPlusOne.IncompleteDataQuery
+            var unpublishedContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == request.Content.UnpublishedContentId);
+            
+            if (request.SaveUnpublishedOnly)
+            {
+                var isNew = request.Content.UnpublishedContentId == null;
+                
+                unpublishedContent ??= new UnpublishedContent();
+                
+                // ReSharper disable once EntityFramework.NPlusOne.IncompleteDataUsage
+                mapper.Map(request.Content, unpublishedContent.JsonContent);
+                
+                // Slight hack. Because we mapped it removed the property data, also need to set the 
+                // ReSharper disable once EntityFramework.NPlusOne.IncompleteDataUsage
+                unpublishedContent.JsonContent.PropertyData = request.Content.PropertyData;
+                // ReSharper disable once EntityFramework.NPlusOne.IncompleteDataUsage
+                unpublishedContent.JsonContent.UnpublishedContentId = unpublishedContent.Id;
+
+                if (isNew)
+                {
+                    var dbContent = dbContext.Contents.FirstOrDefault(x => request.Content.Id == x.Id);
+                    if (dbContent != null)
+                    {
+                        // This should never be null!
+                        dbContent.UnpublishedContentId = unpublishedContent.Id;
+                    }
+                    dbContext.UnpublishedContent.Add(unpublishedContent);
+                }
+                
+                return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
+            }
+
             if (request.Content.Url.IsNullOrWhiteSpace())
             {
                 var baseSlug = _slugHelper.GenerateSlug(request.Content.Name);
@@ -77,7 +109,13 @@ public class SaveContentHandler(
                     UpdateContentPropertyValues(dbContext, content, request.Content.PropertyData);   
                 }
             }
-
+            
+            // If we get here delete any unpublished content
+            if (unpublishedContent != null)
+            {
+                dbContext.UnpublishedContent.Remove(unpublishedContent);
+            }
+            
             // Calculate and set the Path property
             content.Path = BuildPath(content, dbContext, isUpdate);
             cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));

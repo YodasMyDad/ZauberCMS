@@ -10,6 +10,11 @@ public class GetContentCommand : IRequest<Models.Content>
     public bool Cached { get; set; } 
     
     /// <summary>
+    /// Include any unpublished content with this query
+    /// </summary>
+    public bool IncludeUnpublishedContent { get; set; }
+    
+    /// <summary>
     /// The id of the specific content
     /// </summary>
     public Guid? Id { get; set; }
