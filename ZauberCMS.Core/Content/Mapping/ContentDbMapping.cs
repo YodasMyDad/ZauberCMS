@@ -18,7 +18,6 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.Property(x => x.DateUpdated).IsRequired();
         builder.Property(x => x.ViewComponent).HasMaxLength(1000);
         builder.Property(e => e.Path).ToJsonConversion(3000);
-        builder.Property(e => e.Language).HasMaxLength(7);
         
         builder.HasOne(d => d.ContentType)
             .WithMany(p => p.LinkedContent)
@@ -33,6 +32,11 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.HasOne(d => d.LastUpdatedBy)
             .WithMany()
             .HasForeignKey(d => d.LastUpdatedById)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        builder.HasOne(d => d.Language)
+            .WithMany()
+            .HasForeignKey(d => d.LanguageId)
             .OnDelete(DeleteBehavior.NoAction);
         
         builder.HasOne(d => d.UnpublishedContent)

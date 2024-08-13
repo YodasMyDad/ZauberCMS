@@ -75,9 +75,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<bool>("IsRootContent")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Language")
-                        .HasMaxLength(7)
-                        .HasColumnType("nvarchar(7)");
+                    b.Property<Guid?>("LanguageId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("LastUpdatedById")
                         .HasColumnType("uniqueidentifier");
@@ -115,6 +114,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.HasKey("Id");
 
                     b.HasIndex("ContentTypeId");
+
+                    b.HasIndex("LanguageId");
 
                     b.HasIndex("LastUpdatedById");
 
@@ -683,6 +684,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ZauberCMS.Core.Languages.Models.Language", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("ZauberCMS.Core.Membership.Models.User", "LastUpdatedBy")
                         .WithMany()
                         .HasForeignKey("LastUpdatedById")
@@ -699,6 +705,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ContentType");
+
+                    b.Navigation("Language");
 
                     b.Navigation("LastUpdatedBy");
 

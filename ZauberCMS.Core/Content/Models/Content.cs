@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Content.Models;
@@ -124,9 +125,14 @@ public class Content : IContent<ContentPropertyValue>
     public string ViewComponent { get; set; } = string.Empty;
 
     /// <summary>
-    /// Language of the page
+    /// Manually set language of the page
     /// </summary>
-    public string? Language { get; set; }
+    public Guid? LanguageId { get; set; }
+    
+    /// <summary>
+    /// Manually set Language of the page
+    /// </summary>
+    public Language? Language { get; set; }
     
     /// <summary>
     /// The content properties

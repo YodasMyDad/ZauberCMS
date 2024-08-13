@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data.Models;
+using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Data;
@@ -29,12 +30,14 @@ public class ZauberDbContext(DbContextOptions options, IConfiguration configurat
     public DbSet<ContentPropertyValue> ContentPropertyValues => Set<ContentPropertyValue>();
     public DbSet<UnpublishedContent> UnpublishedContent => Set<UnpublishedContent>();
     public DbSet<UserPropertyValue> UserPropertyValues => Set<UserPropertyValue>();
+    public DbSet<Domain> Domains => Set<Domain>();
+    public DbSet<Language> Languages => Set<Language>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         
-        //TODO - need to pull in configurations from other assemblies
+        //TODO - Do I need to pull in configurations from other assemblies?? Will this work as expected??
         /*foreach (var assembly in AssemblyManager.Assemblies)
         {
             if (assembly != null) modelBuilder.ApplyConfigurationsFromAssembly(assembly);

@@ -274,11 +274,23 @@
             Id = Constants.Guids.AuditTreeRootId,
             Name = "Audit Log",
             Icon = "sync_alt",
-            SortOrder = 1,
+            SortOrder = 10,
             Url = "/admin/settings/auditlog"
         };
 
         tree.Add(auditTree);
+        
+        var languageTree = new TreeStub
+        {
+            Id = Constants.Guids.LanguageTreeRootId,
+            Name = "Languages",
+            Icon = "language",
+            SortOrder = 1,
+            Url = "/admin/settings/languages"
+        };
+
+        tree.Add(languageTree);
+        
         AdvancedData = tree;
     }
 
