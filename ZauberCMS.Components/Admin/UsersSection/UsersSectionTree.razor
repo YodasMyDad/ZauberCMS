@@ -1,5 +1,4 @@
-﻿@using ZauberCMS.Core
-@using ZauberCMS.Components.Admin.Trees
+﻿@using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Membership.Commands
@@ -21,6 +20,7 @@
 
 
     public string Heading => "User Management";
+    public string Alias => "UserSectionNav";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.UsersSection;
     private IEnumerable<TreeStub> TreeItems { get; set; } = [];

@@ -1,0 +1,203 @@
+﻿@using ZauberCMS.Core.Sections.Interfaces
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
+
+@foreach (var sectionNav in SectionNavs)
+{
+    <div class="rz-pb-2">
+        <div class="rz-px-4 rz-pt-4 rz-pb-1">
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">@sectionNav.Heading</RadzenText>
+        </div>
+        
+        @foreach (var sectionNavItem in AllSectionNavItems.Select(x => x.Value)
+                      .Where(x => x.SectionNavAlias == sectionNav.Alias).OrderBy(x => x.SortOrder))
+        {
+            <BaseTree
+                T="TreeStub"
+                Data="@sectionNavItem.Trees"
+                Expand="@OnExpandHandler"
+                Change="@sectionNavItem.OnChange"
+                @bind-Value="@Selection"
+                HasChildren="@(e => HasChildren(e))"
+                ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+                ItemContextMenu="@ItemContextMenu"
+                Template="@(CreateTreeTemplate<object>())">
+            </BaseTree>
+        }
+    </div>
+
+}
+
+@code {
+
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = default!;
+
+    [Parameter, EditorRequired] public string SectionAlias { get; set; } = string.Empty;
+
+    private Dictionary<string, ISectionNav> AllSectionNavs { get; set; } = [];
+    private Dictionary<string, ISectionNavItem> AllSectionNavItems { get; set; } = [];
+    private IEnumerable<ISectionNav> SectionNavs { get; set; } = [];
+    private object? Selection { get; set; }
+    
+    protected override void OnInitialized()
+    {
+        // Get all the ISectionNavs in order
+        // Then get all the ISectionNavItems for each section in order and create the trees and events
+        AllSectionNavs = ExtensionManager.GetInstances<ISectionNav>(true);
+        AllSectionNavItems = ExtensionManager.GetInstances<ISectionNavItem>(true);
+
+        SectionNavs = AllSectionNavs.Select(x => x.Value)
+            .Where(x => x.SectionAlias == SectionAlias)
+            .OrderBy(x => x.SortOrder);
+    }
+
+    private bool HasChildren(object data)
+    {
+        return data switch
+        {
+            TreeStub tree => tree.Branches.Any(),
+            TreeBranch branch => branch.Branches.Any(),
+            _ => false
+        };
+    }
+
+    private void OnExpandHandler(TreeExpandEventArgs args)
+    {
+        switch (args.Value)
+        {
+            case TreeStub treeStub:
+                if (treeStub.Branches.Any())
+                {
+                    args.Children.Data = treeStub.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(treeStub.Id);
+                }
+
+                break;
+            case TreeBranch branch:
+                if (branch.Branches.Any())
+                {
+                    args.Children.Data = branch.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(branch.Id);
+                }
+
+                break;
+        }
+    }
+    
+    
+    private static RenderFragment<T> CreateTreeTemplate<T>() where T : class
+    {
+        return context => builder =>
+        {
+            var treeItem = context as RadzenTreeItem;
+            switch (treeItem?.Value)
+            {
+                case TreeStub treeStub:
+                    builder.OpenComponent<RadzenIcon>(0);
+                    builder.AddAttribute(1, "Icon", treeStub.Icon);
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+                    builder.AddContent(3, treeStub.Name);
+                    break;
+                case TreeBranch branch:
+                    builder.OpenComponent<RadzenIcon>(0);
+                    builder.AddAttribute(1, "Icon", branch.Icon);
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+                    builder.AddContent(3, branch.Name);
+                    break;
+            }
+        };
+    }
+    
+
+    private bool ShouldBeExpanded(object data)
+    {
+        switch (data)
+        {
+            case TreeStub tree:
+                return TreeState.IsNodeExpanded(tree.Id);
+            case TreeBranch branch:
+                return TreeState.IsNodeExpanded(branch.Id);
+            default:
+                return false;
+        }
+    }
+    
+    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
+    {
+        var items = new List<ContextMenuItem>();
+        
+        // Some logic here
+        if (args.Value is TreeBranch treeBranch)
+        {
+            if (treeBranch.BranchType == typeof(ContentType))
+            {
+                items.Add(new ContextMenuItem { Text = "Copy", Value = 1 });   
+            }
+        }
+        
+        if (args.Value is TreeStub treeStub)
+        {
+            if (treeStub.StubType == typeof(ContentType))
+            {
+                items.Add(new ContextMenuItem { Text = "Create", Value = 1 });   
+            }
+        }
+        
+        return items;
+    }
+
+    
+    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
+    {
+        ContextMenuService.Open(args,
+            MenuItems(args), 
+            e =>
+            {
+                if (args.Value is TreeBranch treeBranch)
+                {
+                    if (treeBranch.BranchType == typeof(ContentType))
+                    {
+                        switch(e.Value)
+                        {
+                            case 1:
+                                ContextMenuService.Close();
+                                NavigationManager.NavigateTo($"/admin/copycontentype/{treeBranch.Id}");
+                                ContextMenuService.Close();
+                                break;
+                        }     
+                    }
+                }
+                if (args.Value is TreeStub treeStub)
+                {
+                    if (treeStub.StubType == typeof(ContentType))
+                    {
+                        switch(e.Value)
+                        {
+                            case 1:
+                                ContextMenuService.Close();
+                                NavigationManager.NavigateTo("/admin/createcontentype", true);
+                                break;
+                        }     
+                    }
+                }
+            }
+        );
+    }
+
+
+}
+
