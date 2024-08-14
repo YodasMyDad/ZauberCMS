@@ -1,17 +1,90 @@
 ﻿@page "/admin/settings/languages"
-@using ZauberCMS.Core.Audit.Commands
-@using ZauberCMS.Core.Audit.Models
+@using ZauberCMS.Core.Data.Commands
+@using ZauberCMS.Core.Languages.Models
 @layout SectionLayout
 
 <PageTitle>Languages</PageTitle>
 
-<p>TODO</p>
+<RadzenDataGrid AllowFiltering="true"
+                FilterPopupRenderMode="PopupRenderMode.Initial"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                AllowPaging="true"
+                PageSize="@AmountPerPage"
+                AllowSorting="true"
+                LoadData="@LoadData"
+                IsLoading="@IsLoading"
+                Count="@Count"
+                Data="@AllLanguages"
+                SelectionMode="DataGridSelectionMode.Single"
+                RowSelect="@((Language value) => OnRowSelect(value))"
+                PagerHorizontalAlign="HorizontalAlign.Center">
+    
+    <Columns>
+        <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="DateCreated" Title="Last Updated">
+            <Template Context="data">
+                @data.DateCreated.Humanize()
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
 
 @code {
+
+    [Parameter] public int AmountPerPage { get; set; } = 20;
+    [Parameter] public bool RefreshPage { get; set; }
+    
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
+    
+    private IEnumerable<Language> AllLanguages { get; set; } = [];
+    private int Count { get; set; } 
+    private bool IsLoading { get; set; }
     
     protected override async Task OnInitializedAsync()
     {
         Layout?.SetSection(Constants.Sections.SettingsSection);
+        await LoadData(new LoadDataArgs {Top = AmountPerPage});
+    }
+    
+    async Task LoadData(LoadDataArgs args)
+    {
+        IsLoading = true;
+
+        await Task.Yield();
+
+        var command = new DataGridCommand<Language>();
+        
+        if (args.Top != null)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            command.Filter = args.Filter;
+        }
+
+        // Sort via the OrderBy method
+        command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateUpdated desc";
+
+        var result = await Mediator.Send(command);
+        Count = result.Count;
+        AllLanguages  = result.Items;
+
+        IsLoading = false;
+    }
+    
+    private void OnRowSelect(object value)
+    {
+        /*if (value is Language selectedRow)
+        {
+            NavigationManager.NavigateTo($"/admin/updatecontentype/{selectedRow.Id}", RefreshPage);
+        }*/
     }
 }
