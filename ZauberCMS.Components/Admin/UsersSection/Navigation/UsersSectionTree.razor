@@ -1,5 +1,4 @@
-﻿@using ZauberCMS.Core
-@using ZauberCMS.Components.Admin.Trees
+﻿@using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Membership.Commands
@@ -15,14 +14,13 @@
     OnItemContextMenu="ItemContextMenu"/>
 
 @code {
+    public int SortOrder => 0;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.UsersNavGroup;
+    
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
-
-
-    public string Heading => "User Management";
-    public int SortOrder => 0;
-    public string SectionAlias => Constants.Sections.UsersSection;
+    
     private IEnumerable<TreeStub> TreeItems { get; set; } = [];
     private object? Selection { get; set; }
 

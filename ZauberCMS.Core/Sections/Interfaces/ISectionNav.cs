@@ -2,7 +2,6 @@
 
 public interface ISectionNav : IDisposable
 {
-    string Heading { get; }
     int SortOrder { get; }
-    string SectionAlias { get; }
+    string SectionNavGroupAlias { get; }
 }

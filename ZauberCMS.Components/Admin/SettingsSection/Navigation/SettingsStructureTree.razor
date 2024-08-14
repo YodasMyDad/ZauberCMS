@@ -4,10 +4,7 @@
 @using ZauberCMS.Components.Admin.Trees
 
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
-<div class="rz-pb-2">
-    <div class="rz-px-4 rz-pt-4 rz-pb-1">
-        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Structure</RadzenText>
-    </div>
+
     <BaseTree
         T="TreeStub"
         Data="@StructureData"
@@ -19,29 +16,11 @@
         ItemContextMenu="@ItemContextMenu"
         Template="@(CreateTreeTemplate<object>())">
     </BaseTree>
-</div>
-
-<div class="rz-pb-2">
-    <div class="rz-px-4 rz-pt-4 rz-pb-1">
-        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Advanced</RadzenText>
-    </div>
-    <BaseTree
-        T="TreeStub"
-        Data="@AdvancedData"
-        Expand="@OnExpandHandler"
-        Change="@OnChange"
-        @bind-Value="@Selection"
-        HasChildren="@(e => HasChildren(e))"
-        ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
-        Template="@(CreateTreeTemplate<object>())">
-    </BaseTree>
-</div>
 
 @code {
-
-    public string Heading => "";
+    
     public int SortOrder => 0;
-    public string SectionAlias => Constants.Sections.SettingsSection;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsStructureNavGroup;
 
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
@@ -49,7 +28,6 @@
     [Inject] public TreeState TreeState { get; set; } = default!;
 
     private IEnumerable<TreeStub> StructureData { get; set; } = [];
-    private IEnumerable<TreeStub> AdvancedData { get; set; } = [];
     private object? Selection { get; set; }
 
     private bool ShouldBeExpanded(object data)
@@ -142,7 +120,6 @@
     private async Task DataRefresh()
     {
         await PrepareStructureTree();
-        PrepareAdvancedTree();
     }
 
     private bool HasChildren(object data)
@@ -263,35 +240,6 @@
         tree.Add(elementTypeTree);
 
         StructureData = tree;
-    }
-
-    private void PrepareAdvancedTree()
-    {
-        var tree = new List<TreeStub>();
-
-        var auditTree = new TreeStub
-        {
-            Id = Constants.Guids.AuditTreeRootId,
-            Name = "Audit Log",
-            Icon = "sync_alt",
-            SortOrder = 10,
-            Url = "/admin/settings/auditlog"
-        };
-
-        tree.Add(auditTree);
-        
-        var languageTree = new TreeStub
-        {
-            Id = Constants.Guids.LanguageTreeRootId,
-            Name = "Languages",
-            Icon = "language",
-            SortOrder = 1,
-            Url = "/admin/settings/languages"
-        };
-
-        tree.Add(languageTree);
-        
-        AdvancedData = tree;
     }
 
     void OnChange()

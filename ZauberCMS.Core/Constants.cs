@@ -47,8 +47,16 @@ public static class Constants
         public const string SettingsSection = "SettingsSection";
         public const string UsersSection = "UsersSection";
         public const string FormsSection = "FormsSection";
-        
-        
+
+        public static class SectionNavGroups
+        {
+            public const string ContentNavGroup = "ContentNavGroup";
+            public const string MediaNavGroup = "MediaNavGroup";
+            public const string UsersNavGroup = "UsersNavGroup";
+            public const string SettingsStructureNavGroup = "SettingsStructureNavGroup";
+            public const string SettingsLanguagesNavGroup = "SettingsLanguagesNavGroup";
+            public const string SettingsAdvancedNavGroup = "SettingsAdvancedNavGroup";
+        }
     }
     
     public static class Urls

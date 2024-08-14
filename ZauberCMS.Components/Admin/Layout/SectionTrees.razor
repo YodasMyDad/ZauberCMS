@@ -1,28 +1,45 @@
 ﻿@using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Sections.Interfaces
 
-@foreach (var nav in NavItems)
+@foreach (var nav in NavGroups.OrderBy(x => x.Value.SortOrder))
 {
-    <div class="rz-pb-2">
-        @if (!nav.Value.Heading.IsNullOrWhiteSpace())
-        {
+    var navItems = GetNavItems(nav.Value.Alias);
+    var sectionNavs = navItems as ISectionNav[] ?? navItems.ToArray();
+    if (sectionNavs.Any())
+    {
+        <div class="rz-pb-2">
             <div class="rz-px-4 rz-pt-4 rz-pb-1">
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">@nav.Value.Heading</RadzenText>
             </div>
-        }
-        <DynamicComponent Type="@nav.Value.GetType()"/>
-    </div>
+            @foreach (var navItem in sectionNavs)
+            {
+                <DynamicComponent Type="@navItem.GetType()"/>
+            }
+        </div>   
+    }
 }
 
 @code {
     [Parameter] public string? SectionAlias { get; set; }
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    private Dictionary<string, ISectionNavGroup> NavGroups { get; set; } = new();
     private Dictionary<string, ISectionNav> NavItems { get; set; } = new();
 
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        var sectionNavs = ExtensionManager.GetInstances<ISectionNav>(true);
-        NavItems = sectionNavs.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
+        NavItems = ExtensionManager.GetInstances<ISectionNav>(true);
+
+        var sectionNavGroups = ExtensionManager.GetInstances<ISectionNavGroup>(true);
+        NavGroups = sectionNavGroups.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
     }
+
+    private IEnumerable<ISectionNav> GetNavItems(string sectionNavGroupAlias)
+    {
+        return NavItems.Where(x => x.Value.SectionNavGroupAlias.Equals(sectionNavGroupAlias))
+            .OrderBy(x => x.Value.SortOrder)
+            .Select(x => x.Value);
+    }
+
 }
+

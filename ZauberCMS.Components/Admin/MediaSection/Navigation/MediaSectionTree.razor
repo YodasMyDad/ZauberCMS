@@ -10,10 +10,9 @@
 
 @code {
     [Inject] public AppState AppState { get; set; } = default!;
-
-    public string Heading => "Media";
+    
     public int SortOrder => 0;
-    public string SectionAlias => Constants.Sections.MediaSection;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.MediaNavGroup;
 
     private List<Media> MediaItems { get; set; } = [];
     private object? Selection { get; set; }

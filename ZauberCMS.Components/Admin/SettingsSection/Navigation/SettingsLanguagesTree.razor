@@ -1,0 +1,167 @@
+﻿@using ZauberCMS.Core.Shared.Models
+@using ZauberCMS.Core.Shared
+@using ZauberCMS.Components.Admin.Trees
+
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
+
+    <BaseTree
+        T="TreeStub"
+        Data="@AdvancedData"
+        Expand="@OnExpandHandler"
+        Change="@OnChange"
+        @bind-Value="@Selection"
+        HasChildren="@(e => HasChildren(e))"
+        ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+        Template="@(CreateTreeTemplate<object>())">
+    </BaseTree>
+
+@code {
+    
+    public int SortOrder => 0;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsAdvancedNavGroup;
+
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = default!;
+    
+    private IEnumerable<TreeStub> AdvancedData { get; set; } = [];
+    
+    private object? Selection { get; set; }
+
+    private bool ShouldBeExpanded(object data)
+    {
+        switch (data)
+        {
+            case TreeStub tree:
+                return TreeState.IsNodeExpanded(tree.Id);
+            case TreeBranch branch:
+                return TreeState.IsNodeExpanded(branch.Id);
+            default:
+                return false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await DataRefresh();
+    }
+    
+    private async Task DataRefresh()
+    {
+        PrepareAdvancedTree();
+    }
+
+    private bool HasChildren(object data)
+    {
+        return data switch
+        {
+            TreeStub tree => tree.Branches.Any(),
+            TreeBranch branch => branch.Branches.Any(),
+            _ => false
+        };
+    }
+
+    private void OnExpandHandler(TreeExpandEventArgs args)
+    {
+        switch (args.Value)
+        {
+            case TreeStub treeStub:
+                if (treeStub.Branches.Any())
+                {
+                    args.Children.Data = treeStub.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(treeStub.Id);
+                }
+                break;
+            case TreeBranch branch:
+                if (branch.Branches.Any())
+                {
+                    args.Children.Data = branch.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();   
+                    args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(branch.Id);
+                }
+                break;
+        }
+    }
+
+    private static RenderFragment<T> CreateTreeTemplate<T>() where T : class
+    {
+        return context => builder =>
+        {
+            var treeItem = context as RadzenTreeItem;
+            switch (treeItem?.Value)
+            {
+                case TreeStub treeStub:
+                    builder.OpenComponent<RadzenIcon>(0);
+                    builder.AddAttribute(1, "Icon", treeStub.Icon);
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+                    builder.AddContent(3, treeStub.Name);
+                    break;
+                case TreeBranch branch:
+                    builder.OpenComponent<RadzenIcon>(0);
+                    builder.AddAttribute(1, "Icon", branch.Icon);
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+                    builder.AddContent(3, branch.Name);
+                    break;
+            }
+        };
+    }
+    
+    private void PrepareAdvancedTree()
+    {
+        var tree = new List<TreeStub>();
+
+        var auditTree = new TreeStub
+        {
+            Id = Constants.Guids.AuditTreeRootId,
+            Name = "Audit Log",
+            Icon = "sync_alt",
+            SortOrder = 10,
+            Url = "/admin/settings/auditlog"
+        };
+
+        tree.Add(auditTree);
+        
+        var languageTree = new TreeStub
+        {
+            Id = Constants.Guids.LanguageTreeRootId,
+            Name = "Languages",
+            Icon = "language",
+            SortOrder = 1,
+            Url = "/admin/settings/languages"
+        };
+
+        tree.Add(languageTree);
+        
+        AdvancedData = tree;
+    }
+
+    void OnChange()
+    {
+        switch (Selection)
+        {
+            case TreeStub treeStub:
+            {
+                if (!treeStub.Url.IsNullOrWhiteSpace())
+                {
+                    NavigationManager.NavigateTo(treeStub.Url);
+                }
+
+                break;
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+ 
+    }
+
+}

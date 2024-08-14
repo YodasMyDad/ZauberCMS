@@ -10,9 +10,8 @@
              OnItemContextMenu="ItemContextMenu"/>
 
 @code {
-    public string Heading => "Content";
     public int SortOrder => 0;
-    public string SectionAlias => Constants.Sections.ContentSection;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
 
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;

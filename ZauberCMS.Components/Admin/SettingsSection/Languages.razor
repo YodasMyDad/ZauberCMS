@@ -71,7 +71,7 @@
         }
 
         // Sort via the OrderBy method
-        command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateUpdated desc";
+        command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateCreated desc";
 
         var result = await Mediator.Send(command);
         Count = result.Count;
