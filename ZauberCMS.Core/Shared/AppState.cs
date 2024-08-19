@@ -22,27 +22,6 @@ public class AppState(IMediator mediator)
     public event Func<User?, string, Task>? OnUserDeleted;
     public event Func<Media.Models.Media?, string, Task>? OnMediaDeleted;
     
-    public event Action<object>? OnTreeValueChanged;
-
-    private object? _treeValue;
-    public object? TreeValue
-    {
-        get => _treeValue;
-        set
-        {
-            if (_treeValue != value)
-            {
-                _treeValue = value;
-                if (_treeValue != null) OnTreeValueChanged?.Invoke(_treeValue);
-            }
-        }
-    }
-
-    public void SetTreeValue(object value)
-    {
-        TreeValue = value;
-    }
-    
     public async Task NotifyMediaChanged(Media.Models.Media? media, string username) 
     {
         if (OnMediaChanged != null)

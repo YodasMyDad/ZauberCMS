@@ -1,0 +1,69 @@
+﻿@using System.Globalization
+@using ZauberCMS.Core.Languages.Commands
+@using ZauberCMS.Core.Languages.Models
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Create Language" />
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenDropDown
+            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" 
+            FilterOperator="StringFilterOperator.StartsWith" 
+            AllowFiltering="true"
+            TextProperty="@nameof(CultureInfo.EnglishName)" 
+            ValueProperty="@nameof(CultureInfo.Name)" 
+            Data="@Languages" 
+            Style="width: 100%;" Name="LanguageList"
+            @bind-Value="@Selected"/>
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+
+    [Parameter] public Language? Language { get; set; }
+    
+    private bool IsUpdate { get; set; }
+    private List<CultureInfo> Languages { get; set; } = [];
+    private string? Selected { get; set; }
+    
+    protected override void OnParametersSet()
+    {
+        if (Language == null)
+        {
+            Language = new Language();
+        }
+        else
+        {
+            IsUpdate = true;
+            Selected = Language.LanguageIsoCode;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        var cultures = CultureInfo.GetCultures(CultureTypes.SpecificCultures);
+    
+        Languages = cultures
+            .OrderBy(lang => lang.EnglishName) // Sort alphabetically by culture name
+            .ToList();
+        
+        //LanguageIsoCode = culture.Name, // This gives you the ISO code like "en-US"
+        //LanguageCultureName = culture.EnglishName
+    }
+
+    private async Task Save()
+    {
+        // Is this an update, and if so, have they changed the language
+        var language = await Mediator.Send(new SaveLanguageCommand
+        {
+            CultureInfo = Languages.FirstOrDefault(x => x.Name == Selected), 
+            Id = Language?.Id
+        });
+        await BlazoredModal.CloseAsync(ModalResult.Ok(language));
+    }
+}

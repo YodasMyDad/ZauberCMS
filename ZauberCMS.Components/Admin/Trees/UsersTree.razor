@@ -10,7 +10,7 @@
     @bind-Value="@Value"
     HasChildren="@(e => HasChildren(e))"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
-    Template="@(CreateTreeTemplate<object>())">
+    Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
 </BaseTree>
 
 @code {
@@ -38,43 +38,19 @@
                 case TreeStub treeStub:
                     args.Children.Data = treeStub.Branches;
                     args.Children.TextProperty = "Name";
-                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;
                     TreeState.NodeExpanded(treeStub.Id);
                     break;
                 case TreeBranch branch:
                     args.Children.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
-                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;
                     TreeState.NodeExpanded(branch.Id);
                     break;
             }
         }
-    }
-    
-    private RenderFragment<T> CreateTreeTemplate<T>() where T : class
-    {
-        return context => builder =>
-        {
-            var treeItem = context as RadzenTreeItem;
-            builder.OpenComponent<RadzenIcon>(0);
-            switch (treeItem?.Value)
-            {
-                case TreeStub treeStub:
-                    builder.AddAttribute(1, "Icon", treeStub.Icon);
-                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
-                    builder.CloseComponent();
-                    builder.AddContent(3, treeStub.Name);
-                    break;
-                case TreeBranch branch:
-                    builder.AddAttribute(1, "Icon", branch.Icon);
-                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
-                    builder.CloseComponent();
-                    builder.AddContent(3, branch.Name);
-                    break;
-            }
-        };
     }
 
     private async Task OnChangeHandler()

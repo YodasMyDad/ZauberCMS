@@ -1,35 +1,32 @@
 ﻿@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Components.Admin.Trees
-@using ZauberCMS.Core.Languages.Models
 
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-<BaseTree
-    T="TreeStub"
-    Data="@AdvancedData"
-    Expand="@OnExpandHandler"
-    Change="@OnChange"
-    @bind-Value="@Selection"
-    HasChildren="@(e => HasChildren(e))"
-    ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
-    ItemContextMenu="@ItemContextMenu"
-    Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
-</BaseTree>
+    <BaseTree
+        T="TreeStub"
+        Data="@AdvancedData"
+        Expand="@OnExpandHandler"
+        Change="@OnChange"
+        @bind-Value="@Selection"
+        HasChildren="@(e => HasChildren(e))"
+        ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+        Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
+    </BaseTree>
 
 @code {
-
+    
     public int SortOrder => 0;
-    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsLanguagesNavGroup;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsAdvancedNavGroup;
 
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
     [Inject] public TreeState TreeState { get; set; } = default!;
-    [Inject] public IModalService DialogService { get; set; } = default!;
-
+    
     private IEnumerable<TreeStub> AdvancedData { get; set; } = [];
-
+    
     private object? Selection { get; set; }
 
     private bool ShouldBeExpanded(object data)
@@ -70,45 +67,6 @@
         return Task.CompletedTask;
     }
     
-    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
-    {
-        var items = new List<ContextMenuItem>();
-        
-        if (args.Value is TreeStub treeStub)
-        {
-            if (treeStub.StubType == typeof(Language))
-            {
-                items.Add(new ContextMenuItem { Text = "Create", Value = 1 });   
-            }
-        }
-        
-        return items;
-    }
-
-    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
-    {
-        ContextMenuService.Open(args,
-            MenuItems(args),
-            async e =>
-            {
-                switch (e.Value)
-                {
-                    case 1:
-                        
-                        ContextMenuService.Close();
-                        var dialog = DialogService.OpenSidePanel<CreateLanguage>("Create Language");
-                        var result = await dialog.Result;
-                        if (result is { Confirmed: true, Data: Language language })
-                        {
-                           
-                        }       
-                        
-                        break;
-                }
-            }
-        );
-    }
-
     private bool HasChildren(object data)
     {
         return data switch
@@ -118,7 +76,7 @@
             _ => false
         };
     }
-
+    
     private void OnExpandHandler(TreeExpandEventArgs args)
     {
         switch (args.Value)
@@ -132,38 +90,35 @@
                     args.Children.HasChildren = HasChildren;
                     TreeState.NodeExpanded(treeStub.Id);
                 }
-
                 break;
             case TreeBranch branch:
                 if (branch.Branches.Any())
                 {
                     args.Children.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
-                    args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
+                    args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();   
                     args.Children.HasChildren = HasChildren;
                     TreeState.NodeExpanded(branch.Id);
                 }
-
                 break;
         }
     }
-
+    
     private void PrepareAdvancedTree()
     {
         var tree = new List<TreeStub>();
 
-        var languageTree = new TreeStub
+        var auditTree = new TreeStub
         {
-            Id = Constants.Guids.LanguageTreeRootId,
-            Name = "Languages",
-            Icon = "language",
-            SortOrder = 1,
-            Url = "/admin/settings/languages",
-            StubType = typeof(Language)
+            Id = Constants.Guids.AuditTreeRootId,
+            Name = "Audit Log",
+            Icon = "sync_alt",
+            SortOrder = 10,
+            Url = "/admin/settings/auditlog"
         };
 
-        tree.Add(languageTree);
-
+        tree.Add(auditTree);
+        
         AdvancedData = tree;
     }
 

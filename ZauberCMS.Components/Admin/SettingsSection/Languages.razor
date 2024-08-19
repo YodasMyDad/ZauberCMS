@@ -20,8 +20,9 @@
                 PagerHorizontalAlign="HorizontalAlign.Center">
     
     <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="DateCreated" Title="Last Updated">
+        <RadzenDataGridColumn Property="LanguageCultureName" Title="Name"/>
+        <RadzenDataGridColumn Property="LanguageIsoCode" Title="ISO Code"/>
+        <RadzenDataGridColumn Property="DateCreated" Title="Created">
             <Template Context="data">
                 @data.DateCreated.Humanize()
             </Template>
@@ -30,7 +31,8 @@
 </RadzenDataGrid>
 
 @code {
-
+    [Inject] public IModalService DialogService { get; set; } = default!;
+    
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
     
@@ -75,16 +77,24 @@
 
         var result = await Mediator.Send(command);
         Count = result.Count;
-        AllLanguages  = result.Items;
+        AllLanguages = result.Items;
 
         IsLoading = false;
     }
     
-    private void OnRowSelect(object value)
+    private async Task OnRowSelect(object value)
     {
-        /*if (value is Language selectedRow)
+        if (value is Language selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontentype/{selectedRow.Id}", RefreshPage);
-        }*/
+            var dialog = DialogService.OpenSidePanel<CreateLanguage>("Create Language", new Dictionary<string, object>
+            {
+                { "Language", selectedRow }
+            });
+            var result = await dialog.Result;
+            if (result is { Confirmed: true })
+            {
+                await LoadData(new LoadDataArgs {Top = AmountPerPage});      
+            }
+        }
     }
 }

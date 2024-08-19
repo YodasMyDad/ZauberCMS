@@ -7,6 +7,22 @@ public class TreeState
     // ConcurrentDictionary to store the IDs of expanded nodes
     private readonly ConcurrentDictionary<Guid, byte> _expandedNodeIds = new();
 
+    public event Action<object>? OnTreeValueChanged;
+
+    private object? _treeValue;
+    public object? TreeValue
+    {
+        get => _treeValue;
+        set
+        {
+            if (_treeValue != value)
+            {
+                _treeValue = value;
+                if (_treeValue != null) OnTreeValueChanged?.Invoke(_treeValue);
+            }
+        }
+    }
+    
     // Method to expand a node
     public void NodeExpanded(Guid nodeId)
     {

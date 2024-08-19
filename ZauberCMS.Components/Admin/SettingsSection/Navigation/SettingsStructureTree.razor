@@ -14,7 +14,7 @@
         HasChildren="@(e => HasChildren(e))"
         ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
         ItemContextMenu="@ItemContextMenu"
-        Template="@(CreateTreeTemplate<object>())">
+        Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
     </BaseTree>
 
 @code {
@@ -47,6 +47,21 @@
     {
         await DataRefresh();
         AppState.OnContentTypeChanged += HandleContentTypeTreeChanged;
+        TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
+    }
+    
+    /// <summary>
+    /// Remove the selected state, this is needed if you have multiple trees
+    /// or the selected state stays on the tree, even when you click on another tree
+    /// </summary>
+    /// <param name="obj"></param>
+    private void TreeStateOnOnTreeValueChanged(object obj)
+    {
+        if (obj != Selection)
+        {
+            Selection = null;
+            StateHasChanged();
+        }
     }
     
     private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
@@ -88,7 +103,6 @@
                             case 1:
                                 ContextMenuService.Close();
                                 NavigationManager.NavigateTo($"/admin/copycontentype/{treeBranch.Id}");
-                                ContextMenuService.Close();
                                 break;
                         }     
                     }
@@ -141,7 +155,7 @@
                 {
                     args.Children.Data = treeStub.Branches;
                     args.Children.TextProperty = "Name";
-                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                    args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;
                     TreeState.NodeExpanded(treeStub.Id);
                 }
@@ -151,37 +165,12 @@
                 {
                     args.Children.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
-                    args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();   
+                    args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();   
                     args.Children.HasChildren = HasChildren;
                     TreeState.NodeExpanded(branch.Id);
                 }
                 break;
         }
-    }
-
-    private static RenderFragment<T> CreateTreeTemplate<T>() where T : class
-    {
-        return context => builder =>
-        {
-            var treeItem = context as RadzenTreeItem;
-            switch (treeItem?.Value)
-            {
-                case TreeStub treeStub:
-                    builder.OpenComponent<RadzenIcon>(0);
-                    builder.AddAttribute(1, "Icon", treeStub.Icon);
-                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
-                    builder.CloseComponent();
-                    builder.AddContent(3, treeStub.Name);
-                    break;
-                case TreeBranch branch:
-                    builder.OpenComponent<RadzenIcon>(0);
-                    builder.AddAttribute(1, "Icon", branch.Icon);
-                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
-                    builder.CloseComponent();
-                    builder.AddContent(3, branch.Name);
-                    break;
-            }
-        };
     }
 
     private async Task PrepareStructureTree()
@@ -244,6 +233,7 @@
 
     void OnChange()
     {
+        TreeState.TreeValue = Selection;
         switch (Selection)
         {
             case TreeStub treeStub:
@@ -270,6 +260,7 @@
     public void Dispose()
     {
         AppState.OnContentTypeChanged -= HandleContentTypeTreeChanged;
+        TreeState.OnTreeValueChanged -= TreeStateOnOnTreeValueChanged;
     }
 
 }
