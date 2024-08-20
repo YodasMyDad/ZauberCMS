@@ -1,0 +1,49 @@
+﻿@using ZauberCMS.Core.Languages.Commands
+@using ZauberCMS.Core.Languages.Models
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Language" />
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenDropDown
+            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+            FilterOperator="StringFilterOperator.StartsWith"
+            AllowFiltering="true"
+            TextProperty="@nameof(Language.LanguageCultureName)"
+            ValueProperty="@nameof(Language.Id)"
+            Data="@Languages"
+            Style="width: 100%;" 
+            Name="LanguageList"
+            @bind-Value="@Content.LanguageId"/>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Domains" />
+    </LeftColumn>
+    <CentreColumn>
+        TODO
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter, EditorRequired] public Content Content { get; set; } = default!;
+    private IEnumerable<Language> Languages { get; set; } = [];
+    
+    protected override async Task OnInitializedAsync()
+    { 
+        var allLangs = await Mediator.Send(new QueryLanguageCommand{OrderBy = GetLanguageOrderBy.LanguageCultureName, AmountPerPage = 200});
+        Languages = allLangs.Items;
+    }
+    
+    private async Task Save()
+    {
+       //TODO
+    }
+}

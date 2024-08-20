@@ -4,8 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Audit.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Membership.Commands;
-using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Audit.Handlers;

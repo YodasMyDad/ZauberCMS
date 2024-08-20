@@ -1,9 +1,14 @@
 ﻿@page "/admin/settings/languages"
 @using ZauberCMS.Core.Data.Commands
+@using ZauberCMS.Core.Languages.Commands
 @using ZauberCMS.Core.Languages.Models
 @layout SectionLayout
 
 <PageTitle>Languages</PageTitle>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Create Language" Click="@CreateLanguage"/>
+</RadzenStack>
 
 <RadzenDataGrid AllowFiltering="true"
                 FilterPopupRenderMode="PopupRenderMode.Initial"
@@ -27,12 +32,17 @@
                 @data.DateCreated.Humanize()
             </Template>
         </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="Id" Title="Delete">
+            <Template Context="data">
+                <RadzenButton Variant="Variant.Text" Text="Delete" Click="@(() => Delete(data.Id))"/>
+            </Template>
+        </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
 
 @code {
     [Inject] public IModalService DialogService { get; set; } = default!;
-    
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
     
@@ -80,6 +90,29 @@
         AllLanguages = result.Items;
 
         IsLoading = false;
+    }
+
+    private async Task CreateLanguage()
+    {
+        var dialog = DialogService.OpenSidePanel<CreateLanguage>("Create Language");
+        var result = await dialog.Result;
+        if (result is { Confirmed: true })
+        {
+            await LoadData(new LoadDataArgs {Top = AmountPerPage});       
+        }       
+    }
+
+    private async Task Delete(Guid id)
+    {
+        var result = await Mediator.Send(new DeleteLanguageCommand{Id = id});
+        if (result.Success)
+        {
+            await LoadData(new LoadDataArgs {Top = AmountPerPage});
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+        }
     }
     
     private async Task OnRowSelect(object value)

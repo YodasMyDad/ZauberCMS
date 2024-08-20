@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Components.Admin.ContentSection.Dialogs
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
 @using ZauberCMS.Components.Admin.Trees
@@ -18,8 +19,10 @@
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public DialogService ConfirmService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
+    
 
     private List<Content> ContentItems { get; set; } = [];
     private object? Selection { get; set; }
@@ -53,15 +56,37 @@
         });
         ContentItems = items.Items.ToList();
     }
+    
+    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
+    {
+        var globalMenuItems = new List<ContextMenuItem>
+        {
+            new() { Text = "Create", Value = 1 },
+            new() { Text = "Delete", Value = 2 },
+            new() { Text = "Sort", Value = 3 }
+        };
+        
+        
+        var items = new List<ContextMenuItem>();
+        
+        if (args.Value is Content content)
+        {
+            items.AddRange(globalMenuItems);
+            
+            if (content.IsRootContent)
+            {
+                items.Add(new ContextMenuItem { Text = "Culture & Domains", Value =4 });
+            }
+            
+        }
+        
+        return items;
+    }
 
     private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
         ContextMenuService.Open(args,
-            new List<ContextMenuItem> {
-                new(){ Text = "Create", Value = 1 },
-                new(){ Text = "Delete", Value = 2 },
-                new(){ Text = "Sort", Value = 3 }
-            }, async e =>
+            MenuItems(args), async e =>
             {
                 var content = (Content)args.Value;
                 var dbContent = await Mediator.Send(new GetContentCommand { Id = content.Id, IncludeChildren = true });
@@ -78,7 +103,7 @@
                             var message = hasChildren
                                 ? "The content you are trying to delete has child content, are you sure you want to delete it?"
                                 : "Are you sure you want to delete this?";
-                            var delete = await DialogService.Confirm(message, "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+                            var delete = await ConfirmService.Confirm(message, "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
                             if (delete == true)
                             {
                                 var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id});
@@ -119,6 +144,20 @@
                                     StateHasChanged();
                                 }
                             }
+         
+                        break;
+                    case 4:
+                        ContextMenuService.Close();
+                        var languageDialog = DialogService.OpenSidePanel<CultureDomains>("Domains & Culture", 
+                            new Dictionary<string, object>
+                            {
+                                {"Content", content}
+                            });
+                        var languageDialogResult = await languageDialog.Result;
+                        if (languageDialogResult is { Confirmed: true })
+                        {
+                            // TODO       
+                        }    
          
                         break;
                 }

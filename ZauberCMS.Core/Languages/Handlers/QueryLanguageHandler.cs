@@ -53,6 +53,7 @@ public class QueryLanguageHandler(IServiceProvider serviceProvider)
             GetLanguageOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
             GetLanguageOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
             GetLanguageOrderBy.LanguageIsoCode => query.OrderBy(p => p.LanguageIsoCode),
+            GetLanguageOrderBy.LanguageCultureName => query.OrderBy(p => p.LanguageCultureName),
             _ => query.OrderByDescending(p => p.DateCreated)
         };
         

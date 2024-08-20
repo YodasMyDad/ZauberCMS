@@ -22,5 +22,6 @@ public enum GetLanguageOrderBy
 {
     DateCreated,
     DateCreatedDescending,
-    LanguageIsoCode
+    LanguageIsoCode,
+    LanguageCultureName
 }

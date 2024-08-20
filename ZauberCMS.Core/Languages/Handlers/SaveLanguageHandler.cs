@@ -30,11 +30,25 @@ public class SaveLanguageHandler(
                 var lang = dbContext.Languages.FirstOrDefault(x => x.Id == request.Id);
                 if (lang != null)
                 {
+                    if (request.CultureInfo.Name == lang.LanguageIsoCode)
+                    {
+                        // Just return if they are trying to save the same culture
+                        handlerResult.Success = true;
+                        return handlerResult;
+                    }
                     isUpdate = true;
                     language = lang;
                 }
             }
-
+            
+            // Does this already exist
+            var existing = dbContext.Languages.FirstOrDefault(x => x.LanguageIsoCode == request.CultureInfo.Name);
+            if (existing != null)
+            {
+                handlerResult.AddMessage("Language already exists", ResultMessageType.Error);
+                return handlerResult;
+            }
+            
             language.LanguageCultureName = request.CultureInfo.EnglishName;
             language.LanguageIsoCode = request.CultureInfo.Name;
 
