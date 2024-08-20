@@ -1,22 +1,22 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Languages.Commands;
-using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Shared.Models;
 
-namespace ZauberCMS.Core.Languages.Handlers;
+namespace ZauberCMS.Core.Content.Handlers;
 
-public class QueryLanguageHandler(IServiceProvider serviceProvider)
-    : IRequestHandler<QueryLanguageCommand, PaginatedList<Language>>
+public class QueryDomainHandler(IServiceProvider serviceProvider)
+    : IRequestHandler<QueryDomainCommand, PaginatedList<Domain>>
 {
-    public Task<PaginatedList<Language>> Handle(QueryLanguageCommand request, CancellationToken cancellationToken)
+    public Task<PaginatedList<Domain>> Handle(QueryDomainCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var query = dbContext.Languages.AsQueryable();
+        var query = dbContext.Domains.AsQueryable();
 
         if (request.Query != null)
         {
@@ -36,10 +36,14 @@ public class QueryLanguageHandler(IServiceProvider serviceProvider)
                 request.AmountPerPage = idCount;
             }
 
-            if (request.LanguageIsoCodes.Count != 0)
+            if (request.ContentId != null)
             {
-                query = query.Where(x =>
-                    x.LanguageIsoCode != null && request.LanguageIsoCodes.Contains(x.LanguageIsoCode));
+                query = query.Where(x => x.ContentId == request.ContentId);
+            }
+
+            if (request.LanguageId != null)
+            {
+                query = query.Where(x => x.LanguageId == request.LanguageId);
             }
         }
 
@@ -50,10 +54,9 @@ public class QueryLanguageHandler(IServiceProvider serviceProvider)
 
         query = request.OrderBy switch
         {
-            GetLanguageOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
-            GetLanguageOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
-            GetLanguageOrderBy.LanguageIsoCode => query.OrderBy(p => p.LanguageIsoCode),
-            GetLanguageOrderBy.LanguageCultureName => query.OrderBy(p => p.LanguageCultureName),
+            GetDomainOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
+            GetDomainOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+            GetDomainOrderBy.Url => query.OrderBy(p => p.Url),
             _ => query.OrderByDescending(p => p.DateCreated)
         };
 

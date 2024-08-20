@@ -1,28 +1,28 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
-using ZauberCMS.Core.Languages.Commands;
-using ZauberCMS.Core.Languages.Models;
 
-namespace ZauberCMS.Core.Languages.Handlers;
+namespace ZauberCMS.Core.Content.Handlers;
 
-public class GetLanguageHandler(IServiceProvider serviceProvider) : IRequestHandler<GetLanguageCommand, Language?>
+public class GetDomainHandler(IServiceProvider serviceProvider) : IRequestHandler<GetDomainCommand, Domain?>
 {
-    public async Task<Language?> Handle(GetLanguageCommand request, CancellationToken cancellationToken)
+    public async Task<Domain?> Handle(GetDomainCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var query = dbContext.Languages.AsQueryable();
+        var query = dbContext.Domains.AsQueryable();
 
         if (request.AsNoTracking)
         {
             query = query.AsNoTracking();
         }
 
-        if (request.LanguageIsoCode != null)
+        if (request.Url != null)
         {
-            return await query.FirstOrDefaultAsync(x => x.LanguageIsoCode == request.LanguageIsoCode, cancellationToken: cancellationToken);
+            return await query.FirstOrDefaultAsync(x => x.Url == request.Url, cancellationToken: cancellationToken);
         }
 
         if (request.Id != null)

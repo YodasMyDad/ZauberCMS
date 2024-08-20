@@ -35,6 +35,7 @@
 @code {
     [Parameter, EditorRequired] public Content Content { get; set; } = default!;
     private IEnumerable<Language> Languages { get; set; } = [];
+    private IEnumerable<Domain> Domains { get; set; } = [];
     
     protected override async Task OnInitializedAsync()
     { 
@@ -44,6 +45,8 @@
     
     private async Task Save()
     {
-       //TODO
+       // Save the content, if the language has been set
+       
+       // Save the domains
     }
 }
