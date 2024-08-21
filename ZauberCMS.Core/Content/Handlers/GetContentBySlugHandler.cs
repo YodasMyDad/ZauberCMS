@@ -82,6 +82,14 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider, IMediator
         var fullContent = await query
             .FirstOrDefaultAsync(c => c.Id == content.Id, cancellationToken: cancellationToken);
 
+        // Domain overrides language set on content
+        if (matchedDomain?.Language?.LanguageIsoCode != null)
+        {
+            var cultureInfo = new CultureInfo(matchedDomain.Language.LanguageIsoCode);
+            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+        }
+        else
         // Set the language
         if (fullContent?.Language?.LanguageIsoCode != null)
         {
@@ -89,14 +97,7 @@ public class GetContentBySlugHandler(IServiceProvider serviceProvider, IMediator
             CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
             CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
         }
-        // Fall back to matched domain
-        else if (matchedDomain?.Language?.LanguageIsoCode != null)
-        {
-            var cultureInfo = new CultureInfo(matchedDomain.Language.LanguageIsoCode);
-            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-        }
-
+        
         return fullContent;
     }
 

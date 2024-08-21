@@ -1,52 +1,132 @@
-﻿@using ZauberCMS.Core.Languages.Commands
+﻿@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Languages.Commands
 @using ZauberCMS.Core.Languages.Models
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Language" />
+        <PropertyInfo Name="Language" Description="Set a language for this content, or set domains"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenDropDown
-            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-            FilterOperator="StringFilterOperator.StartsWith"
-            AllowFiltering="true"
             TextProperty="@nameof(Language.LanguageCultureName)"
             ValueProperty="@nameof(Language.Id)"
             Data="@Languages"
-            Style="width: 100%;" 
+            Style="width: 100%;"
             Name="LanguageList"
             @bind-Value="@Content.LanguageId"/>
     </CentreColumn>
 </EditorRow>
 
-<EditorRow>
-    <LeftColumn>
-        <PropertyInfo Name="Domains" />
-    </LeftColumn>
-    <CentreColumn>
-        TODO
-    </CentreColumn>
-</EditorRow>
+@if (Content.IsRootContent)
+{
+    <EditorRow>
+        <CentreColumn>
+            <RadzenText TextStyle="TextStyle.Caption">Valid domain names are: "example.com", "www.example.com", "example.com:8080". One-level paths in domains are supported, eg. "example.com/en" but it is recommended to just set the culture on the content</RadzenText>
+            <RadzenDataGrid @ref="grid" AllowFiltering="false"
+                            AllowPaging="false"
+                            PageSize="@(500)"
+                            Data="@Domains">
+                <Columns>
+                    <RadzenDataGridColumn Property="Url" Title="Domain">
+                        <Template Context="data">
+                            <RadzenTextBox @bind-Value="@data.Url" Style="width: 100%;"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="LanguageId" Title="Language">
+                        <Template Context="data">
+                            <RadzenDropDown
+                                AllowFiltering="false"
+                                TextProperty="@nameof(Language.LanguageCultureName)"
+                                ValueProperty="@nameof(Language.Id)"
+                                Data="@Languages"
+                                Style="width: 100%;"
+                                @bind-Value="@data.LanguageId"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="DateCreated" Title="Date Created" Width="110px" TextAlign="TextAlign.Center">
+                        <Template Context="data">
+                            @data.DateCreated.Humanize()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Title="Delete" Width="90px" TextAlign="TextAlign.Center">
+                        <Template Context="data">
+                            <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="rz-mt-3">
+                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Text="Add Domain" Click="AddDomain"/>
+            </RadzenStack>
+        </CentreColumn>
+    </EditorRow>
+}
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
 </RadzenStack>
 
 @code {
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+
     [Parameter, EditorRequired] public Content Content { get; set; } = default!;
     private IEnumerable<Language> Languages { get; set; } = [];
-    private IEnumerable<Domain> Domains { get; set; } = [];
-    
+    private List<Domain> Domains { get; set; } = [];
+    RadzenDataGrid<Domain> grid;
+
     protected override async Task OnInitializedAsync()
-    { 
-        var allLangs = await Mediator.Send(new QueryLanguageCommand{OrderBy = GetLanguageOrderBy.LanguageCultureName, AmountPerPage = 200});
+    {
+        var allLangs = await Mediator.Send(new QueryLanguageCommand { OrderBy = GetLanguageOrderBy.LanguageCultureName, AmountPerPage = 200 });
         Languages = allLangs.Items;
+
+        var allDomains = await Mediator.Send(new QueryDomainCommand { OrderBy = GetDomainOrderBy.DateCreatedDescending, AmountPerPage = 200, ContentId = Content.Id });
+        Domains = allDomains.Items.ToList();
     }
-    
+
+    private async Task Delete(Guid id)
+    {
+        var deleteDomainResult = await Mediator.Send(new DeleteDomainCommand { Id = id });
+        if (!deleteDomainResult.Success)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = deleteDomainResult.Messages.MessagesAsString(), Duration = 4000 });
+        }
+        else
+        {
+            Domains.RemoveAll(x => x.Id == id);
+            await grid.Reload();
+        }
+    }
+
+    private void AddDomain()
+    {
+        Domains.Add(new Domain { ContentId = Content.Id });
+        grid.Reload();
+    }
+
     private async Task Save()
     {
-       // Save the content, if the language has been set
-       
-       // Save the domains
+        // Save the content, if the language has been set
+        var saveContentResult = await Mediator.Send(new SaveContentCommand { Content = Content });
+        if (saveContentResult.Success)
+        {
+            // Save domains
+            foreach (var domain in Domains)
+            {
+                var domainSave = await Mediator.Send(new SaveDomainCommand { Domain = domain });
+                if (!domainSave.Success)
+                {
+                    NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = domainSave.Messages.MessagesAsString(), Duration = 4000 });
+                }
+            }
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveContentResult.Messages.MessagesAsString(), Duration = 4000 });
+        }
+
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Content));
     }
+
 }

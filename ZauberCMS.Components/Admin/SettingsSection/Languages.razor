@@ -34,7 +34,7 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn Property="Id" Title="Delete">
             <Template Context="data">
-                <RadzenButton Variant="Variant.Text" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
             </Template>
         </RadzenDataGridColumn>
     </Columns>

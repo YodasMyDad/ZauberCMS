@@ -72,12 +72,9 @@
         if (args.Value is Content content)
         {
             items.AddRange(globalMenuItems);
-            
-            if (content.IsRootContent)
-            {
-                items.Add(new ContextMenuItem { Text = "Culture & Domains", Value =4 });
-            }
-            
+
+            var domainCultureMenuText = content.IsRootContent ? "Culture & Domains" : "Culture";
+            items.Add(new ContextMenuItem { Text = domainCultureMenuText, Value =4 });
         }
         
         return items;
