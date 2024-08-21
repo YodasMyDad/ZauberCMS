@@ -23,4 +23,6 @@ public class GetContentBySlugCommand : IRequest<Models.Content?>
     /// Ignores the internal redirect
     /// </summary>
     public bool IgnoreInternalRedirect { get; set; }
+    
+    public string Url { get; set; }
 }

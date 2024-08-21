@@ -1,11 +1,13 @@
 ﻿using System.Reflection;
 using Blazored.Modal;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +17,7 @@ using SixLabors.ImageSharp.Web.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
+using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Claims;
 using ZauberCMS.Core.Membership.Models;
@@ -54,16 +57,37 @@ public static class ZauberSetup
             {
                 Log.Error(ex, "Error during startup trying to do Db migrations");
             }
+            
+            
+            var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
+            
+            // Is this ok to use the awaiter and result here?
+            var langs = mediatr.Send(new QueryLanguageCommand{AmountPerPage = 200}).GetAwaiter().GetResult();
+            
+            var supportedCultures = new List<string>();
+            foreach (var langsItem in langs.Items)
+            {
+                if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
+            }
+
+            if (supportedCultures.Count == 0)
+            {
+                // Set a default for now, should really pull this from the appSettings
+                supportedCultures.Add("en-US");
+            }
+            var supportedCulturesArray = supportedCultures.ToArray();
+            var localizationOptions = new RequestLocalizationOptions()
+                .SetDefaultCulture(supportedCulturesArray[0])
+                .AddSupportedCultures(supportedCulturesArray)
+                .AddSupportedUICultures(supportedCulturesArray);
+            app.UseRequestLocalization(localizationOptions);
+            
+            //TODO - We need to store cultures in cache
         }
         
         app.UseImageSharp();
         app.UseSerilogRequestLogging();
-        var supportedCultures = new[] { "en" };
-        var localizationOptions = new RequestLocalizationOptions()
-            .SetDefaultCulture(supportedCultures[0])
-            .AddSupportedCultures(supportedCultures)
-            .AddSupportedUICultures(supportedCultures);
-        app.UseRequestLocalization(localizationOptions);
+        
         app.UseHttpsRedirection();
         app.UseStaticFiles();
         app.UseRouting();

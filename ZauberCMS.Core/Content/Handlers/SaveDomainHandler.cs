@@ -6,11 +6,13 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
 public class SaveDomainHandler(
     IServiceProvider serviceProvider,
+    ICacheService cacheService,
     IMapper mapper)
     : IRequestHandler<SaveDomainCommand, HandlerResult<Domain>>
 {
@@ -38,6 +40,7 @@ public class SaveDomainHandler(
                 mapper.Map(request.Domain, domain);
             }
 
+            cacheService.ClearCachedItemsWithPrefix(nameof(Domain));
             return await dbContext.SaveChangesAndLog(domain, handlerResult, cancellationToken);
         }
 

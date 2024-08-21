@@ -9,6 +9,7 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
@@ -16,6 +17,7 @@ public class SaveContentTypeHandler(
     IServiceProvider serviceProvider,
     IMapper mapper,
     AuthenticationStateProvider authenticationStateProvider,
+    ICacheService cacheService,
     UserManager<User> userManager)
     : IRequestHandler<SaveContentTypeCommand, HandlerResult<ContentType>>
 {
@@ -61,6 +63,7 @@ public class SaveContentTypeHandler(
                 contentType.DateUpdated = DateTime.UtcNow;
             }
             
+            cacheService.ClearCachedItemsWithPrefix(nameof(ContentType));
             return await dbContext.SaveChangesAndLog(contentType, handlerResult, cancellationToken);
         }
 

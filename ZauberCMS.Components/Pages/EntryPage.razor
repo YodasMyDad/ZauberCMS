@@ -29,7 +29,7 @@
     protected override async Task OnParametersSetAsync()
     {
         AllContentViews = ExtensionManager.GetInstances<IContentView>(true);
-        Content = await Mediator.Send(new GetContentBySlugCommand { Slug = Slug, IsRootContent = Slug == null });
+        Content = await Mediator.Send(new GetContentBySlugCommand { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri});
         
         if (Content != null)
         {
