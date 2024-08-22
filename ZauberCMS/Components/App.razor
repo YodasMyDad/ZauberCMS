@@ -1,8 +1,4 @@
-﻿@using System.Globalization
-@using Microsoft.AspNetCore.Http
-@using Microsoft.AspNetCore.Localization
-
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -60,9 +56,9 @@
     // Set the Admin to InteractiveServer but use SSR for rest of site
     private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
 
-    [CascadingParameter] public HttpContext? HttpContext { get; set; }
+    //[CascadingParameter] public HttpContext? HttpContext { get; set; }
 
-    protected override void OnInitialized()
+    /*protected override void OnInitialized()
     {
         HttpContext?.Response.Cookies.Append(
             CookieRequestCultureProvider.DefaultCookieName,
@@ -70,6 +66,6 @@
                 new RequestCulture(
                     CultureInfo.CurrentCulture,
                     CultureInfo.CurrentUICulture)));
-    }
+    }*/
 
 }

@@ -22,7 +22,7 @@
     <EditorRow>
         <CentreColumn>
             <RadzenText TextStyle="TextStyle.Caption">Valid domain names are: "example.com", "www.example.com", "example.com:8080". One-level paths in domains are supported, eg. "example.com/en" but it is recommended to just set the culture on the content</RadzenText>
-            <RadzenDataGrid @ref="grid" AllowFiltering="false"
+            <RadzenDataGrid @ref="Grid" AllowFiltering="false"
                             AllowPaging="false"
                             PageSize="@(500)"
                             Data="@Domains">
@@ -74,7 +74,7 @@
     [Parameter, EditorRequired] public Content Content { get; set; } = default!;
     private IEnumerable<Language> Languages { get; set; } = [];
     private List<Domain> Domains { get; set; } = [];
-    RadzenDataGrid<Domain> grid;
+    private RadzenDataGrid<Domain> Grid { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,14 +95,14 @@
         else
         {
             Domains.RemoveAll(x => x.Id == id);
-            await grid.Reload();
+            await Grid.Reload();
         }
     }
 
     private void AddDomain()
     {
         Domains.Add(new Domain { ContentId = Content.Id });
-        grid.Reload();
+        Grid.Reload();
     }
 
     private async Task Save()

@@ -2,7 +2,6 @@
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Web.Layouts
 @using ZauberCMS.Web.Shared
-@using System.Globalization
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 @* This is the layout you want to use *@
 @layout MainLayout
@@ -35,13 +34,6 @@
 
     <div class="row gx-4 gx-lg-5 justify-content-center">
         <div class="col-md-10 col-lg-8 col-xl-7">
-
-            <ul>
-                <li><b>CurrentCulture:</b> @CultureInfo.CurrentCulture.Name</li>
-                <li><b>CurrentUICulture:</b> @CultureInfo.CurrentUICulture.Name</li>
-                <li><b>Date Format:</b> @DateTime.Now.ToString("D", CultureInfo.CurrentCulture)</li>
-            </ul>
-            
             @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
             <hr class="my-4"/>
             @foreach (var post in BlogPosts)

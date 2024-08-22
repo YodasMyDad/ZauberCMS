@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
+using ZauberCMS.Core.Content.Middleware;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
@@ -81,8 +82,6 @@ public static class ZauberSetup
                 .AddSupportedCultures(supportedCulturesArray)
                 .AddSupportedUICultures(supportedCulturesArray);
             app.UseRequestLocalization(localizationOptions);
-            
-            //TODO - We need to store cultures in cache
         }
         
         app.UseImageSharp();
@@ -98,6 +97,8 @@ public static class ZauberSetup
         app.UseAuthentication();
         app.UseAuthorization();
 
+        app.UseCustomCulture();
+        
         app.MapRazorComponents<T>()
             .AddInteractiveServerRenderMode()
             .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
@@ -141,6 +142,7 @@ builder.Services.AddRazorComponents()
         builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
+        builder.Services.AddScoped<RequestDataService>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
         builder.Services.AddRadzenComponents();
