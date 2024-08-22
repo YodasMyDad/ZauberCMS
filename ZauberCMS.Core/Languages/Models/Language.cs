@@ -29,4 +29,9 @@ public class Language
     /// Domains using this language
     /// </summary>
     public List<Domain> Domains { get; set; } = [];
+    
+    /// <summary>
+    /// Language Text using this language
+    /// </summary>
+    public List<LanguageText> LanguageTexts { get; set; } = [];
 }

@@ -328,6 +328,54 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.ToTable("ZauberLanguages", (string)null);
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Languages.Models.LanguageDictionary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .HasDatabaseName("IX_LanguageDictionary_Key");
+
+                    b.ToTable("ZauberLanguageDictionaries", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Languages.Models.LanguageText", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("LanguageDictionaryId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("LanguageId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LanguageDictionaryId");
+
+                    b.HasIndex("LanguageId");
+
+                    b.HasIndex("Value")
+                        .HasDatabaseName("IX_LanguageText_Value");
+
+                    b.ToTable("ZauberLanguageTexts", (string)null);
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Media.Models.Media", b =>
                 {
                     b.Property<Guid>("Id")
@@ -736,6 +784,25 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("Language");
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Languages.Models.LanguageText", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Languages.Models.LanguageDictionary", "LanguageDictionary")
+                        .WithMany("Texts")
+                        .HasForeignKey("LanguageDictionaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZauberCMS.Core.Languages.Models.Language", "Language")
+                        .WithMany("LanguageTexts")
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Language");
+
+                    b.Navigation("LanguageDictionary");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Media.Models.Media", b =>
                 {
                     b.HasOne("ZauberCMS.Core.Membership.Models.User", "LastUpdatedBy")
@@ -834,6 +901,13 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
             modelBuilder.Entity("ZauberCMS.Core.Languages.Models.Language", b =>
                 {
                     b.Navigation("Domains");
+
+                    b.Navigation("LanguageTexts");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Languages.Models.LanguageDictionary", b =>
+                {
+                    b.Navigation("Texts");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Media.Models.Media", b =>
