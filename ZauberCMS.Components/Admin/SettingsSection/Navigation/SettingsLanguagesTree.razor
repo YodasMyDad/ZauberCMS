@@ -163,6 +163,18 @@
         };
 
         tree.Add(languageTree);
+        
+        var languageDictTree = new TreeStub
+        {
+            Id = Constants.Guids.LanguageDictionaryTreeRootId,
+            Name = "Dictionary",
+            Icon = "menu_book",
+            SortOrder = 2,
+            Url = "/admin/settings/languagedictionaries",
+            StubType = typeof(LanguageDictionary)
+        };
+
+        tree.Add(languageDictTree);
 
         AdvancedData = tree;
     }
