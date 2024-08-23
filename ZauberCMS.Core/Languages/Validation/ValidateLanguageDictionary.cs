@@ -1,12 +1,11 @@
-﻿using MediatR;
-using ZauberCMS.Core.Extensions;
+﻿using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Shared.Validation.Interfaces;
 using ZauberCMS.Core.Shared.Validation.Models;
 
 namespace ZauberCMS.Core.Languages.Validation;
 
-public class ValidateLanguageDictionary(IMediator mediator) : IValidate<LanguageDictionary>
+public class ValidateLanguageDictionary : IValidate<LanguageDictionary>
 {
     public Task<ValidateResult> Validate(LanguageDictionary item)
     {
@@ -16,7 +15,7 @@ public class ValidateLanguageDictionary(IMediator mediator) : IValidate<Language
             validateResult.ErrorMessages.Add("You cannot leave key name empty");
         }
         
-        // Make sure the Language text's are not null
+        // Make sure the Language texts are not null
         foreach (var languageText in item.Texts)
         {
             if (languageText.Value.IsNullOrWhiteSpace())

@@ -1,26 +1,29 @@
 ﻿@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Languages.Commands
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Settings
+@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
 
 @if (ComponentView != null)
 {
     <LayoutView Layout="LayoutType">
-        <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />
+        <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters"/>
     </LayoutView>
 }
 
 @code {
-    
+
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public LayoutResolverService LayoutResolver { get; set; } = default!;
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
-    
+
     [Parameter] public string? Slug { get; set; }
-    
+
     private Content? Content { get; set; }
+    private Dictionary<string, string> LanguageKeys { get; set; } = [];
     private Dictionary<string, IContentView> AllContentViews { get; set; } = new();
     private IContentView? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
@@ -29,8 +32,9 @@
     protected override async Task OnParametersSetAsync()
     {
         AllContentViews = ExtensionManager.GetInstances<IContentView>(true);
-        Content = await Mediator.Send(new GetContentBySlugCommand { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri});
-        
+        var entryModel = await Mediator.Send(new GetContentFromRequestCommand { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
+        Content = entryModel.Content;
+        LanguageKeys = entryModel.LanguageKeys;
         if (Content != null)
         {
             //Found content, now find the view to display it
@@ -38,42 +42,42 @@
             {
                 ComponentView = contentView;
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
-                Parameters = new Dictionary<string, object> { ["Content"] = Content };
+                Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };
             }
             else
             {
                 // No view selected, let the user know
-                if(AllContentViews.TryGetValue(Settings.Value.MissingView!, out var missing))
+                if (AllContentViews.TryGetValue(Settings.Value.MissingView!, out var missing))
                 {
                     ComponentView = missing;
                     LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
-                    Parameters = new Dictionary<string, object> { ["Content"] = Content };
+                    Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };
                 }
             }
         }
-        else 
+        else
         {
             // Before we show the 404, we want to check if there is any content at all, if not show the starter page
             var hasContent = await Mediator.Send(new AnyContentCommand());
             if (hasContent)
             {
                 // No content found on slug (404) Show not found component
-                if(AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
+                if (AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
                 {
                     ComponentView = notFound;
                     LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
-                }   
+                }
             }
             else
             {
                 // No content found on slug (404) Show not found component
-                if(AllContentViews.TryGetValue(Settings.Value.StarterComponent!, out var starter))
+                if (AllContentViews.TryGetValue(Settings.Value.StarterComponent!, out var starter))
                 {
                     ComponentView = starter;
                     LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
-                }   
+                }
             }
         }
     }
-    
+
 }

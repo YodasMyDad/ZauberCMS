@@ -44,6 +44,7 @@
 
 @code {
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
     
     private List<Content> BlogPages { get; set; } = [];
     private Media HeaderImage { get; set; } = new();
@@ -61,6 +62,4 @@
         BlogPages = pages.Items.ToList();
         HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
     }
-    
-    
 }

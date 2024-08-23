@@ -100,6 +100,7 @@ public class EntryContentMiddleware(RequestDelegate next)
         {
             requestDataService.ContentId = content.Id;
             requestDataService.IncludeChildren = content.IncludeChildren;
+            requestDataService.LanguageIsoCode = CultureInfo.CurrentCulture.Name;
         }
 
         await next(context);

@@ -41,6 +41,15 @@ namespace ZauberCMS.Core.Extensions;
             }
             return default;
         }
+        
+        public static string? Get(this Dictionary<string, string> data, string key)
+        {
+            if (data.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+            return string.Empty;
+        }
 
         /// <summary>
         /// Gets a temp UI messages in the extended data

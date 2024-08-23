@@ -111,6 +111,7 @@
         if (result.Success)
         {
             await LoadData(new LoadDataArgs {Top = AmountPerPage});
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Deleted", Duration = 4000 });
         }
         else
         {

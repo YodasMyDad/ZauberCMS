@@ -35,9 +35,9 @@
     <div class="row gx-4 gx-lg-5 justify-content-center">
         <div class="col-md-10 col-lg-8 col-xl-7">
             <ul>
-                <li><b>CurrentCulture:</b> @CultureInfo.CurrentCulture.Name</li>
-                <li><b>CurrentUICulture:</b> @CultureInfo.CurrentUICulture.Name</li>
-                <li><b>Date Format:</b> @DateTime.Now.ToString("D", CultureInfo.CurrentCulture)</li>
+                <li><b>@(LanguageKeys?.Get("CurrentCulture")):</b> @CultureInfo.CurrentCulture.Name</li>
+                <li><b>@(LanguageKeys?.Get("CurrentUICulture")):</b> @CultureInfo.CurrentUICulture.Name</li>
+                <li><b>@(LanguageKeys?.Get("DateFormat")):</b> @DateTime.Now.ToString("D", CultureInfo.CurrentCulture)</li>
             </ul>
             @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
         </div>
@@ -49,6 +49,7 @@
     
     @* This is the content page passed in that matches the url *@
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
 
     private Media HeaderImage { get; set; } = new();
     

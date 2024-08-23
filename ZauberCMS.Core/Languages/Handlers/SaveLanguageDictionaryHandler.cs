@@ -6,10 +6,11 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Languages.Handlers;
 
-public class SaveLanguageDictionaryHandler(IServiceProvider serviceProvider, IMapper mapper) : IRequestHandler<SaveLanguageDictionaryCommand, HandlerResult<LanguageDictionary>>
+public class SaveLanguageDictionaryHandler(IServiceProvider serviceProvider, IMapper mapper, ICacheService cacheService) : IRequestHandler<SaveLanguageDictionaryCommand, HandlerResult<LanguageDictionary>>
 {
     public async Task<HandlerResult<LanguageDictionary>> Handle(SaveLanguageDictionaryCommand request, CancellationToken cancellationToken)
     {
@@ -67,6 +68,8 @@ public class SaveLanguageDictionaryHandler(IServiceProvider serviceProvider, IMa
                 return handlerResult;
             }
 
+            // Clear Cache
+            cacheService.ClearCachedItemsWithPrefix(nameof(LanguageDictionary));
             return handlerResult;
         }
         

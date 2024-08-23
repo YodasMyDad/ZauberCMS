@@ -6,4 +6,5 @@ public interface IContentView
     /// The Content item that the View uses
     /// </summary>
     Models.Content? Content { get; set; }
+    Dictionary<string, string>? LanguageKeys { get; set; }
 }

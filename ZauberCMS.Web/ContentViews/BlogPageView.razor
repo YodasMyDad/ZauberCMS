@@ -50,6 +50,8 @@
 @code {
 
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
+    
     private List<Content> ContentBlocks { get; set; } = [];
     private Media HeaderImage { get; set; } = new();
     
@@ -62,5 +64,4 @@
         }
         HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "/assets/img/post-sample-image.jpg")).FirstOrDefault()!;
     }
-
 }

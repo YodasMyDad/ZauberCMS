@@ -1,8 +1,9 @@
 ﻿using MediatR;
+using ZauberCMS.Core.Content.Models;
 
 namespace ZauberCMS.Core.Content.Commands;
 
-public class GetContentBySlugCommand : IRequest<Models.Content?>
+public class GetContentFromRequestCommand : IRequest<EntryModel>
 {
     /// <summary>
     /// The slug to find the content
