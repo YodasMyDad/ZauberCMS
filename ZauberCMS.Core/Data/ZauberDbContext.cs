@@ -32,6 +32,8 @@ public class ZauberDbContext(DbContextOptions options, IConfiguration configurat
     public DbSet<UserPropertyValue> UserPropertyValues => Set<UserPropertyValue>();
     public DbSet<Domain> Domains => Set<Domain>();
     public DbSet<Language> Languages => Set<Language>();
+    public DbSet<LanguageDictionary> LanguageDictionaries => Set<LanguageDictionary>();
+    public DbSet<LanguageText> LanguageTexts => Set<LanguageText>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

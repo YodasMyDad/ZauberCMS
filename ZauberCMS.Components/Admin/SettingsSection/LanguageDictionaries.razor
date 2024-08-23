@@ -1,14 +1,134 @@
 ﻿@page "/admin/settings/languagedictionaries"
+@using ZauberCMS.Core.Languages.Commands
+@using ZauberCMS.Core.Languages.Models
 @layout SectionLayout
 
-<PageTitle>Language Dictionary</PageTitle>
+<PageTitle>Language Dictionary Items</PageTitle>
 
-<p>TODO</p>
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Create Dictionary" Click="@CreateLanguageDictionary"/>
+</RadzenStack>
+
+<RadzenPanel Class="rz-mx-auto">
+    <RadzenDataGrid AllowFiltering="true"
+                    FilterPopupRenderMode="PopupRenderMode.Initial"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    AllowPaging="true"
+                    PageSize="@AmountPerPage"
+                    AllowSorting="true"
+                    LoadData="@LoadData"
+                    IsLoading="@IsLoading"
+                    Count="@Count"
+                    Data="@LanguageDicts"
+                    SelectionMode="DataGridSelectionMode.Single"
+                    RowSelect="@((LanguageDictionary value) => OnRowSelect(value))"
+                    PagerHorizontalAlign="HorizontalAlign.Center">
+
+        <Columns>
+            <RadzenDataGridColumn Property="Key" Title="Key"/>
+            <RadzenDataGridColumn Property="Id" Title="Values">
+                <Template Context="data">
+                    @data.Texts.Count
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="Id" Title="Delete">
+                <Template Context="data">
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenPanel>
 
 @code {
+    [Inject] public IModalService DialogService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Parameter] public int AmountPerPage { get; set; } = 20;
+    [Parameter] public bool RefreshPage { get; set; }
+
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
-    protected override void OnInitialized()
+
+    private IEnumerable<LanguageDictionary> LanguageDicts { get; set; } = [];
+    private int Count { get; set; }
+    private bool IsLoading { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
         Layout?.SetSection(Constants.Sections.SettingsSection);
+        await LoadData(new LoadDataArgs { Top = AmountPerPage });
     }
+
+    async Task LoadData(LoadDataArgs args)
+    {
+        IsLoading = true;
+
+        await Task.Yield();
+
+        var command = new DataGridLanguageDictionaryCommand();
+
+        if (args.Top != null)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            command.Filter = args.Filter;
+        }
+
+        // Sort via the OrderBy method
+        command.Order = args.OrderBy;
+
+        var result = await Mediator.Send(command);
+        Count = result.Count;
+        LanguageDicts = result.Items;
+
+        IsLoading = false;
+    }
+
+    private async Task CreateLanguageDictionary()
+    {
+        var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>("Create Language Dictionary", new Dictionary<string, object>{{"LanguageDictionary", new LanguageDictionary()}});
+        var result = await dialog.Result;
+        if (result is { Confirmed: true })
+        {
+            await LoadData(new LoadDataArgs { Top = AmountPerPage });
+        }
+    }
+
+    private async Task Delete(Guid id)
+    {
+        var result = await Mediator.Send(new DeleteLanguageCommand { Id = id });
+        if (result.Success)
+        {
+            await LoadData(new LoadDataArgs { Top = AmountPerPage });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+        }
+    }
+
+    private async Task OnRowSelect(object value)
+    {
+        if (value is LanguageDictionary selectedRow)
+        {
+            var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>("Update Language Dictionary", new Dictionary<string, object>
+            {
+                { "LanguageDictionary", selectedRow }
+            });
+            var result = await dialog.Result;
+            if (result is { Confirmed: true })
+            {
+                await LoadData(new LoadDataArgs { Top = AmountPerPage });
+            }
+        }
+    }
+
 }

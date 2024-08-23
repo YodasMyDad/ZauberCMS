@@ -10,35 +10,38 @@
     <RadzenButton Variant="Variant.Filled" Text="Create Language" Click="@CreateLanguage"/>
 </RadzenStack>
 
-<RadzenDataGrid AllowFiltering="true"
-                FilterPopupRenderMode="PopupRenderMode.Initial"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="true"
-                PageSize="@AmountPerPage"
-                AllowSorting="true"
-                LoadData="@LoadData"
-                IsLoading="@IsLoading"
-                Count="@Count"
-                Data="@AllLanguages"
-                SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((Language value) => OnRowSelect(value))"
-                PagerHorizontalAlign="HorizontalAlign.Center">
-    
-    <Columns>
-        <RadzenDataGridColumn Property="LanguageCultureName" Title="Name"/>
-        <RadzenDataGridColumn Property="LanguageIsoCode" Title="ISO Code"/>
-        <RadzenDataGridColumn Property="DateCreated" Title="Created">
-            <Template Context="data">
-                @data.DateCreated.Humanize()
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="Id" Title="Delete">
-            <Template Context="data">
-                <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+<RadzenPanel Class="rz-mx-auto">
+    <RadzenDataGrid AllowFiltering="true"
+                    FilterPopupRenderMode="PopupRenderMode.Initial"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    AllowPaging="true"
+                    PageSize="@AmountPerPage"
+                    AllowSorting="true"
+                    LoadData="@LoadData"
+                    IsLoading="@IsLoading"
+                    Count="@Count"
+                    Data="@AllLanguages"
+                    SelectionMode="DataGridSelectionMode.Single"
+                    RowSelect="@((Language value) => OnRowSelect(value))"
+                    PagerHorizontalAlign="HorizontalAlign.Center">
+
+        <Columns>
+            <RadzenDataGridColumn Property="LanguageCultureName" Title="Name"/>
+            <RadzenDataGridColumn Property="LanguageIsoCode" Title="ISO Code"/>
+            <RadzenDataGridColumn Property="DateCreated" Title="Created">
+                <Template Context="data">
+                    @data.DateCreated.Humanize()
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="Id" Title="Delete">
+                <Template Context="data">
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenPanel>
+
 
 @code {
     [Inject] public IModalService DialogService { get; set; } = default!;

@@ -5,24 +5,26 @@
 
 <PageTitle>Audit Log</PageTitle>
 
-<RadzenDataGrid AllowFiltering="true"
-                FilterPopupRenderMode="PopupRenderMode.OnDemand"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="true"
-                PageSize="20"
-                AllowSorting="true"
-                Data="@AuditLogs"
-                SelectionMode="DataGridSelectionMode.Single">
-    <Columns>
-        <RadzenDataGridColumn Property="Username" Title="Username"/>
-        <RadzenDataGridColumn Property="Description" Title="Description"/>
-        <RadzenDataGridColumn Property="DateCreated" Title="Created">
-            <Template Context="data">
-                @data.DateCreated.Humanize()
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+<RadzenPanel Class="rz-mx-auto">
+    <RadzenDataGrid AllowFiltering="true"
+                    FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    AllowPaging="true"
+                    PageSize="20"
+                    AllowSorting="true"
+                    Data="@AuditLogs"
+                    SelectionMode="DataGridSelectionMode.Single">
+        <Columns>
+            <RadzenDataGridColumn Property="Username" Title="Username"/>
+            <RadzenDataGridColumn Property="Description" Title="Description"/>
+            <RadzenDataGridColumn Property="DateCreated" Title="Created">
+                <Template Context="data">
+                    @data.DateCreated.Humanize()
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>    
+</RadzenPanel>
 
 @code {
     [CascadingParameter] protected SectionLayout? Layout { get; set; }

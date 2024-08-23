@@ -16,7 +16,6 @@ public class DataGridContentHandler(IServiceProvider serviceProvider) : IRequest
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         
-  
         var result = new DataGridResult<Models.Content>();
 
         // Now you have the DbSet<T> and can query it

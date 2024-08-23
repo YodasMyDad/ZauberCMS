@@ -1,0 +1,100 @@
+﻿@using ZauberCMS.Core.Languages.Commands
+@using ZauberCMS.Core.Languages.Models
+@using ZauberCMS.Core.Shared.Services
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Key" Description="The text key used to get the language values"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenTextBox @bind-Value="@LanguageDictionary.Key" Style="width: 100%;"/>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <CentreColumn>
+        <RadzenText TextStyle="TextStyle.Caption">Set the value for each language below</RadzenText>
+        <div class="rz-data-grid rz-datatable rz-datatable-scrollable">
+            <div class="rz-data-grid-data" tabindex="-1">
+                <table class="rz-grid-table rz-grid-table-fixed rz-grid-table-striped">
+                    <thead>
+                    <tr>
+                        <th rowspan="1" colspan="1" class="rz-unselectable-text rz-text-align-left" scope="col" style="">
+                            <div>
+                                <span class="rz-column-title" title="Name">
+                                    <span class="rz-column-title-content">Language</span>
+                                </span>
+                            </div>
+                        </th>
+                        <th rowspan="1" colspan="1" class="rz-unselectable-text rz-text-align-left" scope="col" style="">
+                            <div>
+                                <span class="rz-column-title" title="Name">
+                                    <span class="rz-column-title-content">Value</span>
+                                </span>
+                            </div>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var lang in AllLanguages)
+                    {
+                        <tr class="rz-data-row ">
+                            <td>
+                                <span class="rz-cell-data">
+                                    @lang.Key.LanguageCultureName
+                                </span>
+                            </td>
+                            <td>
+                                <span class="rz-cell-data">
+                                    <RadzenTextArea oninput="event.target.style.height = Math.max(event.target.clientHeight, event.target.scrollHeight) + 'px';" @bind-Value="@lang.Value.Value" Style="width: 100%" />
+                                </span>
+                            </td>
+                        </tr>   
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Inject] public ValidateService<LanguageDictionary> ValidateService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    
+    [Parameter, EditorRequired] public LanguageDictionary LanguageDictionary { get; set; } = default!;
+    
+    private Dictionary<Language, LanguageText> AllLanguages { get; set; } = [];
+    protected override async Task OnInitializedAsync()
+    {
+        var allLangs = await Mediator.Send(new QueryLanguageCommand { AmountPerPage = 200, OrderBy = GetLanguageOrderBy.LanguageCultureName });
+        var allTextsDict = LanguageDictionary.Texts.ToDictionary(x => x.LanguageId, x => x);
+        foreach (var lang in allLangs.Items)
+        {
+            var languageText = allTextsDict.TryGetValue(lang.Id, out var value) ? value : new LanguageText { LanguageId = lang.Id, LanguageDictionaryId = LanguageDictionary.Id };
+            AllLanguages.Add(lang, languageText);
+        }
+    }
+
+    private async Task Save()
+    {
+        // Save all the language text onto the language dictionary
+        var allTexts = AllLanguages.Select(x => x.Value).ToList();
+        LanguageDictionary.Texts = allTexts;
+        if (await ValidateService.CanSave(LanguageDictionary))
+        {
+            var saveResult = await Mediator.Send(new SaveLanguageDictionaryCommand { LanguageDictionary = LanguageDictionary });
+            if (!saveResult.Success)
+            {
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveResult.Messages.MessagesAsString(), Duration = 4000 });
+            }
+            await BlazoredModal.CloseAsync(ModalResult.Ok(LanguageDictionary));
+        }
+    }
+}
