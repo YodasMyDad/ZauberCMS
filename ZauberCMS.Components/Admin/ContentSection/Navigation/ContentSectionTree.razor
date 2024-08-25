@@ -99,6 +99,7 @@
                 {
                     case 1:
                         // Handle Create
+                        ContextMenuService.Close();
                         NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}");
                         break;
                     case 2:
