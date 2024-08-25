@@ -1,18 +1,48 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<InputTextArea Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
-               ValueExpression="@(() => Value)" class="form-control" />
+<InputTextArea oninput="event.target.style.height = Math.max(event.target.clientHeight, event.target.scrollHeight) + 'px';"
+               Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
+               ValueExpression="@(() => Value)" class="form-control" @attributes="GetAdditionalAttributes()"/>
+
+@if (SettingsModel.MaxLength != null)
+{
+    <div>
+        <RadzenText TextStyle="TextStyle.Caption">Max Length: @SettingsModel.MaxLength</RadzenText>
+    </div>
+}
 
 @code {
     public string Name { get; set; } = "TextArea";
     public string Alias { get; set; } = "ZauberCMS.TextArea";
     public string Icon { get; set; } = "notes";
     public string Description { get; set; } = "Standard Text area";
-    public Type? SettingsComponent { get; set; }
-    
+    public Type? SettingsComponent { get; set; } = typeof(TextContentSettings);
+
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
+
+    private TextContentSettingsModel SettingsModel { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        SettingsModel = Settings.FromJson<TextContentSettingsModel>();
+    }
+
+    private IEnumerable<KeyValuePair<string, object?>> GetAdditionalAttributes()
+    {
+        var attributes = new List<KeyValuePair<string, object?>>();
+
+        if (SettingsModel.MaxLength.HasValue)
+        {
+            attributes.Add(new KeyValuePair<string, object?>("MaxLength", SettingsModel.MaxLength.Value));
+        }
+
+        return attributes;
+    }
+
 }

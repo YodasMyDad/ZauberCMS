@@ -109,6 +109,21 @@
             }
         };
     }
+    
+    public void ClearHasChildrenCache(Guid? contentId)
+    {
+        if (_hasChildrenCache != null)
+        {
+            if (contentId != null)
+            {
+                _hasChildrenCache.TryRemove(contentId.Value, out _);    
+            }
+            else
+            {
+                _hasChildrenCache.Clear();
+            }
+        }
+    }
 
     private async Task OnChangeHandler()
     {

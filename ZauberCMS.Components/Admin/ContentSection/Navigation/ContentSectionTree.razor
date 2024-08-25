@@ -2,13 +2,15 @@
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
+@using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Components.Admin.Trees
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-<ContentTree Data="@ContentItems"
-             OnChange="OnChange" 
-             @bind-Value="@Selection" 
-             OnItemContextMenu="ItemContextMenu"/>
+<ContentTree @ref="ContentTree"
+            Data="@ContentItems"
+            OnChange="OnChange" 
+            @bind-Value="@Selection" 
+            OnItemContextMenu="ItemContextMenu"/>
 
 @code {
     public int SortOrder => 0;
@@ -22,11 +24,12 @@
     [Inject] public DialogService ConfirmService { get; set; } = default!;
     [Inject] public IModalService DialogService { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public ICacheService CacheService { get; set; } = default!;
     
-
     private List<Content> ContentItems { get; set; } = [];
     private object? Selection { get; set; }
-
+    private ContentTree? ContentTree { get; set; }
+    
     protected override async Task OnInitializedAsync()
     {
         await DataRefresh();
@@ -66,7 +69,6 @@
             new() { Text = "Sort", Value = 3 }
         };
         
-        
         var items = new List<ContextMenuItem>();
         
         if (args.Value is Content content)
@@ -74,7 +76,12 @@
             items.AddRange(globalMenuItems);
 
             var domainCultureMenuText = content.IsRootContent ? "Culture & Domains" : "Culture";
-            items.Add(new ContextMenuItem { Text = domainCultureMenuText, Value =4 });
+            items.Add(new ContextMenuItem { Text = domainCultureMenuText, Value = 4 });
+
+            if (content.IsRootContent)
+            {
+                items.Add(new ContextMenuItem { Text = "Refresh", Value = 5});
+            }
         }
         
         return items;
@@ -92,7 +99,7 @@
                 {
                     case 1:
                         // Handle Create
-                        NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}", forceLoad: true);
+                        NavigationManager.NavigateTo($"/admin/createcontent/{content.Id}");
                         break;
                     case 2:
                         // Confirm dialogue, say if there are children, and confirm then delete all
@@ -153,9 +160,15 @@
                         var languageDialogResult = await languageDialog.Result;
                         if (languageDialogResult is { Confirmed: true })
                         {
-                            // TODO       
+                            // Do we need to do anything here?     
                         }    
          
+                        break;
+                    case 5:
+                        ContextMenuService.Close();
+                        CacheService.ClearCachedItemsWithPrefix(nameof(Content));
+                        ContentTree?.ClearHasChildrenCache(null);
+                        await DataRefresh();
                         break;
                 }
             }
