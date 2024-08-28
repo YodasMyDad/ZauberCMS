@@ -27,13 +27,11 @@
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
     // Dictionary to cache HasChildren results
-    private ConcurrentDictionary<Guid, bool>? _hasChildrenCache;
+
     
     protected override void OnInitialized()
     {
         AppState.OnContentChanged += HandleContentChanged;
-        // Initialize the cache
-        _hasChildrenCache = new ConcurrentDictionary<Guid, bool>();
     }
     
     protected override async Task OnParametersSetAsync()
@@ -53,7 +51,7 @@
     
     private Task HandleContentChanged(Content? media, string username)
     {
-        _hasChildrenCache?.Clear();
+        TreeState.ClearChildCache(null);
         return Task.CompletedTask;
     }
 
@@ -109,21 +107,6 @@
             }
         };
     }
-    
-    public void ClearHasChildrenCache(Guid? contentId)
-    {
-        if (_hasChildrenCache != null)
-        {
-            if (contentId != null)
-            {
-                _hasChildrenCache.TryRemove(contentId.Value, out _);    
-            }
-            else
-            {
-                _hasChildrenCache.Clear();
-            }
-        }
-    }
 
     private async Task OnChangeHandler()
     {
@@ -147,14 +130,14 @@
         if (data is Content content)
         {
             // Check if result is cached
-            if (_hasChildrenCache!.TryGetValue(content.Id, out var hasChildren))
+            if (TreeState.HasChildrenCache.TryGetValue(content.Id, out var hasChildren))
             {
                 return !content.ContentType!.EnableListView && hasChildren;
             }
 
             // Calculate result and cache it
             hasChildren = Task.Run(() => Mediator.Send(new HasChildContentCommand { ParentId = content.Id })).GetAwaiter().GetResult();
-            _hasChildrenCache[content.Id] = hasChildren;
+            TreeState.SetChildren(content.Id, hasChildren);
 
             return !content.ContentType!.EnableListView && hasChildren;
         }

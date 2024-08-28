@@ -327,6 +327,7 @@ else
                     // If we are creating or saving a child item, make sure the parent is open
                     if (!TreeState.IsNodeExpanded(ParentId.Value))
                     {
+                        TreeState.ClearChildCache(ParentId.Value);
                         TreeState.NodeExpanded(ParentId.Value);
                     }
                 }

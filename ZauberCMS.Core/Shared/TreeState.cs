@@ -7,9 +7,13 @@ public class TreeState
     // ConcurrentDictionary to store the IDs of expanded nodes
     private readonly ConcurrentDictionary<Guid, byte> _expandedNodeIds = new();
 
+    // Initialize the cache
+    public readonly ConcurrentDictionary<Guid, bool> HasChildrenCache = new();
+
     public event Action<object>? OnTreeValueChanged;
 
     private object? _treeValue;
+
     public object? TreeValue
     {
         get => _treeValue;
@@ -22,7 +26,7 @@ public class TreeState
             }
         }
     }
-    
+
     // Method to expand a node
     public void NodeExpanded(Guid nodeId)
     {
@@ -45,5 +49,27 @@ public class TreeState
     public void ClearNodes()
     {
         _expandedNodeIds.Clear();
+    }
+
+    public bool HasChildren(Guid nodeId)
+    {
+        return HasChildrenCache.TryGetValue(nodeId, out var hasChildren) && hasChildren;
+    }
+    
+    public void SetChildren(Guid nodeId, bool hasChildren)
+    {
+        HasChildrenCache[nodeId] = hasChildren;
+    }
+
+    public void ClearChildCache(Guid? contentId)
+    {
+        if (contentId != null)
+        {
+            HasChildrenCache.TryRemove(contentId.Value, out _);
+        }
+        else
+        {
+            HasChildrenCache.Clear();
+        }
     }
 }

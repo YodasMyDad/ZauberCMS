@@ -24,6 +24,7 @@
     [Inject] public DialogService ConfirmService { get; set; } = default!;
     [Inject] public IModalService DialogService { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = default!;
     [Inject] public ICacheService CacheService { get; set; } = default!;
     
     private List<Content> ContentItems { get; set; } = [];
@@ -168,7 +169,7 @@
                     case 5:
                         ContextMenuService.Close();
                         CacheService.ClearCachedItemsWithPrefix(nameof(Content));
-                        ContentTree?.ClearHasChildrenCache(null);
+                        TreeState.ClearChildCache(null);
                         await DataRefresh();
                         break;
                 }
