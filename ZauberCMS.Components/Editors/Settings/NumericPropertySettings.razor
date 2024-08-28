@@ -1,0 +1,77 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<NumericPropertySettingsModel>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Min" Description="Set a minimum starting value"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.Min" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter min value" } })"/>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Max" Description="Set a maximum value"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.Max" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max value" } })"/>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Increment Step" Description="Set the incremental step (i.e. 0.5)"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenTextBox @bind-Value="@Settings.Step" Style="width: 100%;" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Placeholder" Description="Set placeholder text for the user"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenTextBox @bind-Value="@Settings.Placeholder" Style="width: 100%;" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Format" Description="Format the input using a string format (i.e. #.0000, c, ### m2)"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenTextBox @bind-Value="@Settings.Format" Style="width: 100%;" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Align Right" Description="Align the numbers to the right"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AlignRight" />
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    public NumericPropertySettingsModel Settings { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+
+}

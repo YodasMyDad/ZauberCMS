@@ -1,35 +1,77 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@using System.Globalization
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenNumeric TValue="int" Value="@SavedValue" Change="@(args => OnChange(args))" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter numeric value" }})" />
+<RadzenNumeric TValue="double" Value="@SavedValue" Change="@(args => OnChange(args))" 
+               InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter numeric value" }})"
+               @attributes="GetAdditionalAttributes()" />
 
 @code {
     public string Name { get; set; } = "Numeric Text Field";
     public string Alias { get; set; } = "ZauberCMS.Numeric";
     public string Icon { get; set; } = "pin";
     public string Description { get; set; } = "Text field that only allows numbers";
-    public Type? SettingsComponent { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(NumericPropertySettings);
 
-    private int SavedValue { get; set; }
+    private double SavedValue { get; set; }
     
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-
+    private NumericPropertySettingsModel SettingsModel { get; set; } = new();
     protected override void OnInitialized()
     {
-        //TODO - Settings
-        //TODO - Allow formatting - But think about value being a double, so allows 
         if (!Value.IsNullOrWhiteSpace())
         {
-            SavedValue = Convert.ToInt32(Value);
+            SavedValue = Convert.ToDouble(Value);
         }
+        
+        SettingsModel = Settings.FromJson<NumericPropertySettingsModel>();
     }
     
-    private async Task OnChange(int changedValue)
+    private async Task OnChange(double changedValue)
     {
         SavedValue = changedValue;
-        await ValueChanged.InvokeAsync(SavedValue.ToString());   
+        await ValueChanged.InvokeAsync(SavedValue.ToString(CultureInfo.CurrentCulture));   
+    }
+    
+    private IEnumerable<KeyValuePair<string, object?>> GetAdditionalAttributes()
+    {
+        var attributes = new List<KeyValuePair<string, object?>>();
+
+        if (SettingsModel.Min.HasValue)
+        {
+            attributes.Add(new KeyValuePair<string, object?>("Min", SettingsModel.Min.Value));
+        }
+        
+        if (SettingsModel.Max.HasValue)
+        {
+            attributes.Add(new KeyValuePair<string, object?>("Max", SettingsModel.Max.Value));
+        }
+        
+        if (!SettingsModel.Step.IsNullOrWhiteSpace())
+        {
+            attributes.Add(new KeyValuePair<string, object?>("Step", SettingsModel.Step));
+        }
+        
+        if (!SettingsModel.Placeholder.IsNullOrWhiteSpace())
+        {
+            attributes.Add(new KeyValuePair<string, object?>("Placeholder", SettingsModel.Placeholder));
+        }
+        
+        if (!SettingsModel.Format.IsNullOrWhiteSpace())
+        {
+            attributes.Add(new KeyValuePair<string, object?>("Format", SettingsModel.Format));
+        }
+
+        if (SettingsModel.AlignRight)
+        {
+            attributes.Add(new KeyValuePair<string, object?>("TextAlign", TextAlign.Right));
+        }
+
+        return attributes;
     }
 }
