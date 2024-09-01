@@ -1,13 +1,16 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenDatePicker Value="@DateValue" ValueChanged="@((DateTime? value) => SaveDate(value))" Name="RadzenDatePickerBindValue" ShowCalendarWeek />
+<RadzenDatePicker Value="@DateValue" ValueChanged="@((DateTime? value) => SaveDate(value))"
+                  @attributes="GetAdditionalAttributes()" />
 
 @code {
     public string Name { get; set; } = "Date Picker";
     public string Alias { get; set; } = "ZauberCMS.DatePicker";
     public string Description { get; set; } = "Standard date picker";
     public string Icon { get; set; } = "calendar_today";
-    public Type? SettingsComponent { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(DatePickerPropertySettings);
     private DateTime? DateValue { get; set; }
     
     [Parameter] public string? Value { get; set; } = string.Empty;
@@ -15,13 +18,15 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-
+    private DatePickerPropertySettingsModel SettingsModel { get; set; } = new();
     protected override void OnInitialized()
     {
         if (!Value.IsNullOrWhiteSpace())
         {
             DateValue = DateTime.Parse(Value);   
         }
+        
+        SettingsModel = Settings.FromJson<DatePickerPropertySettingsModel>();
     }
 
     private async Task SaveDate(DateTime? value)
@@ -32,5 +37,34 @@
             Value = value.Value.ToLongDateString();
             await ValueChanged.InvokeAsync(Value);   
         }
+    }
+    
+    private IEnumerable<KeyValuePair<string, object?>> GetAdditionalAttributes()
+    {
+        var attributes = new List<KeyValuePair<string, object?>>();
+
+        if (SettingsModel.MinDate.HasValue)
+        {
+            attributes.Add(new KeyValuePair<string, object?>("Min", SettingsModel.MinDate.Value));
+        }
+        
+        if (SettingsModel.MaxDate.HasValue)
+        {
+            attributes.Add(new KeyValuePair<string, object?>("Max", SettingsModel.MaxDate.Value));
+        }
+        
+        if (SettingsModel.ShowTimeOnly)
+        {
+            attributes.Add(new KeyValuePair<string, object?>("ShowTime", SettingsModel.ShowTimeOnly));
+            attributes.Add(new KeyValuePair<string, object?>("TimeOnly", SettingsModel.ShowTimeOnly));
+            attributes.Add(new KeyValuePair<string, object?>("DateFormat", "HH:mm"));
+        }
+        
+        if (SettingsModel.InlineCalendar)
+        {
+            attributes.Add(new KeyValuePair<string, object?>("Inline", SettingsModel.InlineCalendar));
+        }
+        
+        return attributes;
     }
 }

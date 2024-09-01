@@ -1,0 +1,59 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<DatePickerPropertySettingsModel>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Starting Date" Description="Set the min/starting date value for the picker"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenDatePicker @bind-Value="@Settings.MinDate" Name="MinDatePicker" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Max End Date" Description="Set the max/end date value for the picker"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenDatePicker @bind-Value="@Settings.MaxDate" Name="MaxDatePicker" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Show Time Only" Description="Turns the date picker into a time only picker"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.ShowTimeOnly"/>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Inline Calendar" Description="Turns the date picker into an inline calender on the page"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.InlineCalendar"/>
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    public DatePickerPropertySettingsModel Settings { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+
+}
