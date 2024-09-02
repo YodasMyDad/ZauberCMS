@@ -25,5 +25,6 @@ public enum AuditAction
     Create,
     Update,
     Delete,
+    Move,
     Misc
 }
