@@ -1,4 +1,5 @@
-﻿using ZauberCMS.Core.Extensions;
+﻿using System.Text.Json.Serialization;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Interfaces;
 
@@ -104,4 +105,15 @@ public class Media : ITreeItem
     /// If parent ids are set this could have children
     /// </summary>
     public List<Media> Children { get; set; } = [];
+    
+    /// <summary>
+    /// Whether this media is set as deleted
+    /// </summary>
+    public bool Deleted { get; set; }
+    
+    /// <summary>
+    /// If parent ids are set this could have children
+    /// </summary>
+    [JsonIgnore]
+    public List<Audit.Models.Audit> Audits { get; set; } = [];
 }

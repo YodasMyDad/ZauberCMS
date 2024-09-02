@@ -38,6 +38,7 @@ public class SaveAuditHandler(
             {
                 // Map the updated properties
                 mapper.Map(request.Audit, audit);
+                audit.DateUpdated = DateTime.UtcNow;                
             }
             
             return await dbContext.SaveChangesAndLog(audit, handlerResult, cancellationToken);

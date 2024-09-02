@@ -10,8 +10,18 @@ public class AuditDbMapper : IEntityTypeConfiguration<Models.Audit>
         builder.ToTable("ZauberAudits");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).IsRequired();
-        builder.Property(x => x.Username).HasMaxLength(500);
         builder.Property(x => x.Description).HasMaxLength(3000);
-        builder.HasIndex(x => x.Username).HasDatabaseName("IX_ZauberAudits_Username");
+        
+        builder.HasOne(x => x.User)
+            .WithMany(x => x.Audits)
+            .HasForeignKey(x => x.UserId);
+        
+        builder.HasOne(x => x.Content)
+            .WithMany(x =>x.Audits)
+            .HasForeignKey(x => x.ContentId);
+        
+        builder.HasOne(x => x.Media)
+            .WithMany(x =>x.Audits)
+            .HasForeignKey(x => x.MediaId);
     }
 }

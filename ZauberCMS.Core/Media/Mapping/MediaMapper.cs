@@ -8,6 +8,7 @@ public class MediaMapper : Profile
     {
         CreateMap<Models.Media, Models.Media>()
             .ForMember(x => x.Children, opt => opt.Ignore())
+            .ForMember(x => x.Audits, opt => opt.Ignore())
             .ForMember(x => x.Parent, opt => opt.Ignore());
     }
 }

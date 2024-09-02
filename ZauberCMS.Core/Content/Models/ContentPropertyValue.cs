@@ -13,5 +13,6 @@ public class ContentPropertyValue
     public Guid ContentTypePropertyId { get; set; }
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string Value { get; set; } = string.Empty;
+    public DateTime? DateCreated { get; set; } = DateTime.UtcNow;
     public DateTime? DateUpdated { get; set; } = DateTime.UtcNow;
 }

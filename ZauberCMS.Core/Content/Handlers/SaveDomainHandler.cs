@@ -38,6 +38,7 @@ public class SaveDomainHandler(
             {
                 // Map the updated properties
                 mapper.Map(request.Domain, domain);
+                domain.DateUpdated = DateTime.UtcNow;
             }
 
             cacheService.ClearCachedItemsWithPrefix(nameof(Domain));

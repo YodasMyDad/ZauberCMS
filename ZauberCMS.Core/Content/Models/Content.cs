@@ -70,6 +70,11 @@ public class Content : IContent<ContentPropertyValue>
     /// Whether this content item is published or not
     /// </summary>
     public bool Published { get; set; }
+    
+    /// <summary>
+    /// Whether this content is set as deleted
+    /// </summary>
+    public bool Deleted { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the content should be hidden from navigation.
@@ -152,4 +157,10 @@ public class Content : IContent<ContentPropertyValue>
     /// </summary>
     [JsonIgnore]
     public List<Content> Children { get; set; } = [];
+    
+    /// <summary>
+    /// If parent ids are set this could have children
+    /// </summary>
+    [JsonIgnore]
+    public List<Audit.Models.Audit> Audits { get; set; } = [];
 }

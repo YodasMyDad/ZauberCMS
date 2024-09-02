@@ -58,6 +58,11 @@
       </Compile>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Data\Migrations\SqLite\" />
+      <Folder Include="Data\Migrations\SqlServer\" />
+    </ItemGroup>
+
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
         <PropertyGroup>
             <PackageOutputDir>$(OutputPath)..\</PackageOutputDir>

@@ -1,11 +1,9 @@
-﻿using MediatR;
-using ZauberCMS.Core.Audit.Commands;
-using ZauberCMS.Core.Content.Models;
+﻿using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Shared;
 
-public class AppState(IMediator mediator)
+public class AppState
 {
     public event Func<ContentType?, string, Task>? OnContentTypeChanged;
     public event Func<Content.Models.Content?, string, Task>? OnContentChanged;
@@ -60,12 +58,7 @@ public class AppState(IMediator mediator)
         {
             await OnMediaSaved.Invoke(media, username);
         }
-        await NotifyMediaChanged(media, username); // Trigger changed event
-        await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-        {
-            Username = username,
-            Description = $"Media - {media?.Name} Saved"
-        }});
+        await NotifyMediaChanged(media, username);
     }
     
     public async Task NotifyUserSaved(User? user, string username) 
@@ -74,13 +67,7 @@ public class AppState(IMediator mediator)
         {
             await OnUserSaved.Invoke(user, username);
         }
-        await NotifyUserChanged(user, username); // Trigger changed event
-        
-        await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-        {
-            Username = username,
-            Description = $"User - {user?.UserName} Saved"
-        }});
+        await NotifyUserChanged(user, username);
     }
     
     public async Task NotifyContentTypeSaved(ContentType? contentType, string username) 
@@ -90,11 +77,6 @@ public class AppState(IMediator mediator)
             await OnContentTypeSaved.Invoke(contentType, username);
         }
         await NotifyContentTypeChanged(contentType, username); // Trigger changed event
-        await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-        {
-            Username = username,
-            Description = $"Content Type - {contentType?.Name} Saved"
-        }});
     }
 
     public async Task NotifyContentSaved(Content.Models.Content? content, string username)
@@ -104,11 +86,6 @@ public class AppState(IMediator mediator)
             await OnContentSaved.Invoke(content, username);
         }
         await NotifyContentChanged(content, username); // Trigger changed event
-        await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-        {
-            Username = username,
-            Description = $"{content?.Name} Saved"
-        }});
     }
 
     public async Task NotifyMediaDeleted(Media.Models.Media? media, string username) 
@@ -118,11 +95,6 @@ public class AppState(IMediator mediator)
             await OnMediaDeleted.Invoke(media, username);
         }
         await NotifyMediaChanged(media, username); // Trigger changed event
-        await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-        {
-            Username = username,
-            Description = "Media Deleted"
-        }});
     }
     
     public async Task NotifyUserDeleted(User? userObject, string username) 
@@ -132,11 +104,6 @@ public class AppState(IMediator mediator)
             await OnUserDeleted.Invoke(userObject, username);
         }
         await NotifyUserChanged(userObject, username); // Trigger changed event
-        await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-        {
-            Username = username,
-            Description = "User Deleted"
-        }});
     }
     
     public async Task NotifyContentTypeDeleted(ContentType? contentType, string username) 
@@ -146,11 +113,6 @@ public class AppState(IMediator mediator)
             await OnContentTypeDeleted.Invoke(contentType, username);
         }
         await NotifyContentTypeChanged(contentType, username); // Trigger changed event
-        await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-        {
-            Username = username,
-            Description = "Content Type Deleted"
-        }});
     }
 
     public async Task NotifyContentDeleted(Content.Models.Content? content, string username)
@@ -160,11 +122,5 @@ public class AppState(IMediator mediator)
             await OnContentDeleted.Invoke(content, username);
         }
         await NotifyContentChanged(content, username); // Trigger changed event
-
-        await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-        {
-            Username = username,
-            Description = "Content Deleted"
-        }});
     }
 }

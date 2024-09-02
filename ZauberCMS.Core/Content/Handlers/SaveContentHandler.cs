@@ -118,7 +118,16 @@ public class SaveContentHandler(
             
             // Calculate and set the Path property
             content.Path = BuildPath(content, dbContext, isUpdate);
+            
+            
             cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
+            //TODO - Save Audit
+            /*await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
+            {
+                Username = username,
+                Description = $"User - {user?.UserName} Saved"
+            }});*/
+            
             return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
         }
 

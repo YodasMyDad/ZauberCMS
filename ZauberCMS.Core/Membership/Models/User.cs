@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity;
 using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Membership.Models;
@@ -27,6 +28,12 @@ public class User : IdentityUser<Guid>, ITreeItem
     }
     
     public Dictionary<string, object> ExtendedData { get; set; } = new();
+    
+    /// <summary>
+    /// If parent ids are set this could have children
+    /// </summary>
+    [JsonIgnore]
+    public List<Audit.Models.Audit> Audits { get; set; } = [];
     
     public string? Name
     {

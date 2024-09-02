@@ -56,6 +56,10 @@ public class SaveLanguageHandler(IServiceProvider serviceProvider)
             {
                 dbContext.Languages.Add(language);
             }
+            else
+            {
+                language.DateUpdated = DateTime.UtcNow;
+            }
 
             return await dbContext.SaveChangesAndLog(language, handlerResult, cancellationToken);
         }

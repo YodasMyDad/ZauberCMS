@@ -29,10 +29,10 @@ public class QueryAuditsHandler(IServiceProvider serviceProvider)
             }
         }
 
-        if (request.Username != null)
+        /*if (request.Username != null)
         {
             query = query.Where(x => x.Username == request.Username);
-        }
+        }*/
         
         if (request.WhereClause != null)
         {
@@ -44,7 +44,6 @@ public class QueryAuditsHandler(IServiceProvider serviceProvider)
         {
             GetAuditsOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
             GetAuditsOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
-            GetAuditsOrderBy.Username => query.OrderBy(p => p.Username),
             _ => query.OrderByDescending(p => p.DateCreated)
         };
         

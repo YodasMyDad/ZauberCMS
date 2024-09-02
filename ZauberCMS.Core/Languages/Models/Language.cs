@@ -24,6 +24,11 @@ public class Language
     /// The date and time when the item was created.
     /// </summary>
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
+    
+    /// <summary>
+    /// The date and time the item was updated
+    /// </summary>
+    public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Domains using this language

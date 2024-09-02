@@ -10,6 +10,7 @@ public class ContentMapper : Profile
             .ForMember(x => x.ContentType, opt => opt.Ignore())
             .ForMember(x => x.Children, opt => opt.Ignore())
             .ForMember(x => x.Parent, opt => opt.Ignore())
+            .ForMember(x => x.Audits, opt => opt.Ignore())
             .ForMember(x => x.PropertyData, opt => opt.Ignore())
             .ForMember(x => x.LastUpdatedBy, opt => opt.Ignore())
             .ForMember(x => x.Language, opt => opt.Ignore())
