@@ -2,5 +2,5 @@
 
 public class TextContentSettingsModel
 {
-    public int? MaxLength { get; set; }
+    public long? MaxLength { get; set; }
 }

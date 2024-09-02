@@ -3,7 +3,7 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenTextBox @ref="TextBoxReference" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
-               ValueExpression="@(() => Value)" class="form-control" @attributes="GetAdditionalAttributes()"/>
+               ValueExpression="@(() => Value)" class="form-control" @attributes="GetAdditionalAttributes()" />
 
 @if (SettingsModel.MaxLength != null)
 {
@@ -40,7 +40,7 @@
 
         if (SettingsModel.MaxLength.HasValue)
         {
-            attributes.Add(new KeyValuePair<string, object?>("MaxLength", SettingsModel.MaxLength.Value));
+            attributes.Add(new KeyValuePair<string, object?>("MaxLength", SettingsModel.MaxLength));
         }
 
         return attributes;

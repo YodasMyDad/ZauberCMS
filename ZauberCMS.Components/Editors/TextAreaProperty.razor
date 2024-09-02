@@ -39,7 +39,7 @@
 
         if (SettingsModel.MaxLength.HasValue)
         {
-            attributes.Add(new KeyValuePair<string, object?>("MaxLength", SettingsModel.MaxLength.Value));
+            attributes.Add(new KeyValuePair<string, object?>("MaxLength", SettingsModel.MaxLength));
         }
 
         return attributes;
