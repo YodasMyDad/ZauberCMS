@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using ZauberCMS.Core.Audit.Commands;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
@@ -20,6 +21,7 @@ public class SaveContentHandler(
     IServiceProvider serviceProvider,
     IMapper mapper,
     IOptions<ZauberSettings> settings,
+    IMediator mediator,
     ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider,
     UserManager<User> userManager)
@@ -121,12 +123,12 @@ public class SaveContentHandler(
             
             
             cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
-            //TODO - Save Audit
-            /*await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
+            await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
             {
-                Username = username,
-                Description = $"User - {user?.UserName} Saved"
-            }});*/
+                UserId = user.Id,
+                ContentId = content.Id,
+                Description = "Saved"
+            }}, cancellationToken);
             
             return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
         }

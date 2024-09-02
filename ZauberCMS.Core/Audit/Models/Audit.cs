@@ -19,3 +19,11 @@ public class Audit
     public Guid? MediaId { get; set; }
     public Media.Models.Media? Media { get; set; }
 }
+
+public enum AuditAction
+{
+    Create,
+    Update,
+    Delete,
+    Misc
+}
