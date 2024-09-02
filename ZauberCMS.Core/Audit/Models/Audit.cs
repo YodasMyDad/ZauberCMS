@@ -28,3 +28,13 @@ public enum AuditAction
     Move,
     Misc
 }
+
+public enum AuditType
+{
+    Content,
+    ContentType,
+    Domain,
+    Media,
+    Language,
+    LanguageDictionary
+}
