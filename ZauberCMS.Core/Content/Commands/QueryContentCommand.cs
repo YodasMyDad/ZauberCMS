@@ -37,6 +37,11 @@ public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedLi
     public bool IncludeUnpublished { get; set; }
     
     /// <summary>
+    /// Return only unpublished content
+    /// </summary>
+    public bool OnlyUnpublished { get; set; }
+    
+    /// <summary>
     /// Where clause builder
     /// </summary>
     public Expression<Func<Models.Content, bool>>? WhereClause { get; set; }
@@ -73,6 +78,11 @@ public class BaseQueryContentCommand
     /// Show items that have a parent id matching this
     /// </summary>
     public Guid? ParentId { get; set; }
+    
+    /// <summary>
+    /// The Guid of the last edited by user
+    /// </summary>
+    public Guid? LastEditedBy { get; set; }
     
     /// <summary>
     /// How to order the content

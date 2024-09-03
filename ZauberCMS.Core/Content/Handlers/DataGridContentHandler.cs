@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Radzen;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
@@ -42,6 +43,11 @@ public class DataGridContentHandler(IServiceProvider serviceProvider) : IRequest
             {
                 request.ContentTypeId = contentType.Id;
             }
+        }
+
+        if (request.LastEditedBy != null)
+        {
+            query = query.Where(x => x.LastUpdatedById == request.LastEditedBy.Value);
         }
         
         if(request.ContentTypeId != null)

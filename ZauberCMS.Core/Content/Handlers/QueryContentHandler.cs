@@ -51,6 +51,12 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
                 query = query.Where(x => x.Published);
             }
             
+            if (request.OnlyUnpublished)
+            {
+                query = query.Include(x => x.UnpublishedContent);
+                query = query.Where(x => x.UnpublishedContent != null);
+            }
+            
             if (request.IncludeChildren)
             {
                 query = request.IncludeUnpublished ? query.Include(x => x.Children) 

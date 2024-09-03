@@ -1,51 +1,113 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Membership.Models
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
 
+<div class="grid grid-cols-2 gap-4">
+    
+    @if (UnpublishedContent.Count > 0)
+    {
+        <div class="p-2 border border-gray-500 col-span-2">
+            <div class="font-semibold flex items-center text-lg">
+                <div class="flex rounded-full bg-cyan-800 w-8 h-8 justify-center items-center text-white mr-2">@UnpublishedContent.Count</div>
+                <div>Unpublished Content</div>
+            </div>
+            <div class="text-sm mt-1">The amount of unpublished content waiting to be published</div>
+        </div>
+    }
 
-<RadzenDataGrid AllowFiltering="true"
-                FilterPopupRenderMode="PopupRenderMode.Initial"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                AllowPaging="true"
-                PageSize="@AmountPerPage"
-                AllowSorting="true"
-                LoadData="@LoadData"
-                IsLoading="@IsLoading"
-                Count="@Count"
-                Data="@Contents"
-                SelectionMode="DataGridSelectionMode.Single"
-                RowSelect="@((Content value) => OnRowSelect(value))"
-                PagerHorizontalAlign="HorizontalAlign.Center">
-    @*@bind-Value="@SelectedContent"*@
-    <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
-            <Template Context="data">
-                @data.DateUpdated.Humanize()
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="LastUpdatedBy" Title="Updated By">
-            <Template Context="data">
-                <RadzenGravatar Email="@data.LastUpdatedBy?.Email" Style="width: 25px; height: 25px;"/>
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+    <div>
+        <div class="p-2 font-semibold">
+            Recent Activity
+            <div class="text-sm font-normal">Shows all users recent activity</div>
+        </div>
+        <div class="p-2">
+            <RadzenDataGrid AllowFiltering="true"
+                            FilterPopupRenderMode="PopupRenderMode.Initial"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            AllowPaging="true"
+                            PageSize="@AmountPerPage"
+                            AllowSorting="true"
+                            LoadData="@LoadAllUserData"
+                            IsLoading="@IsLoading"
+                            Count="@AllUserCount"
+                            Data="@AllUserContents"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            RowSelect="@((Content value) => OnRowSelect(value))"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                @*@bind-Value="@SelectedContent"*@
+                <Columns>
+                    <RadzenDataGridColumn Property="Name" Title="Name"/>
+                    <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                        <Template Context="data">
+                            @data.DateUpdated.Humanize()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="LastUpdatedBy" Title="Updated By">
+                        <Template Context="data">
+                            <RadzenGravatar Email="@data.LastUpdatedBy?.Email" Style="width: 25px; height: 25px;"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+
+    <div>
+        <div class="p-2 font-semibold">
+            Your Activity
+            <div class="text-sm font-normal">Shows your recent activity</div>
+        </div>
+        <div class="p-2">
+            <RadzenDataGrid AllowFiltering="true"
+                            FilterPopupRenderMode="PopupRenderMode.Initial"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            AllowPaging="true"
+                            PageSize="@AmountPerPage"
+                            AllowSorting="true"
+                            LoadData="@LoadYourUserData"
+                            IsLoading="@IsLoading"
+                            Count="@YourUserCount"
+                            Data="@YourUserContents"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            RowSelect="@((Content value) => OnRowSelect(value))"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                @*@bind-Value="@SelectedContent"*@
+                <Columns>
+                    <RadzenDataGridColumn Property="Name" Title="Name"/>
+                    <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                        <Template Context="data">
+                            @data.DateUpdated.Humanize()
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+</div>
 
 @code {
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] public UserManager<User> UserManager { get; set; } = default!;
+    
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
-    
+
     public string TabName => "Latest Content";
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.ContentSection;
-    
-    private int Count { get; set; } 
+    private User? CurrentUser { get; set; }
+    private int AllUserCount { get; set; }
+    private int YourUserCount { get; set; }
+    private List<Guid> UnpublishedContent { get; set; } = [];
     private bool IsLoading { get; set; } = false;
-    private IEnumerable<Content> Contents { get; set; } = [];
+    private IEnumerable<Content> AllUserContents { get; set; } = [];
+    private IEnumerable<Content> YourUserContents { get; set; } = [];
 
-    async Task LoadData(LoadDataArgs args)
+    async Task LoadAllUserData(LoadDataArgs args)
     {
         IsLoading = true;
 
@@ -57,7 +119,7 @@
         {
             command.ParentId = ParentId;
         }
-        
+
         if (args.Top != null)
         {
             command.Take = args.Top.Value;
@@ -81,15 +143,64 @@
         }
 
         var result = await Mediator.Send(command);
-        Count = result.Count;
-        Contents = result.Items;
+        AllUserCount = result.Count;
+        AllUserContents = result.Items;
+
+        IsLoading = false;
+    }
+    
+    async Task LoadYourUserData(LoadDataArgs args)
+    {
+        IsLoading = true;
+
+        await Task.Yield();
+
+        var command = new DataGridContentCommand();
+
+        if (ParentId != null)
+        {
+            command.ParentId = ParentId;
+        }
+
+        if (args.Top != null)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            command.Filter = args.Filter;
+        }
+
+        if (!string.IsNullOrEmpty(args.OrderBy))
+        {
+            // Sort via the OrderBy method
+            command.Order = args.OrderBy;
+        }
+
+        command.LastEditedBy = CurrentUser?.Id;
+
+        var result = await Mediator.Send(command);
+        YourUserCount = result.Count;
+        YourUserContents = result.Items;
 
         IsLoading = false;
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData(new LoadDataArgs {Top = AmountPerPage});
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CurrentUser = await UserManager.GetUserAsync(authenticationState.User);
+        await LoadAllUserData(new LoadDataArgs { Top = AmountPerPage });
+        await LoadYourUserData(new LoadDataArgs { Top = AmountPerPage });
+        var items = await Mediator.Send(new QueryContentCommand { AmountPerPage = 100, OnlyUnpublished = true });
+        UnpublishedContent = items.Items.Select(x => x.Id).ToList();
     }
 
     private void OnRowSelect(object value)
