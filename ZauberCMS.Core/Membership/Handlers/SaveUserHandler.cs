@@ -14,6 +14,7 @@ namespace ZauberCMS.Core.Membership.Handlers;
 
 public class SaveUserHandler(
     IServiceProvider serviceProvider,
+    IMediator mediator,
     IMapper mapper,
     AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveUserCommand, HandlerResult<User>>
@@ -23,8 +24,10 @@ public class SaveUserHandler(
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var loggedInUser = await userManager.GetUserAsync(authState.User);
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
         var refreshCurrentUser = false;
+        var isUpdate = false;
         var handlerResult = new HandlerResult<User>();
         if (request.User != null)
         {
@@ -45,6 +48,7 @@ public class SaveUserHandler(
             }
             else
             {
+                isUpdate = true;
                 if (user.UserName != request.User.UserName)
                 {
                     var result = await userManager.SetUserNameAsync(user, request.User.UserName);
@@ -85,6 +89,8 @@ public class SaveUserHandler(
                     handlerResult.Messages.AddRange(updateResult.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                     return handlerResult;
                 }
+                
+                await loggedInUser.AddAudit(request.User, request.User.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
                 
                 // Finally update property data
                 handlerResult = await UpdateUserPropertyValues(dbContext, request.User, handlerResult, cancellationToken);

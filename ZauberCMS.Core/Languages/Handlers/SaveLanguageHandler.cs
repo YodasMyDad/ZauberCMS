@@ -1,22 +1,30 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
+using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Languages.Handlers;
 
-public class SaveLanguageHandler(IServiceProvider serviceProvider)
+public class SaveLanguageHandler(
+    IServiceProvider serviceProvider,
+    IMediator mediator,
+    AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveLanguageCommand, HandlerResult<Language>>
 {
     public async Task<HandlerResult<Language>> Handle(SaveLanguageCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Language>();
 
         if (request.CultureInfo != null)
@@ -61,6 +69,9 @@ public class SaveLanguageHandler(IServiceProvider serviceProvider)
                 language.DateUpdated = DateTime.UtcNow;
             }
 
+            await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
+                isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator,
+                cancellationToken);
             return await dbContext.SaveChangesAndLog(language, handlerResult, cancellationToken);
         }
 

@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using ZauberCMS.Core.Audit.Commands;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
@@ -23,8 +22,7 @@ public class SaveContentHandler(
     IOptions<ZauberSettings> settings,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider,
-    UserManager<User> userManager)
+    AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveContentCommand, HandlerResult<Models.Content>>
 {
     private readonly SlugHelper _slugHelper = new();
@@ -34,6 +32,7 @@ public class SaveContentHandler(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var isUpdate = true;
@@ -53,7 +52,7 @@ public class SaveContentHandler(
                 // ReSharper disable once EntityFramework.NPlusOne.IncompleteDataUsage
                 mapper.Map(request.Content, unpublishedContent.JsonContent);
                 
-                // Slight hack. Because we mapped it removed the property data, also need to set the 
+                // Slight hack. Because we mapped, it removed the property data
                 // ReSharper disable once EntityFramework.NPlusOne.IncompleteDataUsage
                 unpublishedContent.JsonContent.PropertyData = request.Content.PropertyData;
                 // ReSharper disable once EntityFramework.NPlusOne.IncompleteDataUsage
@@ -123,13 +122,7 @@ public class SaveContentHandler(
             
             
             cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
-            await mediator.Send(new SaveAuditCommand{ Audit = new Audit.Models.Audit
-            {
-                UserId = user.Id,
-                ContentId = content.Id,
-                Description = "Saved"
-            }}, cancellationToken);
-            
+            await user.AddAudit(content, content.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
             return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
         }
 

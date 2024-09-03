@@ -9,7 +9,7 @@ public class Domain
     /// The ID
     /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
-    
+
     /// <summary>
     /// The content ID
     /// </summary>

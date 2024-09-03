@@ -1,10 +1,12 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -13,6 +15,7 @@ namespace ZauberCMS.Core.Content.Handlers;
 
 public class DeleteContentHandler(IServiceProvider serviceProvider, 
     AppState appState, 
+    IMediator mediator,
     AuthenticationStateProvider authenticationStateProvider,
     ICacheService cacheService) : IRequestHandler<DeleteContentCommand, HandlerResult<Models.Content>>
 {
@@ -20,7 +23,9 @@ public class DeleteContentHandler(IServiceProvider serviceProvider,
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Models.Content>();
         
         var content = dbContext.Contents.FirstOrDefault(x => x.Id == request.ContentId);
@@ -49,6 +54,7 @@ public class DeleteContentHandler(IServiceProvider serviceProvider,
             }
 
             content.PropertyData.Clear();
+            await user.AddAudit(content, content.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
             dbContext.Contents.Remove(content);
             cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
             await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);

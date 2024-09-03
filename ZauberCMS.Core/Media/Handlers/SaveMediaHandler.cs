@@ -18,8 +18,8 @@ public class SaveMediaHandler(ProviderService providerService,
     IServiceProvider serviceProvider, 
     IMapper mapper, 
     AppState appState, 
-    AuthenticationStateProvider authenticationStateProvider,
-    UserManager<User> userManager)
+    IMediator mediator,
+    AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveMediaCommand, HandlerResult<Models.Media>>
 {
     public async Task<HandlerResult<Models.Media>> Handle(SaveMediaCommand request, CancellationToken cancellationToken)
@@ -29,6 +29,7 @@ public class SaveMediaHandler(ProviderService providerService,
         
         var result = new HandlerResult<Models.Media>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var user = await userManager.GetUserAsync(authState.User);
         
         // If we are either creating a new file or over writing the current one
@@ -69,12 +70,14 @@ public class SaveMediaHandler(ProviderService providerService,
                     result.AddMessage("Url cannot be empty", ResultMessageType.Error);
                     return result;
                 }
+                await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Update, mediator, cancellationToken);
                 result = await dbContext.SaveChangesAndLog(result.Entity, result, cancellationToken);
                 if (dbMedia != null) await appState.NotifyMediaSaved(dbMedia, authState.User.Identity?.Name!);
             }
             else
             {
                 dbContext.Medias.Add(result.Entity);
+                await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Create, mediator, cancellationToken);
                 result = await dbContext.SaveChangesAndLog(result.Entity, result, cancellationToken);
                 await appState.NotifyMediaSaved(result.Entity, authState.User.Identity?.Name!);
             }   

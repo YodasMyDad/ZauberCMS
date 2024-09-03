@@ -755,23 +755,17 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
-                    b.HasOne("ZauberCMS.Core.Content.Models.Content", "Content")
+                    b.HasOne("ZauberCMS.Core.Content.Models.Content", null)
                         .WithMany("Audits")
                         .HasForeignKey("ContentId");
 
-                    b.HasOne("ZauberCMS.Core.Media.Models.Media", "Media")
+                    b.HasOne("ZauberCMS.Core.Media.Models.Media", null)
                         .WithMany("Audits")
                         .HasForeignKey("MediaId");
 
-                    b.HasOne("ZauberCMS.Core.Membership.Models.User", "User")
+                    b.HasOne("ZauberCMS.Core.Membership.Models.User", null)
                         .WithMany("Audits")
                         .HasForeignKey("UserId");
-
-                    b.Navigation("Content");
-
-                    b.Navigation("Media");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Content", b =>
