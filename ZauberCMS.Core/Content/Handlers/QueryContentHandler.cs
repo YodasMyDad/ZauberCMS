@@ -46,22 +46,20 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
         }
         else
         {
-            if (!request.IncludeUnpublished)
-            {
-                query = query.Where(x => x.Published);
-            }
-            
             if (request.OnlyUnpublished)
             {
                 query = query.Include(x => x.UnpublishedContent);
-                query = query.Where(x => x.UnpublishedContent != null);
+                query = query.Where(x => x.UnpublishedContentId != null || x.Published == false);
+            }
+            else
+            {
+                query = !request.IncludeUnpublished ? query.Where(x => x.Published) : query.Include(x => x.UnpublishedContent);       
             }
             
             if (request.IncludeChildren)
             {
-                query = request.IncludeUnpublished ? query.Include(x => x.Children) 
+                query = request.IncludeUnpublished ? query.Include(x => x.Children).ThenInclude(x => x.UnpublishedContent) 
                     : query.Include(x => x.Children.Where(c => c.Published));
-                query = query.AsSplitQuery();
             }
             
             if (request.AsNoTracking)

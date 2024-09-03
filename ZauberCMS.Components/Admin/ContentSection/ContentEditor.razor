@@ -15,8 +15,12 @@
 
         <RadzenRow class="rz-pb-2">
             <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content!.Name" ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.2rem">
                 <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last Updated: @Content.DateUpdated.Humanize()</RadzenText>
+                @if (Content.UnpublishedContent != null)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0; color: #e85d5d">(Contains Unpublished Changes)</RadzenText>
+                }                
             </RadzenStack>
         </RadzenRow>
 

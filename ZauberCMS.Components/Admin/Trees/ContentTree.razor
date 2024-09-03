@@ -1,5 +1,4 @@
-﻿@using System.Collections.Concurrent
-@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Shared
 @implements IDisposable
 
@@ -89,19 +88,25 @@
             var treeItem = context as RadzenTreeItem;
             if (treeItem?.Value is Content content)
             {
+                string opacity;
+                if (content.UnpublishedContent != null)
+                {
+                    opacity = "0.6";
+                }
+                else
+                {
+                    opacity = content.Published ? "1" : "0.6";
+                }
                 if (!string.IsNullOrWhiteSpace(content.ContentType?.Icon))
                 {
                     builder.OpenComponent<RadzenIcon>(0);
                     builder.AddAttribute(1, "Icon", content.ContentType.Icon);
-                    // Also need to think about unsaved changes and how to show to user
-                    var opacity = content.Published ? "1" : "0.6";
                     builder.AddAttribute(2, "style", $"font-weight: 300; color: dimgray; opacity: {opacity};");
                     builder.CloseComponent();
                 }
-
-                var textOpacity = content.Published ? "1" : "0.6";
+                
                 builder.OpenElement(3, "span"); // using span as the container for the text
-                builder.AddAttribute(4, "style", $"opacity: {textOpacity};"); // applying the opacity to the span
+                builder.AddAttribute(4, "style", $"opacity: {opacity};"); // applying the opacity to the span
                 builder.AddContent(5, content.Name); // the text
                 builder.CloseElement();
             }
