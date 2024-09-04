@@ -1,0 +1,17 @@
+﻿@using ZauberCMS.Core.Content.Commands
+@foreach (var content in UnpublishedContent)
+{
+    <p>
+        <a href="/admin/updatecontent/@content.Id">@content.Name</a>
+    </p>
+}
+
+@code {
+    private IEnumerable<Content> UnpublishedContent { get; set; } = [];
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var items = await Mediator.Send(new QueryContentCommand { AmountPerPage = 100, OnlyUnpublished = true });
+        UnpublishedContent = items.Items;
+    }
+}

@@ -1,4 +1,5 @@
-﻿@using System.Text.Json
+﻿@using System.Data
+@using System.Text.Json
 @using AutoMapper
 @using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Core.Content.Commands
@@ -124,6 +125,10 @@
             </Tabs>
         </RadzenTabs>
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+            @if (Content!.UnpublishedContentId != null)
+            {
+                <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter" Text="Clear Changes"/>
+            }
             @if (Content!.Published)
             {
                 <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
@@ -182,17 +187,7 @@ else
             // If no content is passed in
             if (ContentId != null)
             {
-                Content = await Mediator.Send(new GetContentCommand { Id = ContentId.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true});
-                ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
-
-                if (Content.UnpublishedContent != null)
-                {
-                    // Replace the Content with the Json one
-                    Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
-                    Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
-                }
-                
-                SyncProperties(Content, ContentType);
+                await RefreshContent();
             }
             else if (ParentId != null)
             {
@@ -218,6 +213,21 @@ else
         }
     }
 
+    private async Task RefreshContent()
+    {
+        Content = await Mediator.Send(new GetContentCommand { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true});
+        ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
+
+        if (Content.UnpublishedContent != null)
+        {
+            // Replace the Content with the Json one
+            Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
+            Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
+        }
+                
+        SyncProperties(Content, ContentType);
+    }
+    
     private void TabChange(int i)
     {
         SelectedTabIndex = i;
@@ -293,6 +303,20 @@ else
         SyncProperties(Content!, ContentType);
     }
 
+    private async Task ClearUnpublishedChanges()
+    {
+        var removeUnpublishedContent = await Mediator.Send(new ClearUnpublishedContentCommand { ContentId = Content!.Id });
+        if (removeUnpublishedContent.Success)
+        {
+            await RefreshContent();
+            await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = removeUnpublishedContent.Messages.MessagesAsString(), Duration = 4000 });
+        }
+    }
+    
     private async Task Save(RadzenSplitButtonItem? item, bool unpublish)
     {
         if (await ValidateService.CanSave(Content!))
@@ -324,7 +348,7 @@ else
 
                 saveContentCommand.Content = Content;
                 var result = await Mediator.Send(saveContentCommand);
-                NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = "", Duration = 4000 });
+                NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
                 
                 if (ParentId != null)
                 {
@@ -337,6 +361,7 @@ else
                 }
                 
                 await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
+                await RefreshContent();
             }
         }
     }

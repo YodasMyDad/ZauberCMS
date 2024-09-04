@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
+@using ZauberCMS.Components.Admin.ContentSection.Dialogs
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Membership.Models
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
@@ -10,7 +11,7 @@
     @if (UnpublishedContent.Count > 0)
     {
         <div class="p-2 border border-gray-500 col-span-2">
-            <div class="font-semibold flex items-center text-lg">
+            <div class="font-semibold flex items-center text-lg cursor-pointer" @onclick="ShowUnpublishedContent">
                 <div class="flex rounded-full bg-cyan-800 w-8 h-8 justify-center items-center text-white mr-2">@UnpublishedContent.Count</div>
                 <div>Unpublished Content</div>
             </div>
@@ -91,6 +92,7 @@
 @code {
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] public UserManager<User> UserManager { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = default!;
     
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public int AmountPerPage { get; set; } = 20;
@@ -201,6 +203,12 @@
         await LoadYourUserData(new LoadDataArgs { Top = AmountPerPage });
         var items = await Mediator.Send(new QueryContentCommand { AmountPerPage = 100, OnlyUnpublished = true });
         UnpublishedContent = items.Items.Select(x => x.Id).ToList();
+    }
+
+    private async Task ShowUnpublishedContent()
+    {
+        var unpubContent = DialogService.OpenSidePanel<UnpublishedContentList>("Unpublished Content");
+        var unpubContentResult = await unpubContent.Result;
     }
 
     private void OnRowSelect(object value)
