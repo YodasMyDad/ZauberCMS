@@ -1,0 +1,63 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@using ZauberCMS.Components.Editors.Dialogs
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<div style="margin-top: -25px;">
+    @if (SettingsModel.ShowInline)
+    {
+    <div class="p-2 rz-background-color-primary-lighter rounded" style="@(SettingsModel.BackgroundColor)">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem">
+            <h6 style="margin: 0">@SettingsModel.Title</h6>
+            <RadzenIcon Icon="@SettingsModel.Icon" Style="line-height: 24px; height: 24px; font-size: 24px; color: #403f3f;" />
+        </RadzenStack>
+        @((MarkupString)(SettingsModel.Note ?? string.Empty))
+    </div>
+    }
+    else
+    {
+    <div class="p-2 rz-background-color-primary-lighter rounded cursor-pointer" style="@(SettingsModel.BackgroundColor)" @onclick="OpenNotes">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem">
+            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding: 0;">@SettingsModel.Title</RadzenText>
+            <RadzenIcon Icon="@SettingsModel.Icon" Style="line-height: 22px; height: 22px; font-size: 22px; color: #403f3f;" />
+        </RadzenStack>
+    </div>
+    }
+</div>
+
+@code {
+    public string Name { get; set; } = "Editor Notes";
+    public string Alias { get; set; } = "ZauberCMS.EditorNotes";
+    public string Icon { get; set; } = "format_align_justify";
+    public string Description { get; set; } = "Add useful notes for editors either inline or in an dialog panel";
+    public Type? SettingsComponent { get; set; } = typeof(EditorNotePropertySettings);
+    
+    [Inject] public IModalService DialogService { get; set; } = default!;
+    
+    [Parameter] public string? Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string? Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
+    
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    
+    private EditorNotesSettingsModel SettingsModel { get; set; } = new();
+    
+    protected override void OnInitialized()
+    {
+        SettingsModel = Settings.FromJson<EditorNotesSettingsModel>();
+        if (!SettingsModel.BackgroundColor.IsNullOrWhiteSpace())
+        {
+            SettingsModel.BackgroundColor = $"background-color: {SettingsModel.BackgroundColor} !important";
+        }
+    }
+
+    private async Task OpenNotes()
+    {
+        var dialog = DialogService.OpenSidePanel<EditorNotesDialog>(SettingsModel.Title ?? string.Empty, new Dictionary<string, object>
+        {
+            {"Model", SettingsModel}
+        });
+        var result = await dialog.Result;
+    }
+}

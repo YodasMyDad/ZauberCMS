@@ -1,0 +1,9 @@
+﻿@using ZauberCMS.Components.Editors.Models
+
+<div>
+    @((MarkupString)(Model.Note ?? string.Empty))
+</div>
+
+@code {
+    [Parameter] public EditorNotesSettingsModel Model { get; set; } = new();
+}

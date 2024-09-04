@@ -1,0 +1,97 @@
+﻿@using ZauberCMS.Components.Editors.Dialogs
+@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<EditorNotesSettingsModel>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Title" Description="Title first shown to the user"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenTextBox @bind-Value="@Settings.Title" Style="width: 100%;" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Note" Description="The main note you want the editor to know"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenHtmlEditor @bind-Value="@Settings.Note" style="height: 300px;" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Background Color" Description="Optional background color override"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenColorPicker @bind-Value="@Settings.BackgroundColor" ShowHSV="true" ShowRGBA="true" />
+        @if (!Settings.BackgroundColor.IsNullOrWhiteSpace())
+        {
+            <div>
+                <RadzenButton Variant="Variant.Text" 
+                              Size="ButtonSize.ExtraSmall"
+                              Click=@(ClearColor) Text="Clear"
+                              ButtonStyle="ButtonStyle.Primary" />
+            </div>
+        }
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Icon" Description="Optional icon override"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
+            <RadzenIcon Icon="@(Settings.Icon)" style="font-weight: 300; color: dimgray;"/>
+        </RadzenStack>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Show Inline" Description="Notes open in a side dialog by default, change the note to be inline within the page"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.ShowInline" />
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Close" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Inject] public IModalService DialogService { get; set; } = default!;
+    
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    
+    public EditorNotesSettingsModel Settings { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private void ClearColor()
+    {
+        Settings.BackgroundColor = null;
+    }
+    
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+    
+    private async Task SelectIcon()
+    {
+        var dialog = DialogService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
+        var result = await dialog.Result;
+        if (result is { Confirmed: true, Data: string icon })
+        {
+            Settings.Icon = icon;
+        }
+    }
+}
