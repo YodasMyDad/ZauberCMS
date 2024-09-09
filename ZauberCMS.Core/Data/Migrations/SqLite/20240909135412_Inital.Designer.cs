@@ -11,8 +11,8 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqLite
 {
     [DbContext(typeof(SqliteZauberDbContext))]
-    [Migration("20240903093653_SimplifyAudit")]
-    partial class SimplifyAudit
+    [Migration("20240909135412_Inital")]
+    partial class Inital
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

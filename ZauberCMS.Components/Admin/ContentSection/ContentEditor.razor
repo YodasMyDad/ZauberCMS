@@ -1,5 +1,4 @@
-﻿@using System.Data
-@using System.Text.Json
+﻿@using System.Text.Json
 @using AutoMapper
 @using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Core.Content.Commands
@@ -215,17 +214,20 @@ else
 
     private async Task RefreshContent()
     {
-        Content = await Mediator.Send(new GetContentCommand { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true});
-        ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
-
-        if (Content.UnpublishedContent != null)
+        if (ContentId != null)
         {
-            // Replace the Content with the Json one
-            Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
-            Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
-        }
+            Content = await Mediator.Send(new GetContentCommand { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true});
+            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
+
+            if (Content.UnpublishedContent != null)
+            {
+                // Replace the Content with the Json one
+                Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
+                Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
+            }
                 
-        SyncProperties(Content, ContentType);
+            SyncProperties(Content, ContentType);   
+        }
     }
     
     private void TabChange(int i)

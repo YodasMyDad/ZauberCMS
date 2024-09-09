@@ -12,7 +12,7 @@
     </div>
 }
 
-<RadzenGoogleMap ApiKey="@ApiKey" MapId="@MapId" @ref="Map" 
+<RadzenGoogleMap ApiKey="@ApiKey" MapId="@(MapId.ToString())" @ref="Map" 
                  Style="height: 400px" 
                  Options=@(new Dictionary<string, object> { { "disableDoubleClickZoom", true } })
                  Zoom="@SettingsModel.ZoomLevel" 

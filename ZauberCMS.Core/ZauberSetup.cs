@@ -99,6 +99,9 @@ public static class ZauberSetup
 
         app.UseCustomCulture();
         
+        // TODO - Enable when .Net 9 comes out 
+        //app.MapStaticAssets();
+        
         app.MapRazorComponents<T>()
             .AddInteractiveServerRenderMode()
             .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);

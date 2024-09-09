@@ -16,7 +16,7 @@ public class ZauberDbContext(DbContextOptions options, IConfiguration configurat
     {
         var section = configuration.GetSection("Zauber");
         var connectionString = section.GetValue<string>("ConnectionString");
-        options.UseSqlServer(connectionString);
+        options.UseSqlServer(connectionString, builder => builder.MigrationsHistoryTable(tableName:"ZauberMigrations"));
         #if DEBUG
                 options.EnableSensitiveDataLogging();
         #endif

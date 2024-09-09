@@ -12,8 +12,8 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqlServer
 {
     [DbContext(typeof(ZauberDbContext))]
-    [Migration("20240903093707_SimplifyAudit")]
-    partial class SimplifyAudit
+    [Migration("20240909135401_Inital")]
+    partial class Inital
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
