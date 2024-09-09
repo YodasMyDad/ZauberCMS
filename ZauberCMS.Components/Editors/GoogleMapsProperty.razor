@@ -1,0 +1,79 @@
+﻿@using System.Text.Json
+@using Microsoft.Extensions.Options
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@using ZauberCMS.Core.Settings
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+@if (Location is { Lat: not 0, Lng: not 0 })
+{
+    <div>
+        <RadzenText TextStyle="TextStyle.Subtitle1">Latitude: @Location.Lat, Longitude: @Location.Lng</RadzenText>
+    </div>
+}
+
+<RadzenGoogleMap ApiKey="@ApiKey" MapId="@MapId" @ref="Map" 
+                 Style="height: 400px" 
+                 Options=@(new Dictionary<string, object> { { "disableDoubleClickZoom", true } })
+                 Zoom="@SettingsModel.ZoomLevel" 
+                 Center="@(Location)" 
+                 MapClick="@OnMapClick">
+    <Markers>
+            <RadzenGoogleMapMarker Title="" Position="@(Location)" />   
+    </Markers>
+</RadzenGoogleMap>
+
+@code {
+    public string Name { get; set; } = "Google Map Picker";
+    public string Alias { get; set; } = "ZauberCMS.GoogleMapPicker";
+    public string Icon { get; set; } = "add_location";
+    public string Description { get; set; } = "Pick and save a location with a Google map";
+    public Type? SettingsComponent { get; set; } = typeof(GoogleMapsPropertySettings);
+
+    [Inject] public IModalService DialogService { get; set; } = default!;
+    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
+    [Inject] IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
+
+    [Parameter] public string? Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string? Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
+
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+
+    private GoogleMapsSettingsModel SettingsModel { get; set; } = new();
+    private GoogleMapPosition Location { get; set; } = new();
+    private RadzenGoogleMap? Map { get; set; }
+    private Guid MapId { get; set; }
+    private string? ApiKey { get; set; }
+    
+    protected override void OnParametersSet()
+    {
+        MapId = Guid.NewGuid();
+        if (ZauberSettings.Value.ApiKeys.TryGetValue("GoogleMaps", out var apiKey))
+        {
+            ApiKey = apiKey;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        SettingsModel = Settings.FromJson<GoogleMapsSettingsModel>();
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            Location = JsonSerializer.Deserialize<GoogleMapPosition>(Value) ?? new GoogleMapPosition { Lat = 51.5074, Lng = 0.1278};
+        }
+        else if (SettingsModel is { DefaultLng: not null, DefaultLat: not null })
+        {
+            Location.Lng = SettingsModel.DefaultLng.Value;
+            Location.Lat = SettingsModel.DefaultLat.Value;
+        }
+    }
+    
+    private async Task OnMapClick(GoogleMapClickEventArgs args)
+    {
+        Location.Lat = args.Position.Lat;
+        Location.Lng = args.Position.Lng;
+        await ValueChanged.InvokeAsync(JsonSerializer.Serialize(Location));
+    }
+}

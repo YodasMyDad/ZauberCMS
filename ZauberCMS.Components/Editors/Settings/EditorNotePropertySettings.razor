@@ -74,15 +74,15 @@
     {
         Settings = this.GetPropertySettings();
     }
-
-    private void ClearColor()
-    {
-        Settings.BackgroundColor = null;
-    }
     
     private async Task Save()
     {
         await this.SavePropertySettings(Settings);
+    }
+    
+    private void ClearColor()
+    {
+        Settings.BackgroundColor = null;
     }
     
     private async Task SelectIcon()

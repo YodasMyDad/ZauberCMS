@@ -1,0 +1,52 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<GoogleMapsSettingsModel>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Latitude" Description="Set the default latitude for the map"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.DefaultLat" Style="width: 100%;" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Longitude" Description="Set the default longitude for the map"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.DefaultLng" Style="width: 100%;" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Zoom Level" Description="Set the default zoom level for the map"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.ZoomLevel" Style="width: 100%;" Min="0" Max="20" Step="1"/>
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Close" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Inject] public IModalService DialogService { get; set; } = default!;
+    
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    
+    public GoogleMapsSettingsModel Settings { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+    
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+}
