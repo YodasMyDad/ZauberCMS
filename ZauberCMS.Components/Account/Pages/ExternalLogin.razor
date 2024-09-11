@@ -3,20 +3,16 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
 @using System.Text
-@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.AspNetCore.Http
-@using Microsoft.Extensions.Logging
+@using Microsoft.Extensions.Options
+@using Serilog
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Settings
+@using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Membership
-
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
-@inject IUserStore<IdentityUser> UserStore
-@inject IEmailSender<IdentityUser> EmailSender
-@inject NavigationManager NavigationManager
-@inject IdentityRedirectManager RedirectManager
-@inject ILogger<ExternalLogin> Logger
 
 <PageTitle>Register</PageTitle>
 
@@ -47,6 +43,13 @@
 </div>
 
 @code {
+    [Inject] public IdentityRedirectManager RedirectManager { get; set; } = default!;
+    [Inject] public SignInManager<User> SignInManager { get; set; } = default!;
+    [Inject] public UserManager<User> UserManager { get; set; } = default!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    
     public const string LoginCallbackAction = "LoginCallback";
 
     private string? message;
@@ -109,7 +112,7 @@
 
         if (result.Succeeded)
         {
-            Logger.LogInformation(
+            Log.Information(
                 "{Name} logged in with {LoginProvider} provider.",
                 externalLoginInfo.Principal.Identity?.Name,
                 externalLoginInfo.LoginProvider);
@@ -129,11 +132,11 @@
 
     private async Task OnValidSubmitAsync()
     {
-        var emailStore = GetEmailStore();
+        //var emailStore = GetEmailStore();
         var user = CreateUser();
 
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+        //await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+        //await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
         var result = await UserManager.CreateAsync(user);
         if (result.Succeeded)
@@ -141,7 +144,7 @@
             result = await UserManager.AddLoginAsync(user, externalLoginInfo);
             if (result.Succeeded)
             {
-                Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
+                Log.Information("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
 
                 var userId = await UserManager.GetUserIdAsync(user);
                 var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
@@ -150,7 +153,7 @@
                 var callbackUrl = NavigationManager.GetUriWithQueryParameters(
                     NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
                     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-                await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+                //await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
                 // If account confirmation is required, we need to show the link if we don't have a real email sender
                 if (UserManager.Options.SignIn.RequireConfirmedAccount)
@@ -166,26 +169,17 @@
         message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
     }
 
-    private IdentityUser CreateUser()
+    private User CreateUser()
     {
         try
         {
-            return Activator.CreateInstance<IdentityUser>();
+            return new User();
         }
         catch
         {
             throw new InvalidOperationException($"Can't create an instance of '{nameof(IdentityUser)}'. " +
                 $"Ensure that '{nameof(IdentityUser)}' is not an abstract class and has a parameterless constructor");
         }
-    }
-
-    private IUserEmailStore<IdentityUser> GetEmailStore()
-    {
-        if (!UserManager.SupportsUserEmail)
-        {
-            throw new NotSupportedException("The default UI requires a user store with email support.");
-        }
-        return (IUserEmailStore<IdentityUser>)UserStore;
     }
 
     private sealed class InputModel

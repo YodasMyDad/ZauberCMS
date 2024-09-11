@@ -30,7 +30,10 @@ public class RegisterUserHandler(
             
         var newUser = new User { Id = Guid.NewGuid().NewSequentialGuid(), Email = request.Email, UserName = request.Username };
         var loginResult = new AuthenticationResult();
-        var createResult = await userManager.CreateAsync(newUser, request.Password);
+        var createResult = request.ExternalLogin
+            ? await userManager.CreateAsync(newUser)
+            : await userManager.CreateAsync(newUser, request.Password);
+
         loginResult.Success = createResult.Succeeded;
         if (loginResult.Success)
         {
