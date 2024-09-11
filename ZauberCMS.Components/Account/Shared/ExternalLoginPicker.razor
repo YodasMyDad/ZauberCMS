@@ -14,12 +14,14 @@
         <div>
             <AntiforgeryToken/>
             <input type="hidden" name="ReturnUrl" value="@ReturnUrl"/>
-            <p>
+            <div class="row">
                 @foreach (var provider in externalLogins)
                 {
-                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary w-100" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                    </div>
                 }
-            </p>
+            </div>
         </div>
     </form>
 }
