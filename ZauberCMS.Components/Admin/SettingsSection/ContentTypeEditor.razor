@@ -210,6 +210,10 @@
             ContentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
             ShowDeleteButton = true;
         }
+        else
+        {
+            ContentType = new ContentType();
+        }
 
         if (CopyContentTypeId != null)
         {

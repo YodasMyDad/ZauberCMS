@@ -363,7 +363,7 @@ else
                 }
                 
                 await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
-                await RefreshContent();
+                NavigationManager.NavigateTo($"/admin/updatecontent/{Content.Id}");
             }
         }
     }

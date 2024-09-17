@@ -1,11 +1,38 @@
-﻿@using ZauberCMS.Components.Admin.Dashboards
+﻿@using ZauberCMS.Core.Content.Commands
 <RadzenTabs RenderMode="TabRenderMode.Client">
     <Tabs>
-        <RadzenTabsItem Text="Child Content">
-            <MainContentDashboard @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ContentId" RefreshPage="true" />
-        </RadzenTabsItem>
         <RadzenTabsItem Text="Edit">
             <ContentEditor @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ParentId" ContentId="@ContentId"/>
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="Child Content">
+            <RadzenDataGrid AllowFiltering="true"
+                            FilterPopupRenderMode="PopupRenderMode.Initial"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            AllowPaging="true"
+                            PageSize="@AmountPerPage"
+                            AllowSorting="true"
+                            LoadData="@LoadAllUserData"
+                            IsLoading="@IsLoading"
+                            Count="@AllUserCount"
+                            Data="@AllUserContents"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            RowSelect="@((Content value) => OnRowSelect(value))"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                @*@bind-Value="@SelectedContent"*@
+                <Columns>
+                    <RadzenDataGridColumn Property="Name" Title="Name"/>
+                    <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                        <Template Context="data">
+                            @data.DateUpdated.Humanize()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="LastUpdatedBy" Title="Updated By">
+                        <Template Context="data">
+                            <RadzenGravatar Email="@data.LastUpdatedBy?.Email" Style="width: 25px; height: 25px;"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
         </RadzenTabsItem>
     </Tabs>
 </RadzenTabs>
@@ -16,9 +43,71 @@
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public Content? Content { get; set; }
+    
+    [Parameter] public int AmountPerPage { get; set; } = 20;
+    [Parameter] public bool RefreshPage { get; set; }
 
+    private bool IsLoading { get; set; } = false;
+    private int AllUserCount { get; set; }
+    private IEnumerable<Content> AllUserContents { get; set; } = [];
+    
     private static string GetCompositeKey(Guid? contentId, Guid? parentId)
     {
         return $"{contentId?.ToString() ?? "null"}_{parentId?.ToString() ?? "null"}";
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllUserData(new LoadDataArgs { Top = AmountPerPage });
+    }
+    
+    async Task LoadAllUserData(LoadDataArgs args)
+    {
+        IsLoading = true;
+
+        await Task.Yield();
+
+        var command = new DataGridContentCommand();
+
+        if (ContentId != null)
+        {
+            command.ParentId = ContentId;
+        }
+
+        if (args.Top != null)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            command.Filter = args.Filter;
+        }
+
+        if (!string.IsNullOrEmpty(args.OrderBy))
+        {
+            // Sort via the OrderBy method
+            command.Order = args.OrderBy;
+        }
+
+        var result = await Mediator.Send(command);
+        AllUserCount = result.Count;
+        AllUserContents = result.Items;
+
+        IsLoading = false;
+    }
+    
+    private void OnRowSelect(object value)
+    {
+        if (value is Content selectedRow)
+        {
+            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}", RefreshPage);
+        }
     }
 }
