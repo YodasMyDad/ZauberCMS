@@ -33,7 +33,7 @@
 @if (IsAdmin)
 {
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js"></script>
     <script src="_content/TinyMCE.Blazor/tinymce-blazor.js"></script>
 }
 </body>
@@ -55,17 +55,4 @@
 
     // Set the Admin to InteractiveServer but use SSR for rest of site
     private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
-
-    //[CascadingParameter] public HttpContext? HttpContext { get; set; }
-
-    /*protected override void OnInitialized()
-    {
-        HttpContext?.Response.Cookies.Append(
-            CookieRequestCultureProvider.DefaultCookieName,
-            CookieRequestCultureProvider.MakeCookieValue(
-                new RequestCulture(
-                    CultureInfo.CurrentCulture,
-                    CultureInfo.CurrentUICulture)));
-    }*/
-
 }
