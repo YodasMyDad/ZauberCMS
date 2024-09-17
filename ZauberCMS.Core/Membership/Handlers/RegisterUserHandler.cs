@@ -30,33 +30,22 @@ public class RegisterUserHandler(
             
         var newUser = new User { Id = Guid.NewGuid().NewSequentialGuid(), Email = request.Email, UserName = request.Username };
         var loginResult = new AuthenticationResult();
-        var createResult = request.ExternalLogin
-            ? await userManager.CreateAsync(newUser)
-            : await userManager.CreateAsync(newUser, request.Password);
+        var createResult = 
+            await userManager.CreateAsync(newUser, request.Password);
 
         loginResult.Success = createResult.Succeeded;
         if (loginResult.Success)
         {
-            logger.LogInformation("{RequestUsername} created a new account", request.Username);
-            var startingRoleName = settings.Value.NewUserStartingRole ?? Constants.Roles.StandardRoleName;
-            if (dbContext.Users.Count() == 1 || settings.Value.AdminEmailAddresses.Count != 0 && settings.Value.AdminEmailAddresses.Contains(newUser.Email!))
+            loginResult = await userManager.AssignStartingRoleAsync(
+                                            roleManager,
+                                            logger,
+                                            dbContext,
+                                            settings,
+                                            newUser,
+                                            loginResult);
+
+            if (!loginResult.Success)
             {
-                startingRoleName = Constants.Roles.AdminRoleName;
-            }
-                
-            // Check the starting role exists
-            var roleExist = await roleManager.RoleExistsAsync(startingRoleName);
-            if (!roleExist)
-            {
-                await roleManager.CreateAsync(new Role {Name = startingRoleName});
-            }
-                
-            var addToRoleResult = await userManager.AddToRoleAsync(newUser, startingRoleName);
-            if (addToRoleResult.Succeeded == false)
-            {
-                addToRoleResult.LogErrors();
-                loginResult.AddMessage(addToRoleResult.ToErrorsList(), ResultMessageType.Error);
-                loginResult.Success = false;
                 return loginResult;
             }
 
@@ -80,8 +69,8 @@ public class RegisterUserHandler(
                 {
                     var signInResult = await signInManager.PasswordSignInAsync(user!, request.Password, request.RememberMe, false);
                     loginResult.Success = signInResult.Succeeded;
-                    //await signInManager.SignInAsync(user, request.RememberMe);
-                    if (request.ReturnUrl.IsNullOrWhiteSpace() && startingRoleName == Constants.Roles.AdminRoleName)
+                    
+                    if (request.ReturnUrl.IsNullOrWhiteSpace() && await userManager.IsInRoleAsync(user!, Constants.Roles.AdminRoleName))
                     {
                         request.ReturnUrl = Constants.Urls.AdminBaseUrl;
                     }

@@ -1,9 +1,13 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ZauberCMS.Core.Data;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Settings;
 
@@ -18,12 +22,12 @@ public class ZauberSignInManager(
     IAuthenticationSchemeProvider schemes,
     IUserConfirmation<User> confirmation,
     IOptions<ZauberSettings> options,
+    ZauberDbContext dbContext,
     RoleManager<Role> roleManager)
     : SignInManager<User>(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
 {
     private readonly UserManager<User> _userManager = userManager;
-
-
+    
     public override async Task<SignInResult> ExternalLoginSignInAsync(string loginProvider, string providerKey,
         bool isPersistent, bool bypassTwoFactor)
     {
@@ -43,7 +47,7 @@ public class ZauberSignInManager(
             }
 
             var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-            var username = info.Principal.FindFirstValue(ClaimTypes.Name) ?? email; // Use email as username if name is not available.
+            var username = info.Principal.FindFirstValue(ClaimTypes.Name) ?? GenerateUsernameFromEmail(email);
 
             user = new User
             {
@@ -76,44 +80,62 @@ public class ZauberSignInManager(
             // If the user successfully signed in, add them to a role.
             if (signInResult.Succeeded)
             {
-                // Firstly, check to see if this email address is meant to be a default admin
-                var roleName = options.Value.NewUserStartingRole;
+                var loginResult = await _userManager.AssignStartingRoleAsync(
+                    roleManager,
+                    logger,
+                    dbContext,
+                    options,
+                    user,
+                    new AuthenticationResult{Success = true});
+
+                if (!loginResult.Success)
+                {
+                    logger.LogError("Unable to assign roles for login for user {UserUserName}", user.UserName);
+                    foreach (var message in loginResult.Messages)
+                    {
+                        logger.LogError(message.Message);
+                    }
+                    return SignInResult.Failed;
+                }
                 
-                /*if (_settings.Value.AdminEmailAddresses.Any() && _settings.Value.AdminEmailAddresses.Contains(user.Email!))
-                {
-                    roleName = Constants.Roles.AdminRoleName;
-                }*/
-
-                // Check if the role exists, create if not.
-                if (roleName != null)
-                {
-                    var roleExists = await roleManager.RoleExistsAsync(roleName);
-                    if (!roleExists)
-                    {
-                        await roleManager.CreateAsync(new Role {Name = roleName});
-                    }
-
-                    // Add user to the role.
-                    var result = await _userManager.AddToRoleAsync(user, roleName);
-                    if (!result.Succeeded)
-                    {
-                        // Handle failure to add user to role here.
-                        logger.LogError("Unable to add {UserUserName} to the role {RoleName}", user.UserName, roleName);
-                    }
-                    else
-                    {
-                        // Sign in the user again to update their claims.
-                        await base.SignOutAsync();
-                        signInResult = await base.ExternalLoginSignInAsync(loginProvider, providerKey, isPersistent, bypassTwoFactor);
-                    }
-                }
-                else
-                {
-                    logger.LogError("Unable to add {UserUserName} to a role as the roleName was null", user.UserName);
-                }
+                // Sign in the user again to update their claims.
+                await base.SignOutAsync();
+                signInResult = await base.ExternalLoginSignInAsync(loginProvider, providerKey, isPersistent, bypassTwoFactor);
             }
         }
 
         return signInResult;
+    }
+    
+    private string? GenerateUsernameFromEmail(string? email)
+    {
+        if (!email.IsNullOrWhiteSpace())
+        {
+            var adjectives = new List<string> { "Brave", "Calm", "Eager", "Fancy", "Jolly", "Kind", "Lucky", "Silly", "Witty", "Zany" };
+            var nouns = new List<string> { "Lion", "Tiger", "Bear", "Wolf", "Fox", "Hawk", "Shark", "Whale", "Eagle", "Frog" };
+
+            using var md5 = MD5.Create();
+            var emailBytes = Encoding.UTF8.GetBytes(email);
+            var hashBytes = md5.ComputeHash(emailBytes);
+
+            var adjectiveIndex = BitConverter.ToUInt16(hashBytes, 0) % adjectives.Count;
+            var nounIndex = BitConverter.ToUInt16(hashBytes, 2) % nouns.Count;
+            var number = BitConverter.ToUInt16(hashBytes, 4) % 100;
+
+            var username = adjectives[adjectiveIndex] + nouns[nounIndex] + number.ToString("D2");
+
+            // Optionally check for uniqueness and adjust if necessary
+            var attempt = 1;
+            while (_userManager.Users.Any(u => u.UserName == username))
+            {
+                number = (number + attempt) % 100;
+                username = adjectives[adjectiveIndex] + nouns[nounIndex] + number.ToString("D2");
+                attempt++;
+            }
+
+            return username;
+        }
+
+        return email;
     }
 }
