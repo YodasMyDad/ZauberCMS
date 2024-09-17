@@ -18,6 +18,7 @@ using ZauberCMS.Core.Content.Middleware;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Claims;
@@ -150,6 +151,14 @@ builder.Services.AddRazorComponents()
 
         builder.Services.AddRadzenComponents();
 
+        if (!zauberSettings.RedisConnectionString.IsNullOrWhiteSpace())
+        {
+            builder.Services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = zauberSettings.RedisConnectionString;
+            });   
+        }
+        
         var databaseProvider = zauberSettings.DatabaseProvider;
         if (databaseProvider != null)
         {
@@ -214,7 +223,7 @@ builder.Services.AddRazorComponents()
         builder.Services.AddScoped<ExtensionManager>();
         builder.Services.AddScoped<ProviderService>();
         builder.Services.AddScoped(typeof(ValidateService<>));
-        builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+        builder.Services.AddScoped<ICacheService, DefaultCacheService>();
         builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
         builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
         builder.Services.AddScoped<TreeState>();

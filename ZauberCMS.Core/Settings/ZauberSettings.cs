@@ -5,6 +5,7 @@ public class ZauberSettings
     public string? NewUserStartingRole { get; set; } = "Member";
     public string? DatabaseProvider { get; set; } = "Sqlite";
     public string? ConnectionString { get; set; } = "DataSource=app.db;Cache=Shared";
+    public string? RedisConnectionString { get; set; }
     public string? UploadFolderName { get; set; } = "media";
     public List<string> AdminEmailAddresses { get; set; } = [];
     public long MaxUploadFileSizeInBytes { get; set; } = 5242880;
