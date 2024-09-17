@@ -72,7 +72,7 @@ public class CreateUpdateUserHandler(
         }
         */
         
-        handlerResult = await dbContext.SaveChangesAndLog(user, handlerResult, cancellationToken);
+        handlerResult = await dbContext.SaveChangesAndLog(user, handlerResult, cacheService, cancellationToken);
         if (!handlerResult.Success)
         {
             return handlerResult;

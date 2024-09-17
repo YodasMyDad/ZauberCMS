@@ -5,11 +5,13 @@ using ZauberCMS.Core.Audit.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Audit.Handlers;
 
 public class SaveAuditHandler(
     IServiceProvider serviceProvider,
+    ICacheService cacheService,
     IMapper mapper)
     : IRequestHandler<SaveAuditCommand, HandlerResult<Models.Audit>>
 {
@@ -41,7 +43,7 @@ public class SaveAuditHandler(
                 audit.DateUpdated = DateTime.UtcNow;                
             }
             
-            return await dbContext.SaveChangesAndLog(audit, handlerResult, cancellationToken);
+            return await dbContext.SaveChangesAndLog(audit, handlerResult, cacheService, cancellationToken);
         }
 
         handlerResult.AddMessage("Audit is null", ResultMessageType.Error);

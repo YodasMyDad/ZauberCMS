@@ -66,9 +66,9 @@ public class SaveContentTypeHandler(
                 contentType.DateUpdated = DateTime.UtcNow;
             }
             
-            cacheService.ClearCachedItemsWithPrefix(nameof(ContentType));
+            //cacheService.ClearCachedItemsWithPrefix(nameof(ContentType));
             await user.AddAudit(contentType, contentType.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cancellationToken);
+            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, cancellationToken);
         }
 
         handlerResult.AddMessage("ContentType is null", ResultMessageType.Error);

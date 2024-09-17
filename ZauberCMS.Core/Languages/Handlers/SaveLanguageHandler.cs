@@ -9,12 +9,14 @@ using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Languages.Handlers;
 
 public class SaveLanguageHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
+    ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveLanguageCommand, HandlerResult<Language>>
 {
@@ -72,7 +74,7 @@ public class SaveLanguageHandler(
             await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
                 isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator,
                 cancellationToken);
-            return await dbContext.SaveChangesAndLog(language, handlerResult, cancellationToken);
+            return await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, cancellationToken);
         }
 
         handlerResult.AddMessage("CultureInfo is null", ResultMessageType.Error);

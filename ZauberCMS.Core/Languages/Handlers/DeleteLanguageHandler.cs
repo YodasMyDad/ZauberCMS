@@ -9,12 +9,14 @@ using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Languages.Handlers;
 
 public class DeleteLanguageHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
+    ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteLanguageCommand, HandlerResult<Language?>>
 {
     public async Task<HandlerResult<Language?>> Handle(DeleteLanguageCommand request,
@@ -53,6 +55,6 @@ public class DeleteLanguageHandler(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken))!;
+        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
     }
 }

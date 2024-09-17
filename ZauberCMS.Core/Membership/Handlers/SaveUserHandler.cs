@@ -9,6 +9,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Membership.Handlers;
 
@@ -16,6 +17,7 @@ public class SaveUserHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
     IMapper mapper,
+    ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveUserCommand, HandlerResult<User>>
 {
@@ -182,6 +184,6 @@ public class SaveUserHandler(
             }
         }
         
-        return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
+        return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken);
     }
 }

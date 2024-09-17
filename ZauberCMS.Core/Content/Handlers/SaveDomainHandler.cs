@@ -51,7 +51,7 @@ public class SaveDomainHandler(
 
             cacheService.ClearCachedItemsWithPrefix(nameof(Domain));
             await user.AddAudit(domain, $"Domain ({domain.Url})", isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-            return await dbContext.SaveChangesAndLog(domain, handlerResult, cancellationToken);
+            return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, cancellationToken);
         }
 
         handlerResult.AddMessage("Domain is null", ResultMessageType.Error);

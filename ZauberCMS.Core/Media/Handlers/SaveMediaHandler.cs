@@ -11,6 +11,7 @@ using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Media.Handlers;
 
@@ -19,6 +20,7 @@ public class SaveMediaHandler(ProviderService providerService,
     IMapper mapper, 
     AppState appState, 
     IMediator mediator,
+    ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveMediaCommand, HandlerResult<Models.Media>>
 {
@@ -71,14 +73,14 @@ public class SaveMediaHandler(ProviderService providerService,
                     return result;
                 }
                 await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Update, mediator, cancellationToken);
-                result = await dbContext.SaveChangesAndLog(result.Entity, result, cancellationToken);
+                result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, cancellationToken);
                 if (dbMedia != null) await appState.NotifyMediaSaved(dbMedia, authState.User.Identity?.Name!);
             }
             else
             {
                 dbContext.Medias.Add(result.Entity);
                 await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-                result = await dbContext.SaveChangesAndLog(result.Entity, result, cancellationToken);
+                result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, cancellationToken);
                 await appState.NotifyMediaSaved(result.Entity, authState.User.Identity?.Name!);
             }   
         }

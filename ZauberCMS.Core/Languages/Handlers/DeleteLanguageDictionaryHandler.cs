@@ -9,12 +9,14 @@ using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Languages.Handlers;
 
 public class DeleteLanguageDictionaryHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
+    ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<DeleteLanguageDictionaryCommand, HandlerResult<LanguageDictionary?>>
 {
@@ -41,6 +43,6 @@ public class DeleteLanguageDictionaryHandler(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken))!;
+        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
     }
 }

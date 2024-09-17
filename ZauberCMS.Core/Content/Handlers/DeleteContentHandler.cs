@@ -56,9 +56,9 @@ public class DeleteContentHandler(IServiceProvider serviceProvider,
             content.PropertyData.Clear();
             await user.AddAudit(content, content.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
             dbContext.Contents.Remove(content);
-            cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
+            //cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
             await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
-            return await dbContext.SaveChangesAndLog(content, handlerResult, cancellationToken);
+            return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, cancellationToken);
         }
 
         handlerResult.AddMessage("Unable to delete, as no Content with that id exists", ResultMessageType.Warning);

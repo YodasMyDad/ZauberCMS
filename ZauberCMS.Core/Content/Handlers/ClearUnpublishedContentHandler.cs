@@ -6,10 +6,11 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
-public class ClearUnpublishedContentHandler(IServiceProvider serviceProvider) : IRequestHandler<ClearUnpublishedContentCommand, HandlerResult<UnpublishedContent>>
+public class ClearUnpublishedContentHandler(IServiceProvider serviceProvider, ICacheService cacheService) : IRequestHandler<ClearUnpublishedContentCommand, HandlerResult<UnpublishedContent>>
 {
     public async Task<HandlerResult<UnpublishedContent>> Handle(ClearUnpublishedContentCommand request, CancellationToken cancellationToken)
     { 
@@ -21,7 +22,7 @@ public class ClearUnpublishedContentHandler(IServiceProvider serviceProvider) : 
         {
             var uContent = await dbContext.UnpublishedContent.FirstOrDefaultAsync(x => x.Id == content.UnpublishedContentId, cancellationToken: cancellationToken);
             if (uContent != null) dbContext.UnpublishedContent.Remove(uContent);
-            var result = (await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken))!;
+            var result = (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
             return result;
         }
         return handlerResult;

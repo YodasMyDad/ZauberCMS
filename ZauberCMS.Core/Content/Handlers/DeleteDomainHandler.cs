@@ -9,12 +9,14 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
 public class DeleteDomainHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
+    ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteDomainCommand, HandlerResult<Domain?>>
 {
     public async Task<HandlerResult<Domain?>> Handle(DeleteDomainCommand request, CancellationToken cancellationToken)
@@ -50,6 +52,6 @@ public class DeleteDomainHandler(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken))!;
+        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
     }
 }

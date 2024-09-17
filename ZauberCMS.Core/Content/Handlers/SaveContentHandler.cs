@@ -69,7 +69,7 @@ public class SaveContentHandler(
                     dbContext.UnpublishedContent.Add(unpublishedContent);
                 }
                 
-                return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
+                return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken);
             }
 
             if (request.Content.Url.IsNullOrWhiteSpace())
@@ -123,7 +123,7 @@ public class SaveContentHandler(
             
             cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
             await user.AddAudit(content, content.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-            return await dbContext.SaveChangesAndLog(null, handlerResult, cancellationToken);
+            return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken);
         }
 
         handlerResult.AddMessage("Content is null", ResultMessageType.Error);

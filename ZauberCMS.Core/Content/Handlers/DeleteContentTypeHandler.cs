@@ -8,12 +8,14 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
 public class DeleteContentTypeHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
+    ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteContentTypeCommand, HandlerResult<ContentType>>
 {
     public async Task<HandlerResult<ContentType>> Handle(DeleteContentTypeCommand request,
@@ -31,7 +33,7 @@ public class DeleteContentTypeHandler(
         {
             await user.AddAudit(contentType, contentType.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
             dbContext.ContentTypes.Remove(contentType);
-            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cancellationToken);
+            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, cancellationToken);
         }
 
         handlerResult.AddMessage("Unable to delete, as no ContentType with that id exists", ResultMessageType.Warning);

@@ -1,6 +1,7 @@
 using Serilog;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Extensions;
 
@@ -22,10 +23,11 @@ public static class DbContextExtensions
     }
     
     public static async Task<HandlerResult<T>> SaveChangesAndLog<T>(this ZauberDbContext context, T? entity,
-        HandlerResult<T> crudResult, CancellationToken cancellationToken)
+        HandlerResult<T> crudResult, ICacheService cacheService, CancellationToken cancellationToken)
     {
         try
         {
+            cacheService.ClearCachedItemsWithPrefix(typeof(T).Name);
             var isSaved = await context.SaveChangesAsync(cancellationToken);
             crudResult.Success = true;
             if (entity != null)
@@ -34,18 +36,19 @@ public static class DbContextExtensions
             }
             if (isSaved <= 0)
             {
-                Log.Warning($"{nameof(T)} returned 0 items saved when creating or updating");
+                Log.Warning($"{typeof(T).Name} returned 0 items saved when creating or updating");
             }
         }
         catch (Exception ex)
         {
             crudResult.Success = false;
             crudResult.AddMessage($"{ex.Message} - {ex.InnerException?.Message}", ResultMessageType.Error);
-            Log.Error(ex, $"{nameof(T)} not saved using SaveChangesAsync");
+            Log.Error(ex, $"{typeof(T).Name} not saved using SaveChangesAsync");
         }
 
         return crudResult;
     }
+
 
     /// <summary>
     /// Returns paginated list from a queryable

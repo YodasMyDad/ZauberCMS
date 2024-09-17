@@ -52,7 +52,7 @@ public class SaveLanguageDictionaryHandler(
             await user.AddAudit(langDictionary, $"Language Dictionary ({langDictionary.Key})",
                 AuditExtensions.AuditAction.Update, mediator,
                 cancellationToken);
-            handlerResult = await dbContext.SaveChangesAndLog(langDictionary, handlerResult, cancellationToken);
+            handlerResult = await dbContext.SaveChangesAndLog(langDictionary, handlerResult, cacheService, cancellationToken);
             if (handlerResult.Success)
             {
                 var langTextResult = new HandlerResult<LanguageText>();
@@ -69,7 +69,7 @@ public class SaveLanguageDictionaryHandler(
                         mapper.Map(languageText, lt);
                     }
 
-                    var saveResult = await dbContext.SaveChangesAndLog(lt, langTextResult, cancellationToken);
+                    var saveResult = await dbContext.SaveChangesAndLog(lt, langTextResult, cacheService, cancellationToken);
                     if (!saveResult.Success)
                     {
                         handlerResult.Success = false;

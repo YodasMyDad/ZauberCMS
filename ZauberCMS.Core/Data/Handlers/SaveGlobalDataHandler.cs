@@ -5,11 +5,13 @@ using ZauberCMS.Core.Data.Commands;
 using ZauberCMS.Core.Data.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Data.Handlers;
 
 public class SaveGlobalDataHandler(
     IServiceProvider serviceProvider,
+    ICacheService cacheService,
     IMapper mapper)
     : IRequestHandler<SaveGlobalDataCommand, HandlerResult<GlobalData>>
 {
@@ -41,7 +43,7 @@ public class SaveGlobalDataHandler(
                 gData.DateUpdated = DateTime.UtcNow;
             }
             
-            return await dbContext.SaveChangesAndLog(gData, handlerResult, cancellationToken);
+            return await dbContext.SaveChangesAndLog(gData, handlerResult, cacheService, cancellationToken);
         }
 
         handlerResult.AddMessage("GlobalData is null", ResultMessageType.Error);
