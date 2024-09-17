@@ -7,6 +7,10 @@ namespace ZauberCMS.Core.Membership.Commands;
 
 public class QueryUsersCommand : IRequest<PaginatedList<User>>
 {
+    /// <summary>
+    /// Whether this query is to be cached
+    /// </summary>
+    public bool Cached { get; set; } 
     public List<string> Roles { get; set; } = [];
     public bool AsNoTracking { get; set; } = true;
     public List<Guid> Ids { get; set; } = [];

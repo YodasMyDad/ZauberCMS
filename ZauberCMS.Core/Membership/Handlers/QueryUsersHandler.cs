@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using System.Security.Cryptography;
+using System.Text;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
@@ -6,16 +8,37 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Membership.Handlers;
 
-public class QueryUsersHandler(IServiceProvider serviceProvider)
+public class QueryUsersHandler(IServiceProvider serviceProvider, ICacheService cacheService)
     : IRequestHandler<QueryUsersCommand, PaginatedList<User>>
 {
-    public Task<PaginatedList<User>> Handle(QueryUsersCommand request, CancellationToken cancellationToken)
+    public async Task<PaginatedList<User>> Handle(QueryUsersCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var cacheKey = GenerateCacheKey(request, dbContext);
+
+        if (request.Cached)
+        {
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchUsersAsync(request, dbContext, cancellationToken)))!;
+        }
+
+        return await FetchUsersAsync(request, dbContext, cancellationToken);
+    }
+
+    private string GenerateCacheKey(QueryUsersCommand request, ZauberDbContext dbContext)
+    {
+        var query = BuildQuery(request, dbContext);
+        var queryString = query.ToQueryString();
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
+        return typeof(User).ToCacheKey(Convert.ToBase64String(hash));
+    }
+
+    private IQueryable<User> BuildQuery(QueryUsersCommand request, ZauberDbContext dbContext)
+    {
         var query = dbContext.Users.Include(x => x.UserRoles).AsQueryable();
 
         if (request.Query != null)
@@ -24,35 +47,33 @@ public class QueryUsersHandler(IServiceProvider serviceProvider)
         }
         else
         {
-            
             if (request.AsNoTracking)
             {
                 query = query.AsNoTracking();
             }
-        
-            if (!request.SearchTerm.IsNullOrWhiteSpace())
+
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
-                query = query.Where(x => x.UserName != null && x.UserName.ToLower().Contains(request.SearchTerm.ToLower()));
+                var searchTermLower = request.SearchTerm.ToLower();
+                query = query.Where(x => x.UserName != null && x.UserName.ToLower().Contains(searchTermLower));
             }
 
             if (request.Roles.Count != 0)
             {
                 query = query.Where(x => x.UserRoles.Any(ur => ur.Role.Name != null && request.Roles.Contains(ur.Role.Name)));
             }
-            
 
-            var idCount = request.Ids.Count;
             if (request.Ids.Count != 0)
             {
                 query = query.Where(x => request.Ids.Contains(x.Id));
-                request.AmountPerPage = idCount;
+                request.AmountPerPage = request.Ids.Count;
             }
         }
-        
+
         if (request.WhereClause != null)
         {
             query = query.Where(request.WhereClause);
-        }   
+        }
 
         query = request.OrderBy switch
         {
@@ -60,7 +81,13 @@ public class QueryUsersHandler(IServiceProvider serviceProvider)
             GetUsersOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
             _ => query.OrderByDescending(p => p.DateCreated)
         };
-        
+
+        return query;
+    }
+
+    private Task<PaginatedList<User>> FetchUsersAsync(QueryUsersCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));
     }
 }

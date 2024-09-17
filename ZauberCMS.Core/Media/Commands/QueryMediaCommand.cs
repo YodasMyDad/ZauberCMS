@@ -7,6 +7,10 @@ namespace ZauberCMS.Core.Media.Commands;
 
 public class QueryMediaCommand : IRequest<PaginatedList<Models.Media>>
 {
+    /// <summary>
+    /// Whether this query is to be cached
+    /// </summary>
+    public bool Cached { get; set; } 
     public bool AsNoTracking { get; set; } = true;
     public List<Guid> Ids { get; set; } = [];
     public int PageIndex { get; set; } = 1;
