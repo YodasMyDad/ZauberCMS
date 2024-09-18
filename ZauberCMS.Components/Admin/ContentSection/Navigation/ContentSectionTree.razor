@@ -1,8 +1,11 @@
-﻿@using ZauberCMS.Components.Admin.ContentSection.Dialogs
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using ZauberCMS.Components.Admin.ContentSection.Dialogs
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
 @using ZauberCMS.Core.Shared.Services
+@using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Components.Admin.Trees
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
@@ -20,26 +23,33 @@
     
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public DialogService ConfirmService { get; set; } = default!;
     [Inject] public IModalService DialogService { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public TreeState TreeState { get; set; } = default!;
     [Inject] public ICacheService CacheService { get; set; } = default!;
+    [Inject] public UserManager<User> UserManager { get; set; } = default!;
     
     private List<Content> ContentItems { get; set; } = [];
     private object? Selection { get; set; }
     private ContentTree? ContentTree { get; set; }
+    private User? CurrentUser { get; set; }
     
     protected override async Task OnInitializedAsync()
     {
-        await DataRefresh();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CurrentUser = await UserManager.GetUserAsync(authState.User);
         AppState.OnContentChanged += HandleContentTreeChanged;
+        TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
+        await DataRefresh();
     }
 
     public void Dispose()
     {
         AppState.OnContentChanged -= HandleContentTreeChanged;
+        TreeState.OnTreeValueChanged -= TreeStateOnOnTreeValueChanged;
     }
 
     private async Task HandleContentTreeChanged(Content? content, string user)
@@ -48,6 +58,19 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Remove the selected state
+    /// </summary>
+    /// <param name="obj"></param>
+    private void TreeStateOnOnTreeValueChanged(object obj)
+    {
+        if (obj != Selection)
+        {
+            Selection = null;
+            StateHasChanged();
+        }
+    }
+    
     private async Task DataRefresh()
     {
         var items = await Mediator.Send(new QueryContentCommand
@@ -107,19 +130,19 @@
                         // Confirm dialogue, say if there are children, and confirm then delete all
                             var hasChildren = dbContent.Children.Any();
                             var message = hasChildren
-                                ? "The content you are trying to delete has child content, are you sure you want to delete it?"
-                                : "Are you sure you want to delete this?";
-                            var delete = await ConfirmService.Confirm(message, "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+                                ? "Move this content and it's children to the recycle bin?"
+                                : "Move this content to the recycle bin?";
+                            var delete = await ConfirmService.Confirm(message, "Move to recycle bin", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
                             if (delete == true)
                             {
-                                var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id});
+                                var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id, MoveToRecycleBin = true});
                                 NotificationService.Notify(new NotificationMessage { 
                                     Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
                                     Summary = result.Success ? "Success" : "Error", 
                                     Detail = result.Messages.MessagesAsString(), Duration = 4000 });
                                 if (result.Success)
                                 {
-                                    NavigationManager.NavigateTo("/admin", forceLoad: true); 
+                                    await AppState.NotifyContentChanged(dbContent, CurrentUser?.Name ?? "Unknown");
                                 }
                             }
             
@@ -146,8 +169,7 @@
                                             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveResult.Messages.MessagesAsString(), Duration = 4000 });
                                         }
                                     }
-                                    await DataRefresh();
-                                    StateHasChanged();
+                                    await AppState.NotifyContentChanged(dbContent, CurrentUser?.Name ?? "Unknown");
                                 }
                             }
          
@@ -179,6 +201,7 @@
 
     private void OnChange()
     {
+        TreeState.TreeValue = Selection;
         if (Selection is Content content)
         {
             NavigationManager.NavigateTo($"/admin/updatecontent/{content.Id}");

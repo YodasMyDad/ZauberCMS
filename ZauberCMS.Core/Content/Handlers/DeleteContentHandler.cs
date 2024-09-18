@@ -31,33 +31,42 @@ public class DeleteContentHandler(IServiceProvider serviceProvider,
         var content = dbContext.Contents.FirstOrDefault(x => x.Id == request.ContentId);
         if (content != null)
         {
-            //Check if it has children
-            var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
-            if (children.Any())
+            if (request.MoveToRecycleBin)
             {
-                handlerResult.AddMessage("Unable to delete content with child content, delete or move those items first", ResultMessageType.Error);
-                return handlerResult;
+                content.Deleted = true;
+                await user.AddAudit(content, content.Name, AuditExtensions.AuditAction.RecycleBin, mediator, cancellationToken);
             }
-
-            // Now delete the PropertyData
-            var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
-            foreach (var contentPropertyValue in propertyDataToDelete)
+            else
             {
-                dbContext.ContentPropertyValues.Remove(contentPropertyValue);
+                //Check if it has children
+                var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
+                if (children.Any())
+                {
+                    handlerResult.AddMessage("Unable to delete content with child content, delete or move those items first", ResultMessageType.Error);
+                    return handlerResult;
+                }
+
+                // Now delete the PropertyData
+                var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
+                foreach (var contentPropertyValue in propertyDataToDelete)
+                {
+                    dbContext.ContentPropertyValues.Remove(contentPropertyValue);
+                }
+            
+                // Now delete any unpublished content
+                if (content.UnpublishedContentId != null)
+                {
+                    var unpublishedContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == content.UnpublishedContentId);
+                    if (unpublishedContent != null) dbContext.UnpublishedContent.Remove(unpublishedContent);
+                }
+
+                content.PropertyData.Clear();
+                await user.AddAudit(content, content.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
+                dbContext.Contents.Remove(content);
+                //cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
+                await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);    
             }
             
-            // Now delete any unpublished content
-            if (content.UnpublishedContentId != null)
-            {
-                var unpublishedContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == content.UnpublishedContentId);
-                if (unpublishedContent != null) dbContext.UnpublishedContent.Remove(unpublishedContent);
-            }
-
-            content.PropertyData.Clear();
-            await user.AddAudit(content, content.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
-            dbContext.Contents.Remove(content);
-            //cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
-            await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
             return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, cancellationToken);
         }
 

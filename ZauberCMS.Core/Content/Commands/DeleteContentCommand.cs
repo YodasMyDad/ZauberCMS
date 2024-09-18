@@ -6,4 +6,5 @@ namespace ZauberCMS.Core.Content.Commands;
 public class DeleteContentCommand : IRequest<HandlerResult<Models.Content>>
 {
     public Guid ContentId { get; set; }
+    public bool MoveToRecycleBin { get; set; }
 }

@@ -123,22 +123,24 @@
                 }
             </Tabs>
         </RadzenTabs>
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
-            @if (Content!.UnpublishedContentId != null)
-            {
-                <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter" Text="Clear Changes"/>
-            }
-            @if (Content!.Published)
-            {
-                <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
-            }
-            <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save" ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
-                <ChildContent>
-                    <RadzenSplitButtonItem Text="Save Only" Value="1"/>
-                </ChildContent>
-            </RadzenSplitButton>
-        </RadzenStack>
-
+        @if (!Content.Deleted)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+                @if (Content!.UnpublishedContentId != null)
+                {
+                    <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter" Text="Clear Changes"/>
+                }
+                @if (Content!.Published)
+                {
+                    <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
+                }
+                <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save" ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
+                    <ChildContent>
+                        <RadzenSplitButtonItem Text="Save Only" Value="1"/>
+                    </ChildContent>
+                </RadzenSplitButton>
+            </RadzenStack>    
+        }
     </EditForm>
 }
 else

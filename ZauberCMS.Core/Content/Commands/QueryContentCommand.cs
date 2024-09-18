@@ -40,6 +40,11 @@ public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedLi
     /// Return only unpublished content
     /// </summary>
     public bool OnlyUnpublished { get; set; }
+
+    /// <summary>
+    /// Whether to get deleted items or not
+    /// </summary>
+    public bool? IsDeleted { get; set; } = false;
     
     /// <summary>
     /// Where clause builder

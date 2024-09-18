@@ -64,8 +64,10 @@
             usersTree.Branches.Add(new TreeBranch
             {
                 Icon = "people",
+                Id = role.Id,
                 Name = role.Name,
-                Url = $"/admin/users/list/{role.Id}"
+                Url = $"/admin/users/list/{role.Id}",
+                BranchType = typeof(User)
             });
         }
 
@@ -82,8 +84,10 @@
             rolesTree.Branches.Add(new TreeBranch
             {
                 Icon = "person_add",
+                Id = role.Id,
                 Name = role.Name,
-                Url = $"/admin/users/editrole/{role.Id}"
+                Url = $"/admin/users/editrole/{role.Id}",
+                BranchType = typeof(Role)
             });
         }
 
@@ -92,21 +96,30 @@
         TreeItems = tree;
     }
 
+    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
+    {
+        var items = new List<ContextMenuItem>();
+        
+        if (args.Value is TreeBranch branch)
+        {
+            items.Add(new ContextMenuItem { Text = "Delete", Value = 1 });
+        }
+        
+        return items;
+    }
+    
     private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
-        ContextMenuService.Open(args,
-            new List<ContextMenuItem>
+        /*ContextMenuService.Open(args,
+            MenuItems(args), async e =>
             {
-                new() { Text = "Delete", Value = 1 }
-            }, async e =>
-            {
-                var media = (Media)args.Value;
-                /*var dbContent = await Mediator.Send(new GetMediaCommand { Id = media.Id, IncludeChildren = true });*/
+                var branch = (TreeBranch)args.Value;
+                /*var dbContent = await Mediator.Send(new GetMediaCommand { Id = media.Id, IncludeChildren = true });#1#
                 //var text = args.Text;
                 switch (e.Value)
                 {
                     case 1:
-                        var deleteResult = await Mediator.Send(new DeleteMediaCommand { MediaId = media.Id });
+                        var deleteResult = await Mediator.Send(new DeleteUserCommand { UserId = branch.Id });
                         if (deleteResult.Success)
                         {
                             NavigationManager.NavigateTo("/admin/media", forceLoad: true);
@@ -119,7 +132,7 @@
                         break;
                 }
             }
-        );
+        );*/
     }
 
     private void OnChange()

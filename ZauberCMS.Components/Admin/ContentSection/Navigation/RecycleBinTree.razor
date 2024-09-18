@@ -1,0 +1,226 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
+
+<div>
+    <BaseTree
+        T="TreeStub"
+        Data="@TreeItems"
+        Expand="@OnExpandHandler"
+        Change="@OnChangeHandler"
+        ItemContextMenu="@OnItemContextMenuHandler"
+        @bind-Value="@Selection"
+        HasChildren="@(e => HasChildren(e))"
+        ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+        Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
+    </BaseTree>
+</div>
+
+@code {
+    [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = default!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public DialogService ConfirmService { get; set; } = default!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] public UserManager<User> UserManager { get; set; } = default!;
+
+    public int SortOrder => 100;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
+
+    private object? Selection { get; set; }
+    private IEnumerable<TreeStub> TreeItems { get; set; } = [];
+    private User? CurrentUser { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CurrentUser = await UserManager.GetUserAsync(authState.User);
+        await DataRefresh();
+        TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
+        AppState.OnContentChanged += HandleContentChanged;
+    }
+    
+    /// <summary>
+    /// Remove the selected state
+    /// </summary>
+    /// <param name="obj"></param>
+    private void TreeStateOnOnTreeValueChanged(object obj)
+    {
+        if (obj != Selection)
+        {
+            Selection = null;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task DataRefresh()
+    {
+        var deletedContent = await Mediator.Send(new QueryContentCommand()
+        {
+            OrderBy = GetContentsOrderBy.DateUpdated,
+            IsDeleted = true, // Only get deleted items
+            AmountPerPage = 300 // Need to think about this
+        });
+
+        var tree = new List<TreeStub>();
+        var usersTree = new TreeStub
+        {
+            Id = Constants.Guids.RecycleBinRootId,
+            Name = "Recycle Bin",
+            Icon = "delete",
+            SortOrder = 1,
+            StubType = typeof(TreeStub)
+        };
+        
+        foreach (var content in deletedContent.Items)
+        {
+            usersTree.Branches.Add(new TreeBranch
+            {
+                Icon = content.ContentType?.Icon,
+                Id = content.Id,
+                Name = content.Name,
+                Url = $"/admin/updatecontent/{content.Id}",
+                BranchType = typeof(Content)
+            });
+        }
+
+        tree.Add(usersTree);
+        TreeItems = tree;
+    }
+
+
+    private async Task HandleContentChanged(Content? media, string username)
+    {
+        TreeState.ClearChildCache(null);
+        await DataRefresh();
+        StateHasChanged();
+    }
+
+    private void OnExpandHandler(TreeExpandEventArgs args)
+    {
+        switch (args.Value)
+        {
+            case TreeStub treeStub:
+                args.Children.Data = treeStub.Branches;
+                args.Children.TextProperty = "Name";
+                args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
+                args.Children.HasChildren = HasChildren;
+                TreeState.NodeExpanded(treeStub.Id);
+                break;
+            case TreeBranch branch:
+                args.Children.Data = branch.Branches;
+                args.Children.TextProperty = "Name";
+                args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
+                args.Children.HasChildren = HasChildren;
+                TreeState.NodeExpanded(branch.Id);
+                break;
+        }
+    }
+
+    private void OnChangeHandler()
+    {
+        TreeState.TreeValue = Selection;
+        switch (Selection)
+        {
+            case TreeBranch treeStub:
+            {
+                if (!treeStub.Url.IsNullOrWhiteSpace())
+                {
+                    NavigationManager.NavigateTo(treeStub.Url);
+                    StateHasChanged();
+                }
+
+                break;
+            }
+        }
+    }
+    
+    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
+    {
+        var items = new List<ContextMenuItem>();
+        
+        if (args.Value is TreeBranch branch)
+        {
+            items.Add(new ContextMenuItem { Text = "Restore", Value = 1 });
+            items.Add(new ContextMenuItem { Text = "Delete", Value = 2 });
+        }
+        
+        return items;
+    }
+
+    private Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
+    {
+        ContextMenuService.Open(args,
+            MenuItems(args), async e =>
+            {
+                var branch = (TreeBranch)args.Value;
+                var dbContent = await Mediator.Send(new GetContentCommand { Id = branch.Id, IncludeChildren = true });
+
+                switch (e.Value)
+                {
+                    case 1:
+                        ContextMenuService.Close();
+                        dbContent.Deleted = false;
+                        var saveResult = await Mediator.Send(new SaveContentCommand{ Content = dbContent, ExcludePropertyData = true});
+                        if (saveResult.Success)
+                        {
+                            await AppState.NotifyContentChanged(dbContent, CurrentUser?.Name ?? "Unknown");
+                        }
+                        break;
+                    case 2:
+                        ContextMenuService.Close();
+                        var delete = await ConfirmService.Confirm("Permanently delete this?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+                        if (delete == true)
+                        {
+                            var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id});
+                            NotificationService.Notify(new NotificationMessage { 
+                                Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
+                                Summary = result.Success ? "Success" : "Error", 
+                                Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+                            if (result.Success)
+                            {
+                                // Hard reload as could be in the edit screen
+                                NavigationManager.NavigateTo("/admin", forceLoad: true); 
+                            }
+                        }
+                        break;
+                }
+            }
+        );
+        return Task.CompletedTask;
+    }
+
+    private bool HasChildren(object data)
+    {
+        return data switch
+        {
+            TreeStub tree => tree.Branches.Any(),
+            TreeBranch branch => branch.Branches.Any(),
+            _ => false
+        };
+    }
+
+    private bool ShouldBeExpanded(object data)
+    {
+        return data switch
+        {
+            TreeStub tree => TreeState.IsNodeExpanded(tree.Id) || tree.Branches.Any(),
+            TreeBranch branch => TreeState.IsNodeExpanded(branch.Id),
+            _ => false
+        };
+    }
+
+
+    public void Dispose()
+    {
+        AppState.OnContentChanged -= HandleContentChanged;
+        TreeState.OnTreeValueChanged -= TreeStateOnOnTreeValueChanged;
+    }
+
+}
