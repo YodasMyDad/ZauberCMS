@@ -60,11 +60,11 @@ namespace ZauberCMS.Components.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Name.
+        ///   Looks up a localized string similar to Settings.
         /// </summary>
-        internal static string Name {
+        internal static string Heading_Settings {
             get {
-                return ResourceManager.GetString("Name", resourceCulture);
+                return ResourceManager.GetString("Heading.Settings", resourceCulture);
             }
         }
     }

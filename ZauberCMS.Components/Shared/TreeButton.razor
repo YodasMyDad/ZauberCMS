@@ -1,0 +1,23 @@
+﻿<div class="rz-tree">
+    <ul class="rz-tree-container">
+        <li class="rz-treenode">
+            <div class="rz-treenode-content" @onclick="Clicky">
+                <div class="rz-treenode-label">
+                    <i style="font-weight: 300; color: dimgray;" class="rzi">@Icon</i> @Name
+                </div>
+            </div>
+        </li>
+    </ul>
+</div>
+
+@code
+{
+    [Parameter, EditorRequired] public string? Icon { get; set; }
+    [Parameter, EditorRequired] public string? Name { get; set; }
+    [Parameter, EditorRequired] public string? Url { get; set; }
+
+    private void Clicky()
+    {
+        NavigationManager.NavigateTo(Url!);
+    }
+}

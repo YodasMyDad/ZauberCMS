@@ -1,0 +1,17 @@
+﻿@page "/admin/settings/globalsettings"
+@layout SectionLayout
+
+<PageTitle>Languages</PageTitle>
+
+<RadzenPanel Class="rz-mx-auto">
+    <p>Work in progress</p>
+</RadzenPanel>
+
+@code {
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
+    
+    protected override void OnInitialized()
+    {
+        Layout?.SetSection(Constants.Sections.SettingsSection);
+    }
+}

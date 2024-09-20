@@ -58,6 +58,7 @@ public static class Constants
             public const string SettingsStructureNavGroup = "SettingsStructureNavGroup";
             public const string SettingsLanguagesNavGroup = "SettingsLanguagesNavGroup";
             public const string SettingsAdvancedNavGroup = "SettingsAdvancedNavGroup";
+            public const string SettingsNavGroup = "SettingsNavGroup";
         }
     }
     

@@ -7,6 +7,6 @@ public class SettingsStructureNavGroup : ISectionNavGroup
 {
     public string Heading => "Structure";
     public string Alias => Constants.Sections.SectionNavGroups.SettingsStructureNavGroup;
-    public int SortOrder => 0;
+    public int SortOrder => 20;
     public string SectionAlias => Constants.Sections.SettingsSection;
 }
