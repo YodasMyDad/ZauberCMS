@@ -7,10 +7,10 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
@@ -41,6 +41,7 @@ public static class ZauberSetup
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
             var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
+            var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
             try
             {
                 if (dbContext.Database.GetPendingMigrations().Any())
@@ -66,16 +67,12 @@ public static class ZauberSetup
             // Is this ok to use the awaiter and result here?
             var langs = mediatr.Send(new QueryLanguageCommand{AmountPerPage = 200}).GetAwaiter().GetResult();
             
-            var supportedCultures = new List<string>();
+            // en-US must be the default culture as that's what the backoffice resource is
+            var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
+
             foreach (var langsItem in langs.Items)
             {
                 if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
-            }
-
-            if (supportedCultures.Count == 0)
-            {
-                // Set a default for now, should really pull this from the appSettings
-                supportedCultures.Add("en-US");
             }
             var supportedCulturesArray = supportedCultures.ToArray();
             var localizationOptions = new RequestLocalizationOptions()

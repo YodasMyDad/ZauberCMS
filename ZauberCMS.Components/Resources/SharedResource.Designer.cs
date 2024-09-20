@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ZauberCMS.Core.Resources {
+namespace ZauberCMS.Components.Resources {
     using System;
     
     
@@ -21,14 +21,14 @@ namespace ZauberCMS.Core.Resources {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    internal class SharedResource {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resources() {
+        internal SharedResource() {
         }
         
         /// <summary>
@@ -38,7 +38,7 @@ namespace ZauberCMS.Core.Resources {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("ZauberCMS.Core.Resources.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("ZauberCMS.Components.Resources.SharedResource", typeof(SharedResource).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -60,11 +60,11 @@ namespace ZauberCMS.Core.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This is a test.
+        ///   Looks up a localized string similar to Name.
         /// </summary>
-        internal static string Testing {
+        internal static string Name {
             get {
-                return ResourceManager.GetString("Testing", resourceCulture);
+                return ResourceManager.GetString("Name", resourceCulture);
             }
         }
     }

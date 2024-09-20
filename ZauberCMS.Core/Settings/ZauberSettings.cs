@@ -8,6 +8,7 @@ public class ZauberSettings
     public string? RedisConnectionString { get; set; }
     public string? UploadFolderName { get; set; } = "media";
     public List<string> AdminEmailAddresses { get; set; } = [];
+    public string AdminDefaultLanguage { get; set; } = "en-US";
     public long MaxUploadFileSizeInBytes { get; set; } = 5242880;
     public int MaxImageSizeInPixels { get; set; } = 1500;
     public bool EnablePathUrls { get; set; }

@@ -1,6 +1,7 @@
 ﻿@using System.Text.Json
 @using AutoMapper
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Localization
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Shared
@@ -162,6 +163,7 @@ else
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] public ValidateService<Content> ValidateService { get; set; } = default!;
     [Inject] public IMapper Mapper { get; set; } = default!;
+    [Inject] public IStringLocalizer<SharedResource> Localizer { get; set; } = default!;
 
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
