@@ -16,14 +16,13 @@
     [Parameter] public string? Settings { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-
-    [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
     
     private Dictionary<string, string> ApiKeys { get; set; } = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        ApiKeys = ZauberSettings.Value.ApiKeys;
+        var globalSettingsRequest = await Mediator.GetGlobalSettings();
+        ApiKeys = globalSettingsRequest.ApiKeys;
     }
     
     private async Task OnValueChanged(object value)

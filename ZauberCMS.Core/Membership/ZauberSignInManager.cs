@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -22,6 +23,7 @@ public class ZauberSignInManager(
     IAuthenticationSchemeProvider schemes,
     IUserConfirmation<User> confirmation,
     IOptions<ZauberSettings> options,
+    IMediator mediator,
     ZauberDbContext dbContext,
     RoleManager<Role> roleManager)
     : SignInManager<User>(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
@@ -85,6 +87,7 @@ public class ZauberSignInManager(
                     logger,
                     dbContext,
                     options,
+                    mediator,
                     user,
                     new AuthenticationResult{Success = true});
 

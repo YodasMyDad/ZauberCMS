@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using ZauberCMS.Core.Settings
+@using ZauberCMS.Core.Data.Commands
 @using Microsoft.Extensions.Options
 @inherits LayoutComponentBase
 
@@ -38,15 +39,16 @@
     [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
     [CascadingParameter] public HttpContext? HttpContext { get; set; }
     
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        if (ZauberSettings.Value.AllowedAdminIpAddress.Any() && HttpContext != null)
+        var globalSettingsRequest = await Mediator.GetGlobalSettings();
+        if (globalSettingsRequest.AllowedAdminIpAddress.Any() && HttpContext != null)
         {
             // Someone has set an ip address, so check this persons IP
             var usersIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             if (!usersIp.IsNullOrWhiteSpace())
             {
-                if (!ZauberSettings.Value.AllowedAdminIpAddress.Contains(usersIp))
+                if (!globalSettingsRequest.AllowedAdminIpAddress.Contains(usersIp))
                 {
                     // Log them out and redirect
                     NavigationManager.NavigateTo("/api/auth/logout", true);

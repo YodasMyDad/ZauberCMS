@@ -3,6 +3,7 @@
 public static class Constants
 {
     public const string SettingsConfigName = "Zauber";
+    public const string GlobalSettings = "GlobalSettings";
     
     public static class Guids
     {

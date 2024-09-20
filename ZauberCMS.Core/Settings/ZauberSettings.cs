@@ -7,12 +7,11 @@ public class ZauberSettings
     public string? ConnectionString { get; set; } = "DataSource=app.db;Cache=Shared";
     public string? RedisConnectionString { get; set; }
     public string? UploadFolderName { get; set; } = "media";
-    public List<string> AdminEmailAddresses { get; set; } = [];
+
     public string AdminDefaultLanguage { get; set; } = "en-US";
-    public long MaxUploadFileSizeInBytes { get; set; } = 5242880;
-    public int MaxImageSizeInPixels { get; set; } = 1500;
+
     public bool EnablePathUrls { get; set; }
-    public List<string> AllowedFileTypes { get; set; } = [".jpg", ".jpeg", ".png", ".gif", ".svg"];
+
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new()
     {
@@ -24,8 +23,7 @@ public class ZauberSettings
     public string? NotFoundComponent { get; set; } = "ZauberCMS.Components.Pages.NotFound404";
     public string? StarterComponent { get; set; } = "ZauberCMS.Components.Pages.NewSite";
     public string? MissingView { get; set; } = "ZauberCMS.Components.Pages.MissingView";
-    public Dictionary<string, string> ApiKeys { get; set; } = [];
-    public List<string> AllowedAdminIpAddress { get; set; } = [];
+
 }
 
 public class Identity

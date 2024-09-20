@@ -1,0 +1,43 @@
+﻿@typeparam TItem
+
+<div class="string-list-editor">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+        <RadzenTextBox @bind-Value="_newItem" Style="width: 100%"/>
+        <RadzenButton Click="@(_ => AddItem())" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Style="width: 46px;" class="rz-border-radius-10 rz-shadow-4"/>
+    </RadzenStack>
+
+    @for (var i = 0; i < Items.Count; i++)
+    {
+        var item = Items[i];  // Keep track of current item using index
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
+            <RadzenTextBox @bind-Value="Items[i]" class="w-100" aria-label="Name TextBox"/>
+            <RadzenButton Click=@(_ => RemoveItem(item)) Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Style="width: 46px;" class="rz-border-radius-10 rz-shadow-4"/>
+        </RadzenStack>
+    }
+</div>
+
+@code {
+
+    // Two-way binding for a list of strings
+    [Parameter] public List<string> Items { get; set; } = [];
+
+    // Temporary value for new item
+    private string _newItem = string.Empty;
+
+    // Add new item to the list
+    private void AddItem()
+    {
+        if (!string.IsNullOrWhiteSpace(_newItem))
+        {
+            Items.Add(_newItem);
+            _newItem = string.Empty; // Clear the input after adding
+        }
+    }
+
+    // Remove item from the list
+    private void RemoveItem(string item)
+    {
+        Items.Remove(item);
+    }
+
+}

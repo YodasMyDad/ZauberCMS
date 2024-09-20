@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
@@ -16,17 +17,20 @@ public static class RoleExtensions
             ILogger logger,
             ZauberDbContext dbContext,
             IOptions<ZauberSettings> settings,
+            IMediator mediator,
             User newUser,
             AuthenticationResult loginResult)
         {
             // Log new account creation
             logger.LogInformation("{RequestUsername} created a new account", newUser.UserName);
 
+            var globalSettings = await mediator.GetGlobalSettings();
+            
             // Determine starting role name
             var startingRoleName = settings.Value.NewUserStartingRole ?? Constants.Roles.StandardRoleName;
             if (dbContext.Users.Count() == 1 || 
-                settings.Value.AdminEmailAddresses.Count != 0 && 
-                settings.Value.AdminEmailAddresses.Contains(newUser.Email!))
+                globalSettings.AdminEmailAddresses.Count != 0 && 
+                globalSettings.AdminEmailAddresses.Contains(newUser.Email!))
             {
                 startingRoleName = Constants.Roles.AdminRoleName;
             }

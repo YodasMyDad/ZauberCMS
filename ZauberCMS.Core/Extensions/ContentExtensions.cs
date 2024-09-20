@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Data.Models;
 using ZauberCMS.Core.Media.Commands;
 
 namespace ZauberCMS.Core.Extensions;
@@ -17,7 +18,7 @@ public static class ContentExtensions
     {
         return content.ContentValues().TryGetValue(alias, out var contentValue) ? contentValue.Value.ToValue<T>() : default;
     }
-
+    
     /// <summary>
     /// Gets media items from a picker
     /// </summary>

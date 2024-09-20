@@ -47,10 +47,11 @@
     private Guid MapId { get; set; }
     private string? ApiKey { get; set; }
     
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         MapId = Guid.NewGuid();
-        if (ZauberSettings.Value.ApiKeys.TryGetValue("GoogleMaps", out var apiKey))
+        var globalSettingsRequest = await Mediator.GetGlobalSettings();
+        if (globalSettingsRequest.ApiKeys.TryGetValue("GoogleMaps", out var apiKey))
         {
             ApiKey = apiKey;
         }

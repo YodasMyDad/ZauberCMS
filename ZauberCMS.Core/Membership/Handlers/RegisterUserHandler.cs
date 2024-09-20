@@ -41,6 +41,7 @@ public class RegisterUserHandler(
                                             logger,
                                             dbContext,
                                             settings,
+                                            mediatr,
                                             newUser,
                                             loginResult);
 
