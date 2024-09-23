@@ -1,0 +1,82 @@
+﻿@typeparam TItem
+
+<div>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" class="">
+        <RadzenTextBox @bind-Value="_newKey" Placeholder="Key" Style="width: 100%"/>
+        <RadzenTextBox @bind-Value="_newValue" Placeholder="Value" Style="width: 100%"/>
+        <RadzenButton Click="@AddItem" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
+    </RadzenStack>
+
+    <div class="pt-3 grid gap-2 grid-cols-1">
+        @foreach (var item in Value.ToList())
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" @key="item.Key">
+                <RadzenTextBox Value="@item.Key" ValueChanged="@(newKey => OnKeyChanged(newKey, item.Key))" class="w-100" aria-label="Key TextBox"/>
+                <RadzenTextBox Value="@item.Value" ValueChanged="@(newValue => OnValueChanged(newValue, item.Key))" class="w-100" aria-label="Value TextBox"/>
+                <RadzenButton Click="@(() => RemoveItem(item.Key))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
+            </RadzenStack>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public Dictionary<string, string> Value { get; set; } = new();
+    [Parameter] public EventCallback<Dictionary<string, string>> ValueChanged { get; set; }
+
+    private string _newKey = string.Empty;
+    private string _newValue = string.Empty;
+
+    private async Task AddItem()
+    {
+        if (!string.IsNullOrWhiteSpace(_newKey) && !Value.ContainsKey(_newKey))
+        {
+            Value[_newKey] = _newValue;
+            _newKey = string.Empty;
+            _newValue = string.Empty;
+            await ValueChanged.InvokeAsync(Value);
+            StateHasChanged();
+        }
+        else
+        {
+            // Optionally handle duplicate or empty keys
+        }
+    }
+
+    private async Task RemoveItem(string key)
+    {
+        if (Value.ContainsKey(key))
+        {
+            Value.Remove(key);
+            await ValueChanged.InvokeAsync(Value);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnValueChanged(string newValue, string key)
+    {
+        if (Value.ContainsKey(key))
+        {
+            Value[key] = newValue;
+            await ValueChanged.InvokeAsync(Value);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnKeyChanged(string newKey, string oldKey)
+    {
+        if (string.IsNullOrWhiteSpace(newKey) || (newKey != oldKey && Value.ContainsKey(newKey)))
+        {
+            // Optionally handle duplicate or empty keys
+            return;
+        }
+
+        if (Value.ContainsKey(oldKey))
+        {
+            var value = Value[oldKey];
+            Value.Remove(oldKey);
+            Value[newKey] = value;
+            await ValueChanged.InvokeAsync(Value);
+            StateHasChanged();
+        }
+    }
+}

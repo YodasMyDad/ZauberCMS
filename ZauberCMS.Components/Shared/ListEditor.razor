@@ -1,43 +1,57 @@
 ﻿@typeparam TItem
 
-<div class="string-list-editor">
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
-        <RadzenTextBox @bind-Value="_newItem" Style="width: 100%"/>
-        <RadzenButton Click="@(_ => AddItem())" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Style="width: 46px;" class="rz-border-radius-10 rz-shadow-4"/>
+<div>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" class="">
+        <RadzenTextBox @bind-Value="_newItem" Placeholder="Add a value" Style="width: 100%"/>
+        <RadzenButton Click="@AddItem" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
     </RadzenStack>
 
-    @for (var i = 0; i < Items.Count; i++)
-    {
-        var item = Items[i];  // Keep track of current item using index
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="1">
-            <RadzenTextBox @bind-Value="Items[i]" class="w-100" aria-label="Name TextBox"/>
-            <RadzenButton Click=@(_ => RemoveItem(item)) Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Style="width: 46px;" class="rz-border-radius-10 rz-shadow-4"/>
-        </RadzenStack>
-    }
+    <div class="pt-3 grid gap-2 grid-cols-1">
+        @for (var i = 0; i < Value.Count; i++)
+        {
+            var index = i; // Capture the index
+            var item = Value[index]; // Get the current item
+            
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" @key="item">
+                <RadzenTextBox Value="@item" ValueChanged="@(value => OnValueChanged(value, index))" class="w-100" aria-label="Name TextBox"/>
+                <RadzenButton Click="@(() => RemoveItem(item))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
+            </RadzenStack>
+        }
+    </div>
 </div>
 
 @code {
+    [Parameter] public List<string> Value { get; set; } = [];
+    [Parameter] public EventCallback<List<string>> ValueChanged { get; set; }
 
-    // Two-way binding for a list of strings
-    [Parameter] public List<string> Items { get; set; } = [];
-
-    // Temporary value for new item
     private string _newItem = string.Empty;
 
-    // Add new item to the list
-    private void AddItem()
+    private async Task AddItem()
     {
         if (!string.IsNullOrWhiteSpace(_newItem))
         {
-            Items.Add(_newItem);
-            _newItem = string.Empty; // Clear the input after adding
+            Value.Add(_newItem);
+            _newItem = string.Empty;
+            await ValueChanged.InvokeAsync(Value);
+            StateHasChanged();
         }
     }
 
-    // Remove item from the list
-    private void RemoveItem(string item)
+    private async Task RemoveItem(string item)
     {
-        Items.Remove(item);
+        Value.Remove(item);
+        await ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+
+    private async Task OnValueChanged(string newValue, int index)
+    {
+        if (index >= 0 && index < Value.Count)
+        {
+            Value[index] = newValue;
+            await ValueChanged.InvokeAsync(Value);
+            StateHasChanged();
+        }
     }
 
 }
