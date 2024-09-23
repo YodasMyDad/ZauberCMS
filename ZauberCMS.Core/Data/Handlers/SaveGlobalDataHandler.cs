@@ -24,22 +24,21 @@ public class SaveGlobalDataHandler(
         
         var handlerResult = new HandlerResult<GlobalData>();
 
-        if (request.GlobalData != null)
+        if (!request.Alias.IsNullOrWhiteSpace() && !request.Data.IsNullOrWhiteSpace())
         {
 
             // Get the DB version
             var gData = dbContext.GlobalDatas
-                .FirstOrDefault(x => x.Id == request.GlobalData.Id);
+                .FirstOrDefault(x => x.Alias == request.Alias);
 
             if (gData == null)
             {
-                gData = request.GlobalData;
+                gData = new GlobalData{Alias = request.Alias, Data = request.Data};
                 dbContext.GlobalDatas.Add(gData);
             }
             else
             {
-                // Map the updated properties
-                mapper.Map(request.GlobalData, gData);   
+                gData.Data = request.Data;   
                 gData.DateUpdated = DateTime.UtcNow;
             }
             

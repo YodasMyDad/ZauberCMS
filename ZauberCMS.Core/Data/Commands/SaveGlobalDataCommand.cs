@@ -6,5 +6,6 @@ namespace ZauberCMS.Core.Data.Commands;
 
 public class SaveGlobalDataCommand : IRequest<HandlerResult<GlobalData>>
 {
-    public GlobalData? GlobalData { get; set; }
+    public string? Alias { get; set; }
+    public string? Data { get; set; }
 }

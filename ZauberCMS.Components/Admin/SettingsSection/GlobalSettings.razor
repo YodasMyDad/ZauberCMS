@@ -1,17 +1,91 @@
 ﻿@page "/admin/settings/globalsettings"
 @layout SectionLayout
 
-<PageTitle>Languages</PageTitle>
+<PageTitle>Global Settings</PageTitle>
 
 <RadzenPanel Class="rz-mx-auto">
-    <p>Work in progress</p>
+
+    <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
+        <Tabs>
+            <RadzenTabsItem Text="General">
+                <EditorRow>
+                    <LeftColumn>
+                        <PropertyInfo Name="Api Keys" Description="Manage API keys that can be selected in the API key editor"/>
+                    </LeftColumn>
+                    <CentreColumn>
+                        <DictionaryEditor TItem="string" @bind-Value="@GlobalSettingsModel.ApiKeys"/>                    
+                    </CentreColumn>
+                </EditorRow>
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="Media">
+                <EditorRow>
+                    <LeftColumn>
+                        <PropertyInfo Name="Max Upload File Size" Description="The maximum allowed file size upload in bytes"/>
+                    </LeftColumn>
+                    <CentreColumn>
+                        <RadzenNumeric @bind-Value="@GlobalSettingsModel.MaxUploadFileSizeInBytes"/>
+                    </CentreColumn>
+                </EditorRow>
+                <EditorRow>
+                    <LeftColumn>
+                        <PropertyInfo Name="Max Image Size" Description="The maximum allowed width/height of an image in pixels (Images over this will be resized where possible)" />
+                    </LeftColumn>
+                    <CentreColumn>
+                        <RadzenNumeric @bind-Value="@GlobalSettingsModel.MaxImageSizeInPixels"/>
+                    </CentreColumn>
+                </EditorRow>
+
+                <EditorRow>
+                    <LeftColumn>
+                        <PropertyInfo Name="Allowed File Types" Description="The allowed file types that can be uploaded into the CMS" />
+                    </LeftColumn>
+                    <CentreColumn>
+                        <ListEditor TItem="string" @bind-Value="@GlobalSettingsModel.AllowedFileTypes"/>
+                    </CentreColumn>
+                </EditorRow>
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="Identity">
+                <EditorRow>
+                    <LeftColumn>
+                        <PropertyInfo Name="Allowed Admin IP Addresses" Description="Restrict access to this admin CMS by IP address" />
+                    </LeftColumn>
+                    <CentreColumn>
+                        <ListEditor TItem="string" @bind-Value="@GlobalSettingsModel.AllowedAdminIpAddress"/>
+                    </CentreColumn>
+                </EditorRow>
+                <EditorRow>
+                    <LeftColumn>
+                        <PropertyInfo Name="Admin Email Addresses" Description="Anyone registering with email addresses here, will automatically be added to the admin role (Useful when using social logins)" />
+                    </LeftColumn>
+                    <CentreColumn>
+                        <ListEditor TItem="string" @bind-Value="@GlobalSettingsModel.AdminEmailAddresses"/>
+                    </CentreColumn>
+                </EditorRow>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    </RadzenStack>
 </RadzenPanel>
 
 @code {
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
     
-    protected override void OnInitialized()
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    
+    private int SelectedIndex { get; set; }
+    private ZauberCMS.Core.Settings.GlobalSettings GlobalSettingsModel { get; set; } = new();
+    
+    protected override async Task OnInitializedAsync()
     {
+        GlobalSettingsModel = await Mediator.GetGlobalSettings();
         Layout?.SetSection(Constants.Sections.SettingsSection);
+    }
+
+    private async Task Save()
+    {
+        var result = await Mediator.SaveGlobalSettings(GlobalSettingsModel);
+        NotificationService.Notify(result ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Saved", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "There was an error", Duration = 4000 });
     }
 }

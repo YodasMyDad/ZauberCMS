@@ -6,4 +6,5 @@ namespace ZauberCMS.Core.Data.Commands;
 public class GetGlobalDataCommand : IRequest<GlobalData?>
 {
     public string? Alias { get; set; }
+    public bool Cached { get; set; } = true;
 }

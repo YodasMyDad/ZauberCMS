@@ -27,7 +27,7 @@ public class GetContentHandler(IServiceProvider serviceProvider, ICacheService c
         return await FetchContentAsync(request, dbContext, cancellationToken);
     }
 
-    private string GenerateCacheKey(GetContentCommand request, ZauberDbContext dbContext)
+    private static string GenerateCacheKey(GetContentCommand request, ZauberDbContext dbContext)
     {
         var query = BuildQuery(request, dbContext);
         var queryString = query.ToQueryString();
@@ -35,7 +35,7 @@ public class GetContentHandler(IServiceProvider serviceProvider, ICacheService c
         return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
     }
 
-    private IQueryable<Models.Content> BuildQuery(GetContentCommand request, ZauberDbContext dbContext)
+    private static IQueryable<Models.Content> BuildQuery(GetContentCommand request, ZauberDbContext dbContext)
     {
         var query = dbContext.Contents
             .Include(x => x.ContentType)
@@ -84,7 +84,7 @@ public class GetContentHandler(IServiceProvider serviceProvider, ICacheService c
         return query;
     }
 
-    private async Task<Models.Content?> FetchContentAsync(GetContentCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<Models.Content?> FetchContentAsync(GetContentCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
