@@ -1,0 +1,31 @@
+﻿@using System.Text.Json
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+
+<ListEditor TItem="string" Value="@Model" ValueChanged="@(value => ValueChanged.InvokeAsync(JsonSerializer.Serialize(value)))" />
+
+@code {
+    [Parameter] public string? Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string? Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+
+    public string Name { get; set; } = "Simple List Manager";
+    public string Alias { get; set; } = "ZauberCMS.ListManager";
+    public string Icon { get; set; } = "menu";
+    public string Description { get; set; } = "Simple editor to manage list of strings";
+    public Type? SettingsComponent { get; set; }
+
+    private List<string> Model { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            Model = JsonSerializer.Deserialize<List<string>>(Value) ?? [];
+        }
+
+    }
+
+}

@@ -4,12 +4,33 @@ dotnet ef migrations add InitialCreate --context ZauberDbContext -o "Data/Migrat
 "DatabaseProvider": "SqlServer",
 "ConnectionString": "Server=MORPHEUS;Database=ZauberCMS;Trusted_Connection=True;Connect Timeout=200;TrustServerCertificate=True;",
 
-
 SQLite Migrations
 dotnet ef migrations add InitialCreate --context SqliteZauberDbContext -o "Data/Migrations/SqLite"
 
 "DatabaseProvider": "Sqlite",
 "ConnectionString": "DataSource=app.db;Cache=Shared",
 
+-- Create release nuget packages
+
+dotnet build ZauberCMS.sln -c Release
+
+-- When testing new Nuget packages, clear the caches first
 
 dotnet nuget locals all --clear
+
+-- Templates
+
+Navigate to the root directory of your project (where your .template.config folder is located).
+Run the following command to install your template locally:
+
+dotnet new install ./
+
+Then install the template locally
+
+dotnet new zaubercms -n MyTestProject
+
+To remove the templates. Navigate to the root directory of your project (where your .template.config folder is located).
+
+dotnet new uninstall ./
+
+Haven't figured out the template nuget package, for now, create the nuget package and then change extension to .zip, copy in the .template.config folder in the root and change extension back 

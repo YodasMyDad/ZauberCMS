@@ -5,36 +5,28 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>1.0.0-RC1</Version>
+        <Version>1.0.4</Version>
         <Authors>Lee Messenger</Authors>
         <PackageId>ZauberCMS.Templates</PackageId>
         <Description>Package that creates a ZauberCMS website project.</Description>
-        <PackageTags>Blazor, CMS, Web, Template</PackageTags>
+        <PackageTags>Blazor;CMS;Web;Template</PackageTags>
         <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
     </PropertyGroup>
 
-
     <ItemGroup>
-      <PackageReference Include="ZauberCMS" Version="0.1.0" />
+        <PackageReference Include="ZauberCMS" Version="1.0.0"/>
+    </ItemGroup>
+
+    <!-- Include the .template.config folder in the package and preserve its structure -->
+    <ItemGroup>
+        <None Include=".template.config\**\*" Pack="true" PackagePath="%(RelativePath)"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include=".template.config\template.json" />
-      <Content Remove=".template.config\**" />
+        <Content Update="wwwroot\data.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove=".template.config\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Remove=".template.config\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove=".template.config\**" />
-    </ItemGroup>
-
 </Project>

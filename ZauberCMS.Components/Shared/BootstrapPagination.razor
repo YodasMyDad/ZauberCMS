@@ -153,7 +153,7 @@
         var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
         var queryDict = query.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString());
         queryDict["p"] = pageNumber.ToString();
-        var newUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(path, queryDict);
+        var newUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(path, queryDict!);
         return newUrl;
     }
 
