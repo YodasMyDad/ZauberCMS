@@ -1,5 +1,4 @@
-﻿@using Microsoft.AspNetCore.WebUtilities
-@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Web.Layouts
@@ -57,22 +56,16 @@
     protected override async Task OnParametersSetAsync()
     {
         var amountPerPage = Content!.GetValue<int>("AmountPerPage");
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        var query = QueryHelpers.ParseQuery(uri.Query);
-        var queryDict = query.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString());
         var queryContentCommand = new QueryContentCommand
         {
             OrderBy = GetContentsOrderBy.DateCreated,
             AmountPerPage = amountPerPage,
             WhereClause = content => content.ParentId == Content!.Id
         };
-        if (queryDict.TryGetValue("p", out var page))
+        if (NavigationManager.TryGetQueryString<int>("p", out var page))
         {
-            if (!page.IsNullOrWhiteSpace())
-            {
-                queryContentCommand.PageIndex = Convert.ToInt32(page);
-                CurrentPage = queryContentCommand.PageIndex;
-            }   
+                queryContentCommand.PageIndex = page;
+                CurrentPage = page;
         }
         BlogPages = await Mediator.Send(queryContentCommand);
         HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
