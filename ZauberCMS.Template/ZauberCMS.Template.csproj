@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>1.0.4</Version>
+        <Version>1.0.5</Version>
         <Authors>Lee Messenger</Authors>
         <PackageId>ZauberCMS.Templates</PackageId>
         <Description>Package that creates a ZauberCMS website project.</Description>
@@ -21,12 +21,10 @@
 
     <!-- Include the .template.config folder in the package and preserve its structure -->
     <ItemGroup>
-        <None Include=".template.config\**\*" Pack="true" PackagePath="%(RelativePath)"/>
+        <None Include=".template.config\**\*" Pack="true" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="wwwroot\**\*" Pack="true" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Content Update="wwwroot\data.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
 </Project>
