@@ -1,17 +1,17 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using Microsoft.AspNetCore.WebUtilities
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Web.Layouts
 @using ZauberCMS.Web.Shared
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
-@* This is the layout you want to use *@
 @layout MainLayout
 
-@* This is where you set Head/Meta information *@
 <PageTitle>@(Content!.GetValue<string>("PageTitle"))</PageTitle>
+
 <SectionContent SectionId="MainLayout.Sections.PageHeadContent">
     <meta name="description" content="@(Content!.GetValue<string>("MetaDescription"))">
 </SectionContent>
-
 
 <header class="masthead" style="background-image: url('@(HeaderImage.Url)')">
     <div class="container position-relative px-4 px-lg-5">
@@ -31,35 +31,50 @@
     <div class="row gx-4 gx-lg-5 justify-content-center">
         <div class="col-md-10 col-lg-8 col-xl-7">
             
-            @foreach (var post in BlogPages)
+            @foreach (var post in BlogPages.Items)
             {
-            <BlogPostPreview Content="@post"/>
-            <hr class="my-4"/>
+                <BlogPostPreview Content="@post"/>
+                <hr class="my-4"/>
             }
-
-            @*<div class="d-flex justify-content-end mb-4"><a class="btn btn-primary text-uppercase" href="#!">Older Posts →</a></div>*@
         </div>
     </div>
+    
+    <BootstrapPagination
+        PageCount="@BlogPages.TotalPages"
+        CurrentPage="@CurrentPage"
+        ShowFirstLast="@(true)" />
+
 </div>
 
 @code {
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
-    
-    private List<Content> BlogPages { get; set; } = [];
+
+    private PaginatedList<Content> BlogPages { get; set; } = new();
     private Media HeaderImage { get; set; } = new();
+    private int CurrentPage { get; set; } = 1;
     
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         var amountPerPage = Content!.GetValue<int>("AmountPerPage");
-        var pages = await Mediator.Send(new QueryContentCommand
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        var queryDict = query.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString());
+        var queryContentCommand = new QueryContentCommand
         {
             OrderBy = GetContentsOrderBy.DateCreated,
             AmountPerPage = amountPerPage,
-            WhereClause = content => content.ParentId == Content!.Id,
-            Cached = true
-        });
-        BlogPages = pages.Items.ToList();
+            WhereClause = content => content.ParentId == Content!.Id
+        };
+        if (queryDict.TryGetValue("p", out var page))
+        {
+            if (!page.IsNullOrWhiteSpace())
+            {
+                queryContentCommand.PageIndex = Convert.ToInt32(page);
+                CurrentPage = queryContentCommand.PageIndex;
+            }   
+        }
+        BlogPages = await Mediator.Send(queryContentCommand);
         HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
     }
 }

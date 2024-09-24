@@ -11,12 +11,9 @@ namespace ZauberCMS.Core.Data.Handlers;
 
 public class SaveGlobalDataHandler(
     IServiceProvider serviceProvider,
-    ICacheService cacheService,
-    IMapper mapper)
+    ICacheService cacheService)
     : IRequestHandler<SaveGlobalDataCommand, HandlerResult<GlobalData>>
 {
-
-    
     public async Task<HandlerResult<GlobalData>> Handle(SaveGlobalDataCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
