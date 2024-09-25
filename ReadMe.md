@@ -1,7 +1,5 @@
 # ZauberCMS - The Blazor CMS
 
-### I'm working to get ZauberCMS to a v1 release candidate very soon
-
 ZauberCMS is a CMS built on **Blazor**. The admin is built using InteractiveServer and 
 the front end (Your website) is built using the [new static rendering](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-modes?view=aspnetcore-8.0) (But you can build it in Server or WASM if you want). The CMS is [inspired by Umbraco](https://umbraco.com/), and follows many of the 
 same concepts.
@@ -13,9 +11,17 @@ _Core tech used is: .Net 8, Blazor, EF Core, Identity, Mediatr, [Radzen Componen
 
 ## Getting Started
 
-Fastest way to get started is using the Nuget package, full instructions on how to use it are below (Dotnet template coming with v1 RC1)
+Fastest way to get started is using the .Net Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one)
 
-https://aptitude.gitbook.io/zaubercms/getting-started/quick-start#using-nuget-alpha
+`dotnet new install ZauberCMS.Template --force`
+
+Then create your project (Project names should start with ZauberCMS so the plugin system picks them up)
+
+`dotnet new zaubercms -n ZauberCMS.YourProjectName`
+
+However, you can also use Nuget and full instructions on how to use it are below
+
+https://aptitude.gitbook.io/zaubercms/getting-started/quick-start
 
 ## Starter Site Build
 
@@ -32,9 +38,9 @@ https://aptitude.gitbook.io/zaubercms
 
 ## Progress & Issues
 
-You can view the **v1** release progress here
+You can view the **v2** release features here
 
-https://github.com/users/YodasMyDad/projects/7
+https://github.com/users/YodasMyDad/projects/8
 
 And issues found here
 

@@ -1,15 +1,15 @@
 ﻿{
   "$schema": "http://json.schemastore.org/template",
   "author": "Lee Messenger",
-  "classifications": [ "Web", "Blazor", "CMS" ],
-  "identity": "ZauberCMS.Templates",
+  "classifications": [ "template", "blazor", "cms" ],
+  "identity": "ZauberCMS.Template",
   "name": "ZauberCMS Website Template",
   "shortName": "zaubercms",
   "tags": {
     "language": "C#",
     "type": "project"
   },
-  "sourceName": "ZauberCMS.Website",
+  "sourceName": "ZauberCMS.Template",
   "preferNameDirectory": true,
   "include": [
     "wwwroot/**/*"
