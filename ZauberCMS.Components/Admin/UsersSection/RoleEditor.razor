@@ -109,7 +109,6 @@
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] public ValidateService<Role> ValidateService { get; set; } = default!;
 
     [Parameter] public Guid? RoleId { get; set; }
@@ -132,7 +131,6 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (RoleId != null)
         {
             Role = await Mediator.Send(new GetRoleCommand { Id = RoleId.Value });

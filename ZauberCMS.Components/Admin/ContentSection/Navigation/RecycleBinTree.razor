@@ -1,6 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Identity
-@using ZauberCMS.Components.Admin.Trees
+﻿@using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared
@@ -27,8 +25,6 @@
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public DialogService ConfirmService { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-    [Inject] public UserManager<User> UserManager { get; set; } = default!;
 
     public int SortOrder => 100;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
@@ -39,8 +35,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        CurrentUser = await UserManager.GetUserAsync(authState.User);
+        CurrentUser = await Mediator.GetCurrentUser();
         await DataRefresh();
         TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
         AppState.OnContentChanged += HandleContentChanged;

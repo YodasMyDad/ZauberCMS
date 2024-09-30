@@ -1,6 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Identity
-@using ZauberCMS.Components.Admin.ContentSection.Dialogs
+﻿@using ZauberCMS.Components.Admin.ContentSection.Dialogs
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
@@ -23,14 +21,12 @@
     
     [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public DialogService ConfirmService { get; set; } = default!;
     [Inject] public IModalService DialogService { get; set; } = default!;
     [Inject] public AppState AppState { get; set; } = default!;
     [Inject] public TreeState TreeState { get; set; } = default!;
     [Inject] public ICacheService CacheService { get; set; } = default!;
-    [Inject] public UserManager<User> UserManager { get; set; } = default!;
     
     private List<Content> ContentItems { get; set; } = [];
     private object? Selection { get; set; }
@@ -39,8 +35,7 @@
     
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        CurrentUser = await UserManager.GetUserAsync(authState.User);
+        CurrentUser = await Mediator.GetCurrentUser();
         AppState.OnContentChanged += HandleContentTreeChanged;
         TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
         await DataRefresh();

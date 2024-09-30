@@ -2,6 +2,8 @@
 using MediatR;
 using ZauberCMS.Core.Data.Commands;
 using ZauberCMS.Core.Data.Models;
+using ZauberCMS.Core.Membership.Commands;
+using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Extensions;
@@ -56,5 +58,15 @@ public static class MediatorExtensions
         }
 
         return default;
+    }
+    
+    /// <summary>
+    /// Gets the currently logged in user
+    /// </summary>
+    /// <param name="mediator"></param>
+    /// <returns></returns>
+    public static async Task<User?> GetCurrentUser(this IMediator mediator)
+    {
+        return await mediator.Send(new GetCurrentUserCommand());
     }
 }
