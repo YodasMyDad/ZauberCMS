@@ -21,7 +21,7 @@
 
                     <ValidationSummary class="text-danger" role="alert"/>
                     <div class="form-floating mb-3">
-                        <InputText @bind-Value="LoginUserCommand.Email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
+                        <InputText @bind-Value="LoginUserCommand.Email" type="email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
                         <label for="email" class="form-label">Email</label>
                         <ValidationMessage For="() => LoginUserCommand.Email" class="text-danger"/>
                     </div>

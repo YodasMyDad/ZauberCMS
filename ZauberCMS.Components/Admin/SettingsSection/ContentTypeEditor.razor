@@ -226,6 +226,7 @@
         }
 
         InitializeTabsAndSortOrders();
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
@@ -435,7 +436,7 @@
             new Dictionary<string, object>
             {
                 { "Tab", tab! },
-                { "DefaultSortOrder", ContentType.Tabs.Count(x => !x.IsSystemTab) + 1 }
+                { "DefaultSortOrder", tab?.SortOrder ?? ContentType.Tabs.Count(x => !x.IsSystemTab) + 1 }
             });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: Tab newTab })
@@ -445,7 +446,7 @@
                 if (tab != null)
                 {
                     // Find and update the tab
-                    var index = ContentType.Tabs.IndexOf(tab);
+                    var index = ContentType.Tabs.FindIndex(x => x.Id == tab.Id);
                     if (index != -1)
                     {
                         ContentType.Tabs[index] = newTab;
@@ -468,6 +469,7 @@
                 }
             }
         }
+        StateHasChanged();
     }
 
     private async Task AddProperty()
@@ -490,6 +492,7 @@
                     TabId = tabToAddTo.Id
                 });
                 Tabs.Reload();
+                StateHasChanged();
             }
         }
     }

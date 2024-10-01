@@ -24,7 +24,7 @@
                     <ValidationMessage For="() => RegisterUserCommand.Username" class="text-danger"/>
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="RegisterUserCommand.Email" class="form-control" aria-required="true" placeholder="name@example.com"/>
+                    <InputText @bind-Value="RegisterUserCommand.Email" type="email" class="form-control" aria-required="true" placeholder="name@example.com"/>
                     <label for="email">Email</label>
                     <ValidationMessage For="() => RegisterUserCommand.Email" class="text-danger"/>
                 </div>
