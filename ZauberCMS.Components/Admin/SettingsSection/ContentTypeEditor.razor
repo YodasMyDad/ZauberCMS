@@ -42,14 +42,8 @@
         </RadzenRow>
         <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
             <Tabs>
-                @{
-                    var orderedTabsList = GetTabsInOrder();
-                }
-                @for (var i = 0; i < orderedTabsList.Count; i++)
+                @foreach (var tab in OrderedTabs)
                 {
-                    var tab = orderedTabsList[i];
-                    TabIndex.TryAdd(i, tab);
-
                     if (tab.IsSystemTab)
                     {
                         <RadzenTabsItem Text="System">
@@ -91,7 +85,7 @@
                                                    InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select child types" } })"/>
                                 </CentreColumn>
                             </EditorRow>
-                            
+
                             <EditorRow>
                                 <LeftColumn>
                                     <PropertyInfo Name="Allowed At Tree Root" Description="Whether this content can be created at the root of the content tree"/>
@@ -115,7 +109,7 @@
                                     <PropertyInfo Name="Enable List View" Description="Show list view of child content instead of them showing as child items in the tree"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    <RadzenSwitch Name="EnableListView" @bind-Value="@ContentType.EnableListView"  />
+                                    <RadzenSwitch Name="EnableListView" @bind-Value="@ContentType.EnableListView"/>
                                 </CentreColumn>
                             </EditorRow>
 
@@ -124,10 +118,10 @@
                                     <PropertyInfo Name="Include Child Content" Description="Return children when this page is rendered to save multiple content queries"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    <RadzenSwitch Name="IncludeChildren" @bind-Value="@ContentType.IncludeChildren"  />
+                                    <RadzenSwitch Name="IncludeChildren" @bind-Value="@ContentType.IncludeChildren"/>
                                 </CentreColumn>
                             </EditorRow>
-                            
+
                         </RadzenTabsItem>
                     }
                     else
@@ -193,6 +187,7 @@
     private ContentType ContentType { get; set; } = new();
     private List<ContentViewName> ContentViews { get; set; } = [];
     private List<ContentType> ContentTypes { get; set; } = [];
+    private List<Tab> OrderedTabs { get; set; } = [];
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
     private bool ShowDeleteButton { get; set; }
     private int SelectedTabIndex { get; set; }
@@ -225,15 +220,16 @@
             ContentType.Id = Guid.NewGuid().NewSequentialGuid();
         }
 
-        InitializeTabsAndSortOrders();
-        StateHasChanged();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        InitializeContentViews();
         var contentTypes = await Mediator.Send(new QueryContentTypesCommand { ElementTypesOnly = false, OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000});
         ContentTypes.AddRange(contentTypes.Items);
+        
+        InitializeTabs();
+        InitializeContentViews();
+        SortTabsInOrder();
+    }
+
+    protected override void OnInitialized()
+    {
         Layout?.SetSection(Constants.Sections.SettingsSection);
     }
     
@@ -258,7 +254,7 @@
         SelectedTabIndex = i;
     }
 
-    private void InitializeTabsAndSortOrders()
+    private void InitializeTabs()
     {
         // Now reset sort orders to be correct
         foreach (var tab in ContentType.Tabs.Where(x => !x.IsSystemTab))
@@ -278,7 +274,7 @@
 
     private void InitializeContentViews()
     {
-        var allContentViews = ExtensionManager.GetInstances<IContentView>(true);
+        var allContentViews = ExtensionManager.GetInstances<IContentView>();
         ContentViews = allContentViews.Values.Select(x =>
             {
                 var type = x.GetType();
@@ -294,9 +290,18 @@
             .ToList();
     }
 
-    private List<Tab> GetTabsInOrder()
+    private void SortTabsInOrder()
     {
-        return ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
+        TabIndex.Clear();
+        
+        var tabs = ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
+        @for (var i = 0; i < tabs.Count; i++)
+        {
+            var tab = tabs[i];
+            TabIndex.TryAdd(i, tab);
+        }
+        
+        OrderedTabs = tabs;
     }
 
     private void SortProperty(PropertyType property, bool moveDown)
@@ -384,15 +389,7 @@
         // Remove the specified tab from the list of tabs
         ContentType.Tabs.Remove(tab);
 
-        // The index will be the total count
-        TabIndex.Clear();
-
-        var tabs = GetTabsInOrder();
-
-        for (var index = 0; index < tabs.Count; index++)
-        {
-            TabIndex.TryAdd(index, tabs[index]);
-        }
+        SortTabsInOrder();
     }
 
     private async Task Save()
@@ -457,16 +454,7 @@
                     // Add the new tab to the list of tabs
                     ContentType.Tabs.Add(newTab);
                 }
-
-                // The index will be the total count
-                TabIndex.Clear();
-
-                var tabs = GetTabsInOrder();
-
-                for (var index = 0; index < tabs.Count; index++)
-                {
-                    TabIndex.TryAdd(index, tabs[index]);
-                }
+                SortTabsInOrder();
             }
         }
         StateHasChanged();
