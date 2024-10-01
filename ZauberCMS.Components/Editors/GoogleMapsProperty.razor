@@ -29,7 +29,9 @@
     public string Icon { get; set; } = "add_location";
     public string Description { get; set; } = "Pick and save a location with a Google map";
     public Type? SettingsComponent { get; set; } = typeof(GoogleMapsPropertySettings);
-
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+    
     [Inject] public IModalService DialogService { get; set; } = default!;
     [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
     [Inject] IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;

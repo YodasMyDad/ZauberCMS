@@ -26,13 +26,15 @@
 </div>
 
 @code {
+    [Inject] public IModalService DialogService { get; set; } = default!;
+    
     public string Name { get; set; } = "Editor Notes";
     public string Alias { get; set; } = "ZauberCMS.EditorNotes";
     public string Icon { get; set; } = "format_align_justify";
     public string Description { get; set; } = "Add useful notes for editors either inline or in an dialog panel";
     public Type? SettingsComponent { get; set; } = typeof(EditorNotePropertySettings);
-    
-    [Inject] public IModalService DialogService { get; set; } = default!;
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
     
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }

@@ -1,5 +1,4 @@
-﻿@using System.Text.Json
-@using ZauberCMS.Components.Editors.Models
+﻿@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -11,7 +10,9 @@
     public string Description => "A property that allows star ratings";
     public string Icon => "star_half";
     public Type? SettingsComponent { get; set; } = typeof(RatingPropertySettings);
-
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+    
     [Parameter] public string? Value { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string? Settings { get; set; } = string.Empty;

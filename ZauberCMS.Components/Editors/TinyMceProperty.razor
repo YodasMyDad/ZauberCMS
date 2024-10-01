@@ -29,6 +29,8 @@
     public string Icon { get; set; } = "edit_note";
     public string Description { get; set; } = "TinyMCE Rich Text Editor";
     public Type? SettingsComponent { get; set; } = typeof(TinyMcePropertySettings);
+    public List<string> Scripts { get; set; } = ["_content/TinyMCE.Blazor/tinymce-blazor.js"];
+    public List<string> Styles { get; set; } = [];
     
     private TinyMcePropertySettingsModel SettingsModel { get; set; } = new();
     private string? ApiKey { get; set; }

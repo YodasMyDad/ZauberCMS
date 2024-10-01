@@ -16,4 +16,6 @@ public interface IContentProperty
     string? Settings { get; set; }
     Models.Content? Content { get; set; }
     IModalService? ModalService { get; set; }
+    List<string> Scripts { get; set; }
+    List<string> Styles { get; set; }
 }

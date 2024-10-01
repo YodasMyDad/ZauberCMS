@@ -34,6 +34,8 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
     
     public string Icon { get; set; } = "edit_note";
     public string Description { get; set; } = "Radzen's Rich Text Editor";

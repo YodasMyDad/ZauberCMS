@@ -1,6 +1,4 @@
-﻿@using ZauberCMS.Core.Settings
-@using Microsoft.Extensions.Options
-@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenDropDown TValue="string" Value="@Value" Data="@ApiKeys" Change="@(args => OnValueChanged(args))" TextProperty="Key" ValueProperty="Value" Style="width: 100%;" />
 
@@ -16,6 +14,8 @@
     [Parameter] public string? Settings { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
     
     private Dictionary<string, string> ApiKeys { get; set; } = [];
 
@@ -33,5 +33,4 @@
             await ValueChanged.InvokeAsync(Value);   
         }
     }
-
 }

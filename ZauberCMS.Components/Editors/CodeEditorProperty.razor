@@ -1,0 +1,78 @@
+﻿@using GaelJ.BlazorCodeMirror6.Models
+@using GaelJ.BlazorCodeMirror6
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+@*<label for="Language">Language</label>
+<select @bind="@Language" id="Language">
+    @foreach (var language in Languages) {
+    <option value="@language">@language.DisplayName()</option>
+    }
+</select>*@
+<CodeMirror6Wrapper
+    @ref="@CodeMirror6WrapperRef"
+    IsWASM="@(false)"
+    @bind-Doc="@Code"
+    Language="@Language"
+    Editable="@(true)"
+    LineNumbers="@(true)"
+    LineWrapping="@(false)"
+    Theme="ThemeMirrorTheme.Copilot"
+    Setup="@_setup"
+    MaxHeight="25rem"
+    >
+</CodeMirror6Wrapper>
+
+@code {
+    [Parameter] public string? Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string? Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    
+    public string Name { get; set; } = "Code Editor";
+    public string Alias { get; set; } = "ZauberCMS.CodeEditor";
+    public string Icon { get; set; } = "code";
+    public string Description { get; set; } = "Editor for writing code";
+    public Type? SettingsComponent { get; set; }
+    
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+
+    private CodeMirror6Wrapper CodeMirror6WrapperRef { get; set; } = default!;
+
+    /*
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            CodeMirror6WrapperRef.Setup = new CodeMirrorSetup { FocusOnCreation = false };
+            await InvokeAsync(StateHasChanged);
+
+        }
+    }
+    */
+
+    private List<CodeMirrorLanguage> Languages =>
+        Enum.GetValues<CodeMirrorLanguage>()
+            .OrderBy(l => l == CodeMirrorLanguage.PlainText ? 0 : 1)
+            .ThenBy(l => l.ToString())
+            .ToList();
+    
+    private CodeMirrorLanguage Language { get; set; } = CodeMirrorLanguage.Csharp;
+    
+    private readonly CodeMirrorSetup _setup = new() {
+        FocusOnCreation = false
+    };
+    
+    private string? Code
+    {
+        get => Value;
+        set
+        {
+            if (Value != value)
+            {
+                Value = value;
+                ValueChanged.InvokeAsync(Value);
+            }
+        }
+    }
+}

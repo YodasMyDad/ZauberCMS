@@ -25,6 +25,8 @@
     public string Icon { get; set; } = "arrow_drop_down";
     public string Description { get; set; } = "Dropdown list using manual or custom data, for multiple select items";
     public Type? SettingsComponent { get; set; } = typeof(ListPropertySettings);
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
     
     private RadzenDropDown<IEnumerable<string>>? DropDown { get; set; }
     

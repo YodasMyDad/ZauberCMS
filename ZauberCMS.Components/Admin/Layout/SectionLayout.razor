@@ -1,11 +1,17 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Data.Commands
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Content.Interfaces
 @using Microsoft.Extensions.Options
 @inherits LayoutComponentBase
 
 <HeadContent>
     <link rel="stylesheet" href="_content/ZauberCMS.Components/css/admin.css">
+    @foreach (var style in PageStyles)
+    {
+        <link rel="stylesheet" href="@style">
+    }
     <SectionOutlet SectionId="@Sections.PageHeadContent"/>
 </HeadContent>
 
@@ -15,9 +21,9 @@
     <CascadingValue Value="@this">
         <RadzenHeader class="rz-background-color-primary-darker d-flex justify-content-between">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
-                    <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
-                    <RadzenIcon Icon="automation"/>
-                    <SectionLinks CurrentSection="@(SectionAlias)"/>
+                <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
+                <RadzenIcon Icon="automation"/>
+                <SectionLinks CurrentSection="@(SectionAlias)"/>
             </RadzenStack>
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5" Style="height: 100%;">
                 <UserProfile />
@@ -35,9 +41,18 @@
     </CascadingValue>
 </RadzenLayout>
 
+@foreach (var script in PageScripts)
+{
+    <script src="@script"></script>
+}
+
 @code {
     [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [CascadingParameter] public HttpContext? HttpContext { get; set; }
+    
+    private List<string> PageScripts { get; set; } = [];
+    private List<string> PageStyles { get; set; } = [];
     
     protected override async Task OnParametersSetAsync()
     {
@@ -57,6 +72,16 @@
         }
     }
 
+    protected override void OnInitialized()
+    {
+        var contentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+        if (contentProperties.Any())
+        {
+            PageScripts = contentProperties.SelectMany(x => x.Value.Scripts).Distinct().ToList();
+            PageStyles = contentProperties.SelectMany(x => x.Value.Styles).Distinct().ToList();
+        }
+    }
+
     private string? SectionAlias { get; set; }
     public void SetSection(string value)
     {
@@ -72,7 +97,7 @@
     
     internal static class Sections
     {
-        internal static SectionOutlet? PageHeadContent = new();
+        internal static readonly SectionOutlet? PageHeadContent = new();
     }
 }
 

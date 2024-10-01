@@ -18,7 +18,11 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+    
     private DatePickerPropertySettingsModel SettingsModel { get; set; } = new();
+    
     protected override void OnInitialized()
     {
         if (!Value.IsNullOrWhiteSpace())

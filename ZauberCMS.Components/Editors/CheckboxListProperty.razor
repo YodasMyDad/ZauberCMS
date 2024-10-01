@@ -31,6 +31,8 @@
     public string Icon { get; set; } = "list";
     public string Description { get; set; } = "Checkbox list using manual or custom data";
     public Type? SettingsComponent { get; set; } = typeof(ListPropertySettings);
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
 
     private async Task Changed(object args)
     {

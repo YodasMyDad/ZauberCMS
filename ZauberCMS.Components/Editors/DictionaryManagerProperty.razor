@@ -11,7 +11,9 @@
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+    
     public string Name { get; set; } = "Simple Dictionary Manager";
     public string Alias { get; set; } = "ZauberCMS.DictionaryManager";
     public string Icon { get; set; } = "dictionary";

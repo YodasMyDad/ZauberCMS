@@ -31,6 +31,8 @@
     public string Icon { get; set; } = "account_tree";
     public string Description { get; set; } = "A navigation builder in a tree";
     public Type? SettingsComponent { get; set; }
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
 
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; } = string.Empty;
