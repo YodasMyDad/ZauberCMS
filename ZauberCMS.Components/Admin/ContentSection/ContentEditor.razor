@@ -135,11 +135,18 @@
                 {
                     <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
                 }
-                <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save" ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
-                    <ChildContent>
-                        <RadzenSplitButtonItem Text="Save Only" Value="1"/>
-                    </ChildContent>
-                </RadzenSplitButton>
+                @if (IsBlockList == true)
+                {
+                    <RadzenButton Click=@(() => Save(null, false)) Icon="save" ButtonStyle="ButtonStyle.Success" Text="Save" />
+                }
+                else
+                {
+                    <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save" ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
+                        <ChildContent>
+                            <RadzenSplitButtonItem Text="Save Only" Value="1"/>
+                        </ChildContent>
+                    </RadzenSplitButton>   
+                }
             </RadzenStack>    
         }
     </EditForm>
