@@ -17,6 +17,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TagName = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Slug = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     SortOrder = table.Column<int>(type: "int", nullable: false)
@@ -51,6 +52,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                 name: "IX_ZauberTagItems_TagId",
                 table: "ZauberTagItems",
                 column: "TagId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberTag_Slug",
+                table: "ZauberTags",
+                column: "Slug");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberTag_TagName",

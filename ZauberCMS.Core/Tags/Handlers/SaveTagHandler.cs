@@ -19,6 +19,7 @@ public class SaveTagHandler(
     AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveTagCommand, HandlerResult<Tag>>
 {
+    private readonly SlugHelper _slugHelper = new();
     public async Task<HandlerResult<Tag>> Handle(SaveTagCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
@@ -32,22 +33,17 @@ public class SaveTagHandler(
         {
             var isUpdate = false;
 
-            var tag = new Tag { TagName = request.TagName };
+            var tag = new Tag { TagName = request.TagName, SortOrder = request.SortOrder, Slug = _slugHelper.GenerateSlug(request.TagName)};
             if (request.Id != null)
             {
                 var dbTag = dbContext.Tags.FirstOrDefault(x => x.Id == request.Id);
                 if (dbTag != null)
                 {
-                    if (request.TagName == dbTag.TagName)
-                    {
-                        // Just return if they are trying to save the same tag
-                        handlerResult.Success = true;
-                        return handlerResult;
-                    }
-
                     isUpdate = true;
                     tag = dbTag;
                     tag.TagName = request.TagName;
+                    tag.SortOrder = request.SortOrder;
+                    tag.Slug = _slugHelper.GenerateSlug(request.TagName);
                 }
             }
             else

@@ -6,6 +6,6 @@ namespace ZauberCMS.Core.Tags.Commands;
 
 public class SaveTagItemCommand : IRequest<HandlerResult<TagItem>>
 {
-    public Guid TagId { get; set; }
+    public List<Guid> TagIds { get; set; }
     public Guid ItemId { get; set; }
 }

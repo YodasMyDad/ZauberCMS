@@ -1,13 +1,35 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@using System.Text.Json
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@using ZauberCMS.Core.Tags.Commands
+@using ZauberCMS.Core.Tags.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<p>Testing</p>
+@if (SettingsModel.AllowTagEditing)
+{
+    <div class="mb-2">
+        <RadzenButton Variant="Variant.Text" Shade="Shade.Light" Click=@(OpenTagEditor) Text="Edit Tags" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" />
+    </div>
+}
+
+<RadzenDropDown
+                Data="@Tags"
+                @bind-Value="@SelectedValues"
+                Change="@(args => OnChange())"
+                TextProperty="TagName"
+                ValueProperty="Id"
+                Multiple="true" 
+                AllowClear="false" 
+                Placeholder="Select tags" Chips="true" Style="width: 100%;"/>
 
 @code {
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    
     public string Name { get; set; } = "Tags";
     public string Alias { get; set; } = "ZauberCMS.Tags";
     public string Icon { get; set; } = "sell";
     public string Description { get; set; } = "Tags are used for categorising items";
-    public Type? SettingsComponent { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(TagPropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
     
@@ -16,4 +38,66 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
+    
+    private TagPropertySettingsModel SettingsModel { get; set; } = new();
+    private List<Tag> Tags { get; set; } = [];
+    private IEnumerable<Guid> SelectedValues { get; set; } = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            SelectedValues = JsonSerializer.Deserialize<IEnumerable<Guid>>(Value) ?? [];
+        }
+        
+        // We do this to make sure the tags stay in sync
+        var selectedValues = SelectedValues as Guid[] ?? SelectedValues.ToArray();
+        if (selectedValues.Any())
+        {
+            var result = await Mediator.Send(new SaveTagItemCommand { ItemId = Content!.Id, TagIds = selectedValues.ToList()});
+            if (!result.Success)
+            {
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            }   
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        SettingsModel = Settings.FromJson<TagPropertySettingsModel>();
+        await SetTags();
+    }
+
+    private async Task SetTags()
+    {
+        var tags = await Mediator.Send(new QueryTagCommand { AmountPerPage = 200, OrderBy = GetTagOrderBy.SortOrder});
+        Tags = tags.Items.ToList();
+    }
+    
+    private async Task OnChange()
+    {
+        Value = JsonSerializer.Serialize(SelectedValues);
+        
+        // Now save the tag items
+        var result = await Mediator.Send(new SaveTagItemCommand { ItemId = Content!.Id, TagIds = SelectedValues.ToList()});
+        if (result.Success)
+        {
+            await ValueChanged.InvokeAsync(Value);
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+        }
+    }
+    
+    private async Task OpenTagEditor()
+    {
+        var modalRef = ModalService!.OpenSidePanel<TagEditor>("Edit Tags");
+        var result = await modalRef.Result;
+        if (result.Cancelled)
+        {
+            await SetTags();
+        }
+    }
+
 }

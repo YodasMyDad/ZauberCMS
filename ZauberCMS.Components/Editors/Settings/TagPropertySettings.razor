@@ -1,14 +1,24 @@
 ﻿@using ZauberCMS.Components.Editors.Models
-@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<TextContentSettingsModel>
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ZauberCMS.Components.Editors.Models.TagPropertySettingsModel>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Max Length" Description="The maximum allowed length in the textbox"/>
+        <PropertyInfo Name="Allow Tag Editing" Description="Enables to user to add/edit/update the tags below from within the tag property"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.MaxLength" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max length" } })"/>
+        <RadzenSwitch @bind-Value="@Settings.AllowTagEditing" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Allow Tag Editing" }})" />
     </CentreColumn>
 </EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Tags" Description="Manage the tags the user can pick from"/>
+    </LeftColumn>
+    <CentreColumn>
+        <TagEditor />
+    </CentreColumn>
+</EditorRow>
+
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
@@ -17,8 +27,8 @@
 @code {
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
-    public TextContentSettingsModel Settings { get; set; } = new();
-
+    public TagPropertySettingsModel Settings { get; set; } = new();
+    
     protected override void OnInitialized()
     {
         Settings = this.GetPropertySettings();

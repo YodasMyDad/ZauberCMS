@@ -754,6 +754,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 
@@ -763,6 +768,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .HasDatabaseName("IX_ZauberTag_Slug");
 
                     b.HasIndex("TagName")
                         .HasDatabaseName("IX_ZauberTag_TagName");

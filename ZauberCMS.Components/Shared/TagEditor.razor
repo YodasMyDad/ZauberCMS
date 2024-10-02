@@ -1,0 +1,109 @@
+﻿@using ZauberCMS.Core.Tags.Commands
+@using ZauberCMS.Core.Tags.Models
+@using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
+<div>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" class="mb-4">
+        <RadzenTextBox @bind-Value="_newItem.TagName" Placeholder="Add a tag" Style="width: 100%"/>
+        <RadzenButton Click="@AddItem" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
+    </RadzenStack>
+
+    
+    <SortableList Id="SortTags" Items="@Tags" OnUpdate="@SortList" Context="item">
+        <SortableItemTemplate>
+            <div>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" @key="item.Id" class="mb-2">
+                    <div class="pr-1 flex items-center justify-center cursor-grab">
+                        <RadzenIcon Icon="drag_indicator"/>
+                    </div>
+                    <RadzenTextBox Value="@item.TagName" ValueChanged="@(value => OnValueChanged(value, item))" class="w-100" aria-label="Tag Name"/>
+                    <RadzenButton Click="@(() => RemoveItem(item))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
+                </RadzenStack>
+            </div>
+        </SortableItemTemplate>
+    </SortableList>
+    
+</div>
+
+@code {
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    
+    private List<Tag> Tags { get; set; } = [];
+    private Tag _newItem = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tags = await Mediator.Send(new QueryTagCommand { AmountPerPage = 200, OrderBy = GetTagOrderBy.SortOrder});
+        Tags = tags.Items.ToList(); 
+    }
+
+    private async Task AddItem()
+    {
+        if (!string.IsNullOrWhiteSpace(_newItem.TagName))
+        {
+            var result = await Mediator.Send(new SaveTagCommand { TagName = _newItem.TagName, SortOrder = Tags.Count + 1});
+            if (result.Success)
+            {
+                Tags.Add(_newItem);
+                _newItem = new Tag(); // Create a new Tag instance
+                StateHasChanged();
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            }
+        }
+    }
+
+    private async Task RemoveItem(Tag item)
+    {
+        var delete = await DialogService.Confirm("Are you sure?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (delete == true)
+        {
+            // Are you sure
+            var result = await Mediator.Send(new DeleteTagCommand { Id = item.Id});
+            if (result.Success)
+            {
+                Tags.Remove(item);
+                await SetSortOrders();
+                StateHasChanged();    
+            }
+        }
+    }
+
+    private async Task OnValueChanged(string newValue, Tag tag)
+    {
+        var result = await Mediator.Send(new SaveTagCommand { TagName = newValue, Id = tag.Id});
+        if (result.Success)
+        {
+            tag.TagName = newValue;
+            StateHasChanged();
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+        }
+    }
+
+    private async Task SortList((int oldIndex, int newIndex) indices)
+    {
+        TupleExtensions.SortList(indices, Tags);
+        await SetSortOrders();
+        StateHasChanged();
+    }
+
+    private async Task SetSortOrders()
+    {
+        for (var index = 0; index < Tags.Count; index++)
+        {
+            var tag = Tags[index];
+            tag.SortOrder = index;
+            
+            var result = await Mediator.Send(new SaveTagCommand { Id = tag.Id, TagName = tag.TagName, SortOrder = tag.SortOrder});
+            if (!result.Success)
+            {
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            }
+        }
+    }
+}

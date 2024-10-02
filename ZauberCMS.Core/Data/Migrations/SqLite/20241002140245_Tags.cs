@@ -17,6 +17,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     TagName = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Slug = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
                     DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
                     SortOrder = table.Column<int>(type: "INTEGER", nullable: false)
@@ -51,6 +52,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 name: "IX_ZauberTagItems_TagId",
                 table: "ZauberTagItems",
                 column: "TagId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberTag_Slug",
+                table: "ZauberTags",
+                column: "Slug");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberTag_TagName",

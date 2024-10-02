@@ -11,7 +11,7 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqLite
 {
     [DbContext(typeof(SqliteZauberDbContext))]
-    [Migration("20241002114733_Tags")]
+    [Migration("20241002140245_Tags")]
     partial class Tags
     {
         /// <inheritdoc />
@@ -757,6 +757,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 
@@ -766,6 +771,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .HasDatabaseName("IX_ZauberTag_Slug");
 
                     b.HasIndex("TagName")
                         .HasDatabaseName("IX_ZauberTag_TagName");

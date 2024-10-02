@@ -8,4 +8,5 @@ public class SaveTagCommand : IRequest<HandlerResult<Tag>>
 {
     public Guid? Id { get; set; }
     public string? TagName { get; set; }
+    public int SortOrder { get; set; }
 }

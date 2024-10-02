@@ -12,7 +12,7 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqlServer
 {
     [DbContext(typeof(ZauberDbContext))]
-    [Migration("20241002114649_Tags")]
+    [Migration("20241002140254_Tags")]
     partial class Tags
     {
         /// <inheritdoc />
@@ -768,6 +768,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
 
@@ -777,6 +782,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .HasDatabaseName("IX_ZauberTag_Slug");
 
                     b.HasIndex("TagName")
                         .HasDatabaseName("IX_ZauberTag_TagName");
