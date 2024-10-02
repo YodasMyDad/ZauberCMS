@@ -6,7 +6,6 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
-using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Core.Tags.Commands;
 using ZauberCMS.Core.Tags.Models;
 
@@ -15,7 +14,6 @@ namespace ZauberCMS.Core.Tags.Handlers;
 public class SaveTagItemHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
-    ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider)
     : IRequestHandler<SaveTagItemCommand, HandlerResult<TagItem>>
 {
