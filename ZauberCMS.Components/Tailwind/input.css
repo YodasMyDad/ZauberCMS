@@ -67,3 +67,7 @@
     -ms-user-select: none;
     user-select: none;
 }
+
+.rz-notification-item-wrapper {
+   width: 30rem !important; 
+}

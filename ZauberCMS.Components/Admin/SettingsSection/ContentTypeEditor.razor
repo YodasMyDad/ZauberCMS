@@ -142,14 +142,26 @@
                                     {
                                         @foreach (var property in tabProperties)
                                         {
-                                            <PropertyEditor Property="property"
-                                                            ContentProperty="@(ContentProperties[property.Component!])"
-                                                            OnSortUp="@(prop => SortProperty(prop, false))"
-                                                            OnSortDown="@(prop => SortProperty(prop, true))"
-                                                            OnDelete="@(prop => DeleteProperty(prop))"
-                                                            OnChangeTab="@(async (prop) => await ChangeTab(prop))"
-                                                            OnSettings="@(async (prop) => await Settings(prop))"
-                                                            SlugHelper="@_slugHelper"/>
+                                            if (ContentProperties.TryGetValue(property.Component!, out var contentProperty))
+                                            {
+                                                <PropertyEditor Property="property"
+                                                                ContentProperty="@(contentProperty)"
+                                                                OnSortUp="@(prop => SortProperty(prop, false))"
+                                                                OnSortDown="@(prop => SortProperty(prop, true))"
+                                                                OnDelete="@(prop => DeleteProperty(prop))"
+                                                                OnChangeTab="@(async (prop) => await ChangeTab(prop))"
+                                                                OnSettings="@(async (prop) => await Settings(prop))"
+                                                                SlugHelper="@_slugHelper"/>   
+                                            }
+                                            else
+                                            {
+                                                NotificationService.Notify(new NotificationMessage
+                                                {
+                                                    Severity = NotificationSeverity.Error, Summary = "Missing Editor", Detail = $"Unable to find the editor {property.Component} so it's been skipped, has it been deleted?", Duration = 4000
+                                                });
+                                                <p>Unable to find the editor @property.Component so it's been skipped, has the component been deleted or alias changed?</p>
+                                                <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete This Property" Click="@(() => DeleteProperty(property))"/>
+                                            }
                                         }
                                     }
                                     else
