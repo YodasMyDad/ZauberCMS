@@ -1,3 +1,5 @@
+dotnet tool update --global dotnet-ef
+
 SQL Server Migrations
 dotnet ef migrations add InitialCreate --context ZauberDbContext -o "Data/Migrations/SqlServer"
 

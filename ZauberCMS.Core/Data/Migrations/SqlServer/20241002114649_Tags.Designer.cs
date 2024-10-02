@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZauberCMS.Core.Data;
 
@@ -11,9 +12,11 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqlServer
 {
     [DbContext(typeof(ZauberDbContext))]
-    partial class ZauberDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241002114649_Tags")]
+    partial class Tags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

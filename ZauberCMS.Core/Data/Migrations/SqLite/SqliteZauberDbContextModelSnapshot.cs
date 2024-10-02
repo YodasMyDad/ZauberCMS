@@ -15,7 +15,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
@@ -742,6 +742,59 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.ToTable("ZauberUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagName")
+                        .HasDatabaseName("IX_ZauberTag_TagName");
+
+                    b.ToTable("ZauberTags", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Tags.Models.TagItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("ZauberTagItems", (string)null);
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
                     b.HasOne("ZauberCMS.Core.Content.Models.Content", null)
@@ -930,6 +983,17 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Tags.Models.TagItem", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Tags.Models.Tag", "Tag")
+                        .WithMany("TagItems")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Content", b =>
                 {
                     b.Navigation("Audits");
@@ -975,6 +1039,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("PropertyData");
 
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>
+                {
+                    b.Navigation("TagItems");
                 });
 #pragma warning restore 612, 618
         }
