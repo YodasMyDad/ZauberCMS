@@ -7,6 +7,7 @@ namespace ZauberCMS.Core.Tags.Commands;
 
 public class QueryTagCommand : IRequest<PaginatedList<Tag>>
 {
+    public bool Cached {get;set;}
     public bool AsNoTracking { get; set; } = true;
     
     public List<Guid> Ids { get; set; } = [];
