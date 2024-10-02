@@ -3,8 +3,12 @@
 public interface IContentView
 {
     /// <summary>
-    /// The Content item that the View uses
+    /// The Content that the View uses
     /// </summary>
     Models.Content? Content { get; set; }
+    
+    /// <summary>
+    /// Language dicts for the currently set language
+    /// </summary>
     Dictionary<string, string>? LanguageKeys { get; set; }
 }
