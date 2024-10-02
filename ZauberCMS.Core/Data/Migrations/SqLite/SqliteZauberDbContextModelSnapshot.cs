@@ -798,6 +798,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ItemId");
+
                     b.HasIndex("TagId");
 
                     b.ToTable("ZauberTagItems", (string)null);
@@ -993,11 +995,19 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.TagItem", b =>
                 {
+                    b.HasOne("ZauberCMS.Core.Content.Models.Content", "Content")
+                        .WithMany("TagItems")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ZauberCMS.Core.Tags.Models.Tag", "Tag")
                         .WithMany("TagItems")
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Content");
 
                     b.Navigation("Tag");
                 });
@@ -1009,6 +1019,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("Children");
 
                     b.Navigation("PropertyData");
+
+                    b.Navigation("TagItems");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>

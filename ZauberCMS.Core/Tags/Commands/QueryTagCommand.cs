@@ -11,6 +11,7 @@ public class QueryTagCommand : IRequest<PaginatedList<Tag>>
     
     public List<Guid> Ids { get; set; } = [];
     public List<string> TagNames { get; set; } = [];
+    public List<string> TagSlugs { get; set; } = [];
     public List<Guid> ItemIds { get; set; } = [];
     
     public int PageIndex { get; set; } = 1;

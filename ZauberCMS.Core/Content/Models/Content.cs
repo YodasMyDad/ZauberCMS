@@ -4,6 +4,7 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Tags.Models;
 
 namespace ZauberCMS.Core.Content.Models;
 
@@ -163,4 +164,10 @@ public class Content : IContent<ContentPropertyValue>
     /// </summary>
     [JsonIgnore]
     public List<Audit.Models.Audit> Audits { get; set; } = [];
+    
+    /// <summary>
+    /// If parent ids are set this could have children
+    /// </summary>
+    [JsonIgnore]
+    public List<TagItem> TagItems { get; set; } = [];
 }

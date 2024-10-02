@@ -1,8 +1,10 @@
-﻿using System.Security.Cryptography;
+﻿using System.Linq.Dynamic.Core;
+using System.Security.Cryptography;
 using System.Text;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
@@ -38,7 +40,8 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
 
     private IQueryable<Models.Content> BuildQuery(QueryContentCommand request, ZauberDbContext dbContext)
     {
-        var query = dbContext.Contents.Include(x => x.ContentType).Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
+        var query = dbContext.Contents.Include(x => x.ContentType)
+            .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
 
         if (request.Query != null)
         {
@@ -65,6 +68,13 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
             {
                 query = request.IncludeUnpublished ? query.Include(x => x.Children).ThenInclude(x => x.UnpublishedContent) 
                     : query.Include(x => x.Children.Where(c => c.Published));
+            }
+
+            if (request.TagSlugs.Any())
+            {
+                query = query.Include(x => x.TagItems)
+                    .ThenInclude(x => x.Tag)
+                    .Where(x => x.TagItems.Any(y => request.TagSlugs.Contains(y.Tag!.Slug)));
             }
             
             if (request.AsNoTracking)

@@ -17,6 +17,11 @@ public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedLi
     public List<Guid> Ids { get; set; } = [];
     
     /// <summary>
+    /// Get content from related Tags picked in the Tag Propertry
+    /// </summary>
+    public List<string> TagSlugs { get; set; } = [];
+    
+    /// <summary>
     /// Current page to return
     /// </summary>
     public int PageIndex { get; set; } = 1;

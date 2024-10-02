@@ -16,5 +16,10 @@ public class TagItemDbMapping : IEntityTypeConfiguration<TagItem>
             .WithMany(p => p.TagItems)
             .HasForeignKey(d => d.TagId)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(d => d.Content)
+            .WithMany(p => p.TagItems)
+            .HasForeignKey(d => d.ItemId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

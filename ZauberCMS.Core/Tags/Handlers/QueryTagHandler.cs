@@ -40,6 +40,11 @@ public class QueryTagHandler(IServiceProvider serviceProvider)
                 query = query.Where(x => request.TagNames.Contains(x.TagName));
             }
             
+            if (request.TagSlugs.Count != 0)
+            {
+                query = query.Where(x => request.TagSlugs.Contains(x.Slug));
+            }
+            
             if (request.ItemIds.Count != 0)
             {
                query = query.Include(x => x.TagItems)
