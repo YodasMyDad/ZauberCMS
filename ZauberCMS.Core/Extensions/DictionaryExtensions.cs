@@ -33,6 +33,12 @@ namespace ZauberCMS.Core.Extensions;
             return default;
         }
 
+        /// <summary>
+        /// Retrieves a value from the dictionary by its key.
+        /// </summary>
+        /// <param name="extendedData">The dictionary to search in.</param>
+        /// <param name="key">The key of the value to retrieve.</param>
+        /// <returns>The value associated with the specified key if found; otherwise, default.</returns>
         public static string? Get(this Dictionary<string, object> extendedData, string key)
         {
             if (extendedData.TryGetValue(key, out var value))
@@ -41,7 +47,13 @@ namespace ZauberCMS.Core.Extensions;
             }
             return default;
         }
-        
+
+        /// <summary>
+        /// Retrieves the value associated with the specified key from the dictionary.
+        /// </summary>
+        /// <param name="data">The dictionary from which to retrieve the value.</param>
+        /// <param name="key">The key of the value to retrieve.</param>
+        /// <returns>The value associated with the specified key, or an empty string if the key is not present.</returns>
         public static string? Get(this Dictionary<string, string> data, string key)
         {
             if (data.TryGetValue(key, out var value))
@@ -49,6 +61,33 @@ namespace ZauberCMS.Core.Extensions;
                 return value;
             }
             return string.Empty;
+        }
+        
+        /// <summary>
+        /// Retrieves the value associated with the specified key from the dictionary.
+        /// </summary>
+        /// <param name="dictionary">The dictionary from which to retrieve the value.</param>
+        /// <param name="key">The key of the value to retrieve.</param>
+        /// <typeparam name="T">The type of the values in the dictionary.</typeparam>
+        /// <returns>The value associated with the specified key, or the default value if the key is not present.</returns>
+        public static T? GetValue<T>(this Dictionary<Guid, T> dictionary, Guid key)
+        {
+            return dictionary.TryGetValue(key, out var value) ? value : default;
+        }
+
+        /// <summary>
+        /// Attempts to add a value to the dictionary if the specified key is present.
+        /// </summary>
+        /// <param name="dictionary">The dictionary to which the value should be added.</param>
+        /// <param name="key">The key with which the value will be associated.</param>
+        /// <param name="value">The value to add to the dictionary.</param>
+        /// <typeparam name="T">The type of the values in the dictionary.</typeparam>
+        public static void TryAdd<T>(this Dictionary<Guid, T> dictionary, Guid? key, T? value)
+        {
+            if (key.HasValue && value != null)
+            {
+                dictionary.TryAdd(key.Value, value);
+            }
         }
 
         /// <summary>
