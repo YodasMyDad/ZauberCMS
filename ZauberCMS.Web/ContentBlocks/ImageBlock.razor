@@ -15,7 +15,7 @@
     {
         @if (Content != null)
         {
-            var media = await Content.GetMedia("Image", Mediator);
+            var media = await Content.GetMedias("Image", Mediator);
             Media = media.FirstOrDefault();
         }
     }

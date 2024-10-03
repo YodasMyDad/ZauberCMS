@@ -68,6 +68,6 @@
                 CurrentPage = page;
         }
         BlogPages = await Mediator.Send(queryContentCommand);
-        HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
+        HeaderImage = (await Content!.GetMedias("HeaderImage", Mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
     }
 }

@@ -53,6 +53,6 @@
     
     protected override async Task OnInitializedAsync()
     {
-        HeaderImage = (await Content!.GetMedia("HeaderImage", Mediator, "/assets/img/contact-bg.jpg")).FirstOrDefault()!;
+        HeaderImage = (await Content!.GetMedias("HeaderImage", Mediator, "/assets/img/contact-bg.jpg")).FirstOrDefault()!;
     }
 }

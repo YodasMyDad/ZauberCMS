@@ -1,7 +1,9 @@
 ﻿using System.Text.Json;
 using MediatR;
+using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data.Commands;
 using ZauberCMS.Core.Data.Models;
+using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Settings;
@@ -68,5 +70,56 @@ public static class MediatorExtensions
     public static async Task<User?> GetCurrentUser(this IMediator mediator)
     {
         return await mediator.Send(new GetCurrentUserCommand());
+    }
+
+    /// <summary>
+    /// Retrieves a user based on the specified ID.
+    /// </summary>
+    /// <param name="mediator">The mediator instance used to send the GetUserCommand.</param>
+    /// <param name="id">The unique identifier of the user to retrieve. If null, no user will be returned.</param>
+    /// <param name="cached">Indicates whether to use cached data. Default value is true.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains an instance of User, or null if no user is found.</returns>
+    public static async Task<User?> GetUser(this IMediator mediator, Guid? id, bool cached = true)
+    {
+        if (id != null)
+        {
+            return await mediator.Send(new GetUserCommand { Id = id.Value, Cached = cached});
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Retrieves the media with the specified ID from the mediator.
+    /// </summary>
+    /// <param name="mediator">The mediator instance used to send the GetMediaCommand.</param>
+    /// <param name="id">The ID of the media to retrieve.</param>
+    /// <param name="cached">A boolean value indicating whether the cached version should be retrieved if available.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains an instance of Media or null if the ID is null or the media is not found.</returns>
+    public static async Task<Media.Models.Media?> GetMedia(this IMediator mediator, Guid? id, bool cached = true)
+    {
+        if (id != null)
+        {
+            return await mediator.Send(new GetMediaCommand { Id = id.Value, Cached = cached });
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Retrieves content information based on the provided content ID.
+    /// </summary>
+    /// <param name="mediator">The mediator instance used to send the GetContentCommand.</param>
+    /// <param name="id">The unique identifier of the content to retrieve.</param>
+    /// <param name="cached">Indicates whether to use cached content data or not.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains an instance of Content if found; otherwise, null.</returns>
+    public static async Task<Content.Models.Content?> GetContent(this IMediator mediator, Guid? id, bool cached = true)
+    {
+        if (id != null)
+        {
+            return await mediator.Send(new GetContentCommand { Id = id.Value, Cached = cached });
+        }
+
+        return null;
     }
 }
