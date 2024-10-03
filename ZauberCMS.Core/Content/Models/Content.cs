@@ -164,10 +164,4 @@ public class Content : IContent<ContentPropertyValue>
     /// </summary>
     [JsonIgnore]
     public List<Audit.Models.Audit> Audits { get; set; } = [];
-    
-    /// <summary>
-    /// If parent ids are set this could have children
-    /// </summary>
-    [JsonIgnore]
-    public List<TagItem> TagItems { get; set; } = [];
 }

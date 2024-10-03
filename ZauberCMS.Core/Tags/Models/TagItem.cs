@@ -10,5 +10,4 @@ public class TagItem
     public Guid TagId { get; set; }
     public Tag? Tag { get; set; }
     public Guid ItemId { get; set; }
-    public Content.Models.Content? Content { get; set; }
 }

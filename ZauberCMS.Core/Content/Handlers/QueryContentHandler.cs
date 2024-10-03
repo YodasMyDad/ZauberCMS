@@ -72,9 +72,15 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
 
             if (request.TagSlugs.Any())
             {
-                query = query.Include(x => x.TagItems)
-                    .ThenInclude(x => x.Tag)
-                    .Where(x => x.TagItems.Any(y => request.TagSlugs.Contains(y.Tag!.Slug)));
+                query = (from content in query
+                    join tagItem in dbContext.TagItems on content.Id equals tagItem.ItemId
+                    join tag in dbContext.Tags on tagItem.TagId equals tag.Id
+                    where request.TagSlugs.Contains(tag.Slug)
+                    select content).Distinct();
+                
+                /*query = query.Where(content => dbContext.TagItems
+                    .Any(tagItem => tagItem.ItemId == content.Id &&
+                                    dbContext.Tags.Any(tag => tag.Id == tagItem.TagId && tagSlugs.Contains(tag.Slug))));*/
             }
             
             if (request.AsNoTracking)
