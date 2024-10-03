@@ -233,7 +233,7 @@
         }
 
         var contentTypes = await Mediator.Send(new QueryContentTypesCommand { ElementTypesOnly = false, OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000});
-        ContentTypes.AddRange(contentTypes.Items);
+        ContentTypes = contentTypes.Items.ToList();
         
         InitializeTabs();
         InitializeContentViews();
@@ -287,7 +287,8 @@
     private void InitializeContentViews()
     {
         var allContentViews = ExtensionManager.GetInstances<IContentView>();
-        ContentViews = allContentViews.Values.Select(x =>
+        ContentViews = allContentViews.Values
+            .Select(x =>
             {
                 var type = x.GetType();
                 return new ContentViewName
@@ -298,6 +299,7 @@
                     FullName = type.FullName!
                 };
             })
+            .Where(x => !Constants.InternalContentViews.Contains(x.Name))
             .OrderBy(x => x.Name)
             .ToList();
     }

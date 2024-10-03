@@ -4,6 +4,8 @@ public static class Constants
 {
     public const string SettingsConfigName = "Zauber";
     public const string GlobalSettings = "GlobalSettings";
+
+    public static readonly List<string> InternalContentViews = ["MissingView", "NewSite", "NotFound404"];
     
     public static class Guids
     {
