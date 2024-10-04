@@ -23,13 +23,10 @@
     <Routes @rendermode="RenderModeForPage"/>
 </CascadingValue>
 
+<div id="reconnect-modal" style="display: none;"></div>
 <script src="_framework/blazor.web.js"></script>
-<script>
-    window.blazorCulture = {
-        get: () => window.localStorage['BlazorCulture'],
-        set: (value) => window.localStorage['BlazorCulture'] = value
-    };
-</script>
+<script src="_content/ZauberCMS.Components/js/boot.js"></script>
+@* https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/signalr?view=aspnetcore-8.0#automatically-refresh-the-page-when-server-side-reconnection-fails *@
 @if (IsAdmin)
 {
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
