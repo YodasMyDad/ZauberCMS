@@ -55,7 +55,10 @@
     private CodeMirrorLanguage Language { get; set; } = CodeMirrorLanguage.Csharp;
     
     private readonly CodeMirrorSetup _setup = new() {
-        FocusOnCreation = false
+        FocusOnCreation = false,
+        ScrollToEnd = false,
+        ScrollToStart = false
+        
     };
     
     private string? Code
