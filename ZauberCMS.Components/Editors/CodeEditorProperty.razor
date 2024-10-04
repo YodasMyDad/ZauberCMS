@@ -1,12 +1,7 @@
 ﻿@using GaelJ.BlazorCodeMirror6.Models
 @using GaelJ.BlazorCodeMirror6
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
-@*<label for="Language">Language</label>
-<select @bind="@Language" id="Language">
-    @foreach (var language in Languages) {
-    <option value="@language">@language.DisplayName()</option>
-    }
-</select>*@
+
 <CodeMirror6Wrapper
     @ref="@CodeMirror6WrapperRef"
     IsWASM="@(false)"
