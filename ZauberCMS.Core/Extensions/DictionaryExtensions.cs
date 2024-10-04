@@ -70,9 +70,13 @@ namespace ZauberCMS.Core.Extensions;
         /// <param name="key">The key of the value to retrieve.</param>
         /// <typeparam name="T">The type of the values in the dictionary.</typeparam>
         /// <returns>The value associated with the specified key, or the default value if the key is not present.</returns>
-        public static T? GetValue<T>(this Dictionary<Guid, T> dictionary, Guid key)
+        public static T? GetValue<T>(this Dictionary<Guid, T> dictionary, Guid? key)
         {
-            return dictionary.TryGetValue(key, out var value) ? value : default;
+            if (!key.HasValue)
+            {
+                return default;
+            }
+            return dictionary.TryGetValue(key.Value, out var value) ? value : default;
         }
 
         /// <summary>
