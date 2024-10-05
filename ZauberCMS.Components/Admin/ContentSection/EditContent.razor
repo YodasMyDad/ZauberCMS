@@ -44,7 +44,7 @@
         {
             // Have to get the content to see which view to show
             Content = await Mediator.Send(new GetContentCommand {Id = ContentId, IncludeUnpublished = true});
-            ShowListView = Content.ContentType?.EnableListView ?? false;
+            ShowListView = Content!.ContentType?.EnableListView ?? false;
         }
     }
 

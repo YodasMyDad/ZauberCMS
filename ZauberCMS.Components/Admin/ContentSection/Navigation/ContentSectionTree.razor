@@ -123,7 +123,7 @@
                         break;
                     case 2:
                         // Confirm dialogue, say if there are children, and confirm then delete all
-                            var hasChildren = dbContent.Children.Any();
+                            var hasChildren = dbContent!.Children.Any();
                             var message = hasChildren
                                 ? "Move this content and it's children to the recycle bin?"
                                 : "Move this content to the recycle bin?";
@@ -143,7 +143,7 @@
             
                         break;
                     case 3:
-                            if (!dbContent.Children.Any())
+                            if (!dbContent!.Children.Any())
                             {
                                 // Show message if no children
                                 NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Hmmmm", Detail = "Sorry, nothing to sort as this content has no children", Duration = 4000 });

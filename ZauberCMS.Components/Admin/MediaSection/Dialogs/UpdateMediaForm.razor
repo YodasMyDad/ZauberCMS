@@ -145,7 +145,7 @@
         if (MediaId != null)
         {
             IsUpdate = true;
-            Media = await Mediator.Send(new GetMediaCommand { Id = MediaId });
+            Media = (await Mediator.Send(new GetMediaCommand { Id = MediaId }))!;
         }
     }
 

@@ -228,7 +228,7 @@ else
         if (ContentId != null)
         {
             Content = await Mediator.Send(new GetContentCommand { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true});
-            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
+            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content!.ContentTypeId });
 
             if (Content.UnpublishedContent != null)
             {

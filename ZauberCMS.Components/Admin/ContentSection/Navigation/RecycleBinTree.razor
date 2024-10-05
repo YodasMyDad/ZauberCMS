@@ -161,7 +161,7 @@
                 {
                     case 1:
                         ContextMenuService.Close();
-                        dbContent.Deleted = false;
+                        dbContent!.Deleted = false;
                         var saveResult = await Mediator.Send(new SaveContentCommand{ Content = dbContent, ExcludePropertyData = true});
                         if (saveResult.Success)
                         {
@@ -173,7 +173,7 @@
                         var delete = await ConfirmService.Confirm("Permanently delete this?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
                         if (delete == true)
                         {
-                            var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id});
+                            var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent!.Id});
                             NotificationService.Notify(new NotificationMessage { 
                                 Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
                                 Summary = result.Success ? "Success" : "Error", 

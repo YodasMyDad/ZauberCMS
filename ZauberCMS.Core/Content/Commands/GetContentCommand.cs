@@ -2,7 +2,7 @@
 
 namespace ZauberCMS.Core.Content.Commands;
 
-public class GetContentCommand : IRequest<Models.Content>
+public class GetContentCommand : IRequest<Models.Content?>
 {
     /// <summary>
     /// Whether this is to be cached

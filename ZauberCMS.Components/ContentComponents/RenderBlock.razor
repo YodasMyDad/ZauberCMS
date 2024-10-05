@@ -28,7 +28,10 @@
 
     protected override void OnParametersSet()
     {
-        Parameters.Add("Content", Content! );
+        if (!Parameters.ContainsKey("Content"))
+        {
+            Parameters.Add("Content", Content!);   
+        }
         BlockViews = ExtensionManager.GetInstances<TView>(true);
     }
 }

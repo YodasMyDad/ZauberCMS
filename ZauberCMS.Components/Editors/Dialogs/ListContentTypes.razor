@@ -37,7 +37,7 @@
         if (ParentId != null)
         {
             var content = await Mediator.Send(new GetContentCommand { Id = ParentId.Value });
-            if (content.ContentType?.AllowedChildContentTypes.Any() == true)
+            if (content!.ContentType?.AllowedChildContentTypes.Any() == true)
             {
                 ContentTypes = ContentTypes.Where(x => content.ContentType.AllowedChildContentTypes.Contains(x.Id));
             }
