@@ -4,7 +4,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
-        <Version>1.4.5</Version>
+        <Version>1.4.6</Version>
         <Authors>Lee Messenger</Authors>
         <PackageId>ZauberCMS.Template</PackageId>
         <Description>Package that creates a ZauberCMS website project.</Description>
@@ -15,7 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ZauberCMS" Version="1.4.5"/>
+        <PackageReference Include="ZauberCMS" Version="1.4.6"/>
     </ItemGroup>
     
     <ItemGroup>
