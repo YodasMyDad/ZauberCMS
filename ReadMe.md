@@ -11,7 +11,9 @@ _Core tech used is: .Net 8, Blazor, EF Core, Identity, Mediatr, [Radzen Componen
 
 ## Getting Started
 
-Fastest way to get started is using the .Net Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one)
+This repo comes with a starter site example, if you clone this repo, build and run the **ZauberCMS.Web** project you will see the starter kit (Go to /admin, register an account to see everything).
+
+However, fastest way to get started building your own website is using the .Net Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one)
 
 `dotnet new install ZauberCMS.Template --force`
 
@@ -19,7 +21,7 @@ Then create your project (Project names should start with ZauberCMS so the plugi
 
 `dotnet new zaubercms -n ZauberCMS.YourProjectName`
 
-However, you can also use Nuget and full instructions on how to use it are below
+You can also use Nuget and full instructions on how to use it are below (I prefer this way myself)
 
 https://aptitude.gitbook.io/zaubercms/getting-started/quick-start
 

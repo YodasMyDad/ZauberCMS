@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
 @page "/admin/createcontent"
 @page "/admin/createcontent/{ParentId:guid}"
@@ -10,25 +11,30 @@
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Right" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/admin/createcontent"))/>
+    @if (Content != null)
+    {
+        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click=@(DeleteContent)/>
+    }
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
     @if (ShowListView)
     {
-        <ContentListView @key="GetCompositeKey(ContentId, ParentId)" Content="@Content" ContentId="@ContentId" ParentId="@ParentId" />
+        <ContentListView @key="GetCompositeKey(ContentId, ParentId)" Content="@Content" ContentId="@ContentId" ParentId="@ParentId"/>
     }
     else
     {
-        <ContentEditor @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ParentId" ContentId="@ContentId"/>   
+        <ContentEditor @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ParentId" ContentId="@ContentId"/>
     }
 </RadzenPanel>
 
 @code {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    
+    [Inject] public DialogService ConfirmService { get; set; } = default!;
+
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
-    
+
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
     private Content? Content { get; set; }
     private bool ShowListView { get; set; }
@@ -43,8 +49,26 @@
         if (ContentId != null)
         {
             // Have to get the content to see which view to show
-            Content = await Mediator.Send(new GetContentCommand {Id = ContentId, IncludeUnpublished = true});
+            Content = await Mediator.Send(new GetContentCommand { Id = ContentId, IncludeUnpublished = true });
             ShowListView = Content!.ContentType?.EnableListView ?? false;
+        }
+    }
+
+    private async Task DeleteContent()
+    {
+        // Confirm dialogue, say if there are children, and confirm then delete all
+        var hasChildren = Content!.Children.Any();
+        var message = hasChildren
+            ? "Move this content and it's children to the recycle bin?"
+            : "Move this content to the recycle bin?";
+        var delete = await ConfirmService.Confirm(message, "Move to recycle bin", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (delete == true)
+        {
+            var result = await Mediator.Send(new DeleteContentCommand { ContentId = ContentId!.Value, MoveToRecycleBin = true });
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo("/admin/content", true);
+            }
         }
     }
 
@@ -52,5 +76,5 @@
     {
         return $"{contentId?.ToString() ?? "null"}_{parentId?.ToString() ?? "null"}";
     }
-    
+
 }
