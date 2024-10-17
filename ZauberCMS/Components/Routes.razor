@@ -6,12 +6,14 @@
         AppAssembly="@typeof(App).Assembly"
         AdditionalAssemblies="@ExtensionManager.GetFilteredAssemblies(null)">
         <Found Context="routeData">
-            <AuthorizeRouteView Resource="routeData" RouteData="routeData">
-                <NotAuthorized>
-                    <RedirectToLogin />
-                </NotAuthorized>
-            </AuthorizeRouteView>
-            <FocusOnNavigate RouteData="routeData" Selector="h1"/>
+            <CascadingValue Value="routeData">
+                <AuthorizeRouteView Resource="routeData" RouteData="routeData">
+                    <NotAuthorized>
+                        <RedirectToLogin />
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="routeData" Selector="h1"/>
+            </CascadingValue>
         </Found>
     </Router>
 </CascadingBlazoredModal>
