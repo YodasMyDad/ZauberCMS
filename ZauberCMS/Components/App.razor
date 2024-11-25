@@ -14,6 +14,7 @@
         <link rel="stylesheet" href="_content/ZauberCMS.Components/css/admin.css">
         <link rel="stylesheet" href="_content/Blazored.Modal/Blazored.Modal.bundle.scp.css">
     }
+    <ImportMap/>
     <HeadOutlet @rendermode="RenderModeForPage"/>
 </head>
 
@@ -23,23 +24,7 @@
     <Routes @rendermode="RenderModeForPage"/>
 </CascadingValue>
 
-<div id="reconnect-modal" style="display: none;"></div>
 <script src="_framework/blazor.web.js"></script>
-<script>
-    // Wait until a 'reload' button appears
-    new MutationObserver((mutations, observer) => {
-        if (document.querySelector('#components-reconnect-modal h5')) {
-            // Now every 10 seconds, see if the server appears to be back, and if so, reload
-            async function attemptReload() {
-                await fetch(''); // Check the server really is back
-                location.reload();
-            }
-            observer.disconnect();
-            attemptReload();
-            setInterval(attemptReload, 2000);
-        }
-    }).observe(document.body, { childList: true, subtree: true });
-</script>
 
 @if (IsAdmin)
 {
