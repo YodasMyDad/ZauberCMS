@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Http
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -29,7 +30,7 @@
 @if (IsAdmin)
 {
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.4/Sortable.min.js"></script>
 }
 </body>
 
@@ -37,6 +38,9 @@
 
 @code {
 
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+    
     private bool IsAdmin
     {
         get
@@ -49,5 +53,17 @@
     }
 
     // Set the Admin to InteractiveServer but use SSR for rest of site
-    private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
+    //private IComponentRenderMode? RenderModeForPage => IsAdmin ? InteractiveServer : null;
+    private IComponentRenderMode? RenderModeForPage
+    {
+        get
+        {
+            if (HttpContext == null)
+            {
+                return InteractiveServer;
+            }
+            return HttpContext?.AcceptsInteractiveRouting() == true ? InteractiveServer : null;
+        }
+    }
+
 }

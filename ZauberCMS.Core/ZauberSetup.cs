@@ -94,13 +94,13 @@ public static class ZauberSetup
         // Add authentication and authorization middleware
         app.UseAuthentication();
         app.UseAuthorization();
-
-        app.UseCustomCulture();
         
         app.MapStaticAssets();
         
+        app.UseCustomCulture();
+        
         app.MapRazorComponents<T>()
-            .AddInteractiveServerRenderMode()
+            .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
             .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
 
         // Add additional endpoints required by the Identity /Account Razor components.
