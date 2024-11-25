@@ -14,6 +14,8 @@ public class LanguageDbMapping : IEntityTypeConfiguration<Language>
         builder.Property(x => x.LanguageIsoCode).HasMaxLength(14);
         builder.Property(x => x.LanguageCultureName).HasMaxLength(100);
 
+        builder.Ignore(x => x.Name);
+        
         builder.HasMany(x => x.LanguageTexts)
             .WithOne(x => x.Language)
             .HasForeignKey(x => x.LanguageId)

@@ -251,7 +251,11 @@ builder.Services.AddRazorComponents()
         AssemblyManager.SetAssemblies(discoverAssemblies);
 
         // Mediatr
-        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(discoverAssemblies));
+        builder.Services.AddMediatR(cfg =>
+            {
+                cfg.RegisterGenericHandlers = true;
+                cfg.RegisterServicesFromAssemblies(discoverAssemblies);
+            });
 
         // Automapper
         builder.Services.AddAutoMapper(discoverAssemblies);

@@ -1,15 +1,22 @@
 ﻿using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Languages.Models;
 
-public class Language
+public class Language : ITreeItem
 {
     /// <summary>
     /// The ID
     /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
-    
+
+    public string? Name
+    {
+        get => LanguageCultureName;
+        set => LanguageCultureName = value;
+    }
+
     /// <summary>
     /// Language ISO code
     /// </summary>

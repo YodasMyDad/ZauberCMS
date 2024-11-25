@@ -3,11 +3,12 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data.Commands;
+using ZauberCMS.Core.Shared.Interfaces;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Data.Handlers;
 
-public class DataGridHandler<T>(IServiceProvider serviceProvider) : IRequestHandler<DataGridCommand<T>, DataGridResult<T>> where T : class
+public class DataGridHandler<T>(IServiceProvider serviceProvider) : IRequestHandler<DataGridCommand<T>, DataGridResult<T>> where T : class, ITreeItem
 {
     public async Task<DataGridResult<T>> Handle(DataGridCommand<T> request, CancellationToken cancellationToken)
     {
