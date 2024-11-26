@@ -1,6 +1,6 @@
-﻿namespace ZauberCMS.Core.Shared.Services;
+﻿namespace ZauberCMS.Core.Content.Models;
 
-public class RequestDataService
+public class EntryContentResult
 {
     public Guid? ContentId { get; set; }
     public bool IncludeChildren { get; set; }

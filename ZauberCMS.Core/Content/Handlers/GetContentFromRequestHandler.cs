@@ -9,7 +9,7 @@ using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
-public class GetContentFromRequestHandler(IServiceProvider serviceProvider, RequestDataService requestDataService, IMediator mediator)
+public class GetContentFromRequestHandler(IServiceProvider serviceProvider, IMediator mediator)
     : IRequestHandler<GetContentFromRequestCommand, EntryModel>
 {
     public async Task<EntryModel> Handle(GetContentFromRequestCommand request, CancellationToken cancellationToken)
@@ -19,13 +19,18 @@ public class GetContentFromRequestHandler(IServiceProvider serviceProvider, Requ
         
         var entryModel = new EntryModel();
         
-        if (requestDataService.ContentId == null)
+        var entryContentResult = await mediator.Send(new ProcessEntryContentCommand
+        {
+            FullUrl = request.Url,
+            Slug = request.Slug,
+            IsRootContent = request.IsRootContent
+        }, cancellationToken); 
+        
+        if (entryContentResult == null)
         {
             return entryModel;
         }
         
-        // set the language
-
         // Now we perform the more expensive query to fetch the content with includes
         var query = dbContext.Contents
             .AsNoTracking()
@@ -36,20 +41,20 @@ public class GetContentFromRequestHandler(IServiceProvider serviceProvider, Requ
             .AsSplitQuery()
             .AsQueryable();
 
-        if (request.IncludeChildren || requestDataService.IncludeChildren)
+        if (request.IncludeChildren || entryContentResult.IncludeChildren)
         {
             query = query.Include(x => x.Children);
         }
 
         var fullContent = await query
-            .FirstOrDefaultAsync(c => c.Id == requestDataService.ContentId, cancellationToken: cancellationToken);
+            .FirstOrDefaultAsync(c => c.Id == entryContentResult.ContentId, cancellationToken: cancellationToken);
         
         entryModel.Content = fullContent;
 
         var allLanguageData = await mediator.Send(new GetCachedAllLanguageDictionariesCommand(), cancellationToken);
-        if (requestDataService.LanguageIsoCode != null)
+        if (entryContentResult.LanguageIsoCode != null)
         {
-            allLanguageData.TryGetValue(requestDataService.LanguageIsoCode, out var language);
+            allLanguageData.TryGetValue(entryContentResult.LanguageIsoCode, out var language);
             if (language != null)
             {
                 entryModel.LanguageKeys = language;

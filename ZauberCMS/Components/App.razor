@@ -9,11 +9,11 @@
     @if (IsAdmin)
     {
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-        <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
+        <link rel="stylesheet" href="@Assets["_content/Radzen.Blazor/css/material-base.css"]">
         @* Need to figure out how we can get these a better way *@
-        <link rel="stylesheet" href="_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css">
-        <link rel="stylesheet" href="_content/ZauberCMS.Components/css/admin.css">
-        <link rel="stylesheet" href="_content/Blazored.Modal/Blazored.Modal.bundle.scp.css">
+        <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css"]">
+        <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
+        <link rel="stylesheet" href="@Assets["_content/Blazored.Modal/Blazored.Modal.bundle.scp.css"]">
     }
     <ImportMap/>
     <HeadOutlet @rendermode="RenderModeForPage"/>
@@ -32,6 +32,7 @@
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.4/Sortable.min.js"></script>
 }
+
 </body>
 
 </html>

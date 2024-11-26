@@ -1,6 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using ZauberCMS.Core.Settings
-@using ZauberCMS.Core.Data.Commands
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Content.Interfaces
 @using Microsoft.Extensions.Options
@@ -101,8 +100,8 @@
     }
 }
 
-<div id="blazor-error-ui">
+<div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
 </div>

@@ -14,7 +14,6 @@ using Microsoft.Extensions.Options;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
-using ZauberCMS.Core.Content.Middleware;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
@@ -97,7 +96,7 @@ public static class ZauberSetup
         
         app.MapStaticAssets();
         
-        app.UseCustomCulture();
+        //app.UseCustomCulture();
         
         app.MapRazorComponents<T>()
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
@@ -142,7 +141,6 @@ builder.Services.AddRazorComponents()
         builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
-        builder.Services.AddScoped<RequestDataService>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
         builder.Services.AddRadzenComponents();
