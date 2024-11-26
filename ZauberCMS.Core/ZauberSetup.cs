@@ -19,6 +19,7 @@ using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
+using ZauberCMS.Core.Languages.Middleware;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Claims;
 using ZauberCMS.Core.Membership.Models;
@@ -27,6 +28,7 @@ using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared;
+using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
 // ReSharper disable once CheckNamespace
@@ -81,6 +83,8 @@ public static class ZauberSetup
             app.UseRequestLocalization(localizationOptions);
         }
         
+        app.UseCustomCulture();
+        
         app.UseImageSharp();
         app.UseSerilogRequestLogging();
         
@@ -95,8 +99,6 @@ public static class ZauberSetup
         app.UseAuthorization();
         
         app.MapStaticAssets();
-        
-        //app.UseCustomCulture();
         
         app.MapRazorComponents<T>()
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
@@ -142,6 +144,7 @@ builder.Services.AddRazorComponents()
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+        builder.Services.AddScoped<RequestCulture>();
 
         builder.Services.AddRadzenComponents();
 

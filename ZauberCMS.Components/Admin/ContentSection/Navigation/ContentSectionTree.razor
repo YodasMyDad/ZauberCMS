@@ -180,6 +180,21 @@
                         if (languageDialogResult is { Confirmed: true })
                         {
                             // Do we need to do anything here?     
+                            var savedContent = languageDialogResult.Data as Content;
+                            if (savedContent?.LanguageId != null)
+                            {
+                                // Save the content
+                                var saveResult = await Mediator.Send(new SaveContentCommand {Content = savedContent, ExcludePropertyData = true});
+                                if (!saveResult.Success)
+                                {
+                                    NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveResult.Messages.MessagesAsString(), Duration = 4000 });
+                                }
+                                else
+                                {
+                                    NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Culture Updated", Detail = string.Empty, Duration = 4000 });
+                                    await AppState.NotifyContentChanged(dbContent, CurrentUser?.Name ?? "Unknown");
+                                }
+                            }
                         }    
          
                         break;

@@ -2,7 +2,7 @@
 
 namespace ZauberCMS.Core.Content.Commands;
 
-public class GetContentLanguagesCommand : IRequest<Dictionary<Guid, string>>
+public class GetContentLanguagesCommand : IRequest<Dictionary<string, string>>
 {
     
 }

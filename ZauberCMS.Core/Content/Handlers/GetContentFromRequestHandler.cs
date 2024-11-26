@@ -5,11 +5,11 @@ using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Languages.Commands;
-using ZauberCMS.Core.Shared.Services;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
-public class GetContentFromRequestHandler(IServiceProvider serviceProvider, IMediator mediator)
+public class GetContentFromRequestHandler(IServiceProvider serviceProvider, IMediator mediator, RequestCulture requestCulture)
     : IRequestHandler<GetContentFromRequestCommand, EntryModel>
 {
     public async Task<EntryModel> Handle(GetContentFromRequestCommand request, CancellationToken cancellationToken)
@@ -19,14 +19,39 @@ public class GetContentFromRequestHandler(IServiceProvider serviceProvider, IMed
         
         var entryModel = new EntryModel();
         
-        var entryContentResult = await mediator.Send(new ProcessEntryContentCommand
+        var contentQueryable = dbContext.Contents
+            .AsNoTracking()
+            .Include(x => x.ContentType)
+            .Include(x => x.Language);
+
+        Domain? matchedDomain = null;
+
+        var content = request.IsRootContent
+            ? matchedDomain != null
+                ? await contentQueryable
+                    .Select(c => new
+                        { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Language, c.Path })
+                    .FirstOrDefaultAsync(x => x.Id == matchedDomain.ContentId, cancellationToken)
+                : await contentQueryable
+                    .Where(c => c.IsRootContent && c.Published)
+                    .Select(c => new
+                        { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Language, c.Path })
+                    .FirstOrDefaultAsync(cancellationToken)
+            : await contentQueryable
+                .Where(c => c.Url == request.Slug && c.Published)
+                .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Language, c.Path })
+                .FirstOrDefaultAsync(cancellationToken);
+
+        if (content?.InternalRedirectId != null && content.InternalRedirectId != Guid.Empty)
         {
-            FullUrl = request.Url,
-            Slug = request.Slug,
-            IsRootContent = request.IsRootContent
-        }, cancellationToken); 
+            var internalRedirectIdValue = content.InternalRedirectId.Value;
+            content = await contentQueryable
+                .Where(c => c.Id == internalRedirectIdValue)
+                .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Language, c.Path })
+                .FirstOrDefaultAsync(cancellationToken);
+        }
         
-        if (entryContentResult == null)
+        if (content == null)
         {
             return entryModel;
         }
@@ -41,20 +66,22 @@ public class GetContentFromRequestHandler(IServiceProvider serviceProvider, IMed
             .AsSplitQuery()
             .AsQueryable();
 
-        if (request.IncludeChildren || entryContentResult.IncludeChildren)
+        if (request.IncludeChildren || content.IncludeChildren)
         {
             query = query.Include(x => x.Children);
         }
 
         var fullContent = await query
-            .FirstOrDefaultAsync(c => c.Id == entryContentResult.ContentId, cancellationToken: cancellationToken);
+            .FirstOrDefaultAsync(c => c.Id == content.Id, cancellationToken: cancellationToken);
         
         entryModel.Content = fullContent;
 
         var allLanguageData = await mediator.Send(new GetCachedAllLanguageDictionariesCommand(), cancellationToken);
-        if (entryContentResult.LanguageIsoCode != null)
+        
+        // TODO - Get from middleware
+        if (requestCulture.LanguageIsoCode != null)
         {
-            allLanguageData.TryGetValue(entryContentResult.LanguageIsoCode, out var language);
+            allLanguageData.TryGetValue(requestCulture.LanguageIsoCode, out var language);
             if (language != null)
             {
                 entryModel.LanguageKeys = language;
