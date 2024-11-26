@@ -31,7 +31,7 @@
     <RadzenPanel Class="rz-mx-auto">
         <EditForm Model="Role" OnSubmit="Save">
             <RadzenRow class="rz-pb-6">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="2">
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
                         <RadzenIcon Icon="@(Role.Icon.IsNullOrWhiteSpace() ? "add" : Role.Icon)" style="font-weight: 300; color: dimgray;"/>
                     </RadzenStack>

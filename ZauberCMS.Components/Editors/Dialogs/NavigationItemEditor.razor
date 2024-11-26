@@ -13,7 +13,7 @@
                 <div class="text-xs font-extralight text-slate-300">ID: @NavigationItem.Id</div>
             }
             <div class="flex justify-between items-center">
-                <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-100" aria-label="Name"/>
+                <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-full" aria-label="Name"/>
                 @if (NavigationItem?.ContentId != null)
                 {
                     <RadzenButton Icon="remove_circle_outline" Variant="Variant.Text" Click="RemoveContent" class="ml-1"/>
@@ -32,7 +32,7 @@
             <PropertyInfo Name="Url" Description="The url of the navigation item"/>
         </LeftColumn>
         <CentreColumn>
-            <RadzenTextBox @bind-Value="@NavigationItem!.Url" class="w-100 flex-1" aria-label="Url" ReadOnly="@(NavigationItem?.ContentId != null)"/>
+            <RadzenTextBox @bind-Value="@NavigationItem!.Url" class="w-full flex-1" aria-label="Url" ReadOnly="@(NavigationItem?.ContentId != null)"/>
             <ValidationMessage For="() => NavigationItem!.Url" class="text-danger"/>
         </CentreColumn>
     </EditorRow>

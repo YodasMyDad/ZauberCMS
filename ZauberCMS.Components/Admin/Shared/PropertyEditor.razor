@@ -3,7 +3,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <RadzenTextBox class="w-100 rz-mb-2" Name="Name" Value="@Property.Name"
+        <RadzenTextBox class="w-full rz-mb-2" Name="Name" Value="@Property.Name"
                        ValueChanged="@((string name) => { Property.Name = name; Property.Alias = SlugHelper.GenerateSlug(name); })"
                        Style="font-size: 13px; color: #000;" Placeholder="Name" aria-label="Property Name"/>
         <RadzenText Text="@Property.Alias" TextStyle="TextStyle.Caption"/>

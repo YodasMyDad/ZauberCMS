@@ -15,7 +15,7 @@
                     <div class="pr-1 flex items-center justify-center cursor-grab">
                         <RadzenIcon Icon="drag_indicator"/>
                     </div>
-                    <RadzenTextBox Value="@item.TagName" ValueChanged="@(value => OnValueChanged(value, item))" class="w-100" aria-label="Tag Name"/>
+                    <RadzenTextBox Value="@item.TagName" ValueChanged="@(value => OnValueChanged(value, item))" class="w-full" aria-label="Tag Name"/>
                     <RadzenButton Click="@(() => RemoveItem(item))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
                 </RadzenStack>
             </div>

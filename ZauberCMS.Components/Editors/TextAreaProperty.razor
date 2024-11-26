@@ -2,9 +2,10 @@
 @using ZauberCMS.Components.Editors.Settings
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<InputTextArea oninput="event.target.style.height = Math.max(event.target.clientHeight, event.target.scrollHeight) + 'px';"
-               Value="@Value" ValueChanged="@((string? value) => ValueChanged.InvokeAsync(value))"
-               ValueExpression="@(() => Value)" class="form-control" @attributes="GetAdditionalAttributes()"/>
+<RadzenTextArea oninput="event.target.style.height = Math.max(event.target.clientHeight, event.target.scrollHeight) + 'px';"
+                Value="@Value" 
+                ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
+               ValueExpression="@(() => Value)" class="form-control w-full" @attributes="GetAdditionalAttributes()"/>
 
 @if (SettingsModel.MaxLength != null)
 {

@@ -2,8 +2,9 @@
 @using ZauberCMS.Components.Editors.Settings
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenTextBox @ref="TextBoxReference" Value="@Value" ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
-               ValueExpression="@(() => Value)" class="form-control" @attributes="GetAdditionalAttributes()" />
+<RadzenTextBox @ref="TextBoxReference" Value="@Value" 
+               ValueChanged="@((string value) => ValueChanged.InvokeAsync(value))"
+               ValueExpression="@(() => Value)" class="form-control w-full" @attributes="GetAdditionalAttributes()" />
 
 @if (SettingsModel.MaxLength != null)
 {

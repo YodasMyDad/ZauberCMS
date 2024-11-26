@@ -14,7 +14,7 @@
     </RadzenStack>
 }
 
-<RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container w-100">
+<RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container w-full">
     @foreach (var media in FilesToUpload)
     {
         <PickerItem Icon="@media.Name.ToFileType().GetIcon()" Text="@media.Name" Close="@(() => RemoveMedia(media))" />

@@ -29,14 +29,14 @@
 <RadzenPanel Class="rz-mx-auto">
     <EditForm Model="ContentType" OnSubmit="Save">
         <RadzenRow class="rz-pb-6">
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="2">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="2">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
                     <RadzenIcon Icon="@(ContentType.Icon.IsNullOrWhiteSpace() ? "add" : ContentType.Icon)" style="font-weight: 300; color: dimgray;"/>
                 </RadzenStack>
                 <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
                                ValueChanged="@((string name) => { ContentType.Name = name; ContentType.Alias = _slugHelper.GenerateSlug(name); })" aria-label="Name"/>
             </RadzenStack>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-100" Gap="0">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="0">
                 <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
             </RadzenStack>
         </RadzenRow>

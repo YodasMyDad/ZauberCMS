@@ -3,7 +3,7 @@
 @using ZauberCMS.Components.Editors.Settings
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenNumeric TValue="double" Value="@SavedValue" Change="@(args => OnChange(args))" 
+<RadzenNumeric TValue="double" Value="@SavedValue" Change="@(args => OnChange(args))" class="w-full"
                InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter numeric value" }})"
                @attributes="GetAdditionalAttributes()" />
 

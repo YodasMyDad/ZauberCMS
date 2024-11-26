@@ -13,7 +13,7 @@
             var item = Value[index]; // Get the current item
             
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" @key="item">
-                <RadzenTextBox Value="@item" ValueChanged="@(value => OnValueChanged(value, index))" class="w-100" aria-label="Name TextBox"/>
+                <RadzenTextBox Value="@item" ValueChanged="@(value => OnValueChanged(value, index))" class="w-full" aria-label="Name TextBox"/>
                 <RadzenButton Click="@(() => RemoveItem(item))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
             </RadzenStack>
         }
