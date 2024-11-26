@@ -68,6 +68,10 @@
             <DependentUpon>SharedResource.resx</DependentUpon>
         </Compile>
     </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\js\boot.js" />
+    </ItemGroup>
     
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
         <PropertyGroup>
