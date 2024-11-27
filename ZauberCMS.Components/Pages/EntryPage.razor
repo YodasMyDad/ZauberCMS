@@ -1,11 +1,8 @@
-﻿@using System.Globalization
-@using Microsoft.Extensions.Options
+﻿@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Languages.Commands
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Settings
-@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
 
 @if (ComponentView != null)
@@ -71,7 +68,7 @@
             }
             else
             {
-                // No content found on slug (404) Show not found component
+                // No content show the starter component
                 if (AllContentViews.TryGetValue(Settings.Value.StarterComponent!, out var starter))
                 {
                     ComponentView = starter;

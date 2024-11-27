@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using Blazored.Modal;
-using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -10,7 +9,6 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
@@ -18,8 +16,6 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Languages.Commands;
-using ZauberCMS.Core.Languages.Middleware;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Claims;
 using ZauberCMS.Core.Membership.Models;
@@ -28,7 +24,6 @@ using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared;
-using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
 // ReSharper disable once CheckNamespace
@@ -42,7 +37,6 @@ public static class ZauberSetup
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
             var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
-            var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
             try
             {
                 if (dbContext.Database.GetPendingMigrations().Any())
@@ -61,30 +55,8 @@ public static class ZauberSetup
             {
                 Log.Error(ex, "Error during startup trying to do Db migrations");
             }
-            
-            
-            var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
-            
-            // Is this ok to use the awaiter and result here?
-            var langs = mediatr.Send(new QueryLanguageCommand{AmountPerPage = 200}).GetAwaiter().GetResult();
-            
-            // en-US must be the default culture as that's what the backoffice resource is
-            var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
-
-            foreach (var langsItem in langs.Items)
-            {
-                if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
-            }
-            var supportedCulturesArray = supportedCultures.ToArray();
-            var localizationOptions = new RequestLocalizationOptions()
-                .SetDefaultCulture(supportedCulturesArray[0])
-                .AddSupportedCultures(supportedCulturesArray)
-                .AddSupportedUICultures(supportedCulturesArray);
-            app.UseRequestLocalization(localizationOptions);
         }
-        
-        app.UseCustomCulture();
-        
+
         app.UseImageSharp();
         app.UseSerilogRequestLogging();
         
@@ -144,7 +116,6 @@ builder.Services.AddRazorComponents()
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-        builder.Services.AddScoped<RequestCulture>();
 
         builder.Services.AddRadzenComponents();
 

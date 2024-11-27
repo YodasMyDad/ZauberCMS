@@ -1,5 +1,6 @@
 ﻿@using System.Globalization
 @using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Web.Layouts
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 
@@ -38,20 +39,27 @@
             <p>@CultureInfo.CurrentCulture.Name</p>
             <p>@CultureInfo.CurrentUICulture.Name</p>
             <p>@(DateTime.Now.ToLongDateString())</p>
-
+            
             @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
         </div>
     </div>
 </div>
 
-
 @code {
-    
     @* This is the content page passed in that matches the url *@
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
 
     private Media HeaderImage { get; set; } = new();
+
+    /*protected override void OnInitialized()
+    {
+        var cultureInfo = new CultureInfo("es-ES");
+        CultureInfo.CurrentCulture = cultureInfo;
+        CultureInfo.CurrentUICulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+    }*/
     
     protected override async Task OnInitializedAsync()
     {
