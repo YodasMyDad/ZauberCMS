@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using System.Globalization
+@using Microsoft.Extensions.Options
+@using ZauberCMS.Core.Settings
 @implements ZauberCMS.Core.Membership.Interfaces.IAccountLayout
 
 <head>
@@ -10,9 +13,22 @@
 <body style="display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden;">
 @Body
 
-    @*<div id="blazor-error-ui" data-nosnippet>
+@*<div id="blazor-error-ui" data-nosnippet>
         An unhandled error has occurred.
         <a href="." class="reload">Reload</a>
         <span class="dismiss">🗙</span>
     </div>*@
 </body>
+
+@code
+{
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    protected override void OnInitialized()
+    {
+        var cultureInfo = new CultureInfo(Settings.Value.AdminDefaultLanguage);
+        CultureInfo.CurrentCulture = cultureInfo;
+        CultureInfo.CurrentUICulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+    }
+}

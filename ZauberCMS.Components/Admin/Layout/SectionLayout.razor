@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Http
+﻿@using System.Globalization
+@using Microsoft.AspNetCore.Http
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Content.Interfaces
@@ -73,7 +74,8 @@
     [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [CascadingParameter] public HttpContext? HttpContext { get; set; }
-
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    
     private List<string> PageScripts { get; set; } = [];
     private List<string> PageStyles { get; set; } = [];
 
@@ -97,6 +99,12 @@
 
     protected override void OnInitialized()
     {
+        var cultureInfo = new CultureInfo(Settings.Value.AdminDefaultLanguage);
+        CultureInfo.CurrentCulture = cultureInfo;
+        CultureInfo.CurrentUICulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+        
         var contentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (contentProperties.Any())
         {
@@ -104,7 +112,7 @@
             PageStyles = contentProperties.SelectMany(x => x.Value.Styles)?.Distinct().ToList() ?? [];
         }
     }
-
+    
     private string? SectionAlias { get; set; }
 
     public void SetSection(string value)

@@ -1,6 +1,4 @@
-﻿@using System.Globalization
-@using ZauberCMS.Core.Media.Models
-@using ZauberCMS.Core.Shared.Models
+﻿@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Web.Layouts
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 
@@ -35,11 +33,6 @@
 
     <div class="row gx-4 gx-lg-5 justify-content-center">
         <div class="col-md-10 col-lg-8 col-xl-7">
-            
-            <p>@CultureInfo.CurrentCulture.Name</p>
-            <p>@CultureInfo.CurrentUICulture.Name</p>
-            <p>@(DateTime.Now.ToLongDateString())</p>
-            
             @((MarkupString)(Content!.GetValue<string>("Content") ?? string.Empty))
         </div>
     </div>
@@ -51,15 +44,6 @@
     [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
 
     private Media HeaderImage { get; set; } = new();
-
-    /*protected override void OnInitialized()
-    {
-        var cultureInfo = new CultureInfo("es-ES");
-        CultureInfo.CurrentCulture = cultureInfo;
-        CultureInfo.CurrentUICulture = cultureInfo;
-        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-    }*/
     
     protected override async Task OnInitializedAsync()
     {
