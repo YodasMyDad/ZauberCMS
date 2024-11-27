@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core.Content.Interfaces
+﻿@using System.Text.Json
+@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
 @typeparam TView where TView : IContentBlock
 
@@ -9,7 +10,9 @@
     
     if (blockViewPair.Value != null)
     {
-        <div @ref="_componentDiv">
+        <div @ref="_componentDiv"
+             data-shadow="true"
+             data-shadow-stylesheets="@JsonSerializer.Serialize(Stylesheets)">>
             <DynamicComponent Parameters="@(Parameters)" Type="@blockViewPair.Value.GetType()" />
         </div>
     }
@@ -26,7 +29,7 @@
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Type? FallbackComponentType { get; set; }
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
-    [Parameter] public string? Stylesheet { get; set; }
+    [Parameter] public List<string> Stylesheets { get; set; } = [];
     
     private Dictionary<string, TView>? BlockViews { get; set; }
     private ElementReference _componentDiv;
@@ -42,9 +45,9 @@
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !string.IsNullOrEmpty(Stylesheet))
+        if (firstRender && Stylesheets.Count > 0)
         {
-            await JsRuntime.InvokeVoidAsync("initializeShadowDOM", _componentDiv, Stylesheet);
+            await JsRuntime.InvokeVoidAsync("initializeShadowDOMWithMultipleStylesheets", _componentDiv, Stylesheets);
         }
     }
 }

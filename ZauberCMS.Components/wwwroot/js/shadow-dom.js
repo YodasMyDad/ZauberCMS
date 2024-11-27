@@ -1,15 +1,24 @@
-window.initializeShadowDOM = (element, stylesheetPath) => {
-    if (element) {
-        // Attach a shadow root
+window.cachedStylesheets = window.cachedStylesheets || new Map();
+
+window.initializeShadowDOMWithMultipleStylesheets = (element, stylesheetPaths) => {
+    if (element && Array.isArray(stylesheetPaths)) {
         const shadowRoot = element.attachShadow({ mode: 'open' });
 
-        // Load the stylesheet
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = stylesheetPath;
+        stylesheetPaths.forEach((stylesheetPath) => {
+            if (cachedStylesheets.has(stylesheetPath)) {
+                // Reuse cached style
+                shadowRoot.appendChild(cachedStylesheets.get(stylesheetPath).cloneNode(true));
+            } else {
+                // Load new stylesheet
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = stylesheetPath;
 
-        // Append the stylesheet and content
-        shadowRoot.appendChild(link);
+                // Cache the stylesheet
+                cachedStylesheets.set(stylesheetPath, link);
+                shadowRoot.appendChild(link);
+            }
+        });
 
         // Move the inner content of the component to the shadow root
         while (element.firstChild) {

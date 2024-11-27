@@ -13,10 +13,11 @@
                     <RadzenIcon Icon="@(ContentTypes[item!.ContentTypeId].Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600" />
                 </div>
                 <div class="p-3 flex-1 col-span-8 border-l border-r">
-                    <RenderBlock Content="@(item)" Stylesheet="/css/styles.css"
+                    <RenderBlock Content="@(item)" Stylesheets="@_styleSheets"
                                  TView="IContentBlockPreview"
                                  FallbackComponentType="@(typeof(ContentBlockPreviewFallback))"
-                                 Parameters="@(new Dictionary<string, object> { { nameof(IContentBlockPreview.ContentType), ContentTypes[item!.ContentTypeId]} })"/>
+                                 Parameters="@(new Dictionary<string, object> { { nameof(IContentBlockPreview.ContentType), ContentTypes[item!.ContentTypeId]} })"
+                                 />
                 </div>
                 <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => UpdateContent(item))">
                     <RadzenIcon Icon="edit" Style="font-size: 2rem" class="text-slate-600" />
@@ -48,6 +49,8 @@
     private Dictionary<Guid, ContentType> ContentTypes { get; set; } = [];
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
+
+    private readonly List<string> _styleSheets = ["/css/styles.css"];
 
     protected override async Task OnInitializedAsync()
     {
