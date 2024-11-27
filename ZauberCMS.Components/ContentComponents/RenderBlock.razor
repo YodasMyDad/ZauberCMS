@@ -9,7 +9,9 @@
     
     if (blockViewPair.Value != null)
     {
-        <DynamicComponent Parameters="@(Parameters)" Type="@blockViewPair.Value.GetType()" />
+        <div @ref="_componentDiv">
+            <DynamicComponent Parameters="@(Parameters)" Type="@blockViewPair.Value.GetType()" />
+        </div>
     }
     else if (FallbackComponentType != null)
     {
@@ -20,11 +22,14 @@
 @code 
 {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Type? FallbackComponentType { get; set; }
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
+    [Parameter] public string? Stylesheet { get; set; }
     
     private Dictionary<string, TView>? BlockViews { get; set; }
+    private ElementReference _componentDiv;
 
     protected override void OnParametersSet()
     {
@@ -33,5 +38,13 @@
             Parameters.Add("Content", Content!);   
         }
         BlockViews = ExtensionManager.GetInstances<TView>(true);
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrEmpty(Stylesheet))
+        {
+            await JsRuntime.InvokeVoidAsync("initializeShadowDOM", _componentDiv, Stylesheet);
+        }
     }
 }
