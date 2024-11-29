@@ -5,7 +5,7 @@
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" Context="item">
+<SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" IgnoreDomChanges="@(true)" Context="item">
     <SortableItemTemplate>
         <div>
             <div class="w-full flex justify-between items-start border my-1 notextselection cursor-grab">
@@ -131,9 +131,22 @@
     
     private async Task SortList((int oldIndex, int newIndex) indices)
     {
-        TupleExtensions.SortList(indices, ContentItems);
-        await SaveItems();
-        StateHasChanged();
+        // This is a bit of a hack to deal with shadow doms. I need to make a copy of the content items
+        // as I don't want to trigger a statehaschanged of the contents will disappear.
+        var clonedList = new List<Content>();
+        clonedList.AddRange(ContentItems);
+        
+        TupleExtensions.SortList(indices, clonedList);
+        
+        foreach (var content in clonedList)
+        {
+            // Remove content type and content values as don't want to serialise this
+            content.ContentType = null;
+            content.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
+        }
+        
+        Value = JsonSerializer.Serialize(clonedList);
+        await ValueChanged.InvokeAsync(Value);
     }
 
 

@@ -1,5 +1,4 @@
-﻿@using System.Text.Json
-@using ZauberCMS.Core.Content.Interfaces
+﻿@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
 @typeparam TView where TView : IContentBlock
 
@@ -10,9 +9,7 @@
     
     if (blockViewPair.Value != null)
     {
-        <div @ref="_componentDiv"
-             data-shadow="true"
-             data-shadow-stylesheets="@JsonSerializer.Serialize(Stylesheets)">>
+        <div @ref="_componentDiv">
             <DynamicComponent Parameters="@(Parameters)" Type="@blockViewPair.Value.GetType()" />
         </div>
     }

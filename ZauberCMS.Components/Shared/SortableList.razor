@@ -51,6 +51,9 @@
 
     [Parameter]
     public bool ForceFallback { get; set; } = true;
+    
+    [Parameter]
+    public bool IgnoreDomChanges { get; set; }
 
     private DotNetObjectReference<SortableList<T>>? selfReference;
 
@@ -60,7 +63,7 @@
         {
             selfReference = DotNetObjectReference.Create(this);
             var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/ZauberCMS.Components/Shared/SortableList.razor.js");
-            await module.InvokeAsync<string>("init", Id, Group, Pull, Put, Sort, Handle, Filter, selfReference, ForceFallback);
+            await module.InvokeAsync<string>("init", Id, Group, Pull, Put, Sort, Handle, Filter, selfReference, ForceFallback, IgnoreDomChanges);
         }
     }
 
