@@ -1,0 +1,32 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<BlockListEditorSettingsModel>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Stylesheets" Description="Add the stylesheets needed for this block list editor (Path should be relative to the website root i.e. '/css/styles.css')"/>
+    </LeftColumn>
+    <CentreColumn>
+        <ListEditor TItem="string" @bind-Value="@Settings.Styleheets" />
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+</RadzenStack>
+
+
+@code {
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    public BlockListEditorSettingsModel Settings { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+}

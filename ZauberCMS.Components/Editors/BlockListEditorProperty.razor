@@ -1,5 +1,7 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.ContentComponents
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
@@ -13,7 +15,7 @@
                     <RadzenIcon Icon="@(ContentTypes[item!.ContentTypeId].Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600" />
                 </div>
                 <div class="p-3 flex-1 col-span-8 border-l border-r">
-                    <RenderBlock Content="@(item)" Stylesheets="@_styleSheets"
+                    <RenderBlock Content="@(item)" Stylesheets="@SettingsModel.Styleheets"
                                  TView="IContentBlockPreview"
                                  FallbackComponentType="@(typeof(ContentBlockPreviewFallback))"
                                  Parameters="@(new Dictionary<string, object> { { nameof(IContentBlockPreview.ContentType), ContentTypes[item!.ContentTypeId]} })"
@@ -39,7 +41,7 @@
     public string Alias { get; set; } = "ZauberCMS.BlockListEditor";
     public string Description { get; set; } = "Creates a list of content blocks";
     public string Icon { get; set; } = "format_align_justify";
-    public Type? SettingsComponent { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(BlockListEditorSettings);
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
@@ -49,8 +51,7 @@
     private Dictionary<Guid, ContentType> ContentTypes { get; set; } = [];
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
-
-    private readonly List<string> _styleSheets = ["/css/styles.css"];
+    private BlockListEditorSettingsModel SettingsModel { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -59,6 +60,8 @@
         {
             ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? [];
         }
+        
+        SettingsModel = Settings.FromJson<BlockListEditorSettingsModel>();
     }
 
     private async Task PopulateContentTypes()

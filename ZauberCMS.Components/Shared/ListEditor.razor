@@ -2,7 +2,7 @@
 
 <div>
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" class="">
-        <RadzenTextBox @bind-Value="_newItem" Placeholder="Add a value" Style="width: 100%"/>
+        <RadzenTextBox @bind-Value="_newItem" Placeholder="Add a value and click plus" Style="width: 100%"/>
         <RadzenButton Click="@AddItem" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
     </RadzenStack>
 
@@ -11,7 +11,7 @@
         {
             var index = i; // Capture the index
             var item = Value[index]; // Get the current item
-            
+
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" @key="item">
                 <RadzenTextBox Value="@item" ValueChanged="@(value => OnValueChanged(value, index))" class="w-full" aria-label="Name TextBox"/>
                 <RadzenButton Click="@(() => RemoveItem(item))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
