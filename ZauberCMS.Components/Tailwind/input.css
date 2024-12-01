@@ -71,3 +71,13 @@
 .rz-notification-item-wrapper {
    width: 30rem !important; 
 }
+
+/* Need to set some styles which Tailwincss removes */
+
+.rz-layout p {
+    margin: 1em 0;
+}
+
+.bm-title {
+    font-size: 1.5em;
+}
