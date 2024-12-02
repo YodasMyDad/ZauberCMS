@@ -8,6 +8,7 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
@@ -20,7 +21,8 @@ public class DeleteMediaHandler(IServiceProvider serviceProvider,
     IMediator mediator,
     ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider,
-    ProviderService providerService) 
+    ProviderService providerService,
+    ExtensionManager extensionManager) 
     : IRequestHandler<DeleteMediaCommand, HandlerResult<Models.Media>>
 {
     public async Task<HandlerResult<Models.Media>> Handle(DeleteMediaCommand request, CancellationToken cancellationToken)
@@ -48,7 +50,7 @@ public class DeleteMediaHandler(IServiceProvider serviceProvider,
             await user.AddAudit(media, media.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
             dbContext.Medias.Remove(media);
             await appState.NotifyMediaDeleted(null, authState.User.Identity?.Name!);
-            var result = await dbContext.SaveChangesAndLog(media, handlerResult, cacheService, cancellationToken);
+            var result = await dbContext.SaveChangesAndLog(media, handlerResult, cacheService, extensionManager, cancellationToken);
             if (result.Success && request.DeleteFile)
             {
                 await providerService.StorageProvider!.DeleteFile(filePathToDelete);

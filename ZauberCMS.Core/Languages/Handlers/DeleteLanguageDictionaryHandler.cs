@@ -8,6 +8,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -17,7 +18,8 @@ public class DeleteLanguageDictionaryHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider)
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager)
     : IRequestHandler<DeleteLanguageDictionaryCommand, HandlerResult<LanguageDictionary?>>
 {
     public async Task<HandlerResult<LanguageDictionary?>> Handle(DeleteLanguageDictionaryCommand request,
@@ -30,9 +32,10 @@ public class DeleteLanguageDictionaryHandler(
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<LanguageDictionary>();
 
+        LanguageDictionary? langDict = null;
         if (request.Id != null)
         {
-            var langDict = await dbContext.LanguageDictionaries.FirstOrDefaultAsync(l => l.Id == request.Id,
+            langDict = await dbContext.LanguageDictionaries.FirstOrDefaultAsync(l => l.Id == request.Id,
                 cancellationToken: cancellationToken);
             if (langDict != null)
             {
@@ -43,6 +46,6 @@ public class DeleteLanguageDictionaryHandler(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
+        return (await dbContext.SaveChangesAndLog(langDict, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 }

@@ -8,6 +8,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -18,7 +19,8 @@ public class SaveDomainHandler(
     ICacheService cacheService,
     IMapper mapper,
     IMediator mediator,
-    AuthenticationStateProvider authenticationStateProvider)
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager)
     : IRequestHandler<SaveDomainCommand, HandlerResult<Domain>>
 {
     public async Task<HandlerResult<Domain>> Handle(SaveDomainCommand request, CancellationToken cancellationToken)
@@ -51,7 +53,7 @@ public class SaveDomainHandler(
 
             cacheService.ClearCachedItemsWithPrefix(nameof(Domain));
             await user.AddAudit(domain, $"Domain ({domain.Url})", isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-            return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, cancellationToken);
+            return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("Domain is null", ResultMessageType.Error);

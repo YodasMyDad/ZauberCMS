@@ -7,6 +7,7 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -17,7 +18,8 @@ public class SaveRoleHandler(
     IMediator mediator,
     IMapper mapper,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider)
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager)
     : IRequestHandler<SaveRoleCommand, HandlerResult<Role>>
 {
     public async Task<HandlerResult<Role>> Handle(SaveRoleCommand request, CancellationToken cancellationToken)
@@ -49,7 +51,7 @@ public class SaveRoleHandler(
             }
             
             await loggedInUser.AddAudit(role, role.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-            return await dbContext.SaveChangesAndLog(role, handlerResult, cacheService, cancellationToken);
+            return await dbContext.SaveChangesAndLog(role, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("Role is null", ResultMessageType.Error);

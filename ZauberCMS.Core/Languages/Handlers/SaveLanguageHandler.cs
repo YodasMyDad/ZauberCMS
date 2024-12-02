@@ -8,6 +8,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -17,7 +18,8 @@ public class SaveLanguageHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider)
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager)
     : IRequestHandler<SaveLanguageCommand, HandlerResult<Language>>
 {
     public async Task<HandlerResult<Language>> Handle(SaveLanguageCommand request, CancellationToken cancellationToken)
@@ -74,7 +76,7 @@ public class SaveLanguageHandler(
             await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
                 isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator,
                 cancellationToken);
-            return await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, cancellationToken);
+            return await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("CultureInfo is null", ResultMessageType.Error);

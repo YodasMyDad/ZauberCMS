@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Core.Tags.Commands;
@@ -17,7 +18,9 @@ public class DeleteTagHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteTagCommand, HandlerResult<Tag?>>
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager) 
+    : IRequestHandler<DeleteTagCommand, HandlerResult<Tag?>>
 {
     public async Task<HandlerResult<Tag?>> Handle(DeleteTagCommand request,
         CancellationToken cancellationToken)
@@ -56,6 +59,6 @@ public class DeleteTagHandler(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
+        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 }

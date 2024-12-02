@@ -7,6 +7,7 @@ using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -17,7 +18,9 @@ public class DeleteContentHandler(IServiceProvider serviceProvider,
     AppState appState, 
     IMediator mediator,
     AuthenticationStateProvider authenticationStateProvider,
-    ICacheService cacheService) : IRequestHandler<DeleteContentCommand, HandlerResult<Models.Content>>
+    ICacheService cacheService,
+    ExtensionManager extensionManager) 
+    : IRequestHandler<DeleteContentCommand, HandlerResult<Models.Content>>
 {
     public async Task<HandlerResult<Models.Content>> Handle(DeleteContentCommand request, CancellationToken cancellationToken)
     {
@@ -67,7 +70,7 @@ public class DeleteContentHandler(IServiceProvider serviceProvider,
                 await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);    
             }
             
-            return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, cancellationToken);
+            return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("Unable to delete, as no Content with that id exists", ResultMessageType.Warning);

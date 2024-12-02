@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Core.Tags.Commands;
@@ -16,7 +17,8 @@ public class SaveTagHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider)
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager)
     : IRequestHandler<SaveTagCommand, HandlerResult<Tag>>
 {
     private readonly SlugHelper _slugHelper = new();
@@ -72,7 +74,7 @@ public class SaveTagHandler(
             await user.AddAudit(tag, $"Tag ({tag.TagName})",
                 isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator,
                 cancellationToken);
-            return await dbContext.SaveChangesAndLog(tag, handlerResult, cacheService, cancellationToken);
+            return await dbContext.SaveChangesAndLog(tag, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("Tag Name is null", ResultMessageType.Error);

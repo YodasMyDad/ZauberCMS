@@ -10,6 +10,7 @@ using ZauberCMS.Core.Email.Commands;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -21,7 +22,8 @@ public class CreateUpdateUserHandler(
     AuthenticationStateProvider authenticationStateProvider,
     IServiceProvider serviceProvider,
     IMapper mapper,
-    ICacheService cacheService)
+    ICacheService cacheService,
+    ExtensionManager extensionManager)
     : IRequestHandler<CreateUpdateUserCommand, HandlerResult<User>>
 {
     
@@ -72,7 +74,7 @@ public class CreateUpdateUserHandler(
         }
         */
         
-        handlerResult = await dbContext.SaveChangesAndLog(user, handlerResult, cacheService, cancellationToken);
+        handlerResult = await dbContext.SaveChangesAndLog(user, handlerResult, cacheService, extensionManager, cancellationToken);
         if (!handlerResult.Success)
         {
             return handlerResult;

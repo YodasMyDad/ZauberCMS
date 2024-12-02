@@ -8,6 +8,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -17,7 +18,9 @@ public class DeleteLanguageHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteLanguageCommand, HandlerResult<Language?>>
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager) 
+    : IRequestHandler<DeleteLanguageCommand, HandlerResult<Language?>>
 {
     public async Task<HandlerResult<Language?>> Handle(DeleteLanguageCommand request,
         CancellationToken cancellationToken)
@@ -29,9 +32,10 @@ public class DeleteLanguageHandler(
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Language>();
 
+        Language? language = null;
         if (request.Id != null)
         {
-            var language =
+            language =
                 await dbContext.Languages.FirstOrDefaultAsync(l => l.Id == request.Id,
                     cancellationToken: cancellationToken);
             if (language != null)
@@ -44,7 +48,7 @@ public class DeleteLanguageHandler(
         }
         else
         {
-            var language = await dbContext.Languages.FirstOrDefaultAsync(
+            language = await dbContext.Languages.FirstOrDefaultAsync(
                 l => l.LanguageIsoCode == request.LanguageIsoCode, cancellationToken: cancellationToken);
             if (language != null)
             {
@@ -55,6 +59,6 @@ public class DeleteLanguageHandler(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
+        return (await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 }

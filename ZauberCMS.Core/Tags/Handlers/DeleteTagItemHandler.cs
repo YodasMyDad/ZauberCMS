@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Core.Tags.Commands;
@@ -17,7 +18,9 @@ public class DeleteTagItemHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteTagItemCommand, HandlerResult<TagItem?>>
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager) 
+    : IRequestHandler<DeleteTagItemCommand, HandlerResult<TagItem?>>
 {
     public async Task<HandlerResult<TagItem?>> Handle(DeleteTagItemCommand request,
         CancellationToken cancellationToken)
@@ -29,9 +32,10 @@ public class DeleteTagItemHandler(
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<TagItem>();
 
+        TagItem? tagItem = null;
         if (request.TagId != null)
         {
-            var tagItem =
+            tagItem =
                 await dbContext.TagItems.FirstOrDefaultAsync(l => l.Id == request.TagId,
                     cancellationToken: cancellationToken);
             if (tagItem != null)
@@ -48,16 +52,16 @@ public class DeleteTagItemHandler(
             var tagItems = dbContext.TagItems.Where(l => l.ItemId == request.ItemId).ToList();
             if (tagItems.Any())
             {
-                foreach (var tagItem in tagItems)
+                foreach (var ti in tagItems)
                 {
-                    await user.AddAudit(tagItem, $"TagItem ({tagItem.TagId})",
+                    await user.AddAudit(ti, $"TagItem ({ti.TagId})",
                         AuditExtensions.AuditAction.Delete, mediator,
                         cancellationToken);
-                    dbContext.TagItems.Remove(tagItem);
+                    dbContext.TagItems.Remove(ti);
                 }
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
+        return (await dbContext.SaveChangesAndLog(tagItem, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 }

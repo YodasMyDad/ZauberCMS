@@ -8,6 +8,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
@@ -21,7 +22,8 @@ public class SaveMediaHandler(ProviderService providerService,
     AppState appState, 
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider)
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager)
     : IRequestHandler<SaveMediaCommand, HandlerResult<Models.Media>>
 {
     public async Task<HandlerResult<Models.Media>> Handle(SaveMediaCommand request, CancellationToken cancellationToken)
@@ -73,14 +75,14 @@ public class SaveMediaHandler(ProviderService providerService,
                     return result;
                 }
                 await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Update, mediator, cancellationToken);
-                result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, cancellationToken);
+                result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, extensionManager, cancellationToken);
                 if (dbMedia != null) await appState.NotifyMediaSaved(dbMedia, authState.User.Identity?.Name!);
             }
             else
             {
                 dbContext.Medias.Add(result.Entity);
                 await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-                result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, cancellationToken);
+                result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, extensionManager, cancellationToken);
                 await appState.NotifyMediaSaved(result.Entity, authState.User.Identity?.Name!);
             }   
         }

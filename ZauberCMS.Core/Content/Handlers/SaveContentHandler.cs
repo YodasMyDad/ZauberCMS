@@ -10,6 +10,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -22,7 +23,8 @@ public class SaveContentHandler(
     IOptions<ZauberSettings> settings,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider)
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager)
     : IRequestHandler<SaveContentCommand, HandlerResult<Models.Content>>
 {
     private readonly SlugHelper _slugHelper = new();
@@ -69,7 +71,7 @@ public class SaveContentHandler(
                     dbContext.UnpublishedContent.Add(unpublishedContent);
                 }
                 
-                return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken);
+                return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, extensionManager, cancellationToken);
             }
 
             if (request.Content.Url.IsNullOrWhiteSpace())
@@ -123,7 +125,7 @@ public class SaveContentHandler(
             
             cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
             await user.AddAudit(content, content.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-            return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken);
+            return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("Content is null", ResultMessageType.Error);

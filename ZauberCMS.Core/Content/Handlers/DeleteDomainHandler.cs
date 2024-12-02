@@ -8,6 +8,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -17,7 +18,8 @@ public class DeleteDomainHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<DeleteDomainCommand, HandlerResult<Domain?>>
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager) : IRequestHandler<DeleteDomainCommand, HandlerResult<Domain?>>
 {
     public async Task<HandlerResult<Domain?>> Handle(DeleteDomainCommand request, CancellationToken cancellationToken)
     {
@@ -27,10 +29,10 @@ public class DeleteDomainHandler(
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Domain>();
-
+        Domain? domain = null;
         if (request.Id != null)
         {
-            var domain =
+            domain =
                 await dbContext.Domains.FirstOrDefaultAsync(l => l.Id == request.Id,
                     cancellationToken: cancellationToken);
             if (domain != null)
@@ -42,7 +44,7 @@ public class DeleteDomainHandler(
         }
         else
         {
-            var domain = await dbContext.Domains.FirstOrDefaultAsync(l => l.ContentId == request.ContentId,
+            domain = await dbContext.Domains.FirstOrDefaultAsync(l => l.ContentId == request.ContentId,
                 cancellationToken: cancellationToken);
             if (domain != null)
             {
@@ -52,6 +54,6 @@ public class DeleteDomainHandler(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, cancellationToken))!;
+        return (await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 }

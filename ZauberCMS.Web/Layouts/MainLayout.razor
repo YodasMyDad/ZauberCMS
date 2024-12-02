@@ -61,6 +61,7 @@ rel="stylesheet" type="text/css"/>
 </body>
 
 @code {
+    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
     private Content? Content { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -73,6 +74,14 @@ rel="stylesheet" type="text/css"/>
             IncludeChildren = true,
             Cached = true
         });
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeVoidAsync("initializeMainNavScript");
+        }
     }
 
     internal static class Sections

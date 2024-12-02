@@ -8,6 +8,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -18,7 +19,9 @@ public class SaveLanguageDictionaryHandler(
     IMapper mapper,
     ICacheService cacheService,
     IMediator mediator,
-    AuthenticationStateProvider authenticationStateProvider) : IRequestHandler<SaveLanguageDictionaryCommand, HandlerResult<LanguageDictionary>>
+    AuthenticationStateProvider authenticationStateProvider,
+    ExtensionManager extensionManager) 
+    : IRequestHandler<SaveLanguageDictionaryCommand, HandlerResult<LanguageDictionary>>
 {
     public async Task<HandlerResult<LanguageDictionary>> Handle(SaveLanguageDictionaryCommand request,
         CancellationToken cancellationToken)
@@ -52,7 +55,7 @@ public class SaveLanguageDictionaryHandler(
             await user.AddAudit(langDictionary, $"Language Dictionary ({langDictionary.Key})",
                 AuditExtensions.AuditAction.Update, mediator,
                 cancellationToken);
-            handlerResult = await dbContext.SaveChangesAndLog(langDictionary, handlerResult, cacheService, cancellationToken);
+            handlerResult = await dbContext.SaveChangesAndLog(langDictionary, handlerResult, cacheService, extensionManager, cancellationToken);
             if (handlerResult.Success)
             {
                 var langTextResult = new HandlerResult<LanguageText>();
@@ -69,7 +72,7 @@ public class SaveLanguageDictionaryHandler(
                         mapper.Map(languageText, lt);
                     }
 
-                    var saveResult = await dbContext.SaveChangesAndLog(lt, langTextResult, cacheService, cancellationToken);
+                    var saveResult = await dbContext.SaveChangesAndLog(lt, langTextResult, cacheService, extensionManager, cancellationToken);
                     if (!saveResult.Success)
                     {
                         handlerResult.Success = false;

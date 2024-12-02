@@ -8,6 +8,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -18,7 +19,8 @@ public class SaveContentTypeHandler(
     IMapper mapper,
     IMediator mediator,
     AuthenticationStateProvider authenticationStateProvider,
-    ICacheService cacheService)
+    ICacheService cacheService,
+    ExtensionManager extensionManager)
     : IRequestHandler<SaveContentTypeCommand, HandlerResult<ContentType>>
 {
     public async Task<HandlerResult<ContentType>> Handle(SaveContentTypeCommand request, CancellationToken cancellationToken)
@@ -68,7 +70,7 @@ public class SaveContentTypeHandler(
             
             //cacheService.ClearCachedItemsWithPrefix(nameof(ContentType));
             await user.AddAudit(contentType, contentType.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
-            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, cancellationToken);
+            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("ContentType is null", ResultMessageType.Error);
