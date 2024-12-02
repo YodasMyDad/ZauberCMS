@@ -16,6 +16,10 @@ dotnet ef migrations add InitialCreate --context SqliteZauberDbContext -o "Data/
 
 dotnet build ZauberCMS.sln -c Release
 
+-- Template
+
+dotnet pack
+
 -- When testing new Nuget packages, clear the caches first
 
 dotnet nuget locals all --clear
