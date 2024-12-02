@@ -7,7 +7,7 @@
 
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Components</PackageId>
-        <Version>2.0.0</Version>
+        <Version>2.0.1</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS components package</Description>
         <PackageTags>Web</PackageTags>
@@ -29,7 +29,7 @@
         <PackageReference Include="MediatR" Version="12.4.1" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.0" />
-        <PackageReference Include="Radzen.Blazor" Version="5.6.7" />
+        <PackageReference Include="Radzen.Blazor" Version="5.6.10" />
         <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
@@ -47,7 +47,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Core" Version="2.0.0" />
+        <PackageReference Include="ZauberCMS.Core" Version="2.0.1" />
     </ItemGroup>
 
     <ItemGroup>

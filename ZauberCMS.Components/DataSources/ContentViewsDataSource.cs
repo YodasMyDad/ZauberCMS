@@ -14,7 +14,8 @@ public class ContentViewsDataSource(ExtensionManager extensionManager) : IDataLi
 
     public IEnumerable<DataListItem> GetItems(IServiceScope scope, Content? currentContent)
     {
-        var allContentViews = extensionManager.GetInstances<IContentView>(true);
+        var localContentViews = extensionManager.GetInstances<IContentView>(true);
+        var allContentViews = new Dictionary<string, IContentView>(localContentViews);
         return allContentViews.Values.Select(x =>
         {
             var type = x.GetType();
