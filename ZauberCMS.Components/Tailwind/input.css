@@ -78,6 +78,15 @@
     margin: 1em 0;
 }
 
+.rz-layout h1 {font-size: 2em;}
+.rz-layout h2 {font-size: 1.5em;}
+.rz-layout h3 {font-size: 1.17em;}
+.rz-layout h4 {font-size: 1em;}
+.rz-layout h5 {font-size: 0.83em;}
+.rz-layout h6 {font-size: 0.67em;}
+
 .bm-title {
     font-size: 1.5em;
 }
+
+
