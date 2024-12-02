@@ -1,6 +1,6 @@
 # ZauberCMS - The Blazor CMS
 
-ZauberCMS is a CMS built in **.NET 9 and Blazor InteractiveServer**. The CMS is [inspired by Umbraco](https://umbraco.com/), and follows a number of the same concepts.
+ZauberCMS is a fully featured CMS built in **.NET 9 and Blazor InteractiveServer**. The CMS is [inspired by Umbraco](https://umbraco.com/), and follows a number of the same concepts.
 
 I wanted a CMS that was aimed towards .Net Developers who wanted to use Blazor and also a CMS that is easily extendable and customisable without 
 having to learn a front end framework. Anyone that has Blazor experience and is interested in getting involved, [please contact me on X](https://twitter.com/YodasMyDad)
@@ -15,9 +15,11 @@ However, fastest way to get started building your own website is using the .Net 
 
 `dotnet new install ZauberCMS.Template --force`
 
-Then create your project (Project names should start with ZauberCMS so the plugin system picks them up)
+Then create your new solution and project (Project names should start with ZauberCMS so the plugin system picks them up) using the code below:
 
-`dotnet new zaubercms -n ZauberCMS.YourProjectName`
+`dotnet new sln --name "YourSolutionName"`  
+`dotnet new zaubercms -n "ZauberCMS.YourProjectName"`  
+`dotnet sln add "ZauberCMS.YourProjectName"`
 
 You can also use Nuget and full instructions on how to use it are below (I prefer this way myself)
 
