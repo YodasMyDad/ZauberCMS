@@ -34,7 +34,8 @@
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
                              Style="height: 100%;">
                     <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
-                    <RadzenIcon Icon="automation"/>
+                    @*<RadzenIcon Icon="automation"/>*@
+                    <ZauberCMS.Components.Shared.ZauberLogo Styles="height: 24px; colour: #fff; fill: #fff;" />
                     <SectionLinks CurrentSection="@(SectionAlias)"/>
                 </RadzenStack>
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
