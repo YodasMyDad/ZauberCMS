@@ -72,18 +72,3 @@
    width: 30rem !important; 
 }
 
-/* Need to set some styles which Tailwincss removes */
-
-.rz-layout p, .bm-container p {margin: 1em 0;}
-.rz-layout h1, .bm-container h1 {font-size: 2em;}
-.rz-layout h2, .bm-container h2 {font-size: 1.5em;}
-.rz-layout h3, .bm-container h3 {font-size: 1.17em;}
-.rz-layout h4, .bm-container h4 {font-size: 1em;}
-.rz-layout h5, .bm-container h5 {font-size: 0.83em;}
-.rz-layout h6, .bm-container h6 {font-size: 0.67em;}
-
-.bm-title {
-    font-size: 1.5em;
-}
-
-

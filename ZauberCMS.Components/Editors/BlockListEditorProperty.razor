@@ -10,11 +10,11 @@
 <SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" IgnoreDomChanges="@(true)" Context="item">
     <SortableItemTemplate>
         <div>
-            <div class="w-full flex justify-between items-start border my-1 notextselection cursor-grab">
+            <div class="w-full flex justify-between items-start border border-gray-200 border-solid my-1 notextselection cursor-grab">
                 <div class="p-3 flex items-center justify-center">
                     <RadzenIcon Icon="@(ContentTypes[item!.ContentTypeId].Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600" />
                 </div>
-                <div class="p-3 flex-1 col-span-8 border-l border-r">
+                <div class="p-3 flex-1 col-span-8 border border-y-0 border-gray-200 border-solid">
                     <RenderBlock Content="@(item)" Stylesheets="@SettingsModel.Styleheets"
                                  TView="IContentBlockPreview"
                                  FallbackComponentType="@(typeof(ContentBlockPreviewFallback))"

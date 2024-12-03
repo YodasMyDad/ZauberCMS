@@ -1,7 +1,7 @@
 module.exports = {
-/*  corePlugins: {
+  corePlugins: {
     preflight: false,
-  },*/
+  },
   mode: "jit",
   content: ["**/*.razor"],
   theme: {
