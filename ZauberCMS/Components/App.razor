@@ -24,18 +24,11 @@
         }
     }
     
-    private IComponentRenderMode? RenderModeForPage
-    {
-        get
-        {
-            return InteractiveServer;
-            
-            /*if (HttpContext == null)
+    private static IComponentRenderMode RenderModeForPage => InteractiveServer;
+    
+    /*if (HttpContext == null)
             {
                 return InteractiveServer;
             }
             return HttpContext?.AcceptsInteractiveRouting() == true ? InteractiveServer : null;*/
-        }
-    }
-
 }
