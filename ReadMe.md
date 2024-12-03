@@ -40,7 +40,7 @@ https://aptitude.gitbook.io/zaubercms
 
 ## Progress & Issues
 
-You can view the **v2** release features here
+After v2.0 the next big release will be **v2.5**. You can see the progress and release features here
 
 https://github.com/users/YodasMyDad/projects/8
 
