@@ -1,7 +1,7 @@
 ﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
 @if (Content != null)
 {
-    <div class="fs-6">
+    <div>
         @((MarkupString)(Content.GetValue<string>("Content") ?? string.Empty))
     </div>
 }

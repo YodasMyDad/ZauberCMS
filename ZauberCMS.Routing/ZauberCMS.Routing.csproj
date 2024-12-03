@@ -7,7 +7,7 @@
 
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Routing</PackageId>
-        <Version>2.0.6</Version>
+        <Version>2.0.8</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS routing package</Description>
         <PackageTags>Web</PackageTags>
@@ -37,7 +37,7 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.0" />
         
-        <PackageReference Include="ZauberCMS.Components" Version="2.0.6" />
+        <PackageReference Include="ZauberCMS.Components" Version="2.0.8" />
     </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">

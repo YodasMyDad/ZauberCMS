@@ -11,7 +11,7 @@ _Core tech used is: .Net 9, Blazor, EF Core, Identity, Mediatr, [Radzen Componen
 
 This repo comes with a starter site example, if you clone this repo, build and run the **ZauberCMS.Web** project you will see the starter kit (Go to /admin, register an account to see everything).
 
-However, fastest way to get started building your own website is using the .Net Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one)
+However, fastest way to get started building your own website is using the .Net Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one, which is 2.0.8)
 
 `dotnet new install ZauberCMS.Template --force`
 

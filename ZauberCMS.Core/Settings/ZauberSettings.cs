@@ -11,7 +11,7 @@ public class ZauberSettings
     public string AdminDefaultLanguage { get; set; } = "en-US";
 
     public bool EnablePathUrls { get; set; }
-
+    public bool ShowDetailedErrors { get; set; }
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new()
     {

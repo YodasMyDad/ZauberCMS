@@ -10,9 +10,8 @@
 
 @code {
 
-    [CascadingParameter]
-    private HttpContext? HttpContext { get; set; }
-    
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
     private bool IsAdmin
     {
         get
@@ -23,12 +22,18 @@
             return requestPathSpan.StartsWith(Constants.Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);
         }
     }
-    
-    private static IComponentRenderMode RenderModeForPage => InteractiveServer;
-    
-    /*if (HttpContext == null)
+
+    private IComponentRenderMode? RenderModeForPage
+    {
+        get
+        {
+            if (HttpContext == null)
             {
                 return InteractiveServer;
             }
-            return HttpContext?.AcceptsInteractiveRouting() == true ? InteractiveServer : null;*/
+
+            return HttpContext?.AcceptsInteractiveRouting() == true ? InteractiveServer : null;
+        }
+    }
+
 }

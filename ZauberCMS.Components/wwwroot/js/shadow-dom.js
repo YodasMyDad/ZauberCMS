@@ -1,28 +1,34 @@
 window.cachedStylesheets = window.cachedStylesheets || new Map();
 
 window.initializeShadowDOMWithMultipleStylesheets = (element, stylesheetPaths) => {
-    if (element && Array.isArray(stylesheetPaths)) {
-        const shadowRoot = element.attachShadow({ mode: 'open' });
+    if (!element || typeof element.attachShadow !== 'function') {
+        return;
+    }
 
-        stylesheetPaths.forEach((stylesheetPath) => {
-            if (cachedStylesheets.has(stylesheetPath)) {
-                // Reuse cached style
-                shadowRoot.appendChild(cachedStylesheets.get(stylesheetPath).cloneNode(true));
-            } else {
-                // Load new stylesheet
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = stylesheetPath;
+    if (!Array.isArray(stylesheetPaths)) {
+        return;
+    }
 
-                // Cache the stylesheet
-                cachedStylesheets.set(stylesheetPath, link);
-                shadowRoot.appendChild(link);
-            }
-        });
+    const shadowRoot = element.attachShadow({ mode: 'open' });
 
-        // Move the inner content of the component to the shadow root
-        while (element.firstChild) {
-            shadowRoot.appendChild(element.firstChild);
+    stylesheetPaths.forEach((stylesheetPath) => {
+        if (cachedStylesheets.has(stylesheetPath)) {
+            // Reuse cached style
+            shadowRoot.appendChild(cachedStylesheets.get(stylesheetPath).cloneNode(true));
+        } else {
+            // Load new stylesheet
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = stylesheetPath;
+
+            // Cache the stylesheet
+            cachedStylesheets.set(stylesheetPath, link);
+            shadowRoot.appendChild(link);
         }
+    });
+
+    // Move the inner content of the component to the shadow root
+    while (element.firstChild) {
+        shadowRoot.appendChild(element.firstChild);
     }
 };

@@ -87,17 +87,25 @@ public static class ZauberSetup
 
         builder.Services.AddControllers();
 
-// Add services to the container.
-#if DEBUG
-        builder.Services
-            .AddRazorComponents(c => c.DetailedErrors = true)
-            .AddInteractiveServerComponents(c => c.DetailedErrors = true);
-        builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-#else
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-#endif
-
+        // Bind configuration to ZauberSettings instance
+        var zauberSettings = new ZauberSettings();
+        builder.Configuration.GetSection(Constants.SettingsConfigName).Bind(zauberSettings);
+        builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
+        
+        // Detailed errors have been enabled
+        if (zauberSettings.ShowDetailedErrors)
+        {
+            builder.Services
+                .AddRazorComponents(c => c.DetailedErrors = true)
+                .AddInteractiveServerComponents(c => c.DetailedErrors = true);
+            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+        }
+        else
+        {
+            builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
+        }
+        
         builder.Services.AddHttpClient();
 
         builder.Services.AddScoped(sp =>
@@ -107,12 +115,6 @@ builder.Services.AddRazorComponents()
         });
 
         builder.Services.AddCascadingAuthenticationState();
-        
-        // Bind configuration to ZauberSettings instance
-        var zauberSettings = new ZauberSettings();
-        builder.Configuration.GetSection(Constants.SettingsConfigName).Bind(zauberSettings);
-        
-        builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
@@ -139,10 +141,6 @@ builder.Services.AddRazorComponents()
                     builder.Services.AddDbContext<ZauberDbContext>();
                     break;
             }
-
-#if DEBUG
-            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-#endif
             
             builder.Services.AddIdentityCore<User>(options =>
                 {
