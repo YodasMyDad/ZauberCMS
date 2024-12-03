@@ -1,4 +1,5 @@
-﻿@using Microsoft.Extensions.Options
+﻿@using System.Collections.Concurrent
+@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
@@ -13,7 +14,7 @@
 }
 
 @code {
-
+    
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [Inject] public LayoutResolverService LayoutResolver { get; set; } = default!;
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
@@ -22,14 +23,15 @@
 
     private Content? Content { get; set; }
     private Dictionary<string, string> LanguageKeys { get; set; } = [];
-    private Dictionary<string, IContentView> AllContentViews { get; set; } = new();
+    private ConcurrentDictionary<string, IContentView> AllContentViews { get; set; } = new();
     private IContentView? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
     private Type LayoutType { get; set; } = default!;
 
     protected override async Task OnParametersSetAsync()
     {
-        AllContentViews = ExtensionManager.GetInstances<IContentView>(true);
+        var instances = ExtensionManager.GetInstances<IContentView>();
+        AllContentViews = new ConcurrentDictionary<string, IContentView>(instances);
         var entryModel = await Mediator.Send(new GetContentFromRequestCommand { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
         Content = entryModel.Content;
         LanguageKeys = entryModel.LanguageKeys;

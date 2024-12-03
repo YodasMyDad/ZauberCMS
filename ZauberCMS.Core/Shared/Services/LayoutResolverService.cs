@@ -1,28 +1,29 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿namespace ZauberCMS.Core.Shared.Services;
 
-namespace ZauberCMS.Core.Shared.Services;
+using System.Collections.Concurrent;
+using Microsoft.AspNetCore.Components;
 
 public class LayoutResolverService
 {
-    private readonly Dictionary<string, Type> _layoutCache = new();
+    private readonly ConcurrentDictionary<string, Type> _layoutCache = new();
 
     public Type GetLayoutType(Type componentType)
     {
-        // Check if the layout type is already cached
-        if (_layoutCache.TryGetValue(componentType.FullName ?? throw new InvalidOperationException(), out var layoutType))
-        {
-            return layoutType;
-        }
+        if (componentType == null)
+            throw new ArgumentNullException(nameof(componentType));
 
-        // Use reflection to find the LayoutAttribute if not cached
-        var layoutAttribute = componentType.GetCustomAttributes(typeof(LayoutAttribute), true)
-            .FirstOrDefault() as LayoutAttribute;
+        // Use GetOrAdd to ensure thread safety when accessing or adding to the cache
+        return _layoutCache.GetOrAdd(
+            componentType.FullName ?? throw new InvalidOperationException("Component type must have a valid FullName."),
+            key =>
+            {
+                // Use reflection to find the LayoutAttribute if not cached
+                var layoutAttribute = componentType
+                    .GetCustomAttributes(typeof(LayoutAttribute), true)
+                    .FirstOrDefault() as LayoutAttribute;
 
-        // Cache the layout type
-        layoutType = layoutAttribute?.LayoutType;
-        _layoutCache[componentType.FullName] = layoutType ?? throw new InvalidOperationException();
-
-        // Return the layout type or a default layout if none is specified
-        return layoutType;
+                // Return the layout type or throw if none is specified
+                return layoutAttribute?.LayoutType ?? throw new InvalidOperationException($"No layout type found for {key}.");
+            });
     }
 }

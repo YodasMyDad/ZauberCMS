@@ -6,8 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
     
-    <ItemGroup>
+<!--    <ItemGroup>
       <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
+    </ItemGroup>-->
+
+    <ItemGroup>
+        <PackageReference Include="ZauberCMS" Version="2.0.3" />
     </ItemGroup>
     
     <ItemGroup>
