@@ -1,6 +1,6 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @inherits LayoutComponentBase
-
+@implements IDisposable
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -62,18 +62,28 @@ rel="stylesheet" type="text/css"/>
 
 @code {
     [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
+    [Inject] public PersistentComponentState ApplicationState { get; set; } = default!;
+    
     private Content? Content { get; set; }
+    private PersistingComponentStateSubscription? PersistingSubscription { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
+        PersistingSubscription = ApplicationState.RegisterOnPersisting(PersistWebsiteState);
 
-        Content = await Mediator.Send(new GetContentCommand
+        if (!ApplicationState.TryTakeFromJson<Content>("WebsiteState", out var restoredWebsite))
         {
-            ContentTypeAlias = "Website",
-            IncludeChildren = true,
-            Cached = true
-        });
+            Content = await Mediator.Send(new GetContentCommand
+            {
+                ContentTypeAlias = "Website",
+                IncludeChildren = true,
+                Cached = true
+            });
+        }
+        else
+        {
+            Content = restoredWebsite;
+        }
     }
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -90,4 +100,14 @@ rel="stylesheet" type="text/css"/>
         internal static SectionOutlet? PageBreadcrumbContent = new();
     }
 
+    private Task PersistWebsiteState()
+    {
+        ApplicationState.PersistAsJson("WebsiteState", Content);
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        PersistingSubscription?.Dispose();
+    }
 }
