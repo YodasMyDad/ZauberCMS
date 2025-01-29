@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Blazored.Modal;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
