@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -231,9 +232,17 @@ public static class ZauberSetup
         }
 
         var mvcBuilder = builder.Services.AddControllersWithViews();
+        
         foreach (var assembly in ExtensionManager.GetFilteredAssemblies(null).ToArray()!)
         {
-            if (assembly != null) mvcBuilder.AddApplicationPart(assembly);
+            if (assembly != null)
+            {
+                // This creates an AssemblyPart, but does not create any related parts for items such as views.
+                var part = new AssemblyPart(assembly);
+                mvcBuilder
+                    .ConfigureApplicationPartManager(apm => apm.ApplicationParts.Add(part));
+            } 
+                
         }
         
         // Mediatr
