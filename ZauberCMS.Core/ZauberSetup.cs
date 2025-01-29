@@ -14,6 +14,7 @@ using Microsoft.Extensions.FileProviders;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
+using ZauberCMS.Core.Content.ContentFinders;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
@@ -26,6 +27,7 @@ using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared;
+using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
 
 // ReSharper disable once CheckNamespace
@@ -77,7 +79,7 @@ public static class ZauberSetup
         /*app.MapRazorComponents<T>()
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
             .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);*/
-
+        
         // Group the admin routes for Blazor
         app
             .MapRazorComponents<T>()
@@ -87,11 +89,14 @@ public static class ZauberSetup
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
         
+        app.UseMiddleware<ContentRoutingMiddleware>();
+        
+        //TODO - Don't think we can do this as it will catch the zauber override controllers 
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
             .WithStaticAssets(); // Ensures static files load before hitting controllers
-
+        
         app.MapFallbackToController("Index", "Cms");
     }
 
@@ -192,6 +197,7 @@ public static class ZauberSetup
         builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
         builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
         builder.Services.AddScoped<TreeState>();
+        builder.Services.AddScoped<ContentFinderPipeline>();
 
         builder.Services.AddSingleton<LayoutResolverService>();
         builder.Services.AddSingleton<AppState>();
