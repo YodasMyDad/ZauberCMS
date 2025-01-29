@@ -30,6 +30,7 @@
       <_ContentIncludedByDefault Remove="ContentBlocks\ImageBlock.razor" />
       <_ContentIncludedByDefault Remove="ContentBlocks\QuoteBlock.razor" />
       <_ContentIncludedByDefault Remove="ContentBlocks\RTEBlock.razor" />
+      <_ContentIncludedByDefault Remove="Custom\ContactForm.razor" />
     </ItemGroup>
     
     <ItemGroup>
