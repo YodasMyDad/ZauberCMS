@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS", "ZauberCMS\Zaub
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Template", "ZauberCMS.Template\ZauberCMS.Template.csproj", "{FE64B664-E035-439E-B8ED-783477D2F88E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Routing", "ZauberCMS.Routing\ZauberCMS.Routing.csproj", "{BE1379BA-AD20-474B-BFA5-46D6D81AB489}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,5 +47,9 @@ Global
 		{FE64B664-E035-439E-B8ED-783477D2F88E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE64B664-E035-439E-B8ED-783477D2F88E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE64B664-E035-439E-B8ED-783477D2F88E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE1379BA-AD20-474B-BFA5-46D6D81AB489}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE1379BA-AD20-474B-BFA5-46D6D81AB489}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE1379BA-AD20-474B-BFA5-46D6D81AB489}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE1379BA-AD20-474B-BFA5-46D6D81AB489}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

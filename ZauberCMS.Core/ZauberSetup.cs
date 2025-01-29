@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
@@ -76,8 +77,7 @@ public static class ZauberSetup
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
             .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);*/
 
-// Group the admin routes for Blazor
-//MapGroup("/admin")
+        // Group the admin routes for Blazor
         app
             .MapRazorComponents<T>()
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
@@ -89,7 +89,9 @@ public static class ZauberSetup
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
-            .WithStaticAssets();
+            .WithStaticAssets(); // Ensures static files load before hitting controllers
+
+        app.MapFallbackToController("Index", "Cms");
     }
 
     public static void AddZauberCms(this WebApplicationBuilder builder)
@@ -101,22 +103,6 @@ public static class ZauberSetup
         var zauberSettings = new ZauberSettings();
         builder.Configuration.GetSection(Constants.SettingsConfigName).Bind(zauberSettings);
         builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
-        
-        // Detailed errors have been enabled
-        if (zauberSettings.ShowDetailedErrors)
-        {
-            builder.Services
-                .AddRazorComponents(c => c.DetailedErrors = true)
-                .AddInteractiveServerComponents(c => c.DetailedErrors = true);
-            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-        }
-        else
-        {
-            builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
-        }
-        
-        builder.Services.AddControllersWithViews();
         
         builder.Services.AddHttpClient();
 
@@ -230,6 +216,26 @@ public static class ZauberSetup
         Assembly[] discoverAssemblies = (assemblies as Assembly[] ?? assemblies.ToArray())!;
         AssemblyManager.SetAssemblies(discoverAssemblies);
 
+        // Detailed errors have been enabled
+        if (zauberSettings.ShowDetailedErrors)
+        {
+            builder.Services
+                .AddRazorComponents(c => c.DetailedErrors = true)
+                .AddInteractiveServerComponents(c => c.DetailedErrors = true);
+            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+        }
+        else
+        {
+            builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
+        }
+
+        var mvcBuilder = builder.Services.AddControllersWithViews();
+        foreach (var assembly in ExtensionManager.GetFilteredAssemblies(null).ToArray()!)
+        {
+            if (assembly != null) mvcBuilder.AddApplicationPart(assembly);
+        }
+        
         // Mediatr
         builder.Services.AddMediatR(cfg =>
             {

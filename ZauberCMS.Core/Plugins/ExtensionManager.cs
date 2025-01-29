@@ -164,7 +164,7 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         // Apply the predicate to filter assemblies, or use all assemblies if predicate is null
         var assemblies = GetAssemblies(predicate).Where(a => a?.GetName().Name != "ZauberCMS").ToArray();
 
-        /*// Find the assembly with the name "ZauberCMS.Routing"
+        // Find the assembly with the name "ZauberCMS.Routing"
         var routingAssembly = assemblies.FirstOrDefault(a => a?.GetName().Name == "ZauberCMS.Routing");
 
         // Exclude the "ZauberCMS.Routing" from the filtered list
@@ -174,7 +174,7 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         if (routingAssembly != null)
         {
             assemblies = assemblies.Append(routingAssembly).ToArray();
-        }*/
+        }
 
         return assemblies.Where(x => x != null).ToArray();
     }

@@ -79,6 +79,7 @@
     
     <ItemGroup>
       <UpToDateCheckInput Remove="Components\Pages\Index.razor" />
+      <UpToDateCheckInput Remove="Views\Cms\Index.cshtml" />
     </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
