@@ -70,7 +70,7 @@ public static class Constants
         public const string AdminBaseUrl = "/admin";
         public const string AdminUsersBaseUrl = AdminBaseUrl + "/users";
         public const string AdminMediaBaseUrl = AdminBaseUrl + "/media";
-        public const string AdminContentBaseUrl = AdminBaseUrl + "/content";
+        public const string AdminContentBaseUrl = "/content";
         public const string AdminSettingsBaseUrl = AdminBaseUrl + "/settings";
         public const string AdminFormsBaseUrl = AdminBaseUrl + "/forms";
         public const string RefreshSignIn = "/api/auth/refreshsignin";

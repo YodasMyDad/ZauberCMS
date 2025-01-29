@@ -57,11 +57,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj"/>
-        <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj"/>
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="ZauberCMS.Components" Version="2.0.9"/>
-        <PackageReference Include="ZauberCMS.Routing" Version="2.0.9"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -77,6 +75,10 @@
             <Pack>true</Pack>
             <PackagePath>build/ZauberCMS.targets</PackagePath>
         </Content>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Components\Pages\Index.razor" />
     </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">

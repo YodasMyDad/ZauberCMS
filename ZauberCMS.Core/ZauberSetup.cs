@@ -72,20 +72,30 @@ public static class ZauberSetup
         
         app.MapStaticAssets();
         
-        app.MapRazorComponents<T>()
+        /*app.MapRazorComponents<T>()
+            .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
+            .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);*/
+
+// Group the admin routes for Blazor
+//MapGroup("/admin")
+        app
+            .MapRazorComponents<T>()
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
             .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
 
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
+        
+        app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
     }
 
     public static void AddZauberCms(this WebApplicationBuilder builder)
     {
         builder.Host.UseSerilog((context, configuration) =>
             configuration.ReadFrom.Configuration(context.Configuration));
-
-        builder.Services.AddControllers();
 
         // Bind configuration to ZauberSettings instance
         var zauberSettings = new ZauberSettings();
@@ -105,6 +115,8 @@ public static class ZauberSetup
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
         }
+        
+        builder.Services.AddControllersWithViews();
         
         builder.Services.AddHttpClient();
 
@@ -196,8 +208,6 @@ public static class ZauberSetup
 
         builder.Services.AddSingleton<LayoutResolverService>();
         builder.Services.AddSingleton<AppState>();
-        
-        builder.Services.AddMvc();
 
         // Add Authentication
         var authBuilder = builder.Services.AddAuthentication(options =>

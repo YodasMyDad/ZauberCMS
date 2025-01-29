@@ -16,6 +16,20 @@
       <_ContentIncludedByDefault Remove="wwwroot\templates\email\default.html" />
       <_ContentIncludedByDefault Remove="wwwroot\media\078dfd90-1b11-4585-ab00-b1ad008b4b79\post-bg.jpg" />
       <_ContentIncludedByDefault Remove="wwwroot\media\754be272-b250-4c6c-8d6f-b1ad008b4b51\home-bg.jpg" />
+      <_ContentIncludedByDefault Remove="Shared\BlogPostPreview.razor" />
+      <_ContentIncludedByDefault Remove="Shared\BootstrapBreadcrumb.razor" />
+      <_ContentIncludedByDefault Remove="Layouts\MainLayout.razor" />
+      <_ContentIncludedByDefault Remove="Layouts\NavBar.razor" />
+      <_ContentIncludedByDefault Remove="ContentViews\BlogPageView.razor" />
+      <_ContentIncludedByDefault Remove="ContentViews\BlogView.razor" />
+      <_ContentIncludedByDefault Remove="ContentViews\ContactView.razor" />
+      <_ContentIncludedByDefault Remove="ContentViews\HomeView.razor" />
+      <_ContentIncludedByDefault Remove="ContentViews\TextPageView.razor" />
+      <_ContentIncludedByDefault Remove="ContentBlockPreviews\QuoteBlockPreview.razor" />
+      <_ContentIncludedByDefault Remove="ContentBlockPreviews\RTEBlockPreview.razor" />
+      <_ContentIncludedByDefault Remove="ContentBlocks\ImageBlock.razor" />
+      <_ContentIncludedByDefault Remove="ContentBlocks\QuoteBlock.razor" />
+      <_ContentIncludedByDefault Remove="ContentBlocks\RTEBlock.razor" />
     </ItemGroup>
     
     <ItemGroup>
