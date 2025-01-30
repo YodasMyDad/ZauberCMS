@@ -25,8 +25,8 @@ public class DefaultContentFinder(IMediator mediator, IOptions<ZauberSettings> S
         context.Request.RouteValues["controller"] = entryModel.Content.ContentTypeAlias;
         context.Request.RouteValues["action"] = "Index"; // TODO - This will be the chosen template/view
         
-        // TODO - This should be a RenderModel that has the content? How do we get the language keys?
-        context.Request.RouteValues["model"] = entryModel.Content;
+        context.Items["currentpage"] = entryModel.Content;
+        context.Items["languagekeys"] = entryModel.LanguageKeys;
 
         return true;
     }

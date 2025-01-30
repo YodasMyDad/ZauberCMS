@@ -1,17 +1,16 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using MVCExample.Web.Models;
-using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Routing.Controllers;
 
 namespace ZauberCMS.Web.Controllers;
 
-public class HomeController(ILogger<HomeController> logger) : Controller
+public class HomeController(ILogger<HomeController> logger) : CmsController(logger)
 {
-    private readonly ILogger<HomeController> _logger = logger;
-
-    public IActionResult Index(Content model)
+    public override IActionResult Index()
     {
-        return View(model);
+        // TODO - Remove Index From Here
+        return CurrentTemplate(CurrentPage, "Index");   
     }
 
     public IActionResult Privacy()
