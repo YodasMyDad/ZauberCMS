@@ -1,13 +1,12 @@
 ﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
-@using ZauberCMS.Core.Extensions
-@inherits Microsoft.AspNetCore.Mvc.Razor.RazorPage<ZauberCMS.Core.Content.Models.Content>
+@inherits ZauberCMS.Core.Rendering.ZauberViewPage<ZauberCMS.Core.Content.Models.Content>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="/"/>
-    <title>Testing</title>
+    <title>@CurrentPage?.Name</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico"/>
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css"/>

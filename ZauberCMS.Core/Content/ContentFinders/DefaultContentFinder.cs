@@ -18,16 +18,14 @@ public class DefaultContentFinder(IMediator mediator, IOptions<ZauberSettings> S
         var url = context.Request.GetDisplayUrl();
         var entryModel = await mediator.Send(new GetContentFromRequestCommand { Slug = slug, IsRootContent = slug.IsNullOrWhiteSpace(), Url = url });
         
-        //Content = entryModel.Content;
-        //LanguageKeys = entryModel.LanguageKeys;
         if (entryModel.Content == null) return false;
         
         context.Request.RouteValues["controller"] = entryModel.Content.ContentTypeAlias;
-        context.Request.RouteValues["action"] = "Index"; // TODO - This will be the chosen template/view
+        context.Request.RouteValues["action"] = entryModel.Content.ViewComponent;
         
         context.Items["currentpage"] = entryModel.Content;
         context.Items["languagekeys"] = entryModel.LanguageKeys;
-
+        
         return true;
     }
 }

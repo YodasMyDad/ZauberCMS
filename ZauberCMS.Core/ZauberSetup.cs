@@ -1,5 +1,6 @@
 using System.Reflection;
 using Blazored.Modal;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
@@ -19,10 +20,12 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Claims;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Membership.Stores;
+using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
@@ -30,8 +33,7 @@ using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
 
-// ReSharper disable once CheckNamespace
-namespace ZauberCMS.Core.Plugins;
+namespace ZauberCMS.Core;
 
 public static class ZauberSetup
 {
@@ -41,6 +43,9 @@ public static class ZauberSetup
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
             var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
+            var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
+            
             try
             {
                 if (dbContext.Database.GetPendingMigrations().Any())
@@ -54,6 +59,23 @@ public static class ZauberSetup
                 {
                     data.Value.Initialise(dbContext);
                 }
+                
+                // Is this ok to use the awaiter and result here?
+                var langs = mediatr.Send(new QueryLanguageCommand{AmountPerPage = 200}).GetAwaiter().GetResult();
+            
+                // en-US must be the default culture as that's what the backoffice resource is
+                var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
+
+                foreach (var langsItem in langs.Items)
+                {
+                    if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
+                }
+                var supportedCulturesArray = supportedCultures.Distinct().ToArray();
+                var localizationOptions = new RequestLocalizationOptions()
+                    .SetDefaultCulture(settings.Value.AdminDefaultLanguage)
+                    .AddSupportedCultures(supportedCulturesArray)
+                    .AddSupportedUICultures(supportedCulturesArray);
+                app.UseRequestLocalization(localizationOptions);
             }
             catch (Exception ex)
             {
@@ -76,10 +98,6 @@ public static class ZauberSetup
         
         app.MapStaticAssets();
         
-        /*app.MapRazorComponents<T>()
-            .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
-            .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);*/
-        
         // Group the admin routes for Blazor
         app
             .MapRazorComponents<T>()
@@ -90,13 +108,10 @@ public static class ZauberSetup
         app.MapAdditionalIdentityEndpoints();
         
         app.UseMiddleware<ContentRoutingMiddleware>();
-        
-        //TODO - Don't think we can do this as it will catch the zauber override controllers 
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
             .WithStaticAssets(); // Ensures static files load before hitting controllers
-        
         app.MapFallbackToController("Index", "Cms");
     }
 

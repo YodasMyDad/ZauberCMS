@@ -30,6 +30,7 @@ public class CmsController(ILogger<CmsController> logger) : Controller
                 if (HttpContext.Items.TryGetValue("currentpage", out var model) && model is Content content)
                 {
                     _content = content;
+                    TempData["CurrentPage"] = _content;
                 }
             }
             return _content;
@@ -45,6 +46,7 @@ public class CmsController(ILogger<CmsController> logger) : Controller
                 if (HttpContext.Items.TryGetValue("languagekeys", out var model) && model is Dictionary<string, string> langKeys)
                 {
                     _languageKeys = langKeys;
+                    TempData["LanguageKeys"] = _languageKeys;
                 }
             }
             return _languageKeys;
