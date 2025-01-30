@@ -30,91 +30,12 @@ using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared;
-using ZauberCMS.Core.Shared.Middleware;
 using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core;
 
 public static class ZauberSetup
 {
-    public static void AddZauberCms<T>(this WebApplication app)
-    {
-        using (var scope = app.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-            var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
-            var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
-            var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
-            
-            try
-            {
-                if (dbContext.Database.GetPendingMigrations().Any())
-                {
-                    dbContext.Database.Migrate();
-                }
-        
-                // Get any seed data
-                var seedData = extensionManager.GetInstances<ISeedData>();
-                foreach (var data in seedData)
-                {
-                    data.Value.Initialise(dbContext);
-                }
-                
-                // Is this ok to use the awaiter and result here?
-                var langs = mediatr.Send(new QueryLanguageCommand{AmountPerPage = 200}).GetAwaiter().GetResult();
-            
-                // en-US must be the default culture as that's what the backoffice resource is
-                var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
-
-                foreach (var langsItem in langs.Items)
-                {
-                    if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
-                }
-                var supportedCulturesArray = supportedCultures.Distinct().ToArray();
-                var localizationOptions = new RequestLocalizationOptions()
-                    .SetDefaultCulture(settings.Value.AdminDefaultLanguage)
-                    .AddSupportedCultures(supportedCulturesArray)
-                    .AddSupportedUICultures(supportedCulturesArray);
-                app.UseRequestLocalization(localizationOptions);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error during startup trying to do Db migrations");
-            }
-        }
-
-        app.UseImageSharp();
-        app.UseSerilogRequestLogging();
-        
-        app.UseHttpsRedirection();
-        app.UseStaticFiles();
-        app.UseRouting();
-        app.UseAntiforgery();
-        app.MapControllers();
-
-        // Add authentication and authorization middleware
-        app.UseAuthentication();
-        app.UseAuthorization();
-        
-        app.MapStaticAssets();
-        
-        // Group the admin routes for Blazor
-        app
-            .MapRazorComponents<T>()
-            .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
-            .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
-
-        // Add additional endpoints required by the Identity /Account Razor components.
-        app.MapAdditionalIdentityEndpoints();
-        
-        app.UseMiddleware<ContentRoutingMiddleware>();
-        app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
-            .WithStaticAssets(); // Ensures static files load before hitting controllers
-        app.MapFallbackToController("Index", "Cms");
-    }
-
     public static void AddZauberCms(this WebApplicationBuilder builder)
     {
         builder.Host.UseSerilog((context, configuration) =>
@@ -137,7 +58,8 @@ public static class ZauberSetup
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-
+        builder.Services.AddScoped<ZauberRouteValueTransformer>();
+        
         builder.Services.AddRadzenComponents();
 
         if (!zauberSettings.RedisConnectionString.IsNullOrWhiteSpace())
@@ -294,5 +216,83 @@ public static class ZauberSetup
 
         // Add localization services
         builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
+    }
+    
+        public static void AddZauberCms<T>(this WebApplication app)
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+            var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
+            var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
+            
+            try
+            {
+                if (dbContext.Database.GetPendingMigrations().Any())
+                {
+                    dbContext.Database.Migrate();
+                }
+        
+                // Get any seed data
+                var seedData = extensionManager.GetInstances<ISeedData>();
+                foreach (var data in seedData)
+                {
+                    data.Value.Initialise(dbContext);
+                }
+                
+                // Is this ok to use the awaiter and result here?
+                var langs = mediatr.Send(new QueryLanguageCommand{AmountPerPage = 200}).GetAwaiter().GetResult();
+            
+                // en-US must be the default culture as that's what the backoffice resource is
+                var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
+
+                foreach (var langsItem in langs.Items)
+                {
+                    if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
+                }
+                var supportedCulturesArray = supportedCultures.Distinct().ToArray();
+                var localizationOptions = new RequestLocalizationOptions()
+                    .SetDefaultCulture(settings.Value.AdminDefaultLanguage)
+                    .AddSupportedCultures(supportedCulturesArray)
+                    .AddSupportedUICultures(supportedCulturesArray);
+                app.UseRequestLocalization(localizationOptions);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error during startup trying to do Db migrations");
+            }
+        }
+
+        app.UseImageSharp();
+        app.UseSerilogRequestLogging();
+        
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();
+        app.UseRouting();
+        app.UseAntiforgery();
+
+        // Add authentication and authorization middleware
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapStaticAssets();
+        
+        // Group the admin routes for Blazor
+        app
+            .MapRazorComponents<T>()
+            .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
+            .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
+
+        // Add additional endpoints required by the Identity /Account Razor components.
+        app.MapAdditionalIdentityEndpoints();
+        
+        //app.UseMiddleware<ContentRoutingMiddleware>();
+        app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
+        app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Cms}/{action=Index}/{id?}")
+            .WithStaticAssets(); // Ensures static files load before hitting controllers
+        
+        app.MapFallbackToController("Index", "Cms");
     }
 }

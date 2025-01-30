@@ -1,26 +1,19 @@
-﻿using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using MVCExample.Web.Models;
+﻿using Microsoft.AspNetCore.Mvc;
 using ZauberCMS.Routing.Controllers;
 
 namespace ZauberCMS.Web.Controllers;
 
-public class HomeController(ILogger<HomeController> logger) : CmsController(logger)
+public class HomeController : CmsController
 {
-    public override IActionResult Index()
+    public HomeController(ILogger<HomeController> logger) : base(logger)
     {
-        // TODO - Remove Index From Here
-        return CurrentTemplate(CurrentPage, "Index");   
+        Console.WriteLine("HomeController has been hit!");
+
     }
 
-    public IActionResult Privacy()
+    public IActionResult Home()
     {
-        return View();
-    }
-
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        Console.WriteLine("Home has been hit!");
+        return CurrentView();
     }
 }

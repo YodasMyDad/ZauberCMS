@@ -86,7 +86,7 @@
                                 <PropertyInfo Name="Content View" Description="The views available to render this content in the front end"/>
                             </LeftColumn>
                             <CentreColumn>
-                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@AvailableContentViews" TextProperty="Key" ValueProperty="Value" Style="width: 100%; max-width: 400px;"/>
+                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@ContentType.AvailableContentViews" Style="width: 100%; max-width: 400px;"/>
                             </CentreColumn>
                         </EditorRow>
 
@@ -181,7 +181,7 @@ else
     private ContentType? ContentType { get; set; }
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     private Dictionary<Guid, ContentPropertyValue> AllContentValues { get; set; } = new();
-    private Dictionary<string, string> AvailableContentViews { get; set; } = new();
+    //private Dictionary<string, string> AvailableContentViews { get; set; } = new();
     private int SelectedTabIndex { get; set; }
     private RadzenTabs? Tabs { get; set; }
     private bool RootOnly => IsBlockList != true && ContentId == null && ParentId == null;
@@ -295,7 +295,7 @@ else
         }
 
         AllContentValues = Content!.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
-        AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
+        //AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
 
         if (Content.ViewComponent.IsNullOrWhiteSpace() && contentType.AvailableContentViews.Any())
         {

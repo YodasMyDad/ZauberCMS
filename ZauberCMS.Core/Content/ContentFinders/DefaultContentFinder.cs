@@ -21,10 +21,12 @@ public class DefaultContentFinder(IMediator mediator, IOptions<ZauberSettings> S
         if (entryModel.Content == null) return false;
         
         context.Request.RouteValues["controller"] = entryModel.Content.ContentTypeAlias;
-        context.Request.RouteValues["action"] = entryModel.Content.ViewComponent;
         
+        context.Request.RouteValues["action"] = Path.GetFileNameWithoutExtension(entryModel.Content.ViewComponent);
+
         context.Items["currentpage"] = entryModel.Content;
         context.Items["languagekeys"] = entryModel.LanguageKeys;
+        context.Items["viewpath"] = entryModel.Content.ViewComponent;
         
         return true;
     }
