@@ -1,1 +1,33 @@
-﻿
+﻿@using ZauberCMS.Core.Extensions
+@model ZauberCMS.Web.Blog.Models.BlogViewModel
+
+<header class="masthead" style="background-image: url('@(Model.HeaderImage?.Url)')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="site-heading">
+                    <h1>@(Model.GetValue<string>("Heading"))</h1>
+                    <span class="subheading">@(Model.GetValue<string>("SubHeading"))</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container px-4 px-lg-5">
+
+    <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+
+            @foreach (var post in Model.BlogPosts.Items)
+            {
+                @await Component.InvokeAsync("BlogPostPreview", new { post })
+                <hr class="my-4"/>
+            }
+            
+        </div>
+    </div>
+
+    @await Component.InvokeAsync("BootstrapPager", new { model = Model.BlogPosts })
+    
+</div>

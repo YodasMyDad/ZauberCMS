@@ -1,6 +1,9 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Routing.Controllers;
+using ZauberCMS.Web.Blog.Models;
 
 namespace ZauberCMS.Web.Blog.Controllers;
 
@@ -8,6 +11,10 @@ public class BlogPageController(ILogger<BlogPageController> logger, IMediator me
 {
     public async Task<IActionResult> BlogPage()
     {
-        return CurrentView();
+        var viewModel = new BlogPageViewModel(CurrentPage!);
+        
+        viewModel.HeaderImage = await viewModel.GetMedia("HeaderImage", mediator, "/assets/img/post-sample-image.jpg");
+        
+        return CurrentView(viewModel);
     }
 }

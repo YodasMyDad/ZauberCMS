@@ -11,8 +11,8 @@ public class TextPageController(ILogger<TextPageController> logger, IMediator me
     public async Task<IActionResult> TextPage()
     {
         var model = new SharedViewModel(CurrentPage!);
-        
-        model.HeaderImage = (await model.GetMedias("HeaderImage", mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
+
+        model.HeaderImage = await model.GetMedia("HeaderImage", mediator, "/assets/img/about-bg.jpg");
         
         return CurrentView(model);
     }

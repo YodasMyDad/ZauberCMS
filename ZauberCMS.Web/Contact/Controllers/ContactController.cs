@@ -12,8 +12,8 @@ public class ContactController(ILogger<ContactController> logger, IMediator medi
     public async Task<IActionResult> Contact()
     {
         var model = new SharedViewModel(CurrentPage!);
-        
-        model.HeaderImage = (await model.GetMedias("HeaderImage", mediator, "/assets/img/contact-bg.jpg")).FirstOrDefault()!;
+
+        model.HeaderImage = await model.GetMedia("HeaderImage", mediator, "/assets/img/contact-bg.jpg");
         
         return CurrentView(model);
     }

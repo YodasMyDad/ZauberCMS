@@ -12,8 +12,8 @@ public class HomeController(ILogger<HomeController> logger, IMediator mediator) 
     public async Task<IActionResult> Home()
     {
         var homeViewModel = new HomeViewModel(CurrentPage!);
-        
-        homeViewModel!.HeaderImage = (await homeViewModel.GetMedias("HeaderImage", mediator, "/assets/img/home-bg.jpg")).FirstOrDefault()!;
+
+        homeViewModel!.HeaderImage = await homeViewModel.GetMedia("HeaderImage", mediator, "/assets/img/home-bg.jpg");
         // Get the blog posts
         var posts = await mediator.Send(new QueryContentCommand
         {

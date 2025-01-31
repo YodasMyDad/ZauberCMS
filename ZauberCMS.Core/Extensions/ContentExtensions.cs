@@ -46,10 +46,10 @@ public static class ContentExtensions
         {
             return [new Media.Models.Media{Name = fallBackUrl, Url = fallBackUrl}];
         }
-
         
         return [];
     }
+    
     
     /// <summary>
     /// Extension to get content items
@@ -106,7 +106,7 @@ public static class ContentExtensions
     {
         return (await content.GetUsers(propertyAlias, mediator)).FirstOrDefault();
     }
-    
+
 
     /// <summary>
     /// Extension to get a single media item
@@ -114,10 +114,11 @@ public static class ContentExtensions
     /// <param name="content">The content containing media data</param>
     /// <param name="propertyAlias">The property alias to retrieve media ids</param>
     /// <param name="mediator">The mediator to handle media queries</param>
+    /// <param name="fallBackUrl"></param>
     /// <returns>A single media item or null if no media items are found</returns>
-    public static async Task<Media.Models.Media?> GetMedia(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
+    public static async Task<Media.Models.Media?> GetMedia(this IHasPropertyValues content, string propertyAlias, IMediator mediator, string? fallBackUrl = null)
     {
-        return (await content.GetMedias(propertyAlias, mediator)).FirstOrDefault();
+        return (await content.GetMedias(propertyAlias, mediator, fallBackUrl)).FirstOrDefault();
     }
 
     /// <summary>
