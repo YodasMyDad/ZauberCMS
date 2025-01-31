@@ -1,4 +1,4 @@
-namespace ZauberCMS.Web;
+namespace ZauberCMS.Web.Shared.Models;
 
 public class ErrorViewModel
 {

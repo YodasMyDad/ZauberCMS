@@ -1,9 +1,13 @@
-# ZauberCMS - The Blazor CMS
+# ZauberCMS (.NET CMS)
+## The Best Of Both Worlds
 
-ZauberCMS is a fully featured CMS built in **.NET 9 and Blazor InteractiveServer**. The CMS is [inspired by Umbraco](https://umbraco.com/), and follows a number of the same concepts.
+ZauberCMS is a fully featured CMS built in **.NET 9 (Using Blazor & .NET MVC)**. The CMS is inspired by Umbraco, and follows a number of similar concepts.
 
-I wanted a CMS that was aimed towards .Net Developers who wanted to use Blazor and also a CMS that is easily extendable and customisable without 
-having to learn a front end framework. Anyone that has Blazor experience and is interested in getting involved, [please contact me on X](https://twitter.com/YodasMyDad)
+I built this CMS to allow .NET developers to continue building websites just as they always have - with traditional .NET MVC - while also offering a modern, highly customizable, interactive CMS editing experience powered by Blazor (Can also be used on the front end too!).
+
+The goal is simple: a CMS that’s super easy to extend, highly modular, and doesn’t require learning a front-end framework or dealing with complex build tools. With Blazor, customization is quick, straightforward and developer-friendly. 
+
+Anyone interested in getting involved in this project, [please contact me on X](https://twitter.com/YodasMyDad)
 
 _Core tech used is: .Net 9, Blazor, EF Core, Identity, Mediatr, [Radzen Components](https://www.radzen.com/blazor-components/)_
 
@@ -25,12 +29,11 @@ You can also use Nuget and full instructions on how to use it are below (I prefe
 
 https://aptitude.gitbook.io/zaubercms/getting-started/quick-start
 
-## Starter Site Build
+## Building A Simple Site
 
-The video below shows the starter site being built. It covers building a site from nothing, to complete finished site. If you have never used Umbraco 
-then I highly recommend watching it as it covers a lot of concepts.
+This video shows building a very simple site from scratch, hopefully you'll see how easy it is!
 
-[![Starter Site Build YouTube Video](https://aptitude.gitbook.io/~gitbook/image?url=https%3A%2F%2F417697475-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FVr2cbdfxDGZK1u2Fd59w%252Fuploads%252FQslhSO0S2IBKP3k7v0Qx%252Fyoutube-cover-2.png%3Falt%3Dmedia%26token%3Db4b0d4d1-35e7-4f72-a6a0-84a57ff49095&width=768&dpr=4&quality=100&sign=4611e2ee&sv=1)](https://www.youtube.com/watch?v=BvULaHbiIEU)
+**Updated Video Coming Soon**
 
 ## Documentation
 
@@ -40,7 +43,7 @@ https://aptitude.gitbook.io/zaubercms
 
 ## Progress & Issues
 
-After v2.0 the next big release will be **v2.5**. You can see the progress and release features here
+After v3.0 the next big release will be **v3.5**. You can see the progress and release features here
 
 https://github.com/users/YodasMyDad/projects/8
 

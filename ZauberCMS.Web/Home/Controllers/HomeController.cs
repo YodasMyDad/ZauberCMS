@@ -9,11 +9,18 @@ namespace ZauberCMS.Web.Home.Controllers;
 
 public class HomeController(ILogger<HomeController> logger, IMediator mediator) : ZauberRenderController(logger)
 {
+    /// <summary>
+    /// Route hijacked controller, 'Home' ContentType and 'Home' View 
+    /// </summary>
+    /// <returns></returns>
     public async Task<IActionResult> Home()
     {
-        var homeViewModel = new HomeViewModel(CurrentPage!);
+        var homeViewModel = new HomeViewModel(CurrentPage!)
+        {
+            // Get the header image
+            HeaderImage = await CurrentPage!.GetMedia("HeaderImage", mediator, "/assets/img/home-bg.jpg")
+        };
 
-        homeViewModel!.HeaderImage = await homeViewModel.GetMedia("HeaderImage", mediator, "/assets/img/home-bg.jpg");
         // Get the blog posts
         var posts = await mediator.Send(new QueryContentCommand
         {
@@ -28,7 +35,7 @@ public class HomeController(ILogger<HomeController> logger, IMediator mediator) 
         return CurrentView(homeViewModel);
     }
 
-    public ActionResult Privacy()
+    public ActionResult Custom()
     {
         return View();
     }
