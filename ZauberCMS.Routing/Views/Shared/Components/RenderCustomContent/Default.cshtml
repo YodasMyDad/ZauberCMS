@@ -1,0 +1,14 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using ZauberCMS.Core.Extensions
+@model ZauberCMS.Routing.Views.Shared.Components.RenderCustomContent.RenderCustomContentViewModel
+
+@if (Model.CustomContentComponents?.Any() == true && Model.Components.Any())
+{
+    @foreach (var customComponentName in Model.Components.Where(x => !x.IsNullOrWhiteSpace()))
+    {
+        if (Model.CustomContentComponents.TryGetValue(customComponentName, out var customContentComponent))
+        {
+            <component type="typeof(customContentComponent)" param-Content="@(Model.Content)" render-mode="ServerPrerendered"/>
+        }
+    }
+}

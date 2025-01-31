@@ -27,4 +27,9 @@ public class HomeController(ILogger<HomeController> logger, IMediator mediator) 
         
         return CurrentView(homeViewModel);
     }
+
+    public ActionResult Privacy()
+    {
+        return View();
+    }
 }

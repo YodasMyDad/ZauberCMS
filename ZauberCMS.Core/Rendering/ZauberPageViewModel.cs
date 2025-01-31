@@ -144,4 +144,6 @@ public class ZauberPageViewModel(Content.Models.Content content) : IHasPropertyV
     {
         return content.ContentValues();
     }
+    
+    public Content.Models.Content BaseContent => content;
 }

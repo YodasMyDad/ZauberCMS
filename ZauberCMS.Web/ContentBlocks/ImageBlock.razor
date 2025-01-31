@@ -1,0 +1,23 @@
+﻿@using ZauberCMS.Core.Media.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+
+@if (Content != null && Media != null)
+{
+    <img src="@(Media.Url)?width=875" alt="@Media.AltTag" class="img-thumbnail img-fluid" />
+    <span class="caption text-muted">@(Content.GetValue<string>("Summary"))</span>
+}
+
+@code {
+    public string ContentTypeAlias => "ImageBlock";
+    [Parameter] public Content? Content { get; set; }
+    private Media? Media { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        @if (Content != null)
+        {
+            var media = await Content.GetMedias("Image", Mediator);
+            Media = media.FirstOrDefault();
+        }
+    }
+
+}

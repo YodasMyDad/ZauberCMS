@@ -10,10 +10,10 @@ public class TextPageController(ILogger<TextPageController> logger, IMediator me
 {
     public async Task<IActionResult> TextPage()
     {
-        var homeViewModel = new SharedViewModel(CurrentPage!);
+        var model = new SharedViewModel(CurrentPage!);
         
-        homeViewModel.HeaderImage = (await homeViewModel.GetMedias("HeaderImage", mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
+        model.HeaderImage = (await model.GetMedias("HeaderImage", mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
         
-        return CurrentView(homeViewModel);
+        return CurrentView(model);
     }
 }

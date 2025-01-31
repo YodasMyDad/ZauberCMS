@@ -1,0 +1,15 @@
+﻿
+@using ZauberCMS.Web.ContentBlocks
+@implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
+
+@if (Content != null)
+{
+    <QuoteBlock Content="@Content" />
+}
+
+
+@code {
+    public string ContentTypeAlias => "QuoteBlock";
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public ContentType? ContentType { get; set; }
+}

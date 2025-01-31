@@ -1,0 +1,10 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Web.Custom
+@{
+    Layout = "";
+}
+
+<h1>Testing</h1>
+
+<component type="typeof(ContactForm)" param-Content="@(new Content())" render-mode="ServerPrerendered" />
