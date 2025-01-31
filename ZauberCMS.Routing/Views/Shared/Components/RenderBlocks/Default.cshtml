@@ -1,0 +1,13 @@
+﻿@model ZauberCMS.Routing.Views.Shared.Components.RenderBlocks.RenderBlocksModel
+
+@foreach (var block in Model.Blocks)
+{
+    if (Model.ContentBlockViews.TryGetValue(block.ContentTypeAlias ?? "", out var contentBlockView))
+    {
+        <div class="@Html.Raw(Model.SeparatorCssClasses)">
+            <component type="@(contentBlockView.GetType())" 
+                       param-Content="@(block)"
+                       render-mode="@contentBlockView.RenderMode"/>
+        </div>      
+    }
+}

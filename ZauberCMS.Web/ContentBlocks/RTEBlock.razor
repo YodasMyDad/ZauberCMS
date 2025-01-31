@@ -1,4 +1,5 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+﻿@using RenderMode = Microsoft.AspNetCore.Mvc.Rendering.RenderMode
+@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
 @if (Content != null)
 {
     <div>
@@ -9,4 +10,5 @@
 @code {
     [Parameter] public Content? Content { get; set; }
     public string ContentTypeAlias => "RTEBlock";
+    public RenderMode RenderMode => RenderMode.Static;
 }

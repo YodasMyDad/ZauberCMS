@@ -1,12 +1,7 @@
 ﻿@using Humanizer
-@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Extensions
-@using ZauberCMS.Core.Plugins
 @model ZauberCMS.Web.Blog.Models.BlogPageViewModel
-@inject ExtensionManager ExtensionManager
-@{
-    var blocks = ExtensionManager.GetInstances<IContentBlockView>();
-}
+
 <header class="masthead" style="background-image: url('@(Model.HeaderImage?.Url)')">
     <div class="container position-relative px-4 px-lg-5">
         <div class="row gx-4 gx-lg-5 justify-content-center">
@@ -25,19 +20,7 @@
     <div class="container px-4 px-lg-5">
         <div class="row gx-4 gx-lg-5 justify-content-center">
             <div class="col-md-10 col-lg-8 col-xl-7">
-                @foreach (var block in Model.ContentBlocks)
-                {
-                    var blockViewPair = blocks.FirstOrDefault(pair => pair.Value.ContentTypeAlias == block.ContentTypeAlias).Value;
-                    if (blockViewPair != null)
-                    {
-                        <div class="py-3">
-                            <component type="@(blockViewPair.GetType())"
-                                       param-Content="@(block)"
-                                       render-mode="Static"/>
-                            @*<RenderBlock Content="@(block)" TView="IContentBlockView"/>*@
-                        </div>   
-                    }
-                }
+                @await Component.InvokeAsync("RenderBlocks", new { blocks = Model.ContentBlocks, cssSeparatorClasses = "py-3" })
             </div>
         </div>
     </div>

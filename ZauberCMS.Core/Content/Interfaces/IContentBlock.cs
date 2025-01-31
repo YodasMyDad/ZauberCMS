@@ -3,5 +3,5 @@
 public interface IContentBlock
 {
     string ContentTypeAlias { get; }
-    Models.Content? Content { get; set; } 
+    Models.Content? Content { get; set; }
 }

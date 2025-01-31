@@ -1,4 +1,5 @@
 ﻿@using ZauberCMS.Core.Media.Models
+@using RenderMode = Microsoft.AspNetCore.Mvc.Rendering.RenderMode
 @implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
 
 @if (Content != null && Media != null)
@@ -8,8 +9,9 @@
 }
 
 @code {
-    public string ContentTypeAlias => "ImageBlock";
     [Parameter] public Content? Content { get; set; }
+    public string ContentTypeAlias => "ImageBlock";
+    public RenderMode RenderMode => RenderMode.Static;
     private Media? Media { get; set; }
     protected override async Task OnInitializedAsync()
     {
