@@ -10,18 +10,6 @@ namespace ZauberCMS.Core.Extensions;
 
 public static class IdentityExtensions
 {
-        /// <summary>
-    /// Get a value from a content property
-    /// </summary>
-    /// <param name="user">User</param>
-    /// <param name="alias">The property alias</param>
-    /// <typeparam name="T">The type you expect the value in</typeparam>
-    /// <returns></returns>
-    public static T? GetValue<T>(this User user, string alias)
-    {
-        return user.ContentValues().TryGetValue(alias, out var contentValue) ? contentValue.Value.ToValue<T>() : default;
-    }
-
     /// <summary>
     /// Gets media items from a picker
     /// </summary>

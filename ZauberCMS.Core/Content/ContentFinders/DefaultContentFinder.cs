@@ -1,33 +1,44 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Routing;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Content.ContentFinders;
 
-public class DefaultContentFinder(IMediator mediator, IOptions<ZauberSettings> Settings) 
+public class DefaultContentFinder(IMediator mediator) 
     : IContentFinder
 {
-    public async Task<bool> TryFindContent(HttpContext context)
+    public async Task<RouteValueDictionary?> TryFindContent(HttpContext httpContext)
     {
-        var slug = context.Request.Path.Value?.TrimStart('/');
-        var url = context.Request.GetDisplayUrl();
-        var entryModel = await mediator.Send(new GetContentFromRequestCommand { Slug = slug, IsRootContent = slug.IsNullOrWhiteSpace(), Url = url });
+        var slug = httpContext.Request.Path.Value?.TrimStart('/');
+        var url = httpContext.Request.GetDisplayUrl();
+        var entryModel = await mediator.Send(new GetContentFromRequestCommand
+        {
+            Slug = slug, 
+            IsRootContent = slug.IsNullOrWhiteSpace(), 
+            Url = url
+        });
         
-        if (entryModel.Content == null) return false;
+        if (entryModel.Content == null) return null;
         
-        context.Request.RouteValues["controller"] = entryModel.Content.ContentTypeAlias;
-        
-        context.Request.RouteValues["action"] = Path.GetFileNameWithoutExtension(entryModel.Content.ViewComponent);
+        var controllerName = entryModel.Content.ContentTypeAlias;
+        var actionName = Path.GetFileNameWithoutExtension(entryModel.Content.ViewComponent);
 
-        context.Items["currentpage"] = entryModel.Content;
-        context.Items["languagekeys"] = entryModel.LanguageKeys;
-        context.Items["viewpath"] = entryModel.Content.ViewComponent;
+        var newValues = new RouteValueDictionary
+        {
+            ["controller"] = controllerName,
+            ["action"] = actionName
+        };
         
-        return true;
+        httpContext.Items["currentpage"] = entryModel.Content;
+        httpContext.Items["languagekeys"] = entryModel.LanguageKeys;
+        httpContext.Items["viewpath"] = entryModel.Content.ViewComponent;
+        
+        return newValues;
     }
+
+    public int SortOrder => 10;
 }

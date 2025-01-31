@@ -1,10 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Membership.Models;
 
-public class User : IdentityUser<Guid>, ITreeItem
+public class User : IdentityUser<Guid>, ITreeItem, IHasPropertyValues
 {
     public List<UserRole> UserRoles { get; set; } = [];
 
@@ -20,11 +21,11 @@ public class User : IdentityUser<Guid>, ITreeItem
     public List<UserPropertyValue> PropertyData { get; set; } = [];
 
 
-    private Dictionary<string, UserPropertyValue>? _contentValues;
+    private Dictionary<string, string>? _contentValues;
 
-    public Dictionary<string, UserPropertyValue> ContentValues()
+    public Dictionary<string, string> ContentValues()
     {
-        return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x);
+        return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x.Value);
     }
     
     public Dictionary<string, object> ExtendedData { get; set; } = new();

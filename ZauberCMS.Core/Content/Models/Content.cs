@@ -4,11 +4,10 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
-using ZauberCMS.Core.Tags.Models;
 
 namespace ZauberCMS.Core.Content.Models;
 
-public class Content : IContent<ContentPropertyValue>
+public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
 {
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
 
@@ -146,11 +145,11 @@ public class Content : IContent<ContentPropertyValue>
     public List<ContentPropertyValue> PropertyData { get; set; } = [];
 
 
-    private Dictionary<string, ContentPropertyValue>? _contentValues;
+    private Dictionary<string, string>? _contentValues;
 
-    public Dictionary<string, ContentPropertyValue> ContentValues()
+    public Dictionary<string, string> ContentValues()
     {
-        return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x);
+        return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x.Value);
     }
 
     /// <summary>

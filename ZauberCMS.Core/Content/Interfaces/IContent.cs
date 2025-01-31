@@ -2,7 +2,12 @@
 
 namespace ZauberCMS.Core.Content.Interfaces;
 
-public interface IContent<T> : ITreeItem
+public interface IContent<T> : IBaseContent
+{
+    List<T> PropertyData { get; set; }
+}
+
+public interface IBaseContent : ITreeItem
 {
     string? Url { get; set; }
     Guid ContentTypeId { get; set; }
@@ -13,5 +18,4 @@ public interface IContent<T> : ITreeItem
     DateTime DateCreated { get; set; }
     DateTime DateUpdated { get; set; }
     string ViewComponent { get; set; }
-    List<T> PropertyData { get; set; }
 }

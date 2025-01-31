@@ -290,9 +290,9 @@ public static class ZauberSetup
         app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
         app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Cms}/{action=Index}/{id?}")
+                pattern: "{controller=ZauberRender}/{action=Index}/{id?}")
             .WithStaticAssets(); // Ensures static files load before hitting controllers
         
-        app.MapFallbackToController("Index", "Cms");
+        app.MapFallbackToController("Index", "ZauberRender");
     }
 }

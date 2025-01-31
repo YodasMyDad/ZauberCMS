@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Plugins;
 
@@ -6,18 +7,19 @@ namespace ZauberCMS.Core.Content.ContentFinders;
 
 public class ContentFinderPipeline(ExtensionManager extensionManager)
 {
-    public async Task<bool> FindContent(HttpContext context)
+    public async Task<RouteValueDictionary> FindContent(HttpContext context, RouteValueDictionary defaultRouteValueDictionary)
     {
-        var contentFinders = extensionManager.GetInstances<IContentFinder>();
+        var contentFinders = extensionManager.GetInstances<IContentFinder>(true);
         
-        foreach (var finder in contentFinders.Values)
+        foreach (var finder in contentFinders.Values.OrderBy(x => x.SortOrder))
         {
-            if (await finder.TryFindContent(context))
+            var routeValueDictionary = await finder.TryFindContent(context);
+            if(routeValueDictionary != null)
             {
-                return true; // Stop processing when content is found
+                return routeValueDictionary; // Return the new route values if found
             }
         }
 
-        return false;
+        return defaultRouteValueDictionary; // If nothing found, return the default route values
     }
 }

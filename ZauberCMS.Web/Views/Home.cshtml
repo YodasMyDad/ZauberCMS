@@ -1,9 +1,31 @@
-﻿@inherits ZauberCMS.Core.Rendering.ZauberViewPage<ZauberCMS.Core.Content.Models.Content>
-@model ZauberCMS.Core.Content.Models.Content
+﻿@using ZauberCMS.Core.Extensions
+@model ZauberCMS.Web.Home.Models.HomeViewModel
 
-<div class="text-center">
-    <h1 class="display-4">Welcome to home page</h1>
-    <p>@Model.Name @Model.DateCreated.ToLongDateString()</p>
-    <p>@CurrentPage?.Name @CurrentPage?.DateCreated.ToLongDateString()</p>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<header class="masthead" style="background-image: url('@(Model.HeaderImage?.Url)')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="site-heading">
+                    <h1>@(Model.GetValue<string>("Heading"))</h1>
+                    <span class="subheading">@(Model.GetValue<string>("SubHeading"))</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container px-4 px-lg-5">
+
+    <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+            @Html.Raw(Model.GetValue<string>("Content") ?? string.Empty)
+            <hr class="my-4"/>
+            @foreach (var post in Model.BlogPosts)
+            {
+                @*<BlogPostPreview Content="@post"/>*@
+                <p>Post Here</p>
+                <hr class="my-4"/>
+            }
+        </div>
+    </div>
 </div>

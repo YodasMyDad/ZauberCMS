@@ -1,8 +1,9 @@
-﻿using ZauberCMS.Core.Extensions;
+﻿using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Membership.Models;
 
-public class UserPropertyValue
+public class UserPropertyValue : IPropertyValue
 {
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
     public string Alias { get; set; } = string.Empty;

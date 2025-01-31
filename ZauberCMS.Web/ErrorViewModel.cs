@@ -1,4 +1,4 @@
-namespace MVCExample.Web.Models;
+namespace ZauberCMS.Web;
 
 public class ErrorViewModel
 {

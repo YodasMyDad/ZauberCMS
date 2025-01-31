@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using ZauberCMS.Core.Content.Commands;
-using ZauberCMS.Core.Data.Models;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
@@ -16,11 +16,10 @@ public static class ContentExtensions
     /// <param name="alias">The property alias</param>
     /// <typeparam name="T">The type you expect the value in</typeparam>
     /// <returns></returns>
-    public static T? GetValue<T>(this Content.Models.Content content, string alias)
+    public static T? GetValue<T>(this IHasPropertyValues content, string alias)
     {
-        return content.ContentValues().TryGetValue(alias, out var contentValue) ? contentValue.Value.ToValue<T>() : default;
+        return content.ContentValues().TryGetValue(alias, out var contentValue) ? contentValue.ToValue<T>() : default;
     }
-
 
     /// <summary>
     /// Retrieves a list of media items from a content property.
@@ -30,7 +29,7 @@ public static class ContentExtensions
     /// <param name="mediator">The mediator to send queries to retrieve media information.</param>
     /// <param name="fallBackUrl">A fallback URL to use if no media is found.</param>
     /// <returns>Returns a list of media items if found; otherwise, returns a list containing a single media item with the fallback URL.</returns>
-    public static async Task<List<Media.Models.Media>> GetMedias(this Content.Models.Content content, string? alias,
+    public static async Task<List<Media.Models.Media>> GetMedias(this IHasPropertyValues content, string? alias,
         IMediator mediator, string? fallBackUrl = null)
     {
         if (!string.IsNullOrEmpty(alias))
@@ -59,7 +58,7 @@ public static class ContentExtensions
     /// <param name="propertyAlias"></param>
     /// <param name="mediator"></param>
     /// <returns></returns>
-    public static async Task<List<Content.Models.Content>> GetContents(this Content.Models.Content content, string? propertyAlias, IMediator mediator)
+    public static async Task<List<Content.Models.Content>> GetContents(this IHasPropertyValues content, string? propertyAlias, IMediator mediator)
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
@@ -81,7 +80,7 @@ public static class ContentExtensions
     /// <param name="propertyAlias"></param>
     /// <param name="mediator"></param>
     /// <returns></returns>
-    public static async Task<List<User>> GetUsers(this Content.Models.Content content, string propertyAlias, IMediator mediator)
+    public static async Task<List<User>> GetUsers(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
@@ -103,7 +102,7 @@ public static class ContentExtensions
     /// <param name="propertyAlias">The property alias to retrieve user ids</param>
     /// <param name="mediator">The mediator to handle user queries</param>
     /// <returns>A single user or null if no users are found</returns>
-    public static async Task<User?> GetUser(this Content.Models.Content content, string propertyAlias, IMediator mediator)
+    public static async Task<User?> GetUser(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
     {
         return (await content.GetUsers(propertyAlias, mediator)).FirstOrDefault();
     }
@@ -116,7 +115,7 @@ public static class ContentExtensions
     /// <param name="propertyAlias">The property alias to retrieve media ids</param>
     /// <param name="mediator">The mediator to handle media queries</param>
     /// <returns>A single media item or null if no media items are found</returns>
-    public static async Task<Media.Models.Media?> GetMedia(this Content.Models.Content content, string propertyAlias, IMediator mediator)
+    public static async Task<Media.Models.Media?> GetMedia(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
     {
         return (await content.GetMedias(propertyAlias, mediator)).FirstOrDefault();
     }
@@ -128,7 +127,7 @@ public static class ContentExtensions
     /// <param name="propertyAlias">The property alias to retrieve content ids</param>
     /// <param name="mediator">The mediator to handle content queries</param>
     /// <returns>A single content item or null if no content items are found</returns>
-    public static async Task<Content.Models.Content?> GetContent(this Content.Models.Content content, string propertyAlias, IMediator mediator)
+    public static async Task<Content.Models.Content?> GetContent(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
     {
         return (await content.GetContents(propertyAlias, mediator)).FirstOrDefault();
     }

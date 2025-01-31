@@ -4,7 +4,7 @@ using ZauberCMS.Core.Content.Models;
 
 namespace ZauberCMS.Routing.Controllers;
 
-public class CmsController(ILogger<CmsController> logger) : Controller
+public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Controller
 {
     // ReSharper disable once InconsistentNaming
     private Content? _content { get; set; }
@@ -15,13 +15,13 @@ public class CmsController(ILogger<CmsController> logger) : Controller
     {
         if (CurrentPage != null)
         {
-            Console.WriteLine("CMS Index has been hit!");
             return CurrentView(CurrentPage);
         }
+        logger.LogInformation("No page found for route: {RoutePath}", ControllerContext.HttpContext.Request.Path);
         return NotFound();
     }
 
-    public Content? CurrentPage
+    protected Content? CurrentPage
     {
         get
         {
@@ -37,7 +37,7 @@ public class CmsController(ILogger<CmsController> logger) : Controller
         }
     }
     
-    public Dictionary<string, string>? LanguageKeys
+    protected Dictionary<string, string>? LanguageKeys
     {
         get
         {
@@ -60,7 +60,7 @@ public class CmsController(ILogger<CmsController> logger) : Controller
     /// <param name="model">Instance of model</param>
     /// <param name="viewName">View name</param>
     /// <returns>Template for given route</returns>
-    public IActionResult CurrentView<T>(T model, string? viewName = null)
+    protected IActionResult CurrentView<T>(T model, string? viewName = null)
     {
         if (string.IsNullOrEmpty(viewName))
         {

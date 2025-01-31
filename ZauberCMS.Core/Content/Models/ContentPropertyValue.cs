@@ -1,9 +1,10 @@
 ﻿using System.Text.Json.Serialization;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Content.Models;
 
-public class ContentPropertyValue
+public class ContentPropertyValue : IPropertyValue
 {
     public Guid Id { get; set; } = Guid.NewGuid().NewSequentialGuid();
     public Guid ContentId { get; set; }
