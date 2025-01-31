@@ -39,6 +39,9 @@
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Views\Shared\Components\RenderCustomContent\Default.cshtml" />
+    </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
         <PropertyGroup>

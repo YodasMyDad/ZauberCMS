@@ -1,15 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
 @using ZauberCMS.Components.ContentComponents
-@using ZauberCMS.Components.Shared
-@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Extensions
-@using ZauberCMS.Core.Plugins
-@using ZauberCMS.Web.Custom
 @model ZauberCMS.Web.Shared.Models.SharedViewModel
-@inject ExtensionManager ExtensionManager
-@{
-    var components = ExtensionManager.GetInstances<ICustomContentComponent>(true);
-}
+
 <header class="masthead" style="background-image: url('@(Model.HeaderImage?.Url)')">
     <div class="container position-relative px-4 px-lg-5">
         <div class="row gx-4 gx-lg-5 justify-content-center">
@@ -33,17 +26,10 @@
                 This renders any custom components you have selected on the page
             *@
             <div class="mb-4">
-                @*<RenderCustomContent Content="@(Content)" CustomComponents="@(Content!.GetValue<List<string>>("ContactForm"))" />*@
-                @*<component type="typeof(RenderCustomContent)" param-Content="@(Model.BaseContent)" param-CustomComponents="@(Model.GetValue<List<string>>("ContactForm"))" render-mode="ServerPrerendered" />*@
-                @*@await Component.InvokeAsync("RenderCustomContent", new { Content = Model.BaseContent, Components = Model.GetValue<List<string>>("ContactForm") })*@
-                @foreach (var component in Model.GetValue<List<string>>("ContactForm")!)
-                {
-                    if (components.TryGetValue(component, out var foundComponent))
-                    {
-                        <component type="foundComponent.GetType()" param-Content="@(Model.BaseContent)" render-mode="ServerPrerendered" />
-                    }
-                }
-                
+                <component type="typeof(RenderCustomContent)" 
+                           param-Content="@(Model.BaseContent)" 
+                           param-CustomComponents="@(Model.GetValue<List<string>>("ContactForm"))" 
+                           render-mode="ServerPrerendered" />
             </div>
         </div>
     </div>

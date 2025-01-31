@@ -17,7 +17,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <base href="/"/>
+    <base href="~/" />
     <title>@(Model.GetValue<string>("PageTitle") ?? Model.GetValue<string>("Heading"))</title>
     <meta name="description" content="@(Model.GetValue<string>("MetaDescription"))">
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico"/>
@@ -61,6 +61,7 @@
     </div>
 </footer>
 
+<script src="_framework/blazor.server.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/scripts.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
