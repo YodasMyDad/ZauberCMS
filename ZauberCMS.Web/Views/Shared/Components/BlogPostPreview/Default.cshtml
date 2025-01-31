@@ -1,0 +1,16 @@
+﻿@using Humanizer
+@using ZauberCMS.Core.Extensions
+@model ZauberCMS.Core.Content.Models.Content?
+
+@if (Model != null)
+{
+    <div class="post-preview">
+        <a href="@($"/{Model.Url}")">
+            <h2 class="post-title">@Model.Name</h2>
+            <h3 class="post-subtitle">@(Model.GetValue<string>("Summary"))</h3>
+        </a>
+        <p class="post-meta">
+            Posted @Model.DateCreated.Humanize()
+        </p>
+    </div>
+}

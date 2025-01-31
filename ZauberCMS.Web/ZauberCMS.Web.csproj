@@ -31,6 +31,7 @@
       <_ContentIncludedByDefault Remove="ContentBlocks\QuoteBlock.razor" />
       <_ContentIncludedByDefault Remove="ContentBlocks\RTEBlock.razor" />
       <_ContentIncludedByDefault Remove="Custom\ContactForm.razor" />
+      <_ContentIncludedByDefault Remove="Views\Home\Index.cshtml" />
     </ItemGroup>
     
     <ItemGroup>

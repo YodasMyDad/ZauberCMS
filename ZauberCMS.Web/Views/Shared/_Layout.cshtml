@@ -1,7 +1,17 @@
-﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+﻿@using MediatR
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Extensions
 @inherits ZauberCMS.Core.Rendering.ZauberViewPage<ZauberCMS.Core.Rendering.ZauberPageViewModel>
-
+@inject IMediator Mediator
+@{
+    var website = await Mediator.Send(new GetContentCommand
+    {
+        ContentTypeAlias = "Website",
+        IncludeChildren = true,
+        Cached = true
+    });
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +40,7 @@
             <i class="fas fa-bars"></i>
         </button>
         <div class="collapse navbar-collapse" id="navbarResponsive">
-            @await Component.InvokeAsync("Navbar")
+            @await Component.InvokeAsync("Navbar", new { website })
         </div>
     </div>
 </nav>
@@ -43,10 +53,10 @@
 <footer class="border-top mt-2">
     <div class="container px-4 px-lg-5">
         <div class="row gx-4 gx-lg-5 justify-content-center">
-            @*<div class="col-md-10 col-lg-8 col-xl-7">
+            <div class="col-md-10 col-lg-8 col-xl-7">
                 <div class="small text-center text-muted fst-italic">
-                    &copy; @DateTime.UtcNow.Year @(Model.GetValue<string>("FooterText"))</div>
-            </div>*@
+                    &copy; @DateTime.UtcNow.Year @(website?.GetValue<string>("FooterText"))</div>
+            </div>
         </div>
     </div>
 </footer>

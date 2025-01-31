@@ -46,7 +46,7 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
                 if (HttpContext.Items.TryGetValue("languagekeys", out var model) && model is Dictionary<string, string> langKeys)
                 {
                     _languageKeys = langKeys;
-                    //TempData["LanguageKeys"] = _languageKeys;
+                    TempData["LanguageKeys"] = _languageKeys;
                 }
             }
             return _languageKeys;

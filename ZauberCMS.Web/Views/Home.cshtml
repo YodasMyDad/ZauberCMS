@@ -22,8 +22,7 @@
             <hr class="my-4"/>
             @foreach (var post in Model.BlogPosts)
             {
-                @*<BlogPostPreview Content="@post"/>*@
-                <p>Post Here</p>
+                @await Component.InvokeAsync("BlogPostPreview", new { post })
                 <hr class="my-4"/>
             }
         </div>
