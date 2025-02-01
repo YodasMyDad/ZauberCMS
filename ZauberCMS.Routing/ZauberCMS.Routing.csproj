@@ -42,6 +42,10 @@
     <ItemGroup>
       <UpToDateCheckInput Remove="Views\Shared\Components\RenderCustomContent\Default.cshtml" />
     </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="ProxyViewDataFeature.cs" />
+      <Compile Remove="CmsPageResult.cs" />
+    </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
         <PropertyGroup>

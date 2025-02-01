@@ -1,16 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Content.Models;
 
 namespace ZauberCMS.Routing.Controllers;
 
+//TODO - USe string returnUrl = Request.Headers["Referer"].ToString(); to get the previous url to redirect back to
+
 public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Controller
 {
+    private const string TransferredModelStateKey = "TransferredModelState";
+    private const string TransferredViewDataKey = "TransferredViewData";
+    
     // ReSharper disable once InconsistentNaming
     private Content? _content { get; set; }
     // ReSharper disable once InconsistentNaming
     private Dictionary<string, string>? _languageKeys { get; set; }
-    
+
     public virtual IActionResult Index()
     {
         if (CurrentPage != null)
@@ -54,7 +61,7 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
     }
     
     /// <summary>
-    ///     Locates the template for the given route
+    /// Locates the template for the given route.
     /// </summary>
     /// <typeparam name="T">Model type</typeparam>
     /// <param name="model">Instance of model</param>
@@ -73,5 +80,83 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
     public IActionResult CurrentView()
     {
         return CurrentView(CurrentPage);
+    }
+
+    /// <summary>
+    /// Restore any transferred ModelState and ViewData from TempData.
+    /// </summary>
+    public override void OnActionExecuting(ActionExecutingContext context)
+    {
+        // Restore ModelState errors (if any)
+        if (TempData.ContainsKey(TransferredModelStateKey))
+        {
+            var serializedModelState = TempData[TransferredModelStateKey] as string;
+            if (!string.IsNullOrEmpty(serializedModelState))
+            {
+                var errors = JsonSerializer.Deserialize<Dictionary<string, string[]>>(serializedModelState);
+                if (errors != null)
+                {
+                    foreach (var kvp in errors)
+                    {
+                        foreach (var error in kvp.Value)
+                        {
+                            ModelState.AddModelError(kvp.Key, error);
+                        }
+                    }
+                }
+            }
+            TempData.Remove(TransferredModelStateKey);
+        }
+        
+        // Restore entire ViewData
+        if (TempData.ContainsKey(TransferredViewDataKey))
+        {
+            var serializedViewData = TempData[TransferredViewDataKey] as string;
+            if (!string.IsNullOrEmpty(serializedViewData))
+            {
+                var viewDataDictionary = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedViewData);
+                if (viewDataDictionary != null)
+                {
+                    foreach (var kvp in viewDataDictionary)
+                    {
+                        ViewData[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
+            TempData.Remove(TransferredViewDataKey);
+        }
+        
+        base.OnActionExecuting(context);
+    }
+
+    /// <summary>
+    /// Before redirecting, store ModelState and the entire ViewData into TempData.
+    /// </summary>
+    public override void OnActionExecuted(ActionExecutedContext context)
+    {
+        // Only if the result is a redirect do we transfer the data.
+        if (context.Result is RedirectResult || context.Result is RedirectToActionResult)
+        {
+            // Transfer ModelState errors if ModelState is invalid.
+            if (!ModelState.IsValid)
+            {
+                var errorDictionary = ModelState
+                    .Where(kvp => kvp.Value.Errors.Any())
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray());
+                TempData[TransferredModelStateKey] = JsonSerializer.Serialize(errorDictionary);
+            }
+
+            // Transfer the entire ViewData dictionary.
+            var viewDataDictionary = new Dictionary<string, object>();
+            foreach (var kvp in ViewData)
+            {
+                viewDataDictionary[kvp.Key] = kvp.Value;
+            }
+            TempData[TransferredViewDataKey] = JsonSerializer.Serialize(viewDataDictionary);
+        }
+        
+        base.OnActionExecuted(context);
     }
 }
