@@ -35,6 +35,7 @@ public class DefaultContentFinder(IMediator mediator)
         
         httpContext.Items["currentpage"] = entryModel.Content;
         httpContext.Items["languagekeys"] = entryModel.LanguageKeys;
+        httpContext.Items["languageisocode"] = entryModel.LanguageIsoCode;
         httpContext.Items["viewpath"] = entryModel.Content.ViewComponent;
         
         return newValues;

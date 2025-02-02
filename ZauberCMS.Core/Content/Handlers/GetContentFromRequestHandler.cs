@@ -99,15 +99,8 @@ public class GetContentFromRequestHandler(
             }
         }
 
-        var cultureInfo = new CultureInfo(languageIsoCode);
-        CultureInfo.CurrentCulture = cultureInfo;
-        CultureInfo.CurrentUICulture = cultureInfo;
-        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-
-        // End set Culture
-
-
+        entryModel.LanguageIsoCode = languageIsoCode;
+        
         // Now we perform the more expensive query to fetch the content with includes
         var query = dbContext.Contents
             .AsNoTracking()
@@ -129,8 +122,7 @@ public class GetContentFromRequestHandler(
         entryModel.Content = fullContent;
 
         var allLanguageData = await mediator.Send(new GetCachedAllLanguageDictionariesCommand(), cancellationToken);
-
-        // TODO - Get from middleware
+        
         if (allLanguageData.TryGetValue(languageIsoCode, out var lng))
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract

@@ -34,38 +34,10 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
         return Redirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
     }
 
-    protected Content? CurrentPage
-    {
-        get
-        {
-            if (_content == null)
-            {
-                if (HttpContext.Items.TryGetValue("currentpage", out var model) && model is Content content)
-                {
-                    _content = content;
-                    //TempData["CurrentPage"] = _content;
-                }
-            }
-            return _content;
-        }
-    }
-    
-    protected Dictionary<string, string>? LanguageKeys
-    {
-        get
-        {
-            if (_languageKeys == null)
-            {
-                if (HttpContext.Items.TryGetValue("languagekeys", out var model) && model is Dictionary<string, string> langKeys)
-                {
-                    _languageKeys = langKeys;
-                    TempData["LanguageKeys"] = _languageKeys;
-                }
-            }
-            return _languageKeys;
-        }
-    }
-    
+    protected Content? CurrentPage => _content;
+
+    protected Dictionary<string, string>? LanguageKeys => _languageKeys;
+
     /// <summary>
     /// Locates the template for the given route.
     /// </summary>
@@ -93,12 +65,26 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
     /// </summary>
     public override void OnActionExecuting(ActionExecutingContext context)
     {
-        if (CurrentPage?.LanguageId != null)
+        if (HttpContext.Items.TryGetValue("currentpage", out var page) && page is Content content)
         {
-           var culture = new CultureInfo("es-Es");
-           CultureInfo.CurrentCulture = culture;
-           CultureInfo.CurrentUICulture = culture;
-           //Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(cultureCode)));
+            _content = content;
+            //TempData["CurrentPage"] = _content;
+        }
+        
+        if (HttpContext.Items.TryGetValue("languagekeys", out var model) && model is Dictionary<string, string> langKeys)
+        {
+            _languageKeys = langKeys;
+            TempData["LanguageKeys"] = _languageKeys;
+        }
+        
+        if (HttpContext.Items.TryGetValue("languageisocode", out var iso) && iso is string languageIsoCode)
+        {
+            var cultureInfo = new CultureInfo(languageIsoCode);
+            CultureInfo.CurrentCulture = cultureInfo;
+            CultureInfo.CurrentUICulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+            //Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(cultureCode)));
         }
         
         // Restore ModelState errors (if any)
