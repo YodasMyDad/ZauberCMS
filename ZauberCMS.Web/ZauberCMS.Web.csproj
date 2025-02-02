@@ -4,11 +4,12 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        
     </PropertyGroup>
     
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
-      <!--<PackageReference Include="ZauberCMS" Version="2.0.9" />-->
+      <!--<PackageReference Include="ZauberCMS" Version="3.0.0-beta2" />-->
     </ItemGroup>
     
     <ItemGroup>
