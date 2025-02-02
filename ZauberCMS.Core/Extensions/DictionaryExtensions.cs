@@ -54,13 +54,13 @@ namespace ZauberCMS.Core.Extensions;
         /// <param name="data">The dictionary from which to retrieve the value.</param>
         /// <param name="key">The key of the value to retrieve.</param>
         /// <returns>The value associated with the specified key, or an empty string if the key is not present.</returns>
-        public static string? Get(this Dictionary<string, string> data, string key)
+        public static string Get(this Dictionary<string, string> data, string key)
         {
             if (data.TryGetValue(key, out var value))
             {
                 return value;
             }
-            return string.Empty;
+            return key;
         }
         
         /// <summary>

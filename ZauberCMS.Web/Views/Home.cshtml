@@ -1,4 +1,5 @@
 ﻿@using ZauberCMS.Core.Extensions
+@inherits ZauberCMS.Core.Rendering.ZauberViewPage<ZauberCMS.Web.Home.Models.HomeViewModel>
 @model ZauberCMS.Web.Home.Models.HomeViewModel
 
 <header class="masthead" style="background-image: url('@(Model.HeaderImage?.Url)')">
@@ -25,21 +26,8 @@
                 @await Component.InvokeAsync("BlogPostPreview", new { post })
                 <hr class="my-4"/>
             }
-
-            <form asp-action="SubmitComment" method="post">
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required />
-
-                <label for="comment">Comment:</label>
-                <textarea id="comment" name="comment" required></textarea>
-
-                <button type="submit">Submit</button>
-            </form>
-
-            @if (ViewData["UserName"] != null)
-            {
-                <h3>Thank you, @ViewData["UserName"]!</h3>
-            }
+            <p>@LanguageKeys.Get("Testing")</p>
+            <p>@DateTime.Now.ToLongDateString()</p>
         </div>
     </div>
 </div>
