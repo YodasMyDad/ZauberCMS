@@ -7,11 +7,10 @@ public class ZauberSettings
     public string? ConnectionString { get; set; } = "DataSource=app.db;Cache=Shared";
     public string? RedisConnectionString { get; set; }
     public string? UploadFolderName { get; set; } = "media";
-
     public string AdminDefaultLanguage { get; set; } = "en-US";
-
     public bool EnablePathUrls { get; set; }
     public bool ShowDetailedErrors { get; set; }
+    public string? Default404Url { get; set; }
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new()
     {

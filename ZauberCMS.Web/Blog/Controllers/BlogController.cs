@@ -1,14 +1,17 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Settings;
 using ZauberCMS.Routing.Controllers;
 using ZauberCMS.Web.Blog.Models;
 
 namespace ZauberCMS.Web.Blog.Controllers;
 
-public class BlogController(ILogger<BlogController> logger, IMediator mediator) : ZauberRenderController(logger)
+public class BlogController(ILogger<BlogController> logger, IOptions<ZauberSettings> options, IMediator mediator) 
+    : ZauberRenderController(logger, options)
 {
     public async Task<IActionResult> Blog(int? p = null)
     {

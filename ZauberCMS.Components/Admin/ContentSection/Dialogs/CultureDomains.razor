@@ -11,6 +11,7 @@
             TextProperty="@nameof(Language.LanguageCultureName)"
             ValueProperty="@nameof(Language.Id)"
             Data="@Languages"
+            AllowClear="true"
             Style="width: 100%;"
             Name="LanguageList"
             @bind-Value="@Content.LanguageId"/>

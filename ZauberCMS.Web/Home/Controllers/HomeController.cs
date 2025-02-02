@@ -1,19 +1,16 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Settings;
 using ZauberCMS.Routing.Controllers;
 using ZauberCMS.Web.Home.Models;
 
 namespace ZauberCMS.Web.Home.Controllers;
 
-public class CommentModel
-{
-    public string Name { get; set; }
-    public string Comment { get; set; }
-}
-
-public class HomeController(ILogger<HomeController> logger, IMediator mediator) : ZauberRenderController(logger)
+public class HomeController(ILogger<HomeController> logger, IOptions<ZauberSettings> options, IMediator mediator) 
+    : ZauberRenderController(logger, options)
 {
     /// <summary>
     /// Route hijacked controller, 'Home' ContentType and 'Home' View 
@@ -41,11 +38,16 @@ public class HomeController(ILogger<HomeController> logger, IMediator mediator) 
         return CurrentView(homeViewModel);
     }
     
-    [HttpPost]
-    public IActionResult SubmitComment(string name, string comment)
+    public IActionResult Error(int? statusCode)
     {
-        ViewData["UserName"] = name;  // Or ViewBag.UserName = name;
-        return CurrentCmsPage();
+        if (statusCode.HasValue)
+        {
+            if (statusCode == 404)
+            {
+                return View("NotFound"); // Custom 404 page
+            }
+        }
+        return View("Error"); // Generic error page
     }
 
     public ActionResult Custom()

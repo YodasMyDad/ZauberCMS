@@ -3,11 +3,13 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Routing.Controllers;
 
-public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Controller
+public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOptions<ZauberSettings> options) : Controller
 {
     private const string TransferredModelStateKey = "TransferredModelState";
     private const string TransferredViewDataKey = "TransferredViewData";
@@ -23,11 +25,16 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
         {
             return CurrentView(CurrentPage);
         }
-        logger.LogInformation("No page found for route: {RoutePath}", ControllerContext.HttpContext.Request.Path);
+
+        if (options.Value.Default404Url != null)
+        {
+            return Redirect(options.Value.Default404Url); 
+        }
+        
         return NotFound();
     }
     
-    protected IActionResult CurrentCmsPage()
+    protected IActionResult CurrentZauberPage()
     {
         // Get the URL of the page that issued the POST.
         var returnUrl = Request.Headers.Referer.ToString();
