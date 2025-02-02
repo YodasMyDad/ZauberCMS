@@ -31,6 +31,7 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOpt
             return Redirect(options.Value.Default404Url); 
         }
         
+        logger.LogWarning("No default 404 page url configured in ZauberSettings. Using default.");
         return NotFound();
     }
     
@@ -159,7 +160,10 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOpt
             var viewDataDictionary = new Dictionary<string, object>();
             foreach (var kvp in ViewData)
             {
-                viewDataDictionary[kvp.Key] = kvp.Value;
+                if (kvp.Value != null)
+                {
+                    viewDataDictionary[kvp.Key] = kvp.Value;   
+                }
             }
             TempData[TransferredViewDataKey] = JsonSerializer.Serialize(viewDataDictionary);
         }
