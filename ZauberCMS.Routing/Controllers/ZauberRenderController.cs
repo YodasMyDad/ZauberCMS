@@ -92,6 +92,14 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
     /// </summary>
     public override void OnActionExecuting(ActionExecutingContext context)
     {
+        /*if (CurrentPage?.LanguageId != null)
+        {
+           var culture = new CultureInfo(cultureCode);
+           CultureInfo.CurrentCulture = culture;
+           CultureInfo.CurrentUICulture = culture;
+           //Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(cultureCode)));
+        }*/
+        
         // Restore ModelState errors (if any)
         if (TempData.TryGetValue(TransferredModelStateKey, out var modelState))
         {
