@@ -7,6 +7,12 @@ using ZauberCMS.Web.Home.Models;
 
 namespace ZauberCMS.Web.Home.Controllers;
 
+public class CommentModel
+{
+    public string Name { get; set; }
+    public string Comment { get; set; }
+}
+
 public class HomeController(ILogger<HomeController> logger, IMediator mediator) : ZauberRenderController(logger)
 {
     /// <summary>
@@ -33,6 +39,13 @@ public class HomeController(ILogger<HomeController> logger, IMediator mediator) 
         homeViewModel.BlogPosts = posts.Items.ToList();
         
         return CurrentView(homeViewModel);
+    }
+    
+    [HttpPost]
+    public IActionResult SubmitComment(string name, string comment)
+    {
+        ViewData["UserName"] = name;  // Or ViewBag.UserName = name;
+        return CurrentCmsPage();
     }
 
     public ActionResult Custom()

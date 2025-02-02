@@ -6,8 +6,6 @@ using ZauberCMS.Core.Content.Models;
 
 namespace ZauberCMS.Routing.Controllers;
 
-//TODO - USe string returnUrl = Request.Headers["Referer"].ToString(); to get the previous url to redirect back to
-
 public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Controller
 {
     private const string TransferredModelStateKey = "TransferredModelState";
@@ -26,6 +24,13 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
         }
         logger.LogInformation("No page found for route: {RoutePath}", ControllerContext.HttpContext.Request.Path);
         return NotFound();
+    }
+    
+    protected IActionResult CurrentCmsPage()
+    {
+        // Get the URL of the page that issued the POST.
+        var returnUrl = Request.Headers.Referer.ToString();
+        return Redirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
     }
 
     protected Content? CurrentPage
@@ -88,9 +93,9 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         // Restore ModelState errors (if any)
-        if (TempData.ContainsKey(TransferredModelStateKey))
+        if (TempData.TryGetValue(TransferredModelStateKey, out var modelState))
         {
-            var serializedModelState = TempData[TransferredModelStateKey] as string;
+            var serializedModelState = modelState as string;
             if (!string.IsNullOrEmpty(serializedModelState))
             {
                 var errors = JsonSerializer.Deserialize<Dictionary<string, string[]>>(serializedModelState);
@@ -109,9 +114,9 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
         }
         
         // Restore entire ViewData
-        if (TempData.ContainsKey(TransferredViewDataKey))
+        if (TempData.TryGetValue(TransferredViewDataKey, out var viewData))
         {
-            var serializedViewData = TempData[TransferredViewDataKey] as string;
+            var serializedViewData = viewData as string;
             if (!string.IsNullOrEmpty(serializedViewData))
             {
                 var viewDataDictionary = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedViewData);
@@ -135,16 +140,16 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger) : Co
     public override void OnActionExecuted(ActionExecutedContext context)
     {
         // Only if the result is a redirect do we transfer the data.
-        if (context.Result is RedirectResult || context.Result is RedirectToActionResult)
+        if (context.Result is RedirectResult or RedirectToActionResult)
         {
             // Transfer ModelState errors if ModelState is invalid.
             if (!ModelState.IsValid)
             {
                 var errorDictionary = ModelState
-                    .Where(kvp => kvp.Value.Errors.Any())
+                    .Where(kvp => kvp.Value != null && kvp.Value.Errors.Any())
                     .ToDictionary(
                         kvp => kvp.Key,
-                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray());
+                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray());
                 TempData[TransferredModelStateKey] = JsonSerializer.Serialize(errorDictionary);
             }
 
