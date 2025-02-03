@@ -1,45 +1,88 @@
 ﻿using System.Globalization;
 using System.Text.Json;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Routing.Controllers;
 
-public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOptions<ZauberSettings> options) : Controller
+public class ZauberRenderController(
+    ILogger<ZauberRenderController> logger,
+    IOptions<ZauberSettings> options,
+    IMediator mediator) : Controller
 {
     private const string TransferredModelStateKey = "TransferredModelState";
     private const string TransferredViewDataKey = "TransferredViewData";
-    
+
     // ReSharper disable once InconsistentNaming
     private Content? _content { get; set; }
+
     // ReSharper disable once InconsistentNaming
     private Dictionary<string, string>? _languageKeys { get; set; }
 
-    public virtual IActionResult Index()
+    public virtual async Task<IActionResult> Index()
     {
         if (CurrentPage != null)
         {
-            return CurrentView(CurrentPage);
+            return CurrentPage.ViewComponent.IsNullOrEmpty() ? MissingView() : CurrentView(CurrentPage);
         }
 
-        if (options.Value.Default404Url != null)
+        var anyContent = await mediator.Send(new AnyContentCommand());
+        if (!anyContent)
         {
-            return Redirect(options.Value.Default404Url); 
+            // No content in the site, so show the starter view
+            return NewSite();
         }
         
         logger.LogWarning("No default 404 page url configured in ZauberSettings. Using default.");
-        return NotFound();
+        return NotFound404();
     }
-    
+
+    public IActionResult NewSite()
+    {
+        return View();
+    }
+
+    public IActionResult MissingView()
+    {
+        return View(CurrentPage);
+    }
+
+    public IActionResult NotFound404()
+    {
+        Response.StatusCode = 404; // Set the status code 
+        if (!options.Value.Default404Url.IsNullOrEmpty())
+        {
+            return Redirect(options.Value.Default404Url!);
+        }
+        return View();
+    }
+
     protected IActionResult CurrentZauberPage()
     {
         // Get the URL of the page that issued the POST.
         var returnUrl = Request.Headers.Referer.ToString();
-        return Redirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
+        var queryString = Request.QueryString.HasValue ? $"?{Request.QueryString}" : string.Empty;
+        return Redirect(string.IsNullOrEmpty(returnUrl) ? "/" : $"{returnUrl}{queryString}");
+    }
+
+    protected async Task<IActionResult> RedirectToZauberPage(Guid id)
+    {
+        // Get the URL of the page that issued the POST.
+        var content = await mediator.Send(new GetContentCommand { Id = id });
+        if (content != null)
+        {
+            var queryString = Request.QueryString.HasValue ? $"?{Request.QueryString}" : string.Empty;
+            return Redirect($"/{content.Url}{queryString}");
+        }
+
+        return NotFound404();
     }
 
     protected Content? CurrentPage => _content;
@@ -59,10 +102,10 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOpt
         {
             viewName = ControllerContext.HttpContext.Items["viewpath"]?.ToString();
         }
-        
+
         return View(viewName, model);
     }
-    
+
     public IActionResult CurrentView()
     {
         return CurrentView(CurrentPage);
@@ -78,13 +121,14 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOpt
             _content = content;
             //TempData["CurrentPage"] = _content;
         }
-        
-        if (HttpContext.Items.TryGetValue("languagekeys", out var model) && model is Dictionary<string, string> langKeys)
+
+        if (HttpContext.Items.TryGetValue("languagekeys", out var model) &&
+            model is Dictionary<string, string> langKeys)
         {
             _languageKeys = langKeys;
             TempData["LanguageKeys"] = _languageKeys;
         }
-        
+
         if (HttpContext.Items.TryGetValue("languageisocode", out var iso) && iso is string languageIsoCode)
         {
             var cultureInfo = new CultureInfo(languageIsoCode);
@@ -94,7 +138,7 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOpt
             CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
             //Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(cultureCode)));
         }
-        
+
         // Restore ModelState errors (if any)
         if (TempData.TryGetValue(TransferredModelStateKey, out var modelState))
         {
@@ -113,9 +157,10 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOpt
                     }
                 }
             }
+
             TempData.Remove(TransferredModelStateKey);
         }
-        
+
         // Restore entire ViewData
         if (TempData.TryGetValue(TransferredViewDataKey, out var viewData))
         {
@@ -131,9 +176,10 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOpt
                     }
                 }
             }
+
             TempData.Remove(TransferredViewDataKey);
         }
-        
+
         base.OnActionExecuting(context);
     }
 
@@ -162,12 +208,13 @@ public class ZauberRenderController(ILogger<ZauberRenderController> logger, IOpt
             {
                 if (kvp.Value != null)
                 {
-                    viewDataDictionary[kvp.Key] = kvp.Value;   
+                    viewDataDictionary[kvp.Key] = kvp.Value;
                 }
             }
+
             TempData[TransferredViewDataKey] = JsonSerializer.Serialize(viewDataDictionary);
         }
-        
+
         base.OnActionExecuted(context);
     }
 }

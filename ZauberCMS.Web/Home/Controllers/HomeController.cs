@@ -10,8 +10,10 @@ using ZauberCMS.Web.Home.Models;
 namespace ZauberCMS.Web.Home.Controllers;
 
 public class HomeController(ILogger<HomeController> logger, IOptions<ZauberSettings> options, IMediator mediator) 
-    : ZauberRenderController(logger, options)
+    : ZauberRenderController(logger, options, mediator)
 {
+    private readonly IMediator _mediator = mediator;
+
     /// <summary>
     /// Route hijacked controller, 'Home' ContentType and 'Home' View 
     /// </summary>
@@ -21,11 +23,11 @@ public class HomeController(ILogger<HomeController> logger, IOptions<ZauberSetti
         var homeViewModel = new HomeViewModel(CurrentPage!)
         {
             // Get the header image
-            HeaderImage = await CurrentPage!.GetMedia("HeaderImage", mediator, "/assets/img/home-bg.jpg")
+            HeaderImage = await CurrentPage!.GetMedia("HeaderImage", _mediator, "/assets/img/home-bg.jpg")
         };
 
         // Get the blog posts
-        var posts = await mediator.Send(new QueryContentCommand
+        var posts = await _mediator.Send(new QueryContentCommand
         {
             AmountPerPage = 4,
             ContentTypeAlias = "BlogPage",

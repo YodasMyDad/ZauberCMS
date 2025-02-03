@@ -11,13 +11,15 @@ using ZauberCMS.Web.Blog.Models;
 namespace ZauberCMS.Web.Blog.Controllers;
 
 public class BlogController(ILogger<BlogController> logger, IOptions<ZauberSettings> options, IMediator mediator) 
-    : ZauberRenderController(logger, options)
+    : ZauberRenderController(logger, options, mediator)
 {
+    private readonly IMediator _mediator = mediator;
+
     public async Task<IActionResult> Blog(int? p = null)
     {
         var viewModel = new BlogViewModel(CurrentPage!);
         
-        viewModel.HeaderImage = await viewModel.GetMedia("HeaderImage", mediator, "/assets/img/about-bg.jpg");
+        viewModel.HeaderImage = await viewModel.GetMedia("HeaderImage", _mediator, "/assets/img/about-bg.jpg");
         
         p ??= 0;
         var amountPerPage = viewModel.GetValue<int>("AmountPerPage");
@@ -28,7 +30,7 @@ public class BlogController(ILogger<BlogController> logger, IOptions<ZauberSetti
             WhereClause = content => content.ParentId == viewModel.Id,
             PageIndex = p.Value
         };
-        viewModel.BlogPosts = await mediator.Send(queryContentCommand);
+        viewModel.BlogPosts = await _mediator.Send(queryContentCommand);
         
         return CurrentView(viewModel);
     }

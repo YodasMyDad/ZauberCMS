@@ -1,0 +1,42 @@
+﻿@{
+    Layout = "_ZauberLayout";
+}
+@model ZauberCMS.Core.Content.Models.Content?
+@section Head {
+    <title>Missing View</title>
+    <style>
+        .full-page {
+            font-size: 1.1rem !important;
+            background-image: url('_content/ZauberCMS.Components/img/hat.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.5); /* For slight transparency */
+        }
+
+        .centered-div {
+            background-color: rgba(255, 255, 255, 0.9); /* White background with slight transparency */
+            max-width: 600px;
+            padding: 25px 25px;
+            margin: 0 10px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+}
+
+<div class="full-page">
+    <div class="centered-div text-center">
+        <component type="@(typeof(ZauberCMS.Components.Shared.ZauberLogo))"
+                   param-Styles="@("height: 100px; margin-bottom: 20px")"
+                   render-mode="Static"/>
+        <h3>Missing View</h3>
+        <p>It looks like you haven't selected a Component View for the @Model?.Name page, or the Component View has been deleted.</p>
+    </div>
+</div>
