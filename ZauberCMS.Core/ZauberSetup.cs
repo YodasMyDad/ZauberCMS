@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -291,7 +292,8 @@ public static class ZauberSetup
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=ZauberRender}/{action=Index}/{id?}")
-            .WithStaticAssets(); // Ensures static files load before hitting controllers
+            .WithStaticAssets() // Ensures static files load before hitting controllers
+            .WithMetadata(new RouteOptions { LowercaseUrls = true }); // Lowercase URLs for better SEO
         
         app.MapFallbackToController("Index", "ZauberRender");
     }

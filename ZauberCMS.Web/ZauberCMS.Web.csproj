@@ -9,7 +9,7 @@
     
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
-      <!--<PackageReference Include="ZauberCMS" Version="3.0.0-beta2" />-->
+      <!--<PackageReference Include="ZauberCMS" Version="3.0.0-beta4" />-->
     </ItemGroup>
     
     <ItemGroup>

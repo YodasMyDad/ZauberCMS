@@ -17,7 +17,7 @@ public class DefaultContentFinder(IMediator mediator)
         var url = httpContext.Request.GetDisplayUrl();
         var entryModel = await mediator.Send(new GetContentFromRequestCommand
         {
-            Slug = slug, 
+            Slug = slug?.ToLower(), 
             IsRootContent = slug.IsNullOrWhiteSpace(), 
             Url = url
         });

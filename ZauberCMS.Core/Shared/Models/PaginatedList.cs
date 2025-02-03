@@ -16,6 +16,7 @@ public class PaginatedList<T>
     public bool HasNextPage => PageIndex < TotalPages;
     public PaginatedList(IQueryable<T> items, int pageIndex, int pageSize)
     {
+        PageIndex = pageIndex;
         var count = items.Count();
         TotalPages = (int) Math.Ceiling(count / (double) pageSize);
         var skip = (pageIndex-1) * pageSize;
