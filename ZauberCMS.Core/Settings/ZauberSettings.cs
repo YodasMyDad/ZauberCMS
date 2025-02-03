@@ -11,6 +11,7 @@ public class ZauberSettings
     public bool EnablePathUrls { get; set; }
     public bool ShowDetailedErrors { get; set; }
     public string? Default404Url { get; set; }
+    public List<string> DllExclusions { get; set; } = new();
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new()
     {

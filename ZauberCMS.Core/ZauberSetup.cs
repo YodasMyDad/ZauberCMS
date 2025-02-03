@@ -155,7 +155,7 @@ public static class ZauberSetup
         var extensionManager = serviceProvider.GetRequiredService<ExtensionManager>();
 
         // Plugins
-        var assemblyProvider = new DefaultAssemblyProvider(serviceProvider);
+        var assemblyProvider = new DefaultAssemblyProvider(serviceProvider, zauberSettings);
         var assemblies = assemblyProvider.GetAssemblies();
         Assembly[] discoverAssemblies = (assemblies as Assembly[] ?? assemblies.ToArray())!;
         AssemblyManager.SetAssemblies(discoverAssemblies);

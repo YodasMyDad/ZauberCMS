@@ -3,6 +3,8 @@ using System.Runtime.Loader;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Plugins;
 
@@ -21,19 +23,43 @@ public class DefaultAssemblyProvider
   /// before thay have been added to the resulting assemblies set.
   /// </summary>
   public Func<Library, bool> IsCandidateCompilationLibrary { get; set; }
+  
+  private List<string> _exclusionList =
+  [
+    "System", "StackExchange", "SqlLite", "SizLabors", "Serilog", "Radzen", "Pipelines", "Nuget", "Newtonsoft",
+    "Microsoft", "Mono", "MimeKit", "Mediatr", "MailKit", "Humanizer", "GaelJ", "FluentValidation", "dotnet",
+    "BouncyCastle", "Blazored", "Azure", "AutoMapper", "TinyMCE", "mscorlib", "netstandard", "nlog", "dapper", "Castle.core", 
+    "mongodb", "grpc", "ironpython", "roslyn"
+  ];
 
   /// <summary>
   /// Initializes a new instance of the <see cref="DefaultAssemblyProvider">AssemblyProvider</see> class.
   /// </summary>
   /// <param name="serviceProvider">The service provider that is used to create a logger.</param>
-  public DefaultAssemblyProvider(IServiceProvider serviceProvider)
+  /// <param name="settings"></param>
+  public DefaultAssemblyProvider(IServiceProvider serviceProvider, ZauberSettings settings)
   {
+    if (settings.DllExclusions.Count != 0)
+    {
+      _exclusionList.AddRange(settings.DllExclusions);
+      _exclusionList = _exclusionList.Distinct().ToList();
+    }
+    
     this.logger = serviceProvider.GetService<ILoggerFactory>()!.CreateLogger("ZauberCMS.Core");
+    
+    // Check against the exclusion list instead of hardcoding "ZauberCMS"
     this.IsCandidateAssembly = assembly =>
-      assembly.FullName!.StartsWith("ZauberCMS", StringComparison.OrdinalIgnoreCase);
+    {
+      var assemblyName = assembly.FullName!;
+      return !_exclusionList.Any(exclusion => assemblyName.StartsWith(exclusion, StringComparison.OrdinalIgnoreCase));
+    };
 
-        this.IsCandidateCompilationLibrary = library =>
-      library.Name.StartsWith("ZauberCMS", StringComparison.OrdinalIgnoreCase);
+    this.IsCandidateCompilationLibrary = library =>
+    {
+      var libraryName = library.Name;
+      return !_exclusionList.Any(exclusion => libraryName.StartsWith(exclusion, StringComparison.OrdinalIgnoreCase));
+    };
+
   }
 
   /// <summary>
