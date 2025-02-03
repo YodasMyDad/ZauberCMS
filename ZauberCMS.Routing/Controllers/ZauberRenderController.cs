@@ -46,12 +46,12 @@ public class ZauberRenderController(
 
     public IActionResult NewSite()
     {
-        return View();
+        return View("NewSite");
     }
 
     public IActionResult MissingView()
     {
-        return View(CurrentPage);
+        return View("MissingView", CurrentPage);
     }
 
     public IActionResult NotFound404()
@@ -61,7 +61,7 @@ public class ZauberRenderController(
         {
             return Redirect(options.Value.Default404Url!);
         }
-        return View();
+        return View("NotFound404");
     }
 
     protected IActionResult CurrentZauberPage()
