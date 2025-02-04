@@ -3,13 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Plugins;
+using ZauberCMS.Core.Rendering;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Routing.Controllers;
 using ZauberCMS.Web.Home.Models;
 
 namespace ZauberCMS.Web.Home.Controllers;
 
-public class HomeController(ILogger<HomeController> logger, IOptions<ZauberSettings> options, IMediator mediator) 
+public class HomeController(ILogger<HomeController> logger, IOptions<ZauberSettings> options, IMediator mediator, ExtensionManager extensionManager) 
     : ZauberRenderController(logger, options, mediator)
 {
     private readonly IMediator _mediator = mediator;

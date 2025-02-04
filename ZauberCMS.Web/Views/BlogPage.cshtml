@@ -1,6 +1,6 @@
 ﻿@using Humanizer
 @using ZauberCMS.Core.Extensions
-@model ZauberCMS.Web.Blog.Models.BlogPageViewModel
+@inherits ZauberCMS.Core.Rendering.ZauberViewPage<ZauberCMS.Web.Blog.Models.BlogPageViewModel>
 
 <header class="masthead" style="background-image: url('@(Model.HeaderImage?.Url)')">
     <div class="container position-relative px-4 px-lg-5">

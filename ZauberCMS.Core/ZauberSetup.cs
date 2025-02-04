@@ -175,7 +175,12 @@ public static class ZauberSetup
                 .AddInteractiveServerComponents();
         }
 
-        var mvcBuilder = builder.Services.AddControllersWithViews();
+        var mvcBuilder = builder.Services.AddControllersWithViews()
+            .AddRazorOptions(options =>
+            {
+                // This adds an additional search path that looks for views in the root Views folder.
+                options.ViewLocationFormats.Add("/Views/{0}.cshtml");
+            });
         
         foreach (var assembly in ExtensionManager.GetFilteredAssemblies(null).ToArray()!)
         {

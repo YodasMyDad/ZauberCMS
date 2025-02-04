@@ -27,12 +27,12 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         return GetImplementations<T>(predicate, useCaching).FirstOrDefault();
     }
 
-    public IEnumerable<Type> GetImplementations<T>(bool useCaching = false)
+    public IEnumerable<Type> GetImplementations<T>(bool useCaching = false, bool onlyExportedTypes = true)
     {
-        return GetImplementations<T>(null, useCaching);
+        return GetImplementations<T>(null, useCaching, onlyExportedTypes);
     }
 
-    public IEnumerable<Type> GetImplementations<T>(Func<Assembly?, bool>? predicate, bool useCaching = false)
+    public IEnumerable<Type> GetImplementations<T>(Func<Assembly?, bool>? predicate, bool useCaching = false, bool onlyExportedTypes = true)
     {
         var targetType = typeof(T);
 
@@ -43,9 +43,11 @@ public class ExtensionManager(IServiceProvider serviceProvider)
 
         foreach (var assembly in GetAssemblies(predicate))
         {
-            foreach (var exportedType in assembly?.GetExportedTypes() ?? [])
+            var typesToCheck = (onlyExportedTypes ? assembly?.GetExportedTypes() : assembly?.GetTypes()) ?? [];
+            
+            foreach (var exportedType in typesToCheck)
             {
-                if (targetType.IsAssignableFrom(exportedType) && exportedType.IsClass && !exportedType.IsAbstract)
+                if (targetType.IsAssignableFrom(exportedType) && exportedType is { IsClass: true, IsAbstract: false })
                 {
                     implementations.Add(exportedType);
                 }

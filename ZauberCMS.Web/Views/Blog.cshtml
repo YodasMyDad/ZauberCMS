@@ -1,5 +1,5 @@
 ﻿@using ZauberCMS.Core.Extensions
-@model ZauberCMS.Web.Blog.Models.BlogViewModel
+@inherits ZauberCMS.Core.Rendering.ZauberViewPage<ZauberCMS.Web.Blog.Models.BlogViewModel>
 
 <header class="masthead" style="background-image: url('@(Model.HeaderImage?.Url)')">
     <div class="container position-relative px-4 px-lg-5">

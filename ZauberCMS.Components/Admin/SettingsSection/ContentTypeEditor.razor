@@ -7,6 +7,7 @@
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Rendering
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Shared.Models
@@ -249,14 +250,14 @@
     
     private void LoadViewFiles()
     {
-        var viewsPath = Path.Combine(Env.ContentRootPath, "Views");
-
-        if (Directory.Exists(viewsPath))
+        var viewTypes = ExtensionManager.GetImplementations<IZauberViewPage>(true, false);
+        foreach (var viewType in viewTypes)
         {
-            ViewFiles = Directory.GetFiles(viewsPath, "*.cshtml")
-                .Where(f => !string.IsNullOrWhiteSpace(f) && !Path.GetFileName(f).StartsWith("_")) // Exclude partial views and anything null
-                .Select(f => "/" + Path.GetRelativePath(Env.ContentRootPath, f).Replace("\\", "/")) // Convert to relative path with leading "/"
-                .ToList();
+            var viewDetails = viewType.GetViewDetails();
+            if (!ViewFiles.Contains(viewDetails.Name))
+            {
+                ViewFiles.Add(viewDetails.Name);   
+            }
         }
     }
     
