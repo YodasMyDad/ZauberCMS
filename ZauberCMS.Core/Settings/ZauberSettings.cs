@@ -11,7 +11,7 @@ public class ZauberSettings
     public bool EnablePathUrls { get; set; }
     public bool ShowDetailedErrors { get; set; }
     public string? Default404Url { get; set; }
-    public List<string> DllExclusions { get; set; } = new();
+    public List<string> DllExclusions { get; set; } = [];
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new()
     {
@@ -20,10 +20,6 @@ public class ZauberSettings
     };
 
     public Identity Identity { get; set; } = new();
-    public string? NotFoundComponent { get; set; } = "ZauberCMS.Components.Pages.NotFound404";
-    public string? StarterComponent { get; set; } = "ZauberCMS.Components.Pages.NewSite";
-    public string? MissingView { get; set; } = "ZauberCMS.Components.Pages.MissingView";
-
 }
 
 public class Identity

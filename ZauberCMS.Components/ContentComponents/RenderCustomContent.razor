@@ -13,7 +13,7 @@
 }
 
 @code {
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
 
     [Parameter] public List<string>? CustomComponents { get; set; }
     [Parameter] public Content? Content { get; set; }

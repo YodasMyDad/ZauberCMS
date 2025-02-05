@@ -14,9 +14,11 @@ namespace ZauberCMS.Core.Plugins;
 
 public class ExtensionManager(IServiceProvider serviceProvider)
 {
-    private static readonly ConcurrentDictionary<Type, List<Type>> TypeCache = new();
+    // Cache the implementations for a given type as a Dictionary keyed by the type's full name.
+    private static readonly ConcurrentDictionary<Type, Dictionary<string, Type>> TypeCache = new();
     private static readonly ConcurrentDictionary<string, Type?> NameCache = new();
 
+    // Returns the first implementation for type T (if any).
     public Type? GetImplementation<T>(bool useCaching = false)
     {
         return GetImplementation<T>(null, useCaching);
@@ -24,32 +26,39 @@ public class ExtensionManager(IServiceProvider serviceProvider)
 
     public Type? GetImplementation<T>(Func<Assembly?, bool>? predicate, bool useCaching = false)
     {
-        return GetImplementations<T>(predicate, useCaching).FirstOrDefault();
+        // Since GetImplementations now returns a dictionary, we take the first value.
+        return GetImplementations<T>(predicate, useCaching).Values.FirstOrDefault();
     }
 
-    public IEnumerable<Type> GetImplementations<T>(bool useCaching = false, bool onlyExportedTypes = true)
+    // Returns a dictionary of implementations for type T keyed by full type name.
+    public Dictionary<string, Type> GetImplementations<T>(bool useCaching = false, bool onlyExportedTypes = true)
     {
         return GetImplementations<T>(null, useCaching, onlyExportedTypes);
     }
 
-    public IEnumerable<Type> GetImplementations<T>(Func<Assembly?, bool>? predicate, bool useCaching = false, bool onlyExportedTypes = true)
+    public Dictionary<string, Type> GetImplementations<T>(Func<Assembly?, bool>? predicate, bool useCaching = false, bool onlyExportedTypes = true)
     {
         var targetType = typeof(T);
 
         if (useCaching && TypeCache.TryGetValue(targetType, out var cachedTypes))
             return cachedTypes;
 
-        var implementations = new List<Type>();
+        var implementations = new Dictionary<string, Type>();
 
         foreach (var assembly in GetAssemblies(predicate))
         {
-            var typesToCheck = (onlyExportedTypes ? assembly?.GetExportedTypes() : assembly?.GetTypes()) ?? [];
-            
-            foreach (var exportedType in typesToCheck)
+            // Choose between exported types or all types.
+            var typesToCheck = onlyExportedTypes ? assembly?.GetExportedTypes() : assembly?.GetTypes();
+            foreach (var exportedType in typesToCheck ?? Array.Empty<Type>())
             {
-                if (targetType.IsAssignableFrom(exportedType) && exportedType is { IsClass: true, IsAbstract: false })
+                // If T is assignable from the type, and the type is a non-abstract class...
+                if (targetType.IsAssignableFrom(exportedType) && exportedType.IsClass && !exportedType.IsAbstract)
                 {
-                    implementations.Add(exportedType);
+                    var key = exportedType.FullName ?? exportedType.Name;
+                    if (!implementations.ContainsKey(key))
+                    {
+                        implementations[key] = exportedType;
+                    }
                 }
             }
         }
@@ -75,7 +84,8 @@ public class ExtensionManager(IServiceProvider serviceProvider)
             foreach (var assembly in GetAssemblies(predicate))
             {
                 type = assembly?.GetType(fullyQualifiedName);
-                if (type != null) break;
+                if (type != null)
+                    break;
             }
         }
 
@@ -95,16 +105,15 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         if (componentType != null)
         {
             builder.OpenComponent(0, componentType);
-
             foreach (var parameter in parameters)
             {
                 builder.AddAttribute(0, parameter.Key, parameter.Value);
             }
-
             builder.CloseComponent();
         }
     };
 
+    // Methods to get instances of a given type.
     public T? GetInstance<T>(bool useCaching = false)
     {
         return GetInstance<T>(null, useCaching, Array.Empty<object>());
@@ -117,14 +126,16 @@ public class ExtensionManager(IServiceProvider serviceProvider)
 
     public T? GetInstance<T>(Func<Assembly?, bool>? predicate, bool useCaching = false)
     {
-        return GetInstances<T>(predicate, useCaching).FirstOrDefault().Value;
+        // Since GetInstances returns a dictionary, use its Values.
+        return GetInstances<T>(predicate, useCaching).Values.FirstOrDefault();
     }
 
     public T? GetInstance<T>(Func<Assembly?, bool>? predicate, bool useCaching = false, params object[] args)
     {
-        return GetInstances<T>(predicate, useCaching, args).FirstOrDefault().Value;
+        return GetInstances<T>(predicate, useCaching, args).Values.FirstOrDefault();
     }
 
+    // Returns a dictionary of instances of type T (keyed by the type's full name).
     public Dictionary<string, T> GetInstances<T>(bool useCaching = false)
     {
         return GetInstances<T>(null, useCaching, Array.Empty<object>());
@@ -139,21 +150,23 @@ public class ExtensionManager(IServiceProvider serviceProvider)
     {
         var instances = new Dictionary<string, T>();
 
-        foreach (var implementation in GetImplementations<T>(predicate, useCaching))
+        // Iterate over the dictionary returned by GetImplementations.
+        foreach (var kvp in GetImplementations<T>(predicate, useCaching))
         {
+            var implementation = kvp.Value;
             if (!implementation.IsAbstract)
             {
                 var instance = args.Any()
                     ? (T)Activator.CreateInstance(implementation, args)!
                     : (T)ActivatorUtilities.CreateInstance(serviceProvider, implementation);
-
-                instances[implementation.FullName ?? implementation.Name] = instance;
+                instances[kvp.Key] = instance;
             }
         }
 
         return instances;
     }
 
+    // Returns assemblies to check based on an optional predicate.
     public static IEnumerable<Assembly?> GetAssemblies(Func<Assembly?, bool>? predicate)
     {
         return predicate == null
@@ -163,49 +176,21 @@ public class ExtensionManager(IServiceProvider serviceProvider)
 
     public static Assembly?[] GetFilteredAssemblies(Func<Assembly?, bool>? predicate)
     {
-        // Apply the predicate to filter assemblies, or use all assemblies if predicate is null
+        // Filter assemblies (excluding "ZauberCMS").
         var assemblies = GetAssemblies(predicate).Where(a => a?.GetName().Name != "ZauberCMS").ToArray();
 
-        // Find the assembly with the name "ZauberCMS.Routing"
+        // Find the assembly named "ZauberCMS.Routing".
         var routingAssembly = assemblies.FirstOrDefault(a => a?.GetName().Name == "ZauberCMS.Routing");
 
-        // Exclude the "ZauberCMS.Routing" from the filtered list
+        // Exclude "ZauberCMS.Routing" from the filtered list.
         assemblies = assemblies.Where(a => a != routingAssembly).ToArray();
 
-        // Add the "ZauberCMS.Routing" to the end of the list if it exists
+        // Append "ZauberCMS.Routing" at the end if it exists.
         if (routingAssembly != null)
         {
             assemblies = assemblies.Append(routingAssembly).ToArray();
         }
 
         return assemblies.Where(x => x != null).ToArray();
-    }
-
-    public void ApplyMigrations(ZauberDbContext dbContext)
-    {
-        var settings = serviceProvider.GetRequiredService<IOptions<ZauberSettings>>();
-        var migrationTypes = settings.Value.DatabaseProvider switch
-        {
-            "Sqlite" => GetImplementations<ISqLiteMigration>(),
-            "SqlServer" => GetImplementations<IMsSqlMigration>(),
-            _ => Array.Empty<Type>()
-        };
-
-        var migrator = dbContext.Database.GetService<IMigrator>();
-        var appliedMigrations = dbContext.Database.GetAppliedMigrations().ToHashSet();
-
-        var migrations = migrationTypes
-            .Where(type => typeof(Migration).IsAssignableFrom(type))
-            .Select(type => ActivatorUtilities.CreateInstance(serviceProvider, type) as Migration)
-            .Where(migration => migration != null)
-            .ToList();
-
-        foreach (var migration in migrations)
-        {
-            if (migration != null && !appliedMigrations.Contains(migration.GetType().Name))
-            {
-                migrator.Migrate(migration.GetType().Name);
-            }
-        }
     }
 }

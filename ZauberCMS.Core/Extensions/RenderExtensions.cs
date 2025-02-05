@@ -14,7 +14,7 @@ public static class RenderExtensions
         var viewTypes = manager.GetImplementations<IZauberViewPage>(true, false);
         foreach (var viewType in viewTypes)
         {
-            var viewDetails = viewType.GetViewDetails();
+            var viewDetails = viewType.Value.GetViewDetails();
             if (removeShared)
             {
                 if (viewDetails.Path.StartsWith("/Views/Shared/", StringComparison.CurrentCultureIgnoreCase))

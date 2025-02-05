@@ -27,10 +27,10 @@
 
     protected override void OnParametersSet()
     {
-        var allLayouts = ExtensionManager.GetInstances<IAccountLayout>();
+        var allLayouts = ExtensionManager.GetImplementations<IAccountLayout>(true);
         if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
         {
-            LayoutType = accountLayout.GetType();
+            LayoutType = accountLayout;
         }
     }
 

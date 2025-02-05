@@ -52,7 +52,7 @@
                                                         <PropertyInfo Name="@property.Name" Alias="@property.Alias" Description="@property.Description"/>
                                                     </LeftColumn>
                                                     <CentreColumn>
-                                                        <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
+                                                        <DynamicContentProperty ComponentType="@contentPropertyComponent"
                                                                                 Settings="@property.Settings"
                                                                                 Content="@Content"
                                                                                 Value="@contentValue.Value"
@@ -177,9 +177,9 @@ else
     [Parameter] public bool? IsBlockList { get; set; }
     [Parameter] public Content? Content { get; set; }
 
-    private EditForm ContentForm { get; set; } = default!;
+    private EditForm ContentForm { get; set; } = null!;
     private ContentType? ContentType { get; set; }
-    private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
+    private Dictionary<string, Type> AllContentTypeProperties { get; set; } = new();
     private Dictionary<Guid, ContentPropertyValue> AllContentValues { get; set; } = new();
     //private Dictionary<string, string> AvailableContentViews { get; set; } = new();
     private int SelectedTabIndex { get; set; }
@@ -190,7 +190,7 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        AllContentTypeProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+        AllContentTypeProperties = ExtensionManager.GetImplementations<IContentProperty>(true);
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (Content == null)
         {

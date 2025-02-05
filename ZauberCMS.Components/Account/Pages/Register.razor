@@ -53,15 +53,15 @@
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
-    private Type LayoutType { get; set; } = default!;
+    private Type LayoutType { get; set; } = null!;
     private AuthenticationState? AuthState { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
-        var allLayouts = ExtensionManager.GetInstances<IAccountLayout>();
+        var allLayouts = ExtensionManager.GetImplementations<IAccountLayout>(true);
         if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
         {
-            LayoutType = accountLayout.GetType();
+            LayoutType = accountLayout;
         }
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (AuthState?.User.Identity?.IsAuthenticated == true)
