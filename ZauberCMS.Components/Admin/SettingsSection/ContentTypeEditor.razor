@@ -250,15 +250,7 @@
     
     private void LoadViewFiles()
     {
-        var viewTypes = ExtensionManager.GetImplementations<IZauberViewPage>(true, false);
-        foreach (var viewType in viewTypes)
-        {
-            var viewDetails = viewType.GetViewDetails();
-            if (!ViewFiles.Contains(viewDetails.Name))
-            {
-                ViewFiles.Add(viewDetails.Name);   
-            }
-        }
+        ViewFiles = ExtensionManager.GetAllowedViews(ContentType.Alias);
     }
     
     private async Task SelectIcon()

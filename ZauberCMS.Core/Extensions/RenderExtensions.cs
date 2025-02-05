@@ -1,10 +1,50 @@
 ﻿using System.Reflection;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Razor.Hosting;
+using ZauberCMS.Core.Plugins;
+using ZauberCMS.Core.Rendering;
 
 namespace ZauberCMS.Core.Extensions;
 
 public static class RenderExtensions
 {
+    public static List<string> GetAllowedViews(this ExtensionManager manager, string? contentType = null, bool removeShared = true)
+    {
+        var viewFiles = new List<string>();
+        var viewTypes = manager.GetImplementations<IZauberViewPage>(true, false);
+        foreach (var viewType in viewTypes)
+        {
+            var viewDetails = viewType.GetViewDetails();
+            if (removeShared)
+            {
+                if (viewDetails.Path.StartsWith("/Views/Shared/", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    continue;
+                }
+            }
+
+            if (!contentType.IsNullOrWhiteSpace())
+            {
+                // Ensure the view is either in the root "/Views/" or a subfolder matching "/Views/{contentType}/"
+                var normalizedContentTypePath = $"/Views/{contentType}/";
+                var isInRoot = viewDetails.Path.Equals($"/Views/{viewDetails.Name}.cshtml", StringComparison.CurrentCultureIgnoreCase);
+                var isInContentTypeFolder = viewDetails.Path.StartsWith(normalizedContentTypePath, StringComparison.CurrentCultureIgnoreCase);
+            
+                // Skip if not in the allowed locations
+                if (!isInRoot && !isInContentTypeFolder)
+                {
+                    continue;
+                }
+            }
+            
+            if (!viewFiles.Contains(viewDetails.Name))
+            {
+                viewFiles.Add(viewDetails.Name);   
+            }
+        }
+        return viewFiles;
+    }
+    
     public static string? GetViewIdentifier(this Type viewType)
     {
         // Look for the RazorCompiledItemAttribute on the view type.
