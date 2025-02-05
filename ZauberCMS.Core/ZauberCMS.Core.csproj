@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Core</PackageId>
-        <Version>3.0.0-beta4</Version>
+        <Version>3.0.0-beta5</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS core package</Description>
         <PackageTags>Web</PackageTags>
