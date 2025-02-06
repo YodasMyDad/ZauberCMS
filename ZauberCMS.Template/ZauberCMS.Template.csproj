@@ -1,34 +1,35 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk">
+
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <IsPackable>true</IsPackable>
-        <Version>3.0.0-beta5</Version>
-        <Authors>Lee Messenger</Authors>
+		<PackageVersion>3.0.0-beta6</PackageVersion>
+		<PackageType>Template</PackageType>
         <PackageId>ZauberCMS.Template</PackageId>
+        <Title>ZauberCMS.Template</Title>
+        <Authors>Lee Messenger</Authors>
         <Description>Package that creates a ZauberCMS website project.</Description>
         <PackageTags>Blazor;CMS;Web;Template</PackageTags>
+		
+		<TargetFramework>net9.0</TargetFramework>
+        
+        <IncludeContentInPack>true</IncludeContentInPack>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <ContentTargetFolders>content</ContentTargetFolders>
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
+        <NoDefaultExcludes>true</NoDefaultExcludes>
+        <Copyright>2025 © Lee Messenger</Copyright>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/YodasMyDad/ZauberCMS</PackageProjectUrl>
+        <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
     </PropertyGroup>
-
-    <ItemGroup>
-        <PackageReference Include="ZauberCMS" Version="3.0.0-beta5"/>
-    </ItemGroup>
     
     <ItemGroup>
-        <None Include=".template.config\**\*" Pack="true" />
-        <None Include="Program.cs" Pack="true" />
-        <None Include="ZauberCMS.Template.csproj" Pack="true"  />
-        <None Include="Properties\**\*" Pack="true" />
-        <None Include="wwwroot\**\*" Pack="true" />
+        <Content Include="template\**\*" Exclude="template\**\bin\**;template\**\obj\**" />
+        <Compile Remove="**\*" />
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+        <None Include="images\logo.png" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
-    <!-- Add this Target to ensure wwwroot exists before build -->
-    <Target Name="EnsureWwwRootFolderExists" BeforeTargets="Build">
-        <MakeDir Directories="wwwroot" Condition="!Exists('wwwroot')" />
-    </Target>
-    
 </Project>

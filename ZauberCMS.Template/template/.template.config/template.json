@@ -1,0 +1,48 @@
+﻿{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Lee Messenger",
+  "classifications": [ "template", "blazor", "cms" ],
+  "identity": "ZauberCMS.Template",
+  "name": "ZauberCMS Website Template",
+  "shortName": "zaubercms",
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "sourceName": "ZauberCMSTemplate",
+  "preferNameDirectory": true,
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/.git/**",
+            "**/.vs/**"
+          ],
+          "CopyOnly": [
+          ]
+        }
+      ]
+    }
+  ],
+  "symbols": {
+    "httpPort": {
+      "type": "generated",
+      "generator": "port",
+      "parameters": {
+        "fallback": 5000
+      },
+      "replaces": "38357"
+    },
+    "httpsPort": {
+      "type": "generated",
+      "generator": "port",
+      "parameters": {
+        "low": 44300,
+        "high": 44399,
+        "fallback": 5001
+      },
+      "replaces": "44340"
+    }
+  }
+}

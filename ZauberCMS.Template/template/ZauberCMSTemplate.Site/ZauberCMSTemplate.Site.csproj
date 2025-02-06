@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ZauberCMS" Version="3.0.0-beta5"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Opt-in to app-local ICU to ensure consistent globalization APIs across different platforms -->
+        <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
+        <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))" />
+    </ItemGroup>
+
+    <!-- Add this Target to ensure wwwroot exists before build -->
+    <Target Name="EnsureWwwRootFolderExists" BeforeTargets="Build">
+        <MakeDir Directories="wwwroot" Condition="!Exists('wwwroot')" />
+    </Target>
+    
+</Project>

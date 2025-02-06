@@ -17,13 +17,13 @@ This repo comes with a starter site example, if you clone this repo, build and r
 
 However, fastest way to get started building your own website is using the .Net Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one)
 
-```ps
-# Ensure we have the latest ZauberCMS templates
-dotnet new install ZauberCMS.Template --force
+`dotnet new install ZauberCMS.Template --force`
 
-# Create your CMS
-dotnet new zaubercms -n "YourProjectName"
-```
+Then create your new solution and project (Project names should start with ZauberCMS so the plugin system picks them up) using the code below:
+
+`dotnet new sln --name "YourSolutionName"`  
+`dotnet new zaubercms -n "ZauberCMS.YourProjectName"`  
+`dotnet sln add "ZauberCMS.YourProjectName"`
 
 You can also use Nuget and full instructions on how to use it are below (I prefer this way myself)
 
