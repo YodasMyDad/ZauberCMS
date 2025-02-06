@@ -15,6 +15,10 @@
         <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Folder Include="wwwroot\" />
+    </ItemGroup>
+    
     <!-- Add this Target to ensure wwwroot exists before build -->
     <Target Name="EnsureWwwRootFolderExists" BeforeTargets="Build">
         <MakeDir Directories="wwwroot" Condition="!Exists('wwwroot')" />
