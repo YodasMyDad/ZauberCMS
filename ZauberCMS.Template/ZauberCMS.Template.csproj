@@ -18,7 +18,7 @@
         <NoDefaultExcludes>true</NoDefaultExcludes>
         <Copyright>2025 © Lee Messenger</Copyright>
         <PackageIcon>logo.png</PackageIcon>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
         <PackageProjectUrl>https://github.com/YodasMyDad/ZauberCMS</PackageProjectUrl>
         <RepositoryType>git</RepositoryType>
@@ -28,7 +28,7 @@
     <ItemGroup>
         <Content Include="template\**\*" Exclude="template\**\bin\**;template\**\obj\**" />
         <Compile Remove="**\*" />
-        <None Include="README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\ReadMe.md" Pack="true" PackagePath="\"/>
         <None Include="images\logo.png" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
