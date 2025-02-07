@@ -25,15 +25,15 @@ dotnet new install ZauberCMS.Template --force
 dotnet new zaubercms -n "YourSiteName"
 ```
 
-You can also use Nuget and full instructions on how to use it are below (I prefer this way myself)
+You can also use Nuget and full instructions on how to use it are below
 
 https://aptitude.gitbook.io/zaubercms/getting-started/quick-start
 
-## Building A Simple Site
+## Getting Started Video
 
 This video shows building a very simple site from scratch, hopefully you'll see how easy it is!
 
-**Updated Video Coming Soon**
+[![Starter Site Build YouTube Video](https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FVr2cbdfxDGZK1u2Fd59w%2Fuploads%2FPInFco2RCtXOrEN3hFVY%2Fgetting-started.png?alt=media&token=58bcda5e-0cf8-4789-b797-fb0f85a174b4)](https://www.youtube.com/watch?v=x_klA1Podwg)
 
 ## Documentation
 
