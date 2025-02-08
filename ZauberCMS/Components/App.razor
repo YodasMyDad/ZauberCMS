@@ -1,16 +1,60 @@
 ﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.Extensions.Options
+@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Settings
 <!DOCTYPE html>
 <html lang="en">
-
-<CascadingValue Value="IsAdmin">
-    <Routes @rendermode="RenderModeForPage"/>
-</CascadingValue>
-<script src="_framework/blazor.web.js"></script>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <base href="/"/>
+    <RadzenTheme Theme="material"/>
+    <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css"]">
+    <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
+    <link rel="stylesheet" href="@Assets["_content/Blazored.Modal/Blazored.Modal.bundle.scp.css"]">
+    <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
+    @foreach (var style in PageStyles)
+    {
+        <link rel="stylesheet" href="@style">
+    }
+    <HeadOutlet />
+    <ImportMap/>
+</head>
+<body>
+    <RadzenComponents/>
+    <CascadingValue Value="IsAdmin">
+        <Routes @rendermode="RenderModeForPage"/>
+    </CascadingValue>
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.4/Sortable.min.js"></script>
+    <script src="_content/ZauberCMS.Components/js/shadow-dom.js"></script>
+    @foreach (var script in PageScripts)
+    {
+        <script src="@script"></script>
+    }
+</body>
 </html>
 
 @code {
-
+    [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    private List<string> PageScripts { get; set; } = [];
+    private List<string> PageStyles { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        var contentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+        if (contentProperties.Any())
+        {
+            PageScripts = contentProperties.SelectMany(x => x.Value.Scripts)?.Distinct().ToList() ?? [];
+            PageStyles = contentProperties.SelectMany(x => x.Value.Styles)?.Distinct().ToList() ?? [];
+        }
+    }
 
     private bool IsAdmin
     {
@@ -35,5 +79,4 @@
             return HttpContext?.AcceptsInteractiveRouting() == true ? InteractiveServer : null;
         }
     }
-
 }

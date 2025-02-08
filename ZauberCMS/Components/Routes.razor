@@ -1,7 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Components.Account.Shared
-
+<CascadingBlazoredModal>
     <Router
         AppAssembly="@typeof(App).Assembly"
         AdditionalAssemblies="@ExtensionManager.GetFilteredAssemblies(null)">
@@ -16,3 +16,4 @@
             </CascadingValue>
         </Found>
     </Router>
+</CascadingBlazoredModal>

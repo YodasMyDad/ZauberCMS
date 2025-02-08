@@ -21,8 +21,8 @@
 
 @code 
 {
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Type? FallbackComponentType { get; set; }
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();

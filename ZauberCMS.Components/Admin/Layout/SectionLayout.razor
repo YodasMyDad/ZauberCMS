@@ -6,63 +6,37 @@
 @using Microsoft.Extensions.Options
 @inherits LayoutComponentBase
 
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <base href="/"/>
-    <RadzenTheme Theme="material" />
-    <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css"]">
-    <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
-    <link rel="stylesheet" href="@Assets["_content/Blazored.Modal/Blazored.Modal.bundle.scp.css"]">
-    <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
-    @foreach (var style in PageStyles)
-    {
-        <link rel="stylesheet" href="@style">
-    }
-    <HeadOutlet/>
+<HeadContent>
     <SectionOutlet SectionId="@Sections.PageHeadContent"/>
-    <ImportMap/>
-</head>
+</HeadContent>
 
-<body>
+<RadzenLayout>
+    <CascadingValue Value="@this">
+        <RadzenHeader class="rz-background-color-primary-darker flex justify-between items-center">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
+                         Style="height: 100%;">
+                <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
+                @*<RadzenIcon Icon="automation"/>*@
+                <ZauberCMS.Components.Shared.ZauberLogo Styles="height: 24px; colour: #fff; fill: #fff;" />
+                <SectionLinks CurrentSection="@(SectionAlias)"/>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
+                         Style="height: 100%;">
+                <UserProfile/>
+            </RadzenStack>
+        </RadzenHeader>
+        @if (!SectionAlias.IsNullOrWhiteSpace())
+        {
+            <RadzenSidebar @bind-Expanded="@Expanded">
+                <SectionTrees SectionAlias="@(SectionAlias)"/>
+            </RadzenSidebar>
+        }
+        <RadzenBody>
+            @Body
+        </RadzenBody>
+    </CascadingValue>
+</RadzenLayout>
 
-<RadzenComponents />
-<CascadingBlazoredModal>
-    <RadzenLayout>
-        <CascadingValue Value="@this">
-            <RadzenHeader class="rz-background-color-primary-darker flex justify-between items-center">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
-                             Style="height: 100%;">
-                    <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
-                    @*<RadzenIcon Icon="automation"/>*@
-                    <ZauberCMS.Components.Shared.ZauberLogo Styles="height: 24px; colour: #fff; fill: #fff;" />
-                    <SectionLinks CurrentSection="@(SectionAlias)"/>
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
-                             Style="height: 100%;">
-                    <UserProfile/>
-                </RadzenStack>
-            </RadzenHeader>
-            @if (!SectionAlias.IsNullOrWhiteSpace())
-            {
-                <RadzenSidebar @bind-Expanded="@Expanded">
-                    <SectionTrees SectionAlias="@(SectionAlias)"/>
-                </RadzenSidebar>
-            }
-            <RadzenBody>
-                @Body
-            </RadzenBody>
-        </CascadingValue>
-    </RadzenLayout>
-</CascadingBlazoredModal>
-
-<script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.4/Sortable.min.js"></script>
-<script src="_content/ZauberCMS.Components/js/shadow-dom.js"></script>
-@foreach (var script in PageScripts)
-{
-    <script src="@script"></script>
-}
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -70,16 +44,11 @@
     <span class="dismiss">🗙</span>
 </div>
 
-</body>
-
 @code {
     [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
     [CascadingParameter] public HttpContext? HttpContext { get; set; }
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
-    
-    private List<string> PageScripts { get; set; } = [];
-    private List<string> PageStyles { get; set; } = [];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -106,13 +75,6 @@
         CultureInfo.CurrentUICulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-        
-        var contentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        if (contentProperties.Any())
-        {
-            PageScripts = contentProperties.SelectMany(x => x.Value.Scripts)?.Distinct().ToList() ?? [];
-            PageStyles = contentProperties.SelectMany(x => x.Value.Styles)?.Distinct().ToList() ?? [];
-        }
     }
     
     private string? SectionAlias { get; set; }
@@ -132,7 +94,7 @@
 
     internal static class Sections
     {
-        internal static readonly SectionOutlet? PageHeadContent = new();
+        internal static SectionOutlet? PageHeadContent = new();
     }
 
 }
