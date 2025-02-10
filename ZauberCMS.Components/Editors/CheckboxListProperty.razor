@@ -33,7 +33,8 @@
     public Type? SettingsComponent { get; set; } = typeof(ListPropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
-
+    public bool FullWidth { get; set; }
+    
     private async Task Changed(object args)
     {
         var list = args as IEnumerable<string>;

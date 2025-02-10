@@ -35,6 +35,7 @@
     public Type? SettingsComponent { get; set; } = typeof(EditorNotePropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
     
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }

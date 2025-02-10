@@ -16,6 +16,7 @@
     [CascadingParameter] public IModalService? ModalService { get; set; }
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
 
     private async Task OnChange(string value)
     {

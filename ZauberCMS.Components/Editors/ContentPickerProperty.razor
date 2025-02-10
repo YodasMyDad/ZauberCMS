@@ -34,6 +34,7 @@
     [CascadingParameter] public IModalService? ModalService { get; set; }
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
 
     // Hold the content guid and name in the list
     private List<Content> ContentItems { get; set; } = [];

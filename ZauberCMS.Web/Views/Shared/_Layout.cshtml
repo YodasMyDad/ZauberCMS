@@ -18,8 +18,9 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="~/" />
-    <title>@(Model.GetValue<string>("PageTitle") ?? Model.GetValue<string>("Heading"))</title>
-    <meta name="description" content="@(Model.GetValue<string>("MetaDescription"))">
+    
+    @Html.GenerateMetaTags("SEO", Mediator)
+    
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico"/>
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css"/>
@@ -27,6 +28,7 @@
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="ZauberCMS.Web.styles.css">
     @await RenderSectionAsync("Head", required: false)
+    
 </head>
 
 <body>

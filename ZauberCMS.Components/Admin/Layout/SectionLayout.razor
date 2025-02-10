@@ -10,18 +10,19 @@
     <SectionOutlet SectionId="@Sections.PageHeadContent"/>
 </HeadContent>
 
+<RadzenComponents/>
 <RadzenLayout>
     <CascadingValue Value="@this">
         <RadzenHeader class="rz-background-color-primary-darker flex justify-between items-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
                          Style="height: 100%;">
                 <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
-                @*<RadzenIcon Icon="automation"/>*@
                 <ZauberCMS.Components.Shared.ZauberLogo Styles="height: 24px; colour: #fff; fill: #fff;" />
                 <SectionLinks CurrentSection="@(SectionAlias)"/>
             </RadzenStack>
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
                          Style="height: 100%;">
+                @*<RadzenAppearanceToggle />*@
                 <UserProfile/>
             </RadzenStack>
         </RadzenHeader>

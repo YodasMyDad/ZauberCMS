@@ -1,0 +1,187 @@
+﻿@using System.Text.Json
+@using HtmlAgilityPack
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Seo.Models
+@using ZauberCMS.Core.Plugins
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<RadzenTabs TabPosition="TabPosition.Left">
+    <Tabs>
+        <RadzenTabsItem Text="Data">
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Page Title"
+                                  Description="The title that appears in search engine results and browser tabs. Keep it under 60 characters for the best SEO results."/>
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenTextBox Change="@(async () => await NotifyValueChanged())"
+                                   @bind-Value="@Meta.PageTitle"
+                                   class="form-control w-full"
+                                   MaxLength="80"/>
+                    @*@if (SettingsModel.MaxLength != null)
+                    {
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption">Max Length: @SettingsModel.MaxLength</RadzenText>
+                        </div>
+                    }*@
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Meta Description"
+                                  Description="A short summary of the page that appears in search results. Aim for 150–160 characters to ensure it's fully visible."/>
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenTextArea
+                        oninput="event.target.style.height = Math.max(event.target.clientHeight, event.target.scrollHeight) + 'px';"
+                        Change="@(async () => await NotifyValueChanged())"
+                        @bind-Value="@Meta.MetaDescription"
+                        class="form-control w-full" MaxLength="160"/>
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Open Graph Image"
+                                  Description="The image used when your page is shared on social media (Facebook, X, etc.). Upload a high-quality image, ideally 1200x630 pixels."/>
+                </LeftColumn>
+                <CentreColumn>
+                    <MediaPickerProperty
+                        Value="@(Meta.OpenGraphImage != null ? Meta.OpenGraphImage.ToString() : string.Empty)"
+                        Settings="@(JsonSerializer.Serialize(new MediaPickerSettings { MaxAllowed = 1 }))"
+                        ValueChanged="@(e => SetOpenGraphMedia(e))"/>
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Hide From Search Engines"
+                                  Description="Prevents this page from appearing in Google and other search engines. Use this for private or low-value pages."/>
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenSwitch @bind-Value="@Meta.HideFromSearchEngines"
+                                  Change="@(async () => await NotifyValueChanged())"
+                                  InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Hide from search engines" } })"/>
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Exclude From Sitemap"
+                                  Description="Removes this page from your website's sitemap, so search engines won't prioritize it. Useful for utility pages or duplicates."/>
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenSwitch @bind-Value="@Meta.ExcludeFromSitemap"
+                                  Change="@(async () => await NotifyValueChanged())"
+                                  InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Exclude from sitemap" } })"/>
+                </CentreColumn>
+            </EditorRow>
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="SEO Tools">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
+                <RadzenTextBox Style="width:26rem;" Placeholder="@(FullUrl)"/>
+                <RadzenButton Variant="Variant.Filled" Size="ButtonSize.Small" Text="Run SEO Checks" Click="@(() => RunSeoChecks())"/>
+                <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" Visible="@ShowLoader">
+                    <Template>Wait</Template>
+                </RadzenProgressBarCircular>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0em">
+                @foreach (var check in SeoCheckResults)
+                {
+                    var alertStyle = check.Status switch
+                    {
+                        SeoCheckStatus.Success => AlertStyle.Success,
+                        SeoCheckStatus.Warning => AlertStyle.Warning,
+                        SeoCheckStatus.Error => AlertStyle.Danger,
+                        _ => AlertStyle.Info
+                    };
+                    <RadzenAlert AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light">
+                        @(check.Message)
+                    </RadzenAlert>
+                }
+            </RadzenStack>
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+
+@code {
+    public string Name => "SEO";
+    public string Alias => "ZauberCMS.Seo";
+    public string Description => "Adds meta and SEO tools to your page";
+    public string Icon => "show_chart";
+    public Type? SettingsComponent { get; set; }
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; } = true;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string? Settings { get; set; } = string.Empty;
+    [Parameter] public Content? Content { get; set; }
+    
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    
+    private Meta Meta { get; set; } = new();
+    private string? FullUrl { get; set; }
+    private List<SeoCheckResult> SeoCheckResults { get; set; } = [];
+    private bool ShowLoader { get; set; }
+    
+    private async Task SetOpenGraphMedia(string? e)
+    {
+        if (e.IsNullOrWhiteSpace())
+        {
+            Meta.OpenGraphImage = null;
+        }
+        else
+        {
+            if (Guid.TryParse(e, out var ogi))
+            {
+                Meta.OpenGraphImage = ogi;
+            }
+        }
+
+        await NotifyValueChanged();
+    }
+
+    private async Task RunSeoChecks()
+    {
+        ShowLoader = true;
+        
+        SeoCheckResults = [];
+        
+        var seoChecks = ExtensionManager.GetInstances<ISeoCheck>(true);
+        
+        var web = new HtmlWeb();
+        var doc = web.Load(FullUrl);
+
+        foreach (var seoCheck in seoChecks.OrderBy(x => x.Value.SortOrder).ThenBy(x => x.Value.Name))
+        {
+            SeoCheckResults.Add(await seoCheck.Value.Check(FullUrl ?? string.Empty, doc, Content!));   
+        }
+        
+        ShowLoader = false;
+    }
+    
+    protected override void OnInitialized()
+    {
+        if (!Value.IsNullOrWhiteSpace())
+        {
+            Meta = JsonSerializer.Deserialize<Meta>(Value) ?? new Meta();
+        }
+
+        var currentUri = new Uri(NavigationManager.BaseUri);
+        FullUrl = $"{currentUri}{Content?.Url}";
+
+        //SettingsModel = Settings.FromJson<MediaPickerSettings>();
+    }
+
+    private async Task NotifyValueChanged()
+    {
+        // Serialize Meta object to JSON and notify parent
+        var jsonValue = JsonSerializer.Serialize(Meta);
+        await ValueChanged.InvokeAsync(jsonValue);
+    }
+
+}

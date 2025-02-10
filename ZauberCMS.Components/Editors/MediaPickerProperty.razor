@@ -1,5 +1,4 @@
 ﻿@using System.Text.Json
-@using ZauberCMS.Components.Admin.MediaSection.Dialogs
 @using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
@@ -34,6 +33,7 @@
     public Type? SettingsComponent { get; set; } = typeof(MediaPickerPropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
     
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; } = string.Empty;
@@ -50,14 +50,29 @@
     {
         if (!Value.IsNullOrWhiteSpace())
         {
-            var contentIds = JsonSerializer.Deserialize<List<Guid>>(Value);
-            if (contentIds != null && contentIds.Any())
+            if (Guid.TryParse(Value, out var singleId)) 
             {
-                var contentItems = await Mediator.Send(new QueryMediaCommand
+                // Value is a single guid
+                var mediaItem = await Mediator.Send(new QueryMediaCommand
                 {
-                    Ids = contentIds
+                    Ids = [singleId]
                 });
-                MediaItems = contentItems.Items.ToList();
+
+                MediaItems = mediaItem.Items.ToList();
+            } 
+            else 
+            {
+                // Value might be a list of guids
+                var mediaIds = JsonSerializer.Deserialize<List<Guid>>(Value);
+                if (mediaIds != null && mediaIds.Any())
+                {
+                    var mediaItems = await Mediator.Send(new QueryMediaCommand
+                    {
+                        Ids = mediaIds
+                    });
+
+                    MediaItems = mediaItems.Items.ToList();
+                }
             }
         }
 
@@ -119,7 +134,16 @@
 
     private async Task SaveAndUpdate()
     {
-        Value = JsonSerializer.Serialize(MediaItems.Select(x => x.Id));
+        if (MediaItems.Count <= 0)
+        {
+            Value = string.Empty;
+        }
+        else
+        {
+            Value = MediaItems.Count == 1 ?
+                MediaItems[0].Id.ToString() : 
+                JsonSerializer.Serialize(MediaItems.Select(x => x.Id));   
+        }
         await ValueChanged.InvokeAsync(Value);
     }
 

@@ -11,6 +11,10 @@
         <RadzenText TextStyle="TextStyle.Subtitle1">Latitude: @Location.Lat, Longitude: @Location.Lng</RadzenText>
     </div>
 }
+@if (ApiKey.IsNullOrWhiteSpace())
+{
+    <div>You have not set or created an API key with the name 'GoogleMaps'</div>
+}
 
 <RadzenGoogleMap ApiKey="@ApiKey" MapId="@(MapId.ToString())" @ref="Map" 
                  Style="height: 400px" 
@@ -31,10 +35,11 @@
     public Type? SettingsComponent { get; set; } = typeof(GoogleMapsPropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
     
-    [Inject] public IModalService DialogService { get; set; } = default!;
-    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
-    [Inject] IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+    [Inject] IOptions<ZauberSettings> ZauberSettings { get; set; } = null!;
 
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
@@ -72,11 +77,12 @@
             Location.Lat = SettingsModel.DefaultLat.Value;
         }
     }
-    
+
     private async Task OnMapClick(GoogleMapClickEventArgs args)
     {
         Location.Lat = args.Position.Lat;
         Location.Lng = args.Position.Lng;
         await ValueChanged.InvokeAsync(JsonSerializer.Serialize(Location));
     }
+
 }

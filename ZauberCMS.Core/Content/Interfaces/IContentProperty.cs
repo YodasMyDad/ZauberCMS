@@ -18,4 +18,5 @@ public interface IContentProperty
     IModalService? ModalService { get; set; }
     List<string> Scripts { get; set; }
     List<string> Styles { get; set; }
+    public bool FullWidth { get; set; }
 }

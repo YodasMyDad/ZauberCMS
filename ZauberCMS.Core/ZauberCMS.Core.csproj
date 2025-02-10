@@ -20,6 +20,7 @@
         <PackageReference Include="AutoMapper" Version="13.0.1" />
         <PackageReference Include="Blazored.Modal" Version="7.3.1" />
         <PackageReference Include="FluentValidation" Version="11.11.0" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.72" />
         <PackageReference Include="MailKit" Version="4.10.0" />
         <PackageReference Include="MediatR" Version="12.4.1" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="9.0.1" />

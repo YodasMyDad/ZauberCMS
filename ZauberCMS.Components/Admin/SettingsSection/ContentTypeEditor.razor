@@ -495,7 +495,8 @@
                 {
                     Component = property.GetType().FullName ?? string.Empty,
                     SortOrder = ContentType.ContentProperties.Count + 1,
-                    TabId = tabToAddTo.Id
+                    TabId = tabToAddTo.Id,
+                    FullWidth = property.FullWidth
                 });
                 Tabs.Reload();
                 StateHasChanged();

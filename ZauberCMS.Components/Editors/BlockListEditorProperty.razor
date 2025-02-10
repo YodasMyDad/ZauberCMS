@@ -53,6 +53,7 @@
     private Dictionary<Guid, ContentType> ContentTypes { get; set; } = [];
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
     private BlockListEditorSettingsModel SettingsModel { get; set; } = new();
 
     protected override async Task OnInitializedAsync()

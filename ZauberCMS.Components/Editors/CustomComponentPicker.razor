@@ -30,7 +30,8 @@
     [CascadingParameter] public IModalService? ModalService { get; set; }
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
-
+    public bool FullWidth { get; set; }
+    
     private IEnumerable<string> SelectedValues { get; set; } = [];
     private List<DataListItem> Items { get; set; } = [];
     

@@ -16,7 +16,7 @@
     [CascadingParameter] public IModalService? ModalService { get; set; }
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
-    
+    public bool FullWidth { get; set; }
     private Dictionary<string, string> ApiKeys { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
@@ -33,4 +33,6 @@
             await ValueChanged.InvokeAsync(Value);   
         }
     }
+
+
 }
