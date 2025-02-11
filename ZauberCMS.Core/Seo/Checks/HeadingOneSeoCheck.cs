@@ -10,24 +10,28 @@ public class HeadingOneSeoCheck : ISeoCheck
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
     {
         var result = new SeoCheckResult(Name);
-        
         var seoItem = new SeoCheckResultItem();
-        
-        // Check for H1
-        var h1 = document.DocumentNode.SelectSingleNode("//h1");
-        if (h1 == null || h1.InnerText.IsNullOrWhiteSpace())
+
+        // Select all H1 elements
+        var h1Tags = document.DocumentNode.SelectNodes("//h1");
+
+        if (h1Tags == null || h1Tags.Count == 0)
         {
             seoItem.Status = SeoCheckStatus.Error;
             seoItem.Message = "Page is missing an <h1> heading tag.";
         }
-
-        if (seoItem.Status == SeoCheckStatus.Success)
+        else if (h1Tags.Count > 1)
         {
-            seoItem.Message = h1?.InnerText;
+            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Message = $"Page contains multiple <h1> tags ({h1Tags.Count}). Consider reducing to one for better SEO.";
         }
-        
+        else
+        {
+            seoItem.Status = SeoCheckStatus.Success;
+            seoItem.Message = $"H1 found: '{h1Tags[0].InnerText.Trim()}'.";
+        }
+
         result.Items.Add(seoItem);
-        
         return Task.FromResult(result);
     }
     

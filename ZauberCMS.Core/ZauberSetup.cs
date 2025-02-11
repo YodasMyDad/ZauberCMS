@@ -283,6 +283,8 @@ public static class ZauberSetup
         app.UseAuthorization();
         app.MapStaticAssets();
         
+        app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
+        
         // Group the admin routes for Blazor
         app
             .MapRazorComponents<T>()
@@ -293,7 +295,6 @@ public static class ZauberSetup
         app.MapAdditionalIdentityEndpoints();
         
         //app.UseMiddleware<ContentRoutingMiddleware>();
-        app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=ZauberRender}/{action=Index}/{id?}")

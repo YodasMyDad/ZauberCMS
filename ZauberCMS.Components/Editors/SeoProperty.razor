@@ -99,7 +99,7 @@
                             _ => AlertStyle.Info
                         };
                         <RadzenAlert AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light">
-                            @(checkResultItem.Message)
+                            @check.Name @(checkResultItem.Message)
                         </RadzenAlert>   
                     }
                 }
