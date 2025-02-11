@@ -1,6 +1,6 @@
 ﻿using ZauberCMS.Core.Content.Models;
 
-namespace ZauberCMS.Components.Admin.Seo.Models;
+namespace ZauberCMS.Components.Seo.Models;
 
 public class SeoSitemap
 {

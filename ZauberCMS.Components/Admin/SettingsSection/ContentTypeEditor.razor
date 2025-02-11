@@ -7,7 +7,6 @@
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
-@using ZauberCMS.Core.Rendering
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Shared.Models
@@ -496,7 +495,8 @@
                     Component = property.GetType().FullName ?? string.Empty,
                     SortOrder = ContentType.ContentProperties.Count + 1,
                     TabId = tabToAddTo.Id,
-                    FullWidth = property.FullWidth
+                    FullWidth = property.FullWidth,
+                    ComponentAlias = property.Alias
                 });
                 Tabs.Reload();
                 StateHasChanged();

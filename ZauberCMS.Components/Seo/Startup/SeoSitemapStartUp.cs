@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Plugins.Interfaces;
 
-namespace ZauberCMS.Components.Admin.Seo.Startup;
+namespace ZauberCMS.Components.Seo.Startup;
 
 public class SeoSitemapStartUp : IStartupPlugin
 {

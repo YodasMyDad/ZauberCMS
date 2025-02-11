@@ -1,4 +1,4 @@
-﻿namespace ZauberCMS.Components.Admin.Seo.Models;
+﻿namespace ZauberCMS.Components.Seo.Models;
 
 public static class SeoConstants
 {

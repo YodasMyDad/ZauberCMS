@@ -1,7 +1,7 @@
 ﻿using ZauberCMS.Core;
 using ZauberCMS.Core.Sections.Interfaces;
 
-namespace ZauberCMS.Components.Admin.Seo;
+namespace ZauberCMS.Components.Seo;
 
 public class SeoNavGroup : ISectionNavGroup
 {

@@ -36,6 +36,7 @@
     </ItemGroup>
     
     <ItemGroup>
+      <Folder Include="Logs\" />
       <Folder Include="wwwroot\media\" />
     </ItemGroup>
     

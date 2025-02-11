@@ -72,6 +72,12 @@
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\js\boot.js" />
     </ItemGroup>
+
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Admin\Seo\Dialogs\NewSitemap.razor" />
+      <UpToDateCheckInput Remove="Admin\Seo\SeoSitemaps.razor" />
+      <UpToDateCheckInput Remove="Admin\Seo\SettingsSeoTree.razor" />
+    </ItemGroup>
     
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
         <PropertyGroup>

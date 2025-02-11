@@ -1,15 +1,17 @@
 ﻿using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ZauberCMS.Components.Admin.Seo.Models;
+using ZauberCMS.Components.Seo.Models;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Seo.Models;
 
-namespace ZauberCMS.Components.Admin.Seo.Startup;
+namespace ZauberCMS.Components.Seo.Startup;
 
 public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IWebHostEnvironment env, IServiceProvider serviceProvider)
     : BackgroundService
@@ -65,14 +67,31 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                     // Only allow if this item is under the root id
                     if (content.Path.Contains(seoSitemap.RootContentId))
                     {
-                        // Add content data to the sitemap list
-                        sitemapEntries.Add(new XElement(ns + "url",
-                            new XElement(ns + "loc", $"{seoSitemap.Domain}/{content.Url}"),
-                            new XElement(ns + "lastmod", $"{content.DateUpdated:yyyy-MM-ddTHH:mm:sszzz}"),
-                            new XElement(ns + "changefreq", "weekly"), // Need to make configurable
-                            new XElement(ns + "priority", "0.5") // Need to make configurable
-                        ));
+                        // Finally, need to see if this is using the SEO property and whether they
+                        // have ticked noindex or remove from sitemap
+                        var allowInSitemap = true;
+                        var seoProperty =
+                            content.ContentType?.ContentProperties.FirstOrDefault(x => x.Component == "ZauberCMS.Components.Editors.SeoProperty");
+                        if (seoProperty != null)
+                        {
+                            // We have an SEO property
+                            var metaData = content.GetValue<Meta>(seoProperty.Alias ?? "meh");
+                            if (metaData is { ExcludeFromSitemap: true } or { HideFromSearchEngines: true })
+                            {
+                                allowInSitemap = false;
+                            }
+                        }
 
+                        if (allowInSitemap)
+                        {
+                            // Add content data to the sitemap list
+                            sitemapEntries.Add(new XElement(ns + "url",
+                                new XElement(ns + "loc", $"{seoSitemap.Domain}/{content.Url}"),
+                                new XElement(ns + "lastmod", $"{content.DateUpdated:yyyy-MM-ddTHH:mm:sszzz}"),
+                                new XElement(ns + "changefreq", "weekly"), // Need to make configurable
+                                new XElement(ns + "priority", "0.5") // Need to make configurable
+                            ));   
+                        }
                     }
                 }
     
@@ -84,8 +103,18 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                 );
 
                 // Write the sitemap to the file
-                await File.WriteAllTextAsync(sitemapPath, sitemap.ToString(), Encoding.UTF8);
+                // Create settings to include XML declaration
+                var settings = new XmlWriterSettings
+                {
+                    Indent = true,
+                    Async = true,
+                    Encoding = Encoding.UTF8,
+                    OmitXmlDeclaration = false // Ensure XML declaration is included
+                };
 
+                // Write the sitemap to the file with XML declaration
+                await using var writer = XmlWriter.Create(sitemapPath, settings);
+                sitemap.Save(writer);
             }
         }
         catch (Exception ex)
