@@ -297,8 +297,8 @@ public static class ZauberSetup
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=ZauberRender}/{action=Index}/{id?}")
-            .WithStaticAssets() // Ensures static files load before hitting controllers
-            .WithMetadata(new RouteOptions { LowercaseUrls = true }); // Lowercase URLs for better SEO
+            .WithMetadata(new RouteOptions { LowercaseUrls = true }) // Lowercase URLs for better SEO
+            .WithStaticAssets(); // Ensures static files load before hitting controllers; 
         
         app.MapFallbackToController("Index", "ZauberRender");
     }
