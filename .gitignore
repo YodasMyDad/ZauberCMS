@@ -33,3 +33,4 @@ riderModule.iml
 /ZauberCMS.Web/app.db-shm
 /NugetSource/*
 /ZauberCMS.sln.DotSettings.user
+/ZauberCMS.Web/wwwroot/sitemap.xml
