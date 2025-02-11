@@ -1,10 +1,8 @@
-﻿using System.Linq.Dynamic.Core;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
@@ -68,6 +66,11 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
             {
                 query = request.IncludeUnpublished ? query.Include(x => x.Children).ThenInclude(x => x.UnpublishedContent) 
                     : query.Include(x => x.Children.Where(c => c.Published));
+            }
+
+            if (request.RootContentOnly)
+            {
+                query = query.Where(x => x.ParentId == null);
             }
 
             if (request.TagSlugs.Any())

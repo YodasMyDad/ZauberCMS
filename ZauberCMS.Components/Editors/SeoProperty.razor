@@ -89,16 +89,19 @@
             <RadzenStack Orientation="Orientation.Vertical" Gap="0em">
                 @foreach (var check in SeoCheckResults)
                 {
-                    var alertStyle = check.Status switch
+                    foreach (var checkResultItem in check.Items)
                     {
-                        SeoCheckStatus.Success => AlertStyle.Success,
-                        SeoCheckStatus.Warning => AlertStyle.Warning,
-                        SeoCheckStatus.Error => AlertStyle.Danger,
-                        _ => AlertStyle.Info
-                    };
-                    <RadzenAlert AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light">
-                        @(check.Message)
-                    </RadzenAlert>
+                        var alertStyle = checkResultItem.Status switch
+                        {
+                            SeoCheckStatus.Success => AlertStyle.Success,
+                            SeoCheckStatus.Warning => AlertStyle.Warning,
+                            SeoCheckStatus.Error => AlertStyle.Danger,
+                            _ => AlertStyle.Info
+                        };
+                        <RadzenAlert AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light">
+                            @(checkResultItem.Message)
+                        </RadzenAlert>   
+                    }
                 }
             </RadzenStack>
         </RadzenTabsItem>

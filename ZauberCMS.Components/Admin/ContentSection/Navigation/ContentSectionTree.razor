@@ -17,16 +17,16 @@
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
     
-    [CascadingParameter] public IModalService ModalService { get; set; } = default!;
+    [CascadingParameter] public IModalService ModalService { get; set; } = null!;
     
-    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public DialogService ConfirmService { get; set; } = default!;
-    [Inject] public IModalService DialogService { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public TreeState TreeState { get; set; } = default!;
-    [Inject] public ICacheService CacheService { get; set; } = default!;
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = null!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public DialogService ConfirmService { get; set; } = null!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
+    [Inject] public ICacheService CacheService { get; set; } = null!;
     
     private List<Content> ContentItems { get; set; } = [];
     private object? Selection { get; set; }

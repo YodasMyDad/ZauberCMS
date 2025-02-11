@@ -14,23 +14,27 @@ public class PageTitleSeoCheck : ISeoCheck
         
         var title = document.DocumentNode.SelectSingleNode("//title")?.InnerText;
 
+        var seoItem = new SeoCheckResultItem();
+        
         if (title.IsNullOrWhiteSpace())
         {
-            result.Status = SeoCheckStatus.Error;
-            result.Message = "Page title is missing.";
+            seoItem.Status = SeoCheckStatus.Error;
+            seoItem.Message = "Page title is missing.";
         }
         
         // Check title length
         if (title is { Length: < 30 or > 60 })
         {
-            result.Status = SeoCheckStatus.Warning;
-            result.Message = "Page title length should be between 30 and 60 characters.";
+            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Message = "Page title length should be between 30 and 60 characters.";
         }
 
-        if (result.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == SeoCheckStatus.Success)
         {
-            result.Message = title;
+            seoItem.Message = title;
         }
+        
+        result.Items.Add(seoItem);
         
         return Task.FromResult(result);
     }

@@ -11,18 +11,22 @@ public class HeadingOneSeoCheck : ISeoCheck
     {
         var result = new SeoCheckResult(Name);
         
+        var seoItem = new SeoCheckResultItem();
+        
         // Check for H1
         var h1 = document.DocumentNode.SelectSingleNode("//h1");
         if (h1 == null || h1.InnerText.IsNullOrWhiteSpace())
         {
-            result.Status = SeoCheckStatus.Error;
-            result.Message = "Page is missing an <h1> heading tag.";
+            seoItem.Status = SeoCheckStatus.Error;
+            seoItem.Message = "Page is missing an <h1> heading tag.";
         }
 
-        if (result.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == SeoCheckStatus.Success)
         {
-            result.Message = h1?.InnerText;
+            seoItem.Message = h1?.InnerText;
         }
+        
+        result.Items.Add(seoItem);
         
         return Task.FromResult(result);
     }

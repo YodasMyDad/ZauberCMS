@@ -1,17 +1,16 @@
 ﻿@using ZauberCMS.Core.Shared.Models
-@using ZauberCMS.Core.Shared
 @using ZauberCMS.Components.Admin.Trees
 
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-<GenericTree InitialData="@AdvancedData" />
+<GenericTree InitialData="@SeoData" />
 
 @code {
     
     public int SortOrder => 0;
-    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsAdvancedNavGroup;
-
-    private IEnumerable<TreeStub> AdvancedData { get; set; } = [];
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsSeoNavGroup;
+    
+    private IEnumerable<TreeStub> SeoData { get; set; } = [];
     
     protected override void OnInitialized()
     {
@@ -24,16 +23,16 @@
 
         var auditTree = new TreeStub
         {
-            Id = Constants.Guids.AuditTreeRootId,
-            Name = "Audit Log",
-            Icon = "sync_alt",
+            Id = Constants.Guids.SitemapTreeRootId,
+            Name = "Sitemaps",
+            Icon = "account_tree",
             SortOrder = 10,
-            Url = "/admin/settings/auditlog"
+            Url = "/admin/seo/sitemaps"
         };
 
         tree.Add(auditTree);
         
-        AdvancedData = tree;
+        SeoData = tree;
     }
 
     public void Dispose()

@@ -1,0 +1,155 @@
+﻿@page "/admin/seo/sitemaps"
+@using System.Text.Json
+@using ZauberCMS.Components.Admin.Seo.Dialogs
+@using ZauberCMS.Components.Admin.Seo.Models
+@using ZauberCMS.Core.Data.Models
+@using ZauberCMS.Core.Data.Commands
+
+@layout SectionLayout
+
+<PageTitle>SEO Sitemaps</PageTitle>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5"
+             Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Add Sitemap" Click="@(args => AddNewSitemap())"/>
+</RadzenStack>
+
+<RadzenPanel Class="rz-mx-auto">
+    <RadzenDataGrid AllowFiltering="false"
+                    AllowPaging="false"
+                    PageSize="100"
+                    AllowSorting="false"
+                    LoadData="@LoadData"
+                    Data="@Sitemaps"
+                    SelectionMode="DataGridSelectionMode.Single"
+                    RowSelect="@((SeoSitemap value) => OnRowSelect(value))">
+        <Columns>
+            <RadzenDataGridColumn Property="RootContentId" Title="Content">
+                <Template Context="data">
+                    @data.RootContent?.Name
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="Name" Title="File Name"/>
+            <RadzenDataGridColumn Property="FileName" Title="Delete" Width="90px" TextAlign="TextAlign.Center">
+                <Template Context="data">
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.RootContentId))"/>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenPanel>
+
+@code {
+    [Inject] NotificationService NotificationService { get; set; } = null!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
+    private List<SeoSitemap> Sitemaps { get; set; } = [];
+    private GlobalData? GlobalData { get; set; }
+
+    private readonly SlugHelper _slugHelper = new(new SlugHelper.Config
+    {
+        CharacterReplacements = new Dictionary<string, string> { { " ", "-" } },
+        ForceLowerCase = true
+    });
+    
+    async Task LoadData(LoadDataArgs args)
+    {
+        GlobalData = await Mediator.Send(new GetGlobalDataCommand { Alias = SeoConstants.SeoSitemapName }) ?? new GlobalData();
+        if (GlobalData?.Data.IsNullOrWhiteSpace() == false)
+        {
+            Sitemaps = JsonSerializer.Deserialize<List<SeoSitemap>>(GlobalData.Data) ?? [];
+            foreach (var seoSitemap in Sitemaps)
+            {
+                seoSitemap.RootContent = await Mediator.GetContent(seoSitemap.RootContentId);
+            }
+        }
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        Layout?.SetSection(Constants.Sections.SettingsSection);
+        await LoadData(new LoadDataArgs());
+    }
+
+    private async Task Delete(Guid rootContentId)
+    {
+        var existingSitemap = Sitemaps.FirstOrDefault(x => x.RootContentId == rootContentId);
+        if (existingSitemap != null)
+        {
+            Sitemaps.Remove(existingSitemap);
+        }
+        await Save();
+    }
+
+    private async Task UpdateSitemaps(SeoSitemap sitemap)
+    {
+        var existingSitemap = Sitemaps.FirstOrDefault(x => x.RootContentId == sitemap.RootContentId);
+        if (existingSitemap != null)
+        {
+            Sitemaps.Remove(existingSitemap);
+        }
+
+        Sitemaps.Add(sitemap);
+        await Save();
+    }
+
+    private async Task Save()
+    {
+        // Sort file names
+        foreach (var sitemap in Sitemaps)
+        {
+            sitemap.FileName = _slugHelper.GenerateSlug(sitemap.Name);
+        }
+        
+        var saveResult = await Mediator.Send(new SaveGlobalDataCommand { Alias = SeoConstants.SeoSitemapName, Data = JsonSerializer.Serialize(Sitemaps)});
+        if (saveResult.Success)
+        {
+            NotificationService.ShowSuccessNotification("Sitemaps updated");
+            await LoadData(new LoadDataArgs());
+        }
+        else
+        {
+            NotificationService.ShowNotifications(saveResult.Messages);
+        }
+    }
+    
+    private async Task AddNewSitemap()
+    {
+        var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>("Add New Sitemap");
+        var sitemapDialogResult = await sitemapDialog.Result;
+        if (sitemapDialogResult is { Confirmed: true, Data: SeoSitemap sitemap })
+        {
+            // Make sure they are not trying to add the same root content
+            if (Sitemaps.All(x => x.RootContentId != sitemap.RootContentId))
+            {
+                await UpdateSitemaps(sitemap);
+            }
+            else
+            {
+                NotificationService.ShowErrorNotification("Unable to add sitemap, you already have this content in the list");
+            }
+        }
+    }
+    
+    private async Task OnRowSelect(object value)
+    {
+        if (value is SeoSitemap selectedRow)
+        {
+            var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>("Add New Sitemap", new Dictionary<string, object>
+            {
+                { "SeoSitemap", selectedRow }
+            });
+            var sitemapDialogResult = await sitemapDialog.Result;
+            if (sitemapDialogResult is { Confirmed: true, Data: SeoSitemap sitemap })
+            {
+                if (selectedRow.RootContentId != sitemap.RootContentId)
+                {
+                    // they have changed the root content id. Remove the previous
+                    Sitemaps.RemoveWhere(x => x.RootContentId == selectedRow.RootContentId);
+                }
+                await UpdateSitemaps(sitemap);
+            }
+        }
+    }
+
+}

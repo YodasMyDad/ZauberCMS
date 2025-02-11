@@ -14,17 +14,21 @@ public class CanonicalSeoChecker : ISeoCheck
         var canonicalLinkExists = document.DocumentNode
             .SelectSingleNode("//link[@rel='canonical']") != null;
 
+        var seoItem = new SeoCheckResultItem();
+        
         if (!canonicalLinkExists)
         {
-            result.Status = SeoCheckStatus.Warning;
-            result.Message = "Canonical link is missing.";
+            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Message = "Canonical link is missing.";
         }
 
-        if (result.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == SeoCheckStatus.Success)
         {
-            result.Message = "Canonical link is present.";
+            seoItem.Message = "Canonical link is present.";
         }
 
+        result.Items.Add(seoItem);
+        
         return Task.FromResult(result);
     }
 

@@ -50,6 +50,11 @@ public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedLi
     /// Whether to get deleted items or not
     /// </summary>
     public bool? IsDeleted { get; set; } = false;
+
+    /// <summary>
+    /// Indicates whether the query should retrieve only root-level content items.
+    /// </summary>
+    public bool RootContentOnly { get; set; }
     
     /// <summary>
     /// Where clause builder

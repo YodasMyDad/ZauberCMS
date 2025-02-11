@@ -19,7 +19,7 @@
 </RadzenStack>
 
 @code {
-    [Inject] NotificationService NotificationService { get; set; } = default!;
+    [Inject] NotificationService NotificationService { get; set; } = null!;
     
     public string Name { get; set; } = "Content Picker";
     public string Alias { get; set; } = "ZauberCMS.ContentPicker";
@@ -43,6 +43,8 @@
     
     protected override async Task OnInitializedAsync()
     {
+        SettingsModel = Settings.FromJson<ContentPickerSettings>();
+        
         if (!Value.IsNullOrWhiteSpace())
         {
             if (Guid.TryParse(Value, out var singleId)) 
@@ -70,8 +72,6 @@
                 }
             }
         }
-        
-        SettingsModel = Settings.FromJson<ContentPickerSettings>();
     }
     
     private void SortList((int oldIndex, int newIndex) indices)
@@ -116,6 +116,15 @@
                 if (!SettingsModel.AllowedContentTypes.Contains(content.ContentTypeId))
                 {
                     NotificationService.ShowErrorNotification("You are not allowed to pick that content type");
+                    return;
+                }
+            }
+
+            if (SettingsModel.OnlyRootContent)
+            {
+                if (content.ParentId != null)
+                {
+                    NotificationService.ShowErrorNotification("You can only pick content at the root of the tree");
                     return;
                 }
             }

@@ -11,6 +11,8 @@ public class ImageAltSeoChecker : ISeoCheck
     {
         var result = new SeoCheckResult(Name);
         
+        var seoItem = new SeoCheckResultItem();
+        
         // Check for images without alt attributes
         var imagesWithoutAlt = document.DocumentNode
             .SelectNodes("//img[not(@alt) or normalize-space(@alt)='']")
@@ -18,15 +20,17 @@ public class ImageAltSeoChecker : ISeoCheck
 
         if (imagesWithoutAlt > 0)
         {
-            result.Status = SeoCheckStatus.Warning;
-            result.Message = $"{imagesWithoutAlt} image(s) are missing alt attributes.";
+            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Message = $"{imagesWithoutAlt} image(s) are missing alt attributes.";
         }
 
-        if (result.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == SeoCheckStatus.Success)
         {
-            result.Message = "All images have alt attributes.";
+            seoItem.Message = "All images have alt attributes.";
         }
 
+        result.Items.Add(seoItem);
+        
         return Task.FromResult(result);
     }
     public int SortOrder => 5;

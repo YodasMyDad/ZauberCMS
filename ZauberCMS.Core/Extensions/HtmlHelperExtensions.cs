@@ -3,6 +3,7 @@ using System.Web;
 using MediatR;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Rendering;
 using ZauberCMS.Core.Seo.Models;
 
@@ -10,7 +11,7 @@ namespace ZauberCMS.Core.Extensions;
 
 public static class HtmlHelperExtensions
 {
-    public static IHtmlContent GenerateMetaTags(this IHtmlHelper<dynamic> htmlHelper, string seoAlias, IMediator mediator, string? titleAlias = null, string? descriptionAlias = null)
+    public static async Task<IHtmlContent> GenerateMetaTags(this IHtmlHelper<dynamic> htmlHelper, string seoAlias, IMediator mediator, string? titleAlias = null, string? descriptionAlias = null)
     {
         if (htmlHelper.ViewData.Model is ZauberPageViewModel model)
         {
@@ -19,34 +20,33 @@ public static class HtmlHelperExtensions
             var metaData = model.GetValue<Meta>(seoAlias);
             if (metaData != null)
             {
+                var domain = htmlHelper.ViewContext.HttpContext.Request.Scheme + "://" + htmlHelper.ViewContext.HttpContext.Request.Host;
                 
                 // Basic meta tags
                 sb.AppendLine($"<title>{HttpUtility.HtmlEncode(metaData.PageTitle ?? model.Name)}</title>");
                 AddMetaTag(sb, "description", metaData.MetaDescription);
-                
-                
-                    /*<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
-                    <link rel="canonical" href="@url"/>
-                    <meta property="og:locale" content="en_GB"/>
-                    <meta property="og:type" content="article"/>
-                    <meta property="og:title" content="@pageTitle"/>
-                    <meta property="og:description" content="@metaDescription"/>
-                    <meta property="og:url" content="@url"/>
-                    <meta property="og:site_name" content="Lee"/>
-                    <meta property="article:published_time"
-                content="@Model.DateCreated.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssK")"/>
-                    @if (Model.HeaderImage != null)
+
+                if (metaData.OpenGraphImage != null)
                 {
-                    <meta property="og:image"
-                    content="@($"https://lee.uk/{Model.HeaderImage.Url}?width=1441&height=811&mode=stretch")"/>
-                        <meta property="og:image:width" content="1441"/>
-                        <meta property="og:image:height" content="811"/>
-                        <meta property="og:image:type" content="image/jpeg"/>
+                    var result = await mediator.GetMedia(metaData.OpenGraphImage.Value);
+                    if (result != null)
+                    {
+                        AddOpenGraphTag(sb, "og:image", $"{domain}/{result.Url}?width=1200&height=630&mode=stretch");
+                        AddOpenGraphTag(sb, "og:image:width", "1200");
+                        AddOpenGraphTag(sb, "og:image:height", "630");
+                        AddOpenGraphTag(sb, "og:image:type", "image/jpeg");
+                        AddMetaTag(sb, "twitter:card", "summary_large_image");
+                    }
                 }
-                <meta name="author" content="Lee M"/>
-                    <meta name="twitter:card" content="summary_large_image"/>
-                    <meta name="twitter:creator" content="https://twitter.com/yodasmydad"/>*/
+                AddOpenGraphTag(sb, "og:locale", System.Globalization.CultureInfo.CurrentCulture.Name);
+                AddOpenGraphTag(sb, "og:title", metaData.PageTitle ?? model.Name);
+                AddOpenGraphTag(sb, "og:description", metaData.MetaDescription);
+                AddOpenGraphTag(sb, "og:url", $"{domain}/{model.Url}");
                 
+                AddMetaTag(sb, "robots",
+                    metaData.HideFromSearchEngines ? "noindex" : "index, follow, max-image-preview:large");
+
+                AddLinkTag(sb, "canonical", $"{domain}/{model.Url}");
             }
             else
             {
@@ -54,19 +54,7 @@ public static class HtmlHelperExtensions
                 sb.AppendLine($"<title>{HttpUtility.HtmlEncode(model.GetValue<string>(titleAlias ?? "") ?? model.Name)}</title>");
                 AddMetaTag(sb, "description", model.GetValue<string>(descriptionAlias ?? ""));   
             }
-        
-            // Language meta
-            /*if (model.Language != null)
-            {
-                AddMetaTag(sb, "language", model.Language.Code);
-            }*/
-
-            // OpenGraph tags
-            /*AddOpenGraphTag(sb, "og:title", model.Name);
-            AddOpenGraphTag(sb, "og:type", "website");
-            AddOpenGraphTag(sb, "og:url", model.Url);
-            AddOpenGraphTag(sb, "og:updated_time", model.DateUpdated.ToString("O"));*/
-
+            
             return new HtmlString(sb.ToString());
         }
         

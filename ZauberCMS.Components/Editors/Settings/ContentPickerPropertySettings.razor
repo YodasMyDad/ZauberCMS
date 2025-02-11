@@ -20,6 +20,15 @@
     </CentreColumn>
 </EditorRow>
 
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Root Content Only" Description="Only allow the user to pick content that is in the root of the tree"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.OnlyRootContent" />
+    </CentreColumn>
+</EditorRow>
+
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
 </RadzenStack>

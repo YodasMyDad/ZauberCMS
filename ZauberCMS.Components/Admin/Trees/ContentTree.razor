@@ -15,8 +15,8 @@
 </BaseTree>
 
 @code {
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public TreeState TreeState { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
     
     [Parameter] public IEnumerable<Content> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
@@ -26,7 +26,6 @@
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
     // Dictionary to cache HasChildren results
-
     
     protected override void OnInitialized()
     {
@@ -44,6 +43,7 @@
                 IncludeChildren = true,
                 OrderBy = GetContentsOrderBy.SortOrder
             });
+            
             Data = items.Items.ToList();
         }
     }

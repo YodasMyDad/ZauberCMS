@@ -10,6 +10,8 @@ public class MetaDescriptionSeoCheck : ISeoCheck
     {
         var result = new SeoCheckResult(Name);
         
+        var seoItem = new SeoCheckResultItem();
+        
         // Check for meta description
         var metaDescription = document.DocumentNode
             .SelectSingleNode("//meta[@name='description']")?
@@ -17,20 +19,21 @@ public class MetaDescriptionSeoCheck : ISeoCheck
 
         if (string.IsNullOrWhiteSpace(metaDescription))
         {
-            result.Status = SeoCheckStatus.Error;
-            result.Message = "Meta description is missing.";
+            seoItem.Status = SeoCheckStatus.Error;
+            seoItem.Message = "Meta description is missing.";
         }
         else if (metaDescription.Length is < 150 or > 160)
         {
-            result.Status = SeoCheckStatus.Warning;
-            result.Message = "Meta description should ideally be between 150 and 160 characters.";
+            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Message = "Meta description should ideally be between 150 and 160 characters.";
         }
         
-        if (result.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == SeoCheckStatus.Success)
         {
-            result.Message = "Meta description is fine";
+            seoItem.Message = "Meta description is fine";
         }
 
+        result.Items.Add(seoItem);
         
         return Task.FromResult(result);
     }

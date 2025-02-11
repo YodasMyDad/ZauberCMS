@@ -1,0 +1,145 @@
+﻿@using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
+@implements IDisposable
+
+<BaseTree
+    T="TreeStub"
+    Data="@InitialData"
+    Expand="@OnExpandHandler"
+    Change="@OnChange"
+    @bind-Value="@Selection"
+    HasChildren="@(e => HasChildren(e))"
+    ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+    Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
+</BaseTree>
+
+@code {
+    
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
+    
+    private object? Selection { get; set; }
+
+    
+    /// <summary>
+    /// The data initially passed by the parent.
+    /// </summary>
+
+    [Parameter] public IEnumerable<TreeStub> InitialData { get; set; } = [];
+    
+    /// <summary>
+    /// An optional method to fetch refreshed data.
+    /// Use this if you want the tree to refresh by calling a user-defined method.
+    /// </summary>
+    [Parameter] public Func<Task<IEnumerable<TreeStub>>>? RefreshDataMethod { get; set; }
+
+
+    private bool ShouldBeExpanded(object data)
+    {
+        switch (data)
+        {
+            case TreeStub tree:
+                return TreeState.IsNodeExpanded(tree.Id);
+            case TreeBranch branch:
+                return TreeState.IsNodeExpanded(branch.Id);
+            default:
+                return false;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
+    }
+
+    /// <summary>
+    /// Remove the selected state
+    /// </summary>
+    /// <param name="obj"></param>
+    private void TreeStateOnOnTreeValueChanged(object obj)
+    {
+        if (obj != Selection)
+        {
+            Selection = null;
+            StateHasChanged();
+        }
+    }
+
+    private bool HasChildren(object data)
+    {
+        return data switch
+        {
+            TreeStub tree => tree.Branches.Any(),
+            TreeBranch branch => branch.Branches.Any(),
+            _ => false
+        };
+    }
+
+    private void OnExpandHandler(TreeExpandEventArgs args)
+    {
+        switch (args.Value)
+        {
+            case TreeStub treeStub:
+                if (treeStub.Branches.Any())
+                {
+                    args.Children.Data = treeStub.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
+                    args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(treeStub.Id);
+                }
+                break;
+            case TreeBranch branch:
+                if (branch.Branches.Any())
+                {
+                    args.Children.Data = branch.Branches;
+                    args.Children.TextProperty = "Name";
+                    args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
+                    args.Children.HasChildren = HasChildren;
+                    TreeState.NodeExpanded(branch.Id);
+                }
+                break;
+        }
+    }
+    
+    void OnChange()
+    {
+        TreeState.TreeValue = Selection;
+        switch (Selection)
+        {
+            case TreeStub treeStub:
+            {
+                if (!treeStub.Url.IsNullOrWhiteSpace())
+                {
+                    NavigationManager.NavigateTo(treeStub.Url);
+                }
+
+                break;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Refresh the tree data either by using the provided method or by passing a new data set.
+    /// </summary>
+    private async Task RefreshTree()
+    {
+        if (RefreshDataMethod is not null)
+        {
+            // Use the user-defined method to fetch data
+            InitialData = await RefreshDataMethod.Invoke();
+            
+            // Notify state change
+            StateHasChanged();
+        }
+    }
+
+
+    public void Dispose()
+    {
+        TreeState.OnTreeValueChanged -= TreeStateOnOnTreeValueChanged;
+    }
+
+}

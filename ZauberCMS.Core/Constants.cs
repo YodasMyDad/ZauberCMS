@@ -13,6 +13,7 @@ public static class Constants
         public static readonly Guid ContentTypeTreeRootId = new("bdff0832-1b3d-43b9-b546-1db5ade35b8b");
         public static readonly Guid ElementTypeTreeRootId = new("88e68720-fb1e-40b0-8735-35c5666235e1");
         public static readonly Guid AuditTreeRootId = new("4eb614c6-f399-4a50-8e36-6e3d1d716879");
+        public static readonly Guid SitemapTreeRootId = new("02648d85-5dab-4dfd-a0d8-750c9fd2d35b");
         public static readonly Guid LanguageTreeRootId = new("b8f3582d-fa55-4448-88b6-6389413bfcd2");
         public static readonly Guid LanguageDictionaryTreeRootId = new("72bffd18-ec43-4e85-8569-596fcd60a14c");
         public static readonly Guid UsersTreeRootId = new("86000c41-647d-49d2-9de5-e481b7b4a1c1");
@@ -62,6 +63,7 @@ public static class Constants
             public const string SettingsLanguagesNavGroup = "SettingsLanguagesNavGroup";
             public const string SettingsAdvancedNavGroup = "SettingsAdvancedNavGroup";
             public const string SettingsNavGroup = "SettingsNavGroup";
+            public const string SettingsSeoNavGroup = "SettingsSeoNavGroup";
         }
     }
     
