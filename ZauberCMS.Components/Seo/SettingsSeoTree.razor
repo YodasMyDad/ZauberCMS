@@ -22,7 +22,7 @@
     {
         var tree = new List<TreeStub>();
 
-        var auditTree = new TreeStub
+        var siteMapTree = new TreeStub
         {
             Id = Constants.Guids.SitemapTreeRootId,
             Name = "Sitemaps",
@@ -31,7 +31,18 @@
             Url = "/admin/seo/sitemaps"
         };
 
-        tree.Add(auditTree);
+        tree.Add(siteMapTree);
+        
+        var seoCheckerTree = new TreeStub
+        {
+            Id = Constants.Guids.SeoPageCheckerTreeRootId,
+            Name = "SEO Checker",
+            Icon = "troubleshoot",
+            SortOrder = 20,
+            Url = "/admin/seo/pagechecker"
+        };
+
+        tree.Add(seoCheckerTree);
         
         SeoData = tree;
     }

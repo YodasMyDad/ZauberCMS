@@ -24,11 +24,12 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             return result;
         }
 
-        var excludedTags = new HashSet<string> { "nav", "header", "footer", "aside" };
+        //var excludedTags = new HashSet<string> { "nav", "header", "footer", "aside" };
+        var excludedTags = new HashSet<string>();
         var links = contentNode.Descendants("a")
             .Where(a => a.Attributes["href"] != null &&
                         !string.IsNullOrEmpty(a.GetAttributeValue("href", "").Trim()) &&
-                        !a.GetAttributeValue("href", "").StartsWith("#") &&
+                        !a.GetAttributeValue("href", "").StartsWith('#') &&
                         !excludedTags.Contains(a.Ancestors().FirstOrDefault()?.Name ?? ""))
             .Select(a => a.GetAttributeValue("href", "").Trim())
             .Distinct()
@@ -49,7 +50,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
         // We grab a random user agent so we are not using the same one each time
         httpClient.DefaultRequestHeaders.Add("User-Agent", Constants.UserAgents.OrderBy(x => Guid.NewGuid()).FirstOrDefault());
         
-        foreach (var link in links)
+        foreach (var link in links.Take(50))
         {
             var seoItem = new SeoCheckResultItem { Message = link };
 
@@ -64,6 +65,9 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
                     seoItem.Message = $"Broken link: {link} (Status: {response.StatusCode})";
                     seoItems.Add(seoItem);
                 }
+                // Add 500ms delay between requests
+                await Task.Delay(500);
+
             }
             catch
             {
@@ -71,6 +75,15 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
                 seoItem.Message = $"Invalid or unreachable link: {link}";
                 seoItems.Add(seoItem);
             }
+        }
+
+        if (links.Count > 50)
+        {
+            seoItems.Add(new SeoCheckResultItem
+            {
+                Status = SeoCheckStatus.Warning,
+                Message = "More than 50 links. Only the first 50 have been checked."
+            });
         }
 
         result.Items.AddRange(seoItems);

@@ -1,0 +1,22 @@
+﻿@page "/admin/seo/pagechecker"
+@using ZauberCMS.Core
+
+@layout SectionLayout
+
+<PageTitle>SEO Page Checker</PageTitle>
+
+
+<RadzenPanel Class="rz-mx-auto">
+    <SeoChecker />
+</RadzenPanel>
+
+@code {
+
+    [CascadingParameter] protected SectionLayout? Layout { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Layout?.SetSection(Constants.Sections.SettingsSection);
+    }
+    
+}

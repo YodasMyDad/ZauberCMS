@@ -1,5 +1,4 @@
 ﻿using HtmlAgilityPack;
-using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Seo.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
@@ -19,19 +18,16 @@ public class HeadingOneSeoCheck : ISeoCheck
         {
             seoItem.Status = SeoCheckStatus.Error;
             seoItem.Message = "Page is missing an <h1> heading tag.";
+            result.Items.Add(seoItem);
         }
         else if (h1Tags.Count > 1)
         {
             seoItem.Status = SeoCheckStatus.Warning;
             seoItem.Message = $"Page contains multiple <h1> tags ({h1Tags.Count}). Consider reducing to one for better SEO.";
-        }
-        else
-        {
-            seoItem.Status = SeoCheckStatus.Success;
-            seoItem.Message = $"H1 found: '{h1Tags[0].InnerText.Trim()}'.";
+            result.Items.Add(seoItem);
         }
 
-        result.Items.Add(seoItem);
+
         return Task.FromResult(result);
     }
     

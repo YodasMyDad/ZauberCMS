@@ -1,8 +1,7 @@
 ﻿@using System.Text.Json
-@using HtmlAgilityPack
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Seo.Models
-@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Components.Seo
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenTabs TabPosition="TabPosition.Left">
@@ -79,31 +78,7 @@
             </EditorRow>
         </RadzenTabsItem>
         <RadzenTabsItem Text="SEO Tools">
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
-                <RadzenTextBox Style="width:26rem;" Placeholder="@(FullUrl)"/>
-                <RadzenButton Variant="Variant.Filled" Size="ButtonSize.Small" Text="Run SEO Checks" Click="@(() => RunSeoChecks())"/>
-                <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" Visible="@ShowLoader">
-                    <Template>Wait</Template>
-                </RadzenProgressBarCircular>
-            </RadzenStack>
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0em">
-                @foreach (var check in SeoCheckResults)
-                {
-                    foreach (var checkResultItem in check.Items)
-                    {
-                        var alertStyle = checkResultItem.Status switch
-                        {
-                            SeoCheckStatus.Success => AlertStyle.Success,
-                            SeoCheckStatus.Warning => AlertStyle.Warning,
-                            SeoCheckStatus.Error => AlertStyle.Danger,
-                            _ => AlertStyle.Info
-                        };
-                        <RadzenAlert AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light">
-                            @check.Name @(checkResultItem.Message)
-                        </RadzenAlert>   
-                    }
-                }
-            </RadzenStack>
+            <SeoChecker Content="Content" FullUrl="@FullUrl" />
         </RadzenTabsItem>
     </Tabs>
 </RadzenTabs>
@@ -123,13 +98,9 @@
     [Parameter] public Content? Content { get; set; }
     
     [CascadingParameter] public IModalService? ModalService { get; set; }
-
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     
     private Meta Meta { get; set; } = new();
     private string? FullUrl { get; set; }
-    private List<SeoCheckResult> SeoCheckResults { get; set; } = [];
-    private bool ShowLoader { get; set; }
     
     private async Task SetOpenGraphMedia(string? e)
     {
@@ -146,25 +117,6 @@
         }
 
         await NotifyValueChanged();
-    }
-
-    private async Task RunSeoChecks()
-    {
-        ShowLoader = true;
-        
-        SeoCheckResults = [];
-        
-        var seoChecks = ExtensionManager.GetInstances<ISeoCheck>(true);
-        
-        var web = new HtmlWeb();
-        var doc = web.Load(FullUrl);
-
-        foreach (var seoCheck in seoChecks.OrderBy(x => x.Value.SortOrder).ThenBy(x => x.Value.Name))
-        {
-            SeoCheckResults.Add(await seoCheck.Value.Check(FullUrl ?? string.Empty, doc, Content!));   
-        }
-        
-        ShowLoader = false;
     }
     
     protected override void OnInitialized()

@@ -1,0 +1,59 @@
+﻿@using HtmlAgilityPack
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Seo.Models
+
+<RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
+    <RadzenTextBox Style="width:26rem;" Placeholder="@(FullUrl)" @bind-Value="@FullUrl" />
+    <RadzenButton Variant="Variant.Filled" Size="ButtonSize.Small" Text="Run SEO Checks" Click="@(() => RunSeoChecks())"/>
+    <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" Visible="@ShowLoader">
+        <Template>Wait</Template>
+    </RadzenProgressBarCircular>
+</RadzenStack>
+<RadzenStack Orientation="Orientation.Vertical" Gap="0em">
+    @foreach (var check in SeoCheckResults)
+    {
+        foreach (var checkResultItem in check.Items)
+        {
+            var alertStyle = checkResultItem.Status switch
+            {
+                SeoCheckStatus.Success => AlertStyle.Success,
+                SeoCheckStatus.Warning => AlertStyle.Warning,
+                SeoCheckStatus.Error => AlertStyle.Danger,
+                _ => AlertStyle.Info
+            };
+            <RadzenAlert AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light">
+                @(checkResultItem.Message)
+            </RadzenAlert>
+        }
+    }
+</RadzenStack>
+
+@code
+{
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public string? FullUrl { get; set; }
+    
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    
+    private List<SeoCheckResult> SeoCheckResults { get; set; } = [];
+    private bool ShowLoader { get; set; }
+    
+    private async Task RunSeoChecks()
+    {
+        ShowLoader = true;
+        
+        SeoCheckResults = [];
+        
+        var seoChecks = ExtensionManager.GetInstances<ISeoCheck>(true);
+        
+        var web = new HtmlWeb();
+        var doc = web.Load(FullUrl);
+
+        foreach (var seoCheck in seoChecks.OrderBy(x => x.Value.SortOrder).ThenBy(x => x.Value.Name))
+        {
+            SeoCheckResults.Add(await seoCheck.Value.Check(FullUrl ?? string.Empty, doc, Content!));   
+        }
+        
+        ShowLoader = false;
+    }
+}
