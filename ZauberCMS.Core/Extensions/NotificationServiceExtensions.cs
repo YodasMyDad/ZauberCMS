@@ -10,6 +10,11 @@ public static class NotificationServiceExtensions
         notificationService.ShowNotification(summary, NotificationSeverity.Error, detail, duration);
     }
     
+    public static void ShowWarningNotification(this NotificationService notificationService, string summary, string? detail = null, double? duration = 4000)
+    {
+        notificationService.ShowNotification(summary, NotificationSeverity.Warning, detail, duration);
+    }
+    
     public static void ShowSuccessNotification(this NotificationService notificationService, string summary, string? detail = null, double? duration = 4000)
     {
         notificationService.ShowNotification(summary, NotificationSeverity.Success, detail, duration);

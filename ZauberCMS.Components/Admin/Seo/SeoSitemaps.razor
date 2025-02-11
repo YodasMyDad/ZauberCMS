@@ -29,7 +29,12 @@
                     @data.RootContent?.Name
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="Name" Title="File Name"/>
+            <RadzenDataGridColumn Property="Name" Title="File Name" />
+            <RadzenDataGridColumn Property="FileName" Title="File Path">
+                <Template Context="data">
+                    @($"/{data.FileName}.xml")
+                </Template>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn Property="FileName" Title="Delete" Width="90px" TextAlign="TextAlign.Center">
                 <Template Context="data">
                     <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.RootContentId))"/>
@@ -54,14 +59,10 @@
     
     async Task LoadData(LoadDataArgs args)
     {
-        GlobalData = await Mediator.Send(new GetGlobalDataCommand { Alias = SeoConstants.SeoSitemapName }) ?? new GlobalData();
-        if (GlobalData?.Data.IsNullOrWhiteSpace() == false)
+        Sitemaps = await Mediator.GetGlobalData<List<SeoSitemap>>(SeoConstants.SeoSitemapName) ?? [];
+        foreach (var seoSitemap in Sitemaps)
         {
-            Sitemaps = JsonSerializer.Deserialize<List<SeoSitemap>>(GlobalData.Data) ?? [];
-            foreach (var seoSitemap in Sitemaps)
-            {
-                seoSitemap.RootContent = await Mediator.GetContent(seoSitemap.RootContentId);
-            }
+            seoSitemap.RootContent = await Mediator.GetContent(seoSitemap.RootContentId);
         }
     }
     

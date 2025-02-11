@@ -19,6 +19,15 @@
 {
     <EditorRow>
         <LeftColumn>
+            <PropertyInfo Name="Domain" Description="The domain of the website (Used for the sitemap url)" />
+        </LeftColumn>
+        <CentreColumn>
+            <RadzenTextBox @bind-Value="@SeoSitemap!.Domain" Style="width: 100%;" />
+        </CentreColumn>
+    </EditorRow>
+    
+    <EditorRow>
+        <LeftColumn>
             <PropertyInfo Name="Name" Description="The name of the sitemap (Used for the file name)" />
         </LeftColumn>
         <CentreColumn>
@@ -76,7 +85,10 @@
         }
         else
         {
-            SeoSitemap = new SeoSitemap();
+            SeoSitemap = new SeoSitemap
+            {
+                Domain = new Uri(NavigationManager.Uri).GetLeftPart(UriPartial.Authority)
+            };
         }
         
         var contentTypes = await Mediator.Send(new QueryContentTypesCommand { ElementTypesOnly = false, OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000});
@@ -91,6 +103,10 @@
         }
         else
         {
+            if (SeoSitemap.Domain?.Contains("localhost", StringComparison.CurrentCultureIgnoreCase) == true)
+            {
+                NotificationService.ShowWarningNotification("You have saved the domain as localhost?");
+            }
             await BlazoredModal.CloseAsync(ModalResult.Ok(SeoSitemap));
         }
     }

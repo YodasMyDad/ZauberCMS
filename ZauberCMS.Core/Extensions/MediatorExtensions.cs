@@ -7,6 +7,7 @@ using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Settings;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Extensions;
 
@@ -121,5 +122,17 @@ public static class MediatorExtensions
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Queries content based on the provided command parameters.
+    /// </summary>
+    /// <param name="mediator">The mediator instance used to send the QueryContentCommand.</param>
+    /// <param name="command">The QueryContentCommand containing the parameters for the query.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a paginated list of content items.</returns>
+    public static async Task<PaginatedList<Content.Models.Content>> QueryContent(this IMediator mediator,
+        QueryContentCommand command)
+    {
+        return await mediator.Send(command);
     }
 }
