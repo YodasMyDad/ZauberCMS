@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Components.Seo.Models;
 using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Seo.Models;
 
@@ -56,6 +57,16 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                 // Prepare a list to hold sitemap entries
                 var sitemapEntries = new List<XElement>();
                 
+                var rootPage = await mediator.GetContent(seoSitemap.RootContentId);
+                if (rootPage == null) continue;
+                
+                if (rootPage.InternalRedirectId != null)
+                {
+                    rootPage = await mediator.GetContent(rootPage.InternalRedirectId);
+                }
+
+                if (rootPage != null) AddPageToSitemap(rootPage, sitemapEntries, seoSitemap, ns, true);
+
                 var contentItems = await mediator.QueryContent(new QueryContentCommand
                 {
                     AmountPerPage = 2000,
@@ -67,31 +78,7 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                     // Only allow if this item is under the root id
                     if (content.Path.Contains(seoSitemap.RootContentId))
                     {
-                        // Finally, need to see if this is using the SEO property and whether they
-                        // have ticked noindex or remove from sitemap
-                        var allowInSitemap = true;
-                        var seoProperty =
-                            content.ContentType?.ContentProperties.FirstOrDefault(x => x.Component == "ZauberCMS.Components.Editors.SeoProperty");
-                        if (seoProperty != null)
-                        {
-                            // We have an SEO property
-                            var metaData = content.GetValue<Meta>(seoProperty.Alias ?? "meh");
-                            if (metaData is { ExcludeFromSitemap: true } or { HideFromSearchEngines: true })
-                            {
-                                allowInSitemap = false;
-                            }
-                        }
-
-                        if (allowInSitemap)
-                        {
-                            // Add content data to the sitemap list
-                            sitemapEntries.Add(new XElement(ns + "url",
-                                new XElement(ns + "loc", $"{seoSitemap.Domain}/{content.Url}"),
-                                new XElement(ns + "lastmod", $"{content.DateUpdated:yyyy-MM-ddTHH:mm:sszzz}"),
-                                new XElement(ns + "changefreq", "weekly"), // Need to make configurable
-                                new XElement(ns + "priority", "0.5") // Need to make configurable
-                            ));   
-                        }
+                        AddPageToSitemap(content, sitemapEntries, seoSitemap, ns);
                     }
                 }
     
@@ -120,6 +107,36 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
         catch (Exception ex)
         {
             logger.LogError(ex, "Error generating sitemap.");
+        }
+    }
+    
+    private void AddPageToSitemap(Content content, List<XElement> sitemapEntries, SeoSitemap seoSitemap, XNamespace ns, bool isRootItem = false)
+    {
+        // Finally, need to see if this is using the SEO property and whether they
+        // have ticked noindex or remove from sitemap
+        var allowInSitemap = true;
+        var seoProperty =
+            content.ContentType?.ContentProperties.FirstOrDefault(x => x.Component == "ZauberCMS.Components.Editors.SeoProperty");
+        if (seoProperty != null)
+        {
+            // We have an SEO property
+            var metaData = content.GetValue<Meta>(seoProperty.Alias ?? "meh");
+            if (metaData is { ExcludeFromSitemap: true } or { HideFromSearchEngines: true })
+            {
+                allowInSitemap = false;
+            }
+        }
+
+        if (allowInSitemap)
+        {
+            var fullUrl = isRootItem ? seoSitemap.Domain : $"{seoSitemap.Domain}/{content.Url}";
+            // Add content data to the sitemap list
+            sitemapEntries.Add(new XElement(ns + "url",
+                new XElement(ns + "loc", fullUrl),
+                new XElement(ns + "lastmod", $"{content.DateUpdated:yyyy-MM-ddTHH:mm:sszzz}"),
+                new XElement(ns + "changefreq", "weekly"), // Need to make configurable
+                new XElement(ns + "priority", "0.5") // Need to make configurable
+            ));   
         }
     }
 }
