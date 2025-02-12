@@ -1,19 +1,16 @@
-﻿@using GaelJ.BlazorCodeMirror6.Models
-@using GaelJ.BlazorCodeMirror6
+﻿@using System.Diagnostics.CodeAnalysis
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@using BlazorMonaco.Editor
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<CodeMirror6Wrapper
-    @ref="@CodeMirror6WrapperRef"
-    @bind-Doc="@Code"
-    Language="@Language"
-    Editable="@(true)"
-    LineNumbers="@(true)"
-    LineWrapping="@(false)"
-    Theme="ThemeMirrorTheme.Copilot"
-    Setup="@_setup"
-    MaxHeight="25rem"
-    >
-</CodeMirror6Wrapper>
+<style>
+    .monaco-editor-container {height: @(SettingsModel.Height)px;}
+</style>
+
+<div>
+ <StandaloneCodeEditor @ref="_editor" OnDidChangeModelContent="@(e => OnChangeEditor(e))" ConstructionOptions="EditorConstructionOptions" />
+</div>
 
 @code {
     [Parameter] public string? Value { get; set; } = string.Empty;
@@ -22,43 +19,44 @@
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
     
+    [AllowNull]
+    private StandaloneCodeEditor _editor = null!;
+    
     public string Name { get; set; } = "Code Editor";
     public string Alias { get; set; } = "ZauberCMS.CodeEditor";
     public string Icon { get; set; } = "code";
     public string Description { get; set; } = "Editor for writing code";
-    public Type? SettingsComponent { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(CodeEditorPropertySettings);
     public bool FullWidth { get; set; }
-    public List<string> Scripts { get; set; } = [];
+    public List<string> Scripts { get; set; } = [
+        "_content/BlazorMonaco/jsInterop.js", 
+        "_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js", 
+        "_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js"
+    ];
     public List<string> Styles { get; set; } = [];
 
-    private CodeMirror6Wrapper CodeMirror6WrapperRef { get; set; } = default!;
-
-    /*
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private CodeEditorPropertySettingsModel SettingsModel { get; set; } = new();
+    protected override void OnInitialized()
     {
-        if (firstRender)
-        {
-            CodeMirror6WrapperRef.Setup = new CodeMirrorSetup { FocusOnCreation = false };
-            await InvokeAsync(StateHasChanged);
-
-        }
+        SettingsModel = Settings.FromJson<CodeEditorPropertySettingsModel>();
     }
-    */
-
-    private List<CodeMirrorLanguage> Languages =>
-        Enum.GetValues<CodeMirrorLanguage>()
-            .OrderBy(l => l == CodeMirrorLanguage.PlainText ? 0 : 1)
-            .ThenBy(l => l.ToString())
-            .ToList();
     
-    private CodeMirrorLanguage Language { get; set; } = CodeMirrorLanguage.Csharp;
+    private async Task OnChangeEditor(ModelContentChangedEvent e)
+    {
+        Code = await _editor.GetValue();
+    }
     
-    private readonly CodeMirrorSetup _setup = new() {
-        FocusOnCreation = false,
-        ScrollToEnd = false,
-        ScrollToStart = false
-        
-    };
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            AutomaticLayout = true,
+            GlyphMargin = true,
+            Value = Code,
+            Language = SettingsModel.Language,
+            Theme = "vs"
+        };
+    }
     
     private string? Code
     {

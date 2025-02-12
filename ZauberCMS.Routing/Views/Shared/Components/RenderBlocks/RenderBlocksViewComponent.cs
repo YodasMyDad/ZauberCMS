@@ -9,7 +9,7 @@ public class RenderBlocksViewComponent(ExtensionManager extensionManager) : View
 {
     public IViewComponentResult Invoke(List<Content> blocks, string cssSeparatorClasses)
     {
-        var contentBlockViews = extensionManager.GetInstances<IContentBlockView>();
+        var contentBlockViews = extensionManager.GetInstances<IContentBlockView>(true);
         
         var renderBlockModel = new RenderBlocksModel
         {

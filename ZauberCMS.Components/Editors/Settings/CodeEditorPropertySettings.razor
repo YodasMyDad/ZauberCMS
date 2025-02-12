@@ -1,0 +1,43 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ZauberCMS.Components.Editors.Models.CodeEditorPropertySettingsModel>
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Editor Height" Description="The height of the editor in pixels."/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenNumeric @bind-Value="@Settings.Height" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max height" } })"/>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Default Language" Description="Choose the default language for the editor."/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenDropDown 
+                        Data="@Settings.Languages"
+                        @bind-Value="@Settings.Language" 
+                        Style="width: 100%;"/>
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    public CodeEditorPropertySettingsModel Settings { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+
+}

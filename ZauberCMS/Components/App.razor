@@ -25,14 +25,14 @@
     <CascadingValue Value="IsAdmin">
         <Routes @rendermode="RenderModeForPage"/>
     </CascadingValue>
-    <script src="_framework/blazor.web.js"></script>
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.4/Sortable.min.js"></script>
     <script src="_content/ZauberCMS.Components/js/shadow-dom.js"></script>
     @foreach (var script in PageScripts)
     {
         <script src="@script"></script>
     }
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
 </body>
 </html>
 
