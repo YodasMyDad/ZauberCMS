@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS</PackageId>
-        <Version>3.1.0-beta1</Version>
+        <Version>3.1.0</Version>
         <Authors>Lee Messenger</Authors>
         <Description>The main ZauberCMS nuget package</Description>
         <PackageTags>Web</PackageTags>
@@ -60,8 +60,8 @@
         <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Components" Version="3.1.0-beta1"/>
-        <PackageReference Include="ZauberCMS.Routing" Version="3.1.0-beta1"/>
+        <PackageReference Include="ZauberCMS.Components" Version="3.1.0"/>
+        <PackageReference Include="ZauberCMS.Routing" Version="3.1.0"/>
     </ItemGroup>
 
     <ItemGroup>

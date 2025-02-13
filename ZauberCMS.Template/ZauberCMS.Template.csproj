@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-		<PackageVersion>3.0.1</PackageVersion>
+		<PackageVersion>3.1.0</PackageVersion>
 		<PackageType>Template</PackageType>
         <PackageId>ZauberCMS.Template</PackageId>
         <Title>ZauberCMS.Template</Title>
