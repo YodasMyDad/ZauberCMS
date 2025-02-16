@@ -23,15 +23,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.2" />
     </ItemGroup>
 
     <ItemGroup>
       <Folder Include="wwwroot\" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.2" />
         
         <PackageReference Include="ZauberCMS.Components" Version="3.1.1" />
     </ItemGroup>
