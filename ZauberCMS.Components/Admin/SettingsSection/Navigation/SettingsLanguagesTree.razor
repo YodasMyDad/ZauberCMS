@@ -21,12 +21,8 @@
 
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsLanguagesNavGroup;
-
-    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public TreeState TreeState { get; set; } = default!;
-    [Inject] public IModalService DialogService { get; set; } = default!;
+    
+    [Inject] public TreeState TreeState { get; set; } = null!;
 
     private IEnumerable<TreeStub> AdvancedData { get; set; } = [];
 
@@ -68,45 +64,6 @@
     {
         PrepareAdvancedTree();
         return Task.CompletedTask;
-    }
-    
-    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
-    {
-        var items = new List<ContextMenuItem>();
-        
-        if (args.Value is TreeStub treeStub)
-        {
-            if (treeStub.StubType == typeof(Language))
-            {
-                items.Add(new ContextMenuItem { Text = "Create", Value = 1 });   
-            }
-        }
-        
-        return items;
-    }
-
-    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
-    {
-        ContextMenuService.Open(args,
-            MenuItems(args),
-            async e =>
-            {
-                switch (e.Value)
-                {
-                    case 1:
-                        
-                        ContextMenuService.Close();
-                        var dialog = DialogService.OpenSidePanel<CreateLanguage>("Create Language");
-                        var result = await dialog.Result;
-                        if (result is { Confirmed: true, Data: Language language })
-                        {
-                           
-                        }       
-                        
-                        break;
-                }
-            }
-        );
     }
 
     private bool HasChildren(object data)
