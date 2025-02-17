@@ -44,6 +44,23 @@
     
     private RadzenTree Tree { get; set; } = null!;
 
+    private Dictionary<int, ITreeContextMenu> ContextMenus { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        var menuItems = ExtensionManager.GetInstances<ITreeContextMenu>(true);
+        var filteredMenuItems = menuItems
+            .Where(x => x.Value.Sections.Contains(TreeState.CurrentSection ?? "") || x.Value.TreeAlias.Contains(TreeAlias))
+            .OrderBy(x => x.Value.SortOrder)
+            .ToList();
+
+        for (var i = 0; i < filteredMenuItems.Count; i++)
+        {
+            var treeContextMenu = filteredMenuItems[i];
+            ContextMenus.Add(i, treeContextMenu.Value);
+        }
+    }
+
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (Expand.HasDelegate)
@@ -85,17 +102,40 @@
 
     private void OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
     {
-        var menuItems = ExtensionManager.GetInstances<ITreeContextMenu>(true);
-        foreach (var treeContextMenu in menuItems
-                     .Where(x => x.Value.Sections.Contains(TreeState.CurrentSection ?? ""))
-                     .OrderBy(x => x.Value.SortOrder))
+        if (ContextMenus.Any())
         {
             ContextMenuService.Open(args,
-                treeContextMenu.Value.ContentMenuItems(args), async void (e) => await treeContextMenu.Value.ContextMenuEvents(args, e, NavigationManager, ContextMenuService, ModalService));
+                MenuItems(args), async void (e) => await MenuAction(args, e, NavigationManager, ContextMenuService, ModalService));            
         }
+        
         /*if (ItemContextMenu.HasDelegate)
         {
             await ItemContextMenu.InvokeAsync(args);
         }*/
+    }
+
+    private List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
+    {
+        var menu = new List<ContextMenuItem>();
+        
+        foreach (var kvp in ContextMenus)
+        {
+            if (kvp.Value.CanShowContextMenu(args))
+            {
+                menu.Add(new ContextMenuItem{ Text = kvp.Value.Text(args), Value = kvp.Key, Icon = kvp.Value.Icon(args), IconColor = kvp.Value.IconColor(args) });        
+            }
+        }
+
+        return menu;
+    }
+
+    private Task MenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager, ContextMenuService contextMenuService, IModalService modalService)
+    {
+        var value = (int)e.Value;
+        if (ContextMenus.TryGetValue(value, out var contextMenu))
+        {
+            return contextMenu.ContextMenuAction(args, e, navigationManager, contextMenuService, modalService);
+        }
+        return Task.CompletedTask;
     }
 }
