@@ -12,6 +12,7 @@
     Data="@Data"
     Expand="@OnExpandHandler"
     Change="@OnChange"
+    ItemContextMenu="@ItemContextMenu"
     @bind-Value="@Selection"
     HasChildren="@(e => HasChildren(e))"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
@@ -24,8 +25,8 @@
 </RadzenStack>
 
 @code {
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public TreeState TreeState { get; set; } = default!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
     
     public string Name { get; set; } = "Navigation Tree";
     public string Alias { get; set; } = "ZauberCMS.NavigationTree";

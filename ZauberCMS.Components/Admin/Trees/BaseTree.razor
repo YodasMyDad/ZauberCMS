@@ -9,7 +9,7 @@
             Expand="@OnExpandHandler" 
             Change="@OnChangeHandler"
             Collapse="@OnCollapseHandler"
-            @bind-Value="@Value" 
+            @bind-Value="@Value"
             ItemContextMenu="@OnItemContextMenuHandler">
     <RadzenTreeLevel Expanded="@ShouldBeExpanded" 
                      HasChildren="@(e => HasChildren(e))"
@@ -30,6 +30,7 @@
     [Parameter] public string TreeAlias { get; set; } = Constants.Sections.Trees.BaseTree;
     [Parameter] public EventCallback<TreeExpandEventArgs> Expand { get; set; }
     [Parameter] public EventCallback<TreeEventArgs> Collapse { get; set; }
+    [Parameter] public EventCallback<TreeItemContextMenuEventArgs> ItemContextMenu { get; set; }
     [Parameter] public EventCallback Change { get; set; }
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
@@ -99,18 +100,20 @@
         }
     }
 
-    private void OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
+    private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
     {
-        if (ContextMenus.Any())
-        {
-            ContextMenuService.Open(args,
-                MenuItems(args), async void (e) => await MenuAction(args, e, NavigationManager, ContextMenuService, ModalService));            
-        }
-        
-        /*if (ItemContextMenu.HasDelegate)
+        if (ItemContextMenu.HasDelegate)
         {
             await ItemContextMenu.InvokeAsync(args);
-        }*/
+        }
+        else
+        {
+            if (ContextMenus.Any())
+            {
+                ContextMenuService.Open(args,
+                    MenuItems(args), async void (e) => await MenuAction(args, e, NavigationManager, ContextMenuService, ModalService));            
+            }
+        }
     }
 
     private List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
