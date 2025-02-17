@@ -22,10 +22,10 @@
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsStructureNavGroup;
 
-    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public TreeState TreeState { get; set; } = default!;
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
 
     private IEnumerable<TreeStub> StructureData { get; set; } = [];
     private object? Selection { get; set; }
@@ -63,67 +63,6 @@
             StateHasChanged();
         }
     }
-    
-    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
-    {
-        var items = new List<ContextMenuItem>();
-        
-        // Some logic here
-        if (args.Value is TreeBranch treeBranch)
-        {
-            if (treeBranch.BranchType == typeof(ContentType))
-            {
-                items.Add(new ContextMenuItem { Text = "Copy", Value = 1 });   
-            }
-        }
-        
-        if (args.Value is TreeStub treeStub)
-        {
-            if (treeStub.StubType == typeof(ContentType))
-            {
-                items.Add(new ContextMenuItem { Text = "Create", Value = 1 });   
-            }
-        }
-        
-        return items;
-    }
-    
-    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
-    {
-        ContextMenuService.Open(args,
-            MenuItems(args), 
-             e =>
-            {
-                if (args.Value is TreeBranch treeBranch)
-                {
-                    if (treeBranch.BranchType == typeof(ContentType))
-                    {
-                        switch(e.Value)
-                        {
-                            case 1:
-                                ContextMenuService.Close();
-                                NavigationManager.NavigateTo($"/admin/copycontentype/{treeBranch.Id}");
-                                break;
-                        }     
-                    }
-                }
-                if (args.Value is TreeStub treeStub)
-                {
-                    if (treeStub.StubType == typeof(ContentType))
-                    {
-                        switch(e.Value)
-                        {
-                            case 1:
-                                ContextMenuService.Close();
-                                NavigationManager.NavigateTo("/admin/createcontentype");
-                                break;
-                        }     
-                    }
-                }
-            }
-        );
-    }
-    
 
     private async Task HandleContentTypeTreeChanged(ContentType? contentType, string username)
     {
