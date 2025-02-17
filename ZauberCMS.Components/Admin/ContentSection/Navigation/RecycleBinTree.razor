@@ -7,11 +7,11 @@
 
 <div>
     <BaseTree
+        TreeAlias="RecycleBinTree"
         T="TreeStub"
         Data="@TreeItems"
         Expand="@OnExpandHandler"
         Change="@OnChangeHandler"
-        ItemContextMenu="@OnItemContextMenuHandler"
         @bind-Value="@Selection"
         HasChildren="@(e => HasChildren(e))"
         ShouldBeExpanded="@(e => ShouldBeExpanded(e))"

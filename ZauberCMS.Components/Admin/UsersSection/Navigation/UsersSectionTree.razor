@@ -10,16 +10,15 @@
 <UsersTree
     Data="@TreeItems"
     OnChange="OnChange"
-    @bind-Value="@Selection"
-    OnItemContextMenu="ItemContextMenu"/>
+    @bind-Value="@Selection" />
 
 @code {
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.UsersNavGroup;
     
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
     
     private IEnumerable<TreeStub> TreeItems { get; set; } = [];
     private object? Selection { get; set; }

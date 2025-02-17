@@ -1,4 +1,6 @@
-﻿@using ZauberCMS.Core.Shared.Interfaces
+﻿@using ZauberCMS.Components.Trees.ContextMenus
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Shared.Interfaces
 @using ZauberCMS.Core.Shared
 @typeparam T
 
@@ -20,22 +22,27 @@
         </Template>
     </RadzenTreeLevel>
 </RadzenTree>
+@*<p>@TreeState.CurrentSection</p>*@
 
 @code {
+    [CascadingParameter] public IModalService ModalService { get; set; } = null!;
+    
     [Parameter] public IEnumerable<T> Data { get; set; } = [];
+    [Parameter] public string TreeAlias { get; set; } = "BaseTree";
     [Parameter] public EventCallback<TreeExpandEventArgs> Expand { get; set; }
     [Parameter] public EventCallback<TreeEventArgs> Collapse { get; set; }
     [Parameter] public EventCallback Change { get; set; }
-    [Parameter] public EventCallback<TreeItemContextMenuEventArgs> ItemContextMenu { get; set; }
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
-    [Parameter] public Func<object, bool> HasChildren { get; set; } = default!;
-    [Parameter] public Func<object, bool> ShouldBeExpanded { get; set; } = default!;
+    [Parameter] public Func<object, bool> HasChildren { get; set; } = null!;
+    [Parameter] public Func<object, bool> ShouldBeExpanded { get; set; } = null!;
     [Parameter] public RenderFragment<object>? Template { get; set; }
 
-    [Inject] public TreeState TreeState { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
     
-    private RadzenTree Tree { get; set; } = default!;
+    private RadzenTree Tree { get; set; } = null!;
 
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
@@ -76,11 +83,19 @@
         }
     }
 
-    private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
+    private void OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
     {
-        if (ItemContextMenu.HasDelegate)
+        var menuItems = ExtensionManager.GetInstances<ITreeContextMenu>(true);
+        foreach (var treeContextMenu in menuItems
+                     .Where(x => x.Value.Sections.Contains(TreeState.CurrentSection ?? ""))
+                     .OrderBy(x => x.Value.SortOrder))
+        {
+            ContextMenuService.Open(args,
+                treeContextMenu.Value.ContentMenuItems(args), async void (e) => await treeContextMenu.Value.ContextMenuEvents(args, e, NavigationManager, ContextMenuService, ModalService));
+        }
+        /*if (ItemContextMenu.HasDelegate)
         {
             await ItemContextMenu.InvokeAsync(args);
-        }
+        }*/
     }
 }

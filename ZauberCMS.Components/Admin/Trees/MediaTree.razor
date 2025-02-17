@@ -1,5 +1,4 @@
 ﻿@using System.Collections.Concurrent
-@using ZauberCMS.Components.Admin.MediaSection.Dialogs
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Media.Models
@@ -7,9 +6,9 @@
 
 <BaseTree T="Media"
           Data="@Data"
+          TreeAlias="MediaTree"
           Expand="@OnExpandHandler"
           Change="@OnChangeHandler"
-          ItemContextMenu="@OnItemContextMenuHandler"
           @bind-Value="@Value"
           HasChildren="@(e => HasChildren(e))"
           ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
@@ -17,10 +16,10 @@
 </BaseTree>
 
 @code {
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public TreeState TreeState { get; set; } = default!;
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
 
     [Parameter] public IEnumerable<Media> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
@@ -33,8 +32,6 @@
 
     // Dictionary to cache HasChildren results
     private ConcurrentDictionary<Guid, bool>? _hasChildrenCache;
-    private IModalReference? CreateFolderModal { get; set; }
-    private IModalReference? UpdateMediaModal { get; set; }
 
     protected override void OnInitialized()
     {
@@ -138,87 +135,6 @@
         {
             await OnChange.InvokeAsync();
         }
-    }
-
-    private static List<ContextMenuItem> MediaContextMenuItems(TreeItemContextMenuEventArgs args)
-    {
-        var items = new List<ContextMenuItem>();
-        // Some logic here
-        if (args.Value is Media { MediaType: MediaType.Folder })
-        {
-            items.Add(new ContextMenuItem { Text = "Create Folder", Value = 1 });
-            items.Add(new ContextMenuItem { Text = "Upload Media", Value = 2 });
-        }
-
-        items.Add(new ContextMenuItem { Text = "Delete", Value = 3 });
-
-        return items;
-    }
-
-    private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
-    {
-        if (OnItemContextMenu.HasDelegate)
-        {
-            await OnItemContextMenu.InvokeAsync(args);
-        }
-        else
-        {
-            // Add all of them
-            ContextMenuService.Open(args,
-                MediaContextMenuItems(args),
-                async e =>
-                {
-                    var media = (Media)args.Value;
-                    /*var dbContent = await Mediator.Send(new GetMediaCommand { Id = media.Id, IncludeChildren = true });*/
-                    //var text = args.Text;
-                    switch (e.Value)
-                    {
-                        case 1:
-                            var createParams = new Dictionary<string, object>
-                            {
-                                { nameof(UpdateMediaForm.ParentId), media.Id },
-                                { nameof(UpdateMediaForm.ValueChanged), EventCallback.Factory.Create<Media>(this, OnFolderCreate) }
-                            };
-                            ContextMenuService.Close();
-                            CreateFolderModal = ModalService?.OpenSidePanel<UpdateMediaForm>("Create Folder", createParams);
-                            break;
-                        case 2:
-                            var uploadParams = new Dictionary<string, object>
-                            {
-                                { nameof(MultipleMediaUpload.ParentId), media.Id },
-                                { nameof(MultipleMediaUpload.ValueChanged), EventCallback.Factory.Create<List<Media>>(this, OnUploadMedia) }
-                            };
-                            ContextMenuService.Close();
-                            UpdateMediaModal = ModalService?.OpenSidePanel<MultipleMediaUpload>("Upload Media", uploadParams);
-                            break;
-                        case 3:
-                            var deleteResult = await Mediator.Send(new DeleteMediaCommand { MediaId = media.Id });
-                            if (deleteResult.Success)
-                            {
-                                // Only redirect if on item being deleted? How do we check that?
-                                //NavigationManager.NavigateTo("/admin/media", forceLoad: true);
-                                NotificationService.ShowSuccessNotification("Media deleted");
-                            }
-                            else
-                            {
-                                NotificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
-                            }
-
-                            break;
-                    }
-                }
-            );
-        }
-    }
-
-    private void OnFolderCreate(Media value)
-    {
-        CreateFolderModal?.Close();
-    }
-
-    private void OnUploadMedia(List<Media> value)
-    {
-        UpdateMediaModal?.Close();
     }
 
     private bool HasChildren(object data)

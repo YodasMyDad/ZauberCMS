@@ -6,6 +6,7 @@
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
 <BaseTree
+    TreeAlias="SettingsLanguagesTree"
     T="TreeStub"
     Data="@AdvancedData"
     Expand="@OnExpandHandler"
@@ -13,7 +14,6 @@
     @bind-Value="@Selection"
     HasChildren="@(e => HasChildren(e))"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
-    ItemContextMenu="@ItemContextMenu"
     Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
 </BaseTree>
 

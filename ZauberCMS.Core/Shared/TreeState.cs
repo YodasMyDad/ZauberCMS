@@ -72,4 +72,6 @@ public class TreeState
             HasChildrenCache.Clear();
         }
     }
+    
+    public string? CurrentSection { get; set; }
 }

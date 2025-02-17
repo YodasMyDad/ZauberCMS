@@ -4,9 +4,9 @@
 <BaseTree
     T="TreeStub"
     Data="@Data"
+    TreeAlias="UsersTree"
     Expand="@OnExpandHandler"
     Change="@OnChangeHandler"
-    ItemContextMenu="@OnItemContextMenuHandler"
     @bind-Value="@Value"
     HasChildren="@(e => HasChildren(e))"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
@@ -17,7 +17,6 @@
     [Parameter] public IEnumerable<TreeStub> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
-    [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
@@ -59,14 +58,6 @@
         if (OnChange.HasDelegate)
         {
             await OnChange.InvokeAsync();
-        }
-    }
-
-    private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
-    {
-        if (OnItemContextMenu.HasDelegate)
-        {
-            await OnItemContextMenu.InvokeAsync(args);
         }
     }
 

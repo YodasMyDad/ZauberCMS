@@ -4,6 +4,7 @@
 
 <BaseTree
     T="TreeStub"
+    TreeAlias="GenericTree"
     Data="@InitialData"
     Expand="@OnExpandHandler"
     Change="@OnChange"
@@ -21,7 +22,6 @@
     [Inject] public TreeState TreeState { get; set; } = null!;
     
     private object? Selection { get; set; }
-
     
     /// <summary>
     /// The data initially passed by the parent.
