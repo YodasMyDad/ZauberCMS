@@ -22,13 +22,12 @@
         </Template>
     </RadzenTreeLevel>
 </RadzenTree>
-@*<p>@TreeState.CurrentSection</p>*@
 
 @code {
     [CascadingParameter] public IModalService ModalService { get; set; } = null!;
     
     [Parameter] public IEnumerable<T> Data { get; set; } = [];
-    [Parameter] public string TreeAlias { get; set; } = "BaseTree";
+    [Parameter] public string TreeAlias { get; set; } = Constants.Sections.Trees.BaseTree;
     [Parameter] public EventCallback<TreeExpandEventArgs> Expand { get; set; }
     [Parameter] public EventCallback<TreeEventArgs> Collapse { get; set; }
     [Parameter] public EventCallback Change { get; set; }

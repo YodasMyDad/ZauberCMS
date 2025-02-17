@@ -4,7 +4,7 @@
 <BaseTree
     T="TreeStub"
     Data="@Data"
-    TreeAlias="UsersTree"
+    TreeAlias="@Constants.Sections.Trees.UsersTree"
     Expand="@OnExpandHandler"
     Change="@OnChangeHandler"
     @bind-Value="@Value"
@@ -20,9 +20,9 @@
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
 
-    [Inject] public TreeState TreeState { get; set; } = default!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
     
-    private RadzenTree Tree { get; set; } = default!;
+    private RadzenTree Tree { get; set; } = null!;
 
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {

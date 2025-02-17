@@ -15,7 +15,3 @@ public interface ITreeContextMenu
     Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager, ContextMenuService contextMenuService, IModalService modalService);
     int SortOrder { get; }
 }
-
-
-/*Func<TreeItemContextMenuEventArgs, bool> CanShowContextMenu();*/
-/*Func<TreeItemContextMenuEventArgs, MenuItemEventArgs, NavigationManager, ContextMenuService, IModalService, Task> ContextMenuAction();*/

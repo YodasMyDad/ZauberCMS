@@ -7,7 +7,7 @@
 
 <div>
     <BaseTree
-        TreeAlias="RecycleBinTree"
+        TreeAlias="@Constants.Sections.Trees.RecycleBinTree"
         T="TreeStub"
         Data="@TreeItems"
         Expand="@OnExpandHandler"
@@ -20,11 +20,8 @@
 </div>
 
 @code {
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public TreeState TreeState { get; set; } = default!;
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public DialogService ConfirmService { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
 
     public int SortOrder => 100;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
@@ -134,61 +131,6 @@
                 break;
             }
         }
-    }
-    
-    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
-    {
-        var items = new List<ContextMenuItem>();
-        
-        if (args.Value is TreeBranch branch)
-        {
-            items.Add(new ContextMenuItem { Text = "Restore", Value = 1 });
-            items.Add(new ContextMenuItem { Text = "Delete", Value = 2 });
-        }
-        
-        return items;
-    }
-
-    private Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
-    {
-        ContextMenuService.Open(args,
-            MenuItems(args), async e =>
-            {
-                var branch = (TreeBranch)args.Value;
-                var dbContent = await Mediator.Send(new GetContentCommand { Id = branch.Id, IncludeChildren = true });
-
-                switch (e.Value)
-                {
-                    case 1:
-                        ContextMenuService.Close();
-                        dbContent!.Deleted = false;
-                        var saveResult = await Mediator.Send(new SaveContentCommand{ Content = dbContent, ExcludePropertyData = true});
-                        if (saveResult.Success)
-                        {
-                            await AppState.NotifyContentChanged(dbContent, CurrentUser?.Name ?? "Unknown");
-                        }
-                        break;
-                    case 2:
-                        ContextMenuService.Close();
-                        var delete = await ConfirmService.Confirm("Permanently delete this?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
-                        if (delete == true)
-                        {
-                            var result = await Mediator.Send(new DeleteContentCommand{ContentId = dbContent!.Id});
-                            NotificationService.Notify(new NotificationMessage { 
-                                Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
-                                Summary = result.Success ? "Success" : "Error", 
-                                Detail = result.Messages.MessagesAsString(), Duration = 4000 });
-                            if (result.Success)
-                            {
-                                // Hard reload as could be in the edit screen
-                                NavigationManager.NavigateTo("/admin", forceLoad: true); 
-                            }
-                        }
-                        break;
-                }
-            }
-        );
-        return Task.CompletedTask;
     }
 
     private bool HasChildren(object data)

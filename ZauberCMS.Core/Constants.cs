@@ -69,6 +69,19 @@ public static class Constants
         public const string UsersSection = "UsersSection";
         public const string FormsSection = "FormsSection";
 
+        public static class Trees
+        {
+            public const string UsersTree = "UsersTree";
+            public const string RecycleBinTree = "RecycleBinTree";
+            public const string SettingsLanguagesTree = "SettingsLanguagesTree";
+            public const string SettingsStructureTree = "SettingsStructureTree";
+            public const string ContentTree = "ContentTree";
+            public const string GenericTree = "GenericTree";
+            public const string MediaTree = "MediaTree";
+            public const string NavigationPropertyTree = "NavigationPropertyTree";
+            public const string BaseTree = "BaseTree";
+        }
+        
         public static class SectionNavGroups
         {
             public const string ContentNavGroup = "ContentNavGroup";

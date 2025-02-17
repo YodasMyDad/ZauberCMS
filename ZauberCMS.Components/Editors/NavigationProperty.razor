@@ -2,11 +2,12 @@
 @using ZauberCMS.Components.Admin.Trees
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <BaseTree
-    TreeAlias="NavigationPropertyTree"
+    TreeAlias="@Constants.Sections.Trees.NavigationPropertyTree"
     T="NavigationItem"
     Data="@Data"
     Expand="@OnExpandHandler"

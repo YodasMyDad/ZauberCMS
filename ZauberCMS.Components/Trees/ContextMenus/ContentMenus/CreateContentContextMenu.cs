@@ -11,11 +11,8 @@ public class CreateContentContextMenu : ITreeContextMenu
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias { get; } = [];
     public string Text(TreeItemContextMenuEventArgs args) => "Create";
-
     public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
-
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
-
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
     {
         return args.Value is Content;
