@@ -11,7 +11,7 @@ namespace ZauberCMS.Components.Trees.ContextMenus.MediaMenus;
 
 public class CreateFolderContextMenu() : ITreeContextMenu
 {
-    public List<string> Sections => [Constants.Sections.ContentSection];
+    public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
     public string Text(TreeItemContextMenuEventArgs args) => "Create Folder";
     public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
