@@ -6,7 +6,7 @@ namespace ZauberCMS.Core.Seo.Checks;
 
 public partial class TitleH1KeywordMatchCheck : ISeoCheck
 {
-    public string Name => "Title-H1 Keyword Match Check";
+    public string Name => "Keyword Match Check";
 
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
     {
@@ -39,9 +39,16 @@ public partial class TitleH1KeywordMatchCheck : ISeoCheck
             if (!matchingWords.Any())
             {
                 seoItem.Status = SeoCheckStatus.Warning;
-                seoItem.Message = "No meaningful words from the title appear in the <h1>. Consider aligning them for better SEO.";
+                seoItem.Message = "No keywords from the title appear in the <h1>. Consider aligning them for better SEO.";
                 result.Items.Add(seoItem);
             }
+        }
+
+        if (result.Items.Count == 0)
+        {
+            seoItem.Status = SeoCheckStatus.Success;
+            seoItem.Message = "Page title and <h1> contain keywords words that match.";
+            result.Items.Add(seoItem);
         }
         
         return Task.FromResult(result);

@@ -27,6 +27,12 @@ public class HeadingOneSeoCheck : ISeoCheck
             result.Items.Add(seoItem);
         }
 
+        if (result.Items.Count == 0)
+        {
+            seoItem.Status = SeoCheckStatus.Success;
+            seoItem.Message = "Page contains an <h1> heading tag.";
+            result.Items.Add(seoItem);
+        }
 
         return Task.FromResult(result);
     }

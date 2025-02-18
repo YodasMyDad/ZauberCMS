@@ -21,7 +21,7 @@
                 SeoCheckStatus.Error => AlertStyle.Danger,
                 _ => AlertStyle.Info
             };
-            <RadzenAlert AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light">
+            <RadzenAlert Title="@check.Name" AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light" AllowClose="false">
                 @(checkResultItem.Message)
             </RadzenAlert>
         }

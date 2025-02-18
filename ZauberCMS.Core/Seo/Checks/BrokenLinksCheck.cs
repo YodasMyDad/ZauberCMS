@@ -40,7 +40,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             result.Items.Add(new SeoCheckResultItem
             {
                 Status = SeoCheckStatus.Warning,
-                Message = "No valid content links found on the page. Internal links within body content improve SEO."
+                Message = "No valid content links found on the page. Internal links, within content can help improve SEO"
             });
             return result;
         }
@@ -83,6 +83,15 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             {
                 Status = SeoCheckStatus.Warning,
                 Message = "More than 50 links. Only the first 50 have been checked."
+            });
+        }
+
+        if (seoItems.Count == 0)
+        {
+            result.Items.Add(new SeoCheckResultItem
+            {
+                Status = SeoCheckStatus.Success,
+                Message = "No broken links found."
             });
         }
 
