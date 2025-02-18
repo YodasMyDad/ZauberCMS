@@ -6,6 +6,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data.Models;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Search.Models;
 using ZauberCMS.Core.Tags.Models;
 
 namespace ZauberCMS.Core.Data;
@@ -37,6 +38,7 @@ public class ZauberDbContext(DbContextOptions options, IConfiguration configurat
     public DbSet<TagItem> TagItems => Set<TagItem>();
     public DbSet<LanguageDictionary> LanguageDictionaries => Set<LanguageDictionary>();
     public DbSet<LanguageText> LanguageTexts => Set<LanguageText>();
+    public DbSet<AdminSearchResult> AdminSearchResults => Set<AdminSearchResult>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
