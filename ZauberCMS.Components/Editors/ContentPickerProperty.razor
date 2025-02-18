@@ -94,7 +94,8 @@
     {
         var parameters = new Dictionary<string, object>
         {
-            { nameof(ContentTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) }
+            { nameof(ContentTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) },
+            { nameof(ContentTree.DisableContextMenu), true }
         };
 
         Modal = ModalService?.OpenSidePanel<ContentTree>("Choose Content", parameters);

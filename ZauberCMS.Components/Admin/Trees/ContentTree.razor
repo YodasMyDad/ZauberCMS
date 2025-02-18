@@ -10,6 +10,7 @@
     Change="@OnChangeHandler"
     @bind-Value="@Value"
     HasChildren="@(e => HasChildren(e))"
+    DisableContextMenu="DisableContextMenu"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
     Template="@(CreateTreeTemplate<object>())">
 </BaseTree>
@@ -23,7 +24,8 @@
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
-
+    [Parameter] public bool DisableContextMenu { get; set; }
+    
     // Dictionary to cache HasChildren results
     
     protected override void OnInitialized()

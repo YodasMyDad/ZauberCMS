@@ -12,6 +12,7 @@
           @bind-Value="@Value"
           HasChildren="@(e => HasChildren(e))"
           ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+          DisableContextMenu="DisableContextMenu"
           Template="@(CreateTreeTemplate<object>())">
 </BaseTree>
 
@@ -27,7 +28,7 @@
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
     [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
-
+    [Parameter] public bool DisableContextMenu { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
 
     // Dictionary to cache HasChildren results

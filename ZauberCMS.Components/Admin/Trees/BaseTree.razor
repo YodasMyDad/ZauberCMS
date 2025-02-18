@@ -37,6 +37,7 @@
     [Parameter] public Func<object, bool> HasChildren { get; set; } = null!;
     [Parameter] public Func<object, bool> ShouldBeExpanded { get; set; } = null!;
     [Parameter] public RenderFragment<object>? Template { get; set; }
+    [Parameter] public bool DisableContextMenu { get; set; }
 
     [Inject] public TreeState TreeState { get; set; } = null!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
@@ -102,17 +103,21 @@
 
     private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
     {
-        if (ItemContextMenu.HasDelegate)
+        if (!DisableContextMenu)
         {
-            await ItemContextMenu.InvokeAsync(args);
-        }
-        else
-        {
-            if (ContextMenus.Any())
+            if (ItemContextMenu.HasDelegate)
             {
-                ContextMenuService.Open(args,
-                    MenuItems(args), async void (e) => await MenuAction(args, e, NavigationManager, ContextMenuService, ModalService));            
+                await ItemContextMenu.InvokeAsync(args);
             }
+            else
+            {
+                if (ContextMenus.Any())
+                {
+                    ContextMenuService.Open(args,
+                        MenuItems(args), e => Task.Run(() => MenuAction(args, e, NavigationManager, ContextMenuService, ModalService)));
+            
+                }
+            }   
         }
     }
 

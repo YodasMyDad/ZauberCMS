@@ -99,7 +99,8 @@
     {
         var parameters = new Dictionary<string, object>
         {
-            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) }
+            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) },
+            { nameof(MediaTree.DisableContextMenu), true }
         };
 
         Modal = ModalService?.OpenSidePanel<MediaTree>("Choose Media", parameters);
