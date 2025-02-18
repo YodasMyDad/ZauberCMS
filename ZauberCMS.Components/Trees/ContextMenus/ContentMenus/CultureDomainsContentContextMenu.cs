@@ -59,19 +59,11 @@ public class CultureDomainsContentContextMenu(
                     { Content = savedContent, ExcludePropertyData = true });
                 if (!saveResult.Success)
                 {
-                    notificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Error, Summary = "Error",
-                        Detail = saveResult.Messages.MessagesAsString(), Duration = 4000
-                    });
+                    notificationService.ShowErrorNotification("Error", saveResult.Messages.MessagesAsString());
                 }
                 else
                 {
-                    notificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success, Summary = "Culture Updated", Detail = string.Empty,
-                        Duration = 4000
-                    });
+                    notificationService.ShowSuccessNotification("Culture Updated");
                     await appState.NotifyContentChanged(dbContent, currentUser?.Name ?? "Unknown");
                 }
             }

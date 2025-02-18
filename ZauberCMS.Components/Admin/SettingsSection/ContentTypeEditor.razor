@@ -183,12 +183,12 @@
 </RadzenPanel>
 
 @code {
-    [Inject] public IModalService DialogService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-    [Inject] public ValidateService<ContentType> ValidateService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    [Inject] public ValidateService<ContentType> ValidateService { get; set; } = null!;
     [Inject] public IWebHostEnvironment Env { get; set; } = null!;
     
     [Parameter] public Guid? ContentTypeId { get; set; }
@@ -204,9 +204,9 @@
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
     private bool ShowDeleteButton { get; set; }
     private int SelectedTabIndex { get; set; }
-    private RadzenTabs Tabs { get; set; } = default!;
+    private RadzenTabs Tabs { get; set; } = null!;
     private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
-    private AuthenticationState AuthState { get; set; } = default!;
+    private AuthenticationState AuthState { get; set; } = null!;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -236,6 +236,11 @@
         var contentTypes = await Mediator.Send(new QueryContentTypesCommand { ElementTypesOnly = false, OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000});
         ContentTypes = contentTypes.Items.ToList();
 
+        if (ContentTypes.Count <= 0)
+        {
+            ContentType.AllowAtRoot = true;
+        }
+        
         LoadViewFiles();
         InitializeTabs();
         InitializeContentViews();
