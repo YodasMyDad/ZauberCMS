@@ -15,7 +15,7 @@ public class FinalDeleteContentContextMenu(IMediator mediator, DialogService dia
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.RecycleBinTree];
     public string Text(TreeItemContextMenuEventArgs args) => "Delete";
 
-    public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
+    public string Icon(TreeItemContextMenuEventArgs args) => "dangerous";
 
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
 

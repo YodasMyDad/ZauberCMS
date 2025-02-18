@@ -15,7 +15,7 @@ public class CreateLanguageContextMenu() : ITreeContextMenu
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.SettingsLanguagesTree];
     public string Text(TreeItemContextMenuEventArgs args) => "Create";
 
-    public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
+    public string Icon(TreeItemContextMenuEventArgs args) => "add";
 
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
 

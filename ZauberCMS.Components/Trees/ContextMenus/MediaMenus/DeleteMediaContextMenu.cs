@@ -14,7 +14,7 @@ public class DeleteMediaContextMenu(IMediator mediator, NotificationService noti
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
     public string Text(TreeItemContextMenuEventArgs args) => "Delete";
-    public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
+    public string Icon(TreeItemContextMenuEventArgs args) => "close";
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
     {

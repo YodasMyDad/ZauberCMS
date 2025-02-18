@@ -13,7 +13,7 @@ public class CopyContentTypeContextMenu() : ITreeContextMenu
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.SettingsStructureTree];
     public string Text(TreeItemContextMenuEventArgs args) => "Copy";
 
-    public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
+    public string Icon(TreeItemContextMenuEventArgs args) => "content_copy";
 
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
 

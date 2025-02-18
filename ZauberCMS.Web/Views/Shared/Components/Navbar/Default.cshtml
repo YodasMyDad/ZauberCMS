@@ -3,7 +3,7 @@
 <ul class="navbar-nav ms-auto py-4 py-lg-0">
     @if (Model.Website != null)
     {
-        @foreach (var p in Model.Website.Children.Where(x => !x.HideFromNavigation).OrderBy(x => x.SortOrder))
+        @foreach (var p in Model.Website.Children.Where(x => x is { HideFromNavigation: false, Deleted: false }).OrderBy(x => x.SortOrder))
         {
             var navLinkClass = "nav-link px-lg-3 py-3 py-lg-4" + (Model.CurrentPath == $"/{p.Url}" ? " active" : "");
 

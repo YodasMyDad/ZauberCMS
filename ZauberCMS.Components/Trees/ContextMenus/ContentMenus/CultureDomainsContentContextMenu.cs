@@ -25,7 +25,7 @@ public class CultureDomainsContentContextMenu(
         return content.IsRootContent ? "Culture & Domains" : "Culture";
     }
 
-    public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
+    public string Icon(TreeItemContextMenuEventArgs args) => "bungalow";
 
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
 

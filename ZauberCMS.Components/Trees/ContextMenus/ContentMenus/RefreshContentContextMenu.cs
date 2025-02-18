@@ -22,7 +22,7 @@ public class RefreshContentContextMenu(
 
     public string Text(TreeItemContextMenuEventArgs args) => "Refresh";
 
-    public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
+    public string Icon(TreeItemContextMenuEventArgs args) => "frame_reload";
 
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
 

@@ -16,7 +16,7 @@ public class RestoreContextMenu(IMediator mediator, AppState appState) : ITreeCo
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.RecycleBinTree];
     public string Text(TreeItemContextMenuEventArgs args) => "Restore";
 
-    public string Icon(TreeItemContextMenuEventArgs args) => string.Empty;
+    public string Icon(TreeItemContextMenuEventArgs args) => "settings_backup_restore";
 
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
 

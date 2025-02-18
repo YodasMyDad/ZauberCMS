@@ -74,7 +74,7 @@
         }
 
         // Filter via the Where method
-        command.Filter = !string.IsNullOrEmpty(args.Filter) ? args.Filter : "";
+        command.Filter = !string.IsNullOrEmpty(args.Filter) ? args.Filter : "it => it.MediaType != 0";
 
         // Sort via the OrderBy method
         command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateUpdated desc";
