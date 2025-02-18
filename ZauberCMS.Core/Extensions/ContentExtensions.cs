@@ -29,7 +29,7 @@ public static class ContentExtensions
     /// <param name="mediator">The mediator to send queries to retrieve media information.</param>
     /// <param name="fallBackUrl">A fallback URL to use if no media is found.</param>
     /// <returns>Returns a list of media items if found; otherwise, returns a list containing a single media item with the fallback URL.</returns>
-    public static async Task<List<Media.Models.Media>> GetMedias(this IHasPropertyValues content, string? alias,
+    public static async Task<List<Media.Models.Media>> GetMediaItems(this IHasPropertyValues content, string? alias,
         IMediator mediator, string? fallBackUrl = null)
     {
         if (!string.IsNullOrEmpty(alias))
@@ -58,7 +58,7 @@ public static class ContentExtensions
     /// <param name="propertyAlias"></param>
     /// <param name="mediator"></param>
     /// <returns></returns>
-    public static async Task<List<Content.Models.Content>> GetContents(this IHasPropertyValues content, string? propertyAlias, IMediator mediator)
+    public static async Task<List<Content.Models.Content>> GetContentItems(this IHasPropertyValues content, string? propertyAlias, IMediator mediator)
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
@@ -118,7 +118,7 @@ public static class ContentExtensions
     /// <returns>A single media item or null if no media items are found</returns>
     public static async Task<Media.Models.Media?> GetMedia(this IHasPropertyValues content, string propertyAlias, IMediator mediator, string? fallBackUrl = null)
     {
-        return (await content.GetMedias(propertyAlias, mediator, fallBackUrl)).FirstOrDefault();
+        return (await content.GetMediaItems(propertyAlias, mediator, fallBackUrl)).FirstOrDefault();
     }
 
     /// <summary>
@@ -130,7 +130,7 @@ public static class ContentExtensions
     /// <returns>A single content item or null if no content items are found</returns>
     public static async Task<Content.Models.Content?> GetContent(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
     {
-        return (await content.GetContents(propertyAlias, mediator)).FirstOrDefault();
+        return (await content.GetContentItems(propertyAlias, mediator)).FirstOrDefault();
     }
 
     /// <summary>
