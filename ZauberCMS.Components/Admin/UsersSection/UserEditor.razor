@@ -199,7 +199,7 @@
                 if (roleUpdateResult.RefreshSignIn)
                 {
                     var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.Uri);
-                    NavigationManager.NavigateTo($"{Constants.Urls.RefreshSignIn}?redirectUrl={currentUrl}", true);
+                    NavigationManager.NavigateTo($"{Urls.RefreshSignIn}?redirectUrl={currentUrl}", true);
                 }
             }
         }
@@ -215,7 +215,7 @@
             if (!roleUpdateResult.Success)
             {
                 await AppState.NotifyUserDeleted(User, AuthState.User.Identity?.Name!);
-                NavigationManager.NavigateTo(Constants.Urls.AdminUsersBaseUrl);
+                NavigationManager.NavigateTo(Urls.AdminUsersBaseUrl);
             }
         }
     }
@@ -295,7 +295,7 @@
             if (result is { Success: true, RefreshSignIn: true })
             {
                 var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.Uri);
-                NavigationManager.NavigateTo($"{Constants.Urls.RefreshSignIn}?redirectUrl={currentUrl}", true);
+                NavigationManager.NavigateTo($"{Urls.RefreshSignIn}?redirectUrl={currentUrl}", true);
             }
         }
     }

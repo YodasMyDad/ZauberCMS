@@ -1,10 +1,8 @@
 ﻿@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
-@page "/admin/createcontent"
-@page "/admin/createcontent/{ParentId:guid}"
-@page "/admin/updatecontent/{ContentId:guid}"
+@attribute [Route(Urls.AdminCreateContent)]
+@attribute [Route($"{Urls.AdminCreateContent}/{{ParentId:guid}}")]
+@attribute [Route($"{Urls.AdminUpdateContent}/{{ContentId:guid}}")]
 @layout SectionLayout
 
 <PageTitle>Create & Update Content</PageTitle>
@@ -25,8 +23,8 @@
 </RadzenPanel>
 
 @code {
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public DialogService ConfirmService { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public DialogService ConfirmService { get; set; } = null!;
 
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }

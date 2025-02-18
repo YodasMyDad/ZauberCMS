@@ -11,7 +11,7 @@
 <SectionDashboards SectionAlias="@(Alias)"/>
 
 @code {
-    private const string Url = Constants.Urls.AdminContentBaseUrl; // So we only have on string
+    private const string Url = Urls.AdminContentBaseUrl; // So we only have on string
     public string Name => "Content";
     public string Alias => Constants.Sections.ContentSection;
     public string IndexUrl => Url;

@@ -73,7 +73,7 @@ public class RegisterUserHandler(
                     
                     if (request.ReturnUrl.IsNullOrWhiteSpace() && await userManager.IsInRoleAsync(user!, Constants.Roles.AdminRoleName))
                     {
-                        request.ReturnUrl = Constants.Urls.AdminBaseUrl;
+                        request.ReturnUrl = Urls.AdminBaseUrl;
                     }
                 }
                     

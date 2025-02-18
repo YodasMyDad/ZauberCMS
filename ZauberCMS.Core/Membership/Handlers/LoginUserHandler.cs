@@ -38,7 +38,7 @@ namespace ZauberCMS.Core.Membership.Handlers
                     var userPrincipal = await signInManager.CreateUserPrincipalAsync(user);
                     if (request.ReturnUrl.IsNullOrWhiteSpace() && userPrincipal.IsInRole(Constants.Roles.AdminRoleName))
                     {
-                        request.ReturnUrl = Constants.Urls.AdminBaseUrl;
+                        request.ReturnUrl = Urls.AdminBaseUrl;
                     }
                     loginResult.NavigateToUrl = request.ReturnUrl;
                 }

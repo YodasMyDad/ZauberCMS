@@ -47,7 +47,7 @@ namespace ZauberCMS.Core.Membership.Handlers
                     // visit https://go.microsoft.com/fwlink/?LinkID=532713
                     var code = await userManager.GeneratePasswordResetTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Constants.Urls.Account.ResetPassword, new { code = code, email = request.Email });
+                    var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ResetPassword, new { code = code, email = request.Email });
 
                     var paragraphs = new List<string> { $"Please reset your password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>." };
                     await providerService.EmailProvider!.SendEmailWithTemplateAsync(request.Email, "Reset Password", paragraphs);

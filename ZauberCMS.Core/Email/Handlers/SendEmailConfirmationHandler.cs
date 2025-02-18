@@ -44,7 +44,7 @@ public class SendEmailConfirmationHandler(
   
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-            var callbackUrl = $"{httpContextAccessor.ToAbsoluteUrl(Constants.Urls.Account.ConfirmEmail)}?userId={userId}&code={code}&change={isChange}&returnUrl={request.ReturnUrl}";
+            var callbackUrl = $"{httpContextAccessor.ToAbsoluteUrl(Urls.Account.ConfirmEmail)}?userId={userId}&code={code}&change={isChange}&returnUrl={request.ReturnUrl}";
             
             var paragraphs = new List<string> { $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>." };
 

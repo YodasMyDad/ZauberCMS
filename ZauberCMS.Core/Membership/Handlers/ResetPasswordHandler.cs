@@ -32,7 +32,7 @@ namespace ZauberCMS.Core.Membership.Handlers
             }
 
             result.Success = true;
-            result.AddMessage($"Your password has been reset, <a class=\"underline\" href=\"{Constants.Urls.Account.Login}\">please login</a>", ResultMessageType.Success);
+            result.AddMessage($"Your password has been reset, <a class=\"underline\" href=\"{Urls.Account.Login}\">please login</a>", ResultMessageType.Success);
             return result;
         }
     }

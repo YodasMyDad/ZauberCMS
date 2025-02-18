@@ -1,5 +1,4 @@
 ﻿@attribute [Route(Url)]
-@using ZauberCMS.Core
 @layout SectionLayout
 @implements ZauberCMS.Core.Sections.Interfaces.ISection
 
@@ -12,7 +11,7 @@
 <SectionDashboards SectionAlias="@(Alias)"/>
 
 @code {
-    private const string Url = Constants.Urls.AdminMediaBaseUrl; // So we only have on string
+    private const string Url = Urls.AdminMediaBaseUrl; // So we only have on string
     public string Name => "Media";
     public string Alias => Constants.Sections.MediaSection;
     public string IndexUrl => Url;

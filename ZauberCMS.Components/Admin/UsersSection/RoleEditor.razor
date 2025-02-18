@@ -297,7 +297,7 @@
         var result = await Mediator.Send(new DeleteRoleCommand { RoleId = Role!.Id });
         if (result.Success)
         {
-            NavigationManager.NavigateTo(Constants.Urls.AdminUsersBaseUrl);
+            NavigationManager.NavigateTo(Urls.AdminUsersBaseUrl);
         }
         else
         {
