@@ -95,46 +95,6 @@
         TreeItems = tree;
     }
 
-    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
-    {
-        var items = new List<ContextMenuItem>();
-        
-        if (args.Value is TreeBranch branch)
-        {
-            items.Add(new ContextMenuItem { Text = "Delete", Value = 1 });
-        }
-        
-        return items;
-    }
-    
-    private void ItemContextMenu(TreeItemContextMenuEventArgs args)
-    {
-        // TODO - Needs to be sanity checks here
-        /*ContextMenuService.Open(args,
-            MenuItems(args), async e =>
-            {
-                var branch = (TreeBranch)args.Value;
-                /*var dbContent = await Mediator.Send(new GetMediaCommand { Id = media.Id, IncludeChildren = true });#1#
-                //var text = args.Text;
-                switch (e.Value)
-                {
-                    case 1:
-                        var deleteResult = await Mediator.Send(new DeleteUserCommand { UserId = branch.Id });
-                        if (deleteResult.Success)
-                        {
-                            NavigationManager.NavigateTo("/admin/media", forceLoad: true);
-                        }
-                        else
-                        {
-                            NotificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
-                        }
-
-                        break;
-                }
-            }
-        );*/
-    }
-
     private void OnChange()
     {
         switch (Selection)

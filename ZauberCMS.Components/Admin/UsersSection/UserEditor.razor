@@ -12,7 +12,10 @@
 
 @attribute [Route($"{Urls.AdminUsersEdit}/{{UserId:guid}}")]
 
-<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+<PageTitle>Edit User</PageTitle>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
+             Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Update Roles" Click="@(UpdateRoles)"/>
     <RadzenButton Variant="Variant.Filled" Text="Change Password" Click="@(ChangePassword)"/>
     <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteUser)"/>
@@ -27,68 +30,83 @@
     {
         <EditForm Model="@User" OnSubmit="Save">
 
-            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start" Gap="0.5rem">
-                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@User.UserName" ValueChanged="@((string name) => { User.UserName = name; })" aria-label="Name"/>
-                <RadzenTextBox Style="width: 100%;" Name="Email" Placeholder="Email" Value="@User.Email" ValueChanged="@((string name) => { User.Email = name; })" aria-label="Name"/>
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
-                    <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last Updated: @User.DateUpdated.Humanize()</RadzenText>
+            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center"
+                         AlignItems="AlignItems.Start" Gap="0.5rem">
+                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@User.UserName"
+                               ValueChanged="@((string name) => { User.UserName = name; })" aria-label="Name"/>
+                <RadzenTextBox Style="width: 100%;" Name="Email" Placeholder="Email" Value="@User.Email"
+                               ValueChanged="@((string name) => { User.Email = name; })" aria-label="Name"/>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
+                             AlignItems="AlignItems.Center" Gap="0">
+                    <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;"
+                                IconStyle="IconStyle.Light"/>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last
+                        Updated: @User.DateUpdated.Humanize()</RadzenText>
                 </RadzenStack>
-
             </RadzenStack>
             
-            <RadzenRow class="rz-pb-2">
-                
-            </RadzenRow>
-
-            <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
-                <Tabs>
-                    @foreach (var tab in AllTabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
-                    {
-                        <RadzenTabsItem>
-                            <Template Context="tabContext">
-                                @tab.Name
-                            </Template>
-                            <ChildContent>
-                                <RadzenStack Gap="1rem">
-                                    @foreach (var property in AllContentProperties
-                                                  .Where(x => x.TabId == tab.Id)
-                                                  .OrderBy(x => x.SortOrder))
-                                    {
-                                        if (property.Component != null)
+            @if (AllTabs.Count > 1)
+            {
+                <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
+                    <Tabs>
+                        @foreach (var tab in AllTabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
+                        {
+                            <RadzenTabsItem>
+                                <Template Context="tabContext">
+                                    @tab.Name
+                                </Template>
+                                <ChildContent>
+                                    <RadzenStack Gap="1rem">
+                                        @foreach (var property in AllContentProperties
+                                                          .Where(x => x.TabId == tab.Id)
+                                                          .OrderBy(x => x.SortOrder))
                                         {
-                                            AllProperties.TryGetValue(property.Component, out var contentPropertyComponent);
-                                            if (contentPropertyComponent != null)
+                                            if (property.Component != null)
                                             {
-                                                AllContentValues.TryGetValue(property.Id, out var contentValue);
-                                                if (contentValue != null)
+                                                AllProperties.TryGetValue(property.Component, out var contentPropertyComponent);
+                                                if (contentPropertyComponent != null)
                                                 {
-                                                    <EditorRow FullWidth="@(property.FullWidth)">
-                                                        <LeftColumn>
-                                                            <RadzenLabel Style="font-weight: 600;font-size: 14px;" Text="@property.Name"/>
-                                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0">
-                                                                <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@property.Alias</RadzenText>
-                                                            </RadzenStack>
-                                                            <RadzenLabel Style="font-size: 14px;" Text="@property.Description"/>
-                                                        </LeftColumn>
-                                                        <CentreColumn>
-                                                            <DynamicContentProperty ComponentType="@contentPropertyComponent.GetType()"
-                                                                                    Settings="@property.Settings"
-                                                                                    Value="@contentValue.Value"
-                                                                                    ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
-                                                        </CentreColumn>
-                                                    </EditorRow>
+                                                    AllContentValues.TryGetValue(property.Id, out var contentValue);
+                                                    if (contentValue != null)
+                                                    {
+                                                        <EditorRow FullWidth="@(property.FullWidth)">
+                                                            <LeftColumn>
+                                                                <RadzenLabel Style="font-weight: 600;font-size: 14px;"
+                                                                             Text="@property.Name"/>
+                                                                <RadzenStack Orientation="Orientation.Horizontal"
+                                                                             JustifyContent="JustifyContent.Left"
+                                                                             AlignItems="AlignItems.Center" Gap="0">
+                                                                    <RadzenIcon Icon="lock_outline"
+                                                                                IconStyle="IconStyle.Light"/>
+                                                                    <RadzenText TextStyle="TextStyle.Caption"
+                                                                                Style="margin: 0; padding: 0;">@property.Alias</RadzenText>
+                                                                </RadzenStack>
+                                                                <RadzenLabel Style="font-size: 14px;"
+                                                                             Text="@property.Description"/>
+                                                            </LeftColumn>
+                                                            <CentreColumn>
+                                                                <DynamicContentProperty
+                                                                    ComponentType="@contentPropertyComponent.GetType()"
+                                                                    Settings="@property.Settings"
+                                                                    Value="@contentValue.Value"
+                                                                    ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
+                                                            </CentreColumn>
+                                                        </EditorRow>
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
 
-                                </RadzenStack >
-                            </ChildContent>
-                        </RadzenTabsItem>
-                    }
-                </Tabs>
-            </RadzenTabs>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+                                    </RadzenStack>
+                                </ChildContent>
+                            </RadzenTabsItem>
+                        }
+                    </Tabs>
+                </RadzenTabs>
+            }
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                         AlignItems="AlignItems.Center">
                 <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
             </RadzenStack>
 
@@ -108,7 +126,7 @@
     [Inject] public UserManager<User> UserManager { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public ValidateService<User> ValidateService { get; set; } = null!;
-    
+
     [Parameter] public Guid? UserId { get; set; }
 
     private User? User { get; set; }
@@ -170,9 +188,10 @@
                 }
             }
         }
+
         await AppState.NotifyUserChanged(User, AuthState.User.Identity?.Name!);
     }
-    
+
     private async Task UpdateRoles()
     {
         var dialog = ModalService.OpenSidePanel<UpdateRoles>("Update Users Roles",
@@ -185,7 +204,7 @@
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: List<Guid> roles })
         {
-            var allRoles = await Mediator.Send(new QueryRolesCommand { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200});
+            var allRoles = await Mediator.Send(new QueryRolesCommand { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200 });
             var roleNames = allRoles.Items.Where(x => roles.Contains(x.Id)).Select(x => x.Name).ToList();
             var roleUpdateResult = await Mediator.Send(new SaveUserCommand { User = User, Roles = roleNames! });
             if (!roleUpdateResult.Success)
@@ -193,7 +212,7 @@
                 NotificationService.ShowErrorNotification(roleUpdateResult.Messages.MessagesAsString());
             }
             else
-            {                
+            {
                 NotificationService.ShowSuccessNotification("Roles Updated");
                 if (roleUpdateResult.RefreshSignIn)
                 {
@@ -202,6 +221,7 @@
                 }
             }
         }
+
         await AppState.NotifyUserChanged(User, AuthState.User.Identity?.Name!);
     }
 
