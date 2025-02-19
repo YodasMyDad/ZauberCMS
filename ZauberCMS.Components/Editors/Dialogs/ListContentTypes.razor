@@ -1,78 +1,62 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
-
-<RadzenListBox FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-               FilterOperator="StringFilterOperator.StartsWith"
-               AllowFiltering="true"
-               @bind-Value="@SelectedContentTypeId"
-               Data="@ContentTypes"
-               TextProperty="Name"
-               ValueProperty="Id"
-               Style="width: 100%; height: 100%;"
-               InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select content type" } })"
-               Change="@OnPropertySelected">
-    <Template>
-        <div class="flex space-x-2 cursor-pointer">
-            @if ((context as ContentType)?.Icon != null)
+@if (CoverImages.Any())
+{
+    <div class="mx-auto">
+        <div class="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
+            @foreach (var contentType in ContentTypes)
             {
-                <RadzenIcon Icon="@((context as ContentType)?.Icon)"/>
-            }
-            <div>@((context as ContentType)?.Name)</div>
-        </div>
-    </Template>
-</RadzenListBox>
-
-<div class="mx-auto">
-    <div class="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
-        @foreach (var contentType in ContentTypes)
-        {
-            <div class="relative lg:col-span-2 cursor-pointer">
-                <div class="absolute inset-px rounded-lg"></div>
-                <div class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
-                    @if (contentType.Icon != null)
-                    {
-                        <div class="h-48 flex text-slate-800 items-center justify-center">
-                            <RadzenIcon Icon="drag_indicator" Style="--rz-icon-size: 9rem;"/>
+                <div class="relative lg:col-span-2 cursor-pointer" @onclick="@(() => SelectContentType(contentType.Id))">
+                    <div class="absolute inset-px rounded-lg"></div>
+                    <div class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
+                        @if (CoverImages.TryGetValue(contentType.Id, out var coverimage))
+                        {
+                            <img class="h-48 object-cover" src="/@coverimage.Url" alt="@contentType.Name">
+                        }
+                        else if (contentType.Icon != null)
+                        {
+                            <div class="h-48 flex text-slate-800 items-center justify-center">
+                                <RadzenIcon Icon="@(contentType.Icon)" Style="--rz-icon-size: 10rem;"/>
+                            </div>
+                        }
+                        <div class="p-10 pt-4">
+                            <p class="mt-2 text-2xl font-medium tracking-tight text-gray-950 text-center">@contentType.Name</p>
+                            <p class="mt-2 max-w-lg text-sm/6 text-gray-600 text-center">@contentType.Description</p>
                         </div>
-                    }
-                    <div class="p-10 pt-4">
-                        <p class="mt-2 text-2xl font-medium tracking-tight text-gray-950 text-center">@contentType.Name</p>
-                        <p class="mt-2 max-w-lg text-sm/6 text-gray-600">@contentType.Description</p>
                     </div>
+                    <div class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"></div>
                 </div>
-                <div class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"></div>
-            </div>
-        }
-
-        @*<div class="relative lg:col-span-2 cursor-pointer">
-            <div class="absolute inset-px rounded-lg"></div>
-            <div class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
-                <img class="h-50 object-cover" src="https://tailwindui.com/plus-assets/img/component-images/bento-01-integrations.png" alt="">
-                <div class="p-10 pt-4">
-                    <p class="mt-2 text-2xl font-medium tracking-tight text-gray-950 text-center">Connect your favorite tools</p>
-                    <p class="mt-2 max-w-lg text-sm/6 text-gray-600">Maecenas at augue sed elit dictum vulputate, in nisi aliquam maximus arcu.</p>
-                </div>
-            </div>
-            <div class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"></div>
+            }
         </div>
-
-        <div class="relative lg:col-span-2 cursor-pointer">
-            <div class="absolute inset-px rounded-lg"></div>
-            <div class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
-                <svg class="h-50 text-slate-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
-                </svg>
-                <div class="p-10 pt-4">
-                    <p class="mt-2 text-2xl font-medium tracking-tight text-gray-950 text-center">Quote Block</p>
-                    <p class="mt-2 max-w-lg text-sm/6 text-gray-600">Maecenas at augue sed elit dictum vulputate, in nisi aliquam maximus arcu.</p>
-                </div>
-            </div>
-            <div class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"></div>
-        </div>*@
-
     </div>
-</div>
+}
+else
+{
+    <RadzenListBox FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                   FilterOperator="StringFilterOperator.StartsWith"
+                   AllowFiltering="true"
+                   @bind-Value="@SelectedContentTypeId"
+                   Data="@ContentTypes"
+                   TextProperty="Name"
+                   ValueProperty="Id"
+                   Style="width: 100%; height: 100%;"
+                   InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select content type" } })"
+                   Change="@OnPropertySelected">
+        <Template>
+            <div class="flex space-x-2 cursor-pointer">
+                @if ((context as ContentType)?.Icon != null)
+                {
+                    <RadzenIcon Icon="@((context as ContentType)?.Icon)"/>
+                }
+                <div>@((context as ContentType)?.Name)</div>
+            </div>
+            <div class="text-sm">@((context as ContentType)?.Description)</div>
+        </Template>
+    </RadzenListBox>   
+}
 
 @code {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
@@ -85,6 +69,7 @@
 
     private IEnumerable<ContentType> ContentTypes { get; set; } = [];
     private Guid SelectedContentTypeId { get; set; }
+    private Dictionary<Guid, Media> CoverImages { get; set; } = new();
 
 
     protected override async Task OnInitializedAsync()
@@ -99,16 +84,28 @@
                 ContentTypes = ContentTypes.Where(x => content.ContentType.AllowedChildContentTypes.Contains(x.Id));
             }
         }
-        
-        // I need to check in the folder wwwroot/img/elementtypes/ if there are any images, and 
-        // if there are I need to see if the filename matches the content type alias (Case insensitive) 
 
-        StateHasChanged();
+        foreach (var contentType in ContentTypes)
+        {
+            if (contentType.MediaId != null && contentType.MediaId != Guid.Empty)
+            {
+                var coverImage = await Mediator.GetMedia(contentType.MediaId);
+                if (coverImage != null) CoverImages.Add(contentType.Id, coverImage);
+            }
+        }
+
+        //StateHasChanged();
     }
 
     private void OnPropertySelected()
     {
         ContentTypeSelected.InvokeAsync(SelectedContentTypeId);
+    }
+
+    private void SelectContentType(Guid contentTypeId)
+    {
+        SelectedContentTypeId = contentTypeId;
+        ContentTypeSelected.InvokeAsync(contentTypeId);
     }
 
 }
