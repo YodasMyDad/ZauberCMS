@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Interfaces;
@@ -104,4 +105,29 @@ public class ContentType : ITreeItem
     /// Parent element ID
     /// </summary>
     public Guid? ParentId { get; set; }
+    
+    /// <summary>
+    /// Optional Image 
+    /// </summary>
+    public Guid? MediaId { get; set; }
+    
+    [NotMapped] // Prevents property from being mapped to a DB column
+    public string? MediaIdAsString
+    {
+        get => MediaId.ToString();
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                MediaId = Guid.Empty;
+            }
+            else
+            {
+                if (Guid.TryParse(value, out var guidValue))
+                {
+                    MediaId = guidValue;
+                }
+            }
+        }
+    }
 }

@@ -231,6 +231,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<Guid?>("LastUpdatedById")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("MediaId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
@@ -745,20 +748,6 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("ZauberUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ZauberCMS.Core.Search.Models.AdminSearchResult", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("TEXT");
-
-                    b.ToTable("AdminSearchResults");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>

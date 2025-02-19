@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ZauberCMS.Core.Data.Migrations.SqlServer
 {
     /// <inheritdoc />
-    public partial class Inital : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -72,6 +72,22 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ZauberRoles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ZauberTags",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TagName = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Slug = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SortOrder = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberTags", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -185,11 +201,33 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                 });
 
             migrationBuilder.CreateTable(
+                name: "ZauberTagItems",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TagId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ItemId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberTagItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ZauberTagItems_ZauberTags_TagId",
+                        column: x => x.TagId,
+                        principalTable: "ZauberTags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ZauberContentTypes",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(1500)", maxLength: 1500, nullable: true),
                     Alias = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     Icon = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     IsElementType = table.Column<bool>(type: "bit", nullable: false),
@@ -202,7 +240,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     ContentProperties = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AvailableContentViews = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
                     AllowedChildContentTypes = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    Tabs = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false)
+                    Tabs = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
+                    ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    MediaId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -601,6 +641,26 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                 filter: "[NormalizedName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ZauberTagItems_ItemId",
+                table: "ZauberTagItems",
+                column: "ItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberTagItems_TagId",
+                table: "ZauberTagItems",
+                column: "TagId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberTag_Slug",
+                table: "ZauberTags",
+                column: "Slug");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberTag_TagName",
+                table: "ZauberTags",
+                column: "TagName");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ZauberUserClaims_UserId",
                 table: "ZauberUserClaims",
                 column: "UserId");
@@ -660,6 +720,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                 name: "ZauberRoleClaims");
 
             migrationBuilder.DropTable(
+                name: "ZauberTagItems");
+
+            migrationBuilder.DropTable(
                 name: "ZauberUserClaims");
 
             migrationBuilder.DropTable(
@@ -682,6 +745,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
             migrationBuilder.DropTable(
                 name: "ZauberLanguageDictionaries");
+
+            migrationBuilder.DropTable(
+                name: "ZauberTags");
 
             migrationBuilder.DropTable(
                 name: "ZauberRoles");

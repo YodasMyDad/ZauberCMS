@@ -3,9 +3,11 @@
 @attribute [Route($"{Urls.AdminSettingsUpdateContentType}/{{ContentTypeId:guid}}")]
 @attribute [Route($"{Urls.AdminSettingsCopyContentType}/{{CopyContentTypeId:guid}}")]
 
+@using System.Text.Json
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Hosting
 @using ZauberCMS.Components.Editors.Dialogs
+@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
@@ -119,12 +121,26 @@
 
                             <EditorRow>
                                 <LeftColumn>
+                                    <PropertyInfo Name="Cover Image" Description="Choose an image to show for this content type when it is displayed in a list (Great for element types)"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <MediaPickerProperty
+                                        Value="@ContentType.MediaIdAsString"
+                                        Settings="@(JsonSerializer.Serialize(new MediaPickerSettings { MaxAllowed = 1 }))"
+                                        ValueChanged="@(e => ContentType.MediaIdAsString = e.ToString())"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            @*
+                            <EditorRow>
+                                <LeftColumn>
                                     <PropertyInfo Name="Include Child Content" Description="Return children when this page is rendered to save multiple content queries"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenSwitch Name="IncludeChildren" @bind-Value="@ContentType.IncludeChildren"/>
                                 </CentreColumn>
                             </EditorRow>
+                            *@
 
                         </RadzenTabsItem>
                     }

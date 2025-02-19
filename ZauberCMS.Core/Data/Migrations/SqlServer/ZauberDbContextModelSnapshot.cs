@@ -236,6 +236,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<Guid?>("LastUpdatedById")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("MediaId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -756,20 +759,6 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("ZauberUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ZauberCMS.Core.Search.Models.AdminSearchResult", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.ToTable("AdminSearchResults");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>
