@@ -374,7 +374,7 @@ else
                 }
                 
                 await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
-                NavigationManager.NavigateTo($"/admin/updatecontent/{Content.Id}");
+                NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{Content.Id}");
             }
         }
     }

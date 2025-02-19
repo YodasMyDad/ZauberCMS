@@ -1,7 +1,8 @@
-﻿@page "/admin/users/list/{RoleId:guid}"
-@using ZauberCMS.Core.Membership.Models
-@using ZauberCMS.Core
+﻿@using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Membership.Commands
+
+@attribute [Route($"{Urls.AdminUsersList}/{{RoleId:guid}}")]
+
 @layout SectionLayout
 
 <RadzenPanel Class="rz-mx-auto">
@@ -45,7 +46,7 @@
             {
                 AmountPerPage = 200,
                 OrderBy = GetUsersOrderBy.DateCreatedDescending,
-                Roles = [role.Name]
+                Roles = [role.Name!]
             });
             Users = items.Items;   
         }
@@ -60,7 +61,7 @@
     {
         if (value is User selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/users/edit/{selectedRow.Id}");
+            NavigationManager.NavigateTo($"{Urls.AdminUsersEdit}/{selectedRow.Id}");
         }
     }
 }

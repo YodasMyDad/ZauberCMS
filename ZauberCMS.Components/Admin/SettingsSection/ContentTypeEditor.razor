@@ -443,11 +443,11 @@
             if (result.Success)
             {
                 await AppState.NotifyContentTypeDeleted(null, AuthState.User.Identity?.Name!);
-                NavigationManager.NavigateTo("/admin/settings");
+                NavigationManager.NavigateTo(Urls.AdminSettingsBaseUrl);
             }
         }
         
-        NavigationManager.NavigateTo("/admin/settings", forceLoad: true);
+        NavigationManager.NavigateTo(Urls.AdminSettingsBaseUrl, forceLoad: true);
     }
 
     private async Task AddEditTab(Tab? tab)

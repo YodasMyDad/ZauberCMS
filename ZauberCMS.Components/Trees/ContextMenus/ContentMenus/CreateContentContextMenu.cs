@@ -23,7 +23,7 @@ public class CreateContentContextMenu : ITreeContextMenu
     {
         var content = (Content)args.Value!;
         contextMenuService.Close();
-        navigationManager.NavigateTo($"/admin/createcontent/{content.Id}");
+        navigationManager.NavigateTo($"{Urls.AdminCreateContent}/{content.Id}");
         return Task.CompletedTask;
     }
 

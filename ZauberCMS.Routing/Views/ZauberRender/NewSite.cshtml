@@ -1,4 +1,5 @@
-﻿@{
+﻿@using ZauberCMS.Core
+@{
     Layout = "_ZauberLayout";
 }
 
@@ -36,8 +37,8 @@
         <component type="@(typeof(ZauberCMS.Components.Shared.ZauberLogo))"
                    param-Styles="@("height: 100px; margin-bottom: 20px")"
                    render-mode="Static"/>
-        <p>Looks like you haven't created any content yet. If you are not sure where to start, <a href="/Account/Register?ReturnUrl=%2Fadmin">you just need to register an account</a>. 
-            The first user is created as an admin then you will be redirected to the <a href="/admin">admin section</a>.</p>
+        <p>Looks like you haven't created any content yet. If you are not sure where to start, <a href="@(Urls.Account.Register)?ReturnUrl=%2Fadmin">you just need to register an account</a>. 
+            The first user is created as an admin then you will be redirected to the <a href="@(Urls.AdminBaseUrl)">admin section</a>.</p>
         <p>Make sure you <a href="https://aptitude.gitbook.io/zaubercms" target="_blank">check out our documentation 
             and videos</a>, they show you everything you need to know about building your first website.</p>
     </div>

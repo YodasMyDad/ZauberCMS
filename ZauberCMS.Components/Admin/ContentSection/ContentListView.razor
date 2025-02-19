@@ -106,7 +106,7 @@
     {
         if (value is Content selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}", RefreshPage);
+            NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{selectedRow.Id}", RefreshPage);
         }
     }
 }

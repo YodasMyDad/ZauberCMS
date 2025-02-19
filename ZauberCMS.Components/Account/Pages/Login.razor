@@ -1,6 +1,7 @@
 ﻿@page "/Account/Login"
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.Extensions.Options
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Interfaces
@@ -54,7 +55,7 @@
             }
             else
             {
-                <p>You can <a href="/api/auth/logout">logout here</a></p>
+                <p>You can <a href="@(Urls.ApiLogout)">logout here</a></p>
             }
 
     </div>

@@ -41,7 +41,7 @@ public class FinalDeleteContentContextMenu(IMediator mediator, DialogService dia
             if (result.Success)
             {
                 // Hard reload as could be in the edit screen
-                navigationManager.NavigateTo("/admin", forceLoad: true); 
+                navigationManager.NavigateTo(Urls.AdminBaseUrl, forceLoad: true); 
             }
         }
     }

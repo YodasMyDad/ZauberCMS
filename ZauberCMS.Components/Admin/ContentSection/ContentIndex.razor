@@ -5,7 +5,7 @@
 
 <PageTitle>@Name</PageTitle>
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Create Content" Click=@(args => NavigationManager.NavigateTo("/admin/createcontent"))/>
+    <RadzenButton Variant="Variant.Filled" Text="Create Content" Click="@(_ => NavigationManager.NavigateTo(Urls.AdminCreateContent))"/>
 </RadzenStack>
 
 <SectionDashboards SectionAlias="@(Alias)"/>

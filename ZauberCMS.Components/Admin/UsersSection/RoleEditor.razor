@@ -1,6 +1,4 @@
-﻿@page "/admin/users/addrole"
-@page "/admin/users/editrole/{RoleId:guid}"
-@using Microsoft.AspNetCore.Components.Authorization
+﻿@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Membership.Commands
@@ -9,11 +7,16 @@
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Shared.Models
+
+@attribute [Route(Urls.AdminUsersAddRole)]
+@attribute [Route($"{Urls.AdminUsersEditRole}/{{RoleId:guid}}")]
+
 @layout SectionLayout
 
 <PageTitle>Update Role</PageTitle>
 
-<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
+             Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Add Property" Click="@(AddProperty)"/>
     <RadzenButton Variant="Variant.Filled" Text="Add Tab" Click="@(() => AddEditTab(null))"/>
     @if (TabIndex.Count > 1 && !TabIndex[SelectedTabIndex].IsSystemTab)
@@ -31,11 +34,17 @@
     <RadzenPanel Class="rz-mx-auto">
         <EditForm Model="Role" OnSubmit="Save">
             <RadzenRow class="rz-pb-6">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="2">
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
-                        <RadzenIcon Icon="@(Role.Icon.IsNullOrWhiteSpace() ? "add" : Role.Icon)" style="font-weight: 300; color: dimgray;"/>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
+                             AlignItems="AlignItems.Center" class="w-full" Gap="2">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
+                                 AlignItems="AlignItems.Center"
+                                 Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;"
+                                 @onclick="@(SelectIcon)">
+                        <RadzenIcon Icon="@(Role.Icon.IsNullOrWhiteSpace() ? "add" : Role.Icon)"
+                                    style="font-weight: 300; color: dimgray;"/>
                     </RadzenStack>
-                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="@Role.Name" aria-label="Name"/>
+                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="@Role.Name"
+                                   aria-label="Name"/>
                 </RadzenStack>
             </RadzenRow>
             @if (Role.Tabs.Count > 0)
@@ -84,11 +93,16 @@
                                             }
                                             else
                                             {
-                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-                                                    <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete This Tab" Click="@(() => DeleteTab(tab))"/>
+                                                <RadzenStack Orientation="Orientation.Horizontal"
+                                                             JustifyContent="JustifyContent.Center"
+                                                             AlignItems="AlignItems.Center">
+                                                    <RadzenButton Variant="Variant.Filled"
+                                                                  ButtonStyle="ButtonStyle.Danger"
+                                                                  Text="Delete This Tab"
+                                                                  Click="@(() => DeleteTab(tab))"/>
                                                 </RadzenStack>
                                             }
-                                        </RadzenStack >
+                                        </RadzenStack>
                                     </ChildContent>
                                 </RadzenTabsItem>
                             }
@@ -96,7 +110,8 @@
                     </Tabs>
                 </RadzenTabs>
             }
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                         AlignItems="AlignItems.Center">
                 <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
             </RadzenStack>
         </EditForm>

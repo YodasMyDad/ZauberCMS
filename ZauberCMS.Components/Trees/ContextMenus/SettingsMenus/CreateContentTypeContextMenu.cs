@@ -33,7 +33,7 @@ public class CreateContentTypeContextMenu() : ITreeContextMenu
         ContextMenuService contextMenuService, IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo("/admin/createcontentype");
+        navigationManager.NavigateTo(Urls.AdminSettingsCreateContentType);
         return Task.CompletedTask;
     }
 

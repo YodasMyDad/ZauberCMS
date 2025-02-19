@@ -65,7 +65,7 @@
                 Icon = "people",
                 Id = role.Id,
                 Name = role.Name,
-                Url = $"/admin/users/list/{role.Id}",
+                Url = $"{Urls.AdminUsersList}/{role.Id}",
                 BranchType = typeof(User)
             });
         }
@@ -85,7 +85,7 @@
                 Icon = "person_add",
                 Id = role.Id,
                 Name = role.Name,
-                Url = $"/admin/users/editrole/{role.Id}",
+                Url = $"{Urls.AdminUsersEditRole}/{role.Id}",
                 BranchType = typeof(Role)
             });
         }

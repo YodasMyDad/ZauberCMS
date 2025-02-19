@@ -34,7 +34,7 @@ public class CopyContentTypeContextMenu() : ITreeContextMenu
     {
         var branch = (TreeBranch)args.Value;
         contextMenuService.Close();
-        navigationManager.NavigateTo($"/admin/copycontentype/{branch.Id}");
+        navigationManager.NavigateTo($"{Urls.AdminSettingsCopyContentType}/{branch.Id}");
         return Task.CompletedTask;
     }
 

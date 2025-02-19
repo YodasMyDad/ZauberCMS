@@ -74,7 +74,7 @@ namespace ZauberCMS.Core.Membership.Handlers
                     else if (signInResult.RequiresTwoFactor)
                     {
                         // This is currently not supported
-                        loginResult.NavigateToUrl = $"/account/loginwith2fa?returnUrl={request.ReturnUrl}&rememberMe={request.RememberMe}";
+                        loginResult.NavigateToUrl = $"{Urls.Account.LoginWith2Fa}?returnUrl={request.ReturnUrl}&rememberMe={request.RememberMe}";
                     }
                     else
                     {

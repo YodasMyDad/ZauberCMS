@@ -1,8 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Components.Admin.UsersSection.Dialogs
-@using ZauberCMS.Core
-@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
@@ -11,7 +9,8 @@
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Plugins
 @layout SectionLayout
-@page "/admin/users/edit/{UserId:guid}"
+
+@attribute [Route($"{Urls.AdminUsersEdit}/{{UserId:guid}}")]
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Update Roles" Click="@(UpdateRoles)"/>

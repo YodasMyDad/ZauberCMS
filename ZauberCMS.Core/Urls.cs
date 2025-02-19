@@ -21,7 +21,9 @@ public static class Urls
     public const string AdminMediaFolder = AdminBaseUrl + "/folder";
     
     public const string AdminUsersEditRole = AdminUsersBaseUrl + "/editrole";
+    public const string AdminUsersAddRole = AdminUsersBaseUrl + "/addrole";
     public const string AdminUsersEdit = AdminUsersBaseUrl + "/edit";
+    public const string AdminUsersList = AdminUsersBaseUrl + "/list";
     
     public const string AdminSettingsUpdateContentType = AdminSettingsBaseUrl + "/updatecontentype";
     public const string AdminSettingsCreateContentType = AdminSettingsBaseUrl + "/createcontentype";
@@ -31,6 +33,10 @@ public static class Urls
     public const string AdminSettingsLanguages = AdminSettingsBaseUrl + "/languages";
     public const string AdminSettingsLanguageDictionaries = AdminSettingsBaseUrl + "/languagedictionaries";
     public const string AdminSettingsGlobalSettings = AdminSettingsBaseUrl + "/globalsettings";
+
+    private const string AdminSeoBaseUrl = AdminBaseUrl + "/seo";
+    public const string AdminSeoPageChecker = AdminSeoBaseUrl + "/pagechecker";
+    public const string AdminSeoSitemaps = AdminSeoBaseUrl + "/sitemaps";
         
     public static class Account
     {
