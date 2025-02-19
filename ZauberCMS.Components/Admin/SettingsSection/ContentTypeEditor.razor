@@ -1,4 +1,5 @@
 ﻿@attribute [Route(Urls.AdminSettingsCreateContentType)]
+@attribute [Route($"{Urls.AdminSettingsCreateContentType}/{{ParentId:guid}}")]
 @attribute [Route($"{Urls.AdminSettingsUpdateContentType}/{{ContentTypeId:guid}}")]
 @attribute [Route($"{Urls.AdminSettingsCopyContentType}/{{CopyContentTypeId:guid}}")]
 
@@ -37,6 +38,9 @@
                 </RadzenStack>
                 <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
                                ValueChanged="@((string name) => { ContentType.Name = name; ContentType.Alias = _slugHelper.GenerateSlug(name); })" aria-label="Name"/>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="0">
+                <RadzenTextBox Style="width: 100%;" Name="Description" Placeholder="Optional Description" @bind-Value="ContentType.Description" aria-label="Description"/>
             </RadzenStack>
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="0">
                 <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
@@ -194,6 +198,7 @@
     
     [Parameter] public Guid? ContentTypeId { get; set; }
     [Parameter] public Guid? CopyContentTypeId { get; set; }
+    [Parameter] public Guid? ParentId { get; set; }
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 

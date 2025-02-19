@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZauberCMS.Core.Data;
 
@@ -11,9 +12,11 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqlServer
 {
     [DbContext(typeof(ZauberDbContext))]
-    partial class ZauberDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250219151741_ContentTypeDescriptions")]
+    partial class ContentTypeDescriptions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -756,20 +759,6 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("ZauberUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ZauberCMS.Core.Search.Models.AdminSearchResult", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.ToTable("AdminSearchResults");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>

@@ -1,12 +1,12 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data.Models;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
-using ZauberCMS.Core.Search.Models;
 using ZauberCMS.Core.Tags.Models;
 
 namespace ZauberCMS.Core.Data;
@@ -22,6 +22,8 @@ public class ZauberDbContext(DbContextOptions options, IConfiguration configurat
         #if DEBUG
                 options.EnableSensitiveDataLogging();
         #endif
+        options
+            .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
     
     public DbSet<ContentType> ContentTypes => Set<ContentType>();
@@ -38,7 +40,6 @@ public class ZauberDbContext(DbContextOptions options, IConfiguration configurat
     public DbSet<TagItem> TagItems => Set<TagItem>();
     public DbSet<LanguageDictionary> LanguageDictionaries => Set<LanguageDictionary>();
     public DbSet<LanguageText> LanguageTexts => Set<LanguageText>();
-    public DbSet<AdminSearchResult> AdminSearchResults => Set<AdminSearchResult>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

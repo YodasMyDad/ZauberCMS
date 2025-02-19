@@ -19,6 +19,11 @@ public class ContentType : ITreeItem
     public string? Name { get; set; }
 
     /// <summary>
+    /// Gets or sets the description of the content type.
+    /// </summary>
+    public string? Description { get; set; }
+    
+    /// <summary>
     /// Gets or sets the alias of the content type.
     /// </summary>
     public string? Alias { get; set; }
@@ -86,7 +91,7 @@ public class ContentType : ITreeItem
     /// Tabs are used to organize the properties of a content type into separate sections.
     /// Each tab represents a logical grouping of properties.
     /// </remarks>
-    public List<Tab> Tabs { get; set; } = [new Tab{Id = Constants.Guids.ContentTypeSystemTabId, IsSystemTab = true, SortOrder = 100, Name = "System"}];
+    public List<Tab> Tabs { get; set; } = [new() {Id = Constants.Guids.ContentTypeSystemTabId, IsSystemTab = true, SortOrder = 100, Name = "System"}];
     
     // ReSharper disable once CollectionNeverUpdated.Global
     /// <summary>
@@ -94,4 +99,9 @@ public class ContentType : ITreeItem
     /// </summary>
     [JsonIgnore]
     public List<Content> LinkedContent { get; set; } = [];
+    
+    /// <summary>
+    /// Parent element ID
+    /// </summary>
+    public Guid? ParentId { get; set; }
 }

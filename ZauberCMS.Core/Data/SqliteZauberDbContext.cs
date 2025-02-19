@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 
 namespace ZauberCMS.Core.Data;
@@ -16,5 +17,8 @@ public class SqliteZauberDbContext(DbContextOptions options, IConfiguration conf
         #if DEBUG
                 options.EnableSensitiveDataLogging();
         #endif
+        options
+            .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
+
     }
 }

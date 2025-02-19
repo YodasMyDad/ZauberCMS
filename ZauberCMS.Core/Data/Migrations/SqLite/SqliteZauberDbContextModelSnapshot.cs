@@ -15,7 +15,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
@@ -205,12 +205,14 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("DateCreated")
-                        .IsRequired()
+                    b.Property<DateTime>("DateCreated")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("DateUpdated")
-                        .IsRequired()
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1500)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("EnableListView")
@@ -231,6 +233,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ParentId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Tabs")
@@ -740,6 +745,20 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("ZauberUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Search.Models.AdminSearchResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("TEXT");
+
+                    b.ToTable("AdminSearchResults");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>
