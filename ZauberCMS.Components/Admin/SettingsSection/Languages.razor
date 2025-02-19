@@ -1,4 +1,4 @@
-﻿@page "/admin/settings/languages"
+﻿@attribute [Route(Urls.AdminSettingsLanguages)]
 @using ZauberCMS.Core.Data.Commands
 @using ZauberCMS.Core.Languages.Commands
 @using ZauberCMS.Core.Languages.Models
@@ -44,8 +44,8 @@
 
 
 @code {
-    [Inject] public IModalService DialogService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
     

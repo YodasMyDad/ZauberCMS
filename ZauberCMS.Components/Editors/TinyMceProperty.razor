@@ -15,7 +15,7 @@
 
 @code {
     //https://www.tiny.cloud/docs/tinymce/latest/menus-configuration-options/
-    [Inject] IOptions<ZauberSettings> ZauberSettings { get; set; } = default!;
+    [Inject] IOptions<ZauberSettings> ZauberSettings { get; set; } = null!;
     
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; }

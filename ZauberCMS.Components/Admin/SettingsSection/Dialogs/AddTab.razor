@@ -7,8 +7,7 @@
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
 </RadzenStack>
 @code {
-    //[Inject] public DialogService DialogService { get; set; } = default!;
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     [Parameter] public Tab? Tab { get; set; }
     [Parameter] public int DefaultSortOrder { get; set; }
 

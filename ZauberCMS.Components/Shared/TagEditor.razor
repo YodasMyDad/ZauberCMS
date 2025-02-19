@@ -25,8 +25,8 @@
 </div>
 
 @code {
-    [Inject] public DialogService DialogService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
     
     private List<Tag> Tags { get; set; } = [];
     private Tag _newItem = new();

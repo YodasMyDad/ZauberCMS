@@ -54,7 +54,7 @@
 </RadzenStack>
 
 @code {
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
 
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }

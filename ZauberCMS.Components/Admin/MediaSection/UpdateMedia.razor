@@ -1,7 +1,7 @@
 ﻿@using ZauberCMS.Components.Admin.MediaSection.Dialogs
-@page "/admin/createfolder"
-@page "/admin/createfolder/{ParentId:guid}"
-@page "/admin/updatemedia/{MediaId:guid}"
+@attribute [Route(Urls.AdminCreateMediaFolder)]
+@attribute [Route($"{Urls.AdminCreateMediaFolder}/{{ParentId:guid}}")]
+@attribute [Route($"{Urls.AdminUpdateMedia}/{{MediaId:guid}}")]
 @layout SectionLayout
 
 <PageTitle>Update Media</PageTitle>

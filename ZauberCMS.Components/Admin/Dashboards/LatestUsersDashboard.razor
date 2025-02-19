@@ -82,7 +82,7 @@
     {
         if (value is User selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/users/edit/{selectedRow.Id}", RefreshPage);
+            NavigationManager.NavigateTo($"{Urls.AdminUsersEdit}/{selectedRow.Id}", RefreshPage);
         }
     }
 

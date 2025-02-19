@@ -23,8 +23,8 @@
 </RadzenStack>
 
 @code {
-    [Inject] NotificationService NotificationService { get; set; } = default!;
-    [Inject] public ContextMenuService ContextMenuService { get; set; } = default!;
+    [Inject] NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
 
     public string Name { get; set; } = "Media Picker";
     public string Alias { get; set; } = "ZauberCMS.MediaPicker";

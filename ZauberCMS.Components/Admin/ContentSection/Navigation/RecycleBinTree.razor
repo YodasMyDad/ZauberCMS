@@ -77,7 +77,7 @@
                 Icon = content.ContentType?.Icon,
                 Id = content.Id,
                 Name = content.Name,
-                Url = $"/admin/updatecontent/{content.Id}",
+                Url = $"{Urls.AdminUpdateContent}/{content.Id}",
                 BranchType = typeof(Content)
             });
         }

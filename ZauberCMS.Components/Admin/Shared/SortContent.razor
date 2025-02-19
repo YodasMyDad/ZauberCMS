@@ -14,7 +14,7 @@
 </RadzenStack>
 
 @code {
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     [Parameter] public Guid ContentId { get; set; }
     [Parameter] public List<Content> Content { get; set; } = [];
     

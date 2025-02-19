@@ -23,9 +23,8 @@
 
     private void OnClick(RadzenSplitButtonItem? item, string buttonName)
     {
-        var action = item != null ? "createmedia" : "createfolder";
-        var path = ParentId != null ? $"admin/{action}/{ParentId}" : $"admin/{action}";
-
+        var action = item != null ? Urls.AdminCreateMedia : Urls.AdminCreateMediaFolder;
+        var path = ParentId != null ? $"{action}/{ParentId}" : $"{action}";
         NavigationManager.NavigateTo(path);
     }
 }

@@ -1,5 +1,5 @@
-﻿@page "/admin/createmedia"
-@page "/admin/createmedia/{ParentId:guid}"
+﻿@attribute [Route(Urls.AdminCreateMedia)]
+@attribute [Route($"{Urls.AdminCreateMedia}/{{ParentId:guid}}")]
 @layout SectionLayout
 
 <PageTitle>Create Media</PageTitle>
@@ -17,7 +17,7 @@
 @code {
     [Parameter] public Guid? ParentId { get; set; }
 
-    [Inject] NotificationService NotificationService { get; set; } = default!;
+    [Inject] NotificationService NotificationService { get; set; } = null!;
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 

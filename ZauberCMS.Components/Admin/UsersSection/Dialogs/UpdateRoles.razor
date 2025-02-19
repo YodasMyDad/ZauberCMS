@@ -13,8 +13,8 @@
                     
 @code
 {
-    [Inject] NotificationService NotificationService { get; set; } = default!;
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [Inject] NotificationService NotificationService { get; set; } = null!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     [Parameter, EditorRequired] public Guid UserId { get; set; }
     private User? User { get; set; }
     private IEnumerable<Role> Roles { get; set; } = [];

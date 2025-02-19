@@ -66,7 +66,7 @@
     [Parameter] public NavigationItem? NavigationItem { get; set; }
     [Parameter] public NavigationItem? ParentNavigationItem { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-    [CascadingParameter] BlazoredModalInstance NavigationItemEditorModal { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance NavigationItemEditorModal { get; set; } = null!;
 
     private IModalReference? Modal { get; set; }
 

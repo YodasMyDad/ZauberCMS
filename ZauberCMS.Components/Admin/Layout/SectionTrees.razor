@@ -21,7 +21,7 @@
 
 @code {
     [Parameter] public string? SectionAlias { get; set; }
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     private Dictionary<string, ISectionNavGroup> NavGroups { get; set; } = new();
     private Dictionary<string, ISectionNav> NavItems { get; set; } = new();
 

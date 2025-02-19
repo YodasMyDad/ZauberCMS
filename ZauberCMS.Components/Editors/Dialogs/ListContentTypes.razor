@@ -18,15 +18,15 @@
 </RadzenListBox>
 
 @code {
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public DialogService DialogService { get; set; } = null!;
 
     [Parameter] public bool RootOnly { get; set; }
     [Parameter] public bool? ElementTypesOnly { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public EventCallback<Guid> ContentTypeSelected { get; set; } // add this line
     
-    private IEnumerable<ContentType> ContentTypes { get; set; } = Enumerable.Empty<ContentType>();
+    private IEnumerable<ContentType> ContentTypes { get; set; } = [];
     private Guid SelectedContentTypeId { get; set; }
 
 

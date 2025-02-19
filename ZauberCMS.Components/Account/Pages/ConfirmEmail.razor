@@ -15,14 +15,14 @@
 </LayoutView>
 
 @code {
-    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
 
     [SupplyParameterFromQuery] private string? UserId { get; set; }
     [SupplyParameterFromQuery] private string? Code { get; set; }
     [SupplyParameterFromQuery] private bool? Change { get; set; }
 
-    private Type LayoutType { get; set; } = default!;
+    private Type LayoutType { get; set; } = null!;
     private List<ResultMessage> ResultMessages { get; set; } = [];
 
     protected override void OnParametersSet()

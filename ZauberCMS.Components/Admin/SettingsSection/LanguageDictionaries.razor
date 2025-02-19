@@ -1,4 +1,4 @@
-﻿@page "/admin/settings/languagedictionaries"
+﻿@attribute [Route(Urls.AdminSettingsLanguageDictionaries)]
 @using ZauberCMS.Core.Languages.Commands
 @using ZauberCMS.Core.Languages.Models
 @layout SectionLayout
@@ -41,8 +41,8 @@
 </RadzenPanel>
 
 @code {
-    [Inject] public IModalService DialogService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
 

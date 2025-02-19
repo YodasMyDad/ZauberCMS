@@ -15,9 +15,7 @@
 </RadzenStack>
 
 @code {
-
-    //[Inject] public DialogService DialogService { get; set; } = default!;
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     private List<string> Icons { get; set; } = [];
     private List<string> FilteredIcons { get; set; } = [];
     private string? SearchTerm { get; set; }

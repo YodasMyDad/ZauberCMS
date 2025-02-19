@@ -1,6 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Identity
-@using ZauberCMS.Components.Admin.ContentSection.Dialogs
+﻿@using ZauberCMS.Components.Admin.ContentSection.Dialogs
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Membership.Models
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
@@ -90,7 +88,7 @@
 </div>
 
 @code {
-    [Inject] public IModalService DialogService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
     
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public int AmountPerPage { get; set; } = 20;
@@ -212,7 +210,7 @@
     {
         if (value is Content selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontent/{selectedRow.Id}", RefreshPage);
+            NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{selectedRow.Id}", RefreshPage);
         }
     }
 

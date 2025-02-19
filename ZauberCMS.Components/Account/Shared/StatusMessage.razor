@@ -42,7 +42,7 @@
 
     [Parameter] public string? Message { get; set; }
     [Parameter] public List<ResultMessage> ResultMessages { get; set; } = [];
-    [CascadingParameter] private HttpContext? HttpContext { get; set; } = default!;
+    [CascadingParameter] private HttpContext? HttpContext { get; set; } = null!;
 
     private string? DisplayMessage => Message ?? _messageFromCookie;
 

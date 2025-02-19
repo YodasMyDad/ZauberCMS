@@ -8,7 +8,7 @@ namespace ZauberCMS.Core.Shared.Validation;
 
 public class FluentValidationValidator : ComponentBase
 {
-    [Inject] private IServiceProvider ServiceProvider { get; set; } = default!;
+    [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
 
     [CascadingParameter] private EditContext? CurrentEditContext { get; set; }
 

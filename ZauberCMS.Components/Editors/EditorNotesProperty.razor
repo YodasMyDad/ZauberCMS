@@ -26,7 +26,7 @@
 </div>
 
 @code {
-    [Inject] public IModalService DialogService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
     
     public string Name { get; set; } = "Editor Notes";
     public string Alias { get; set; } = "ZauberCMS.EditorNotes";

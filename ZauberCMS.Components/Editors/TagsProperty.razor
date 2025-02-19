@@ -23,7 +23,7 @@
                 Placeholder="Select tags" Chips="true" Style="width: 100%;"/>
 
 @code {
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
     
     public string Name { get; set; } = "Tags";
     public string Alias { get; set; } = "ZauberCMS.Tags";

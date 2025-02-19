@@ -1,6 +1,7 @@
-﻿@page "/admin/createcontentype"
-@page "/admin/updatecontentype/{ContentTypeId:guid}"
-@page "/admin/copycontentype/{CopyContentTypeId:guid}"
+﻿@attribute [Route(Urls.AdminSettingsCreateContentType)]
+@attribute [Route($"{Urls.AdminSettingsUpdateContentType}/{{ContentTypeId:guid}}")]
+@attribute [Route($"{Urls.AdminSettingsCopyContentType}/{{CopyContentTypeId:guid}}")]
+
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Hosting
 @using ZauberCMS.Components.Editors.Dialogs

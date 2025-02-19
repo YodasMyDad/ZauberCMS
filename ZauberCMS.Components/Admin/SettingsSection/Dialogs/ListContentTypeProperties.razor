@@ -31,9 +31,8 @@
 </RadzenListBox>
 
 @code {
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    //[Inject] public DialogService DialogService { get; set; } = default!;
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
 
     [Parameter] public Guid Id { get; set; }
 

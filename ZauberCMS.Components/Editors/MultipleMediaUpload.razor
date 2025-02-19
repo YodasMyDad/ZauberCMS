@@ -43,11 +43,11 @@
 </RadzenStack>
 
 @code {
-    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
-    [Inject] public ProviderService ProviderService { get; set; } = default!;
-    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+    [Inject] public ProviderService ProviderService { get; set; } = null!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
     
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public int MaxAllowedFiles { get; set; } = 30; // Only allow 30 max at a time, should be setting
@@ -58,7 +58,7 @@
     [Parameter] public List<IBrowserFile> FilesToUpload { get; set; } = [];
     
     private ElementReference FileDropContainer { get; set; }
-    private InputFile InputFile { get; set; } = default!;
+    private InputFile InputFile { get; set; } = null!;
     private IJSObjectReference? FilePasteModule { get; set; }
     private IJSObjectReference? FilePasteFunctionReference { get; set; }
     private string HoverClass { get; set; } = string.Empty;

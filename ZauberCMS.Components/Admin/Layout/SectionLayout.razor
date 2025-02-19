@@ -64,7 +64,7 @@
                 if (!globalSettingsRequest.AllowedAdminIpAddress.Contains(usersIp))
                 {
                     // Log them out and redirect
-                    NavigationManager.NavigateTo("/api/auth/logout", true);
+                    NavigationManager.NavigateTo(Urls.ApiLogout, true);
                 }
             }
         }

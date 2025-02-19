@@ -1,6 +1,6 @@
 ﻿@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-<TreeButton Icon="settings" Name="Global Settings" Url="/admin/settings/globalsettings" />
+<TreeButton Icon="settings" Name="Global Settings" Url="@(Urls.AdminSettingsGlobalSettings)" />
 
 @code {
     public int SortOrder => 0;

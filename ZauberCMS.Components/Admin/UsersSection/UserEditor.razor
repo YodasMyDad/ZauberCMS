@@ -100,19 +100,19 @@
 
 @code {
 
-    [CascadingParameter] BlazoredModalInstance ContentEditorModal { get; set; } = default!;
-    [CascadingParameter] IModalService ModalService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public DialogService DialogService { get; set; } = default!;
-    [Inject] public UserManager<User> UserManager { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-    [Inject] public ValidateService<User> ValidateService { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance ContentEditorModal { get; set; } = null!;
+    [CascadingParameter] IModalService ModalService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public DialogService DialogService { get; set; } = null!;
+    [Inject] public UserManager<User> UserManager { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    [Inject] public ValidateService<User> ValidateService { get; set; } = null!;
     
     [Parameter] public Guid? UserId { get; set; }
 
-    private User? User { get; set; } = default!;
+    private User? User { get; set; }
     private string? InitialUsername { get; set; }
     private string? InitialEmail { get; set; }
     private Dictionary<string, IContentProperty> AllProperties { get; set; } = new();
@@ -121,7 +121,7 @@
     private RadzenTabs? Tabs { get; set; }
     private List<Tab> AllTabs { get; set; } = [];
     private List<PropertyType> AllContentProperties { get; set; } = [];
-    private AuthenticationState AuthState { get; set; } = default!;
+    private AuthenticationState AuthState { get; set; } = null!;
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
@@ -199,7 +199,7 @@
                 if (roleUpdateResult.RefreshSignIn)
                 {
                     var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.Uri);
-                    NavigationManager.NavigateTo($"{Urls.RefreshSignIn}?redirectUrl={currentUrl}", true);
+                    NavigationManager.NavigateTo($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}", true);
                 }
             }
         }
@@ -295,7 +295,7 @@
             if (result is { Success: true, RefreshSignIn: true })
             {
                 var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.Uri);
-                NavigationManager.NavigateTo($"{Urls.RefreshSignIn}?redirectUrl={currentUrl}", true);
+                NavigationManager.NavigateTo($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}", true);
             }
         }
     }

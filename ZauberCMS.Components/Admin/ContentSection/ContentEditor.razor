@@ -161,16 +161,16 @@ else
 
 @code {
 
-    [CascadingParameter] BlazoredModalInstance ContentEditorModal { get; set; } = default!;
-    [CascadingParameter] IModalService ModalService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public TreeState TreeState { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-    [Inject] public ValidateService<Content> ValidateService { get; set; } = default!;
-    [Inject] public IMapper Mapper { get; set; } = default!;
-    [Inject] public IStringLocalizer<SharedResource> Localizer { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance ContentEditorModal { get; set; } = null!;
+    [CascadingParameter] IModalService ModalService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    [Inject] public ValidateService<Content> ValidateService { get; set; } = null!;
+    [Inject] public IMapper Mapper { get; set; } = null!;
+    [Inject] public IStringLocalizer<SharedResource> Localizer { get; set; } = null!;
 
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
@@ -186,7 +186,7 @@ else
     private RadzenTabs? Tabs { get; set; }
     private bool RootOnly => IsBlockList != true && ContentId == null && ParentId == null;
     private bool ElementTypesOnly => IsBlockList == true;
-    private AuthenticationState AuthState { get; set; } = default!;
+    private AuthenticationState AuthState { get; set; } = null!;
 
     protected override async Task OnParametersSetAsync()
     {

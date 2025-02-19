@@ -80,7 +80,7 @@
     {
         if (value is ContentType selectedRow)
         {
-            NavigationManager.NavigateTo($"/admin/updatecontentype/{selectedRow.Id}", RefreshPage);
+            NavigationManager.NavigateTo($"{Urls.AdminSettingsUpdateContentType}/{selectedRow.Id}", RefreshPage);
         }
     }
 }

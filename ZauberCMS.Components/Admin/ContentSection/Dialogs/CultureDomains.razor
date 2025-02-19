@@ -69,13 +69,13 @@
 </RadzenStack>
 
 @code {
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
 
-    [Parameter, EditorRequired] public Content Content { get; set; } = default!;
+    [Parameter, EditorRequired] public Content Content { get; set; } = null!;
     private IEnumerable<Language> Languages { get; set; } = [];
     private List<Domain> Domains { get; set; } = [];
-    private RadzenDataGrid<Domain> Grid { get; set; } = default!;
+    private RadzenDataGrid<Domain> Grid { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {

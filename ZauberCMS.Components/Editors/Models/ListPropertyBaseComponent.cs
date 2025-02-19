@@ -12,9 +12,9 @@ namespace ZauberCMS.Components.Editors.Models;
 
 public class ListPropertyBaseComponent : ComponentBase
 {
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public IServiceProvider ServiceProvider { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public IServiceProvider ServiceProvider { get; set; } = null!;
 
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }

@@ -2,7 +2,7 @@
 @foreach (var content in UnpublishedContent)
 {
     <p>
-        <a href="/admin/updatecontent/@content.Id">@content.Name</a>
+        <a href="@Urls.AdminUpdateContent/@content.Id">@content.Name</a>
     </p>
 }
 

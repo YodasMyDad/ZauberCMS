@@ -62,10 +62,10 @@
 </LayoutView>
 
 @code {
-    [Inject] public IdentityRedirectManager RedirectManager { get; set; } = default!;
-    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] public IdentityRedirectManager RedirectManager { get; set; } = null!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
     [SupplyParameterFromForm] private LoginUserCommand LoginUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }

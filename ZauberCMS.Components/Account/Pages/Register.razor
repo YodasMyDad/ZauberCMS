@@ -47,10 +47,10 @@
     [SupplyParameterFromForm] public RegisterUserCommand RegisterUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
-    [Inject] public IdentityRedirectManager RedirectManager { get; set; } = default!;
-    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] public IdentityRedirectManager RedirectManager { get; set; } = null!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
     private Type LayoutType { get; set; } = null!;

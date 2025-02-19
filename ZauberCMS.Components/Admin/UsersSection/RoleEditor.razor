@@ -105,11 +105,11 @@
 
 
 @code {
-    [Inject] public IModalService DialogService { get; set; } = default!;
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
-    [Inject] public AppState AppState { get; set; } = default!;
-    [Inject] public ValidateService<Role> ValidateService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public ValidateService<Role> ValidateService { get; set; } = null!;
 
     [Parameter] public Guid? RoleId { get; set; }
 
@@ -119,9 +119,9 @@
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
     private bool ShowDeleteButton { get; set; }
     private int SelectedTabIndex { get; set; }
-    private RadzenTabs Tabs { get; set; } = default!;
+    private RadzenTabs Tabs { get; set; } = null!;
     private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
-    private AuthenticationState AuthState { get; set; } = default!;
+    private AuthenticationState AuthState { get; set; } = null!;
 
     protected override void OnInitialized()
     {

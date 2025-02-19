@@ -9,7 +9,7 @@
            @bind-Value="@Selection" />
 
 @code {
-    [Inject] public AppState AppState { get; set; } = default!;
+    [Inject] public AppState AppState { get; set; } = null!;
     
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.MediaNavGroup;
@@ -51,10 +51,10 @@
         switch (Selection)
         {
             case Media { MediaType: MediaType.Folder } folder:
-                NavigationManager.NavigateTo($"/admin/folder/{folder.Id}");
+                NavigationManager.NavigateTo($"{Urls.AdminMediaFolder}/{folder.Id}");
                 break;
             case Media media:
-                NavigationManager.NavigateTo($"/admin/updatemedia/{media.Id}");
+                NavigationManager.NavigateTo($"{Urls.AdminUpdateMedia}/{media.Id}");
                 break;
         }
     }

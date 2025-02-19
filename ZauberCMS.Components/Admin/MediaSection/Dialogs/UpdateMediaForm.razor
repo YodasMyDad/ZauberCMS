@@ -126,9 +126,9 @@
 </RadzenTabs>
 
 @code {
-    [Inject] NotificationService NotificationService { get; set; } = default!;
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-    [Inject] public ValidateService<Media> ValidateService { get; set; } = default!;
+    [Inject] NotificationService NotificationService { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    [Inject] public ValidateService<Media> ValidateService { get; set; } = null!;
     [CascadingParameter] public IModalService? ModalService { get; set; }
     
     [Parameter] public EventCallback<Media> ValueChanged { get; set; }

@@ -42,12 +42,12 @@
 </EditorRow>
 
 @code {
-    [Parameter, EditorRequired] public PropertyType Property { get; set; } = default!;
-    [Parameter, EditorRequired] public IContentProperty ContentProperty { get; set; } = default!;
+    [Parameter, EditorRequired] public PropertyType Property { get; set; } = null!;
+    [Parameter, EditorRequired] public IContentProperty ContentProperty { get; set; } = null!;
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnSortUp { get; set; }
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnSortDown { get; set; }
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnDelete { get; set; }
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnChangeTab { get; set; }
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnSettings { get; set; }
-    [Parameter, EditorRequired] public SlugHelper SlugHelper { get; set; } = default!;
+    [Parameter, EditorRequired] public SlugHelper SlugHelper { get; set; } = null!;
 }

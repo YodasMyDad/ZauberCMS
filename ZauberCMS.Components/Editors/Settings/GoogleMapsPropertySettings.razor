@@ -33,7 +33,7 @@
 </RadzenStack>
 
 @code {
-    [Inject] public IModalService DialogService { get; set; } = default!;
+    [Inject] public IModalService DialogService { get; set; } = null!;
     
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }

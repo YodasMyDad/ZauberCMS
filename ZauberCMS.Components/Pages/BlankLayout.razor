@@ -21,7 +21,7 @@
 
 @code
 {
-    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = default!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     protected override void OnInitialized()
     {
         var cultureInfo = new CultureInfo(Settings.Value.AdminDefaultLanguage);

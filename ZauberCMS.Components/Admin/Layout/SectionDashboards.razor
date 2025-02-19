@@ -18,7 +18,7 @@
 
 @code {
     [Parameter] public string? SectionAlias { get; set; }
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     private Dictionary<string, ISectionDashboard> Dashboards { get; set; } = new();
     private int SelectedIndex { get; set; }
     protected override void OnInitialized()

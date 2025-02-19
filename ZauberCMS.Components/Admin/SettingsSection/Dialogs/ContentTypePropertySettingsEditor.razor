@@ -12,11 +12,10 @@ else
 }
 
 @code {
-    //[Inject] public DialogService DialogService { get; set; } = default!;
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     
-    [Parameter] public PropertyType PropertyType { get; set; } = default!;
+    [Parameter] public PropertyType PropertyType { get; set; } = null!;
     
     private Dictionary<string, IContentProperty> AllContentTypeProperties { get; set; } = new();
     private Type? SettingsComponent { get; set; }

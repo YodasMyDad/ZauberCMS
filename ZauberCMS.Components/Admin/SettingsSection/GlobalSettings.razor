@@ -1,4 +1,4 @@
-﻿@page "/admin/settings/globalsettings"
+﻿@attribute [Route(Urls.AdminSettingsGlobalSettings)]
 @layout SectionLayout
 
 <PageTitle>Global Settings</PageTitle>
@@ -72,7 +72,7 @@
 @code {
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
     
-    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
     
     private int SelectedIndex { get; set; }
     private ZauberCMS.Core.Settings.GlobalSettings GlobalSettingsModel { get; set; } = new();

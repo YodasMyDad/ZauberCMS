@@ -14,8 +14,7 @@
 </RadzenListBox>
 
 @code {
-    //[Inject] public DialogService DialogService { get; set; } = default!;
-    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     
     [Parameter] public Guid ContentTypeId { get; set; }
     [Parameter] public List<Tab> Tabs { get; set; } = [];

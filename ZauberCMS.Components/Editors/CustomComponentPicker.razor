@@ -15,7 +15,7 @@
                 Multiple="true" AllowClear="true" Placeholder="Select components" Chips="true" Style="width: 100%;"/>
 
 @code {
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = default!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     
     public string Name => "Custom Component Picker";
     public string Alias => "ZauberCMS.CustomComponentPicker";

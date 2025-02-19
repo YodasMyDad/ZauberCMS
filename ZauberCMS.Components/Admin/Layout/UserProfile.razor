@@ -12,17 +12,17 @@
 
 @code {
 
-    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-    private AuthenticationState AuthState { get; set; } = default!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    private AuthenticationState AuthState { get; set; } = null!;
 
     private void Edit()
     {
-        NavigationManager.NavigateTo($"/admin/users/edit/{AuthState.User.GetUserId()}");
+        NavigationManager.NavigateTo($"{Urls.AdminUsersEdit}/{AuthState.User.GetUserId()}");
     }
 
     private void Logout()
     {
-        NavigationManager.NavigateTo("/api/auth/logout", true);
+        NavigationManager.NavigateTo(Urls.ApiLogout, true);
     }
 
     protected override async Task OnInitializedAsync()
