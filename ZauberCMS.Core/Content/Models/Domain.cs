@@ -1,5 +1,6 @@
 ﻿using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Models;
+using ZauberCMS.Core.Seo.Models;
 
 namespace ZauberCMS.Core.Content.Models;
 
@@ -39,4 +40,6 @@ public class Domain
     /// The date and time the item was updated
     /// </summary>
     public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
+    
+    public List<SeoRedirect> Redirects { get; set; } = [];
 }

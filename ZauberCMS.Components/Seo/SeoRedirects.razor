@@ -1,22 +1,122 @@
 ﻿@attribute [Route(Urls.AdminSeoRedirects)]
+@using ZauberCMS.Core.Seo.Models
+@using ZauberCMS.Core.Data.Commands
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core
 
 @layout SectionLayout
 
 <PageTitle>SEO Redirects</PageTitle>
 
-
 <RadzenPanel Class="rz-mx-auto">
-    TODO
+    <RadzenDataGrid AllowFiltering="true"
+                    FilterPopupRenderMode="PopupRenderMode.Initial"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    AllowPaging="true"
+                    PageSize="@AmountPerPage"
+                    AllowSorting="true"
+                    LoadData="@LoadData"
+                    IsLoading="@IsLoading"
+                    Count="@Count"
+                    Data="@SeoRedirectsList"
+                    SelectionMode="DataGridSelectionMode.Single"
+                    RowSelect="@((SeoRedirect value) => OnRowSelect(value))"
+                    PagerHorizontalAlign="HorizontalAlign.Center">
+        @*@bind-Value="@SelectedContent"*@
+        <Columns>
+            <RadzenDataGridColumn Property="DomainId" Title="Domain">
+                <Template Context="data">
+                    @if (data.DomainId.HasValue)
+                    {
+                        if (Domains.TryGetValue(data.DomainId.Value, out var domain))
+                        {
+                            @domain.Url
+                        }
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="FromUrl" Title="From Url">
+                <Template Context="data">
+                    @data.FromUrl
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="ToUrl" Title="To Url">
+                <Template Context="data">
+                    @data.ToUrl
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="IsPermanent" Title="Redirect Type">
+                <Template Context="data">
+                    @(data.IsPermanent ? "301" : "302")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                <Template Context="data">
+                    @data.DateUpdated.Humanize()
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
 </RadzenPanel>
 
 @code {
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
-
-    protected override void OnInitialized()
+    private int AmountPerPage { get; set; }
+    private int Count { get; set; } 
+    private bool IsLoading { get; set; } = false;
+    private IEnumerable<SeoRedirect> SeoRedirectsList { get; set; } = [];
+    private Dictionary<Guid, Domain> Domains { get; set; } = [];
+    
+    protected override async Task OnInitializedAsync()
     {
+        await LoadData(new LoadDataArgs {Top = AmountPerPage});
         Layout?.SetSection(Constants.Sections.SettingsSection);
+        var domains = await Mediator.Send(new QueryDomainCommand{AmountPerPage = 100});
+        Domains = domains.Items.ToDictionary(x => x.Id, x => x);
+    }
+    
+    async Task LoadData(LoadDataArgs args)
+    {
+        IsLoading = true;
+
+        await Task.Yield();
+
+        var command = new DataGridCommand<SeoRedirect>();
+        
+        if (args.Top != null)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        // Filter via the Where method
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            command.Filter = args.Filter;
+        }
+
+        // Sort via the OrderBy method
+        command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateUpdated desc";
+
+        var result = await Mediator.Send(command);
+        Count = result.Count;
+        SeoRedirectsList = result.Items;
+
+        IsLoading = false;
+    }
+    
+    private void OnRowSelect(object value)
+    {
+        if (value is SeoRedirect selectedRow)
+        {
+            // TODO
+        }
     }
 
 }

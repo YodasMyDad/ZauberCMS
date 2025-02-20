@@ -761,6 +761,44 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.ToTable("ZauberUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Seo.Models.SeoRedirect", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DomainId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FromUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsPermanent")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ToUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DomainId");
+
+                    b.HasIndex("FromUrl")
+                        .HasDatabaseName("IX_ZauberRedirects_FromUrl");
+
+                    b.ToTable("ZauberRedirects", (string)null);
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1013,6 +1051,16 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Seo.Models.SeoRedirect", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Content.Models.Domain", "Domain")
+                        .WithMany("Redirects")
+                        .HasForeignKey("DomainId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Domain");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.TagItem", b =>
                 {
                     b.HasOne("ZauberCMS.Core.Tags.Models.Tag", "Tag")
@@ -1036,6 +1084,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>
                 {
                     b.Navigation("LinkedContent");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
+                {
+                    b.Navigation("Redirects");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Languages.Models.Language", b =>
