@@ -110,24 +110,27 @@
                                 </CentreColumn>
                             </EditorRow>
 
+                            @if (ContentType.IsElementType)
+                            {
+                                <EditorRow>
+                                    <LeftColumn>
+                                        <PropertyInfo Name="Element Type Preview Image" Description="Choose an image to show for this element type when it is displayed in the block list editor"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <MediaPickerProperty
+                                            Value="@ContentType.MediaIdAsString"
+                                            Settings="@(JsonSerializer.Serialize(new MediaPickerSettings { MaxAllowed = 1 }))"
+                                            ValueChanged="@(e => ContentType.MediaIdAsString = e.ToString())"/>
+                                    </CentreColumn>
+                                </EditorRow>   
+                            }
+
                             <EditorRow>
                                 <LeftColumn>
                                     <PropertyInfo Name="Enable List View" Description="Show list view of child content instead of them showing as child items in the tree"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenSwitch Name="EnableListView" @bind-Value="@ContentType.EnableListView"/>
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <PropertyInfo Name="Cover Image" Description="Choose an image to show for this content type when it is displayed in a list (Great for element types)"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <MediaPickerProperty
-                                        Value="@ContentType.MediaIdAsString"
-                                        Settings="@(JsonSerializer.Serialize(new MediaPickerSettings { MaxAllowed = 1 }))"
-                                        ValueChanged="@(e => ContentType.MediaIdAsString = e.ToString())"/>
                                 </CentreColumn>
                             </EditorRow>
 

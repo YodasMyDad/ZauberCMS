@@ -1,9 +1,7 @@
 ﻿@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Content.Models
 @using ZauberCMS.Core.Media.Models
-@using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
-@if (CoverImages.Any())
+@if (ElementTypesOnly == true && CoverImages.Any())
 {
     <div class="mx-auto">
         <div class="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
@@ -12,9 +10,9 @@
                 <div class="relative lg:col-span-2 cursor-pointer" @onclick="@(() => SelectContentType(contentType.Id))">
                     <div class="absolute inset-px rounded-lg"></div>
                     <div class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
-                        @if (CoverImages.TryGetValue(contentType.Id, out var coverimage))
+                        @if (CoverImages.TryGetValue(contentType.Id, out var coverImage))
                         {
-                            <img class="h-48 object-cover" src="/@coverimage.Url" alt="@contentType.Name">
+                            <img class="h-48 object-cover" src="/@coverImage.Url" alt="@contentType.Name">
                         }
                         else if (contentType.Icon != null)
                         {
