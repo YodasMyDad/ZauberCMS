@@ -50,8 +50,7 @@ public class SaveDomainHandler(
                 mapper.Map(request.Domain, domain);
                 domain.DateUpdated = DateTime.UtcNow;
             }
-
-            cacheService.ClearCachedItemsWithPrefix(nameof(Domain));
+            
             await user.AddAudit(domain, $"Domain ({domain.Url})", isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
             return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken);
         }

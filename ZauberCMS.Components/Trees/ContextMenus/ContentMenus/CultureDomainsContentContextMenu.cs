@@ -31,7 +31,11 @@ public class CultureDomainsContentContextMenu(
 
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
     {
-        return args.Value is Content;
+        if(args.Value is Content content)
+        {
+            return content.Published;
+        }
+        return false;
     }
 
     public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e,

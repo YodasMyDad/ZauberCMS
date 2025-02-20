@@ -15,7 +15,11 @@ public class CreateContentContextMenu : ITreeContextMenu
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
     {
-        return args.Value is Content;
+        if(args.Value is Content content)
+        {
+            return content.Published;
+        }
+        return false;
     }
 
     public Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,

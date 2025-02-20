@@ -29,7 +29,7 @@ public class RestoreContextMenu(IMediator mediator, AppState appState) : ITreeCo
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var branch = (TreeBranch)args.Value;
-        var dbContent = await mediator.Send(new GetContentCommand { Id = branch.Id, IncludeChildren = true });
+        var dbContent = await mediator.Send(new GetContentCommand { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true});
         var currentUser = await mediator.GetCurrentUser();
         contextMenuService.Close();
         dbContent!.Deleted = false;

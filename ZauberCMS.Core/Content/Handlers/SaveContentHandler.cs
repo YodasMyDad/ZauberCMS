@@ -122,8 +122,6 @@ public class SaveContentHandler(
             // Calculate and set the Path property
             content.Path = BuildPath(content, dbContext, isUpdate);
             
-            
-            cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
             await user.AddAudit(content, content.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
             return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
         }

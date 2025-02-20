@@ -28,7 +28,7 @@ public class DeleteContentContextMenu(IMediator mediator, DialogService confirmS
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var content = (Content)args.Value!;
-        var dbContent = await mediator.Send(new GetContentCommand { Id = content.Id, IncludeChildren = true });
+        var dbContent = await mediator.Send(new GetContentCommand { Id = content.Id, IncludeChildren = true, IncludeUnpublished = true, Cached = false});
         var currentUser = await mediator.GetCurrentUser();
         // Confirm dialogue, say if there are children, and confirm then delete all
         var hasChildren = dbContent!.Children.Count != 0;

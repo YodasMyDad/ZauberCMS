@@ -1,0 +1,42 @@
+﻿@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Content.Commands
+<h5>Choose where to copy @Content.Name to in the tree structure below</h5>
+
+<EditorRow>
+    <CentreColumn>
+        <ContentTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Include Descendants" Description=""/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@CopyContentCommand.IncludeDescendants" />
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+
+@code {
+    [Parameter, EditorRequired] public Content Content { get; set; } = null!;
+    [Parameter, EditorRequired] public CopyContentCommand CopyContentCommand { get; set; } = null!;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    
+    private void OnValueChangedHandler(object value)
+    {
+        if (value is Content content)
+        {
+            CopyContentCommand.CopyTo = content.Id;
+        }
+    }
+    
+    private async Task Save()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(CopyContentCommand));
+    }
+}

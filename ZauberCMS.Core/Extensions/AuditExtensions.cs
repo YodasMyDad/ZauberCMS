@@ -32,6 +32,7 @@ public static class AuditExtensions
             AuditAction.Move => "Moved",
             AuditAction.RecycleBin => "Recycle Binned",
             AuditAction.Misc => "Misc action on",
+            AuditAction.Copy => "Copied",
             _ => string.Empty
         };
     }
@@ -43,6 +44,7 @@ public static class AuditExtensions
         Update,
         Move,
         RecycleBin,
-        Misc
+        Misc,
+        Copy
     }
 }

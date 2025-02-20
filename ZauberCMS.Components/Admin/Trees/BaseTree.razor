@@ -114,7 +114,7 @@
                 if (ContextMenus.Any())
                 {
                     ContextMenuService.Open(args,
-                        MenuItems(args), e => Task.Run(() => MenuAction(args, e, NavigationManager, ContextMenuService, ModalService)));
+                        MenuItems(args), e => _ = MenuAction(args, e, NavigationManager, ContextMenuService, ModalService));
             
                 }
             }   
@@ -136,13 +136,13 @@
         return menu;
     }
 
-    private Task MenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager, ContextMenuService contextMenuService, IModalService modalService)
+    private async Task MenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager, ContextMenuService contextMenuService, IModalService modalService)
     {
         var value = (int)e.Value;
         if (ContextMenus.TryGetValue(value, out var contextMenu))
-        {
-            return contextMenu.ContextMenuAction(args, e, navigationManager, contextMenuService, modalService);
+        { 
+            await contextMenu.ContextMenuAction(args, e, navigationManager, contextMenuService, modalService);
+            StateHasChanged();
         }
-        return Task.CompletedTask;
     }
 }

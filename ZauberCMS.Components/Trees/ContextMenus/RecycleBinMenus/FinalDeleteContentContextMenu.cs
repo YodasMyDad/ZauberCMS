@@ -28,7 +28,7 @@ public class FinalDeleteContentContextMenu(IMediator mediator, DialogService dia
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var branch = (TreeBranch)args.Value;
-        var dbContent = await mediator.Send(new GetContentCommand { Id = branch.Id, IncludeChildren = true });
+        var dbContent = await mediator.Send(new GetContentCommand { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true });
         contextMenuService.Close();
         var delete = await dialogService.Confirm("Permanently delete this?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
         if (delete == true)

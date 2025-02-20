@@ -53,10 +53,11 @@
     
     private async Task DataRefresh()
     {
-        var deletedContent = await Mediator.Send(new QueryContentCommand()
+        var deletedContent = await Mediator.Send(new QueryContentCommand
         {
             OrderBy = GetContentsOrderBy.DateUpdated,
             IsDeleted = true, // Only get deleted items
+            IncludeUnpublished = true,
             AmountPerPage = 300 // Need to think about this
         });
 
