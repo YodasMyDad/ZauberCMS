@@ -72,7 +72,8 @@
                                   InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Hide from search engines" } })"/>
                 </CentreColumn>
             </EditorRow>
-
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="Sitemap">
             <EditorRow>
                 <LeftColumn>
                     <PropertyInfo Name="Exclude From Sitemap"
@@ -84,9 +85,28 @@
                                   InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Exclude from sitemap" } })"/>
                 </CentreColumn>
             </EditorRow>
-        </RadzenTabsItem>
-        <RadzenTabsItem Text="Sitemap">
-            TODO
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Change Frequency"
+                                  Description="How frequently the page is likely to change. This affects how search engines treat your page."/>
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenDropDown
+                        @bind-Value="Meta.ChangeFrequency"
+                        Data="ChangeFrequencies"
+                        Style="width: 100%;" />
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Priority"
+                                  Description="Relative importance of this page compared to other pages on your site."/>
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenNumeric Style="width: 100%;" TValue="double" @bind-Value="@Meta.Priority" />
+                </CentreColumn>
+            </EditorRow>
         </RadzenTabsItem>
         <RadzenTabsItem Text="SEO Checker">
             <SeoChecker Content="Content" FullUrl="@FullUrl" />
@@ -112,6 +132,10 @@
     
     private Meta Meta { get; set; } = new();
     private string? FullUrl { get; set; }
+    
+    public SeoSitemapChangeFrequency[] ChangeFrequencies { get; set; } =
+        Enum.GetValues(typeof(SeoSitemapChangeFrequency)).Cast<SeoSitemapChangeFrequency>().ToArray();
+
     
     private async Task SetOpenGraphMedia(string? e)
     {

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using MediatR;
@@ -117,10 +118,12 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
         var allowInSitemap = true;
         var seoProperty =
             content.ContentType?.ContentProperties.FirstOrDefault(x => x.Component == "ZauberCMS.Components.Editors.SeoProperty");
+        
+        Meta? metaData = null;
         if (seoProperty != null)
         {
             // We have an SEO property
-            var metaData = content.GetValue<Meta>(seoProperty.Alias ?? "meh");
+            metaData = content.GetValue<Meta>(seoProperty.Alias ?? "meh");
             if (metaData is { ExcludeFromSitemap: true } or { HideFromSearchEngines: true })
             {
                 allowInSitemap = false;
@@ -134,8 +137,8 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
             sitemapEntries.Add(new XElement(ns + "url",
                 new XElement(ns + "loc", fullUrl),
                 new XElement(ns + "lastmod", $"{content.DateUpdated:yyyy-MM-ddTHH:mm:sszzz}"),
-                new XElement(ns + "changefreq", "weekly"), // Need to make configurable
-                new XElement(ns + "priority", "0.5") // Need to make configurable
+                new XElement(ns + "changefreq", metaData != null ? metaData.ChangeFrequency.ToString().ToLower(CultureInfo.CurrentCulture) : "weekly"),
+                new XElement(ns + "priority", metaData != null ? metaData.Priority.ToString(CultureInfo.CurrentCulture) : "0.5")
             ));   
         }
     }

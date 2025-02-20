@@ -7,4 +7,6 @@ public class Meta
     public Guid? OpenGraphImage { get; set; }
     public bool HideFromSearchEngines { get; set; }
     public bool ExcludeFromSitemap { get; set; }
+    public SeoSitemapChangeFrequency ChangeFrequency { get; set; } = SeoSitemapChangeFrequency.Weekly;
+    public double Priority { get; set; } = 0.5;
 }
