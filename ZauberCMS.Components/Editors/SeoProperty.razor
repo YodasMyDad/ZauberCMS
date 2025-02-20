@@ -1,12 +1,13 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Seo.Models
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Components.Seo
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenTabs TabPosition="TabPosition.Left">
     <Tabs>
-        <RadzenTabsItem Text="Data">
+        <RadzenTabsItem Text="Fields">
             <EditorRow>
                 <LeftColumn>
                     <PropertyInfo Name="Page Title"
@@ -17,12 +18,13 @@
                                    @bind-Value="@Meta.PageTitle"
                                    class="form-control w-full"
                                    MaxLength="80"/>
-                    @*@if (SettingsModel.MaxLength != null)
+                    @if (!string.IsNullOrEmpty(Meta.PageTitle) && Meta.PageTitle.Length > 60)
                     {
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Caption">Max Length: @SettingsModel.MaxLength</RadzenText>
+                        <div class="mt-1">
+                            <TailwindAlert Type="AlertType.Warning" Title="@($"Page title is {Meta.PageTitle.Length} characters")" />
                         </div>
-                    }*@
+                    }
+
                 </CentreColumn>
             </EditorRow>
 
@@ -37,6 +39,12 @@
                         Change="@(async () => await NotifyValueChanged())"
                         @bind-Value="@Meta.MetaDescription"
                         class="form-control w-full" MaxLength="160"/>
+                    @if (!string.IsNullOrEmpty(Meta.MetaDescription) && Meta.MetaDescription.Length > 160)
+                    {
+                        <div class="mt-1">
+                            <TailwindAlert Type="AlertType.Warning" Title="@($"Meta description is {Meta.MetaDescription.Length} characters")" />
+                        </div>
+                    }
                 </CentreColumn>
             </EditorRow>
 
@@ -77,7 +85,10 @@
                 </CentreColumn>
             </EditorRow>
         </RadzenTabsItem>
-        <RadzenTabsItem Text="SEO Tools">
+        <RadzenTabsItem Text="Sitemap">
+            TODO
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="SEO Checker">
             <SeoChecker Content="Content" FullUrl="@FullUrl" />
         </RadzenTabsItem>
     </Tabs>

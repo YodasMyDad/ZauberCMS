@@ -1,6 +1,7 @@
 ﻿using ZauberCMS.Core.Seo.Models;
 using HtmlAgilityPack;
 using System.Text.RegularExpressions;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -23,12 +24,12 @@ public partial class WordCountCheck : ISeoCheck
 
         if (wordCount < 250)
         {
-            seoItem.Status = SeoCheckStatus.Error;
+            seoItem.Status = AlertType.Error;
             seoItem.Message = $"Page contains only {wordCount} words. Consider adding more content for better SEO.";
         }
         else if (wordCount < 500)
         {
-            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Status = AlertType.Warning;
             seoItem.Message = $"Page contains {wordCount} words. While acceptable, more content may improve SEO.";
         }
         else

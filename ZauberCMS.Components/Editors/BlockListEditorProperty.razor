@@ -33,8 +33,9 @@
     </SortableItemTemplate>
 </SortableList>
 
-<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+<RadzenStack Orientation="Orientation.Vertical" Gap="0.2rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
     <RadzenButton Icon="add" Size="ButtonSize.Medium" Click="@(() => UpdateContent())" class="rz-border-radius-10" />
+    <div class="text-sm">Add New Block</div>
 </RadzenStack>
 
 @code {
@@ -88,6 +89,10 @@
         if (contentUpdate != null)
         {
             contentParams.Add("Content", contentUpdate);
+        }
+        else
+        {
+            contentParams.Add("DefaultName", $"Block {(ContentItems.Count+1).ToWords()}");
         }
 
         if (ModalService != null)

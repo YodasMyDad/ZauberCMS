@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -18,7 +19,7 @@ public class MobileFriendlyCheck : ISeoCheck
 
         if (viewportMeta == null)
         {
-            seoItem.Status = SeoCheckStatus.Error;
+            seoItem.Status = AlertType.Error;
             seoItem.Message = "Missing <meta name=\"viewport\"> tag. The page may not be mobile-friendly.";
         }
         else
@@ -29,12 +30,12 @@ public class MobileFriendlyCheck : ISeoCheck
             const string recommended = "width=device-width, initial-scale=1";
             if (contentAttr.Contains("width=device-width") && contentAttr.Contains("initial-scale"))
             {
-                seoItem.Status = SeoCheckStatus.Success;
+                seoItem.Status = AlertType.Success;
                 seoItem.Message = $"Viewport meta tag found: {contentAttr}";
             }
             else
             {
-                seoItem.Status = SeoCheckStatus.Warning;
+                seoItem.Status = AlertType.Warning;
                 seoItem.Message = $"Viewport tag detected but may not be fully optimized: {contentAttr}. Recommended: \"{recommended}\"";
             }
         }

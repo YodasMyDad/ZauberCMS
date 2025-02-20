@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -18,11 +19,11 @@ public class CanonicalSeoChecker : ISeoCheck
         
         if (!canonicalLinkExists)
         {
-            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Status = AlertType.Warning;
             seoItem.Message = "Canonical link is missing.";
         }
 
-        if (seoItem.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == AlertType.Success)
         {
             seoItem.Message = "Canonical link is present.";
         }

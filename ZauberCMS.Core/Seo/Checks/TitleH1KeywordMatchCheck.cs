@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -23,7 +24,7 @@ public partial class TitleH1KeywordMatchCheck : ISeoCheck
 
         if (string.IsNullOrWhiteSpace(titleText) || string.IsNullOrWhiteSpace(h1Text))
         {
-            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Status = AlertType.Warning;
             seoItem.Message = "Either the page title or the <h1> is missing, making keyword consistency impossible.";
             result.Items.Add(seoItem);
         }
@@ -38,7 +39,7 @@ public partial class TitleH1KeywordMatchCheck : ISeoCheck
 
             if (!matchingWords.Any())
             {
-                seoItem.Status = SeoCheckStatus.Warning;
+                seoItem.Status = AlertType.Warning;
                 seoItem.Message = "No keywords from the title appear in the <h1>. Consider aligning them for better SEO.";
                 result.Items.Add(seoItem);
             }
@@ -46,7 +47,7 @@ public partial class TitleH1KeywordMatchCheck : ISeoCheck
 
         if (result.Items.Count == 0)
         {
-            seoItem.Status = SeoCheckStatus.Success;
+            seoItem.Status = AlertType.Success;
             seoItem.Message = "Page title and <h1> contain keywords words that match.";
             result.Items.Add(seoItem);
         }

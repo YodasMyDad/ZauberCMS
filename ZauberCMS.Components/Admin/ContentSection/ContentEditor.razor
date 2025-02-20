@@ -176,6 +176,7 @@ else
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public bool? IsBlockList { get; set; }
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public string? DefaultName { get; set; }
 
     private EditForm ContentForm { get; set; } = null!;
     private ContentType? ContentType { get; set; }
@@ -213,6 +214,13 @@ else
                 {
                     IsRootContent = IsBlockList != true
                 };
+            }
+
+            if (IsBlockList == true && 
+                Content?.Name.IsNullOrWhiteSpace() == true && 
+                DefaultName.IsNullOrWhiteSpace() == false)
+            {
+                Content.Name = DefaultName;
             }
         }
         else

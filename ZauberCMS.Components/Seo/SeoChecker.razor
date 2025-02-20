@@ -1,5 +1,6 @@
 ﻿@using HtmlAgilityPack
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Seo.Models
 
 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
@@ -16,9 +17,9 @@
         {
             var alertStyle = checkResultItem.Status switch
             {
-                SeoCheckStatus.Success => AlertStyle.Success,
-                SeoCheckStatus.Warning => AlertStyle.Warning,
-                SeoCheckStatus.Error => AlertStyle.Danger,
+                AlertType.Success => AlertStyle.Success,
+                AlertType.Warning => AlertStyle.Warning,
+                AlertType.Error => AlertStyle.Danger,
                 _ => AlertStyle.Info
             };
             <RadzenAlert Title="@check.Name" AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light" AllowClose="false">

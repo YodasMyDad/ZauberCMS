@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -61,12 +62,12 @@ public partial class AiContentCheck : ISeoCheck
 
         if (repeatedPhrases.Count > 5 || uniformityScore < 0.2 || transitionDensity > 0.1)
         {
-            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Status = AlertType.Warning;
             seoItem.Message = $"Potential AI-Generated Content Detected{analysisSummary}";
         }
         else
         {
-            seoItem.Status = SeoCheckStatus.Success;
+            seoItem.Status = AlertType.Success;
             seoItem.Message = $"Content appears natural{analysisSummary}";
         }
 

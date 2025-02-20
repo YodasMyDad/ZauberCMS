@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -19,16 +20,16 @@ public class MetaDescriptionSeoCheck : ISeoCheck
 
         if (string.IsNullOrWhiteSpace(metaDescription))
         {
-            seoItem.Status = SeoCheckStatus.Error;
+            seoItem.Status = AlertType.Error;
             seoItem.Message = "Meta description is missing.";
         }
         else if (metaDescription.Length is < 150 or > 160)
         {
-            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Status = AlertType.Warning;
             seoItem.Message = "Meta description should ideally be between 150 and 160 characters.";
         }
         
-        if (seoItem.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == AlertType.Success)
         {
             seoItem.Message = "Meta description is fine";
         }

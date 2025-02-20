@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -18,7 +19,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
         {
             result.Items.Add(new SeoCheckResultItem
             {
-                Status = SeoCheckStatus.Warning,
+                Status = AlertType.Warning,
                 Message = "No valid <body> content found on the page."
             });
             return result;
@@ -39,7 +40,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
         {
             result.Items.Add(new SeoCheckResultItem
             {
-                Status = SeoCheckStatus.Warning,
+                Status = AlertType.Warning,
                 Message = "No valid content links found on the page. Internal links, within content can help improve SEO"
             });
             return result;
@@ -61,7 +62,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    seoItem.Status = SeoCheckStatus.Error;
+                    seoItem.Status = AlertType.Error;
                     seoItem.Message = $"Broken link: {link} (Status: {response.StatusCode})";
                     seoItems.Add(seoItem);
                 }
@@ -71,7 +72,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             }
             catch
             {
-                seoItem.Status = SeoCheckStatus.Error;
+                seoItem.Status = AlertType.Error;
                 seoItem.Message = $"Invalid or unreachable link: {link}";
                 seoItems.Add(seoItem);
             }
@@ -81,7 +82,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
         {
             seoItems.Add(new SeoCheckResultItem
             {
-                Status = SeoCheckStatus.Warning,
+                Status = AlertType.Warning,
                 Message = "More than 50 links. Only the first 50 have been checked."
             });
         }
@@ -90,7 +91,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
         {
             result.Items.Add(new SeoCheckResultItem
             {
-                Status = SeoCheckStatus.Success,
+                Status = AlertType.Success,
                 Message = "No broken links found."
             });
         }

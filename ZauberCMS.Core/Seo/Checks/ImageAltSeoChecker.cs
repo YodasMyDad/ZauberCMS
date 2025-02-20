@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -20,11 +21,11 @@ public class ImageAltSeoChecker : ISeoCheck
 
         if (imagesWithoutAlt > 0)
         {
-            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Status = AlertType.Warning;
             seoItem.Message = $"{imagesWithoutAlt} image(s) are missing alt attributes.";
         }
 
-        if (seoItem.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == AlertType.Success)
         {
             seoItem.Message = "All images have alt attributes.";
         }

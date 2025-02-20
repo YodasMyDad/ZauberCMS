@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
@@ -18,18 +19,18 @@ public class PageTitleSeoCheck : ISeoCheck
         
         if (title.IsNullOrWhiteSpace())
         {
-            seoItem.Status = SeoCheckStatus.Error;
+            seoItem.Status = AlertType.Error;
             seoItem.Message = "Page title is missing.";
         }
         
         // Check title length
         if (title is { Length: < 30 or > 60 })
         {
-            seoItem.Status = SeoCheckStatus.Warning;
+            seoItem.Status = AlertType.Warning;
             seoItem.Message = "Page title length should be between 30 and 60 characters.";
         }
 
-        if (seoItem.Status == SeoCheckStatus.Success)
+        if (seoItem.Status == AlertType.Success)
         {
             seoItem.Message = title;
         }
