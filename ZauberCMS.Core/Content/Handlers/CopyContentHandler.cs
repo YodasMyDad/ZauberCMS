@@ -17,7 +17,6 @@ namespace ZauberCMS.Core.Content.Handlers;
 public class CopyContentHandler(
     IServiceProvider serviceProvider,
     IMapper mapper,
-    AppState appState,
     IMediator mediator,
     AuthenticationStateProvider authenticationStateProvider) 
     : IRequestHandler<CopyContentCommand, HandlerResult<Models.Content>>
@@ -83,12 +82,18 @@ public class CopyContentHandler(
         {
             // Fetch all descendants of the original content
             var descendants = await dbContext.Contents
+#pragma warning disable EF1002
+                .FromSqlRaw($"""
+                                 SELECT * 
+                                 FROM ZauberContent
+                                 WHERE Path LIKE '%"{contentToCopy.Id}"%'
+                             """)
+#pragma warning restore EF1002
                 .AsNoTracking()
-                .Where(x => x.Path.Contains(contentToCopy.Id))
                 .Include(content => content.PropertyData)
                 .ToListAsync(cancellationToken);
-
-            foreach (var descendant in descendants)
+            
+            foreach (var descendant in descendants.Where(x => x.Id != contentToCopy.Id))
             {
                 // Get the parent ID of the descendant from the idMap
                 if (descendant.ParentId != null)
@@ -119,7 +124,6 @@ public class CopyContentHandler(
         // Return the root copied content as the result
         handlerResult.Success = true;
         handlerResult.AddMessage("Content copied successfully.", ResultMessageType.Success);
-        await appState.NotifyContentSaved(contentToCopy, user?.UserName);
         return handlerResult;
 
 

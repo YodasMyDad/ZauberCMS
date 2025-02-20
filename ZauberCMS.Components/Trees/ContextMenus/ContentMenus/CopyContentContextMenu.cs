@@ -58,6 +58,8 @@ public class CopyContentContextMenu(NotificationService notificationService, IMe
             else
             {
                 notificationService.ShowSuccessNotification("Content copied");
+                var user = await mediator.GetCurrentUser();
+                await appState.NotifyContentChanged(content, user?.UserName ?? "Unknown");
             }
         }
     }
