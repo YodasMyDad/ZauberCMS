@@ -11,27 +11,46 @@ public partial class AiContentCheck : ISeoCheck
 
     private readonly List<string> _aiTriggers =
     [
-        "delve into", "intricate", "interplay", "embark", "embrace", "enrich", "pivotal",
-        "sheds light", "paves the way", "underscore", "grasp", "unveil", "nuanced", "navigate",
-        "poised", "revolutionize", "multifaceted", "showcase", "propel to the forefront",
-        "paramount", "tapestry", "resonate", "intriguing", "realm", "transformative", "explore",
-        "landscape", "dive into", "illuminate", "foster", "echo", "drawing from", "boast",
-        "vibrant", "captivate", "testament", "shape", "clearly", "obviously", "ultimately",
-        "simply put", "in conclusion", "to be honest", "needless to say", "as we can see",
-        "in other words", "in essence", "basically", "fundamentally", "notably", "certainly",
-        "naturally", "of course", "evidently", "specifically", "generally speaking",
-        "for the most part", "as a matter of fact", "furthermore", "moreover", "additionally",
-        "however", "therefore", "thus", "consequently", "nevertheless", "albeit", "hence",
-        "inherently", "precisely", "predominantly", "respectively", "regarding", "pertaining to",
-        "in terms of", "with respect to", "in regards to", "in relation to", "in this context",
-        "it goes without saying", "it is worth noting", "it should be noted", "it is important to note",
-        "it is interesting to note", "it is crucial to understand", "it is essential to remember",
-        "this means that", "that being said", "in this case", "in light of", "as mentioned earlier",
-        "as discussed above", "as previously mentioned", "as we discussed", "moving forward",
-        "let me help", "i'd be happy to", "i apologize", "rest assured", "feel free to",
-        "i understand", "indeed", "utilize", "leverage", "facilitate", "optimal", "robust",
-        "streamline", "seamless", "interface", "synergy", "paradigm", "framework", "methodology",
-        "implementation", "functionality", "infrastructure"
+        "additionally", "albeit", "alleviate", "alright", "also", "although", "amongst", "arguably",
+        "assessing", "as a matter of fact", "as a professional", "as mentioned earlier",
+        "as previously mentioned", "as such", "as well as", "balancing", "bear in mind", "because",
+        "beacon", "buckle up", "bustling", "bombastic", "blank", "captivate", "certainly", "clearly",
+        "competitive digital world", "comprehensive", "consequently", "crucial", "crucible",
+        "curated", "cutting-edge", "dance", "daunting", "deep dive", "delve", "designed to enhance",
+        "despite", "detailed", "digital world", "dive", "dive into", "drawing from", "due to", "eager",
+        "echo", "efficiency", "elevate", "embrace", "embark", "emphasis", "emphasize", "enable",
+        "enigma", "ensure", "enter AI", "enter Bard", "enter ChatGPT", "enter Claude", "enter Gemini",
+        "enter Perplexity", "essential", "essentially", "evidently", "everchanging", "ever-evolving",
+        "excels", "expanding", "explore", "extensive", "facilitate", "fancy", "feel free to", "field",
+        "firstly", "folks", "foster", "fostering", "framework", "frontier", "fundamentally",
+        "furthermore", "game changer", "generally", "generally speaking", "gemini", "given that",
+        "grasp", "harness", "hence", "hey", "however", "hurdles", "hustle and bustle", "i apologize",
+        "i'd be happy to", "i understand", "illuminate", "imagine", "implementation", "importantly",
+        "in a nutshell", "in a world of", "in conclusion", "in contrast", "in essence", "in infrastructure",
+        "in light of", "in order to", "in other words", "in regards to", "in relation to", "in summary",
+        "in terms of", "in the realm", "in today's digital age", "in today's digital era",
+        "in today's fast-paced", "in the world of", "in this case", "indeed", "indelible",
+        "interestingly", "intricate", "intriguing", "it depends on", "it goes without saying",
+        "it is advisable", "it is crucial to understand", "it is essential to remember",
+        "it is important to consider", "it is important to note", "it is interesting to note",
+        "it is worth noting", "it should be noted", "it’s worth noting that", "journey", "keen",
+        "labyrinth", "labyrinthine", "landscape", "lastly", "leverage", "mastering", "metamorphosis",
+        "meticulous", "meticulously", "methodology", "moist", "moreover", "moving forward",
+        "multifaceted", "navigating", "navigate", "naturally", "needless to say", "nestled",
+        "nevertheless", "notably", "noteworthy", "nuance", "nuanced", "obviously", "optimal",
+        "out of the box", "paramount", "paradigm", "peace of mind", "pesky", "paves the way",
+        "picture this", "pivot", "plethora", "poised", "power", "predominantly", "precisely",
+        "propel to the forefront", "promptly", "realm", "recognize", "refreshing", "regarding",
+        "relevance", "remember that", "remnant", "reverberate", "revolutionize", "robust", "shall",
+        "shape", "shed light", "showcase", "significantly", "similarly", "simply put", "sights unseen",
+        "soul", "specifically", "streamline", "strive", "striving", "subsequently", "sure", "synergy",
+        "tailored", "tapestry", "testament", "that being said", "there are a few considerations",
+        "therefore", "thus", "to be honest", "to consider", "to put it simply", "to sum up",
+        "top-notch", "transformative", "transition", "transitioning", "treasure box", "treasure trove",
+        "ultimately", "unleash", "unleashed", "unlimited guarantee", "unlock", "unlocked",
+        "underscore", "underpins", "understanding", "unveiled", "unveil", "utilize", "vibrant", "vital",
+        "we know", "we understand", "we've got you covered", "whimsical", "while", "whispering",
+        "with respect to", "you may want to"
     ];
 
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
@@ -42,8 +61,9 @@ public partial class AiContentCheck : ISeoCheck
         var bodyText = document.DocumentNode.InnerText;
 
         // Pattern Analysis: Repeated Phrases Check
-        var repeatedPhrases = _aiTriggers.Where(trigger => Regex.Matches(bodyText, $@"\b{Regex.Escape(trigger)}\b", RegexOptions.IgnoreCase).Count > 2).ToList();
-        
+        var repeatedPhrases = _aiTriggers.Where(trigger =>
+            Regex.Matches(bodyText, $@"\b{Regex.Escape(trigger)}\b", RegexOptions.IgnoreCase).Count > 2).ToList();
+
         // Language Flow Analysis: Sentence Length Consistency Check
         var sentences = MyRegex().Split(bodyText).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
         var averageSentenceLength = sentences.Average(s => s.Length);
@@ -51,14 +71,17 @@ public partial class AiContentCheck : ISeoCheck
         var uniformityScore = shortSentenceCount / (double)sentences.Count;
 
         // Context Coherence Check (Repetitive Transitions)
-        var transitions = new List<string> { "however", "moreover", "therefore", "thus", "consequently", "furthermore" };
+        var transitions = new List<string>
+            { "however", "moreover", "therefore", "thus", "consequently", "furthermore" };
         var transitionCount = transitions.Sum(t => Regex.Matches(bodyText, $@"\b{t}\b", RegexOptions.IgnoreCase).Count);
         var transitionDensity = transitionCount / (double)sentences.Count;
 
-        var analysisSummary = (repeatedPhrases.Count > 0 ? $" - Repeated AI Phrases: {string.Join(", ", repeatedPhrases)}\n" : string.Empty)
-                      + $" - Average Sentence Length: {averageSentenceLength:F2} characters"
-                      + $" - Short Sentence Ratio: {uniformityScore:P2}"
-                      + $" - Transition Density: {transitionDensity:P2}";
+        var analysisSummary = (repeatedPhrases.Count > 0
+                                  ? $" - Repeated AI Phrases: {string.Join(", ", repeatedPhrases)}\n"
+                                  : string.Empty)
+                              + $" - Average Sentence Length: {averageSentenceLength:F2} characters"
+                              + $" - Short Sentence Ratio: {uniformityScore:P2}"
+                              + $" - Transition Density: {transitionDensity:P2}";
 
         if (repeatedPhrases.Count > 5 || uniformityScore < 0.2 || transitionDensity > 0.1)
         {
