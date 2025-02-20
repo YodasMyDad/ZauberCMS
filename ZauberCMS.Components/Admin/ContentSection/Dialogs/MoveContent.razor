@@ -1,0 +1,37 @@
+﻿@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Content.Commands
+<h5>Choose where to move @Content.Name to in the tree structure below</h5>
+
+<EditorRow>
+    <CentreColumn>
+        <ContentTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)" />
+    </CentreColumn>
+</EditorRow>
+
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+
+@code {
+    [Parameter, EditorRequired] public Content Content { get; set; } = null!;
+    [Parameter] public Guid? ParentId { get; set; }
+    
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    private void OnValueChangedHandler(object value)
+    {
+        if (value is Content content)
+        {
+            if (content.Id != Content.Id)
+            {
+                ParentId = content.Id;   
+            }
+        }
+    }
+
+    private async Task Save()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(ParentId ?? Guid.Empty));
+    }
+}
