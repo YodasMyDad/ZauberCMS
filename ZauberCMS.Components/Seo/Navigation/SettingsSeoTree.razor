@@ -44,6 +44,17 @@
 
         tree.Add(seoCheckerTree);
         
+        var seoRedirectsTree = new TreeStub
+        {
+            Id = Constants.Guids.SeoRedirectsRootId,
+            Name = "SEO Redirects",
+            Icon = "undo",
+            SortOrder = 30,
+            Url = Urls.AdminSeoRedirects
+        };
+
+        tree.Add(seoRedirectsTree);
+        
         SeoData = tree;
     }
 

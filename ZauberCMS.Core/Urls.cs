@@ -5,20 +5,20 @@ public static class Urls
     public const string AdminBaseUrl = "/admin";
     public const string AdminUsersBaseUrl = AdminBaseUrl + "/users";
     public const string AdminMediaBaseUrl = AdminBaseUrl + "/media";
-    public const string AdminContentBaseUrl = "/content";
+    public const string AdminContentBaseUrl = AdminBaseUrl + "/content";
     public const string AdminSettingsBaseUrl = AdminBaseUrl + "/settings";
     public const string AdminFormsBaseUrl = AdminBaseUrl + "/forms";
     
     public const string ApiRefreshSignIn = "/api/auth/refreshsignin";
     public const string ApiLogout = "/api/auth/logout";
         
-    public const string AdminCreateContent = AdminBaseUrl + "/createcontent";
-    public const string AdminUpdateContent = AdminBaseUrl + "/updatecontent";
+    public const string AdminCreateContent = AdminContentBaseUrl + "/createcontent";
+    public const string AdminUpdateContent = AdminContentBaseUrl + "/updatecontent";
     
-    public const string AdminCreateMedia = AdminBaseUrl + "/createmedia";
-    public const string AdminUpdateMedia = AdminBaseUrl + "/updatemedia";
-    public const string AdminCreateMediaFolder = AdminBaseUrl + "/createfolder";
-    public const string AdminMediaFolder = AdminBaseUrl + "/folder";
+    public const string AdminCreateMedia = AdminMediaBaseUrl + "/createmedia";
+    public const string AdminUpdateMedia = AdminMediaBaseUrl + "/updatemedia";
+    public const string AdminCreateMediaFolder = AdminMediaBaseUrl + "/createfolder";
+    public const string AdminMediaFolder = AdminMediaBaseUrl + "/folder";
     
     public const string AdminUsersEditRole = AdminUsersBaseUrl + "/editrole";
     public const string AdminUsersAddRole = AdminUsersBaseUrl + "/addrole";
@@ -37,6 +37,7 @@ public static class Urls
     private const string AdminSeoBaseUrl = AdminBaseUrl + "/seo";
     public const string AdminSeoPageChecker = AdminSeoBaseUrl + "/pagechecker";
     public const string AdminSeoSitemaps = AdminSeoBaseUrl + "/sitemaps";
+    public const string AdminSeoRedirects = AdminSeoBaseUrl + "/redirects";
         
     public static class Account
     {

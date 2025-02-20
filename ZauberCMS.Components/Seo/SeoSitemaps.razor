@@ -51,7 +51,6 @@
     [Inject] public IModalService DialogService { get; set; } = null!;
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
     private List<SeoSitemap> Sitemaps { get; set; } = [];
-    private GlobalData? GlobalData { get; set; }
 
     private readonly SlugHelper _slugHelper = new(new SlugHelper.Config
     {

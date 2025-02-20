@@ -4,7 +4,7 @@
 
 <BaseTree
     T="TreeStub"
-    TreeAlias="@Constants.Sections.Trees.GenericTree"
+    TreeAlias="@TreeAlias"
     Data="@InitialData"
     Expand="@OnExpandHandler"
     Change="@OnChange"
@@ -26,7 +26,6 @@
     /// <summary>
     /// The data initially passed by the parent.
     /// </summary>
-
     [Parameter] public IEnumerable<TreeStub> InitialData { get; set; } = [];
     
     /// <summary>
@@ -35,6 +34,10 @@
     /// </summary>
     [Parameter] public Func<Task<IEnumerable<TreeStub>>>? RefreshDataMethod { get; set; }
 
+    /// <summary>
+    /// Optionally override tree name
+    /// </summary>
+    [Parameter] public string? TreeAlias { get; set; } = Constants.Sections.Trees.GenericTree;
 
     private bool ShouldBeExpanded(object data)
     {
