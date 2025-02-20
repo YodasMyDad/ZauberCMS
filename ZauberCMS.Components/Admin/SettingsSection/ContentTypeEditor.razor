@@ -18,7 +18,8 @@
 
 <PageTitle>Create Content Type</PageTitle>
 
-<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
+             Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Add Property" Click="@(AddProperty)"/>
     <RadzenButton Variant="Variant.Filled" Text="Add Tab" Click="@(() => AddEditTab(null))"/>
     @if (TabIndex.Count > 1 && SelectedTabIndex < TabIndex.Count && !TabIndex[SelectedTabIndex].IsSystemTab)
@@ -27,25 +28,40 @@
     }
     @if (ShowDeleteButton)
     {
-        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteContentType)"/>
+        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete"
+                      Click="@(DeleteContentType)"/>
     }
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
     <EditForm Model="ContentType" OnSubmit="Save">
         <RadzenRow class="rz-pb-6">
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="2">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
-                    <RadzenIcon Icon="@(ContentType.Icon.IsNullOrWhiteSpace() ? "add" : ContentType.Icon)" style="font-weight: 300; color: dimgray;"/>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
+                         AlignItems="AlignItems.Center" class="w-full" Gap="2">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
+                             AlignItems="AlignItems.Center"
+                             Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;"
+                             @onclick="@(SelectIcon)">
+                    <RadzenIcon Icon="@(ContentType.Icon.IsNullOrWhiteSpace() ? "add" : ContentType.Icon)"
+                                style="font-weight: 300; color: dimgray;"/>
                 </RadzenStack>
                 <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
-                               ValueChanged="@((string name) => { ContentType.Name = name; ContentType.Alias = _slugHelper.GenerateSlug(name); })" aria-label="Name"/>
+                               ValueChanged="@((string name) =>
+                                             {
+                                                 ContentType.Name = name;
+                                                 ContentType.Alias = _slugHelper.GenerateSlug(name);
+                                             })" aria-label="Name"/>
             </RadzenStack>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="0">
-                <RadzenTextBox Style="width: 100%;" Name="Description" Placeholder="Optional Description" @bind-Value="ContentType.Description" aria-label="Description"/>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
+                         AlignItems="AlignItems.Center" class="w-full" Gap="0">
+                <RadzenTextBox Style="width: 100%;" Name="Description" Placeholder="Optional Description"
+                               @bind-Value="ContentType.Description" aria-label="Description"/>
             </RadzenStack>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="w-full" Gap="0">
-                <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light" Style="line-height: 20px; height: 20px; font-size: 20px;"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
+                         AlignItems="AlignItems.Center" class="w-full" Gap="0">
+                <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light"
+                            Style="line-height: 20px; height: 20px; font-size: 20px;"/>
+                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
             </RadzenStack>
         </RadzenRow>
         <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
@@ -55,58 +71,68 @@
                     if (tab.IsSystemTab)
                     {
                         <RadzenTabsItem Text="System">
+                            @if (ContentType.IsElementType == false)
+                            {
+                                <EditorRow>
+                                    <LeftColumn>
+                                        <PropertyInfo Name="Allowed Views"
+                                                      Description="The views the user can pick to display their content"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
+                                                       Data="@ViewFiles"
+                                                       FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                       FilterOperator="StringFilterOperator.StartsWith"
+                                                       AllowFiltering="true"
+                                                       Multiple="true"
+                                                       AllowClear="true"
+                                                       Placeholder="Select Content Views"
+                                                       Style="width: 100%; height: 250px"
+                                                       InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select content views" } })"/>
+                                    </CentreColumn>
+                                </EditorRow>
+
+                                <EditorRow>
+                                    <LeftColumn>
+                                        <PropertyInfo Name="Allowed Child Content Types"
+                                                      Description="Optionally limit what child content types can be created"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <RadzenListBox @bind-Value="@ContentType.AllowedChildContentTypes"
+                                                       Data="@ContentTypes"
+                                                       FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                       FilterOperator="StringFilterOperator.StartsWith"
+                                                       AllowFiltering="true"
+                                                       TextProperty="Name"
+                                                       ValueProperty="Id"
+                                                       Multiple="true"
+                                                       AllowClear="true"
+                                                       Placeholder="Select Content Types"
+                                                       Style="width: 100%; height: 250px"
+                                                       InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select child types" } })"/>
+                                    </CentreColumn>
+                                </EditorRow>
+
+                                <EditorRow>
+                                    <LeftColumn>
+                                        <PropertyInfo Name="Allowed At Tree Root"
+                                                      Description="Whether this content can be created at the root of the content tree"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot"
+                                                      InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Allow at root" } })"/>
+                                    </CentreColumn>
+                                </EditorRow>
+                            }
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Allowed Views" Description="The views the user can pick to display their content"/>
+                                    <PropertyInfo Name="Is Element Type"
+                                                  Description="Allows this content type to be used in the Block List Editor"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
-                                                   Data="@ViewFiles"
-                                                   FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                   FilterOperator="StringFilterOperator.StartsWith"
-                                                   AllowFiltering="true"
-                                                   Multiple="true"
-                                                   AllowClear="true"
-                                                   Placeholder="Select Content Views" Style="width: 100%; height: 250px"
-                                                   InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select content views" } })"/>
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <PropertyInfo Name="Allowed Child Content Types" Description="Optionally limit what child content types can be created"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenListBox @bind-Value="@ContentType.AllowedChildContentTypes"
-                                                   Data="@ContentTypes"
-                                                   FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                   FilterOperator="StringFilterOperator.StartsWith"
-                                                   AllowFiltering="true"
-                                                   TextProperty="Name"
-                                                   ValueProperty="Id"
-                                                   Multiple="true"
-                                                   AllowClear="true"
-                                                   Placeholder="Select Content Types" Style="width: 100%; height: 250px"
-                                                   InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select child types" } })"/>
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <PropertyInfo Name="Allowed At Tree Root" Description="Whether this content can be created at the root of the content tree"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Allow at root" } })"/>
-                                </CentreColumn>
-                            </EditorRow>
-
-                            <EditorRow>
-                                <LeftColumn>
-                                    <PropertyInfo Name="Is Element Type" Description="Allows this content type to be used in the Block List Editor"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenSwitch @bind-Value="@ContentType.IsElementType" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Element Type" } })"/>
+                                    <RadzenSwitch @bind-Value="@ContentType.IsElementType"
+                                                  InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Element Type" } })"/>
                                 </CentreColumn>
                             </EditorRow>
 
@@ -114,7 +140,8 @@
                             {
                                 <EditorRow>
                                     <LeftColumn>
-                                        <PropertyInfo Name="Element Type Preview Image" Description="Choose an image to show for this element type when it is displayed in the block list editor"/>
+                                        <PropertyInfo Name="Element Type Preview Image"
+                                                      Description="Choose an image to show for this element type when it is displayed in the block list editor"/>
                                     </LeftColumn>
                                     <CentreColumn>
                                         <MediaPickerProperty
@@ -122,18 +149,22 @@
                                             Settings="@(JsonSerializer.Serialize(new MediaPickerSettings { MaxAllowed = 1 }))"
                                             ValueChanged="@(e => ContentType.MediaIdAsString = e.ToString())"/>
                                     </CentreColumn>
-                                </EditorRow>   
+                                </EditorRow>
                             }
 
-                            <EditorRow>
-                                <LeftColumn>
-                                    <PropertyInfo Name="Enable List View" Description="Show list view of child content instead of them showing as child items in the tree"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenSwitch Name="EnableListView" @bind-Value="@ContentType.EnableListView"/>
-                                </CentreColumn>
-                            </EditorRow>
-
+                            @if (ContentType.IsElementType == false)
+                            {
+                                <EditorRow>
+                                    <LeftColumn>
+                                        <PropertyInfo Name="Enable List View"
+                                                      Description="Show list view of child content instead of them showing as child items in the tree"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <RadzenSwitch Name="EnableListView" @bind-Value="@ContentType.EnableListView"/>
+                                    </CentreColumn>
+                                </EditorRow>
+                            }
+                            
                             @*
                             <EditorRow>
                                 <LeftColumn>
@@ -174,7 +205,7 @@
                                                                 OnDelete="@(prop => DeleteProperty(prop))"
                                                                 OnChangeTab="@(async (prop) => await ChangeTab(prop))"
                                                                 OnSettings="@(async (prop) => await Settings(prop))"
-                                                                SlugHelper="@_slugHelper"/>   
+                                                                SlugHelper="@_slugHelper"/>
                                             }
                                             else
                                             {
@@ -182,25 +213,32 @@
                                                 {
                                                     Severity = NotificationSeverity.Error, Summary = "Missing Editor", Detail = $"Unable to find the editor {property.Component} so it's been skipped, has it been deleted?", Duration = 4000
                                                 });
-                                                <p>Unable to find the editor @property.Component so it's been skipped, has the component been deleted or alias changed?</p>
-                                                <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete This Property" Click="@(() => DeleteProperty(property))"/>
+                                                <p>Unable to find the editor @property.Component so it's been skipped,
+                                                    has the component been deleted or alias changed?</p>
+                                                <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger"
+                                                              Text="Delete This Property"
+                                                              Click="@(() => DeleteProperty(property))"/>
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-                                            <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete This Tab" Click="@(() => DeleteTab(tab))"/>
+                                        <RadzenStack Orientation="Orientation.Horizontal"
+                                                     JustifyContent="JustifyContent.Center"
+                                                     AlignItems="AlignItems.Center">
+                                            <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger"
+                                                          Text="Delete This Tab" Click="@(() => DeleteTab(tab))"/>
                                         </RadzenStack>
                                     }
-                                </RadzenStack >
+                                </RadzenStack>
                             </ChildContent>
                         </RadzenTabsItem>
                     }
                 }
             </Tabs>
         </RadzenTabs>
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                     AlignItems="AlignItems.Center">
             <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
         </RadzenStack>
     </EditForm>
@@ -214,7 +252,7 @@
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public ValidateService<ContentType> ValidateService { get; set; } = null!;
     [Inject] public IWebHostEnvironment Env { get; set; } = null!;
-    
+
     [Parameter] public Guid? ContentTypeId { get; set; }
     [Parameter] public Guid? CopyContentTypeId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
@@ -237,7 +275,7 @@
     {
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         ContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        
+
         if (ContentTypeId != null)
         {
             ContentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
@@ -258,14 +296,14 @@
             ContentType.Id = Guid.NewGuid().NewSequentialGuid();
         }
 
-        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { ElementTypesOnly = false, OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000});
+        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { ElementTypesOnly = false, OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000 });
         ContentTypes = contentTypes.Items.ToList();
 
         if (ContentTypes.Count <= 0)
         {
             ContentType.AllowAtRoot = true;
         }
-        
+
         LoadViewFiles();
         InitializeTabs();
         InitializeContentViews();
@@ -276,12 +314,12 @@
     {
         Layout?.SetSection(Constants.Sections.SettingsSection);
     }
-    
+
     private void LoadViewFiles()
     {
         ViewFiles = ExtensionManager.GetAllowedViews(ContentType.Alias);
     }
-    
+
     private async Task SelectIcon()
     {
         var dialog = DialogService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
@@ -340,14 +378,14 @@
     private void SortTabsInOrder()
     {
         TabIndex.Clear();
-        
+
         var tabs = ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
         @for (var i = 0; i < tabs.Count; i++)
         {
             var tab = tabs[i];
             TabIndex.TryAdd(i, tab);
         }
-        
+
         OrderedTabs = tabs;
     }
 
@@ -470,7 +508,7 @@
                 NavigationManager.NavigateTo(Urls.AdminSettingsBaseUrl);
             }
         }
-        
+
         NavigationManager.NavigateTo(Urls.AdminSettingsBaseUrl, forceLoad: true);
     }
 
@@ -501,9 +539,11 @@
                     // Add the new tab to the list of tabs
                     ContentType.Tabs.Add(newTab);
                 }
+
                 SortTabsInOrder();
             }
         }
+
         StateHasChanged();
     }
 
