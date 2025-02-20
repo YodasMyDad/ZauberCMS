@@ -1,0 +1,31 @@
+﻿@using ZauberCMS.Core.Seo.Models
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="TODO" Description=""/>
+    </LeftColumn>
+    <CentreColumn>
+        TO DO 
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+
+    [Parameter] public SeoRedirect Redirect { get; set; } = new();
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    
+    protected override void OnInitialized()
+    {
+        
+    }
+        
+    private async Task Save()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(string.Empty));
+    }
+
+}

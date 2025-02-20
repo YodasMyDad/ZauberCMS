@@ -1,4 +1,5 @@
 ﻿@attribute [Route(Urls.AdminSeoRedirects)]
+@using ZauberCMS.Components.Seo.Dialogs
 @using ZauberCMS.Core.Seo.Models
 @using ZauberCMS.Core.Data.Commands
 @using ZauberCMS.Core.Content.Commands
@@ -7,6 +8,10 @@
 @layout SectionLayout
 
 <PageTitle>SEO Redirects</PageTitle>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
+    <RadzenButton Variant="Variant.Filled" Text="Create Redirect" Click="@(() => OpenEditor(null))"/>
+</RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
     <RadzenDataGrid AllowFiltering="true"
@@ -60,8 +65,9 @@
 </RadzenPanel>
 
 @code {
-
+    [CascadingParameter] IModalService ModalService { get; set; } = null!;
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
+    
     private int AmountPerPage { get; set; }
     private int Count { get; set; } 
     private bool IsLoading { get; set; } = false;
@@ -111,12 +117,29 @@
         IsLoading = false;
     }
     
-    private void OnRowSelect(object value)
+    private async Task OnRowSelect(object value)
     {
         if (value is SeoRedirect selectedRow)
         {
-            // TODO
+            await OpenEditor(selectedRow);
         }
+    }
+
+    private async Task OpenEditor(SeoRedirect? seoRedirect)
+    {
+        var parameters = new Dictionary<string, object>();
+        
+        if (seoRedirect != null)
+        {
+            parameters.Add(nameof(AddEditRedirect.Redirect), seoRedirect);
+        }
+
+        var modal = ModalService.OpenSidePanel<AddEditRedirect>(seoRedirect == null ? "Create" : "Add" + " Redirect", parameters);
+        var result = await modal.Result;
+        if (result is { Confirmed: true, Data: AddEditRedirect addEditRedirect })
+        {
+            // TODO - Complete
+        }        
     }
 
 }
