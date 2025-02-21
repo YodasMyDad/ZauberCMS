@@ -1,1 +1,385 @@
-﻿<p>You will soon be able to crop and edit images in this dialog</p>
+﻿@using Microsoft.AspNetCore.Components.Web
+
+<!-- 
+  Container that holds the image and the crop box overlays.
+  You can adjust width/height as needed.
+-->
+<div @ref="ContainerRef"
+     style="position: relative; 
+            width: @(ContainerWidth)px; 
+            height: @(ContainerHeight)px; 
+            border: 1px solid #ccc; 
+            overflow: hidden;"
+     @onmousedown="OnMouseDown"
+     @onmousemove="OnMouseMove"
+     @onmouseup="OnMouseUp"
+     @onmouseleave="OnMouseLeave"
+     @ondblclick="ResetCropBox">
+
+    <!-- The image to be cropped -->
+    <img src="@ImageSrc"
+         alt="Croppable Image"
+         style="width: 100%; 
+                height: 100%; 
+                object-fit: cover;" />
+
+    <!-- Draggable + resizable crop rectangle overlay -->
+    <div style="@GetCropBoxStyle()"
+         @onmousedown="OnCropBoxMouseDown"
+         @onmousedown:stopPropagation="true">
+      
+      <!-- Corner Handles -->
+      <div style="@GetHandleStyle(CornerHandle.TopLeft)" 
+           @onmousedown="(e) => OnHandleMouseDown(e, CornerHandle.TopLeft)"
+           @onmousedown:stopPropagation="true">
+      </div>
+      <div style="@GetHandleStyle(CornerHandle.TopRight)" 
+           @onmousedown="(e) => OnHandleMouseDown(e, CornerHandle.TopRight)"
+           @onmousedown:stopPropagation="true">
+      </div>
+      <div style="@GetHandleStyle(CornerHandle.BottomLeft)" 
+           @onmousedown="(e) => OnHandleMouseDown(e, CornerHandle.BottomLeft)"
+           @onmousedown:stopPropagation="true">
+      </div>
+      <div style="@GetHandleStyle(CornerHandle.BottomRight)" 
+           @onmousedown="(e) => OnHandleMouseDown(e, CornerHandle.BottomRight)"
+           @onmousedown:stopPropagation="true">
+      </div>
+    </div>
+</div>
+
+<!-- Display resulting crop coordinates -->
+<div class="mt-3">
+    <p>Crop Box Left: @CropLeft px</p>
+    <p>Crop Box Top: @CropTop px</p>
+    <p>Crop Box Width: @CropWidth px</p>
+    <p>Crop Box Height: @CropHeight px</p>
+
+    @if (OriginalImageWidth != ContainerWidth || OriginalImageHeight != ContainerHeight)
+    {
+        <p>Scaled Crop Left: @ScaledLeft px</p>
+        <p>Scaled Crop Top: @ScaledTop px</p>
+        <p>Scaled Crop Width: @ScaledWidth px</p>
+        <p>Scaled Crop Height: @ScaledHeight px</p>
+    }
+
+    <button @onclick="SaveCropInfo">Save Crop Info (Console)</button>
+    <button @onclick="ShowImageSharpUrl">Show ImageSharp URL</button>
+
+    @if (!string.IsNullOrEmpty(ImageSharpUrl))
+    {
+        <div class="mt-2">
+            <p><strong>ImageSharp Crop URL:</strong> @ImageSharpUrl</p>
+            <!-- Potentially display the cropped preview by referencing that URL -->
+            <img src="@ImageSharpUrl" alt="Cropped Preview" style="max-width: 300px;" />
+        </div>
+    }
+</div>
+
+@code {
+    //
+    // Parameters / Setup
+    //
+    [Parameter] public string ImageSrc { get; set; } = "_content/ZauberCMS.Components/img/hat.jpg"; 
+    [Parameter] public int ContainerWidth { get; set; } = 600;
+    [Parameter] public int ContainerHeight { get; set; } = 400;
+
+    // If your *original* image is bigger, set these to the actual image size.
+    // This way we can compute the scaled coordinates for the real crop in server or client logic.
+    [Parameter] public int OriginalImageWidth { get; set; } = 1200;
+    [Parameter] public int OriginalImageHeight { get; set; } = 800;
+
+    // Reference to the container
+    private ElementReference ContainerRef;
+
+    //
+    // Crop box position and size (in container coordinates)
+    //
+    private double CropLeft { get; set; } = 50;
+    private double CropTop { get; set; } = 50;
+    private double CropWidth { get; set; } = 200;
+    private double CropHeight { get; set; } = 150;
+
+    // If you have an aspect ratio requirement, you can enforce it in the resizing logic.
+
+    //
+    // For dragging/resizing
+    //
+    private bool _isDraggingBox = false;
+    private bool _isResizing = false;
+
+    private CornerHandle? _activeHandle = null;
+
+    // Captures the initial positions/sizes at mousedown
+    private double _initialMouseX, _initialMouseY;
+    private double _initialLeft, _initialTop, _initialWidth, _initialHeight;
+
+    //
+    // For demonstrating how to produce an ImageSharp URL
+    //
+    private string ImageSharpUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Scale factor from displayed container to original image width/height.
+    /// </summary>
+    private double ScaleX => (double)OriginalImageWidth / ContainerWidth;
+    private double ScaleY => (double)OriginalImageHeight / ContainerHeight;
+
+    /// <summary>
+    /// Coordinates in the original image's scale (useful for ImageSharp).
+    /// </summary>
+    private double ScaledLeft => CropLeft * ScaleX;
+    private double ScaledTop => CropTop * ScaleY;
+    private double ScaledWidth => CropWidth * ScaleX;
+    private double ScaledHeight => CropHeight * ScaleY;
+
+    //
+    // CSS Helpers
+    //
+    private string GetCropBoxStyle() => $@"
+        position: absolute;
+        left: {CropLeft}px;
+        top: {CropTop}px;
+        width: {CropWidth}px;
+        height: {CropHeight}px;
+        border: 2px dashed red;
+        background-color: rgba(255, 255, 255, 0.3);
+        cursor: move;
+    ";
+
+    // Corner handle styles
+    // Each handle is a 10x10 square at each corner.
+    private string GetHandleStyle(CornerHandle handle)
+    {
+        const int handleSize = 10;
+        string baseStyle = $@"
+            position: absolute;
+            width: {handleSize}px;
+            height: {handleSize}px;
+            background-color: blue;
+            z-index: 2;
+            cursor: nwse-resize; /* simplest approach for corners */
+        ";
+
+        return handle switch
+        {
+            CornerHandle.TopLeft => $@"
+                {baseStyle}
+                top: 0px;
+                left: 0px;
+                transform: translate(-50%, -50%);
+            ",
+            CornerHandle.TopRight => $@"
+                {baseStyle}
+                top: 0px;
+                right: 0px;
+                transform: translate(50%, -50%);
+            ",
+            CornerHandle.BottomLeft => $@"
+                {baseStyle}
+                bottom: 0px;
+                left: 0px;
+                transform: translate(-50%, 50%);
+            ",
+            CornerHandle.BottomRight => $@"
+                {baseStyle}
+                bottom: 0px;
+                right: 0px;
+                transform: translate(50%, 50%);
+            ",
+            _ => baseStyle
+        };
+    }
+
+    //
+    // Crop Box MouseDown (dragging the box)
+    //
+    private void OnCropBoxMouseDown(MouseEventArgs e)
+    {
+        // If we're not resizing from a handle, we let the user drag the box
+        if (!_isResizing)
+        {
+            _isDraggingBox = true;
+            CaptureInitialValues(e);
+        }
+        // No call to StopPropagation here—done via @onmousedown:stopPropagation="true"
+    }
+
+    //
+    // Corner Handles MouseDown (resizing)
+    //
+    private void OnHandleMouseDown(MouseEventArgs e, CornerHandle handle)
+    {
+        _isDraggingBox = false;
+        _isResizing = true;
+        _activeHandle = handle;
+        CaptureInitialValues(e);
+        // No StopPropagation() call—done in markup with @onmousedown:stopPropagation="true"
+    }
+
+    private void CaptureInitialValues(MouseEventArgs e)
+    {
+        _initialMouseX = e.ClientX;
+        _initialMouseY = e.ClientY;
+
+        _initialLeft = CropLeft;
+        _initialTop = CropTop;
+        _initialWidth = CropWidth;
+        _initialHeight = CropHeight;
+    }
+
+    //
+    // Container-level events
+    //
+    private void OnMouseDown(MouseEventArgs e)
+    {
+        // If the user clicked directly on the container (not the box or a handle),
+        // you could create a new region, or do nothing.
+    }
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        // DRAG the entire crop box
+        if (_isDraggingBox)
+        {
+            var deltaX = e.ClientX - _initialMouseX;
+            var deltaY = e.ClientY - _initialMouseY;
+
+            CropLeft = _initialLeft + deltaX;
+            CropTop = _initialTop + deltaY;
+
+            // Optionally clamp so it stays within container
+            if (CropLeft < 0) CropLeft = 0;
+            if (CropTop < 0) CropTop = 0;
+            if (CropLeft + CropWidth > ContainerWidth) 
+                CropLeft = ContainerWidth - CropWidth;
+            if (CropTop + CropHeight > ContainerHeight) 
+                CropTop = ContainerHeight - CropHeight;
+
+            StateHasChanged();
+        }
+        // RESIZE from a corner
+        else if (_isResizing && _activeHandle.HasValue)
+        {
+            var deltaX = e.ClientX - _initialMouseX;
+            var deltaY = e.ClientY - _initialMouseY;
+
+            switch (_activeHandle.Value)
+            {
+                case CornerHandle.TopLeft:
+                    // Move left boundary & top boundary
+                    CropLeft = _initialLeft + deltaX;
+                    CropWidth = _initialWidth - deltaX;
+
+                    CropTop = _initialTop + deltaY;
+                    CropHeight = _initialHeight - deltaY;
+                    break;
+
+                case CornerHandle.TopRight:
+                    // Move right boundary (width changes), top boundary
+                    CropWidth = _initialWidth + deltaX;
+                    CropTop = _initialTop + deltaY;
+                    CropHeight = _initialHeight - deltaY;
+                    break;
+
+                case CornerHandle.BottomLeft:
+                    // Move left boundary, bottom boundary
+                    CropLeft = _initialLeft + deltaX;
+                    CropWidth = _initialWidth - deltaX;
+                    CropHeight = _initialHeight + deltaY;
+                    break;
+
+                case CornerHandle.BottomRight:
+                    // Move right boundary, bottom boundary
+                    CropWidth = _initialWidth + deltaX;
+                    CropHeight = _initialHeight + deltaY;
+                    break;
+            }
+
+            // Enforce minimum box size
+            if (CropWidth < 20) CropWidth = 20;
+            if (CropHeight < 20) CropHeight = 20;
+
+            // Clamp so it doesn't go outside container
+            if (CropLeft < 0)
+            {
+                CropWidth += CropLeft;  // reduce width by how far we overshot
+                CropLeft = 0;
+            }
+            if (CropTop < 0)
+            {
+                CropHeight += CropTop; 
+                CropTop = 0;
+            }
+            if (CropLeft + CropWidth > ContainerWidth)
+            {
+                CropWidth = ContainerWidth - CropLeft;
+            }
+            if (CropTop + CropHeight > ContainerHeight)
+            {
+                CropHeight = ContainerHeight - CropTop;
+            }
+
+            // If you need a fixed aspect ratio, you can enforce it here.
+            StateHasChanged();
+        }
+    }
+
+    private void OnMouseUp(MouseEventArgs e)
+    {
+        _isDraggingBox = false;
+        _isResizing = false;
+        _activeHandle = null;
+    }
+
+    private void OnMouseLeave(MouseEventArgs e)
+    {
+        _isDraggingBox = false;
+        _isResizing = false;
+        _activeHandle = null;
+    }
+
+    private void ResetCropBox(MouseEventArgs e)
+    {
+        CropLeft = 50;
+        CropTop = 50;
+        CropWidth = 200;
+        CropHeight = 150;
+    }
+
+    //
+    // Actions / saving data
+    //
+    private void SaveCropInfo()
+    {
+        // Log to console or send to an API
+        Console.WriteLine($"Crop Box (Container coords): Left={CropLeft}, Top={CropTop}, Width={CropWidth}, Height={CropHeight}");
+        Console.WriteLine($"Crop Box (Original image coords): Left={ScaledLeft}, Top={ScaledTop}, Width={ScaledWidth}, Height={ScaledHeight}");
+    }
+
+    /// <summary>
+    /// Demonstrate how to produce a URL that your ImageSharp.Web server might accept 
+    /// to do server-side cropping. Adjust query param format to your pipeline config.
+    /// </summary>
+    private void ShowImageSharpUrl()
+    {
+        // If your server accepts something like "?rect=X,Y,W,H" 
+        // we can build that:
+        var x = Math.Floor(ScaledLeft);
+        var y = Math.Floor(ScaledTop);
+        var w = Math.Floor(ScaledWidth);
+        var h = Math.Floor(ScaledHeight);
+
+        // e.g. /images/example.jpg?rect=100,100,300,200
+        ImageSharpUrl = $"{ImageSrc}?rect={x},{y},{w},{h}";
+    }
+
+    // An enum to identify which handle is being used
+    enum CornerHandle
+    {
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight
+    }
+}
