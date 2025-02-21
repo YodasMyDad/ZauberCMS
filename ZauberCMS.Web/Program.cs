@@ -1,3 +1,4 @@
+using SixLabors.ImageSharp.Web.DependencyInjection;
 using ZauberCMS.Components;
 using ZauberCMS.Core;
 
@@ -5,7 +6,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddZauberCms();
 
+
+
 var app = builder.Build();
+
+app.UseImageSharp();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

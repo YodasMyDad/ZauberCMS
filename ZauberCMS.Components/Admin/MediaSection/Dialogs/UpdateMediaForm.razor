@@ -11,116 +11,122 @@
                     <PropertyInfo Name="Name" Description="The name shown in the tree"/>
                 </LeftColumn>
                 <CentreColumn>
-                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name" aria-label="Name"/>
+                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name"
+                                   aria-label="Name"/>
                 </CentreColumn>
             </EditorRow>
             @if (Media.MediaType == MediaType.Image)
             {
-            <EditorRow>
-                <LeftColumn>
-                    <PropertyInfo Name="Alt Tag" Description="Optional: Image alt tag"/>
-                </LeftColumn>
-                <CentreColumn>
-                    <RadzenTextBox Style="width: 100%;" Name="Alt Tag" Placeholder="Alt Tag" @bind-Value="Media.AltTag" aria-label="alt Tag"/>
-                </CentreColumn>
-            </EditorRow>
+                <EditorRow>
+                    <LeftColumn>
+                        <PropertyInfo Name="Alt Tag" Description="Optional: Image alt tag"/>
+                    </LeftColumn>
+                    <CentreColumn>
+                        <RadzenTextBox Style="width: 100%;" Name="Alt Tag" Placeholder="Alt Tag"
+                                       @bind-Value="Media.AltTag" aria-label="alt Tag"/>
+                    </CentreColumn>
+                </EditorRow>
             }
             @if (Media.MediaType != MediaType.Folder)
             {
-            <div class="py-2">
-                @if (Media.Url.IsNullOrWhiteSpace())
-                {
-                @if (NewFile != null)
-                {
-                <PickerItem Icon="@NewFile.Name.ToFileType().GetIcon()" Text="@NewFile.Name" Close="@(() => ClearNewFile())"/>
-                }
+                <div class="py-2">
+                    @if (Media.Url.IsNullOrWhiteSpace())
+                    {
+                        @if (NewFile != null)
+                        {
+                            <PickerItem Icon="@NewFile.Name.ToFileType().GetIcon()" Text="@NewFile.Name"
+                                        Close="@(() => ClearNewFile())"/>
+                        }
 
-                <div class="file-drop-zone">
-                    <div class="text-center">
-                        <label for="file-upload">
-                            <InputFile OnChange="@OnChange"/>
-                        </label>
-                    </div>
+                        <div class="file-drop-zone">
+                            <div class="text-center">
+                                <label for="file-upload">
+                                    <InputFile OnChange="@OnChange"/>
+                                </label>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        if (Media.MediaType == MediaType.Image)
+                        {
+                            <div class="flex justify-start">
+                                <img src="@(Media.Url)?width=300" alt="" class="rounded-2xl"/>
+                                <div class="pl-3 flex flex-col space-y-2 justify-center">
+                                    <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger"
+                                                  Text="Delete Image" Click="@(() => ClearUrl())"/>
+                                    <RadzenButton Variant="Variant.Text" Text="Edit Image"
+                                                  Click="@(() => EditImage())"/>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <PickerItem Text="@Media.Name"
+                                        Icon="@Media.MediaType.GetIcon()"
+                                        Close="@(() => ClearUrl())"/>
+                        }
+                    }
                 </div>
-                }
-                else
-                {
-                if (Media.MediaType == MediaType.Image)
-                {
-                <div class="flex justify-start">
-                    <img src="@(Media.Url)?width=300" alt="" class="rounded-2xl"/>
-                    <div class="pl-3 flex flex-col space-y-2 justify-center">
-                        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete Image" Click="@(() => ClearUrl())"/>
-                        <RadzenButton Variant="Variant.Text" Text="Edit Image" Click="@(() => EditImage())"/>
-                    </div>
-                </div>
-                }
-                else
-                {
-                <PickerItem Text="@Media.Name"
-                            Icon="@Media.MediaType.GetIcon()"
-                            Close="@(() => ClearUrl())"/>
-                }
-                }
-            </div>
             }
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" Gap="10">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                         AlignItems="AlignItems.Center" Gap="10">
                 <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
             </RadzenStack>
 
         </RadzenTabsItem>
         @if (IsUpdate)
         {
-        <RadzenTabsItem Text="Info">
-            <EditorRow>
-                <LeftColumn>
-                    <PropertyInfo Name="Last Updated"/>
-                </LeftColumn>
-                <CentreColumn>
-                    @Media.DateUpdated.Humanize()
-                </CentreColumn>
-            </EditorRow>
-            @if (Media.MediaType != MediaType.Folder)
-            {
-            <EditorRow>
-                <LeftColumn>
-                    <PropertyInfo Name="File Url"/>
-                </LeftColumn>
-                <CentreColumn>
-                    <a href="/@Media.Url" target="_blank" alt="@Media.AltTag">
-                        /@Media.Url
-                    </a>
-                </CentreColumn>
-            </EditorRow>
-            <EditorRow>
-                <LeftColumn>
-                    <PropertyInfo Name="Size"/>
-                </LeftColumn>
-                <CentreColumn>
-                    @Media.FileSize
-                </CentreColumn>
-            </EditorRow>
-            @if (Media.MediaType == MediaType.Image)
-            {
-            <EditorRow>
-                <LeftColumn>
-                    <PropertyInfo Name="Width"/>
-                </LeftColumn>
-                <CentreColumn>
-                    @Media.Width
-                </CentreColumn>
-            </EditorRow>
-            <EditorRow>
-                <LeftColumn>
-                    <PropertyInfo Name="Height"/>
-                </LeftColumn>
-                <CentreColumn>
-                    @Media.Height
-                </CentreColumn>
-            </EditorRow>
-            }
-            }
-        </RadzenTabsItem>
+            <RadzenTabsItem Text="Info">
+                <EditorRow>
+                    <LeftColumn>
+                        <PropertyInfo Name="Last Updated"/>
+                    </LeftColumn>
+                    <CentreColumn>
+                        @Media.DateUpdated.Humanize()
+                    </CentreColumn>
+                </EditorRow>
+                @if (Media.MediaType != MediaType.Folder)
+                {
+                    <EditorRow>
+                        <LeftColumn>
+                            <PropertyInfo Name="File Url"/>
+                        </LeftColumn>
+                        <CentreColumn>
+                            <a href="/@Media.Url" target="_blank" alt="@Media.AltTag">
+                                /@Media.Url
+                            </a>
+                        </CentreColumn>
+                    </EditorRow>
+                    <EditorRow>
+                        <LeftColumn>
+                            <PropertyInfo Name="Size"/>
+                        </LeftColumn>
+                        <CentreColumn>
+                            @Media.FileSize
+                        </CentreColumn>
+                    </EditorRow>
+                    @if (Media.MediaType == MediaType.Image)
+                    {
+                        <EditorRow>
+                            <LeftColumn>
+                                <PropertyInfo Name="Width"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                @Media.Width
+                            </CentreColumn>
+                        </EditorRow>
+                        <EditorRow>
+                            <LeftColumn>
+                                <PropertyInfo Name="Height"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                @Media.Height
+                            </CentreColumn>
+                        </EditorRow>
+                    }
+                }
+            </RadzenTabsItem>
         }
     </Tabs>
 </RadzenTabs>
@@ -130,7 +136,7 @@
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public ValidateService<Media> ValidateService { get; set; } = null!;
     [CascadingParameter] public IModalService? ModalService { get; set; }
-    
+
     [Parameter] public EventCallback<Media> ValueChanged { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public Guid? MediaId { get; set; }
@@ -166,7 +172,11 @@
 
     private void EditImage()
     {
-        ModalService?.OpenSidePanel<EditImage>("Coming Soon");
+        var parameters = new Dictionary<string, object>
+        {
+            { nameof(ZauberCMS.Components.Admin.MediaSection.Dialogs.EditImage.Media), Media }
+        };
+        ModalService?.OpenSidePanel<EditImage>("Create Crops", parameters);
     }
 
     private static string GetCompositeKey(Guid? mediaId, Guid? parentId)
@@ -191,7 +201,7 @@
                 NotificationService.ShowSuccessNotification("Saved");
                 if (ValueChanged.HasDelegate)
                 {
-                    await ValueChanged.InvokeAsync(result.Entity);   
+                    await ValueChanged.InvokeAsync(result.Entity);
                 }
             }
             else
@@ -200,4 +210,5 @@
             }
         }
     }
+
 }

@@ -123,7 +123,6 @@ public static class ZauberSetup
         }
 
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddImageSharp();
         builder.Services.AddAntiforgery();
         builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         builder.Services.AddBlazoredModal();
@@ -222,6 +221,8 @@ public static class ZauberSetup
 
         // Add localization services
         builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
+        
+        builder.Services.AddImageSharp();
     }
     
         public static void AddZauberCms<T>(this WebApplication app)
@@ -269,8 +270,7 @@ public static class ZauberSetup
                 Log.Error(ex, "Error during startup trying to do Db migrations");
             }
         }
-
-        app.UseImageSharp();
+        
         app.UseSerilogRequestLogging();
         
         app.UseHttpsRedirection();
@@ -302,5 +302,7 @@ public static class ZauberSetup
             .WithStaticAssets(); // Ensures static files load before hitting controllers; 
         
         app.MapFallbackToController("Index", "ZauberRender");
+        
+        app.UseImageSharp();
     }
 }
