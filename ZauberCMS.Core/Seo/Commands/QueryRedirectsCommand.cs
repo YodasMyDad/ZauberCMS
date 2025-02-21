@@ -8,7 +8,7 @@ public class QueryRedirectsCommand : IRequest<List<SeoRedirect>>
     /// <summary>
     /// Whether this query is to be cached
     /// </summary>
-    public bool Cached { get; set; } 
+    public bool Cached { get; set; } = true;
     public bool AsNoTracking { get; set; } = true;
     public List<Guid> Ids { get; set; } = [];
     public int Amount { get; set; } = 5000;

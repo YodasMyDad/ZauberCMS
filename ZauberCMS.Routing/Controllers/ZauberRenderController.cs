@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -8,6 +9,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Seo.Commands;
 using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Routing.Controllers;
@@ -39,11 +42,52 @@ public class ZauberRenderController(
             // No content in the site, so show the starter view
             return NewSite();
         }
+
+        var allRedirects = await mediator.Send(new QueryRedirectsCommand());
+        var currentUrl = GetFullUrlPath();
+        foreach (var seoRedirect in allRedirects.Where(seoRedirect => !string.IsNullOrEmpty(seoRedirect.FromUrl)))
+        {
+            if (!seoRedirect.FromUrl.IsNullOrWhiteSpace() && !seoRedirect.ToUrl.IsNullOrWhiteSpace())
+            {
+                if (seoRedirect.FromUrl.Equals(currentUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Redirect matches directly
+                    return seoRedirect.IsPermanent ? RedirectPermanent(seoRedirect.ToUrl!) : Redirect(seoRedirect.ToUrl!);
+                }
+
+                // Attempt to match as a Regular Expression
+                try
+                {
+                    if (Regex.IsMatch(currentUrl, seoRedirect.FromUrl, RegexOptions.IgnoreCase))
+                    {
+                        // Redirect matches via regex
+                        return seoRedirect.IsPermanent ? RedirectPermanent(seoRedirect.ToUrl!) : Redirect(seoRedirect.ToUrl!);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Invalid regex pattern in redirect FromUrl {seoRedirect.FromUrl}", seoRedirect.FromUrl);
+                }
+            }
+        }
         
         logger.LogWarning("No default 404 page url configured in ZauberSettings. Using default.");
         return NotFound404();
     }
 
+    private  string GetFullUrlPath()
+    {
+        // Get the path (without the domain)
+        var path = HttpContext.Request.Path;
+
+        // Get the query string
+        var queryString = HttpContext.Request.QueryString;
+
+        // Combine the path with the query string (if it exists)
+        return $"{path}{queryString}";
+    }
+
+    
     public IActionResult NewSite()
     {
         return View("NewSite");
