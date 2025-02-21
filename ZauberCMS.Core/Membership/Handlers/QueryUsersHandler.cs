@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
@@ -19,7 +17,8 @@ public class QueryUsersHandler(IServiceProvider serviceProvider, ICacheService c
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var cacheKey = GenerateCacheKey(request, dbContext);
+        var query = BuildQuery(request, dbContext);
+        var cacheKey = query.GenerateCacheKey(typeof(User));
 
         if (request.Cached)
         {
@@ -29,15 +28,7 @@ public class QueryUsersHandler(IServiceProvider serviceProvider, ICacheService c
         return await FetchUsersAsync(request, dbContext, cancellationToken);
     }
 
-    private string GenerateCacheKey(QueryUsersCommand request, ZauberDbContext dbContext)
-    {
-        var query = BuildQuery(request, dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(User).ToCacheKey(Convert.ToBase64String(hash));
-    }
-
-    private IQueryable<User> BuildQuery(QueryUsersCommand request, ZauberDbContext dbContext)
+    private static IQueryable<User> BuildQuery(QueryUsersCommand request, ZauberDbContext dbContext)
     {
         var query = dbContext.Users.Include(x => x.UserRoles).AsQueryable();
 
@@ -85,7 +76,7 @@ public class QueryUsersHandler(IServiceProvider serviceProvider, ICacheService c
         return query;
     }
 
-    private Task<PaginatedList<User>> FetchUsersAsync(QueryUsersCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static Task<PaginatedList<User>> FetchUsersAsync(QueryUsersCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));

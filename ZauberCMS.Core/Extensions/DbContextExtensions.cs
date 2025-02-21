@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Plugins;
@@ -9,6 +12,19 @@ namespace ZauberCMS.Core.Extensions;
 
 public static class DbContextExtensions
 {
+    public static string GenerateCacheKey<T>(this IQueryable<T> query, Type cacheType)
+    {
+        // Get the query string
+        var queryString = query.ToQueryString();
+
+        // Generate a SHA256 hash of the query string
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
+
+        // Return the cache key by combining the type and the hashed query string
+        return cacheType.ToCacheKey(Convert.ToBase64String(hash));
+    }
+
+    
     public static IQueryable<T>? ToTyped<T>(this ZauberDbContext context) where T : class
     {
         try

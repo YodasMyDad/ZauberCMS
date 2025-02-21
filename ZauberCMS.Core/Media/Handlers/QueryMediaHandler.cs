@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
@@ -18,7 +16,8 @@ public class QueryMediaHandler(IServiceProvider serviceProvider, ICacheService c
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var cacheKey = GenerateCacheKey(request, dbContext);
+        var query = BuildQuery(request, dbContext);
+        var cacheKey = query.GenerateCacheKey(typeof(Models.Media));
 
         if (request.Cached)
         {
@@ -28,15 +27,7 @@ public class QueryMediaHandler(IServiceProvider serviceProvider, ICacheService c
         return await FetchMediaAsync(request, dbContext, cancellationToken);
     }
 
-    private string GenerateCacheKey(QueryMediaCommand request, ZauberDbContext dbContext)
-    {
-        var query = BuildQuery(request, dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(Models.Media).ToCacheKey(Convert.ToBase64String(hash));
-    }
-
-    private IQueryable<Models.Media> BuildQuery(QueryMediaCommand request, ZauberDbContext dbContext)
+    private static IQueryable<Models.Media> BuildQuery(QueryMediaCommand request, ZauberDbContext dbContext)
     {
         var query = dbContext.Medias.Include(x => x.Parent).AsQueryable();
 

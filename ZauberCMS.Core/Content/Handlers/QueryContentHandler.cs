@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Commands;
@@ -18,7 +16,8 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var cacheKey = GenerateCacheKey(request, dbContext);
+        var query = BuildQuery(request, dbContext);
+        var cacheKey = query.GenerateCacheKey(typeof(Models.Content));
         
         if (request.Cached)
         {
@@ -28,15 +27,7 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
         return await FetchContentAsync(request, dbContext, cancellationToken);
     }
 
-    private string GenerateCacheKey(QueryContentCommand request, ZauberDbContext dbContext)
-    {
-        var query = BuildQuery(request, dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
-    }
-
-    private IQueryable<Models.Content> BuildQuery(QueryContentCommand request, ZauberDbContext dbContext)
+    private static IQueryable<Models.Content> BuildQuery(QueryContentCommand request, ZauberDbContext dbContext)
     {
         var query = dbContext.Contents.Include(x => x.ContentType)
             .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
@@ -140,7 +131,7 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
         return query;
     }
 
-    private Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));

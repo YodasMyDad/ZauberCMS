@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data;
@@ -19,7 +17,8 @@ public class QueryTagHandler(IServiceProvider serviceProvider, ICacheService cac
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
-        var cacheKey = GenerateCacheKey(request, dbContext);
+        var query = BuildQuery(request, dbContext);
+        var cacheKey = query.GenerateCacheKey(typeof(Tag));
 
         if (request.Cached)
         {
@@ -29,15 +28,7 @@ public class QueryTagHandler(IServiceProvider serviceProvider, ICacheService cac
         return await FetchTagsAsync(request, dbContext, cancellationToken);
     }
 
-    private string GenerateCacheKey(QueryTagCommand request, ZauberDbContext dbContext)
-    {
-        var query = BuildQuery(request, dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(Tag).ToCacheKey(Convert.ToBase64String(hash));
-    }
-
-    private IQueryable<Tag> BuildQuery(QueryTagCommand request, ZauberDbContext dbContext)
+    private static IQueryable<Tag> BuildQuery(QueryTagCommand request, ZauberDbContext dbContext)
     {
         var query = dbContext.Tags.AsQueryable();
 
@@ -92,7 +83,7 @@ public class QueryTagHandler(IServiceProvider serviceProvider, ICacheService cac
         return query;
     }
 
-    private Task<PaginatedList<Tag>> FetchTagsAsync(QueryTagCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static Task<PaginatedList<Tag>> FetchTagsAsync(QueryTagCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));
