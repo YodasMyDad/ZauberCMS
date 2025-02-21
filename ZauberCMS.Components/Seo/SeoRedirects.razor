@@ -3,6 +3,7 @@
 @using ZauberCMS.Core.Seo.Models
 @using ZauberCMS.Core.Data.Commands
 @using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Seo.Commands
 @using ZauberCMS.Core
 
 @layout SectionLayout
@@ -14,7 +15,7 @@
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
-    <RadzenDataGrid AllowFiltering="true"
+    <RadzenDataGrid @ref="Grid" AllowFiltering="true"
                     FilterPopupRenderMode="PopupRenderMode.Initial"
                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                     AllowPaging="true"
@@ -38,6 +39,10 @@
                             @domain.Url
                         }
                     }
+                    else
+                    {
+                        @("Any")
+                    }
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn Property="FromUrl" Title="From Url">
@@ -60,6 +65,11 @@
                     @data.DateUpdated.Humanize()
                 </Template>
             </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="Id" Title="Delete" Width="90px" TextAlign="TextAlign.Center">
+                <Template Context="data">
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                </Template>
+            </RadzenDataGridColumn>
         </Columns>
     </RadzenDataGrid>
 </RadzenPanel>
@@ -67,12 +77,14 @@
 @code {
     [CascadingParameter] IModalService ModalService { get; set; } = null!;
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
     
     private int AmountPerPage { get; set; }
     private int Count { get; set; } 
     private bool IsLoading { get; set; } = false;
     private IEnumerable<SeoRedirect> SeoRedirectsList { get; set; } = [];
     private Dictionary<Guid, Domain> Domains { get; set; } = [];
+    private RadzenDataGrid<SeoRedirect> Grid { get; set; } = null!;
     
     protected override async Task OnInitializedAsync()
     {
@@ -90,7 +102,7 @@
 
         var command = new DataGridCommand<SeoRedirect>();
         
-        if (args.Top != null)
+        if (args.Top != null && args.Top != 0)
         {
             command.Take = args.Top.Value;
         }
@@ -136,10 +148,32 @@
 
         var modal = ModalService.OpenSidePanel<AddEditRedirect>(seoRedirect == null ? "Create" : "Add" + " Redirect", parameters);
         var result = await modal.Result;
-        if (result is { Confirmed: true, Data: AddEditRedirect addEditRedirect })
+        if (result is { Confirmed: true, Data: SeoRedirect redirect })
         {
-            // TODO - Complete
+            var saveResult = await Mediator.Send(new SaveRedirectCommand { Redirect = redirect });
+            if (saveResult.Success)
+            {
+                NotificationService.ShowSuccessNotification("Redirect Saved");
+                await Grid.Reload();
+            }
+            else
+            {
+                NotificationService.ShowNotifications(saveResult.Messages);
+            }
         }        
+    }
+    
+    private async Task Delete(Guid id)
+    {
+        var deleteRedirectResult = await Mediator.Send(new DeleteRedirectCommand{ Id = id });
+        if (!deleteRedirectResult.Success)
+        {
+            NotificationService.ShowNotifications(deleteRedirectResult.Messages);
+        }
+        else
+        {
+            await Grid.Reload();
+        }
     }
 
 }

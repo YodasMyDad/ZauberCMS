@@ -91,7 +91,7 @@
         var deleteDomainResult = await Mediator.Send(new DeleteDomainCommand { Id = id });
         if (!deleteDomainResult.Success)
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = deleteDomainResult.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.ShowNotifications(deleteDomainResult.Messages);
         }
         else
         {

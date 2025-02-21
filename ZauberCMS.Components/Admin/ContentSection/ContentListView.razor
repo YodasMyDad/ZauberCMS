@@ -73,7 +73,7 @@
             command.ParentId = ContentId;
         }
 
-        if (args.Top != null)
+        if (args.Top != null && args.Top != 0)
         {
             command.Take = args.Top.Value;
         }

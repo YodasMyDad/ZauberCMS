@@ -1,11 +1,42 @@
-﻿@using ZauberCMS.Core.Seo.Models
+﻿@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Seo.Models
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="TODO" Description=""/>
+        <PropertyInfo Name="Domain" Description="Optional domain to restrict the redirect to"/>
     </LeftColumn>
     <CentreColumn>
-        TO DO 
+        <RadzenDropDown TValue="Guid" @bind-Value="@SelectedDomainId" Data="@Domains" TextProperty="Text" ValueProperty="Id" Style="width: 100%;" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="From Url" Description="Url you want to redirect from (Regex allowed)" />
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenTextBox @bind-Value="@Redirect.FromUrl" Style="width: 100%" />
+        <div class="rz-mt-2">
+            If you are using regex, double check it works on the <a href="https://regex101.com/" target="_blank">regex101.com</a> website.
+        </div>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="To Url" Description="Url you want to redirect to" />
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenTextBox @bind-Value="@Redirect.ToUrl" Style="width: 100%" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Permanent Redirect?" Description="Do you want a permanent (301) or temporary redirect (302)?" />
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Redirect.IsPermanent" />
     </CentreColumn>
 </EditorRow>
 
@@ -17,15 +48,94 @@
 
     [Parameter] public SeoRedirect Redirect { get; set; } = new();
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
-    
-    protected override void OnInitialized()
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+
+    private List<DomainChoice> Domains { get; set; } = [];
+    private Guid SelectedDomainId { get; set; }
+    protected override async Task OnInitializedAsync()
     {
+        var domains = await Mediator.Send(new QueryDomainCommand
+        {
+            AmountPerPage = 1000
+        });
         
+        Domains = domains.Items
+            .Where(x => !x.Url.IsNullOrWhiteSpace())
+            .Select(x => new DomainChoice
+        {
+            Text = x.Url!,
+            Id = x.Id
+        }).ToList();
+        
+        Domains.Insert(0, new DomainChoice{Text = "Any", Id = Guid.Empty });
     }
         
     private async Task Save()
     {
-        await BlazoredModal.CloseAsync(ModalResult.Ok(string.Empty));
+        // Validate regex
+        if (ValidateFromUrlRegex() == false)
+        {
+            NotificationService.ShowErrorNotification("Unable to validate from url, if using regex, double check it - urls must start with /");
+            return;
+        }
+        
+        if(Redirect.ToUrl.IsNullOrWhiteSpace())
+        {
+            NotificationService.ShowErrorNotification("To url must not be empty");
+            return;
+        }
+        
+        // Sanity check
+        if (!Redirect.ToUrl!.StartsWith("/"))
+        {
+            Redirect.ToUrl = $"/{Redirect.ToUrl}";
+        }
+
+        // Set to null if any selected
+        if (SelectedDomainId == Guid.Empty)
+        {
+            Redirect.DomainId = null;
+        }
+        else
+        {
+            Redirect.DomainId = SelectedDomainId;
+        }
+        
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Redirect));
     }
 
+    private bool ValidateFromUrlRegex()
+    {
+        if (string.IsNullOrWhiteSpace(Redirect.FromUrl))
+        {
+            return false; // Empty or whitespace is invalid
+        }
+
+        // Check if the input is likely a regex pattern
+        var looksLikeRegex = Redirect.FromUrl.IndexOfAny(['*', '.', '$', '^', '[', '(', '?']) >= 0;
+
+        if (looksLikeRegex)
+        {
+            // Try to validate as a regex
+            try
+            {
+                _ = new System.Text.RegularExpressions.Regex(Redirect.FromUrl);
+                return true; // Valid regex
+            }
+            catch (System.Text.RegularExpressions.RegexParseException)
+            {
+                return false; // Invalid regex
+            }
+        }
+
+        // Validate standard URL - must start with a '/'
+        return Redirect.FromUrl.StartsWith("/");
+    }
+    
+    public class DomainChoice
+    {
+        public string Text { get; set; } = string.Empty;
+        public Guid Id { get; set; }
+    }
+    
 }

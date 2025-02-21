@@ -66,7 +66,7 @@
 
         var command = new DataGridLanguageDictionaryCommand();
 
-        if (args.Top != null)
+        if (args.Top != null && args.Top != 0)
         {
             command.Take = args.Top.Value;
         }
