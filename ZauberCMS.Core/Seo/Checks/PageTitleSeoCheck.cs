@@ -20,19 +20,19 @@ public class PageTitleSeoCheck : ISeoCheck
         if (title.IsNullOrWhiteSpace())
         {
             seoItem.Status = AlertType.Error;
-            seoItem.Message = "Page title is missing.";
+            seoItem.DefaultMessage = "Page title is missing.";
         }
         
         // Check title length
         if (title is { Length: < 30 or > 60 })
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.Message = "Page title length should be between 30 and 60 characters.";
+            seoItem.DefaultMessage = "Page title length should be between 30 and 60 characters.";
         }
 
         if (seoItem.Status == AlertType.Success)
         {
-            seoItem.Message = title;
+            seoItem.DefaultMessage = title;
         }
         
         result.Items.Add(seoItem);

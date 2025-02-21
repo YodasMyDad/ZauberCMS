@@ -76,22 +76,23 @@ public partial class AiContentCheck : ISeoCheck
         var transitionCount = transitions.Sum(t => Regex.Matches(bodyText, $@"\b{t}\b", RegexOptions.IgnoreCase).Count);
         var transitionDensity = transitionCount / (double)sentences.Count;
 
-        var analysisSummary = (repeatedPhrases.Count > 0
-                                  ? $" - Repeated AI Phrases: {string.Join(", ", repeatedPhrases)}\n"
-                                  : string.Empty)
-                              + $" - Average Sentence Length: {averageSentenceLength:F2} characters"
-                              + $" - Short Sentence Ratio: {uniformityScore:P2}"
-                              + $" - Transition Density: {transitionDensity:P2}";
+        if (repeatedPhrases.Count > 0)
+        {
+            seoItem.AdditionalMessages.Add($"Repeated AI Phrases: {string.Join(", ", repeatedPhrases)}");   
+        }
+        seoItem.AdditionalMessages.Add($"Average Sentence Length: {averageSentenceLength:F2} characters");
+        seoItem.AdditionalMessages.Add($"Short Sentence Ratio: {uniformityScore:P2}");
+        seoItem.AdditionalMessages.Add($"Transition Density: {transitionDensity:P2}");
 
         if (repeatedPhrases.Count > 5 || uniformityScore < 0.2 || transitionDensity > 0.1)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.Message = $"Potential AI-Generated Content Detected{analysisSummary}";
+            seoItem.DefaultMessage = "Potential AI Generated Content Detected";
         }
         else
         {
             seoItem.Status = AlertType.Success;
-            seoItem.Message = $"Content appears natural{analysisSummary}";
+            seoItem.DefaultMessage = "Content appears natural";
         }
 
         result.Items.Add(seoItem);

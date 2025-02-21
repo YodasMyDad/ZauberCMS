@@ -1,6 +1,5 @@
 ﻿@using HtmlAgilityPack
 @using ZauberCMS.Core.Plugins
-@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Seo.Models
 
 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
@@ -10,21 +9,13 @@
         <Template>Wait</Template>
     </RadzenProgressBarCircular>
 </RadzenStack>
-<RadzenStack Orientation="Orientation.Vertical" Gap="0em">
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1em" class="mt-2">
     @foreach (var check in SeoCheckResults)
     {
         foreach (var checkResultItem in check.Items)
         {
-            var alertStyle = checkResultItem.Status switch
-            {
-                AlertType.Success => AlertStyle.Success,
-                AlertType.Warning => AlertStyle.Warning,
-                AlertType.Error => AlertStyle.Danger,
-                _ => AlertStyle.Info
-            };
-            <RadzenAlert Title="@check.Name" AlertStyle="alertStyle" Variant="Variant.Flat" Shade="Shade.Light" AllowClose="false">
-                @(checkResultItem.Message)
-            </RadzenAlert>
+            <TailwindAlert Type="@checkResultItem.Status" Title="@check.Name" DefaultMessage="@checkResultItem.DefaultMessage" Messages="@checkResultItem.AdditionalMessages" />
         }
     }
 </RadzenStack>
@@ -33,12 +24,24 @@
 {
     [Parameter] public Content? Content { get; set; }
     [Parameter] public string? FullUrl { get; set; }
+    [Parameter] public bool RunNow { get; set; }
     
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     
     private List<SeoCheckResult> SeoCheckResults { get; set; } = [];
     private bool ShowLoader { get; set; }
-    
+
+    /*
+    protected override async Task OnInitializedAsync()
+    {
+        if (RunNow && !FullUrl.IsNullOrWhiteSpace())
+        {
+            await Task.Delay(1000); // Add a 1-second delay
+            await RunSeoChecks();
+        }
+    }
+    */
+
     private async Task RunSeoChecks()
     {
         ShowLoader = true;

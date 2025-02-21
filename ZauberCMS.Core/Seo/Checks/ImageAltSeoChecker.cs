@@ -22,12 +22,12 @@ public class ImageAltSeoChecker : ISeoCheck
         if (imagesWithoutAlt > 0)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.Message = $"{imagesWithoutAlt} image(s) are missing alt attributes.";
+            seoItem.DefaultMessage = $"{imagesWithoutAlt} image(s) are missing alt attributes.";
         }
 
         if (seoItem.Status == AlertType.Success)
         {
-            seoItem.Message = "All images have alt attributes.";
+            seoItem.DefaultMessage = "All images have alt attributes.";
         }
 
         result.Items.Add(seoItem);

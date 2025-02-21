@@ -20,12 +20,12 @@ public class CanonicalSeoChecker : ISeoCheck
         if (!canonicalLinkExists)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.Message = "Canonical link is missing.";
+            seoItem.DefaultMessage = "Canonical link is missing.";
         }
 
         if (seoItem.Status == AlertType.Success)
         {
-            seoItem.Message = "Canonical link is present.";
+            seoItem.DefaultMessage = "Canonical link is present.";
         }
 
         result.Items.Add(seoItem);

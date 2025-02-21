@@ -25,12 +25,12 @@ public partial class WordCountCheck : ISeoCheck
         if (wordCount < 250)
         {
             seoItem.Status = AlertType.Error;
-            seoItem.Message = $"Page contains only {wordCount} words. Consider adding more content for better SEO.";
+            seoItem.DefaultMessage = $"Page contains only {wordCount} words. Consider adding more content for better SEO.";
         }
         else if (wordCount < 500)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.Message = $"Page contains {wordCount} words. While acceptable, more content may improve SEO.";
+            seoItem.DefaultMessage = $"Page contains {wordCount} words. While acceptable, more content may improve SEO.";
         }
         else
         {
@@ -41,7 +41,7 @@ public partial class WordCountCheck : ISeoCheck
         return Task.FromResult(result);
     }
 
-    public int SortOrder => 11;
+    public int SortOrder => -9;
 
     private static int CountWords(string text)
     {

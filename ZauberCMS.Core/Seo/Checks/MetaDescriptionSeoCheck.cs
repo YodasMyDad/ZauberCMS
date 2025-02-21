@@ -21,17 +21,17 @@ public class MetaDescriptionSeoCheck : ISeoCheck
         if (string.IsNullOrWhiteSpace(metaDescription))
         {
             seoItem.Status = AlertType.Error;
-            seoItem.Message = "Meta description is missing.";
+            seoItem.DefaultMessage = "Meta description is missing.";
         }
         else if (metaDescription.Length is < 150 or > 160)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.Message = "Meta description should ideally be between 150 and 160 characters.";
+            seoItem.DefaultMessage = "Meta description should ideally be between 150 and 160 characters.";
         }
         
         if (seoItem.Status == AlertType.Success)
         {
-            seoItem.Message = "Meta description is fine";
+            seoItem.DefaultMessage = "Meta description is fine";
         }
 
         result.Items.Add(seoItem);
