@@ -40,6 +40,9 @@
 
 <!-- Display crop coordinates -->
 <div class="mt-3">
+    <p>Original Width: @Media.Width px</p>
+    <p>Original Height: @Media.Height px</p>
+    
     <p>Crop Box Left: @CropLeft px</p>
     <p>Crop Box Top: @CropTop px</p>
     <p>Crop Box Width: @CropWidth px</p>
@@ -60,7 +63,7 @@
     {
         <div class="mt-2">
             <p><strong>ImageSharp Crop URL:</strong> @ImageSharpUrl</p>
-            <img src="@ImageSharpUrl" alt="Cropped Preview" style="max-width: 300px;" />
+            <img src="@ImageSharpUrl" alt="Cropped Preview" style="max-width: 300px;"/>
         </div>
     }
 </div>
@@ -260,27 +263,22 @@
 
     private void ShowImageSharpUrl()
     {
-        // 1. Calculate user-selected bounding box in *original* image coordinates.
+        // Calculate the crop box in original image coordinates
         var x = (int)Math.Max(0, Math.Min(Media.Width - 1, Math.Floor(ScaledLeft)));
         var y = (int)Math.Max(0, Math.Min(Media.Height - 1, Math.Floor(ScaledTop)));
         var w = (int)Math.Max(1, Math.Min(Media.Width - x, Math.Floor(ScaledWidth)));
         var h = (int)Math.Max(1, Math.Min(Media.Height - y, Math.Floor(ScaledHeight)));
 
-        // 2. Calculate the center of that bounding box in *pixels*.
-        double centerX = x + (w / 2.0);
-        double centerY = y + (h / 2.0);
+        // Calculate the center of the crop box
+        double centerX = x + w / 2.0;
+        double centerY = y + h / 2.0;
 
-        // 3. Convert center to percentages [0..100] of the original dimensions.
-        double rxPercent = (centerX / Media.Width) * 100.0;
-        double ryPercent = (centerY / Media.Height) * 100.0;
+        // Calculate rxy as fractions (between 0 and 1)
+        double rx = centerX / Media.Width;
+        double ry = centerY / Media.Height;
 
-        // 4. Construct the URL.
-        //    - width & height = final output dimensions
-        //    - rmode=crop tells ImageSharp to crop so the final is exactly w×h
-        //    - rxy=xx,yy is the anchor in *percent*
-        // Note: Format the anchor values as needed (e.g. 2 decimals) to keep the URL readable.
-        ImageSharpUrl =
-            $"/{Media.Url}?width={w}&height={h}&rmode=crop&rxy={rxPercent:0.##},{ryPercent:0.##}";
+        // Construct the URL with rxy as fractions
+        ImageSharpUrl = $"/{Media.Url}?width={w}&height={h}&rmode=crop&rxy={rx:0.####},{ry:0.####}";
 
         // Update the UI
         StateHasChanged();

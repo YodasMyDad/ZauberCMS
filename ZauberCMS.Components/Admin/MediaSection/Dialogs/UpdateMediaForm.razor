@@ -2,73 +2,90 @@
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Shared.Services
+
 <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
     <Tabs>
         <RadzenTabsItem Text="@(IsUpdate ? "Update" : "Create")">
 
-            <EditorRow>
-                <LeftColumn>
-                    <PropertyInfo Name="Name" Description="The name shown in the tree"/>
-                </LeftColumn>
-                <CentreColumn>
-                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name"
-                                   aria-label="Name"/>
-                </CentreColumn>
-            </EditorRow>
-            @if (Media.MediaType == MediaType.Image)
-            {
-                <EditorRow>
-                    <LeftColumn>
-                        <PropertyInfo Name="Alt Tag" Description="Optional: Image alt tag"/>
-                    </LeftColumn>
-                    <CentreColumn>
-                        <RadzenTextBox Style="width: 100%;" Name="Alt Tag" Placeholder="Alt Tag"
-                                       @bind-Value="Media.AltTag" aria-label="alt Tag"/>
-                    </CentreColumn>
-                </EditorRow>
-            }
-            @if (Media.MediaType != MediaType.Folder)
-            {
-                <div class="py-2">
-                    @if (Media.Url.IsNullOrWhiteSpace())
-                    {
-                        @if (NewFile != null)
-                        {
-                            <PickerItem Icon="@NewFile.Name.ToFileType().GetIcon()" Text="@NewFile.Name"
-                                        Close="@(() => ClearNewFile())"/>
-                        }
+            <div class="flex space-x-4"> 
 
-                        <div class="file-drop-zone">
-                            <div class="text-center">
-                                <label for="file-upload">
-                                    <InputFile OnChange="@OnChange"/>
-                                </label>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        if (Media.MediaType == MediaType.Image)
-                        {
-                            <div class="flex justify-start">
-                                <img src="@(Media.Url)?width=300" alt="" class="rounded-2xl"/>
-                                <div class="pl-3 flex flex-col space-y-2 justify-center">
-                                    <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger"
-                                                  Text="Delete Image" Click="@(() => ClearUrl())"/>
-                                    <RadzenButton Variant="Variant.Text" Text="Edit Image"
-                                                  Click="@(() => EditImage())"/>
+                @if (Media.MediaType != MediaType.Folder)
+                {
+                        <div class="flex justify-center items-center">
+                            @if (Media.Url.IsNullOrWhiteSpace())
+                            {
+                                @if (NewFile != null)
+                                {
+                                    <PickerItem Icon="@NewFile.Name.ToFileType().GetIcon()" Text="@NewFile.Name"
+                                                Close="@(() => ClearNewFile())"/>
+                                }
+
+                                <div class="file-drop-zone">
+                                    <div class="text-center">
+                                        <label for="file-upload">
+                                            <InputFile OnChange="@OnChange"/>
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <PickerItem Text="@Media.Name"
-                                        Icon="@Media.MediaType.GetIcon()"
-                                        Close="@(() => ClearUrl())"/>
-                        }
+                            }
+                            else
+                            {
+                                if (Media.MediaType == MediaType.Image)
+                                {
+                                    <img src="@(Media.Url)?width=300" alt="" class="rounded-2xl border"/>
+                                }
+                                else
+                                {
+                                    <PickerItem Text="@Media.Name"
+                                                Icon="@Media.MediaType.GetIcon()"
+                                                Close="@(() => ClearUrl())"/>
+                                }
+                            }
+                        </div>
+                }
+
+
+                <div class="flex-1">
+                    <EditorRow>
+                        <LeftColumn>
+                            <PropertyInfo Name="Name" Description="The name shown in the tree"/>
+                        </LeftColumn>
+                        <CentreColumn>
+                            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name"
+                                           aria-label="Name"/>
+                        </CentreColumn>
+                    </EditorRow>
+                    @if (Media.MediaType == MediaType.Image)
+                    {
+                        <EditorRow>
+                            <LeftColumn>
+                                <PropertyInfo Name="Alt Tag" Description="Optional: Image alt tag"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenTextBox Style="width: 100%;" Name="Alt Tag" Placeholder="Alt Tag"
+                                               @bind-Value="Media.AltTag" aria-label="alt Tag"/>
+                            </CentreColumn>
+                        </EditorRow>
+                    }
+                    @if (!Media.Url.IsNullOrWhiteSpace() && Media.MediaType == MediaType.Image)
+                    {
+                        <EditorRow>
+                            <CentreColumn>
+                                <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger"
+                                              Text="Delete Image" Click="@(() => ClearUrl())"/>
+                            </CentreColumn>
+                        </EditorRow>
+
+                        <EditorRow>
+                            <CentreColumn>
+                                <RadzenButton Variant="Variant.Text" Text="Edit Image Crops"
+                                              Click="@(() => EditImage())"/>
+                            </CentreColumn>
+                        </EditorRow>
                     }
                 </div>
-            }
+            </div>
+
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
                          AlignItems="AlignItems.Center" Gap="10">
                 <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
