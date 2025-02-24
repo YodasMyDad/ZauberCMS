@@ -82,13 +82,7 @@ public class CopyContentHandler(
         {
             // Fetch all descendants of the original content
             var descendants = await dbContext.Contents
-#pragma warning disable EF1002
-                .FromSqlRaw($"""
-                                 SELECT * 
-                                 FROM ZauberContent
-                                 WHERE Path LIKE '%"{contentToCopy.Id}"%'
-                             """)
-#pragma warning restore EF1002
+                .WherePathLike(contentToCopy.Id)
                 .AsNoTracking()
                 .Include(content => content.PropertyData)
                 .ToListAsync(cancellationToken);
