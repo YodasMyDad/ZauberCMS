@@ -1,11 +1,11 @@
 ﻿using System.Text.Json.Serialization;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
-using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Media.Models;
 
-public class Media : ITreeItem
+public class Media : IBaseItem
 {
     /// <summary>
     /// Represents the unique identifier (ID) property of a Media object.
@@ -28,7 +28,12 @@ public class Media : ITreeItem
     /// The URL property is used to store the location of the media file.
     /// </remarks>
     public string? Url { get; set; }
-    
+
+    /// <summary>
+    /// The order in which the media should be displayed
+    /// </summary>
+    public int SortOrder { get; set; }
+
     /// <summary>
     /// Name of the media item
     /// </summary>
@@ -81,6 +86,11 @@ public class Media : ITreeItem
     public Media? Parent { get; set; }
     
     /// <summary>
+    /// The path for this media in the media tree
+    /// </summary>
+    public List<Guid> Path { get; set; } = [];
+    
+    /// <summary>
     /// The id of the last person to update the media 
     /// </summary>
     public Guid? LastUpdatedById { get; set; }
@@ -104,6 +114,7 @@ public class Media : ITreeItem
     /// <summary>
     /// If parent ids are set this could have children
     /// </summary>
+    [JsonIgnore]
     public List<Media> Children { get; set; } = [];
     
     /// <summary>
@@ -116,4 +127,7 @@ public class Media : ITreeItem
     /// </summary>
     [JsonIgnore]
     public List<Audit.Models.Audit> Audits { get; set; } = [];
+    
+    [JsonIgnore]
+    public List<MediaRole> MediaRoles { get; set; } = [];
 }

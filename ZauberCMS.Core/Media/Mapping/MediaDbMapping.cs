@@ -16,6 +16,7 @@ public class MediaDbMapping : IEntityTypeConfiguration<Models.Media>
         builder.Property(x => x.AltTag).HasMaxLength(1000);
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
+        builder.Property(e => e.Path).ToJsonConversion(3000);
         builder.Property(e => e.ExtendedData).ToJsonConversion(4000);
         
         builder.HasOne(d => d.Parent)
@@ -30,5 +31,6 @@ public class MediaDbMapping : IEntityTypeConfiguration<Models.Media>
 
         builder.HasIndex(x => x.Url).HasDatabaseName("IX_ZauberMedia_Url");
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberMedia_Name");
+        builder.HasIndex(x => x.Path).HasDatabaseName("IX_ZauberMedia_Path");
     }
 }

@@ -163,4 +163,7 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     /// </summary>
     [JsonIgnore]
     public List<Audit.Models.Audit> Audits { get; set; } = [];
+    
+    [JsonIgnore]
+    public List<ContentRole> ContentRoles { get; set; } = [];
 }

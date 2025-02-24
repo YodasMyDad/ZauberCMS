@@ -1,9 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Serilog;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Plugins;
+using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Interfaces;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -12,6 +15,60 @@ namespace ZauberCMS.Core.Extensions;
 
 public static class DbContextExtensions
 {
+    /// <summary>
+    /// Filters the entities based on whether their raw Path column contains the specified contentId.
+    /// </summary>
+    /// <param name="source">The source IQueryable of entities.</param>
+    /// <param name="itemId">The ID to look for in the Path column.</param>
+    /// <returns>An IQueryable of entities matching the condition.</returns>
+    public static IQueryable<T> WherePathLike<T>(this DbSet<T> source, Guid itemId)
+        where T : class, IBaseItem
+    {
+        var tableName = typeof(T) == typeof(Content.Models.Content) ? "ZauberContent" : "ZauberMedia";
+
+        // Use EF.Functions.Like to avoid in-memory computation
+#pragma warning disable EF1002
+        return source.FromSqlRaw($"""
+                                      SELECT * 
+                                      FROM {tableName}
+                                      WHERE Path LIKE '%"{itemId}"%'
+                                  """);
+#pragma warning restore EF1002
+    }
+    
+    public static List<Guid> BuildPath<T>(this T entity, ZauberDbContext dbContext, bool isUpdate, IOptions<ZauberSettings> settings)
+        where T : class, IBaseItem
+    {
+        var path = new List<Guid>();
+        var urls = new List<string>();
+        IBaseItem? currentEntity = entity;
+
+        while (currentEntity != null)
+        {
+            path.Insert(0, currentEntity.Id);
+            if (currentEntity.Url != null) urls.Insert(0, currentEntity.Url);
+
+            var parentItem = currentEntity.ParentId.HasValue
+                ? dbContext.Set<T>().FirstOrDefault(e => e.Id == currentEntity.ParentId.Value)
+                : null;
+
+            currentEntity = parentItem;
+        }
+
+        if (entity is Content.Models.Content)
+        {
+            if (!isUpdate && settings.Value.EnablePathUrls)
+            {
+                // New item and path URLs are enabled—generate the URL from the path.
+                if (urls.Count > 0) urls.RemoveAt(0); // Remove the root (if applicable)
+                entity.Url = string.Join("/", urls);
+            }    
+        }
+        
+        return path;
+    }
+
+    
     public static string GenerateCacheKey<T>(this IQueryable<T> query, Type cacheType)
     {
         // Get the query string

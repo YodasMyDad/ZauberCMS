@@ -120,7 +120,7 @@ public class SaveContentHandler(
             }
             
             // Calculate and set the Path property
-            content.Path = BuildPath(content, dbContext, isUpdate);
+            content.Path = content.BuildPath(dbContext, isUpdate, settings);
             
             await user.AddAudit(content, content.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
             return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
@@ -155,32 +155,6 @@ public class SaveContentHandler(
                 mapper.Map(newPropertyValue, existingPropertyValue);
             }
         }
-    }
-
-    private List<Guid> BuildPath(Models.Content content, ZauberDbContext dbContext, bool isUpdate)
-    {
-        var path = new List<Guid>();
-        var urls = new List<string>();
-        var currentContent = content;
-        while (currentContent != null)
-        {
-            path.Insert(0, currentContent.Id);
-            if (currentContent.Url != null) urls.Insert(0, currentContent.Url);
-            var parentItem = currentContent.ParentId.HasValue
-                ? dbContext.Contents.FirstOrDefault(c => c.Id == currentContent.ParentId.Value)
-                : null;
-            currentContent = parentItem;
-        }
-
-        if (isUpdate == false && settings.Value.EnablePathUrls)
-        {
-            // New content item and path urls are enabled so make them from the path
-            // Firstly remove the root (Usually website)
-            urls.RemoveAt(0);
-            // Now concat the urls with a / in between to make the url 
-            content.Url = string.Join("/", urls);
-        }
-        return path;
     }
 
     private static string GenerateUniqueUrl(ZauberDbContext dbContext, string baseSlug)

@@ -41,8 +41,10 @@ public static class ValueConversionExtensions
 
         var converter = new ValueConverter<T, string>
         (
-            v => JsonSerializer.Serialize(v, options), // Serialize in the most compact form
-            v => JsonSerializer.Deserialize<T>(v, options) ?? new T()
+            v => JsonSerializer.Serialize(v ?? new T(), options), // Serialize to JSON with default if null
+            v => string.IsNullOrWhiteSpace(v) 
+                ? new T() 
+                : JsonSerializer.Deserialize<T>(v, options) ?? new T() // Deserialize or return default
         );
 
         var comparer = new ValueComparer<T>

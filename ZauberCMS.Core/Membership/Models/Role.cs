@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity;
 using ZauberCMS.Core.Shared.Interfaces;
 using ZauberCMS.Core.Shared.Models;
 
@@ -13,6 +14,12 @@ public class Role : IdentityRole<Guid>, ITreeItem
     public Dictionary<string, object> ExtendedData { get; set; } = new();
     public List<UserRole> UserRoles { get; set; } = [];
     
+    [JsonIgnore]
+    public List<ContentRole> ContentRoles { get; set; } = [];
+    
+    [JsonIgnore]
+    public List<MediaRole> MediaRoles { get; set; } = [];
+    
     /// <summary>
     /// The properties available on this Role
     /// </summary>
@@ -25,5 +32,5 @@ public class Role : IdentityRole<Guid>, ITreeItem
     /// Tabs are used to organize the properties into separate sections.
     /// Each tab represents a logical grouping of properties.
     /// </remarks>
-    public List<Tab> Tabs { get; set; } = [new Tab{Id = Constants.Guids.ContentTypeSystemTabId, IsSystemTab = true, SortOrder = 100, Name = "System"}];
+    public List<Tab> Tabs { get; set; } = [new() {Id = Constants.Guids.ContentTypeSystemTabId, IsSystemTab = true, SortOrder = 100, Name = "System"}];
 }

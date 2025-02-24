@@ -138,6 +138,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.HasIndex("ParentId");
 
+                    b.HasIndex("Path")
+                        .HasDatabaseName("IX_ZauberContent_Path");
+
                     b.HasIndex("UnpublishedContentId");
 
                     b.HasIndex("Url")
@@ -458,6 +461,14 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
                     b.Property<string>("Url")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -474,10 +485,43 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.HasIndex("ParentId");
 
+                    b.HasIndex("Path")
+                        .HasDatabaseName("IX_ZauberMedia_Path");
+
                     b.HasIndex("Url")
                         .HasDatabaseName("IX_ZauberMedia_Url");
 
                     b.ToTable("ZauberMedia", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.ContentRole", b =>
+                {
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ContentId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("ZauberContentRole", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.MediaRole", b =>
+                {
+                    b.Property<Guid>("MediaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("MediaId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("ZauberMediaRole", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.Role", b =>
@@ -985,6 +1029,44 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.ContentRole", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Content.Models.Content", "Content")
+                        .WithMany("ContentRoles")
+                        .HasForeignKey("ContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZauberCMS.Core.Membership.Models.Role", "Role")
+                        .WithMany("ContentRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Content");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.MediaRole", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Media.Models.Media", "Media")
+                        .WithMany("MediaRoles")
+                        .HasForeignKey("MediaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZauberCMS.Core.Membership.Models.Role", "Role")
+                        .WithMany("MediaRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Media");
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.RoleClaim", b =>
                 {
                     b.HasOne("ZauberCMS.Core.Membership.Models.Role", null)
@@ -1078,6 +1160,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Navigation("Children");
 
+                    b.Navigation("ContentRoles");
+
                     b.Navigation("PropertyData");
                 });
 
@@ -1108,10 +1192,16 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Navigation("Audits");
 
                     b.Navigation("Children");
+
+                    b.Navigation("MediaRoles");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.Role", b =>
                 {
+                    b.Navigation("ContentRoles");
+
+                    b.Navigation("MediaRoles");
+
                     b.Navigation("UserRoles");
                 });
 
