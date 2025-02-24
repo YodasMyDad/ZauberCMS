@@ -12,7 +12,7 @@ using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.Trees.ContextMenus.ContentMenus;
 
-public class SeoCheckerContextMenu(NotificationService notificationService, IMediator mediator, AppState appState) : ITreeContextMenu
+public class SeoCheckerContextMenu() : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias => [];

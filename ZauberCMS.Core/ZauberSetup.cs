@@ -16,12 +16,14 @@ using Microsoft.Extensions.Options;
 using Radzen;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
+using SixLabors.ImageSharp.Web.Providers;
 using ZauberCMS.Core.Content.ContentFinders;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
+using ZauberCMS.Core.Media.Processors;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Claims;
 using ZauberCMS.Core.Membership.Models;
@@ -222,7 +224,10 @@ public static class ZauberSetup
         // Add localization services
         builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
         
-        builder.Services.AddImageSharp();
+        builder.Services.AddImageSharp()
+            .ClearProviders()
+            .AddProvider<WebRootImageProvider>()
+            .AddProcessor<CropWebProcessor>();
     }
     
         public static void AddZauberCms<T>(this WebApplication app)

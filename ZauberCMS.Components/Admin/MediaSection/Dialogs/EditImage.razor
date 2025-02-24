@@ -263,24 +263,19 @@
 
     private void ShowImageSharpUrl()
     {
-        // Calculate the crop box in original image coordinates
-        var x = (int)Math.Max(0, Math.Min(Media.Width - 1, Math.Floor(ScaledLeft)));
-        var y = (int)Math.Max(0, Math.Min(Media.Height - 1, Math.Floor(ScaledTop)));
-        var w = (int)Math.Max(1, Math.Min(Media.Width - x, Math.Floor(ScaledWidth)));
-        var h = (int)Math.Max(1, Math.Min(Media.Height - y, Math.Floor(ScaledHeight)));
+        // Calculate fractional coordinates based on container dimensions
+        double left = CropLeft / ContainerWidth;
+        double top = CropTop / ContainerHeight;
+        double right = (CropLeft + CropWidth) / ContainerWidth;
+        double bottom = (CropTop + CropHeight) / ContainerHeight;
 
-        // Calculate the center of the crop box
-        double centerX = x + w / 2.0;
-        double centerY = y + h / 2.0;
+        // Format the "cc" parameter with 4 decimal places
+        string cc = $"{left:F4},{top:F4},{(1 - right):F4},{(1 - bottom):F4}";
 
-        // Calculate rxy as fractions (between 0 and 1)
-        double rx = centerX / Media.Width;
-        double ry = centerY / Media.Height;
+        // Construct the ImageSharp.Web URL
+        ImageSharpUrl = $"{Media.Url}?cc={cc}";
 
-        // Construct the URL with rxy as fractions
-        ImageSharpUrl = $"/{Media.Url}?width={w}&height={h}&rmode=crop&rxy={rx:0.####},{ry:0.####}";
-
-        // Update the UI
+        // Notify the component to re-render
         StateHasChanged();
     }
 
