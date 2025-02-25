@@ -38,5 +38,5 @@ public class DeleteMediaContextMenu(IMediator mediator, NotificationService noti
         }
     }
     
-    public int SortOrder => -80;
+    public int SortOrder => 100;
 }

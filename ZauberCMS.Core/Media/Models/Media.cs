@@ -2,6 +2,7 @@
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Media.Models;
 

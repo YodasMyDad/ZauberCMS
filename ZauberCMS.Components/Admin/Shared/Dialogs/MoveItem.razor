@@ -1,10 +1,18 @@
 ﻿@using ZauberCMS.Components.Admin.Trees
-@using ZauberCMS.Core.Content.Commands
-<h5>Choose where to move @Content.Name to in the tree structure below</h5>
+@using ZauberCMS.Core.Shared.Interfaces
+<div>Choose where to move @Item.Name to in the tree structure below</div>
 
 <EditorRow>
     <CentreColumn>
-        <ContentTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)" />
+        @if (Item is Content)
+        {
+            <ContentTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>    
+        }
+        else
+        {
+            <MediaTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>
+        }
+        
     </CentreColumn>
 </EditorRow>
 
@@ -15,17 +23,17 @@
 
 
 @code {
-    [Parameter, EditorRequired] public Content Content { get; set; } = null!;
+    [Parameter, EditorRequired] public IBaseItem Item { get; set; } = null!;
     [Parameter] public Guid? ParentId { get; set; }
-    
+
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     private void OnValueChangedHandler(object value)
     {
-        if (value is Content content)
+        if (value is IBaseItem baseItem)
         {
-            if (content.Id != Content.Id)
+            if (baseItem.Id != Item.Id)
             {
-                ParentId = content.Id;   
+                ParentId = baseItem.Id;   
             }
         }
     }

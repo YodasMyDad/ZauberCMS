@@ -1,7 +1,7 @@
-﻿@page "/SortContent/{ContentId:guid}"
-@using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
+﻿@using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
+@typeparam T where T : ZauberCMS.Core.Shared.Interfaces.IBaseItem
 
-<SortableList Id="SortContentItems" Items="@Content" OnUpdate="@SortList" Context="item">
+<SortableList Id="SortContentItems" Items="@Items" OnUpdate="@SortList" Context="item">
     <SortableItemTemplate>
         <div>
             <PickerItem Text="@item.Name"/>
@@ -15,23 +15,23 @@
 
 @code {
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
-    [Parameter] public Guid ContentId { get; set; }
-    [Parameter] public List<Content> Content { get; set; } = [];
+    [Parameter] public Guid ItemId { get; set; }
+    [Parameter] public List<T> Items { get; set; } = [];
     
     private void SortList((int oldIndex, int newIndex) indices)
     {
-        TupleExtensions.SortList(indices, Content);
+        TupleExtensions.SortList(indices, Items);
         StateHasChanged();
     }
 
     private async Task Save()
     {
-        @for (var i = 0; i < Content.Count; i++)
+        @for (var i = 0; i < Items.Count; i++)
         {
-            var content = Content[i];
+            var content = Items[i];
             content.SortOrder = i + 1;
         }
         
-        await BlazoredModal.CloseAsync(ModalResult.Ok(Content));
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Items));
     }
 }
