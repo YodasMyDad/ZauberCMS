@@ -90,6 +90,7 @@ public class SaveContentHandler(
             // Get the DB version
             var content = dbContext.Contents
                 .Include(x => x.PropertyData)
+                .Include(x => x.ContentRoles).ThenInclude(x => x.Role)
                 .FirstOrDefault(x => x.Id == request.Content.Id);
             
             if (content == null)
@@ -112,6 +113,11 @@ public class SaveContentHandler(
                     UpdateContentPropertyValues(dbContext, content, request.Content.PropertyData);   
                 }
             }
+
+            if (request.UpdateContentRoles)
+            {
+                UpdateContentRoles(dbContext, content, request);   
+            }
             
             // If we get here delete any unpublished content
             if (unpublishedContent != null)
@@ -130,6 +136,42 @@ public class SaveContentHandler(
         return handlerResult;
     }
 
+    private void UpdateContentRoles(ZauberDbContext dbContext, Models.Content content, SaveContentCommand request)
+    {
+        // Fetch existing ContentRoles for the content
+        var existingRoles = dbContext.ContentRoles
+            .Where(r => r.ContentId == content.Id)
+            .ToList();
+
+        // Remove roles that are no longer in the new list
+        var rolesToRemove = existingRoles
+            .Where(er => request.Roles.All(rr => rr.Id != er.RoleId))
+            .ToList();
+
+        if (rolesToRemove.Count != 0)
+        {
+            dbContext.ContentRoles.RemoveRange(rolesToRemove);
+        }
+
+        // Add roles that are in the new list but not already present in the DB
+        var rolesToAdd = request.Roles
+            .Where(rr => existingRoles.All(er => er.RoleId != rr.Id))
+            .ToList();
+
+        if (rolesToAdd.Count != 0)
+        {
+            foreach (var role in rolesToAdd)
+            {
+                var contentRole = new ContentRole
+                {
+                    ContentId = content.Id,
+                    RoleId = role.Id
+                };
+                dbContext.ContentRoles.Add(contentRole);
+            }
+        }
+    }
+    
     private void UpdateContentPropertyValues(ZauberDbContext dbContext, Models.Content content,
         List<ContentPropertyValue> newPropertyValues)
     {

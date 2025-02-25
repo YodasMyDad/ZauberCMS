@@ -13,6 +13,11 @@ public class GetContentCommand : IRequest<Models.Content?>
     /// Include any unpublished content with this query
     /// </summary>
     public bool IncludeUnpublishedContent { get; set; }
+
+    /// <summary>
+    /// Indicates whether content-related roles should be included.
+    /// </summary>
+    public bool IncludeContentRoles { get; set; }
     
     /// <summary>
     /// The id of the specific content

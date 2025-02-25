@@ -50,5 +50,5 @@ public class DeleteContentContextMenu(IMediator mediator, DialogService confirmS
         }
     }
 
-    public int SortOrder => -90;
+    public int SortOrder => 100;
 }

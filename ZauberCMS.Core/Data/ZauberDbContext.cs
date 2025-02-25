@@ -42,6 +42,8 @@ public class ZauberDbContext(DbContextOptions options, IConfiguration configurat
     public DbSet<LanguageDictionary> LanguageDictionaries => Set<LanguageDictionary>();
     public DbSet<LanguageText> LanguageTexts => Set<LanguageText>();
     public DbSet<SeoRedirect> Redirects => Set<SeoRedirect>();
+    public DbSet<ContentRole> ContentRoles => Set<ContentRole>();
+    public DbSet<MediaRole> MediaRoles => Set<MediaRole>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

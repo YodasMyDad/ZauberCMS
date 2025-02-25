@@ -71,6 +71,12 @@ public class GetContentHandler(IServiceProvider serviceProvider, ICacheService c
             query = query.AsSplitQuery();
         }
 
+        if (request.IncludeContentRoles)
+        {
+            query = query.Include(x => x.ContentRoles).ThenInclude(x => x.Role);
+            query = query.AsSplitQuery();
+        }
+
         if (request.Id != null)
         {
             return query.Where(x => x.Id == request.Id);

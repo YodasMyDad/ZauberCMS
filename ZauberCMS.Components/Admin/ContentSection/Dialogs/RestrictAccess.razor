@@ -1,0 +1,52 @@
+﻿@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Membership.Commands
+@using ZauberCMS.Core.Membership.Models
+
+<div>Pick the roles who have access to this page</div>
+
+<RadzenPickList
+    @bind-Source="@AllRoles" @bind-Target="@SelectedRoles" Style="height:500px; width:100%;"
+    TextProperty="@nameof(Role.Name)">
+    <SourceHeader>
+        Roles:
+    </SourceHeader>
+    <TargetHeader>
+        Selected Roles:
+    </TargetHeader>
+    <Template>
+        @context.Name
+    </Template>
+</RadzenPickList>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    [Parameter] public Guid ContentId { get; set; }
+    private IEnumerable<Role> AllRoles { get; set; } = [];
+    private IEnumerable<Role> SelectedRoles { get; set; } = [];
+    private bool AlreadyHadContentRoles { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var content = await Mediator.Send(new GetContentCommand { Id = ContentId, IncludeContentRoles = true });
+        if (content != null)
+        {
+            var allRoles = await Mediator.Send(new QueryRolesCommand { AmountPerPage = 250, OrderBy = GetRolesOrderBy.Name});
+            AllRoles = allRoles.Items;
+            SelectedRoles = content.ContentRoles.Select(x => x.Role);
+            if (SelectedRoles.Any())
+            {
+                AlreadyHadContentRoles = true;
+            }
+        }
+    }
+
+    private async Task Save()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok((AlreadyHadContentRoles, SelectedRoles.ToList())));
+    }
+}
