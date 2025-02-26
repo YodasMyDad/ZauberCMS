@@ -44,17 +44,23 @@
     public string Description { get; set; } = "Creates a list of content blocks";
     public string Icon { get; set; } = "format_align_justify";
     public Type? SettingsComponent { get; set; } = typeof(BlockListEditorSettings);
+    
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
+    
     [CascadingParameter] public IModalService? ModalService { get; set; }
+    
     [Inject] public IMapper Mapper { get; set; } = null!;
-    private List<Content> ContentItems { get; set; } = [];
-    private Dictionary<Guid, ContentType> ContentTypes { get; set; } = [];
+    [Inject] public DialogService DialogService { get; set; } = null!;
+    
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
     public bool FullWidth { get; set; }
+    
+    private List<Content> ContentItems { get; set; } = [];
+    private Dictionary<Guid, ContentType> ContentTypes { get; set; } = [];
     private BlockListEditorSettingsModel SettingsModel { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
@@ -74,12 +80,16 @@
         ContentTypes = contentTypes.Items.ToDictionary(x => x.Id, x => x);
     }
     
-    private void DeleteContent(Content content)
+    private async Task DeleteContent(Content content)
     {
-        var index = ContentItems.FindIndex(c => c.Id == content.Id);
-        if (index != -1)
+        var delete = await DialogService.Confirm("Are you sure you want to delete this?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (delete == true)
         {
-            ContentItems.RemoveAt(index);
+            var index = ContentItems.FindIndex(c => c.Id == content.Id);
+            if (index != -1)
+            {
+                ContentItems.RemoveAt(index);
+            }
         }
     }
 
