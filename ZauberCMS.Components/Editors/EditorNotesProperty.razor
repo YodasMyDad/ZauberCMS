@@ -59,7 +59,7 @@
     {
         var dialog = DialogService.OpenSidePanel<EditorNotesDialog>(SettingsModel.Title ?? string.Empty, new Dictionary<string, object>
         {
-            {"Model", SettingsModel}
+            {nameof(EditorNotesDialog.Model), SettingsModel}
         });
         var result = await dialog.Result;
     }

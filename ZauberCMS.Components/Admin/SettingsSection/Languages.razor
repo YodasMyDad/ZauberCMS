@@ -125,7 +125,7 @@
         {
             var dialog = DialogService.OpenSidePanel<CreateLanguage>("Create Language", new Dictionary<string, object>
             {
-                { "Language", selectedRow }
+                { nameof(Dialogs.CreateLanguage.Language), selectedRow }
             });
             var result = await dialog.Result;
             if (result is { Confirmed: true })

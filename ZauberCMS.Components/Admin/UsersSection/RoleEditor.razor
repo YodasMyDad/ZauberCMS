@@ -255,7 +255,7 @@
             new Dictionary<string, object>
             {
                 {
-                    "Tabs", Role!.Tabs
+                    nameof(SettingsSection.Dialogs.ChangeTab.Tabs), Role!.Tabs
                         .Where(x => !x.IsSystemTab)
                         .OrderBy(x => x.SortOrder)
                         .ToList()
@@ -272,7 +272,10 @@
     private async Task Settings(PropertyType property)
     {
         var dialog = DialogService.OpenSidePanel<ContentTypePropertySettingsEditor>("Edit Settings",
-            new Dictionary<string, object> { { "PropertyType", property } });
+            new Dictionary<string, object>
+            {
+                { nameof(ContentTypePropertySettingsEditor.PropertyType), property }
+            });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: string settings })
         {
@@ -325,8 +328,8 @@
         var dialog = DialogService.OpenSidePanel<AddTab>("Update Tab",
             new Dictionary<string, object>
             {
-                { "Tab", tab! },
-                { "DefaultSortOrder", Role!.Tabs.Count(x => !x.IsSystemTab) + 1 }
+                { nameof(AddTab.Tab), tab! },
+                { nameof(AddTab.DefaultSortOrder), Role!.Tabs.Count(x => !x.IsSystemTab) + 1 }
             });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: Tab newTab })

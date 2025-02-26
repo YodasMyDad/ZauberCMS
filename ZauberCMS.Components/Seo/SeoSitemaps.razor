@@ -31,7 +31,7 @@
                     @data.RootContent?.Name
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="Name" Title="File Name" />
+            <RadzenDataGridColumn Property="Name" Title="File Name"/>
             <RadzenDataGridColumn Property="FileName" Title="File Path">
                 <Template Context="data">
                     @($"/{data.FileName}.xml")
@@ -39,7 +39,8 @@
             </RadzenDataGridColumn>
             <RadzenDataGridColumn Property="FileName" Title="Delete" Width="90px" TextAlign="TextAlign.Center">
                 <Template Context="data">
-                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.RootContentId))"/>
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete"
+                                  Click="@(() => Delete(data.RootContentId))"/>
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -57,7 +58,7 @@
         CharacterReplacements = new Dictionary<string, string> { { " ", "-" } },
         ForceLowerCase = true
     });
-    
+
     async Task LoadData(LoadDataArgs args)
     {
         Sitemaps = await Mediator.GetGlobalData<List<SeoSitemap>>(SeoConstants.SeoSitemapName) ?? [];
@@ -66,7 +67,7 @@
             seoSitemap.RootContent = await Mediator.GetContent(seoSitemap.RootContentId);
         }
     }
-    
+
     protected override async Task OnInitializedAsync()
     {
         Layout?.SetSection(Constants.Sections.SettingsSection);
@@ -80,6 +81,7 @@
         {
             Sitemaps.Remove(existingSitemap);
         }
+
         await Save();
     }
 
@@ -102,8 +104,8 @@
         {
             sitemap.FileName = _slugHelper.GenerateSlug(sitemap.Name);
         }
-        
-        var saveResult = await Mediator.Send(new SaveGlobalDataCommand { Alias = SeoConstants.SeoSitemapName, Data = JsonSerializer.Serialize(Sitemaps)});
+
+        var saveResult = await Mediator.Send(new SaveGlobalDataCommand { Alias = SeoConstants.SeoSitemapName, Data = JsonSerializer.Serialize(Sitemaps) });
         if (saveResult.Success)
         {
             NotificationService.ShowSuccessNotification("Sitemaps updated");
@@ -114,7 +116,7 @@
             NotificationService.ShowNotifications(saveResult.Messages);
         }
     }
-    
+
     private async Task AddNewSitemap()
     {
         var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>("Add New Sitemap");
@@ -132,15 +134,16 @@
             }
         }
     }
-    
+
     private async Task OnRowSelect(object value)
     {
         if (value is SeoSitemap selectedRow)
         {
-            var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>("Add New Sitemap", new Dictionary<string, object>
-            {
-                { "SeoSitemap", selectedRow }
-            });
+            var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>("Add New Sitemap",
+                new Dictionary<string, object>
+                {
+                    { nameof(NewSitemap.SeoSitemap), selectedRow }
+                });
             var sitemapDialogResult = await sitemapDialog.Result;
             if (sitemapDialogResult is { Confirmed: true, Data: SeoSitemap sitemap })
             {
@@ -149,6 +152,7 @@
                     // they have changed the root content id. Remove the previous
                     Sitemaps.RemoveWhere(x => x.RootContentId == selectedRow.RootContentId);
                 }
+
                 await UpdateSitemaps(sitemap);
             }
         }

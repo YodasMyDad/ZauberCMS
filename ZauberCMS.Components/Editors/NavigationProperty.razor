@@ -62,7 +62,7 @@
             var dict = new Dictionary<string, object>();
             if (parentNavigationItem != null)
             {
-                dict.Add("ParentNavigationItem", parentNavigationItem);
+                dict.Add(nameof(NavigationItemEditor.ParentNavigationItem), parentNavigationItem);
             }
             var dialog = ModalService.OpenSidePanel<NavigationItemEditor>("Navigation Item", dict);
             var result = await dialog.Result;
@@ -88,8 +88,8 @@
         {
             var dict = new Dictionary<string, object>
             {
-                { "Items", items },
-                {"PropertyAlias", Alias}
+                { nameof(NavigationItemSort.Items), items },
+                {nameof(NavigationItemSort.PropertyAlias), Alias}
             };
             var dialog = ModalService.OpenSidePanel<NavigationItemSort>("Sort Items", dict);
             var result = await dialog.Result;
@@ -108,7 +108,7 @@
             var dialog = ModalService.OpenSidePanel<NavigationItemEditor>("Navigation Item",
                 new Dictionary<string, object>
                 {
-                    { "NavigationItem", item }
+                    { nameof(NavigationItemEditor.NavigationItem), item }
                 });
             var result = await dialog.Result;
             if (result is { Confirmed: true })

@@ -85,14 +85,17 @@
 
     private async Task UpdateContent(Content? contentUpdate = null)
     {
-        var contentParams = new Dictionary<string, object> { { "IsBlockList", true } };
+        var contentParams = new Dictionary<string, object>
+        {
+            { nameof(ContentEditor.IsBlockList), true }
+        };
         if (contentUpdate != null)
         {
-            contentParams.Add("Content", contentUpdate);
+            contentParams.Add(nameof(ContentEditor.Content), contentUpdate);
         }
         else
         {
-            contentParams.Add("DefaultName", $"Block {(ContentItems.Count+1).ToWords()}");
+            contentParams.Add(nameof(ContentEditor.DefaultName), $"Block {(ContentItems.Count+1).ToWords()}");
         }
 
         if (ModalService != null)

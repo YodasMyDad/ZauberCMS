@@ -94,7 +94,11 @@
 
     private async Task CreateLanguageDictionary()
     {
-        var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>("Create Language Dictionary", new Dictionary<string, object>{{"LanguageDictionary", new LanguageDictionary()}});
+        var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>("Create Language Dictionary", 
+            new Dictionary<string, object>
+            {
+                {nameof(SaveLanguageDictionary.LanguageDictionary), new LanguageDictionary()}
+            });
         var result = await dialog.Result;
         if (result is { Confirmed: true })
         {
@@ -122,7 +126,7 @@
         {
             var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>("Update Language Dictionary", new Dictionary<string, object>
             {
-                { "LanguageDictionary", selectedRow }
+                { nameof(SaveLanguageDictionary.LanguageDictionary), selectedRow }
             });
             var result = await dialog.Result;
             if (result is { Confirmed: true })

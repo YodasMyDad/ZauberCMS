@@ -166,7 +166,7 @@
             new Dictionary<string, object>
             {
                 {
-                    "UserId", User!.Id
+                    nameof(Dialogs.ChangePassword.UserId), User!.Id
                 }
             });
         var result = await dialog.Result;
@@ -198,7 +198,7 @@
             new Dictionary<string, object>
             {
                 {
-                    "UserId", User!.Id
+                    nameof(Dialogs.UpdateRoles.UserId), User!.Id
                 }
             });
         var result = await dialog.Result;
