@@ -70,7 +70,7 @@ public class RestrictAccessContextMenu(
             {
                 while (parentId != null)
                 {
-                    var parent = await dbContext.Contents.Include(x => x.ContentRoles).FirstOrDefaultAsync(c => c.Id == parentId);
+                    var parent = await dbContext.Contents.Include(x => x.ContentRoles).AsSplitQuery().FirstOrDefaultAsync(c => c.Id == parentId);
                     if (parent is { ContentRoles.Count: > 0 })
                     {
                         ancestorHasRoles = true;
@@ -93,6 +93,7 @@ public class RestrictAccessContextMenu(
                 var descendants = dbContext.Contents
                     .WherePathLike(content.Id)
                     .Include(x => x.ContentRoles)
+                    .AsSplitQuery()
                     .ToList();
 
                 if (alreadyHadContentRoles && selectedRoles.Count == 0)
