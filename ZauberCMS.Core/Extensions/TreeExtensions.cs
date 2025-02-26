@@ -38,7 +38,7 @@ public static class TreeExtensions
             var treeItem = context as RadzenTreeItem;
             if (treeItem?.Value is Content.Models.Content content)
             {
-                var opacity = content.UnpublishedContent != null ? "0.6" : (content.Published ? "1" : "0.6");
+                var opacity = content.Deleted ? "0.6" : (content.UnpublishedContent != null ? "0.6" : (content.Published ? "1" : "0.6"));
                 var iconColor = content.ContentType?.Icon != null ? "dimgray" : "inherit";
 
                 // Check if content has roles; if true, set icon color to red

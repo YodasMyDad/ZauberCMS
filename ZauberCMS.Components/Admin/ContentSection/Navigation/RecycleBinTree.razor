@@ -15,6 +15,7 @@
         @bind-Value="@Selection"
         HasChildren="@(e => HasChildren(e))"
         ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+        DisableSectionOnlyContextMenu="@(true)"
         Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
     </BaseTree>
 </div>
@@ -22,7 +23,7 @@
 @code {
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
-
+    
     public int SortOrder => 100;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
 

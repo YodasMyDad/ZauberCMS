@@ -11,6 +11,8 @@
     @bind-Value="@Selection"
     HasChildren="@(e => HasChildren(e))"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+    DisableContextMenu="DisableContextMenu"
+    DisableSectionOnlyContextMenu="DisableSectionOnlyContextMenu"
     Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
 </BaseTree>
 
@@ -20,6 +22,8 @@
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
+    [Parameter] public bool DisableContextMenu { get; set; }
+    [Parameter] public bool DisableSectionOnlyContextMenu { get; set; }
     
     private object? Selection { get; set; }
     

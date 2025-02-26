@@ -38,6 +38,7 @@
     [Parameter] public Func<object, bool> ShouldBeExpanded { get; set; } = null!;
     [Parameter] public RenderFragment<object>? Template { get; set; }
     [Parameter] public bool DisableContextMenu { get; set; }
+    [Parameter] public bool DisableSectionOnlyContextMenu { get; set; }
 
     [Inject] public TreeState TreeState { get; set; } = null!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
@@ -50,10 +51,21 @@
     protected override void OnInitialized()
     {
         var menuItems = ExtensionManager.GetInstances<ITreeContextMenu>(true);
-        var filteredMenuItems = menuItems
-            .Where(x => x.Value.Sections.Contains(TreeState.CurrentSection ?? "") || x.Value.TreeAlias.Contains(TreeAlias))
+
+        var filteredMenuItems = new List<KeyValuePair<string, ITreeContextMenu>>();
+
+        if (!DisableSectionOnlyContextMenu)
+        {
+            filteredMenuItems.AddRange(menuItems
+                .Where(x => x.Value.Sections.Contains(TreeState.CurrentSection ?? ""))
+                .OrderBy(x => x.Value.SortOrder)
+                .ToList());
+        }
+        
+        filteredMenuItems.AddRange(menuItems
+            .Where(x => x.Value.TreeAlias.Contains(TreeAlias))
             .OrderBy(x => x.Value.SortOrder)
-            .ToList();
+            .ToList());
 
         for (var i = 0; i < filteredMenuItems.Count; i++)
         {
