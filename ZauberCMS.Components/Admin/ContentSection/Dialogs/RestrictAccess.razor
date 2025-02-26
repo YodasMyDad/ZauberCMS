@@ -1,10 +1,12 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Shared.Comparers
 
 <div>Pick the roles who have access to this page</div>
 
-<RadzenPickList
+<RadzenPickList 
+    Multiple="false"
     @bind-Source="@AllRoles" @bind-Target="@SelectedRoles" Style="height:500px; width:100%;"
     TextProperty="@nameof(Role.Name)">
     <SourceHeader>
@@ -27,7 +29,7 @@
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     [Parameter] public Guid ContentId { get; set; }
     private IEnumerable<Role> AllRoles { get; set; } = [];
-    private IEnumerable<Role> SelectedRoles { get; set; } = [];
+    private IEnumerable<Role>? SelectedRoles { get; set; } = [];
     private bool AlreadyHadContentRoles { get; set; }
     
     protected override async Task OnInitializedAsync()
@@ -38,15 +40,18 @@
             var allRoles = await Mediator.Send(new QueryRolesCommand { AmountPerPage = 250, OrderBy = GetRolesOrderBy.Name});
             AllRoles = allRoles.Items;
             SelectedRoles = content.ContentRoles.Select(x => x.Role);
-            if (SelectedRoles.Any())
+            var selectedRoles = SelectedRoles as Role[] ?? SelectedRoles.ToArray();
+            if (selectedRoles.Any())
             {
                 AlreadyHadContentRoles = true;
+                // I need to remove the roles in SelectedRoles from AllRoles
+                AllRoles = AllRoles.Except(selectedRoles, new ITreeEqualityComparer<Role>()).ToList();
             }
         }
     }
 
     private async Task Save()
     {
-        await BlazoredModal.CloseAsync(ModalResult.Ok((AlreadyHadContentRoles, SelectedRoles.ToList())));
+        await BlazoredModal.CloseAsync(ModalResult.Ok((AlreadyHadContentRoles, SelectedRoles != null ? SelectedRoles.ToList() : [])));
     }
 }

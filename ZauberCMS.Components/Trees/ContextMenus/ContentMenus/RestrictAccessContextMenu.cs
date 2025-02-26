@@ -12,13 +12,15 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.Trees.ContextMenus.ContentMenus;
 
 public class RestrictAccessContextMenu(
     IServiceProvider serviceProvider,
     NotificationService notificationService,
-    IMediator mediator)
+    IMediator mediator,
+    AppState appState)
     : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
@@ -48,6 +50,7 @@ public class RestrictAccessContextMenu(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var currentUser = await mediator.GetCurrentUser();
         contextMenuService.Close();
         var content = (Content)args.Value!;
         var parameters = new Dictionary<string, object>
@@ -61,24 +64,35 @@ public class RestrictAccessContextMenu(
         {
             // Need to check if the roles are defined by an ancestor
             // If so we ignore this and return a message
-            var ancestors = dbContext.Contents
-                .Include(x => x.ContentRoles)
-                .ThenInclude(x => x.Role)
-                .Where(x => content.Path.Contains(x.Id))
-                .AsNoTracking();
-
-            // Do any ancestors have roles on them
-            var hasRoles = ancestors.Any(x => x.ContentRoles.Any());
-            if (hasRoles)
+            var ancestorHasRoles = false;
+            var parentId = content.ParentId;
+            if (parentId != null)
+            {
+                while (parentId != null)
+                {
+                    var parent = await dbContext.Contents.Include(x => x.ContentRoles).FirstOrDefaultAsync(c => c.Id == parentId);
+                    if (parent is { ContentRoles.Count: > 0 })
+                    {
+                        ancestorHasRoles = true;
+                        break;
+                    }
+                    parentId = parent?.ParentId;
+                }   
+            }
+            
+            if (ancestorHasRoles)
             {
                 notificationService.ShowErrorNotification(
-                    "Cannot restrict access to content as it has roles already defined by an ancestor.");
+                    "Cannot change access to this content as it has roles already defined by an ancestor.");
             }
+            
+            // Do any ancestors have roles on them
             else
             {
-                // Fetch all descendants of the original content, as these need to be added or removed too
+                // Fetch all descendants and the original content, as these need to be added or removed too
                 var descendants = dbContext.Contents
                     .WherePathLike(content.Id)
+                    .Include(x => x.ContentRoles)
                     .ToList();
 
                 if (alreadyHadContentRoles && selectedRoles.Count == 0)
@@ -97,7 +111,6 @@ public class RestrictAccessContextMenu(
                     var wasError = false;
                     
                     // Add the content roles to the content and descendants 
-                    
                     foreach (var descendant in descendants)
                     {
                         var saveResult = await mediator.Send(new SaveContentCommand
@@ -122,6 +135,8 @@ public class RestrictAccessContextMenu(
                     }
                 }
             }
+            
+            await appState.NotifyContentChanged(content, currentUser?.Name ?? "Unknown");
         }
     }
 

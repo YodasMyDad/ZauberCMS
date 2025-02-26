@@ -38,6 +38,11 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
         }
         else
         {
+            if (request.IncludeContentRoles)
+            {
+                query = query.Include(x => x.ContentRoles);
+            }
+            
             if (request.OnlyUnpublished)
             {
                 query = query.Include(x => x.UnpublishedContent);
@@ -64,6 +69,7 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
             {
                 query = query.Where(x => x.ParentId == null);
             }
+
 
             if (request.TagSlugs.Any())
             {

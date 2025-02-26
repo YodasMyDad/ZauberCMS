@@ -42,6 +42,7 @@
                 AmountPerPage = 100,
                 WhereClause = x => x.IsRootContent,
                 IncludeChildren = true,
+                IncludeContentRoles = true, 
                 OrderBy = GetContentsOrderBy.SortOrder
             });
             
@@ -69,6 +70,7 @@
                 {
                     IncludeUnpublished = true,
                     WhereClause = x => x.ParentId == content.Id,
+                    IncludeContentRoles = true,
                     OrderBy = GetContentsOrderBy.SortOrder
                 }).GetAwaiter().GetResult();
                 args.Children.Data = items.Items;

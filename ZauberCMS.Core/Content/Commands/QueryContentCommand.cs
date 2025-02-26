@@ -40,6 +40,11 @@ public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedLi
     /// Where or not to include unpublished content in this query
     /// </summary>
     public bool IncludeUnpublished { get; set; }
+
+    /// <summary>
+    /// Determines whether the query should include associated content roles.
+    /// </summary>
+    public bool IncludeContentRoles { get; set; }
     
     /// <summary>
     /// Return only unpublished content
