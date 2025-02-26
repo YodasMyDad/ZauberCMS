@@ -26,8 +26,7 @@ public class GetContentFromRequestHandler(
 
         var contentQueryable = dbContext.Contents
             .AsNoTracking()
-            .Include(x => x.ContentType)
-            .Include(x => x.Language);
+            .Include(x => x.ContentType);
 
         // Get the list of domains and content languages
         var domains = await mediator.Send(new CachedDomainsCommand(), cancellationToken);
@@ -40,16 +39,16 @@ public class GetContentFromRequestHandler(
             ? matchedDomain != null
                 ? await contentQueryable
                     .Select(c => new
-                        { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Language, c.Path })
+                        { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(x => x.Id == matchedDomain.ContentId, cancellationToken)
                 : await contentQueryable
                     .Where(c => c.IsRootContent && c.Published)
                     .Select(c => new
-                        { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Language, c.Path })
+                        { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(cancellationToken)
             : await contentQueryable
                 .Where(c => c.Url == request.Slug && c.Published)
-                .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Language, c.Path })
+                .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                 .FirstOrDefaultAsync(cancellationToken);
 
         if (content?.InternalRedirectId != null && content.InternalRedirectId != Guid.Empty)
@@ -57,7 +56,7 @@ public class GetContentFromRequestHandler(
             var internalRedirectIdValue = content.InternalRedirectId.Value;
             content = await contentQueryable
                 .Where(c => c.Id == internalRedirectIdValue)
-                .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Language, c.Path })
+                .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
@@ -65,7 +64,28 @@ public class GetContentFromRequestHandler(
         {
             return entryModel;
         }
+        
+        // Now we perform the more expensive query to fetch the content with includes
+        var query = dbContext.Contents
+            .AsNoTracking()
+            .Include(x => x.PropertyData)
+            .Include(x => x.Parent)
+            .Include(x => x.ContentType)
+            .Include(x => x.Language)
+            .Include(x => x.ContentRoles).ThenInclude(x => x.Role)
+            .AsSplitQuery()
+            .AsQueryable();
 
+        if (request.IncludeChildren || content.IncludeChildren)
+        {
+            query = query.Include(x => x.Children);
+        }
+
+        var fullContent = await query
+            .FirstOrDefaultAsync(c => c.Id == content.Id, cancellationToken: cancellationToken);
+
+        entryModel.Content = fullContent;
+        
         string? languageIsoCode = null;
 
         // Use the matched domain's language if available
@@ -100,26 +120,6 @@ public class GetContentFromRequestHandler(
 
         entryModel.LanguageIsoCode = languageIsoCode;
         
-        // Now we perform the more expensive query to fetch the content with includes
-        var query = dbContext.Contents
-            .AsNoTracking()
-            .Include(x => x.PropertyData)
-            .Include(x => x.Parent)
-            .Include(x => x.ContentType)
-            .Include(x => x.Language)
-            .AsSplitQuery()
-            .AsQueryable();
-
-        if (request.IncludeChildren || content.IncludeChildren)
-        {
-            query = query.Include(x => x.Children);
-        }
-
-        var fullContent = await query
-            .FirstOrDefaultAsync(c => c.Id == content.Id, cancellationToken: cancellationToken);
-
-        entryModel.Content = fullContent;
-
         var allLanguageData = await mediator.Send(new GetCachedAllLanguageDictionariesCommand(), cancellationToken);
         
         if (allLanguageData.TryGetValue(languageIsoCode, out var lng))

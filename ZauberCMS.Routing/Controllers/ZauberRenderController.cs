@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
@@ -29,7 +30,7 @@ public class ZauberRenderController(
     // ReSharper disable once InconsistentNaming
     private Dictionary<string, string>? _languageKeys { get; set; }
 
-    public virtual async Task<IActionResult> Index()
+    public async Task<IActionResult> Index()
     {
         if (CurrentPage != null)
         {
@@ -160,10 +161,45 @@ public class ZauberRenderController(
     /// </summary>
     public override void OnActionExecuting(ActionExecutingContext context)
     {
+        
         if (HttpContext.Items.TryGetValue("currentpage", out var page) && page is Content content)
         {
             _content = content;
             //TempData["CurrentPage"] = _content;
+        }
+
+        if (_content != null && _content.ContentRoles.Count != 0)
+        {
+            // Check if the user is authenticated and in a specific role
+            if (context.HttpContext.User.Identity?.IsAuthenticated == true)
+            {
+                // Always allow admins regardless
+                if (!context.HttpContext.User.IsInRole(Constants.Roles.AdminRoleName))
+                {
+                    var userIsInRole = false;
+                    
+                    foreach (var contentRole in _content.ContentRoles)
+                    {
+                        if (contentRole.Role.Name != null && context.HttpContext.User.IsInRole(contentRole.Role.Name))
+                        {
+                            userIsInRole = true;
+                        }
+                    }   
+                    
+                    if (userIsInRole == false)
+                    {
+                        // Redirect or return unauthorized if the user is not in the role
+                        context.Result = new RedirectResult(options.Value.Identity.DefaultLoginRedirectUrl);
+                        return; // Stop execution here
+                    }
+                }
+            }
+            else
+            {
+                // Handle unauthenticated users (e.g., redirect to login)
+                context.Result = new RedirectResult(options.Value.Identity.DefaultLoginRedirectUrl);
+                return;
+            }
         }
 
         if (HttpContext.Items.TryGetValue("languagekeys", out var model) &&

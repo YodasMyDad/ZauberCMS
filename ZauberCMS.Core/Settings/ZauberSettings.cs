@@ -32,6 +32,8 @@ public class Identity
     public int PasswordRequiredUniqueChars { get; set; } = 1;
     public bool SignInRequireConfirmedAccount { get; set; }
     public string? AccountLayout { get; set; } = "ZauberCMS.Components.Pages.BlankLayout";
+    
+    public string DefaultLoginRedirectUrl { get; set; } = "/account/login";
 }
 
 public class PluginSettings
