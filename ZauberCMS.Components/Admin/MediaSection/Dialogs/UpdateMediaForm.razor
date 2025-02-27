@@ -20,7 +20,7 @@
                                                 Close="@(() => ClearNewFile())"/>
                                 }
 
-                                <div class="file-drop-zone">
+                                <div class="file-drop-zone max-w-72">
                                     <div class="text-center">
                                         <label for="file-upload">
                                             <InputFile OnChange="@OnChange"/>
@@ -32,13 +32,15 @@
                             {
                                 if (Media.MediaType == MediaType.Image)
                                 {
-                                    <img src="@(Media.Url)?width=300" alt="" class="rounded-2xl border"/>
+                                    <img src="@(Media.Url)?width=300" alt="" class="rounded-lg border max-w-72"/>
                                 }
                                 else
                                 {
-                                    <PickerItem Text="@Media.Name"
-                                                Icon="@Media.MediaType.GetIcon()"
-                                                Close="@(() => ClearUrl())"/>
+                                    <div class="max-w-72">
+                                        <PickerItem Text="@Media.Name"
+                                                    Icon="@Media.MediaType.GetIcon()"
+                                                    Close="@(() => ClearUrl())"/>
+                                    </div>
                                 }
                             }
                         </div>
