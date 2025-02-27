@@ -7,43 +7,46 @@
     <Tabs>
         <RadzenTabsItem Text="@(IsUpdate ? "Update" : "Create")">
 
-            <div class="flex space-x-4"> 
+            <div class="flex space-x-4">
 
                 @if (Media.MediaType != MediaType.Folder)
                 {
-                        <div class="flex justify-center items-center">
-                            @if (Media.Url.IsNullOrWhiteSpace())
-                            {
+                    <div class="flex justify-center items-center">
+                        @if (Media.Url.IsNullOrWhiteSpace())
+                        {
+                            <div class="w-[22rem] flex flex-col items-center space-y-2">
                                 @if (NewFile != null)
                                 {
-                                    <PickerItem Icon="@NewFile.Name.ToFileType().GetIcon()" Text="@NewFile.Name"
-                                                Close="@(() => ClearNewFile())"/>
+                                    <PickerItem Icon="@NewFile.Name.ToFileType().GetIcon()" 
+                                                Text="@NewFile.Name"
+                                                Close="@(() => ClearNewFile())" />
                                 }
 
-                                <div class="file-drop-zone max-w-72">
+                                <div class="file-drop-zone">
                                     <div class="text-center">
                                         <label for="file-upload">
-                                            <InputFile OnChange="@OnChange"/>
+                                            <InputFile OnChange="@OnChange" />
                                         </label>
                                     </div>
                                 </div>
+                            </div>
+                        }
+                        else
+                        {
+                            if (Media.MediaType == MediaType.Image)
+                            {
+                                <img src="@(Media.Url)?width=300" alt="" class="rounded-lg border max-w-72"/>
                             }
                             else
                             {
-                                if (Media.MediaType == MediaType.Image)
-                                {
-                                    <img src="@(Media.Url)?width=300" alt="" class="rounded-lg border max-w-72"/>
-                                }
-                                else
-                                {
-                                    <div class="max-w-72">
-                                        <PickerItem Text="@Media.Name"
-                                                    Icon="@Media.MediaType.GetIcon()"
-                                                    Close="@(() => ClearUrl())"/>
-                                    </div>
-                                }
+                                <div class="w-[22rem] items-center">
+                                    <PickerItem Text="@Media.Name"
+                                                Icon="@Media.MediaType.GetIcon()"
+                                                Close="@(() => ClearUrl())" />
+                                </div>
                             }
-                        </div>
+                        }
+                    </div>
                 }
 
 
