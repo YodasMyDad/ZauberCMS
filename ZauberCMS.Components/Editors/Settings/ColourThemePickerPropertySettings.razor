@@ -38,7 +38,7 @@
         Settings.HexColours.Add(colour);
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         Settings = this.GetPropertySettings();
     }

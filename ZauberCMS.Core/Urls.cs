@@ -7,6 +7,7 @@ public static class Urls
     public const string AdminMediaBaseUrl = AdminBaseUrl + "/media";
     public const string AdminContentBaseUrl = AdminBaseUrl + "/content";
     public const string AdminSettingsBaseUrl = AdminBaseUrl + "/settings";
+    public const string AdminSructureBaseUrl = AdminBaseUrl + "/structure";
     public const string AdminFormsBaseUrl = AdminBaseUrl + "/forms";
     
     public const string ApiRefreshSignIn = "/api/auth/refreshsignin";
@@ -25,9 +26,9 @@ public static class Urls
     public const string AdminUsersEdit = AdminUsersBaseUrl + "/edit";
     public const string AdminUsersList = AdminUsersBaseUrl + "/list";
     
-    public const string AdminSettingsUpdateContentType = AdminSettingsBaseUrl + "/updatecontentype";
-    public const string AdminSettingsCreateContentType = AdminSettingsBaseUrl + "/createcontentype";
-    public const string AdminSettingsCopyContentType = AdminSettingsBaseUrl + "/copycontentype";
+    public const string AdminSettingsUpdateContentType = AdminSructureBaseUrl + "/updatecontentype";
+    public const string AdminSettingsCreateContentType = AdminSructureBaseUrl + "/createcontentype";
+    public const string AdminSettingsCopyContentType = AdminSructureBaseUrl + "/copycontentype";
     
     public const string AdminSettingsAuditLog = AdminSettingsBaseUrl + "/auditlog";
     public const string AdminSettingsLanguages = AdminSettingsBaseUrl + "/languages";

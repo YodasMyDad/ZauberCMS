@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using ZauberCMS.Components.Admin.StructureSection.Dialogs
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Membership.Commands
@@ -255,7 +256,7 @@
             new Dictionary<string, object>
             {
                 {
-                    nameof(SettingsSection.Dialogs.ChangeTab.Tabs), Role!.Tabs
+                    nameof(StructureSection.Dialogs.ChangeTab.Tabs), Role!.Tabs
                         .Where(x => !x.IsSystemTab)
                         .OrderBy(x => x.SortOrder)
                         .ToList()

@@ -32,7 +32,7 @@
     // Hold the content guid and name in the list
     private ColourThemePickerSettings SettingsModel { get; set; } = new();
     
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         SettingsModel = Settings.FromJson<ColourThemePickerSettings>();
     }

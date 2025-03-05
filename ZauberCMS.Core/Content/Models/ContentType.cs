@@ -109,7 +109,12 @@ public class ContentType : ITreeItem
     /// <summary>
     /// Gets or sets a value indicating whether the content type is treated as a folder.
     /// </summary>
-    public bool? IsFolder { get; set; }
+    public bool IsFolder { get; set; }
+    
+    /// <summary>
+    /// Gets or sets a value indicating if this is a composition type only
+    /// </summary>
+    public bool IsComposition { get; set; }
     
     /// <summary>
     /// Optional Image 

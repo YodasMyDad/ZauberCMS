@@ -1,0 +1,13 @@
+﻿@implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
+
+<div>
+    <p><strong>Content Types</strong> - These are the blue prints for the content you create.</p>
+    <p><strong>Element Types</strong> - These are used in the Block List Editor</p>
+    @*<p><strong>Compositions</strong> - These are used as re-usable groups of tabs and editors for your content types</p>*@
+</div>
+
+@code {
+    public string TabName => "Info";
+    public int SortOrder => 1;
+    public string SectionAlias => Constants.Sections.StructureSection;
+}

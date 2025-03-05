@@ -67,6 +67,7 @@ public static class Constants
         public const string ContentSection = "ContentSection";
         public const string MediaSection = "MediaSection";
         public const string SettingsSection = "SettingsSection";
+        public const string StructureSection = "StructureSection";
         public const string UsersSection = "UsersSection";
         public const string FormsSection = "FormsSection";
 

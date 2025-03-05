@@ -233,10 +233,13 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<bool>("IncludeChildren")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsComposition")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsElementType")
                         .HasColumnType("bit");
 
-                    b.Property<bool?>("IsFolder")
+                    b.Property<bool>("IsFolder")
                         .HasColumnType("bit");
 
                     b.Property<Guid?>("LastUpdatedById")

@@ -228,10 +228,13 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<bool>("IncludeChildren")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsComposition")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsElementType")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool?>("IsFolder")
+                    b.Property<bool>("IsFolder")
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid?>("LastUpdatedById")

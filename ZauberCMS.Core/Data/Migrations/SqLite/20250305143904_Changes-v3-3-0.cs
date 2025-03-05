@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace ZauberCMS.Core.Data.Migrations.SqlServer
+namespace ZauberCMS.Core.Data.Migrations.SqLite
 {
     /// <inheritdoc />
     public partial class Changesv330 : Migration
@@ -11,15 +11,27 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<bool>(
+                name: "IsComposition",
+                table: "ZauberContentTypes",
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<bool>(
                 name: "IsFolder",
                 table: "ZauberContentTypes",
-                type: "bit",
-                nullable: true);
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: false);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropColumn(
+                name: "IsComposition",
+                table: "ZauberContentTypes");
+
             migrationBuilder.DropColumn(
                 name: "IsFolder",
                 table: "ZauberContentTypes");

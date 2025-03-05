@@ -53,7 +53,7 @@ public class QueryContentTypesHandler(IServiceProvider serviceProvider)
 
             if (request.IncludeFolders == false)
             {
-                query = query.Where(x => x.IsFolder == null || x.IsFolder == false);    
+                query = query.Where(x => x.IsFolder == false);    
             }
             
             if (request.OnlyFolders)
