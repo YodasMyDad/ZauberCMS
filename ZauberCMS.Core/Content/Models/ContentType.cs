@@ -28,11 +28,11 @@ public class ContentType : ITreeItem
     /// Gets or sets the alias of the content type.
     /// </summary>
     public string? Alias { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the icon for the content type
     /// </summary>
-    public string? Icon { get; set; }
+    public string? Icon { get; set; } = "description";
 
     /// <summary>
     /// Whether this content is used in BlockList or another modular way
