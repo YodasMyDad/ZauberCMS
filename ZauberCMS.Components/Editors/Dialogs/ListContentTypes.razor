@@ -72,7 +72,21 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new QueryContentTypesCommand { AmountPerPage = int.MaxValue, RootOnly = RootOnly, ElementTypesOnly = ElementTypesOnly, OrderBy = GetContentTypesOrderBy.Name });
+        var qctc = new QueryContentTypesCommand { AmountPerPage = int.MaxValue, RootOnly = RootOnly, OrderBy = GetContentTypesOrderBy.Name };
+
+        if (ElementTypesOnly != null)
+        {
+            if (ElementTypesOnly == true)
+            {
+                qctc.OnlyElementTypes = true;
+            }
+            else
+            {
+                qctc.IncludeElementTypes = true;
+            }
+        }
+        
+        var items = await Mediator.Send(qctc);
         ContentTypes = items.Items;
         if (ParentId != null)
         {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Radzen.Blazor;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Extensions;
@@ -30,7 +31,7 @@ public static class TreeExtensions
             }
         };
     }
-    
+
     public static RenderFragment<T> CreateContentTreeTemplate<T>() where T : class
     {
         return context => builder =>
@@ -38,7 +39,9 @@ public static class TreeExtensions
             var treeItem = context as RadzenTreeItem;
             if (treeItem?.Value is Content.Models.Content content)
             {
-                var opacity = content.Deleted ? "0.6" : (content.UnpublishedContent != null ? "0.6" : (content.Published ? "1" : "0.6"));
+                var opacity = content.Deleted
+                    ? "0.6"
+                    : (content.UnpublishedContent != null ? "0.6" : (content.Published ? "1" : "0.6"));
                 var iconColor = content.ContentType?.Icon != null ? "dimgray" : "inherit";
 
                 // Check if content has roles; if true, set icon color to red
@@ -54,6 +57,35 @@ public static class TreeExtensions
                     builder.AddAttribute(2, "style", $"font-weight: 300; color: {iconColor}; opacity: {opacity};");
                     builder.CloseComponent();
                 }
+
+                builder.OpenElement(3, "span"); // using span as the container for the text
+                builder.AddAttribute(4, "style", $"opacity: {opacity};"); // applying the opacity to the span
+                builder.AddContent(5, content.Name); // the text
+                builder.CloseElement();
+            }
+        };
+    }
+
+    public static RenderFragment<T> CreateContentTypeTreeTemplate<T>() where T : class
+    {
+        return context => builder =>
+        {
+            var treeItem = context as RadzenTreeItem;
+            if (treeItem?.Value is ContentType content)
+            {
+                var opacity = "1";
+                var iconColor = content.Icon != null ? "dimgray" : "inherit";
+
+                if (content.Icon.IsNullOrWhiteSpace())
+                {
+                    content.Icon = "description";
+                }
+
+                builder.OpenComponent<RadzenIcon>(0);
+                builder.AddAttribute(1, "Icon", content.Icon);
+                builder.AddAttribute(2, "style", $"font-weight: 300; color: {iconColor}; opacity: {opacity};");
+                builder.CloseComponent();
+
 
                 builder.OpenElement(3, "span"); // using span as the container for the text
                 builder.AddAttribute(4, "style", $"opacity: {opacity};"); // applying the opacity to the span

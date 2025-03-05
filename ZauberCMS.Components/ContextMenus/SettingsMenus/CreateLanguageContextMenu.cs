@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.SettingsSection.Dialogs;
+using ZauberCMS.Components.Trees.ContextMenus;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Shared.Models;
 
-namespace ZauberCMS.Components.Trees.ContextMenus.SettingsMenus;
+namespace ZauberCMS.Components.ContextMenus.SettingsMenus;
 
 public class CreateLanguageContextMenu() : ITreeContextMenu
 {

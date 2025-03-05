@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.Shared.Dialogs;
+using ZauberCMS.Components.Trees.ContextMenus;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
@@ -13,7 +14,7 @@ using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Interfaces;
 
-namespace ZauberCMS.Components.Trees.ContextMenus.Shared;
+namespace ZauberCMS.Components.ContextMenus.Shared;
 
 public class MoveItemContextMenu(NotificationService notificationService, IMediator mediator, AppState appState) : ITreeContextMenu
 {

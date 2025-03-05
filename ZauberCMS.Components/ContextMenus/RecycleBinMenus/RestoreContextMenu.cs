@@ -2,13 +2,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
+using ZauberCMS.Components.Trees.ContextMenus;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
 
-namespace ZauberCMS.Components.Trees.ContextMenus.RecycleBinMenus;
+namespace ZauberCMS.Components.ContextMenus.RecycleBinMenus;
 
 public class RestoreContextMenu(IMediator mediator, AppState appState) : ITreeContextMenu
 {

@@ -2,13 +2,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
+using ZauberCMS.Components.Trees.ContextMenus;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared;
 
-namespace ZauberCMS.Components.Trees.ContextMenus.ContentMenus;
+namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
 public class DeleteContentContextMenu(IMediator mediator, DialogService confirmService, NotificationService notificationService, AppState appState) : ITreeContextMenu
 {

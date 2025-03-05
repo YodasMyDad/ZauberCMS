@@ -2,48 +2,49 @@
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using ZauberCMS.Components.Editors;
+using ZauberCMS.Components.Admin.MediaSection.Dialogs;
+using ZauberCMS.Components.Trees.ContextMenus;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Models;
 
-namespace ZauberCMS.Components.Trees.ContextMenus.MediaMenus;
+namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
-public class UploadMediaContextMenu() : ITreeContextMenu
+public class CreateFolderContextMenu() : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Upload Media";
-    public string Icon(TreeItemContextMenuEventArgs args) => "upload_file";
+    public string Text(TreeItemContextMenuEventArgs args) => "Create Folder";
+    public string Icon(TreeItemContextMenuEventArgs args) => "add";
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
     {
         return args.Value is Media { MediaType: MediaType.Folder };
     }
-    
-    private IModalReference? UpdateMediaModal { get; set; }
+
+    private IModalReference? CreateFolderModal { get; set; }
     
     public Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var media = (Media)args.Value!;
-        var uploadParams = new Dictionary<string, object>
+        var createParams = new Dictionary<string, object>
         {
-            { nameof(MultipleMediaUpload.ParentId), media.Id },
+            { nameof(UpdateMediaForm.ParentId), media.Id },
             {
-                nameof(MultipleMediaUpload.ValueChanged),
-                EventCallback.Factory.Create<List<Media>>(this, OnUploadMedia)
+                nameof(UpdateMediaForm.ValueChanged),
+                EventCallback.Factory.Create<Media>(this, OnFolderCreate)
             }
         };
         contextMenuService.Close();
-        UpdateMediaModal = modalService?.OpenSidePanel<MultipleMediaUpload>("Upload Media", uploadParams);
+        CreateFolderModal = modalService?.OpenSidePanel<UpdateMediaForm>("Create Folder", createParams);
         return Task.CompletedTask;
     }
     
-    private void OnUploadMedia(List<Media> value)
+    private void OnFolderCreate(Media value)
     {
-        UpdateMediaModal?.Close();
+        CreateFolderModal?.Close();
     }
-    
-    public int SortOrder => -90;
+
+    public int SortOrder => -100;
 }

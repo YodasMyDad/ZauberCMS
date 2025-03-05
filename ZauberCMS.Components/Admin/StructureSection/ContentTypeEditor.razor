@@ -314,7 +314,7 @@
             ContentType.Id = Guid.NewGuid().NewSequentialGuid();
         }
 
-        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { ElementTypesOnly = false, OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000 });
+        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000 });
         ContentTypes = contentTypes.Items.ToList();
 
         if (ContentTypes.Count <= 0)

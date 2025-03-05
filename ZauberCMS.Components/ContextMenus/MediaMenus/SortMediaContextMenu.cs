@@ -3,14 +3,14 @@ using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.Shared;
+using ZauberCMS.Components.Trees.ContextMenus;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Shared;
 
-namespace ZauberCMS.Components.Trees.ContextMenus.MediaMenus;
+namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
 public class SortMediaContextMenu(IMediator mediator, NotificationService notificationService, AppState appState)
     : ITreeContextMenu

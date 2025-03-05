@@ -83,6 +83,8 @@ public static class Constants
             public const string NavigationPropertyTree = "NavigationPropertyTree";
             public const string BaseTree = "BaseTree";
             
+            public const string ContentTypeTree = "ContentTypeTree";
+            
             public const string StructureContentTypeTree = "StructureContentTypeTree";
             public const string StructureElementTypeTree = "StructureContentTypeTree";
         }

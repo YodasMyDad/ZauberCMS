@@ -12,7 +12,8 @@ namespace ZauberCMS.Core.Content.Handlers;
 public class QueryContentTypesHandler(IServiceProvider serviceProvider)
     : IRequestHandler<QueryContentTypesCommand, PaginatedList<ContentType>>
 {
-    public Task<PaginatedList<ContentType>> Handle(QueryContentTypesCommand request, CancellationToken cancellationToken)
+    public Task<PaginatedList<ContentType>> Handle(QueryContentTypesCommand request,
+        CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
@@ -33,7 +34,7 @@ public class QueryContentTypesHandler(IServiceProvider serviceProvider)
             {
                 query = query.Where(x => request.Ids.Contains(x.Id));
             }
-        
+
             if (!request.SearchTerm.IsNullOrWhiteSpace())
             {
 #pragma warning disable CA1862
@@ -41,32 +42,36 @@ public class QueryContentTypesHandler(IServiceProvider serviceProvider)
 #pragma warning restore CA1862
             }
 
-            if (request.ElementTypesOnly != null)
+            if (request.OnlyElementTypes)
             {
-                query = query.Where(x => x.IsElementType == request.ElementTypesOnly.Value);
+                query = query.Where(x => x.IsElementType == true);
             }
-        
+            else if (request.IncludeElementTypes == false)
+            {
+                query = query.Where(x => x.IsElementType == false);
+            }
+
+
             if (request.RootOnly)
             {
                 query = query.Where(x => x.AllowAtRoot);
             }
 
-            if (request.IncludeFolders == false)
-            {
-                query = query.Where(x => x.IsFolder == false);    
-            }
-            
             if (request.OnlyFolders)
             {
                 query = query.Where(x => x.IsFolder == true);
             }
+            else if (request.IncludeFolders == false)
+            {
+                query = query.Where(x => x.IsFolder == false);
+            }
         }
-        
+
         if (request.WhereClause != null)
         {
             query = query.Where(request.WhereClause);
         }
-        
+
         query = request.OrderBy switch
         {
             GetContentTypesOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
@@ -76,7 +81,7 @@ public class QueryContentTypesHandler(IServiceProvider serviceProvider)
             GetContentTypesOrderBy.Name => query.OrderBy(p => p.Name),
             _ => query.OrderByDescending(p => p.DateUpdated)
         };
-        
+
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));
     }
 }
