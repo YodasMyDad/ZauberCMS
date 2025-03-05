@@ -1,0 +1,56 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ZauberCMS.Components.Editors.Models.ColourThemePickerSettings>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Add Colour" Description="Add a colour to the list of allowed colours."/>
+    </LeftColumn>
+    <CentreColumn>
+        <ColourPickerProperty ValueChanged="@(s => OnColourPicked(s))"/>
+    </CentreColumn>
+</EditorRow>
+
+<div class="flex flex-wrap">
+    @foreach (var color in Settings.HexColours)
+    {
+        <div class="flex items-center justify-center w-16 h-16 rounded border-solid border-4 border-gray-300 cursor-pointer m-3"
+             @onclick="@(() => RemoveColour(color))" style="background-color: @(color);">
+            <RadzenIcon Icon="close" Style="color: #fff;"/>
+        </div>
+    }
+</div>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
+             class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Inject] public IModalService DialogService { get; set; } = null!;
+
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    public ColourThemePickerSettings Settings { get; set; } = new();
+
+    private void OnColourPicked(string colour)
+    {
+        Settings.HexColours.Add(colour);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+
+    private void RemoveColour(string colour)
+    {
+        Settings.HexColours.Remove(colour);
+    }
+
+}

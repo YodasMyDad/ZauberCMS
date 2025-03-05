@@ -1,0 +1,46 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<div class="flex flex-wrap">
+    @foreach (var colour in SettingsModel.HexColours)
+    {
+        var selectedHover = Value?.Equals(colour, StringComparison.OrdinalIgnoreCase) == true ? "ring-2 ring-green-600 ring-offset-1" : "border-solid border-4 border-gray-300 hover:border-gray-500";
+        <div class="w-16 h-16 rounded cursor-pointer m-3 @(selectedHover)" @onclick="@(() => Changed(colour))" style="background-color: @(colour);"></div>
+    }
+</div>
+
+@code {
+    [Inject] NotificationService NotificationService { get; set; } = null!; 
+    
+    public string Name { get; set; } = "Colour Theme Picker";
+    public string Alias { get; set; } = "ZauberCMS.ColourThemePicker";
+    public string Description { get; set; } = "Allows you to pick from a specified colour list";
+    public string Icon { get; set; } = "palette";
+    public Type? SettingsComponent { get; set; } = typeof(ColourThemePickerPropertySettings);
+
+    [Parameter] public string? Value { get; set; } = string.Empty;
+    [Parameter] public string? Settings { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
+
+    // Hold the content guid and name in the list
+    private ColourThemePickerSettings SettingsModel { get; set; } = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        SettingsModel = Settings.FromJson<ColourThemePickerSettings>();
+    }
+    
+    private async Task Changed(string colour)
+    {
+        Value = colour;
+        await ValueChanged.InvokeAsync(colour);
+        StateHasChanged();
+    }
+}
