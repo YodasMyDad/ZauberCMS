@@ -10,7 +10,7 @@ namespace ZauberCMS.Components.Trees.ContextMenus.SettingsMenus;
 public class CopyContentTypeContextMenu() : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
-    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.SettingsStructureTree];
+    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree];
     public string Text(TreeItemContextMenuEventArgs args) => "Copy";
 
     public string Icon(TreeItemContextMenuEventArgs args) => "content_copy";

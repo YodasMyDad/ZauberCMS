@@ -6,7 +6,7 @@
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
 <BaseTree
-        TreeAlias="@Constants.Sections.Trees.SettingsStructureTree"
+        TreeAlias="@Constants.Sections.Trees.StructureElementTypeTree"
         T="TreeStub"
         Data="@StructureData"
         Expand="@OnExpandHandler"
@@ -20,7 +20,7 @@
 @code {
     
     public int SortOrder => 0;
-    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.SettingsStructureNavGroup;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.StructureElementTypesNavGroup;
 
     [Inject] public IServiceProvider ServiceProvider { get; set; } = null!;
     [Inject] public AppState AppState { get; set; } = null!;
@@ -119,31 +119,10 @@
             OrderBy = GetContentTypesOrderBy.Name,
             AmountPerPage = 1000 // Meh
         });
-        var contentTypes = items.Items.Where(x => x.IsElementType != true).ToList();
         var elementTypes = items.Items.Where(x => x.IsElementType).ToList();
 
         var tree = new List<TreeStub>();
-
-        var contentTypeTree = new TreeStub
-        {
-            Id = Constants.Guids.ContentTypeTreeRootId,
-            Name = "Content Types",
-            Icon = "content_copy",
-            SortOrder = 1,
-            StubType = typeof(ContentType)
-        };
-
-        foreach (var contentType in contentTypes)
-        {
-            contentTypeTree.Branches.Add(new TreeBranch
-            {
-                Id = contentType.Id,
-                Icon = contentType.Icon,
-                Name = contentType.Name,
-                BranchType = typeof(ContentType)
-            });
-        }
-
+        
         var elementTypeTree = new TreeStub
         {
             Id = Constants.Guids.ElementTypeTreeRootId,
@@ -164,7 +143,6 @@
             });
         }
 
-        tree.Add(contentTypeTree);
         tree.Add(elementTypeTree);
 
         StructureData = tree;

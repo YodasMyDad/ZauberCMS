@@ -72,7 +72,7 @@
                     if (tab.IsSystemTab)
                     {
                         <RadzenTabsItem Text="System">
-                            @if (ContentType.IsElementType == false)
+                            @if (ContentType is { IsElementType: false, IsFolder: false })
                             {
                                 <EditorRow>
                                     <LeftColumn>
@@ -126,16 +126,19 @@
                                 </EditorRow>
                             }
 
-                            <EditorRow>
-                                <LeftColumn>
-                                    <PropertyInfo Name="Is Element Type"
-                                                  Description="Allows this content type to be used in the Block List Editor"/>
-                                </LeftColumn>
-                                <CentreColumn>
-                                    <RadzenSwitch @bind-Value="@ContentType.IsElementType"
-                                                  InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Element Type" } })"/>
-                                </CentreColumn>
-                            </EditorRow>
+                            @if (ContentType.IsFolder == false)
+                            {
+                                <EditorRow>
+                                    <LeftColumn>
+                                        <PropertyInfo Name="Is Element Type"
+                                                      Description="Allows this content type to be used in the Block List Editor"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <RadzenSwitch @bind-Value="@ContentType.IsElementType"
+                                                      InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Element Type" } })"/>
+                                    </CentreColumn>
+                                </EditorRow>
+                            }
 
                             @if (ContentType.IsElementType)
                             {
@@ -157,6 +160,20 @@
                             {
                                 <EditorRow>
                                     <LeftColumn>
+                                        <PropertyInfo Name="Is Folder"
+                                                      Description="Folder allows you to structure your content types in a tree"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <RadzenSwitch @bind-Value="@ContentType.IsFolder"
+                                                      InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Folder" } })"/>
+                                    </CentreColumn>
+                                </EditorRow>
+                            }
+
+                            @if (ContentType is { IsElementType: false, IsFolder: false })
+                            {
+                                <EditorRow>
+                                    <LeftColumn>
                                         <PropertyInfo Name="Enable List View"
                                                       Description="Show list view of child content instead of them showing as child items in the tree"/>
                                     </LeftColumn>
@@ -165,7 +182,7 @@
                                     </CentreColumn>
                                 </EditorRow>
                             }
-                            
+
                             @*
                             <EditorRow>
                                 <LeftColumn>

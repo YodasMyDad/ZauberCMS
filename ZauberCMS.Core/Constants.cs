@@ -76,24 +76,32 @@ public static class Constants
             public const string UsersTree = "UsersTree";
             public const string RecycleBinTree = "RecycleBinTree";
             public const string SettingsLanguagesTree = "SettingsLanguagesTree";
-            public const string SettingsStructureTree = "SettingsStructureTree";
+            
             public const string ContentTree = "ContentTree";
             public const string GenericTree = "GenericTree";
             public const string MediaTree = "MediaTree";
             public const string NavigationPropertyTree = "NavigationPropertyTree";
             public const string BaseTree = "BaseTree";
+            
+            public const string StructureContentTypeTree = "StructureContentTypeTree";
+            public const string StructureElementTypeTree = "StructureContentTypeTree";
         }
         
         public static class SectionNavGroups
         {
             public const string ContentNavGroup = "ContentNavGroup";
+            
             public const string MediaNavGroup = "MediaNavGroup";
+            
             public const string UsersNavGroup = "UsersNavGroup";
-            public const string SettingsStructureNavGroup = "SettingsStructureNavGroup";
+            
             public const string SettingsLanguagesNavGroup = "SettingsLanguagesNavGroup";
             public const string SettingsAdvancedNavGroup = "SettingsAdvancedNavGroup";
             public const string SettingsNavGroup = "SettingsNavGroup";
             public const string SettingsSeoNavGroup = "SettingsSeoNavGroup";
+            
+            public const string StructureContentTypesNavGroup = "StructureContentTypesNavGroup";
+            public const string StructureElementTypesNavGroup = "StructureElementTypesNavGroup";
         }
     }
     
