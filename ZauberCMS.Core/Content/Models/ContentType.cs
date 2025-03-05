@@ -105,6 +105,11 @@ public class ContentType : ITreeItem
     /// Parent element ID
     /// </summary>
     public Guid? ParentId { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the content type is treated as a folder.
+    /// </summary>
+    public bool? IsFolder { get; set; }
     
     /// <summary>
     /// Optional Image 

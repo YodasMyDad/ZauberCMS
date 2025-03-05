@@ -10,6 +10,9 @@ public class QueryContentTypesCommand : IRequest<PaginatedList<ContentType>>
     public bool? ElementTypesOnly { get; set; }
     public bool RootOnly { get; set; }
     public bool AsNoTracking { get; set; } = true;
+    
+    public bool IncludeFolders { get; set; }
+    public bool OnlyFolders { get; set; }
     public List<Guid> Ids { get; set; } = [];
     public int PageIndex { get; set; } = 1;
     public int AmountPerPage { get; set; }

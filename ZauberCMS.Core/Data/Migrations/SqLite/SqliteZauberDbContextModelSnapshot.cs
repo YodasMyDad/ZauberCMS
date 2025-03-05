@@ -231,6 +231,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<bool>("IsElementType")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool?>("IsFolder")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid?>("LastUpdatedById")
                         .HasColumnType("TEXT");
 

@@ -50,6 +50,16 @@ public class QueryContentTypesHandler(IServiceProvider serviceProvider)
             {
                 query = query.Where(x => x.AllowAtRoot);
             }
+
+            if (request.IncludeFolders == false)
+            {
+                query = query.Where(x => x.IsFolder == null || x.IsFolder == false);    
+            }
+            
+            if (request.OnlyFolders)
+            {
+                query = query.Where(x => x.IsFolder == true);
+            }
         }
         
         if (request.WhereClause != null)
