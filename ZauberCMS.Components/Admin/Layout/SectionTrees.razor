@@ -51,7 +51,9 @@
     {
         NavItems = ExtensionManager.GetInstances<ISectionNav>(true);
 
-        var navGroupActions = ExtensionManager.GetInstances<ISectionNavGroupAction>(true);
+        var navGroupActions = ExtensionManager.GetInstances<ISectionNavGroupAction>(true)
+            .OrderBy(x => x.Value.SortOrder)
+            .ToList();
         for (var i = 0; i < navGroupActions.Count; i++)
         {
             var sectionNavGroupAction = navGroupActions.ElementAt(i);

@@ -43,6 +43,7 @@
             var items = await Mediator.Send(new QueryContentTypesCommand
             {
                 AmountPerPage = 100,
+                WhereClause = x => x.ParentId == null,
                 OrderBy = GetContentTypesOrderBy.Name
             });
             

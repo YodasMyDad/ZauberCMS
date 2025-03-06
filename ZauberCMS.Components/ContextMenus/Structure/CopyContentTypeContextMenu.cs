@@ -27,9 +27,9 @@ public class CopyContentTypeContextMenu() : ITreeContextMenu
     {
         var branch = (ContentType)args.Value;
         contextMenuService.Close();
-        navigationManager.NavigateTo($"{Urls.AdminSettingsCopyContentType}/{branch.Id}");
+        navigationManager.NavigateTo($"{Urls.AdminStructureCopyContentType}/{branch.Id}");
         return Task.CompletedTask;
     }
 
-    public int SortOrder => -100;
+    public int SortOrder => -90;
 }

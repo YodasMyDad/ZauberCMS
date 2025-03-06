@@ -65,6 +65,11 @@ public class QueryContentTypesHandler(IServiceProvider serviceProvider)
             {
                 query = query.Where(x => x.IsFolder == false);
             }
+
+            if (request.ParentId != null)
+            {
+                query = query.Where(x => x.ParentId == request.ParentId);
+            }
         }
 
         if (request.WhereClause != null)

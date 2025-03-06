@@ -6,9 +6,10 @@ namespace ZauberCMS.Core.Sections.Interfaces;
 
 public interface ISectionNavGroupAction
 {
-    public string Text { get; }
-    public string Icon { get; }
-    public string IconColor { get; }
-    public string SectionNavGroupAlias { get; }
+    string Text { get; }
+    string Icon { get; }
+    string IconColor { get; }
+    string SectionNavGroupAlias { get; }
+    int SortOrder { get; }
     Task ContextMenuAction(MenuItemEventArgs e, NavigationManager navigationManager, ContextMenuService contextMenuService, IModalService modalService);
 }

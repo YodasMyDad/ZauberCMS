@@ -18,16 +18,21 @@ public class CreateContentTypeContextMenu() : ITreeContextMenu
 
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
     {
-        return args.Value is ContentType;
+        if (args.Value is ContentType contentType)
+        {
+            return contentType.IsFolder;
+        }
+        return false;
     }
 
     public Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
+        var contentType = (ContentType)args.Value;
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminSettingsCreateContentType);
+        navigationManager.NavigateTo($"{Urls.AdminStructureCreateContentType}/{contentType.Id}");
         return Task.CompletedTask;
     }
 
-    public int SortOrder => -90;
+    public int SortOrder => -100;
 }

@@ -11,12 +11,12 @@ public class QueryContentTypesCommand : IRequest<PaginatedList<ContentType>>
     public bool OnlyElementTypes { get; set; }
     public bool RootOnly { get; set; }
     public bool AsNoTracking { get; set; } = true;
-    
     public bool IncludeFolders { get; set; }
     public bool OnlyFolders { get; set; }
     public List<Guid> Ids { get; set; } = [];
     public int PageIndex { get; set; } = 1;
     public int AmountPerPage { get; set; }
+    public Guid? ParentId { get; set; }
     public string? SearchTerm { get; set; }
     public GetContentTypesOrderBy OrderBy { get; set; } = GetContentTypesOrderBy.DateUpdatedDescending;
     public Expression<Func<ContentType, bool>>? WhereClause { get; set; }

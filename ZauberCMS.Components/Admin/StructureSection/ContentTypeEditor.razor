@@ -1,7 +1,11 @@
-﻿@attribute [Route(Urls.AdminSettingsCreateContentType)]
-@attribute [Route($"{Urls.AdminSettingsCreateContentType}/{{ParentId:guid}}")]
-@attribute [Route($"{Urls.AdminSettingsUpdateContentType}/{{ContentTypeId:guid}}")]
-@attribute [Route($"{Urls.AdminSettingsCopyContentType}/{{CopyContentTypeId:guid}}")]
+﻿@attribute [Route(Urls.AdminStructureCreateContentType)]
+@attribute [Route(Urls.AdminStructureCreateElementType)]
+@attribute [Route(Urls.AdminStructureCreateComposition)]
+@attribute [Route(Urls.AdminStructureCreateFolder)]
+@attribute [Route($"{Urls.AdminStructureCreateFolder}/{{FolderType:int}}")]
+@attribute [Route($"{Urls.AdminStructureCreateContentType}/{{ParentId:guid}}")]
+@attribute [Route($"{Urls.AdminStructureUpdateContentType}/{{ContentTypeId:guid}}")]
+@attribute [Route($"{Urls.AdminStructureCopyContentType}/{{CopyContentTypeId:guid}}")]
 
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Authorization
@@ -39,13 +43,16 @@
         <RadzenRow class="rz-pb-6">
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
                          AlignItems="AlignItems.Center" class="w-full" Gap="2">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
-                             AlignItems="AlignItems.Center"
-                             Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;"
-                             @onclick="@(SelectIcon)">
-                    <RadzenIcon Icon="@(ContentType.Icon.IsNullOrWhiteSpace() ? "add" : ContentType.Icon)"
-                                style="font-weight: 300; color: dimgray;"/>
-                </RadzenStack>
+                @if (!ContentType.IsFolder)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
+                                 AlignItems="AlignItems.Center"
+                                 Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;"
+                                 @onclick="@(SelectIcon)">
+                        <RadzenIcon Icon="@(ContentType.Icon.IsNullOrWhiteSpace() ? "add" : ContentType.Icon)"
+                                    style="font-weight: 300; color: dimgray;"/>
+                    </RadzenStack>
+                }
                 <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@ContentType.Name"
                                ValueChanged="@((string name) =>
                                              {
@@ -53,17 +60,23 @@
                                                  ContentType.Alias = _slugHelper.GenerateSlug(name);
                                              })" aria-label="Name"/>
             </RadzenStack>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
-                         AlignItems="AlignItems.Center" class="w-full" Gap="0">
-                <RadzenTextBox Style="width: 100%;" Name="Description" Placeholder="Optional Description"
-                               @bind-Value="ContentType.Description" aria-label="Description"/>
-            </RadzenStack>
+
+            @if (!ContentType.IsFolder)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
+                             AlignItems="AlignItems.Center" class="w-full" Gap="0">
+                    <RadzenTextBox Style="width: 100%;" Name="Description" Placeholder="Optional Description"
+                                   @bind-Value="ContentType.Description" aria-label="Description"/>
+                </RadzenStack>
+            }
+
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
                          AlignItems="AlignItems.Center" class="w-full" Gap="0">
                 <RadzenIcon Icon="lock_outline" IconStyle="IconStyle.Light"
                             Style="line-height: 20px; height: 20px; font-size: 20px;"/>
                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@ContentType.Alias</RadzenText>
             </RadzenStack>
+
         </RadzenRow>
         <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
             <Tabs>
@@ -140,7 +153,7 @@
                                 </EditorRow>
                             }
 
-                            @if (ContentType.IsElementType)
+                            @if (ContentType is { IsElementType: true, IsFolder: false })
                             {
                                 <EditorRow>
                                     <LeftColumn>
@@ -156,7 +169,7 @@
                                 </EditorRow>
                             }
 
-                            @if (ContentType.IsElementType == false)
+                            @*@if (ContentType.IsElementType == false)
                             {
                                 <EditorRow>
                                     <LeftColumn>
@@ -168,7 +181,7 @@
                                                       InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Is Folder" } })"/>
                                     </CentreColumn>
                                 </EditorRow>
-                            }
+                            }*@
 
                             @if (ContentType is { IsElementType: false, IsFolder: false })
                             {
@@ -193,6 +206,24 @@
                                 </CentreColumn>
                             </EditorRow>
                             *@
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Created"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    @(ContentType.DateCreated.HasValue ? ContentType.DateCreated.Value.ToString("dd MMM yyyy HH:mm") : string.Empty)
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Last Updated"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    @(ContentType.DateUpdated.HasValue ? ContentType.DateUpdated.Value.ToString("dd MMM yyyy HH:mm") : string.Empty)
+                                </CentreColumn>
+                            </EditorRow>
 
                         </RadzenTabsItem>
                     }
@@ -274,6 +305,7 @@
     [Parameter] public Guid? ContentTypeId { get; set; }
     [Parameter] public Guid? CopyContentTypeId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
+    [Parameter] public int? FolderType { get; set; }
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
@@ -288,9 +320,12 @@
     private RadzenTabs Tabs { get; set; } = null!;
     private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
     private AuthenticationState AuthState { get; set; } = null!;
+    private PageType CurrentPageType { get; set; } = PageType.ContentTypeCreate;
 
     protected override async Task OnParametersSetAsync()
     {
+        SetPageType();
+
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         ContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
 
@@ -302,6 +337,36 @@
         else
         {
             ContentType = new ContentType();
+
+            if (ParentId != null)
+            {
+                ContentType.ParentId = ParentId.Value;
+            }
+
+            switch (CurrentPageType)
+            {
+                case PageType.ElementTypeCreate:
+                    ContentType.IsElementType = true;
+                    break;
+                case PageType.CompositionCreate:
+                    ContentType.IsComposition = true;
+                    break;
+                case PageType.Folder:
+                    ContentType.IsFolder = true;
+                    ContentType.Icon = "folder";
+
+                    switch (FolderType)
+                    {
+                        case 1:
+                            ContentType.IsElementType = true;
+                            break;
+                        case 2:
+                            ContentType.IsComposition = true;
+                            break;
+                    }
+
+                    break;
+            }
         }
 
         if (CopyContentTypeId != null)
@@ -508,26 +573,17 @@
 
     private async Task DeleteContentType()
     {
-        // Check no content is using it first
-        var contentUsingContentType = await Mediator.Send(new QueryContentCommand { ContentTypeId = ContentType.Id });
-        if (contentUsingContentType.Items.Any())
-        {
-            // Display error message
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"Delete Error", Detail = "Unable to delete, because this ContentType is being used", Duration = 4000 });
+        var result = await Mediator.Send(new DeleteContentTypeCommand { ContentTypeId = ContentType.Id });
+        if (result.Success)
+        {            
+            NotificationService.ShowSuccessNotification("Content Type Deleted");
+            await AppState.NotifyContentTypeDeleted(null, AuthState.User.Identity?.Name!);
+            NavigationManager.NavigateTo(Urls.AdminStructureBaseUrl, true);
         }
         else
         {
-            var result = await Mediator.Send(new DeleteContentTypeCommand { ContentTypeId = ContentType.Id });
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Deleted", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
-
-            if (result.Success)
-            {
-                await AppState.NotifyContentTypeDeleted(null, AuthState.User.Identity?.Name!);
-                NavigationManager.NavigateTo(Urls.AdminSettingsBaseUrl);
-            }
+            NotificationService.ShowNotifications(result.Messages);
         }
-
-        NavigationManager.NavigateTo(Urls.AdminSettingsBaseUrl, forceLoad: true);
     }
 
     private async Task AddEditTab(Tab? tab)
@@ -596,6 +652,33 @@
     {
         public string Name { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
+    }
+
+    private void SetPageType()
+    {
+        var currentUri = NavigationManager.Uri; // Current full URI
+
+        // Check if the current URI matches any route and set the CurrentPageType
+        CurrentPageType = currentUri switch
+        {
+            _ when currentUri.Contains(Urls.AdminStructureCreateContentType, StringComparison.OrdinalIgnoreCase) => PageType.ContentTypeCreate,
+            _ when currentUri.Contains(Urls.AdminStructureCreateElementType, StringComparison.OrdinalIgnoreCase) => PageType.ElementTypeCreate,
+            _ when currentUri.Contains(Urls.AdminStructureUpdateContentType, StringComparison.OrdinalIgnoreCase) => PageType.ContentTypeUpdate,
+            _ when currentUri.Contains(Urls.AdminStructureCopyContentType, StringComparison.OrdinalIgnoreCase) => PageType.ContentTypeCopy,
+            _ when currentUri.Contains(Urls.AdminStructureCreateComposition, StringComparison.OrdinalIgnoreCase) => PageType.CompositionCreate,
+            _ when currentUri.Contains(Urls.AdminStructureCreateFolder, StringComparison.OrdinalIgnoreCase) => PageType.Folder,
+            _ => CurrentPageType // Retain the current value if no match is found
+        };
+    }
+
+    private enum PageType
+    {
+        ContentTypeCreate,
+        ContentTypeUpdate,
+        ContentTypeCopy,
+        ElementTypeCreate,
+        CompositionCreate,
+        Folder
     }
 
 }

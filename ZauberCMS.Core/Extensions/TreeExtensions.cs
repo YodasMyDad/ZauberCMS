@@ -59,7 +59,8 @@ public static class TreeExtensions
                 }
 
                 builder.OpenElement(3, "span"); // using span as the container for the text
-                builder.AddAttribute(4, "style", $"opacity: {opacity};"); // applying the opacity to the span
+                builder.AddAttribute(4, "style",
+                    $"opacity: {opacity}; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;");
                 builder.AddContent(5, content.Name); // the text
                 builder.CloseElement();
             }
@@ -87,8 +88,10 @@ public static class TreeExtensions
                 builder.CloseComponent();
 
 
-                builder.OpenElement(3, "span"); // using span as the container for the text
-                builder.AddAttribute(4, "style", $"opacity: {opacity};"); // applying the opacity to the span
+                builder.OpenElement(3, "span");
+                builder.AddAttribute(4, "style",
+                    $"opacity: {opacity}; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;");
+
                 builder.AddContent(5, content.Name); // the text
                 builder.CloseElement();
             }

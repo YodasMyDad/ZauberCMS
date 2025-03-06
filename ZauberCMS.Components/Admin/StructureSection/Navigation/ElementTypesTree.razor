@@ -62,6 +62,8 @@
         {
             AmountPerPage = 1000,
             OnlyElementTypes = true,
+            IncludeFolders = true,
+            WhereClause = x => x.ParentId == null,
             OrderBy = GetContentTypesOrderBy.Name
         });
         ContentTypeItems = items.Items.ToList();
@@ -72,7 +74,7 @@
         TreeState.TreeValue = Selection;
         if (Selection is ContentType content)
         {
-            NavigationManager.NavigateTo($"{Urls.AdminSettingsUpdateContentType}/{content.Id}");
+            NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{content.Id}");
             StateHasChanged();
         }
     }

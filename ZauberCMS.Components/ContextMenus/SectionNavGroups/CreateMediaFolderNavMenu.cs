@@ -6,19 +6,19 @@ using ZauberCMS.Core.Sections.Interfaces;
 
 namespace ZauberCMS.Components.ContextMenus.SectionNavGroups;
 
-public class CreateContentNavMenu : ISectionNavGroupAction
+public class CreateMediaFolderNavMenu : ISectionNavGroupAction
 {
-    public string Text => "Create Content";
-    public string Icon => "add";
+    public string Text => "Create Folder";
+    public string Icon => "folder";
     public string IconColor => string.Empty;
-    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.MediaNavGroup;
     public int SortOrder => -100;
 
     public Task ContextMenuAction(MenuItemEventArgs e, NavigationManager navigationManager, ContextMenuService contextMenuService,
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminCreateContent);
+        navigationManager.NavigateTo(Urls.AdminCreateMediaFolder);
         return Task.CompletedTask;
     }
 }

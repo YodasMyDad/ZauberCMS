@@ -30,7 +30,25 @@ public class DeleteContentTypeHandler(
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
-
+        
+        // Check if being used by content
+        var contentUsingContentType = await mediator.Send(new QueryContentCommand { ContentTypeId = request.ContentTypeId }, cancellationToken);
+        if (contentUsingContentType.Items.Any())
+        {
+            handlerResult.Success = false;
+            handlerResult.AddMessage("Unable to delete, because this ContentType is being used", ResultMessageType.Warning);
+            return handlerResult;
+        }
+        
+        // Check if it has children
+        var children = await mediator.Send(new QueryContentTypesCommand { ParentId = request.ContentTypeId }, cancellationToken);
+        if (children.Items.Any())
+        {
+            handlerResult.Success = false;
+            handlerResult.AddMessage("Unable to delete, because this ContentType has children", ResultMessageType.Warning);
+            return handlerResult;
+        }
+        
         var contentType = dbContext.ContentTypes.FirstOrDefault(x => x.Id == request.ContentTypeId);
         if (contentType != null)
         {
