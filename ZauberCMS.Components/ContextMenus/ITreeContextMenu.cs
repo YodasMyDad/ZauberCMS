@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using Radzen;
 
-namespace ZauberCMS.Components.Trees.ContextMenus;
+namespace ZauberCMS.Components.ContextMenus;
 
 public interface ITreeContextMenu
 {

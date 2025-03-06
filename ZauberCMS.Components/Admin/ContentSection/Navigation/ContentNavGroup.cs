@@ -9,4 +9,5 @@ public class ContentNavGroup : ISectionNavGroup
     public string Alias => Constants.Sections.SectionNavGroups.ContentNavGroup;
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.ContentSection;
+    public List<ISectionNavGroupAction> Actions => [];
 }

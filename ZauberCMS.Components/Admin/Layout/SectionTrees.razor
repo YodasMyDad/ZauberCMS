@@ -8,9 +8,15 @@
     if (sectionNavs.Any())
     {
         <div class="rz-pb-2">
-            <div class="rz-px-4 rz-pt-4 rz-pb-1">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">@nav.Value.Heading</RadzenText>
+            <div class="px-4 pt-3 pb-2 flex justify-between items-center">
+                <div class="font-semibold">@nav.Value.Heading</div>
+                <div class="p-1 cursor-pointer">
+                    <svg class="w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                    </svg>
+                </div>
             </div>
+
             @foreach (var navItem in sectionNavs)
             {
                 <DynamicComponent Type="@navItem.GetType()"/>
