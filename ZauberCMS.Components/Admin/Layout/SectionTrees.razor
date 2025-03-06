@@ -8,38 +8,93 @@
     if (sectionNavs.Any())
     {
         <div class="rz-pb-2">
-            <div class="px-4 pt-3 pb-2 flex justify-between items-center">
+            <div class="px-4 pt-3 pb-1 flex h-14 justify-between items-center">
                 <div class="font-semibold">@nav.Value.Heading</div>
-                <div class="p-1 cursor-pointer">
-                    <svg class="w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                    </svg>
-                </div>
+                @if (ContextMenuSections.ContainsKey(nav.Value.Alias))
+                {
+                    <div>
+                        <RadzenButton Icon="more_horiz" ButtonStyle="ButtonStyle.Dark" Variant="Variant.Text"
+                                      Size="ButtonSize.Medium"
+                                      Click="@(args => ShowContextMenuWithItems(args, nav.Value.Alias))"/>
+                    </div>   
+                }
             </div>
 
             @foreach (var navItem in sectionNavs)
             {
                 <DynamicComponent Type="@navItem.GetType()"/>
             }
-        </div>   
+        </div>
     }
 }
 
 @code {
     [Parameter] public string? SectionAlias { get; set; }
+    
+    [CascadingParameter] public IModalService ModalService { get; set; } = null!;
+    
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    
     private Dictionary<string, ISectionNavGroup> NavGroups { get; set; } = new();
     private Dictionary<string, ISectionNav> NavItems { get; set; } = new();
+    private Dictionary<int, ISectionNavGroupAction> ContextMenus { get; set; } = new();
+    private Dictionary<string, string> ContextMenuSections { get; set; } = new();
 
     protected override void OnParametersSet()
     {
-        base.OnParametersSet();
-        NavItems = ExtensionManager.GetInstances<ISectionNav>(true);
-
         var sectionNavGroups = ExtensionManager.GetInstances<ISectionNavGroup>(true);
         NavGroups = sectionNavGroups.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
     }
 
+    protected override void OnInitialized()
+    {
+        NavItems = ExtensionManager.GetInstances<ISectionNav>(true);
+
+        var navGroupActions = ExtensionManager.GetInstances<ISectionNavGroupAction>(true);
+        for (var i = 0; i < navGroupActions.Count; i++)
+        {
+            var sectionNavGroupAction = navGroupActions.ElementAt(i);
+            
+            ContextMenus.TryAdd(i, sectionNavGroupAction.Value);
+            ContextMenuSections.TryAdd(sectionNavGroupAction.Value.SectionNavGroupAlias, sectionNavGroupAction.Value.SectionNavGroupAlias);
+        }
+    }
+
+
+    void ShowContextMenuWithItems(MouseEventArgs args, string sectionNavGroupAlias)
+    {
+        var contextMenus = ContextMenus.Where(x => x.Value.SectionNavGroupAlias == sectionNavGroupAlias);
+        var keyValuePairs = contextMenus as KeyValuePair<int, ISectionNavGroupAction>[] ?? contextMenus.ToArray();
+        if (keyValuePairs.Any())
+        {
+            ContextMenuService.Open(args,
+                MenuItems(keyValuePairs), e => _ = MenuAction(e, NavigationManager, ContextMenuService, ModalService));
+        }
+    }
+
+    private List<ContextMenuItem> MenuItems(IEnumerable<KeyValuePair<int, ISectionNavGroupAction>> items)
+    {
+        var menu = new List<ContextMenuItem>();
+
+        foreach (var kvp in items)
+        {
+            menu.Add(new ContextMenuItem { Text = kvp.Value.Text, Value = kvp.Key, Icon = kvp.Value.Icon, IconColor = kvp.Value.IconColor });
+        }
+
+        return menu;
+    }
+
+    private async Task MenuAction(MenuItemEventArgs e, NavigationManager navigationManager, ContextMenuService contextMenuService, IModalService modalService)
+    {
+        var value = (int)e.Value;
+        if (ContextMenus.TryGetValue(value, out var contextMenu))
+        { 
+            await contextMenu.ContextMenuAction(e, navigationManager, contextMenuService, modalService);
+            StateHasChanged();
+        }
+    }
+    
     private IEnumerable<ISectionNav> GetNavItems(string sectionNavGroupAlias)
     {
         return NavItems.Where(x => x.Value.SectionNavGroupAlias.Equals(sectionNavGroupAlias))
