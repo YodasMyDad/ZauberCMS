@@ -1,5 +1,4 @@
 ﻿@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Components.Admin.Trees
 
@@ -7,20 +6,19 @@
 
 @if (ContentTypeItems.Any())
 {
-    <ContentTypeTree 
+    <ContentTypeTree
         Data="@ContentTypeItems"
-        Alias="@Constants.Sections.Trees.StructureElementTypeTree"
+        Alias="@Constants.Sections.Trees.StructureCompositionsTree"
         OnExpand="OnExpandHandler"
         Change="OnChange"
         DisableContextMenu="@DisableContextMenu"
-        @bind-Value="@Selection"/>
-
+        @bind-Value="@Selection"/>   
 }
 
 @code {
 
     public int SortOrder => 0;
-    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.StructureElementTypesNavGroup;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.StructureCompositionsNavGroup;
 
     [CascadingParameter] public IModalService ModalService { get; set; } = null!;
 
@@ -73,7 +71,7 @@
             {
                 WhereClause = x => x.ParentId == content.Id,
                 AmountPerPage = 100,
-                OnlyElementTypes = true,
+                OnlyCompositions = true,
                 IncludeFolders = true,
                 OrderBy = GetContentTypesOrderBy.Name
             }).GetAwaiter().GetResult();
@@ -113,7 +111,7 @@
         var items = await Mediator.Send(new QueryContentTypesCommand
         {
             AmountPerPage = 1000,
-            OnlyElementTypes = true,
+            OnlyCompositions = true,
             IncludeFolders = true,
             WhereClause = x => x.ParentId == null,
             OrderBy = GetContentTypesOrderBy.Name

@@ -87,6 +87,7 @@ public static class Constants
             
             public const string StructureContentTypeTree = "StructureContentTypeTree";
             public const string StructureElementTypeTree = "StructureContentTypeTree";
+            public const string StructureCompositionsTree = "StructureCompositionsTree";
         }
         
         public static class SectionNavGroups
@@ -104,6 +105,7 @@ public static class Constants
             
             public const string StructureContentTypesNavGroup = "StructureContentTypesNavGroup";
             public const string StructureElementTypesNavGroup = "StructureElementTypesNavGroup";
+            public const string StructureCompositionsNavGroup = "StructureCompositionsNavGroup";
         }
     }
     

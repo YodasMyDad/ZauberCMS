@@ -18,7 +18,7 @@ public class MoveContentTypeContextMenu(NotificationService notificationService,
     public List<string> Sections { get; } = [];
 
     public List<string> TreeAlias { get; } =
-        [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree];
+        [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree, Constants.Sections.Trees.StructureCompositionsTree];
 
     public string Text(TreeItemContextMenuEventArgs args) => "Move";
 
@@ -43,7 +43,8 @@ public class MoveContentTypeContextMenu(NotificationService notificationService,
         var parameters = new Dictionary<string, object>
         {
             { nameof(MoveContentType.Item), baseItem },
-            { nameof(MoveContentType.IsElementType), baseItem.IsElementType }
+            { nameof(MoveContentType.IsElementType), baseItem.IsElementType },
+            { nameof(MoveContentType.IsComposition), baseItem.IsComposition }
         };
         if (baseItem.ParentId != null)
         {

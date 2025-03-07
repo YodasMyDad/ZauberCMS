@@ -50,8 +50,16 @@ public class QueryContentTypesHandler(IServiceProvider serviceProvider)
             {
                 query = query.Where(x => x.IsElementType == false);
             }
-
-
+            
+            if (request.OnlyCompositions)
+            {
+                query = query.Where(x => x.IsComposition == true);
+            }
+            else if (request.IncludeCompositions == false)
+            {
+                query = query.Where(x => x.IsComposition == false);
+            }
+            
             if (request.RootOnly)
             {
                 query = query.Where(x => x.AllowAtRoot);

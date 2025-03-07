@@ -9,8 +9,24 @@ namespace ZauberCMS.Components.ContextMenus.Structure;
 public class CreateContentTypeContextMenu() : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
-    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree];
-    public string Text(TreeItemContextMenuEventArgs args) => "Create Content Type";
+    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree, Constants.Sections.Trees.StructureCompositionsTree];
+
+    public string Text(TreeItemContextMenuEventArgs args)
+    {
+        if (args.Value is ContentType contentType)
+        {
+            if (contentType.IsElementType)
+            {
+                return "Create Element Type";
+            }
+
+            if (contentType.IsComposition)
+            {
+                return "Create Composition";
+            }
+        }
+        return "Create Content Type";
+    }
 
     public string Icon(TreeItemContextMenuEventArgs args) => "add";
 

@@ -10,7 +10,7 @@ namespace ZauberCMS.Components.ContextMenus.Structure;
 public class CopyContentTypeContextMenu() : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
-    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree];
+    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree, Constants.Sections.Trees.StructureCompositionsTree];
     public string Text(TreeItemContextMenuEventArgs args) => "Copy";
 
     public string Icon(TreeItemContextMenuEventArgs args) => "content_copy";
@@ -19,7 +19,12 @@ public class CopyContentTypeContextMenu() : ITreeContextMenu
 
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
     {
-        return args.Value is ContentType;
+        if (args.Value is ContentType contentType)
+        {
+            return !contentType.IsFolder;
+        }
+
+        return false;
     }
 
     public Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,

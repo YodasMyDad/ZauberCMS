@@ -227,7 +227,14 @@ else
         {
             // We have a content item passed in
             ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
-            SyncProperties(Content, ContentType);
+            if (ContentType == null)
+            {
+                NotificationService.ShowErrorNotification("Unable to find a content type for the content?");
+            }
+            else
+            {
+                SyncProperties(Content, ContentType);   
+            }
         }
     }
 
@@ -237,15 +244,21 @@ else
         {
             Content = await Mediator.Send(new GetContentCommand { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true});
             ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content!.ContentTypeId });
-
-            if (Content.UnpublishedContent != null)
+            if (ContentType == null)
             {
-                // Replace the Content with the Json one
-                Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
-                Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
+                NotificationService.ShowErrorNotification("Unable to find conent type for this content");
             }
+            else
+            {
+                if (Content.UnpublishedContent != null)
+                {
+                    // Replace the Content with the Json one
+                    Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
+                    Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
+                }
                 
-            SyncProperties(Content, ContentType);   
+                SyncProperties(Content, ContentType);      
+            }
         }
     }
     
@@ -314,14 +327,20 @@ else
     private async Task UpdateContentTypeId(Guid contentTypeId)
     {
         ContentType = await Mediator.Send(new GetContentTypeCommand { Id = contentTypeId });
-
-        // Need to set the ContentType is this is new content
-        if (ContentId == null)
+        if (ContentType == null)
         {
-            Content!.ContentTypeId = ContentType.Id;
+            NotificationService.ShowErrorNotification("Content Type does not exist");
         }
+        else
+        {
+            // Need to set the ContentType is this is new content
+            if (ContentId == null)
+            {
+                Content!.ContentTypeId = ContentType.Id;
+            }
 
-        SyncProperties(Content!, ContentType);
+            SyncProperties(Content!, ContentType);   
+        }
     }
 
     private async Task ClearUnpublishedChanges()

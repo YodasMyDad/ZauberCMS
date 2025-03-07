@@ -18,18 +18,24 @@ public class ValidateContent(IMediator mediator) : IValidate<Models.Content>
         
         // This might be new content, so we need to get the content type manually! 
         var contentType = await mediator.Send(new GetContentTypeCommand { Id = item.ContentTypeId });
-        
-        var valuesInDict = item.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
-        foreach (var p in contentType.ContentProperties.Where(x => x.IsRequired))
+        if (contentType == null)
         {
-            
-            valuesInDict.TryGetValue(p.Id, out var contentValue);
-            if (contentValue != null && contentValue.Value.IsNullOrWhiteSpace())
-            {
-                validateResult.ErrorMessages.Add($"{p.Name} is required");
-            }
+            validateResult.ErrorMessages.Add("Content type not found");
         }
-
+        else
+        {
+            var valuesInDict = item.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+            foreach (var p in contentType.ContentProperties.Where(x => x.IsRequired))
+            {
+            
+                valuesInDict.TryGetValue(p.Id, out var contentValue);
+                if (contentValue != null && contentValue.Value.IsNullOrWhiteSpace())
+                {
+                    validateResult.ErrorMessages.Add($"{p.Name} is required");
+                }
+            }    
+        }
+        
         return validateResult;
     }
 }

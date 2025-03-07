@@ -9,7 +9,7 @@ namespace ZauberCMS.Components.ContextMenus.Structure;
 public class CreateContentTypeFolderContextMenu : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
-    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree];
+    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree, Constants.Sections.Trees.StructureCompositionsTree];
     public string Text(TreeItemContextMenuEventArgs args) => "Create Folder";
 
     public string Icon(TreeItemContextMenuEventArgs args) => "folder";

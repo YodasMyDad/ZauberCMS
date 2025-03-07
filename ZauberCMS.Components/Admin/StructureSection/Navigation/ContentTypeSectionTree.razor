@@ -4,13 +4,15 @@
 
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-<ContentTypeTree 
-            @ref="ContentTypeTree"
-            Alias="@Constants.Sections.Trees.StructureContentTypeTree"
-            Data="@ContentTypeItems"
-            Change="OnChange"
-            DisableContextMenu="@DisableContextMenu"
-            @bind-Value="@Selection" />
+@if (ContentTypeItems.Any())
+{
+    <ContentTypeTree 
+        Alias="@Constants.Sections.Trees.StructureContentTypeTree"
+        Data="@ContentTypeItems"
+        Change="OnChange"
+        DisableContextMenu="@DisableContextMenu"
+        @bind-Value="@Selection" />
+}
 
 @code {
 
@@ -24,8 +26,7 @@
     
     private List<ContentType> ContentTypeItems { get; set; } = [];
     private object? Selection { get; set; }
-    private ContentTypeTree? ContentTypeTree { get; set; }
-    
+
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
     [Parameter] public bool DisableContextMenu { get; set; }
     
