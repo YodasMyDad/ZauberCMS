@@ -3,6 +3,7 @@
 @attribute [Route(Urls.AdminStructureCreateComposition)]
 @attribute [Route(Urls.AdminStructureCreateFolder)]
 @attribute [Route($"{Urls.AdminStructureCreateFolder}/{{FolderType:int}}")]
+@attribute [Route($"{Urls.AdminStructureCreateFolderWithParent}/{{ParentId:guid}}")]
 @attribute [Route($"{Urls.AdminStructureCreateContentType}/{{ParentId:guid}}")]
 @attribute [Route($"{Urls.AdminStructureUpdateContentType}/{{ContentTypeId:guid}}")]
 @attribute [Route($"{Urls.AdminStructureCopyContentType}/{{CopyContentTypeId:guid}}")]
@@ -331,7 +332,11 @@
 
         if (ContentTypeId != null)
         {
-            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
+            var contentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
+            if (contentType != null)
+            {
+                ContentType = contentType;
+            }
             ShowDeleteButton = true;
         }
         else
@@ -341,6 +346,18 @@
             if (ParentId != null)
             {
                 ContentType.ParentId = ParentId.Value;
+                
+                // Need to get parent to decide what type this is
+                if (CurrentPageType == PageType.Folder)
+                {
+                    // Need to update folder type from the parent
+                    var parentContentType = await Mediator.Send(new GetContentTypeCommand{ Id = ParentId.Value});
+                    if (parentContentType != null)
+                    {
+                        ContentType.IsElementType = parentContentType.IsElementType;
+                        ContentType.IsComposition = parentContentType.IsComposition;
+                    }
+                }
             }
 
             switch (CurrentPageType)
@@ -373,10 +390,13 @@
         {
             // Should this be done here?
             var contentTypeToCopy = await Mediator.Send(new GetContentTypeCommand { Id = CopyContentTypeId.Value });
-            ContentType = contentTypeToCopy;
-            ContentType.Name = string.Concat("Copy Of ", contentTypeToCopy.Name);
-            ContentType.Alias = string.Concat("CopyOf", contentTypeToCopy.Alias);
-            ContentType.Id = Guid.NewGuid().NewSequentialGuid();
+            if (contentTypeToCopy != null)
+            {
+                ContentType = contentTypeToCopy;
+                ContentType.Name = string.Concat("Copy Of ", contentTypeToCopy.Name);
+                ContentType.Alias = string.Concat("CopyOf", contentTypeToCopy.Alias);
+                ContentType.Id = Guid.NewGuid().NewSequentialGuid();   
+            }
         }
 
         var contentTypes = await Mediator.Send(new QueryContentTypesCommand { OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000 });
@@ -667,6 +687,7 @@
             _ when currentUri.Contains(Urls.AdminStructureCopyContentType, StringComparison.OrdinalIgnoreCase) => PageType.ContentTypeCopy,
             _ when currentUri.Contains(Urls.AdminStructureCreateComposition, StringComparison.OrdinalIgnoreCase) => PageType.CompositionCreate,
             _ when currentUri.Contains(Urls.AdminStructureCreateFolder, StringComparison.OrdinalIgnoreCase) => PageType.Folder,
+            _ when currentUri.Contains(Urls.AdminStructureCreateFolderWithParent, StringComparison.OrdinalIgnoreCase) => PageType.Folder,
             _ => CurrentPageType // Retain the current value if no match is found
         };
     }

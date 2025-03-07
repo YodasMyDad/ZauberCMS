@@ -1,0 +1,63 @@
+﻿@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Components.Admin.StructureSection.Navigation
+<div>Choose where to move @Item.Name to in the tree structure below</div>
+
+<EditorRow>
+    <CentreColumn>
+        @if (IsElementType)
+        {
+            <ElementTypesTree
+                ValueChanged="OnValueChangedHandler"
+                DisableContextMenu="@(true)"/>
+        }
+        else
+        {
+            <ContentTypeTree
+                ValueChanged="OnValueChangedHandler"
+                DisableContextMenu="@(true)"/>   
+        }
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+
+@code {
+    [Parameter, EditorRequired] public ContentType Item { get; set; } = null!;
+    [Parameter] public Guid? ParentId { get; set; }
+    [Parameter] public bool IsElementType { get; set; }
+    [Parameter] public bool IsComposition { get; set; }
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+
+    [Inject] NotificationService NotificationService { get; set; } = null!;
+    
+    private void OnValueChangedHandler(object value)
+    {
+        if (value is ContentType baseItem)
+        {
+            if (!baseItem.IsFolder)
+            {
+                NotificationService.ShowErrorNotification("Content Types can only be moved into folders");
+            }
+            else
+            {
+                if (baseItem.Id != Item.Id)
+                {
+                    ParentId = baseItem.Id;   
+                }   
+            }
+        }
+        else
+        {
+            NotificationService.ShowErrorNotification("This is not a Content Type");
+        }
+    }
+
+    private async Task Save()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(ParentId ?? Guid.Empty));
+    }
+}

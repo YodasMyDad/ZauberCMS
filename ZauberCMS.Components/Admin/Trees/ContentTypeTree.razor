@@ -22,8 +22,9 @@
     
     [Parameter] public IEnumerable<ContentType> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
-    [Parameter] public EventCallback OnChange { get; set; }
+    [Parameter] public Func<object, bool>? Children { get; set; }
     [Parameter] public object? Value { get; set; }
+    [Parameter] public EventCallback Change { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
     [Parameter] public bool DisableContextMenu { get; set; }
     [Parameter] public bool DisableSectionOnlyContextMenu { get; set; }
@@ -43,6 +44,7 @@
             var items = await Mediator.Send(new QueryContentTypesCommand
             {
                 AmountPerPage = 100,
+                IncludeFolders = true,
                 WhereClause = x => x.ParentId == null,
                 OrderBy = GetContentTypesOrderBy.Name
             });
@@ -71,6 +73,7 @@
                 {
                     WhereClause = x => x.ParentId == content.Id,
                     AmountPerPage = 100,
+                    IncludeFolders = true,
                     OrderBy = GetContentTypesOrderBy.Name
                 }).GetAwaiter().GetResult();
                 args.Children.Data = items.Items;
@@ -86,30 +89,38 @@
     private async Task OnChangeHandler()
     {
         await ValueChanged.InvokeAsync(Value);
-        if (OnChange.HasDelegate)
+        if (Change.HasDelegate)
         {
-            await OnChange.InvokeAsync();
+            await Change.InvokeAsync();
         }
     }
 
     private bool HasChildren(object data)
     {
-        if (data is ContentType content)
+        if (Children != null)
         {
-            // Check if result is cached
-            if (TreeState.HasChildrenCache.TryGetValue(content.Id, out var hasChildren))
+            // Use the user-provided method
+            return Children(data);
+        }
+        else
+        {
+            if (data is ContentType content)
             {
+                // Check if result is cached
+                if (TreeState.HasChildrenCache.TryGetValue(content.Id, out var hasChildren))
+                {
+                    return hasChildren;
+                }
+
+                // Calculate result and cache it
+                hasChildren = Task.Run(() => Mediator.Send(new HasChildContentTypeCommand { ParentId = content.Id })).GetAwaiter().GetResult();
+                TreeState.SetChildren(content.Id, hasChildren);
+
                 return hasChildren;
             }
 
-            // Calculate result and cache it
-            hasChildren = Task.Run(() => Mediator.Send(new HasChildContentTypeCommand { ParentId = content.Id })).GetAwaiter().GetResult();
-            TreeState.SetChildren(content.Id, hasChildren);
-
-            return hasChildren;
+            return false;   
         }
-
-        return false;
     }
 
     private bool ShouldBeExpanded(object data)

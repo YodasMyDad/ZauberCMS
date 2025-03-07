@@ -4,7 +4,7 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Commands;
 
-public class GetContentTypeCommand : IRequest<ContentType>
+public class GetContentTypeCommand : IRequest<ContentType?>
 {
     public Guid Id { get; set; }
 }

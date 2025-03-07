@@ -1,20 +1,25 @@
-﻿using Blazored.Modal.Services;
+﻿using Blazored.Modal;
+using Blazored.Modal.Services;
+using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using ZauberCMS.Components.Admin.Shared.Dialogs;
+using ZauberCMS.Components.Admin.StructureSection.Dialogs;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Media.Commands;
-using ZauberCMS.Core.Media.Models;
+using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.Structure;
 
-public class MoveContentTypeContextMenu : ITreeContextMenu
+public class MoveContentTypeContextMenu(NotificationService notificationService, IMediator mediator, AppState appState)
+    : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
-    public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree];
+
+    public List<string> TreeAlias { get; } =
+        [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree];
+
     public string Text(TreeItemContextMenuEventArgs args) => "Move";
 
     public string Icon(TreeItemContextMenuEventArgs args) => "move_up";
@@ -26,27 +31,53 @@ public class MoveContentTypeContextMenu : ITreeContextMenu
         return args.Value is ContentType;
     }
 
-    public Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
+    private IModalReference? Modal { get; set; }
+
+    public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e,
+        NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
         contextMenuService.Close();
         var baseItem = (ContentType)args.Value!;
-
-        /*var parameters = new Dictionary<string, object>
+        
+        var parameters = new Dictionary<string, object>
         {
-            { nameof(MoveItem.Item), baseItem}
+            { nameof(MoveContentType.Item), baseItem },
+            { nameof(MoveContentType.IsElementType), baseItem.IsElementType }
         };
         if (baseItem.ParentId != null)
         {
-            parameters.Add(nameof(MoveItem.ParentId), baseItem.ParentId);
+            parameters.Add(nameof(MoveContentType.ParentId), baseItem.ParentId);
         }
 
-        Modal = modalService.OpenSidePanel<MoveItem>(args.Value is Content ? "Move Content" : "Move Media", parameters);
-        var result = await Modal.Result;*/
+        Modal = modalService.OpenSidePanel<MoveContentType>("Move Content Type", parameters);
+        var result = await Modal.Result;
 
-        
-        
-        return Task.CompletedTask;
+        if (result is { Confirmed: true, Data: Guid parentId })
+        {
+            if (parentId == Guid.Empty)
+            {
+                baseItem.ParentId = null;
+            }
+            else
+            {
+                baseItem.ParentId = parentId;
+            }
+
+            var user = await mediator.GetCurrentUser();
+
+            var copyContentTypeResult = await mediator.Send(new SaveContentTypeCommand
+                { ContentType = baseItem });
+            if (!copyContentTypeResult.Success)
+            {
+                notificationService.ShowNotifications(copyContentTypeResult.Messages);
+            }
+            else
+            {
+                notificationService.ShowSuccessNotification("Content Type Moved");
+                await appState.NotifyContentTypeChanged(baseItem, user?.UserName ?? "Unknown");
+            }
+        }
     }
 
     public int SortOrder => -98;

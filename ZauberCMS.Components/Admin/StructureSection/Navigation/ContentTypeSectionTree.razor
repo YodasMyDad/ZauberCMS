@@ -8,7 +8,8 @@
             @ref="ContentTypeTree"
             Alias="@Constants.Sections.Trees.StructureContentTypeTree"
             Data="@ContentTypeItems"
-            OnChange="OnChange"
+            Change="OnChange"
+            DisableContextMenu="@DisableContextMenu"
             @bind-Value="@Selection" />
 
 @code {
@@ -24,6 +25,9 @@
     private List<ContentType> ContentTypeItems { get; set; } = [];
     private object? Selection { get; set; }
     private ContentTypeTree? ContentTypeTree { get; set; }
+    
+    [Parameter] public EventCallback<object> ValueChanged { get; set; }
+    [Parameter] public bool DisableContextMenu { get; set; }
     
     protected override async Task OnInitializedAsync()
     {
@@ -69,13 +73,20 @@
         ContentTypeItems = items.Items.ToList();
     }
 
-    private void OnChange()
+    private async Task OnChange()
     {
         TreeState.TreeValue = Selection;
         if (Selection is ContentType content)
         {
-            NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{content.Id}");
-            StateHasChanged();
+            if (ValueChanged.HasDelegate)
+            {
+                await ValueChanged.InvokeAsync(Selection);
+            }
+            else
+            {
+                NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{content.Id}");
+                StateHasChanged();
+            }
         }
     }
 

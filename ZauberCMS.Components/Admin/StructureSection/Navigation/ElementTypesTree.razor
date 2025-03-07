@@ -8,22 +8,28 @@
 <ContentTypeTree @ref="ContentTypeTree"
                  Data="@ContentTypeItems"
                  Alias="@Constants.Sections.Trees.StructureElementTypeTree"
-                 OnChange="OnChange"
-                 @bind-Value="@Selection" />
+                 OnExpand="OnExpandHandler"
+                 Change="OnChange"
+                 DisableContextMenu="@DisableContextMenu"
+                 @bind-Value="@Selection"/>
+
 @code {
-    
+
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.StructureElementTypesNavGroup;
 
     [CascadingParameter] public IModalService ModalService { get; set; } = null!;
-    
+
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
     
+    [Parameter] public EventCallback<object> ValueChanged { get; set; }
+    [Parameter] public bool DisableContextMenu { get; set; }
+
     private List<ContentType> ContentTypeItems { get; set; } = [];
     private object? Selection { get; set; }
     private ContentTypeTree? ContentTypeTree { get; set; }
-    
+
     protected override async Task OnInitializedAsync()
     {
         AppState.OnContentTypeChanged += HandleContentTypeTreeChanged;
@@ -55,7 +61,50 @@
             StateHasChanged();
         }
     }
-    
+
+    private Task OnExpandHandler(TreeExpandEventArgs args)
+    {
+        if (args.Value is ContentType content)
+        {
+            var items = Mediator.Send(new QueryContentTypesCommand()
+            {
+                WhereClause = x => x.ParentId == content.Id,
+                AmountPerPage = 100,
+                OnlyElementTypes = true,
+                IncludeFolders = true,
+                OrderBy = GetContentTypesOrderBy.Name
+            }).GetAwaiter().GetResult();
+            args.Children.Data = items.Items;
+            args.Children.TextProperty = "Name";
+            args.Children.Template = TreeExtensions.CreateContentTypeTreeTemplate<RadzenTreeItem>();
+            args.Children.HasChildren = HasChildren;
+
+            TreeState.NodeExpanded(content.Id);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private bool HasChildren(object data)
+    {
+        if (data is ContentType content)
+        {
+            // Check if result is cached
+            if (TreeState.HasChildrenCache.TryGetValue(content.Id, out var hasChildren))
+            {
+                return hasChildren;
+            }
+
+            // Calculate result and cache it
+            hasChildren = Task.Run(() => Mediator.Send(new HasChildContentTypeCommand { ParentId = content.Id })).GetAwaiter().GetResult();
+            TreeState.SetChildren(content.Id, hasChildren);
+
+            return hasChildren;
+        }
+
+        return false;
+    }
+
     private async Task DataRefresh()
     {
         var items = await Mediator.Send(new QueryContentTypesCommand
@@ -69,13 +118,37 @@
         ContentTypeItems = items.Items.ToList();
     }
 
-    private void OnChange()
+    private async Task OnChangeHandler()
+    {
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(Selection);
+        }
+        else
+        {
+            TreeState.TreeValue = Selection;
+            if (Selection is ContentType content)
+            {
+                NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{content.Id}");
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task OnChange()
     {
         TreeState.TreeValue = Selection;
         if (Selection is ContentType content)
         {
-            NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{content.Id}");
-            StateHasChanged();
+            if (ValueChanged.HasDelegate)
+            {
+                await ValueChanged.InvokeAsync(Selection);
+            }
+            else
+            {
+                NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{content.Id}");
+                StateHasChanged();
+            }
         }
     }
 }

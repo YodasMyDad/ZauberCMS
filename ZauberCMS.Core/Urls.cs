@@ -32,6 +32,7 @@ public static class Urls
     public const string AdminStructureCreateElementType = AdminStructureBaseUrl + "/createelementtype";
     public const string AdminStructureCreateComposition = AdminStructureBaseUrl + "/createcomposition";
     public const string AdminStructureCreateFolder = AdminStructureBaseUrl + "/createfolder";
+    public const string AdminStructureCreateFolderWithParent = AdminStructureBaseUrl + "/createfolderwithparent";
     
     public const string AdminSettingsAuditLog = AdminSettingsBaseUrl + "/auditlog";
     public const string AdminSettingsLanguages = AdminSettingsBaseUrl + "/languages";

@@ -32,8 +32,8 @@
     [Parameter] public EventCallback<TreeEventArgs> Collapse { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> ItemContextMenu { get; set; }
     [Parameter] public EventCallback Change { get; set; }
-    [Parameter] public object? Value { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
+    [Parameter] public object? Value { get; set; }
     [Parameter] public Func<object, bool> HasChildren { get; set; } = null!;
     [Parameter] public Func<object, bool> ShouldBeExpanded { get; set; } = null!;
     [Parameter] public RenderFragment<object>? Template { get; set; }
