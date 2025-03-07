@@ -20,6 +20,7 @@ public class ContentTypeDbMapping : IEntityTypeConfiguration<ContentType>
         builder.Property(x => x.DateUpdated).IsRequired();
         builder.Property(e => e.AllowedChildContentTypes).ToJsonConversion(2000);
         builder.Property(e => e.AvailableContentViews).ToJsonConversion(4000);
+        builder.Property(e => e.CompositionIds).ToJsonConversion(2000);
         builder.Property(e => e.Tabs).ToJsonConversion(4000);
         
         builder.Property(e => e.ContentProperties).ToJsonConversion(null);

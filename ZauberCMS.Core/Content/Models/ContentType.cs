@@ -115,6 +115,11 @@ public class ContentType : ITreeItem
     /// Gets or sets a value indicating if this is a composition type only
     /// </summary>
     public bool IsComposition { get; set; }
+
+    /// <summary>
+    /// Gets or sets the list of compositions associated with the content type.
+    /// </summary>
+    public List<Guid> CompositionIds { get; set; } = [];
     
     /// <summary>
     /// Optional Image 
