@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using Radzen;
 using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
@@ -41,7 +42,7 @@ public class DeleteContentTypeHandler(
         }
         
         // Check if it has children
-        var children = await mediator.Send(new QueryContentTypesCommand { ParentId = request.ContentTypeId }, cancellationToken);
+        var children = await mediator.Send(new QueryContentTypesCommand { Query = () => dbContext.ContentTypes.Where(x => x.ParentId == request.ContentTypeId)}, cancellationToken);
         if (children.Items.Any())
         {
             handlerResult.Success = false;

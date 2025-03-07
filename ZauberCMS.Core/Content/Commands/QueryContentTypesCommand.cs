@@ -15,13 +15,14 @@ public class QueryContentTypesCommand : IRequest<PaginatedList<ContentType>>
     public bool OnlyFolders { get; set; }
     public List<Guid> Ids { get; set; } = [];
     public int PageIndex { get; set; } = 1;
-    public int AmountPerPage { get; set; }
+    public int AmountPerPage { get; set; } = 10;
     public Guid? ParentId { get; set; }
     public string? SearchTerm { get; set; }
     public GetContentTypesOrderBy OrderBy { get; set; } = GetContentTypesOrderBy.DateUpdatedDescending;
     public Expression<Func<ContentType, bool>>? WhereClause { get; set; }
     
-    public IQueryable<ContentType>? Query { get; set; }
+    public Func<IQueryable<ContentType>>? Query { get; set; }
+
 }
 
 public enum GetContentTypesOrderBy
