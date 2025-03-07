@@ -86,7 +86,7 @@
                     if (tab.IsSystemTab)
                     {
                         <RadzenTabsItem Text="System">
-                            @if (ContentType is { IsElementType: false, IsFolder: false })
+                            @if (ContentType is { IsElementType: false, IsFolder: false, IsComposition: false })
                             {
                                 <EditorRow>
                                     <LeftColumn>
@@ -140,7 +140,7 @@
                                 </EditorRow>
                             }
 
-                            @if (ContentType.IsFolder == false)
+                            @if (ContentType is { IsFolder: false, IsComposition: false })
                             {
                                 <EditorRow>
                                     <LeftColumn>
@@ -154,7 +154,7 @@
                                 </EditorRow>
                             }
 
-                            @if (ContentType is { IsElementType: true, IsFolder: false })
+                            @if (ContentType is { IsElementType: true, IsFolder: false, IsComposition: false })
                             {
                                 <EditorRow>
                                     <LeftColumn>
@@ -184,7 +184,7 @@
                                 </EditorRow>
                             }*@
 
-                            @if (ContentType is { IsElementType: false, IsFolder: false })
+                            @if (ContentType is { IsElementType: false, IsFolder: false, IsComposition: false })
                             {
                                 <EditorRow>
                                     <LeftColumn>
@@ -341,49 +341,7 @@
         }
         else
         {
-            ContentType = new ContentType();
-
-            if (ParentId != null)
-            {
-                ContentType.ParentId = ParentId.Value;
-                
-                // Need to get parent to decide what type this is
-                if (CurrentPageType == PageType.Folder)
-                {
-                    // Need to update folder type from the parent
-                    var parentContentType = await Mediator.Send(new GetContentTypeCommand{ Id = ParentId.Value});
-                    if (parentContentType != null)
-                    {
-                        ContentType.IsElementType = parentContentType.IsElementType;
-                        ContentType.IsComposition = parentContentType.IsComposition;
-                    }
-                }
-            }
-
-            switch (CurrentPageType)
-            {
-                case PageType.ElementTypeCreate:
-                    ContentType.IsElementType = true;
-                    break;
-                case PageType.CompositionCreate:
-                    ContentType.IsComposition = true;
-                    break;
-                case PageType.Folder:
-                    ContentType.IsFolder = true;
-                    ContentType.Icon = "folder";
-
-                    switch (FolderType)
-                    {
-                        case 1:
-                            ContentType.IsElementType = true;
-                            break;
-                        case 2:
-                            ContentType.IsComposition = true;
-                            break;
-                    }
-
-                    break;
-            }
+            ContentType = await NewContentType();
         }
 
         if (CopyContentTypeId != null)
@@ -418,6 +376,51 @@
         Layout?.SetSection(Constants.Sections.StructureSection);
     }
 
+    private async Task<ContentType> NewContentType()
+    {
+        var contentType = new ContentType();
+
+        if (ParentId != null)
+        {
+            contentType.ParentId = ParentId.Value;
+            
+            // Need to update folder type from the parent
+            var parentContentType = await Mediator.Send(new GetContentTypeCommand{ Id = ParentId.Value});
+            if (parentContentType != null)
+            {
+                contentType.IsElementType = parentContentType.IsElementType;
+                contentType.IsComposition = parentContentType.IsComposition;
+            }
+        }
+
+        switch (CurrentPageType)
+        {
+            case PageType.ElementTypeCreate:
+                contentType.IsElementType = true;
+                break;
+            case PageType.CompositionCreate:
+                contentType.IsComposition = true;
+                break;
+            case PageType.Folder:
+                contentType.IsFolder = true;
+                contentType.Icon = "folder";
+
+                switch (FolderType)
+                {
+                    case 1:
+                        contentType.IsElementType = true;
+                        break;
+                    case 2:
+                        contentType.IsComposition = true;
+                        break;
+                }
+
+                break;
+        }
+
+        return contentType;
+    }
+    
     private void LoadViewFiles()
     {
         ViewFiles = ExtensionManager.GetAllowedViews(ContentType.Alias);
