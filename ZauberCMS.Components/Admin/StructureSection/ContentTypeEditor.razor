@@ -91,6 +91,17 @@
                             {
                                 <EditorRow>
                                     <LeftColumn>
+                                        <PropertyInfo Name="Allowed At Tree Root"
+                                                      Description="Whether this content can be created at the root of the content tree"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot"
+                                                      InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Allow at root" } })"/>
+                                    </CentreColumn>
+                                </EditorRow>
+                                
+                                <EditorRow>
+                                    <LeftColumn>
                                         <PropertyInfo Name="Allowed Views"
                                                       Description="The views the user can pick to display their content"/>
                                     </LeftColumn>
@@ -126,17 +137,6 @@
                                                        Placeholder="Select Content Types"
                                                        Style="width: 100%; height: 250px"
                                                        InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select child types" } })"/>
-                                    </CentreColumn>
-                                </EditorRow>
-
-                                <EditorRow>
-                                    <LeftColumn>
-                                        <PropertyInfo Name="Allowed At Tree Root"
-                                                      Description="Whether this content can be created at the root of the content tree"/>
-                                    </LeftColumn>
-                                    <CentreColumn>
-                                        <RadzenSwitch @bind-Value="@ContentType.AllowAtRoot"
-                                                      InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Allow at root" } })"/>
                                     </CentreColumn>
                                 </EditorRow>
                             }

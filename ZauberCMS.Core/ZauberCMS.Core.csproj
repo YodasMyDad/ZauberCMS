@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Core</PackageId>
-        <Version>3.2.0</Version>
+        <Version>3.3.0-beta1</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS core package</Description>
         <PackageTags>Web</PackageTags>
@@ -20,8 +20,8 @@
         <PackageReference Include="AutoMapper" Version="14.0.0" />
         <PackageReference Include="Blazored.Modal" Version="7.3.1" />
         <PackageReference Include="FluentValidation" Version="11.11.0" />
-        <PackageReference Include="HtmlAgilityPack" Version="1.11.74" />
-        <PackageReference Include="MailKit" Version="4.10.0" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+        <PackageReference Include="MailKit" Version="4.11.0" />
         <PackageReference Include="MediatR" Version="12.4.1" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="9.0.2" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.2" />
@@ -43,8 +43,9 @@
         <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.2" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.2" />
-        <PackageReference Include="Radzen.Blazor" Version="6.2.4" />
+        <PackageReference Include="Radzen.Blazor" Version="6.2.6" />
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
         <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.1.3" />
     </ItemGroup>
 

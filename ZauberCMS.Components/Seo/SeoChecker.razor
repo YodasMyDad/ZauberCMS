@@ -51,13 +51,16 @@
         var seoChecks = ExtensionManager.GetInstances<ISeoCheck>(true);
         
         var web = new HtmlWeb();
-        var doc = web.Load(FullUrl);
-
-        foreach (var seoCheck in seoChecks.OrderBy(x => x.Value.SortOrder).ThenBy(x => x.Value.Name))
+        if (FullUrl != null)
         {
-            SeoCheckResults.Add(await seoCheck.Value.Check(FullUrl ?? string.Empty, doc, Content!));   
+            var doc = web.Load(FullUrl);
+
+            foreach (var seoCheck in seoChecks.OrderBy(x => x.Value.SortOrder).ThenBy(x => x.Value.Name))
+            {
+                SeoCheckResults.Add(await seoCheck.Value.Check(FullUrl ?? string.Empty, doc, Content!));   
+            }
         }
-        
+
         ShowLoader = false;
     }
 }
