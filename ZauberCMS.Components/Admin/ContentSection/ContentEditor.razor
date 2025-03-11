@@ -8,6 +8,7 @@
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
 
 @if (ContentType != null && Content != null)
@@ -27,7 +28,7 @@
 
         <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
             <Tabs>
-                @foreach (var tab in ContentType.Tabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
+                @foreach (var tab in OrderedTabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
                 {
                     <RadzenTabsItem>
                         <Template Context="tabContext">
@@ -35,8 +36,8 @@
                         </Template>
                         <ChildContent>
                             <RadzenStack Gap="1rem">
-                                @foreach (var property in ContentType.ContentProperties
-                                              .Where(x => x.TabId == tab.Id)
+                                @foreach (var property in AllProperties
+                                              .Where(x => x.TabAlias == tab.Alias)
                                               .OrderBy(x => x.SortOrder))
                                 {
                                     if (property.Component != null)
@@ -188,6 +189,9 @@ else
     private bool RootOnly => IsBlockList != true && ContentId == null && ParentId == null;
     private bool ElementTypesOnly => IsBlockList == true;
     private AuthenticationState AuthState { get; set; } = null!;
+    private List<Tab> OrderedTabs { get; set; } = [];
+    private List<PropertyType> AllProperties { get; set; } = [];
+    private List<ContentType> SelectedCompositions { get; set; } = [];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -233,7 +237,7 @@ else
             }
             else
             {
-                SyncProperties(Content, ContentType);   
+                await SyncProperties(Content, ContentType);   
             }
         }
     }
@@ -257,7 +261,7 @@ else
                     Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
                 }
                 
-                SyncProperties(Content, ContentType);      
+                await SyncProperties(Content, ContentType);      
             }
         }
     }
@@ -279,13 +283,56 @@ else
         return Task.CompletedTask;
     }
 
-    private void SyncProperties(Content content, ContentType contentType)
+    private async Task CompositionsInit()
+    {
+        // Get these content properties
+        AllProperties = ContentType!.ContentProperties;
+     
+        if (!ContentType.IsComposition)
+        {
+            var compositions = await Mediator.Send(new QueryContentTypesCommand { OnlyCompositions = true, AmountPerPage = 100 });
+
+            if (ContentType.CompositionIds.Any())
+            {
+                SelectedCompositions = compositions.Items.Where(x => ContentType.CompositionIds.Contains(x.Id)).ToList();
+            
+                // Now append any composition properties
+                foreach (var selectedComposition in SelectedCompositions)
+                {
+                    AllProperties.AddRange(selectedComposition.ContentProperties);
+                }
+            }   
+        }
+    }
+    
+    private void SortTabsInOrder()
+    {
+        OrderedTabs = ContentType!.Tabs.OrderBy(x => x.SortOrder).ToList();
+        foreach (var selectedComposition in SelectedCompositions)
+        {
+            foreach (var selectedCompositionTab in selectedComposition.Tabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
+            {
+                if (OrderedTabs.All(x => x.Alias != selectedCompositionTab.Alias))
+                {
+                    selectedCompositionTab.IsCompositionTab = true;
+                    OrderedTabs.Add(selectedCompositionTab);   
+                }   
+            }
+        }
+    }
+    
+    private async Task SyncProperties(Content content, ContentType contentType)
     {
         var toRemove = new List<ContentPropertyValue>();
+
+        
+        await CompositionsInit();
+        SortTabsInOrder();
+        
         // Check for properties that were removed
         foreach (var cpd in content.PropertyData)
         {
-            var existsInContentType = contentType.ContentProperties.Any(x => x.Id == cpd.ContentTypePropertyId);
+            var existsInContentType = AllProperties.Any(x => x.Id == cpd.ContentTypePropertyId);
             if (!existsInContentType)
             {
                 // Mark for removal
@@ -300,7 +347,7 @@ else
         }
 
         // Check for properties to add
-        foreach (var ctp in contentType.ContentProperties)
+        foreach (var ctp in AllProperties)
         {
             var exists = content.PropertyData.FirstOrDefault(x => x.ContentTypePropertyId == ctp.Id);
             if (exists == null)
@@ -339,7 +386,7 @@ else
                 Content!.ContentTypeId = ContentType.Id;
             }
 
-            SyncProperties(Content!, ContentType);   
+            await SyncProperties(Content!, ContentType);   
         }
     }
 

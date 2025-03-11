@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Serilog;
 using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Settings;
@@ -32,6 +33,18 @@ public static class DbContextExtensions
                                       SELECT * 
                                       FROM {tableName}
                                       WHERE Path LIKE '%"{itemId}"%'
+                                  """);
+#pragma warning restore EF1002
+    }
+    
+    public static IQueryable<ContentType> WhereHasCompositionsUsing(this DbSet<ContentType> source, Guid itemId)
+    {
+        // Use EF.Functions.Like to avoid in-memory computation
+#pragma warning disable EF1002
+        return source.FromSqlRaw($"""
+                                      SELECT * 
+                                      FROM ZauberContentTypes
+                                      WHERE CompositionIds LIKE '%"{itemId}"%'
                                   """);
 #pragma warning restore EF1002
     }

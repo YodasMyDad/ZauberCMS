@@ -53,6 +53,18 @@ public class DeleteContentTypeHandler(
         var contentType = dbContext.ContentTypes.FirstOrDefault(x => x.Id == request.ContentTypeId);
         if (contentType != null)
         {
+            // Check if this is a composition and if it is, are there any content types using it
+            if (contentType.IsComposition)
+            {
+                var anyUsingThisComposition = await mediator.Send(new QueryContentTypesCommand { Query = () => dbContext.ContentTypes.WhereHasCompositionsUsing(contentType.Id)}, cancellationToken);
+                if (anyUsingThisComposition.Items.Any())
+                {
+                    handlerResult.Success = false;
+                    handlerResult.AddMessage("Unable to delete, because there are content types using this composition, remove it first", ResultMessageType.Warning);
+                    return handlerResult;
+                }
+            }
+            
             await user.AddAudit(contentType, contentType.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
             dbContext.ContentTypes.Remove(contentType);
             return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager, cancellationToken);

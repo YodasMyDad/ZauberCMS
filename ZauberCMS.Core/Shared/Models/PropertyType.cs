@@ -15,5 +15,7 @@ public class PropertyType
     public bool FullWidth { get; set; }
     public int SortOrder { get; set; }
     public Guid? TabId { get; set; }
+    public string? TabAlias { get; set; }
     public bool ShowAlias { get; set; } = true;
+    public bool IsFromComposition { get; set; }
 }

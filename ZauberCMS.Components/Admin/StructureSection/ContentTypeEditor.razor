@@ -20,6 +20,7 @@
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Shared.Models
+
 @layout SectionLayout
 
 <PageTitle>Create Content Type</PageTitle>
@@ -140,6 +141,32 @@
                                 </EditorRow>
                             }
 
+                            @if (!ContentType.IsComposition)
+                            {
+                                <EditorRow>
+                                    <LeftColumn>
+                                        <PropertyInfo Name="Compositions"
+                                                      Description="Choose compositions to add to this content type" />
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <RadzenListBox TValue="Guid"
+                                                       Data="@Compositions"
+                                                       FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                       FilterOperator="StringFilterOperator.StartsWith"
+                                                       AllowFiltering="true"
+                                                       TextProperty="Name"
+                                                       ValueProperty="Id"
+                                                       Multiple="true"
+                                                       Value="@ContentType.CompositionIds"
+                                                       Change="@(args => CompositionSelected(args))"
+                                                       AllowClear="true"
+                                                       Placeholder="Select Compositions"
+                                                       Style="width: 100%; height: 250px"
+                                                       InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select compositions" } })"/>
+                                    </CentreColumn>
+                                </EditorRow>   
+                            }
+
                             @if (ContentType is { IsFolder: false, IsComposition: false })
                             {
                                 <EditorRow>
@@ -237,8 +264,8 @@
                             <ChildContent>
                                 <RadzenStack Gap="1rem">
                                     @{
-                                        var tabProperties = ContentType.ContentProperties
-                                            .Where(x => x.TabId == tab.Id)
+                                        var tabProperties = AllProperties
+                                            .Where(x => x.TabAlias == tab.Alias)
                                             .OrderBy(x => x.SortOrder)
                                             .ToList();
                                     }
@@ -255,7 +282,8 @@
                                                                 OnDelete="@(prop => DeleteProperty(prop))"
                                                                 OnChangeTab="@(async (prop) => await ChangeTab(prop))"
                                                                 OnSettings="@(async (prop) => await Settings(prop))"
-                                                                SlugHelper="@_slugHelper"/>
+                                                                SlugHelper="@_slugHelper"
+                                                                DisableEdit="@(ContentType.IsComposition == false && property.IsFromComposition)" />
                                             }
                                             else
                                             {
@@ -271,8 +299,9 @@
                                             }
                                         }
                                     }
-                                    else
+                                    else if(!ContentType.IsComposition && !tab.IsCompositionTab)
                                     {
+                                        
                                         <RadzenStack Orientation="Orientation.Horizontal"
                                                      JustifyContent="JustifyContent.Center"
                                                      AlignItems="AlignItems.Center">
@@ -314,6 +343,9 @@
     private List<ContentViewName> ContentViews { get; set; } = [];
     private List<string> ViewFiles { get; set; } = [];
     private List<ContentType> ContentTypes { get; set; } = [];
+    private List<ContentType> Compositions { get; set; } = [];
+    private List<ContentType> SelectedCompositions { get; set; } = [];
+    private List<PropertyType> AllProperties { get; set; } = [];
     private List<Tab> OrderedTabs { get; set; } = [];
     private Dictionary<int, Tab> TabIndex { get; set; } = new();
     private bool ShowDeleteButton { get; set; }
@@ -364,7 +396,8 @@
         {
             ContentType.AllowAtRoot = true;
         }
-
+        
+        await CompositionsInit();
         LoadViewFiles();
         InitializeTabs();
         InitializeContentViews();
@@ -376,6 +409,41 @@
         Layout?.SetSection(Constants.Sections.StructureSection);
     }
 
+    
+    
+    private void CompositionSelected(object data)
+    {
+        if (data is IEnumerable<Guid> compositionIds)
+        {
+            var enumerable = compositionIds as Guid[] ?? compositionIds.ToArray();
+            ContentType.CompositionIds = enumerable.ToList();
+            SelectedCompositions = Compositions.Where(x => enumerable.Contains(x.Id)).ToList();
+        }
+    }
+
+    private async Task CompositionsInit()
+    {
+        // Get these content properties
+        AllProperties = ContentType.ContentProperties;
+     
+        if (!ContentType.IsComposition)
+        {
+            var compositions = await Mediator.Send(new QueryContentTypesCommand { OnlyCompositions = true, AmountPerPage = 100 });
+            Compositions = compositions.Items.ToList();
+
+            if (ContentType.CompositionIds.Any())
+            {
+                SelectedCompositions = Compositions.Where(x => ContentType.CompositionIds.Contains(x.Id)).ToList();
+            
+                // Now append any composition properties
+                foreach (var selectedComposition in SelectedCompositions)
+                {
+                    AllProperties.AddRange(selectedComposition.ContentProperties);
+                }
+            }   
+        }
+    }
+    
     private async Task<ContentType> NewContentType()
     {
         var contentType = new ContentType();
@@ -384,7 +452,7 @@
         {
             contentType.ParentId = ParentId.Value;
             
-            // Need to update folder type from the parent
+            // Need to update foldertype from the parent
             var parentContentType = await Mediator.Send(new GetContentTypeCommand{ Id = ParentId.Value});
             if (parentContentType != null)
             {
@@ -449,11 +517,23 @@
 
     private void InitializeTabs()
     {
-        // Now reset sort orders to be correct
-        foreach (var tab in ContentType.Tabs.Where(x => !x.IsSystemTab))
+        var allTabs = ContentType.Tabs.Where(x => !x.IsSystemTab).ToList();
+        foreach (var selectedComposition in SelectedCompositions)
         {
-            var contentProperties = ContentType.ContentProperties
-                .Where(x => x.TabId == tab.Id)
+            foreach (var selectedCompositionTab in selectedComposition.Tabs.Where(x => !x.IsSystemTab))
+            {
+                if (allTabs.All(x => x.Name != selectedCompositionTab.Name))
+                {
+                    allTabs.Add(selectedCompositionTab);   
+                }
+            }
+        }
+        
+        // Now reset sort orders to be correct
+        foreach (var tab in allTabs)
+        {
+            var contentProperties = AllProperties
+                .Where(x => x.TabAlias == tab.Alias)
                 .OrderBy(x => x.SortOrder)
                 .ToList();
 
@@ -485,7 +565,20 @@
     {
         TabIndex.Clear();
 
-        var tabs = ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
+        var allTabs = ContentType.Tabs.OrderBy(x => x.SortOrder).ToList();
+        foreach (var selectedComposition in SelectedCompositions)
+        {
+            foreach (var selectedCompositionTab in selectedComposition.Tabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
+            {
+                if (allTabs.All(x => x.Alias != selectedCompositionTab.Alias))
+                {
+                    selectedCompositionTab.IsCompositionTab = true;
+                    allTabs.Add(selectedCompositionTab);   
+                }   
+            }
+        }
+        
+        var tabs = allTabs.OrderBy(x => x.SortOrder).ToList();
         @for (var i = 0; i < tabs.Count; i++)
         {
             var tab = tabs[i];
@@ -497,7 +590,7 @@
 
     private void SortProperty(PropertyType property, bool moveDown)
     {
-        var propertiesInSameTab = ContentType.ContentProperties
+        var propertiesInSameTab = AllProperties
             .Where(p => p.TabId == property.TabId)
             .OrderBy(p => p.SortOrder)
             .ToList();
@@ -525,22 +618,29 @@
 
     private void DeleteProperty(PropertyType property)
     {
-        // Remove the specified property from the list
-        ContentType.ContentProperties.Remove(property);
-
-        // Get properties in the same tab and re-adjust their sort orders
-        var propertiesInSameTab = ContentType.ContentProperties
-            .Where(p => p.TabId == property.TabId)
-            .OrderBy(p => p.SortOrder)
-            .ToList();
-
-        for (var i = 0; i < propertiesInSameTab.Count; i++)
+        if (!ContentType.IsComposition && property.IsFromComposition)
         {
-            propertiesInSameTab[i].SortOrder = i + 1;
+            NotificationService.ShowWarningNotification("This property is from a composition, unable to delete here");
         }
+        else
+        {
+            // Remove the specified property from the list
+            ContentType.ContentProperties.Remove(property);
 
-        // Reload Tabs and update state
-        Tabs.Reload();
+            // Get properties in the same tab and re-adjust their sort orders
+            var propertiesInSameTab = ContentType.ContentProperties
+                .Where(p => p.TabId == property.TabId)
+                .OrderBy(p => p.SortOrder)
+                .ToList();
+
+            for (var i = 0; i < propertiesInSameTab.Count; i++)
+            {
+                propertiesInSameTab[i].SortOrder = i + 1;
+            }
+
+            // Reload Tabs and update state
+            Tabs.Reload();   
+        }
     }
 
     private async Task ChangeTab(PropertyType property)
@@ -550,7 +650,7 @@
             {
                 { nameof(Dialogs.ChangeTab.ContentTypeId), ContentType.Id },
                 {
-                    nameof(Dialogs.ChangeTab.Tabs), ContentType.Tabs
+                    nameof(Dialogs.ChangeTab.Tabs), OrderedTabs
                         .Where(x => !x.IsSystemTab)
                         .OrderBy(x => x.SortOrder)
                         .ToList()
@@ -577,20 +677,33 @@
 
     private void DeleteTab(Tab tab)
     {
-        // Remove the specified tab from the list of tabs
-        ContentType.Tabs.Remove(tab);
+        if (!ContentType.IsComposition && tab.IsCompositionTab)
+        {
+            NotificationService.ShowWarningNotification("Unable to delete, this tab is from a composition");
+        }
+        else
+        {
+            // Remove the specified tab from the list of tabs
+            ContentType.Tabs.Remove(tab);
 
-        SortTabsInOrder();
+            SortTabsInOrder();   
+        }
     }
 
     private async Task Save()
     {
         if (await ValidateService.CanSave(ContentType))
         {
+            ContentType.ContentProperties = ContentType.IsComposition ? AllProperties : AllProperties.Where(x => x.IsFromComposition == false).ToList();
             var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
             var result = await Mediator.Send(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             await AppState.NotifyContentTypeSaved(ContentType, AuthState.User.Identity?.Name!);
+
+            await CompositionsInit();
+            InitializeTabs();
+            SortTabsInOrder();
+            StateHasChanged();
         }
     }
 
@@ -615,33 +728,42 @@
             new Dictionary<string, object>
             {
                 { nameof(AddTab.Tab), tab! },
-                { nameof(AddTab.DefaultSortOrder), tab?.SortOrder ?? ContentType.Tabs.Count(x => !x.IsSystemTab) + 1 }
+                { nameof(AddTab.DefaultSortOrder), tab?.SortOrder ?? ContentType.Tabs.Count(x => !x.IsSystemTab) + 1 },
+                { nameof(AddTab.IsComposition), ContentType.IsComposition },
+                
             });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: Tab newTab })
         {
-            if (!newTab.Name.IsNullOrWhiteSpace())
+            if (ContentType.IsComposition == false && newTab.IsCompositionTab)
             {
-                if (tab != null)
+                // Intentionally left empty: Do nothing in this case
+            }
+            else
+            {
+                if (!newTab.Name.IsNullOrWhiteSpace())
                 {
-                    // Find and update the tab
-                    var index = ContentType.Tabs.FindIndex(x => x.Id == tab.Id);
-                    if (index != -1)
+                    if (tab != null)
                     {
-                        ContentType.Tabs[index] = newTab;
+                        // Find and update the tab
+                        var index = ContentType.Tabs.FindIndex(x => x.Id == tab.Id);
+                        if (index != -1)
+                        {
+                            ContentType.Tabs[index] = newTab;
+                        }
                     }
-                }
-                else
-                {
-                    // Add the new tab to the list of tabs
-                    ContentType.Tabs.Add(newTab);
-                }
+                    else
+                    {
+                        // Add the new tab to the list of tabs
+                        ContentType.Tabs.Add(newTab);
+                    }
 
-                SortTabsInOrder();
+                    SortTabsInOrder();
+                }
+            
+                StateHasChanged();   
             }
         }
-
-        StateHasChanged();
     }
 
     private async Task AddProperty()
@@ -657,15 +779,16 @@
             if (result is { Confirmed: true, Data: IContentProperty property })
             {
                 var tabToAddTo = TabIndex[SelectedTabIndex];
-                ContentType.ContentProperties.Add(new PropertyType
+                AllProperties.Add(new PropertyType
                 {
                     Component = property.GetType().FullName ?? string.Empty,
                     SortOrder = ContentType.ContentProperties.Count + 1,
                     TabId = tabToAddTo.Id,
+                    TabAlias = tabToAddTo.Alias,
                     FullWidth = property.FullWidth,
-                    ComponentAlias = property.Alias
+                    ComponentAlias = property.Alias,
+                    IsFromComposition = ContentType.IsComposition
                 });
-                Tabs.Reload();
                 StateHasChanged();
             }
         }

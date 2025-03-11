@@ -1,7 +1,7 @@
 ﻿@using ZauberCMS.Core.Shared.Models
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center">
-    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Tab Name" @bind-Value="@Tab!.Name" aria-label="Tab Name"/>
-    <RadzenNumeric Style="width: 100%;" TValue="int" @bind-Value="@Tab!.SortOrder" aria-label="Tab Sort Order" />
+    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Tab Name" @bind-Value="@Tab!.Name" Disabled="@(!IsComposition && Tab?.IsCompositionTab == true)" aria-label="Tab Name"/>
+    <RadzenNumeric Style="width: 100%;" TValue="int" @bind-Value="@Tab!.SortOrder" Disabled="@(!IsComposition && Tab?.IsCompositionTab == true)" aria-label="Tab Sort Order" />
 </RadzenStack>
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
@@ -10,13 +10,19 @@
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     [Parameter] public Tab? Tab { get; set; }
     [Parameter] public int DefaultSortOrder { get; set; }
+    [Parameter] public bool IsComposition { get; set; }
 
+    private bool IsEdit { get; set; }
+    
     protected override void OnInitialized()
     {
+        if (Tab == null) IsEdit = true;
+        
         // New tab
         Tab ??= new Tab
         {
-            SortOrder = DefaultSortOrder
+            SortOrder = DefaultSortOrder,
+            IsCompositionTab = IsComposition
         };
     }
 

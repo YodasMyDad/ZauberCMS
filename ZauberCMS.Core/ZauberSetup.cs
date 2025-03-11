@@ -48,7 +48,7 @@ public static class ZauberSetup
         var zauberSettings = new ZauberSettings();
         builder.Configuration.GetSection(Constants.SettingsConfigName).Bind(zauberSettings);
         builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
-        
+
         builder.Services.AddHttpClient();
 
         builder.Services.AddScoped(sp =>
@@ -62,7 +62,7 @@ public static class ZauberSetup
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
         builder.Services.AddScoped<ZauberRouteValueTransformer>();
-        
+
         builder.Services.AddRadzenComponents();
 
         if (!zauberSettings.RedisConnectionString.IsNullOrWhiteSpace())
@@ -70,9 +70,9 @@ public static class ZauberSetup
             builder.Services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = zauberSettings.RedisConnectionString;
-            });   
+            });
         }
-        
+
         var databaseProvider = zauberSettings.DatabaseProvider;
         if (databaseProvider != null)
         {
@@ -85,7 +85,7 @@ public static class ZauberSetup
                     builder.Services.AddDbContext<ZauberDbContext>();
                     break;
             }
-            
+
             builder.Services.AddIdentityCore<User>(options =>
                 {
                     // Password settings.
@@ -179,10 +179,10 @@ public static class ZauberSetup
         var mvcBuilder = builder.Services.AddControllersWithViews()
             .AddRazorOptions(options =>
             {
-                // This adds an additional search path that looks for views in the root Views folder.
+                // This adds another search path that looks for views in the root Views folder.
                 options.ViewLocationFormats.Add("/Views/{0}.cshtml");
             });
-        
+
         foreach (var assembly in ExtensionManager.GetFilteredAssemblies(null).ToArray()!)
         {
             if (assembly != null)
@@ -191,29 +191,26 @@ public static class ZauberSetup
                 var part = new AssemblyPart(assembly);
                 mvcBuilder
                     .ConfigureApplicationPartManager(apm => apm.ApplicationParts.Add(part));
-            } 
-                
+            }
         }
-        
+
         // Mediatr
         builder.Services.AddMediatR(cfg =>
-            {
-                cfg.RegisterGenericHandlers = true;
-                cfg.RegisterServicesFromAssemblies(discoverAssemblies);
-            });
+        {
+            cfg.RegisterGenericHandlers = true;
+            cfg.RegisterServicesFromAssemblies(discoverAssemblies);
+        });
 
         // Automapper
         builder.Services.AddAutoMapper(discoverAssemblies);
 
         // Start up items
-        var startUpItems = extensionManager?.GetInstances<IStartupPlugin>();
-        if (startUpItems != null)
+        var startUpItems = extensionManager.GetInstances<IStartupPlugin>();
+        foreach (var startUpItem in startUpItems)
         {
-            foreach (var startUpItem in startUpItems)
-            {
-                startUpItem.Value.Register(builder.Services, builder.Configuration);
-            }
+            startUpItem.Value.Register(builder.Services, builder.Configuration);
         }
+
 
         // Add external authentication providers
         foreach (var provider in extensionManager?.GetInstances<IExternalAuthenticationProvider>()!)
@@ -223,14 +220,14 @@ public static class ZauberSetup
 
         // Add localization services
         builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
-        
+
         builder.Services.AddImageSharp()
             .ClearProviders()
             .AddProvider<WebRootImageProvider>()
             .AddProcessor<CropWebProcessor>();
     }
-    
-        public static void AddZauberCms<T>(this WebApplication app)
+
+    public static void AddZauberCms<T>(this WebApplication app)
     {
         using (var scope = app.Services.CreateScope())
         {
@@ -238,24 +235,24 @@ public static class ZauberSetup
             var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
             var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
             var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
-            
+
             try
             {
                 if (dbContext.Database.GetPendingMigrations().Any())
                 {
                     dbContext.Database.Migrate();
                 }
-        
+
                 // Get any seed data
                 var seedData = extensionManager.GetInstances<ISeedData>();
                 foreach (var data in seedData)
                 {
                     data.Value.Initialise(dbContext);
                 }
-                
+
                 // Is this ok to use the awaiter and result here?
-                var langs = mediatr.Send(new QueryLanguageCommand{AmountPerPage = 200}).GetAwaiter().GetResult();
-            
+                var langs = mediatr.Send(new QueryLanguageCommand { AmountPerPage = 200 }).GetAwaiter().GetResult();
+
                 // en-US must be the default culture as that's what the backoffice resource is
                 var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
 
@@ -263,6 +260,7 @@ public static class ZauberSetup
                 {
                     if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
                 }
+
                 var supportedCulturesArray = supportedCultures.Distinct().ToArray();
                 var localizationOptions = new RequestLocalizationOptions()
                     .SetDefaultCulture(settings.Value.AdminDefaultLanguage)
@@ -275,9 +273,9 @@ public static class ZauberSetup
                 Log.Error(ex, "Error during startup trying to do Db migrations");
             }
         }
-        
+
         app.UseSerilogRequestLogging();
-        
+
         app.UseHttpsRedirection();
         app.UseStaticFiles();
         app.UseRouting();
@@ -287,9 +285,9 @@ public static class ZauberSetup
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapStaticAssets();
-        
+
         app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
-        
+
         // Group the admin routes for Blazor
         app
             .MapRazorComponents<T>()
@@ -298,16 +296,16 @@ public static class ZauberSetup
 
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
-        
+
         //app.UseMiddleware<ContentRoutingMiddleware>();
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=ZauberRender}/{action=Index}/{id?}")
             .WithMetadata(new RouteOptions { LowercaseUrls = true }) // Lowercase URLs for better SEO
             .WithStaticAssets(); // Ensures static files load before hitting controllers; 
-        
+
         app.MapFallbackToController("Index", "ZauberRender");
-        
+
         app.UseImageSharp();
     }
 }

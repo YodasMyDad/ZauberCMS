@@ -209,6 +209,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
 
+                    b.Property<string>("CompositionIds")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<string>("ContentProperties")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
