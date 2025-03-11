@@ -16,6 +16,10 @@
             <RadzenLabel Text="Full Width" Style="font-size: 13px;" Component="FullWidth"/>
         </RadzenStack>
         <RadzenTextArea Style="font-size: 12px;" @bind-Value="@Property.Description" Placeholder="Description..."/>
+        @if (ContentTypeIsComposition && Property.IsFromComposition)
+        {
+            <RadzenNumeric Style="font-size: 12px;" @bind-Value="@Property.SortOrder" />   
+        }
     </LeftColumn>
     <CentreColumn>
         <RadzenCard class="rz-background-color-base-200" Style="height: 100%; display: flex; justify-content: center; align-items: center;">
@@ -33,7 +37,11 @@
         </RadzenCard>
     </CentreColumn>
     <RightColumn>
-        @if (!DisableEdit)
+        @if (ContentTypeIsComposition == false && Property.IsFromComposition)
+        {
+            // Don't show
+        }
+        else
         {
             <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move up" Click="@(() => OnSortUp.InvokeAsync(Property))"/>
             <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Delete" Click="@(() => OnDelete.InvokeAsync(Property))"/>
@@ -53,5 +61,5 @@
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnChangeTab { get; set; }
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnSettings { get; set; }
     [Parameter, EditorRequired] public SlugHelper SlugHelper { get; set; } = null!;
-    [Parameter] public bool DisableEdit { get; set; }
+    [Parameter] public bool ContentTypeIsComposition { get; set; }
 }

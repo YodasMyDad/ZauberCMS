@@ -283,7 +283,7 @@
                                                                 OnChangeTab="@(async (prop) => await ChangeTab(prop))"
                                                                 OnSettings="@(async (prop) => await Settings(prop))"
                                                                 SlugHelper="@_slugHelper"
-                                                                DisableEdit="@(ContentType.IsComposition == false && property.IsFromComposition)" />
+                                                                ContentTypeIsComposition="@(ContentType.IsComposition)" />
                                             }
                                             else
                                             {
@@ -408,8 +408,6 @@
     {
         Layout?.SetSection(Constants.Sections.StructureSection);
     }
-
-    
     
     private void CompositionSelected(object data)
     {
@@ -424,6 +422,9 @@
     private async Task CompositionsInit()
     {
         // Get these content properties
+        SelectedCompositions.Clear();
+        AllProperties.Clear();
+        
         AllProperties = ContentType.ContentProperties;
      
         if (!ContentType.IsComposition)
