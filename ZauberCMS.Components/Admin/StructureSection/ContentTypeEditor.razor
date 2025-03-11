@@ -402,6 +402,7 @@
         InitializeTabs();
         InitializeContentViews();
         SortTabsInOrder();
+        SelectedTabIndex = 0;        
     }
 
     protected override void OnInitialized()
@@ -704,6 +705,7 @@
             await CompositionsInit();
             InitializeTabs();
             SortTabsInOrder();
+            SelectedTabIndex = OrderedTabs.Count - 1;
             StateHasChanged();
         }
     }
