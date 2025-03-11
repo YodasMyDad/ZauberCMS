@@ -4,31 +4,100 @@
 @if (ElementTypesOnly == true && CoverImages.Any())
 {
     <div class="mx-auto">
-        <div class="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
-            @foreach (var contentType in ContentTypes)
+        @if (ElementTypeFolders.Any())
+        {
+            @foreach (var folder in ElementTypeFolders)
             {
-                <div class="relative lg:col-span-2 cursor-pointer" @onclick="@(() => SelectContentType(contentType.Id))">
-                    <div class="absolute inset-px rounded-lg"></div>
-                    <div class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
-                        @if (CoverImages.TryGetValue(contentType.Id, out var coverImage))
-                        {
-                            <img class="h-48 object-cover" src="/@coverImage.Url" alt="@contentType.Name">
-                        }
-                        else if (contentType.Icon != null)
-                        {
-                            <div class="h-48 flex text-slate-800 items-center justify-center">
-                                <RadzenIcon Icon="@(contentType.Icon)" Style="--rz-icon-size: 10rem;"/>
+                <h2 class="text-2xl font-bold">@folder.Name</h2>
+                <div class="grid grid-cols-1 gap-4 lg:grid-cols-6">
+                    @foreach (var contentType in ContentTypes.Where(x => x.ParentId == folder.Id))
+                    {
+                        <div class="relative lg:col-span-2 cursor-pointer"
+                             @onclick="@(() => SelectContentType(contentType.Id))">
+                            <div class="absolute inset-px rounded-lg"></div>
+                            <div
+                                class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
+                                @if (CoverImages.TryGetValue(contentType.Id, out var coverImage))
+                                {
+                                    <img class="h-48 object-cover" src="/@coverImage.Url" alt="@contentType.Name">
+                                }
+                                else if (contentType.Icon != null)
+                                {
+                                    <div class="h-48 flex text-slate-800 items-center justify-center">
+                                        <RadzenIcon Icon="@(contentType.Icon)" Style="--rz-icon-size: 10rem;"/>
+                                    </div>
+                                }
+                                <div class="p-10 pt-4">
+                                    <p class="mt-2 text-2xl font-medium tracking-tight text-gray-950 text-center">@contentType.Name</p>
+                                    <p class="mt-2 max-w-lg text-sm/6 text-gray-600 text-center">@contentType.Description</p>
+                                </div>
                             </div>
-                        }
-                        <div class="p-10 pt-4">
-                            <p class="mt-2 text-2xl font-medium tracking-tight text-gray-950 text-center">@contentType.Name</p>
-                            <p class="mt-2 max-w-lg text-sm/6 text-gray-600 text-center">@contentType.Description</p>
+                            <div
+                                class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"></div>
                         </div>
-                    </div>
-                    <div class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"></div>
+                    }
                 </div>
             }
-        </div>
+
+            <h2 class="text-2xl font-bold">Other</h2>
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-6">
+                @foreach (var contentType in ContentTypes.Where(x => x.ParentId == null))
+                {
+                    <div class="relative lg:col-span-2 cursor-pointer"
+                         @onclick="@(() => SelectContentType(contentType.Id))">
+                        <div class="absolute inset-px rounded-lg"></div>
+                        <div
+                            class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
+                            @if (CoverImages.TryGetValue(contentType.Id, out var coverImage))
+                            {
+                                <img class="h-48 object-cover" src="/@coverImage.Url" alt="@contentType.Name">
+                            }
+                            else if (contentType.Icon != null)
+                            {
+                                <div class="h-48 flex text-slate-800 items-center justify-center">
+                                    <RadzenIcon Icon="@(contentType.Icon)" Style="--rz-icon-size: 10rem;"/>
+                                </div>
+                            }
+                            <div class="p-10 pt-4">
+                                <p class="mt-2 text-2xl font-medium tracking-tight text-gray-950 text-center">@contentType.Name</p>
+                                <p class="mt-2 max-w-lg text-sm/6 text-gray-600 text-center">@contentType.Description</p>
+                            </div>
+                        </div>
+                        <div class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"></div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-6">
+                @foreach (var contentType in ContentTypes)
+                {
+                    <div class="relative lg:col-span-2 cursor-pointer"
+                         @onclick="@(() => SelectContentType(contentType.Id))">
+                        <div class="absolute inset-px rounded-lg"></div>
+                        <div
+                            class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
+                            @if (CoverImages.TryGetValue(contentType.Id, out var coverImage))
+                            {
+                                <img class="h-48 object-cover" src="/@coverImage.Url" alt="@contentType.Name">
+                            }
+                            else if (contentType.Icon != null)
+                            {
+                                <div class="h-48 flex text-slate-800 items-center justify-center">
+                                    <RadzenIcon Icon="@(contentType.Icon)" Style="--rz-icon-size: 10rem;"/>
+                                </div>
+                            }
+                            <div class="p-10 pt-4">
+                                <p class="mt-2 text-2xl font-medium tracking-tight text-gray-950 text-center">@contentType.Name</p>
+                                <p class="mt-2 max-w-lg text-sm/6 text-gray-600 text-center">@contentType.Description</p>
+                            </div>
+                        </div>
+                        <div class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"></div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 }
 else
@@ -53,7 +122,7 @@ else
             </div>
             <div class="text-sm">@((context as ContentType)?.Description)</div>
         </Template>
-    </RadzenListBox>   
+    </RadzenListBox>
 }
 
 @code {
@@ -66,6 +135,8 @@ else
     [Parameter] public EventCallback<Guid> ContentTypeSelected { get; set; } // add this line
 
     private IEnumerable<ContentType> ContentTypes { get; set; } = [];
+    private IEnumerable<ContentType> ElementTypeFolders { get; set; } = [];
+
     private Guid SelectedContentTypeId { get; set; }
     private Dictionary<Guid, Media> CoverImages { get; set; } = new();
 
@@ -85,7 +156,7 @@ else
                 qctc.IncludeElementTypes = true;
             }
         }
-        
+
         var items = await Mediator.Send(qctc);
         ContentTypes = items.Items;
         if (ParentId != null)
@@ -106,7 +177,8 @@ else
             }
         }
 
-        //StateHasChanged();
+        var elementTypeFolders = await Mediator.Send(new QueryContentTypesCommand { AmountPerPage = 100, OnlyFolders = true, OnlyElementTypes = true, OrderBy = GetContentTypesOrderBy.Name });
+        ElementTypeFolders = elementTypeFolders.Items;
     }
 
     private void OnPropertySelected()
