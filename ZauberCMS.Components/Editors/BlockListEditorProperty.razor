@@ -10,26 +10,28 @@
 
 <SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" IgnoreDomChanges="@(true)" Context="item">
     <SortableItemTemplate>
-        <div>
-            <div class="w-full flex justify-between items-start border border-gray-200 border-solid my-1 notextselection cursor-grab">
-                <div class="p-3 flex items-center justify-center">
-                    <RadzenIcon Icon="@(ContentTypes[item!.ContentTypeId].Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600" />
+        @if (ContentTypes.ContainsKey(item!.ContentTypeId))
+        {
+            <div>
+                <div class="w-full flex justify-between items-start border border-gray-200 border-solid my-1 notextselection cursor-grab">
+                    <div class="p-3 flex items-center justify-center">
+                        <RadzenIcon Icon="@(ContentTypes[item!.ContentTypeId].Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600"/>
+                    </div>
+                    <div class="p-3 flex-1 col-span-8 border border-y-0 border-gray-200 border-solid">
+                        <RenderBlock Content="@(item)" Stylesheets="@SettingsModel.Styleheets"
+                                     TView="IContentBlockPreview"
+                                     FallbackComponentType="@(typeof(ContentBlockPreviewFallback))"
+                                     Parameters="@(new Dictionary<string, object> { { nameof(IContentBlockPreview.ContentType), ContentTypes[item.ContentTypeId] } })"/>
+                    </div>
+                    <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => UpdateContent(item))">
+                        <RadzenIcon Icon="edit" Style="font-size: 2rem" class="text-slate-600"/>
+                    </div>
+                    <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => DeleteContent(item))">
+                        <RadzenIcon Icon="delete" Style="font-size: 2rem" class="text-slate-600"/>
+                    </div>
                 </div>
-                <div class="p-3 flex-1 col-span-8 border border-y-0 border-gray-200 border-solid">
-                    <RenderBlock Content="@(item)" Stylesheets="@SettingsModel.Styleheets"
-                                 TView="IContentBlockPreview"
-                                 FallbackComponentType="@(typeof(ContentBlockPreviewFallback))"
-                                 Parameters="@(new Dictionary<string, object> { { nameof(IContentBlockPreview.ContentType), ContentTypes[item!.ContentTypeId]} })"
-                                 />
-                </div>
-                <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => UpdateContent(item))">
-                    <RadzenIcon Icon="edit" Style="font-size: 2rem" class="text-slate-600" />
-                </div>
-                <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => DeleteContent(item))">
-                    <RadzenIcon Icon="delete" Style="font-size: 2rem" class="text-slate-600" />
-                </div>
-            </div>
-        </div>
+            </div>   
+        }
     </SortableItemTemplate>
 </SortableList>
 
@@ -76,7 +78,7 @@
 
     private async Task PopulateContentTypes()
     {
-        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { AmountPerPage = 300});
+        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { AmountPerPage = 300, OnlyElementTypes = true});
         ContentTypes = contentTypes.Items.ToDictionary(x => x.Id, x => x);
     }
     
