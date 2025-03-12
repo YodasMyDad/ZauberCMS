@@ -18,7 +18,7 @@ public class CreateCompositionFolder : ISectionNavGroupAction
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo($"{Urls.AdminStructureCreateFolder}/2");
+        navigationManager.NavigateTo($"{Urls.AdminStructureCreateFolder}/2", true);
         return Task.CompletedTask;
     }
 }

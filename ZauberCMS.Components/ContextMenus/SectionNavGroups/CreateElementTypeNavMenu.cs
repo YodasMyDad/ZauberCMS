@@ -18,7 +18,7 @@ public class CreateElementTypeNavMenu : ISectionNavGroupAction
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminStructureCreateElementType);
+        navigationManager.NavigateTo(Urls.AdminStructureCreateElementType, true);
         return Task.CompletedTask;
     }
 }

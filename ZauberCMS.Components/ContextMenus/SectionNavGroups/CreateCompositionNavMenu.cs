@@ -18,7 +18,7 @@ public class CreateCompositionNavMenu : ISectionNavGroupAction
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminStructureCreateComposition);
+        navigationManager.NavigateTo(Urls.AdminStructureCreateComposition, true);
         return Task.CompletedTask;
     }
 }

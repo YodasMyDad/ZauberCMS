@@ -18,7 +18,7 @@ public class CreateContentTypeFolder : ISectionNavGroupAction
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminStructureCreateFolder);
+        navigationManager.NavigateTo(Urls.AdminStructureCreateFolder, true);
         return Task.CompletedTask;
     }
 }

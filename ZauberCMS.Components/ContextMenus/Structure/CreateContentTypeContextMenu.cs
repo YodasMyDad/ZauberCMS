@@ -46,7 +46,7 @@ public class CreateContentTypeContextMenu() : ITreeContextMenu
     {
         var contentType = (ContentType)args.Value;
         contextMenuService.Close();
-        navigationManager.NavigateTo($"{Urls.AdminStructureCreateContentType}/{contentType.Id}");
+        navigationManager.NavigateTo($"{Urls.AdminStructureCreateContentType}/{contentType.Id}", true);
         return Task.CompletedTask;
     }
 

@@ -27,7 +27,7 @@ public class CreateContentContextMenu : ITreeContextMenu
     {
         var content = (Content)args.Value!;
         contextMenuService.Close();
-        navigationManager.NavigateTo($"{Urls.AdminCreateContent}/{content.Id}");
+        navigationManager.NavigateTo($"{Urls.AdminCreateContent}/{content.Id}", true);
         return Task.CompletedTask;
     }
 

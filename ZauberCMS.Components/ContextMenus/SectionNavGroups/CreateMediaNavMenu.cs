@@ -18,7 +18,7 @@ public class CreateMediaNavMenu : ISectionNavGroupAction
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminCreateMedia);
+        navigationManager.NavigateTo(Urls.AdminCreateMedia, true);
         return Task.CompletedTask;
     }
 }

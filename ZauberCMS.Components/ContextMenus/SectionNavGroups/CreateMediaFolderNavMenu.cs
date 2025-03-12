@@ -18,7 +18,7 @@ public class CreateMediaFolderNavMenu : ISectionNavGroupAction
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminCreateMediaFolder);
+        navigationManager.NavigateTo(Urls.AdminCreateMediaFolder, true);
         return Task.CompletedTask;
     }
 }

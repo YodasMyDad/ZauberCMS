@@ -31,7 +31,7 @@ public class CreateContentTypeFolderContextMenu : ITreeContextMenu
     {
         var contentType = (ContentType)args.Value;
         contextMenuService.Close();
-        navigationManager.NavigateTo($"{Urls.AdminStructureCreateFolderWithParent}/{contentType.Id}");
+        navigationManager.NavigateTo($"{Urls.AdminStructureCreateFolderWithParent}/{contentType.Id}", true);
         return Task.CompletedTask;
     }
 

@@ -18,7 +18,7 @@ public class CreateContentNavMenu : ISectionNavGroupAction
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminCreateContent);
+        navigationManager.NavigateTo(Urls.AdminCreateContent, true);
         return Task.CompletedTask;
     }
 }
