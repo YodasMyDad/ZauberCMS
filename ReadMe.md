@@ -11,8 +11,8 @@ The goal is simple: a CMS that’s simple, super easy to extend, highly modular,
 ✅ Custom Languages  
 ✅ Multi Sites  
 ✅ SEO Features Built In  
-✅ Private Members Sections (Role Based)
-✅ Radzen Blazor Components
+✅ Private Members Sections (Role Based)  
+✅ Radzen Blazor Components  
 ✅ Highly Customizable  
 ✅ Full Documentation
 
