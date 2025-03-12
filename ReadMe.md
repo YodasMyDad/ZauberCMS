@@ -1,16 +1,18 @@
-﻿# ZauberCMS (.NET CMS)
+﻿# ZauberCMS
 
-ZauberCMS is a fully featured CMS built in .NET 9. The CMS is inspired by Umbraco, and follows similar concepts.
+ZauberCMS is a fully featured CMS built in .NET 9. The CMS is inspired by Umbraco, but much faster and easier to extend.
 
-I built this CMS to allow .NET developers to continue building websites just as they always have - with traditional .NET MVC - while also offering a modern, highly customizable, interactive CMS editing experience powered by Blazor (Can also be used on the front end too!).
+I built this CMS to allow .NET developers to continue building websites just as they always have - with traditional .NET MVC - while also offering a modern, highly customizable, interactive CMS editing experience powered by Blazor.
 
-The goal is simple: a CMS that’s super easy to extend, highly modular, and doesn’t require learning a front-end framework or dealing with complex build tools. With Blazor, customization is quick, straightforward and developer-friendly. 
-
-✅ .Net Identity  
-✅ Block List Editor   
+The goal is simple: a CMS that’s simple, super easy to extend, highly modular, and doesn’t require learning a verbose front-end framework or dealing with complex build tools. With Blazor, customization is quick, straightforward and very .NET friendly. 
+ 
+✅ ASP.NET MVC  
+✅ Visual Page Editor (Block List Editor)   
 ✅ Custom Languages  
 ✅ Multi Sites  
 ✅ SEO Features Built In  
+✅ Private Members Sections (Role Based)
+✅ Radzen Blazor Components
 ✅ Highly Customizable  
 ✅ Full Documentation
 
