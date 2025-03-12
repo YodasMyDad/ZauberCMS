@@ -41,6 +41,11 @@ public static class ZauberSetup
 {
     public static void AddZauberCms(this WebApplicationBuilder builder)
     {
+        builder.Services.AddImageSharp()
+            .ClearProviders()
+            .AddProvider<WebRootImageProvider>()
+            .AddProcessor<CropWebProcessor>();
+        
         builder.Host.UseSerilog((context, configuration) =>
             configuration.ReadFrom.Configuration(context.Configuration));
 
@@ -220,15 +225,12 @@ public static class ZauberSetup
 
         // Add localization services
         builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
-
-        builder.Services.AddImageSharp()
-            .ClearProviders()
-            .AddProvider<WebRootImageProvider>()
-            .AddProcessor<CropWebProcessor>();
     }
 
     public static void AddZauberCms<T>(this WebApplication app)
     {
+        app.UseImageSharp();
+        
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
@@ -305,7 +307,5 @@ public static class ZauberSetup
             .WithStaticAssets(); // Ensures static files load before hitting controllers; 
 
         app.MapFallbackToController("Index", "ZauberRender");
-
-        app.UseImageSharp();
     }
 }
