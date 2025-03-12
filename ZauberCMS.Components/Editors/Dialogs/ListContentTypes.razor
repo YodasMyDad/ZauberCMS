@@ -9,10 +9,10 @@
             @foreach (var folder in ElementTypeFolders)
             {
                 <h2 class="text-2xl font-bold">@folder.Name</h2>
-                <div class="grid grid-cols-1 gap-4 lg:grid-cols-6">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-6">
                     @foreach (var contentType in ContentTypes.Where(x => x.ParentId == folder.Id))
                     {
-                        <div class="relative lg:col-span-2 cursor-pointer"
+                        <div class="relative sm:col-span-2 cursor-pointer"
                              @onclick="@(() => SelectContentType(contentType.Id))">
                             <div class="absolute inset-px rounded-lg"></div>
                             <div
@@ -40,10 +40,10 @@
             }
 
             <h2 class="text-2xl font-bold">Other</h2>
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-6">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-6">
                 @foreach (var contentType in ContentTypes.Where(x => x.ParentId == null))
                 {
-                    <div class="relative lg:col-span-2 cursor-pointer"
+                    <div class="relative sm:col-span-2 cursor-pointer"
                          @onclick="@(() => SelectContentType(contentType.Id))">
                         <div class="absolute inset-px rounded-lg"></div>
                         <div
@@ -70,10 +70,10 @@
         }
         else
         {
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-6">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-6">
                 @foreach (var contentType in ContentTypes)
                 {
-                    <div class="relative lg:col-span-2 cursor-pointer"
+                    <div class="relative sm:col-span-2 cursor-pointer"
                          @onclick="@(() => SelectContentType(contentType.Id))">
                         <div class="absolute inset-px rounded-lg"></div>
                         <div

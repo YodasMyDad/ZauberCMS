@@ -5,18 +5,28 @@
 .side-panel {
     overflow: hidden;
 }
+.bm-container {
+    overflow: hidden !important;
+}
 .side-panel .blazored-modal {
     position: absolute;
     bottom: 0;
     right: 0;
     top: 0;
     height: 100%;
-    max-width: 1024px;
-    width: 100vw;
+    min-width: 80%;
     margin: 0 0 0 4rem;
     border-radius: 0;
     overflow: auto;
+    padding-bottom: 25px;
 }
+
+@media (min-width: 1400px) {
+    .side-panel .blazored-modal {
+        min-width: 60%;
+    }
+}
+
 
 .file-drop-zone {
     width: 100%;
