@@ -1,5 +1,7 @@
 ﻿@attribute [Route(Url)]
 @layout SectionLayout
+@using ZauberCMS.Core.Sections.Interfaces
+@using ZauberCMS.Core.Plugins
 @implements ZauberCMS.Core.Sections.Interfaces.ISection
 
 <PageTitle>@Name</PageTitle>
@@ -19,8 +21,18 @@
     
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
+    [Inject] private ExtensionManager ExtensionManager { get; set; } = null!;
+
     protected override void OnInitialized()
     {
         Layout?.SetSection(Alias);
+        
+        // See if we have any dashboards for settings
+
+        var dashboards = ExtensionManager.GetInstances<ISectionDashboard>(true);
+        if (dashboards.All(x => x.Value.SectionAlias != Constants.Sections.SettingsSection))
+        {
+            NavigationManager.NavigateTo(Urls.AdminSettingsGlobalSettings);
+        }
     }
 }
