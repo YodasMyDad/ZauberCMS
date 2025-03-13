@@ -34,22 +34,31 @@ public static class ContentExtensions
     {
         if (!string.IsNullOrEmpty(alias))
         {
-            var mediaId = content.GetValue<Guid>(alias);
-            if (mediaId != Guid.Empty)
+            var valueString = content.GetValue<string>(alias);
+            if (!valueString.IsNullOrWhiteSpace())
             {
-                var media = await mediator.GetMedia(mediaId);
-                if (media != null)
+                if (valueString.Contains('['))
                 {
-                    return [media];
+                    var mediaIds = content.GetValue<List<Guid>>(alias);
+                    if (mediaIds != null && mediaIds.Count != 0)
+                    {
+                        var result = await mediator.Send(new QueryMediaCommand { Ids = mediaIds, AmountPerPage = mediaIds.Count, Cached = true });
+                        return result.Items.ToList();
+                    }                      
                 }
-            }   
-            
-            var mediaIds = content.GetValue<List<Guid>>(alias);
-            if (mediaIds != null && mediaIds.Count != 0)
-            {
-                var result = await mediator.Send(new QueryMediaCommand { Ids = mediaIds, AmountPerPage = mediaIds.Count, Cached = true });
-                return result.Items.ToList();
-            }   
+                else
+                {
+                    var mediaId = content.GetValue<Guid>(alias);
+                    if (mediaId != Guid.Empty)
+                    {
+                        var media = await mediator.GetMedia(mediaId);
+                        if (media != null)
+                        {
+                            return [media];
+                        }
+                    }   
+                }
+            }
         }
         
         if (!fallBackUrl.IsNullOrWhiteSpace())
@@ -72,21 +81,30 @@ public static class ContentExtensions
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
-            var id = content.GetValue<Guid>(propertyAlias);
-            if (id != Guid.Empty)
+            var valueString = content.GetValue<string>(propertyAlias);
+            if (!valueString.IsNullOrWhiteSpace())
             {
-                var media = await mediator.GetContent(id);
-                if (media != null)
+                if (valueString.Contains('['))
                 {
-                    return [media];
+                    var ids = content.GetValue<List<Guid>>(propertyAlias);
+                    if (ids != null && ids.Count != 0)
+                    {
+                        var result = await mediator.Send(new QueryContentCommand { Ids = ids, AmountPerPage = ids.Count, Cached = true});
+                        return result.Items.ToList();
+                    }
                 }
-            }  
-            
-            var ids = content.GetValue<List<Guid>>(propertyAlias);
-            if (ids != null && ids.Count != 0)
-            {
-                var result = await mediator.Send(new QueryContentCommand { Ids = ids, AmountPerPage = ids.Count, Cached = true});
-                return result.Items.ToList();
+                else
+                {
+                    var id = content.GetValue<Guid>(propertyAlias);
+                    if (id != Guid.Empty)
+                    {
+                        var media = await mediator.GetContent(id);
+                        if (media != null)
+                        {
+                            return [media];
+                        }
+                    }  
+                }
             }
         }
 
