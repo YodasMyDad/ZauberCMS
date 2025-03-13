@@ -69,7 +69,7 @@
     {
         var items = await Mediator.Send(new QueryMediaCommand
         {
-            AmountPerPage = 100,
+            AmountPerPage = 250,
             WhereClause = x => x.ParentId == null,
             IncludeChildren = true,
             OrderBy = GetMediaOrderBy.Name
@@ -90,7 +90,8 @@
                 var items = Mediator.Send(new QueryMediaCommand
                 {
                     WhereClause = x => x.ParentId == media.Id,
-                    OrderBy = GetMediaOrderBy.Name
+                    OrderBy = GetMediaOrderBy.Name,
+                    AmountPerPage = 250
                 }).GetAwaiter().GetResult();
                 args.Children.Data = items.Items;
                 args.Children.TextProperty = "Name";

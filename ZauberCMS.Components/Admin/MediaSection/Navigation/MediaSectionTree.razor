@@ -38,7 +38,7 @@
     {
         var items = await Mediator.Send(new QueryMediaCommand
         {
-            AmountPerPage = 100,
+            AmountPerPage = 250,
             WhereClause = x => x.ParentId == null,
             IncludeChildren = true,
             OrderBy = GetMediaOrderBy.Name
