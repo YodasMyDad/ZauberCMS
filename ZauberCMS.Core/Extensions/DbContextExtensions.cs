@@ -121,8 +121,8 @@ public static class DbContextExtensions
             // Find any before save plugins
             if (entity != null)
             {
-                var beforeSaves = extensionManager.GetInstances<IBeforeEntitySave>(true);
-                foreach (var kvp in beforeSaves.Where(x => x.Value.EntityType == typeof(T)))   
+                var beforeSaves = extensionManager.GetInstances<IBeforeEntitySave<T>>(true);
+                foreach (var kvp in beforeSaves)
                 {
                     canSave = kvp.Value.BeforeSave(entity, context.Entry(entity).State);
                     if (!canSave)
