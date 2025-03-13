@@ -15,7 +15,7 @@ public class QueryLanguageCommand : IRequest<PaginatedList<Language>>
     public List<string> LanguageIsoCodes { get; set; } = [];
     public GetLanguageOrderBy OrderBy { get; set; } = GetLanguageOrderBy.DateCreatedDescending;
     public Expression<Func<Language, bool>>? WhereClause { get; set; }
-    public IQueryable<Language>? Query { get; set; }
+    public Func<IQueryable<Language>>? Query { get; set; }
 }
 
 public enum GetLanguageOrderBy

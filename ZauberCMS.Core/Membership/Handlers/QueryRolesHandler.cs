@@ -20,7 +20,7 @@ public class QueryRolesHandler(IServiceProvider serviceProvider)
 
         if (request.Query != null)
         {
-            query = request.Query;
+            query = request.Query.Invoke();
         }
         else
         {

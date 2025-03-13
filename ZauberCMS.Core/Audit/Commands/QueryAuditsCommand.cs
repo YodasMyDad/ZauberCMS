@@ -13,7 +13,7 @@ public class QueryAuditsCommand : IRequest<PaginatedList<Models.Audit>>
     public string? Username { get; set; }
     public GetAuditsOrderBy OrderBy { get; set; } = GetAuditsOrderBy.DateCreatedDescending;
     public Expression<Func<Models.Audit, bool>>? WhereClause { get; set; }
-    public IQueryable<Models.Audit>? Query { get; set; }
+    public Func<IQueryable<Models.Audit>>? Query { get; set; }
 }
 
 public enum GetAuditsOrderBy

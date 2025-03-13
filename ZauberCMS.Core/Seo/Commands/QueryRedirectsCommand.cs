@@ -13,7 +13,7 @@ public class QueryRedirectsCommand : IRequest<List<SeoRedirect>>
     public List<Guid> Ids { get; set; } = [];
     public int Amount { get; set; } = 5000;
     public GetSeoRedirectOrderBy OrderBy { get; set; } = GetSeoRedirectOrderBy.DateUpdatedDescending;
-    public IQueryable<SeoRedirect>? Query { get; set; }
+    public Func<IQueryable<SeoRedirect>>? Query { get; set; }
 }
 
 public enum GetSeoRedirectOrderBy

@@ -33,7 +33,7 @@ public class QueryRedirectsHandler(IServiceProvider serviceProvider, ICacheServi
 
         if (request.Query != null)
         {
-            query = request.Query;
+            query = request.Query.Invoke();
             return query;
         }
 

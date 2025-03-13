@@ -16,7 +16,7 @@ public class QueryDomainCommand : IRequest<PaginatedList<Domain>>
     public Guid? LanguageId { get; set; }
     public GetDomainOrderBy OrderBy { get; set; } = GetDomainOrderBy.DateCreatedDescending;
     public Expression<Func<Domain, bool>>? WhereClause { get; set; }
-    public IQueryable<Domain>? Query { get; set; }
+    public Func<IQueryable<Domain>>? Query { get; set; }
 }
 
 public enum GetDomainOrderBy

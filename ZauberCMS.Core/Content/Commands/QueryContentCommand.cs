@@ -69,7 +69,7 @@ public class QueryContentCommand : BaseQueryContentCommand, IRequest<PaginatedLi
     /// <summary>
     /// Optional direct query
     /// </summary>
-    public IQueryable<Models.Content>? Query { get; set; }
+    public Func<IQueryable<Models.Content>>? Query { get; set; }
 }
 
 public class BaseQueryContentCommand

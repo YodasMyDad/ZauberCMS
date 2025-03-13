@@ -14,7 +14,7 @@ public class QueryRolesCommand : IRequest<PaginatedList<Role>>
     public int AmountPerPage { get; set; } = 10;
     public GetRolesOrderBy OrderBy { get; set; } = GetRolesOrderBy.DateUpdatedDescending;
     public Expression<Func<Role, bool>>? WhereClause { get; set; }
-    public IQueryable<Role>? Query { get; set; }
+    public Func<IQueryable<Role>>? Query { get; set; }
 }
 
 public enum GetRolesOrderBy

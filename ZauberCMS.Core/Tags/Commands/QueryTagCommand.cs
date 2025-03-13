@@ -19,7 +19,7 @@ public class QueryTagCommand : IRequest<PaginatedList<Tag>>
     public int AmountPerPage { get; set; } = 10;
     public GetTagOrderBy OrderBy { get; set; } = GetTagOrderBy.TagName;
     public Expression<Func<Tag, bool>>? WhereClause { get; set; }
-    public IQueryable<Tag>? Query { get; set; }
+    public Func<IQueryable<Tag>>? Query { get; set; }
 }
 
 public enum GetTagOrderBy

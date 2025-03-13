@@ -34,7 +34,7 @@ public class QueryUsersHandler(IServiceProvider serviceProvider, ICacheService c
 
         if (request.Query != null)
         {
-            query = request.Query;
+            query = request.Query.Invoke();
         }
         else
         {

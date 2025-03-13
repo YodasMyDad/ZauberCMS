@@ -19,7 +19,8 @@ public class QueryMediaCommand : IRequest<PaginatedList<Models.Media>>
     public List<MediaType> MediaTypes { get; set; } = [];
     public GetMediaOrderBy OrderBy { get; set; } = GetMediaOrderBy.DateUpdatedDescending;
     public Expression<Func<Models.Media, bool>>? WhereClause { get; set; }
-    public IQueryable<Models.Media>? Query { get; set; }
+
+    public Func<IQueryable<Models.Media>>? Query { get; set; }
 }
 
 public enum GetMediaOrderBy
