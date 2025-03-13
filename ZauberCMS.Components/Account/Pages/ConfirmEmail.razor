@@ -1,5 +1,6 @@
 ﻿@page "/Account/ConfirmEmail"
 @using Microsoft.Extensions.Options
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Interfaces
 @using ZauberCMS.Core.Settings
@@ -11,6 +12,7 @@
     <PageTitle>Confirm email</PageTitle>
     <div style="width: 100%; max-width: 700px;">
         <StatusMessage ResultMessages="@ResultMessages"/>
+        <p>Go to the <a href="@Urls.Account.Login">Login Page</a></p>
     </div>
 </LayoutView>
 

@@ -96,7 +96,7 @@
         {
             var result = await Mediator.Send(LoginUserCommand);
 
-            if (result.Success || !result.Messages.ErrorMessages().Any())
+            if (result.Messages.ErrorMessages().Any() == false && result.Success)
             {
                 RedirectManager.RedirectTo(result.NavigateToUrl);
             }
