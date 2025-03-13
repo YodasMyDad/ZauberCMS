@@ -34,6 +34,16 @@ public static class ContentExtensions
     {
         if (!string.IsNullOrEmpty(alias))
         {
+            var mediaId = content.GetValue<Guid>(alias);
+            if (mediaId != Guid.Empty)
+            {
+                var media = await mediator.GetMedia(mediaId);
+                if (media != null)
+                {
+                    return [media];
+                }
+            }   
+            
             var mediaIds = content.GetValue<List<Guid>>(alias);
             if (mediaIds != null && mediaIds.Count != 0)
             {
@@ -62,6 +72,16 @@ public static class ContentExtensions
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
+            var id = content.GetValue<Guid>(propertyAlias);
+            if (id != Guid.Empty)
+            {
+                var media = await mediator.GetContent(id);
+                if (media != null)
+                {
+                    return [media];
+                }
+            }  
+            
             var ids = content.GetValue<List<Guid>>(propertyAlias);
             if (ids != null && ids.Count != 0)
             {
