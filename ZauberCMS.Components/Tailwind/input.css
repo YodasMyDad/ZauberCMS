@@ -21,6 +21,10 @@
     padding-bottom: 25px;
 }
 
+.side-panel .bm-content {
+    padding-bottom: 40px;
+}
+
 @media (min-width: 1400px) {
     .side-panel .blazored-modal {
         min-width: 60%;
