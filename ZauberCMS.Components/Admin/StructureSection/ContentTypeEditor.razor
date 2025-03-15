@@ -240,7 +240,7 @@
                                     <PropertyInfo Name="Created"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    @(ContentType.DateCreated.HasValue ? ContentType.DateCreated.Value.ToString("dd MMM yyyy HH:mm") : string.Empty)
+                                    @(ContentType.DateCreated.HasValue ? ContentType.DateCreated.Humanize() : string.Empty)
                                 </CentreColumn>
                             </EditorRow>
 
@@ -249,7 +249,7 @@
                                     <PropertyInfo Name="Last Updated"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    @(ContentType.DateUpdated.HasValue ? ContentType.DateUpdated.Value.ToString("dd MMM yyyy HH:mm") : string.Empty)
+                                    @(ContentType.DateUpdated.HasValue ? ContentType.DateUpdated.Humanize() : string.Empty)
                                 </CentreColumn>
                             </EditorRow>
 

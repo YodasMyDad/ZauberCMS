@@ -1,0 +1,28 @@
+﻿@using ZauberCMS.Core.Shared.Models
+<div class="pb-2">
+    <TailwindAlert Title="Changing the alias can break the front end of your site!" Type="AlertType.Warning" />
+</div>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Change Alias"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenTextBox Style="width: 100%;" Name="Alias" @bind-Value="@PropertyType.Alias"/>
+    </CentreColumn>
+</EditorRow>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter, EditorRequired] public PropertyType PropertyType { get; set; } = null!;
+    
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    
+    private async Task Save()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(PropertyType));
+    }
+}

@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core.Content.Interfaces
+﻿@using ZauberCMS.Components.Admin.Shared.Dialogs
+@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Shared.Models
 
 <EditorRow>
@@ -6,7 +7,10 @@
         <RadzenTextBox class="w-full rz-mb-2" Name="Name" Value="@Property.Name"
                        ValueChanged="@((string name) => { Property.Name = name; Property.Alias = SlugHelper.GenerateSlug(name); })"
                        Style="font-size: 13px; color: #000;" Placeholder="Name" aria-label="Property Name"/>
-        <RadzenText Text="@Property.Alias" TextStyle="TextStyle.Caption"/>
+        @if (!Property.Alias.IsNullOrWhiteSpace())
+        {
+            <div class="cursor-pointer underline hover:no-underline text-sm text-gray-700" @onclick=@(args => ChangeAlias())>@Property.Alias</div>
+        }
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
             <RadzenSwitch @bind-Value="@Property.IsRequired" Name="IsRequired"/>
             <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired"/>
@@ -62,4 +66,19 @@
     [Parameter, EditorRequired] public EventCallback<PropertyType> OnSettings { get; set; }
     [Parameter, EditorRequired] public SlugHelper SlugHelper { get; set; } = null!;
     [Parameter] public bool ContentTypeIsComposition { get; set; }
+    [CascadingParameter] public IModalService ModalService { get; set; } = null!;
+
+    private async Task ChangeAlias()
+    {
+        var dialog = ModalService.OpenSidePanel<ChangeAlias>("Change Alias", 
+            new Dictionary<string, object>
+            {
+                {nameof(Dialogs.ChangeAlias.PropertyType), Property}
+            });
+        var result = await dialog.Result;
+        if (result is { Confirmed: true, Data: PropertyType propertyType })
+        {
+            Property.Alias = SlugHelper.GenerateSlug(propertyType.Alias);
+        }
+    }
 }

@@ -1,4 +1,5 @@
-﻿@using System.Text.Json
+﻿@using System.Globalization
+@using System.Text.Json
 @using AutoMapper
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.Extensions.Localization
@@ -8,6 +9,7 @@
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
 
@@ -120,6 +122,39 @@
                                     ValueChanged="@(e => Content.InternalRedirectIdAsString = e.ToString())"/>
                             </CentreColumn>
                         </EditorRow>
+
+                        <EditorRow>
+                            <LeftColumn>
+                                <PropertyInfo Name="Date Created"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenDatePicker @bind-Value="@Content.DateCreated" Name="ContentDateCreated" DateFormat="@(CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern)" />
+                            </CentreColumn>
+                        </EditorRow>
+
+                        <EditorRow>
+                            <LeftColumn>
+                                <PropertyInfo Name="Last Updated"/>
+                            </LeftColumn>
+                            <CentreColumn>
+                                @Content.DateUpdated.Humanize()
+                            </CentreColumn>
+                        </EditorRow>
+
+                        @if (LastUpdatedBy != null)
+                        {
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Updated By"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <div class="flex justify-start items-center space-x-2">
+                                        <RadzenGravatar Email="@LastUpdatedBy?.Email" />
+                                        <span>@(LastUpdatedBy?.Name)</span>
+                                    </div>
+                                </CentreColumn>
+                            </EditorRow>    
+                        }
                         
                     </RadzenTabsItem>
                 }
@@ -192,6 +227,7 @@ else
     private List<Tab> OrderedTabs { get; set; } = [];
     private List<PropertyType> AllProperties { get; set; } = [];
     private List<ContentType> SelectedCompositions { get; set; } = [];
+    private User? LastUpdatedBy { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -323,8 +359,13 @@ else
     
     private async Task SyncProperties(Content content, ContentType contentType)
     {
-        var toRemove = new List<ContentPropertyValue>();
 
+        if (content.LastUpdatedById != null)
+        {
+            LastUpdatedBy = await Mediator.GetUser(content.LastUpdatedById);   
+        }
+        
+        var toRemove = new List<ContentPropertyValue>();
         
         await CompositionsInit();
         SortTabsInOrder();
