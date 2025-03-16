@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS</PackageId>
-        <Version>3.3.0-beta9</Version>
+        <Version>3.3.0-beta10</Version>
         <Authors>Lee Messenger</Authors>
         <Description>The main ZauberCMS nuget package</Description>
         <PackageTags>Web</PackageTags>
@@ -16,8 +16,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
     </PropertyGroup>
-
-
+    
     <ItemGroup>
         <SupportedPlatform Include="browser"/>
     </ItemGroup>
@@ -60,8 +59,8 @@
         <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Components" Version="3.3.0-beta9"/>
-        <PackageReference Include="ZauberCMS.Routing" Version="3.3.0-beta9"/>
+        <PackageReference Include="ZauberCMS.Components" Version="3.3.0-beta10"/>
+        <PackageReference Include="ZauberCMS.Routing" Version="3.3.0-beta10"/>
     </ItemGroup>
 
     <ItemGroup>

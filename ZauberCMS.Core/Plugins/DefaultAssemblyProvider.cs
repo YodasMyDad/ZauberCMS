@@ -79,30 +79,34 @@ public class DefaultAssemblyProvider
   {
     this.logger.LogInformation("Discovering and loading assemblies from DependencyContext");
 
-    foreach (CompilationLibrary compilationLibrary in DependencyContext.Default?.CompileLibraries!)
+    if (DependencyContext.Default?.RuntimeLibraries != null)
     {
-      if (this.IsCandidateCompilationLibrary(compilationLibrary))
+      foreach (var compilationLibrary in DependencyContext.Default.RuntimeLibraries)
+        // foreach (var compilationLibrary in DependencyContext.Default?.CompileLibraries!)
       {
-        Assembly? assembly = null;
-
-        try
+        if (this.IsCandidateCompilationLibrary(compilationLibrary))
         {
-          assembly = AssemblyLoadContext.Default.LoadFromAssemblyName(new AssemblyName(compilationLibrary.Name));
+          Assembly? assembly = null;
 
-          if (!assemblies.Any(a => string.Equals(a?.FullName, assembly.FullName, StringComparison.OrdinalIgnoreCase)))
+          try
           {
-            assemblies.Add(assembly);
-            this.logger.LogInformation("Assembly '{FullName}' is discovered and loaded", assembly.FullName);
+            assembly = AssemblyLoadContext.Default.LoadFromAssemblyName(new AssemblyName(compilationLibrary.Name));
+
+            if (!assemblies.Any(a => string.Equals(a?.FullName, assembly.FullName, StringComparison.OrdinalIgnoreCase)))
+            {
+              assemblies.Add(assembly);
+              this.logger.LogInformation("Assembly '{FullName}' is discovered and loaded", assembly.FullName);
+            }
+          }
+
+          catch (Exception e)
+          {
+            this.logger.LogWarning("Error loading assembly '{Name}'", compilationLibrary.Name);
+            // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
+            this.logger.LogWarning(message: e?.Message);
           }
         }
-
-        catch (Exception e)
-        {
-          this.logger.LogWarning("Error loading assembly '{Name}'", compilationLibrary.Name);
-          // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
-          this.logger.LogWarning(message: e?.Message);
-        }
-      }
+      } 
     }
   }
   
