@@ -15,6 +15,7 @@
         <PackageProjectUrl>https://github.com/YodasMyDad/ZauberCMS</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
+        <PreserveCompilationContext>true</PreserveCompilationContext>
     </PropertyGroup>
     
     <ItemGroup>
