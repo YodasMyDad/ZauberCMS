@@ -80,7 +80,7 @@
             </RadzenStack>
 
         </RadzenRow>
-        <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
+        <RadzenTabs @ref="Tabs" Change="@(i => TabChange(i))" @bind-SelectedIndex="@SelectedTabIndex">
             <Tabs>
                 @foreach (var tab in OrderedTabs)
                 {
@@ -354,7 +354,7 @@
     private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
     private AuthenticationState AuthState { get; set; } = null!;
     private PageType CurrentPageType { get; set; } = PageType.ContentTypeCreate;
-
+    
     protected override async Task OnParametersSetAsync()
     {
         SetPageType();
@@ -402,7 +402,7 @@
         InitializeTabs();
         InitializeContentViews();
         SortTabsInOrder();
-        SelectedTabIndex = 0;        
+        SelectedTabIndex = 0; 
     }
 
     protected override void OnInitialized()
@@ -702,11 +702,10 @@
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             await AppState.NotifyContentTypeSaved(ContentType, AuthState.User.Identity?.Name!);
 
-            await CompositionsInit();
+            /*await CompositionsInit();
             InitializeTabs();
-            SortTabsInOrder();
-            SelectedTabIndex = OrderedTabs.Count - 1;
-            StateHasChanged();
+            SortTabsInOrder();*/
+            SelectedTabIndex = 0;
         }
     }
 
