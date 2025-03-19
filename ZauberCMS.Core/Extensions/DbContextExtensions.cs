@@ -122,7 +122,7 @@ public static class DbContextExtensions
             if (entity != null)
             {
                 var beforeSaves = extensionManager.GetInstances<IBeforeEntitySave<T>>(true);
-                foreach (var kvp in beforeSaves)
+                foreach (var kvp in beforeSaves.OrderBy(x => x.Value.SortOrder))
                 {
                     canSave = kvp.Value.BeforeSave(entity, context.Entry(entity).State);
                     if (!canSave)
@@ -144,6 +144,25 @@ public static class DbContextExtensions
                 {
                     Log.Warning($"{typeof(T).Name} returned 0 items saved when creating or updating");
                 }   
+                
+                // After save plugins
+                if (entity != null)
+                {
+                    var afterSaves = extensionManager.GetInstances<IAfterEntitySave<T>>(true);
+                    var shouldReSave = false;
+
+                    foreach (var kvp in afterSaves.OrderBy(x => x.Value.SortOrder))
+                    {
+                        shouldReSave = kvp.Value.AfterSave(entity, context.Entry(entity).State);
+                    }
+
+                    // If AfterSave logic updated something, persist it to the DB again
+                    if (shouldReSave)
+                    {
+                        await context.SaveChangesAsync(cancellationToken);
+                    }
+                }
+
             }
             else
             {
