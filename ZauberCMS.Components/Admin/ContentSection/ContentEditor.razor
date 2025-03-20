@@ -13,186 +13,218 @@
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
 
-@if (ContentType != null && Content != null)
+@if (Loading)
 {
-    <EditForm @ref="@ContentForm" Model="@Content">
+    <div class="pt-4 flex items-center justify-center">
+        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate"
+                                   Size="ProgressBarCircularSize.Medium">
+            <Template>Loading</Template>
+        </RadzenProgressBarCircular>
+    </div>
+}
+else
+{
+    @if (ContentType != null && Content != null)
+    {
+        <EditForm @ref="@ContentForm" Model="@Content">
 
-        <RadzenRow class="rz-pb-2">
-            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content!.Name" ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.2rem">
-                <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;" IconStyle="IconStyle.Light"/> <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last Updated: @Content.DateUpdated.Humanize()</RadzenText>
-                @if (Content.UnpublishedContent != null)
-                {
-                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0; color: #e85d5d">(Contains Unpublished Changes)</RadzenText>
-                }                
-            </RadzenStack>
-        </RadzenRow>
+            <RadzenRow class="rz-pb-2">
+                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content!.Name"
+                               ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
+                             AlignItems="AlignItems.Center" Gap="0.2rem">
+                    <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;"
+                                IconStyle="IconStyle.Light"/>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last
+                        Updated: @Content.DateUpdated.Humanize()</RadzenText>
+                    @if (Content.UnpublishedContent != null)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0; color: #e85d5d">
+                            (Contains Unpublished Changes)
+                        </RadzenText>
+                    }
+                </RadzenStack>
+            </RadzenRow>
 
-        <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
-            <Tabs>
-                @foreach (var tab in OrderedTabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
-                {
-                    <RadzenTabsItem>
-                        <Template Context="tabContext">
-                            @tab.Name
-                        </Template>
-                        <ChildContent>
-                            <RadzenStack Gap="1rem">
-                                @foreach (var property in AllProperties
-                                              .Where(x => x.TabAlias == tab.Alias)
-                                              .OrderBy(x => x.SortOrder))
-                                {
-                                    if (property.Component != null)
+            <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
+                <Tabs>
+                    @foreach (var tab in OrderedTabs.Where(x => !x.IsSystemTab).OrderBy(x => x.SortOrder))
+                    {
+                        <RadzenTabsItem>
+                            <Template Context="tabContext">
+                                @tab.Name
+                            </Template>
+                            <ChildContent>
+                                <RadzenStack Gap="1rem">
+                                    @foreach (var property in AllProperties
+                                                      .Where(x => x.TabAlias == tab.Alias)
+                                                      .OrderBy(x => x.SortOrder))
                                     {
-                                        AllContentTypeProperties.TryGetValue(property.Component, out var contentPropertyComponent);
-                                        if (contentPropertyComponent != null)
+                                        if (property.Component != null)
                                         {
-                                            AllContentValues.TryGetValue(property.Id, out var contentValue);
-                                            if (contentValue != null)
+                                            AllContentTypeProperties.TryGetValue(property.Component, out var contentPropertyComponent);
+                                            if (contentPropertyComponent != null)
                                             {
-                                                <EditorRow FullWidth="@(property.FullWidth)">
-                                                    <LeftColumn>
-                                                        <PropertyInfo Name="@property.Name" Alias="@property.Alias" Description="@property.Description"/>
-                                                    </LeftColumn>
-                                                    <CentreColumn>
-                                                        <DynamicContentProperty ComponentType="@contentPropertyComponent"
-                                                                                Settings="@property.Settings"
-                                                                                Content="@Content"
-                                                                                Value="@contentValue.Value"
-                                                                                ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
-                                                    </CentreColumn>
-                                                </EditorRow>
+                                                AllContentValues.TryGetValue(property.Id, out var contentValue);
+                                                if (contentValue != null)
+                                                {
+                                                    <EditorRow FullWidth="@(property.FullWidth)">
+                                                        <LeftColumn>
+                                                            <PropertyInfo Name="@property.Name" Alias="@property.Alias"
+                                                                          Description="@property.Description"/>
+                                                        </LeftColumn>
+                                                        <CentreColumn>
+                                                            <DynamicContentProperty
+                                                                ComponentType="@contentPropertyComponent"
+                                                                Settings="@property.Settings"
+                                                                Content="@Content"
+                                                                Value="@contentValue.Value"
+                                                                ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
+                                                        </CentreColumn>
+                                                    </EditorRow>
+                                                }
                                             }
                                         }
                                     }
-                                }
 
-                            </RadzenStack >
-                        </ChildContent>
-                    </RadzenTabsItem>
-                }
+                                </RadzenStack>
+                            </ChildContent>
+                        </RadzenTabsItem>
+                    }
 
-                @if (IsBlockList != true)
-                {
-                    <RadzenTabsItem Text="System">
-                        <EditorRow>
-                            <LeftColumn>
-                                <PropertyInfo Name="Id"/>
-                            </LeftColumn>
-                            <CentreColumn>
-                                @Content.Id
-                            </CentreColumn>
-                        </EditorRow>
-
-                        <EditorRow>
-                            <LeftColumn>
-                                <PropertyInfo Name="Content View" Description="The views available to render this content in the front end"/>
-                            </LeftColumn>
-                            <CentreColumn>
-                                <RadzenDropDown @bind-Value="@Content.ViewComponent" Data="@ContentType.AvailableContentViews" Style="width: 100%; max-width: 400px;"/>
-                            </CentreColumn>
-                        </EditorRow>
-
-                        <EditorRow>
-                            <LeftColumn>
-                                <PropertyInfo Name="Url" Description="The url in the browser bar to show this page"/>
-                            </LeftColumn>
-                            <CentreColumn>
-                                <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
-                            </CentreColumn>
-                        </EditorRow>
-
-                        <EditorRow>
-                            <LeftColumn>
-                                <PropertyInfo Name="Hide From Navigation" Description="Optional: Hides this page from any navigation if the developer has integrated it"/>
-                            </LeftColumn>
-                            <CentreColumn>
-                                <RadzenSwitch Name="HideFromNavigation" @bind-Value="@Content.HideFromNavigation"/>
-                            </CentreColumn>
-                        </EditorRow>
-
-                        <EditorRow>
-                            <LeftColumn>
-                                <PropertyInfo Name="Internal Redirect" Description="Choose a different page to show when the user browses to this pages url"/>
-                            </LeftColumn>
-                            <CentreColumn>
-                                <ContentPickerProperty
-                                    Value="@Content.InternalRedirectIdAsString"
-                                    Settings="@(JsonSerializer.Serialize(new ContentPickerSettings { MaxAllowed = 1 }))"
-                                    ValueChanged="@(e => Content.InternalRedirectIdAsString = e.ToString())"/>
-                            </CentreColumn>
-                        </EditorRow>
-
-                        <EditorRow>
-                            <LeftColumn>
-                                <PropertyInfo Name="Date Created"/>
-                            </LeftColumn>
-                            <CentreColumn>
-                                <RadzenDatePicker @bind-Value="@Content.DateCreated" Name="ContentDateCreated" DateFormat="@(CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern)" />
-                            </CentreColumn>
-                        </EditorRow>
-
-                        <EditorRow>
-                            <LeftColumn>
-                                <PropertyInfo Name="Last Updated"/>
-                            </LeftColumn>
-                            <CentreColumn>
-                                @Content.DateUpdated.Humanize()
-                            </CentreColumn>
-                        </EditorRow>
-
-                        @if (LastUpdatedBy != null)
-                        {
+                    @if (IsBlockList != true)
+                    {
+                        <RadzenTabsItem Text="System">
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Updated By"/>
+                                    <PropertyInfo Name="Id"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    <div class="flex justify-start items-center space-x-2">
-                                        <RadzenGravatar Email="@LastUpdatedBy?.Email" />
-                                        <span>@(LastUpdatedBy?.Name)</span>
-                                    </div>
+                                    @Content.Id
                                 </CentreColumn>
-                            </EditorRow>    
-                        }
-                        
-                    </RadzenTabsItem>
-                }
-            </Tabs>
-        </RadzenTabs>
-        @if (!Content.Deleted)
-        {
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
-                @if (Content!.UnpublishedContentId != null)
-                {
-                    <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter" Text="Clear Changes"/>
-                }
-                @if (Content!.Published)
-                {
-                    <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
-                }
-                @if (IsBlockList == true)
-                {
-                    <RadzenButton Click=@(() => Save(null, false)) Icon="save" ButtonStyle="ButtonStyle.Success" Text="Save" />
-                }
-                else
-                {
-                    <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save" ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
-                        <ChildContent>
-                            <RadzenSplitButtonItem Text="Save Only" Value="1"/>
-                        </ChildContent>
-                    </RadzenSplitButton>   
-                }
-            </RadzenStack>    
-        }
-    </EditForm>
-}
-else if(ContentId == null)
-{
-    <ListContentTypes ContentTypeSelected="@UpdateContentTypeId"
-                      RootOnly="@RootOnly"
-                      ElementTypesOnly="@ElementTypesOnly"
-                      ParentId="@ParentId"/>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Content View"
+                                                  Description="The views available to render this content in the front end"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenDropDown @bind-Value="@Content.ViewComponent"
+                                                    Data="@ContentType.AvailableContentViews"
+                                                    Style="width: 100%; max-width: 400px;"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Url"
+                                                  Description="The url in the browser bar to show this page"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Hide From Navigation"
+                                                  Description="Optional: Hides this page from any navigation if the developer has integrated it"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenSwitch Name="HideFromNavigation" @bind-Value="@Content.HideFromNavigation"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Internal Redirect"
+                                                  Description="Choose a different page to show when the user browses to this pages url"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <ContentPickerProperty
+                                        Value="@Content.InternalRedirectIdAsString"
+                                        Settings="@(JsonSerializer.Serialize(new ContentPickerSettings { MaxAllowed = 1 }))"
+                                        ValueChanged="@(e => Content.InternalRedirectIdAsString = e.ToString())"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Date Created"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    <RadzenDatePicker @bind-Value="@Content.DateCreated" Name="ContentDateCreated"
+                                                      DateFormat="@(CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern)"/>
+                                </CentreColumn>
+                            </EditorRow>
+
+                            <EditorRow>
+                                <LeftColumn>
+                                    <PropertyInfo Name="Last Updated"/>
+                                </LeftColumn>
+                                <CentreColumn>
+                                    @Content.DateUpdated.Humanize()
+                                </CentreColumn>
+                            </EditorRow>
+
+                            @if (LastUpdatedBy != null)
+                            {
+                                <EditorRow>
+                                    <LeftColumn>
+                                        <PropertyInfo Name="Updated By"/>
+                                    </LeftColumn>
+                                    <CentreColumn>
+                                        <div class="flex justify-start items-center space-x-2">
+                                            <RadzenGravatar Email="@LastUpdatedBy?.Email"/>
+                                            <span>@(LastUpdatedBy?.Name)</span>
+                                        </div>
+                                    </CentreColumn>
+                                </EditorRow>
+                            }
+
+                        </RadzenTabsItem>
+                    }
+                </Tabs>
+            </RadzenTabs>
+            @if (!Content.Deleted)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                             AlignItems="AlignItems.Center">
+                    @if (Content!.UnpublishedContentId != null)
+                    {
+                        <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter"
+                                      Text="Clear Changes"/>
+                    }
+                    @if (Content!.Published)
+                    {
+                        <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
+                    }
+                    @if (IsBlockList == true)
+                    {
+                        <RadzenButton Click=@(() => Save(null, false)) Icon="save" ButtonStyle="ButtonStyle.Success"
+                                      Text="Save"/>
+                    }
+                    else
+                    {
+                        <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save"
+                                           ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
+                            <ChildContent>
+                                <RadzenSplitButtonItem Text="Save Only" Value="1"/>
+                            </ChildContent>
+                        </RadzenSplitButton>
+                    }
+                </RadzenStack>
+            }
+        </EditForm>
+    }
+    else
+    {
+        <ListContentTypes ContentTypeSelected="@UpdateContentTypeId"
+                          RootOnly="@RootOnly"
+                          ElementTypesOnly="@ElementTypesOnly"
+                          ParentId="@ParentId"/>
+    }
 }
 
 @code {
@@ -217,7 +249,9 @@ else if(ContentId == null)
     private EditForm ContentForm { get; set; } = null!;
     private ContentType? ContentType { get; set; }
     private Dictionary<string, Type> AllContentTypeProperties { get; set; } = new();
+
     private Dictionary<Guid, ContentPropertyValue> AllContentValues { get; set; } = new();
+
     //private Dictionary<string, string> AvailableContentViews { get; set; } = new();
     private int SelectedTabIndex { get; set; }
     private RadzenTabs? Tabs { get; set; }
@@ -228,9 +262,11 @@ else if(ContentId == null)
     private List<PropertyType> AllProperties { get; set; } = [];
     private List<ContentType> SelectedCompositions { get; set; } = [];
     private User? LastUpdatedBy { get; set; }
+    private bool Loading { get; set; } = true;
 
     protected override async Task OnParametersSetAsync()
     {
+        Loading = true;
         AllContentTypeProperties = ExtensionManager.GetImplementations<IContentProperty>(true);
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (Content == null)
@@ -256,8 +292,8 @@ else if(ContentId == null)
                 };
             }
 
-            if (IsBlockList == true && 
-                Content?.Name.IsNullOrWhiteSpace() == true && 
+            if (IsBlockList == true &&
+                Content?.Name.IsNullOrWhiteSpace() == true &&
                 DefaultName.IsNullOrWhiteSpace() == false)
             {
                 Content.Name = DefaultName;
@@ -273,16 +309,17 @@ else if(ContentId == null)
             }
             else
             {
-                await SyncProperties(Content, ContentType);   
+                await SyncProperties(Content, ContentType);
             }
         }
+        Loading = false;
     }
 
     private async Task RefreshContent()
     {
         if (ContentId != null)
         {
-            Content = await Mediator.Send(new GetContentCommand { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true});
+            Content = await Mediator.Send(new GetContentCommand { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true });
             ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content!.ContentTypeId });
             if (ContentType == null)
             {
@@ -296,12 +333,12 @@ else if(ContentId == null)
                     Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
                     Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
                 }
-                
-                await SyncProperties(Content, ContentType);      
+
+                await SyncProperties(Content, ContentType);
             }
         }
     }
-    
+
     private void TabChange(int i)
     {
         SelectedTabIndex = i;
@@ -315,7 +352,7 @@ else if(ContentId == null)
             property.Value = value;
             property.DateUpdated = DateTime.UtcNow;
         }
-        
+
         return Task.CompletedTask;
     }
 
@@ -323,7 +360,7 @@ else if(ContentId == null)
     {
         // Get these content properties
         AllProperties = ContentType!.ContentProperties;
-     
+
         if (!ContentType.IsComposition)
         {
             var compositions = await Mediator.Send(new QueryContentTypesCommand { OnlyCompositions = true, AmountPerPage = 100 });
@@ -331,16 +368,16 @@ else if(ContentId == null)
             if (ContentType.CompositionIds.Any())
             {
                 SelectedCompositions = compositions.Items.Where(x => ContentType.CompositionIds.Contains(x.Id)).ToList();
-            
+
                 // Now append any composition properties
                 foreach (var selectedComposition in SelectedCompositions)
                 {
                     AllProperties.AddRange(selectedComposition.ContentProperties);
                 }
-            }   
+            }
         }
     }
-    
+
     private void SortTabsInOrder()
     {
         OrderedTabs = ContentType!.Tabs.OrderBy(x => x.SortOrder).ToList();
@@ -351,25 +388,24 @@ else if(ContentId == null)
                 if (OrderedTabs.All(x => x.Alias != selectedCompositionTab.Alias))
                 {
                     selectedCompositionTab.IsCompositionTab = true;
-                    OrderedTabs.Add(selectedCompositionTab);   
-                }   
+                    OrderedTabs.Add(selectedCompositionTab);
+                }
             }
         }
     }
-    
+
     private async Task SyncProperties(Content content, ContentType contentType)
     {
-
         if (content.LastUpdatedById != null)
         {
-            LastUpdatedBy = await Mediator.GetUser(content.LastUpdatedById);   
+            LastUpdatedBy = await Mediator.GetUser(content.LastUpdatedById);
         }
-        
+
         var toRemove = new List<ContentPropertyValue>();
-        
+
         await CompositionsInit();
         SortTabsInOrder();
-        
+
         // Check for properties that were removed
         foreach (var cpd in content.PropertyData)
         {
@@ -427,7 +463,7 @@ else if(ContentId == null)
                 Content!.ContentTypeId = ContentType.Id;
             }
 
-            await SyncProperties(Content!, ContentType);   
+            await SyncProperties(Content!, ContentType);
         }
     }
 
@@ -444,7 +480,7 @@ else if(ContentId == null)
             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = removeUnpublishedContent.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
-    
+
     private async Task Save(RadzenSplitButtonItem? item, bool unpublish)
     {
         if (await ValidateService.CanSave(Content!))
@@ -456,7 +492,7 @@ else if(ContentId == null)
             else
             {
                 var saveContentCommand = new SaveContentCommand();
-                
+
                 if (unpublish)
                 {
                     Content!.Published = false;
@@ -477,7 +513,7 @@ else if(ContentId == null)
                 saveContentCommand.Content = Content;
                 var result = await Mediator.Send(saveContentCommand);
                 NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
-                
+
                 if (ParentId != null)
                 {
                     // If we are creating or saving a child item, make sure the parent is open
@@ -487,7 +523,7 @@ else if(ContentId == null)
                         TreeState.NodeExpanded(ParentId.Value);
                     }
                 }
-                
+
                 await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
                 NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{Content.Id}");
             }
