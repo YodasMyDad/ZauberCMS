@@ -287,17 +287,35 @@ public static class ZauberSetup
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapStaticAssets();
+        
+        // We only want to map Blazor routes if its the admin or account section 
+        app.MapWhen(
+            context => context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase) ||
+                       context.Request.Path.StartsWithSegments("/account", StringComparison.OrdinalIgnoreCase),
+            branch =>
+            {
+                // Use MapRazorComponents<T>() ONLY in the branch
+                branch.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapRazorComponents<T>()
+                        .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
+                        .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
+                    
+                    endpoints.MapAdditionalIdentityEndpoints();
+                });
+                
+                /*// Group the admin routes for Blazor
+                app
+                    .MapRazorComponents<T>()
+                    .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
+                    .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);*/
 
+                // Add additional endpoints required by the Identity /Account Razor components.
+                //app.MapAdditionalIdentityEndpoints();
+            }
+        );
+        
         app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
-
-        // Group the admin routes for Blazor
-        app
-            .MapRazorComponents<T>()
-            .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
-            .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
-
-        // Add additional endpoints required by the Identity /Account Razor components.
-        app.MapAdditionalIdentityEndpoints();
 
         //app.UseMiddleware<ContentRoutingMiddleware>();
         app.MapControllerRoute(
