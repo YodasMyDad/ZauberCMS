@@ -315,6 +315,8 @@ public static class ZauberSetup
             }
         );
         
+        //app.MapBlazorHub();
+        
         app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
 
         //app.UseMiddleware<ContentRoutingMiddleware>();
