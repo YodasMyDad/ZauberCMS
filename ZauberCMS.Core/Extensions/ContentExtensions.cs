@@ -4,11 +4,77 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Extensions;
 
 public static class ContentExtensions
 {
+    
+    /// <summary>
+    /// Gets navigation items making sure picked content is up to date
+    /// </summary>
+    /// <param name="content"></param>
+    /// <param name="alias"></param>
+    /// <param name="mediator"></param>
+    /// <returns></returns>
+    public static async Task<List<NavigationItem>> NavigationItems(this IHasPropertyValues content, string alias, IMediator mediator)
+    {
+        var navItems = content.GetValue<List<NavigationItem>>(alias);
+        if (navItems?.Count > 0)
+        {
+            await ProcessNavigationItems(navItems, mediator);
+        }
+        return navItems ?? [];
+    }
+
+    private static async Task ProcessNavigationItems(List<NavigationItem> navItems, IMediator mediator)
+    {
+        // Collect all ContentIds from this level
+        var navWithContent = navItems.Where(x => x.ContentId != null).Select(x => x.ContentId!.Value).ToList();
+    
+        // Process this level's ContentIds
+        if (navWithContent.Count > 0)
+        {
+            var contentItems = await mediator.Send(new QueryContentCommand
+            {
+                Ids = navWithContent,
+                AmountPerPage = navWithContent.Count,
+                Cached = true
+            });
+            var dictContentItems = contentItems.Items.ToDictionary(x => x.Id, x => x);
+        
+            foreach (var navigationItem in navItems)
+            {
+                if (navigationItem.ContentId != null)
+                {
+                    if (dictContentItems.TryGetValue(navigationItem.ContentId.Value, out var newContent))
+                    {
+                        navigationItem.Url = newContent.Url;
+                    }
+                }
+            
+                // Recursively process children if they exist
+                if (navigationItem.Children?.Count > 0)
+                {
+                    await ProcessNavigationItems(navigationItem.Children, mediator);
+                }
+            }
+        }
+        // If there are no ContentIds at this level but there might be children to process
+        else
+        {
+            foreach (var navigationItem in navItems)
+            {
+                if (navigationItem.Children?.Count > 0)
+                {
+                    await ProcessNavigationItems(navigationItem.Children, mediator);
+                }
+            }
+        }
+    }
+
+    
     /// <summary>
     /// Get a value from a content property
     /// </summary>

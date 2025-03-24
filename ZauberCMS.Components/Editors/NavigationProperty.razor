@@ -3,6 +3,7 @@
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core
+@using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -47,11 +48,23 @@
     private object Selection { get; set; } = new();
     private List<NavigationItem> Data { get; set; } = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!Value.IsNullOrWhiteSpace())
         {
             Data = JsonSerializer.Deserialize<List<NavigationItem>>(Value) ?? [];
+            foreach (var navItem in Data)
+            {
+                if (navItem.ContentId != null)
+                {
+                    var content = await Mediator.GetContent(navItem.ContentId.Value);
+                    if (content != null)
+                    {
+                        // Re-sync url's in case those have been changed.
+                        navItem.Url = content.Url;
+                    }
+                }
+            }
         }
     }
 

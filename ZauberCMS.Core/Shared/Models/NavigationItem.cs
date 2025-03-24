@@ -2,7 +2,7 @@
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Interfaces;
 
-namespace ZauberCMS.Components.Editors.Models;
+namespace ZauberCMS.Core.Shared.Models;
 
 public class NavigationItem : ITreeItem
 {
