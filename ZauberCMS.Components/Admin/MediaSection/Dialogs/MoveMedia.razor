@@ -1,0 +1,48 @@
+﻿@using ZauberCMS.Components.Admin.Trees
+@using ZauberCMS.Core.Media.Models
+<div>Choose where to move @Item.Name to in the tree structure below</div>
+
+<EditorRow>
+    <CentreColumn>
+        @if (ParentId != null)
+        {
+            <div class="pb-2">
+                <TreeButton Icon="start" Name="Move To Root" OnClick="SetAsRoot" />
+            </div>
+        }
+        <MediaTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>
+    </CentreColumn>
+</EditorRow>
+
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+
+@code {
+    [Parameter, EditorRequired] public Media Item { get; set; } = null!;
+    [Parameter] public Guid? ParentId { get; set; }
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    private void OnValueChangedHandler(object value)
+    {
+        if (value is Media baseItem)
+        {
+            if (baseItem.Id != Item.Id)
+            {
+                ParentId = baseItem.Id;   
+            }
+        }
+    }
+
+    private async Task Save()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(ParentId ?? Guid.Empty));
+    }
+    
+    private async Task SetAsRoot()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Guid.Empty));
+    }
+}

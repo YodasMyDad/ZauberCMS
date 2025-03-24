@@ -1,18 +1,15 @@
 ﻿@using ZauberCMS.Components.Admin.Trees
-@using ZauberCMS.Core.Shared.Interfaces
 <div>Choose where to move @Item.Name to in the tree structure below</div>
 
 <EditorRow>
     <CentreColumn>
-        @if (Item is Content)
+        @if (ParentId != null)
         {
-            <ContentTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>    
+            <div class="pb-2">
+                <TreeButton Icon="start" Name="Move To Root" OnClick="SetAsRoot" />
+            </div>
         }
-        else
-        {
-            <MediaTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>
-        }
-        
+        <ContentTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>
     </CentreColumn>
 </EditorRow>
 
@@ -23,17 +20,17 @@
 
 
 @code {
-    [Parameter, EditorRequired] public IBaseItem Item { get; set; } = null!;
+    [Parameter, EditorRequired] public Content Item { get; set; } = null!;
     [Parameter] public Guid? ParentId { get; set; }
 
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     private void OnValueChangedHandler(object value)
     {
-        if (value is IBaseItem baseItem)
+        if (value is Content baseItem)
         {
             if (baseItem.Id != Item.Id)
             {
-                ParentId = baseItem.Id;   
+                ParentId = baseItem.Id;
             }
         }
     }
@@ -41,5 +38,10 @@
     private async Task Save()
     {
         await BlazoredModal.CloseAsync(ModalResult.Ok(ParentId ?? Guid.Empty));
+    }
+    
+    private async Task SetAsRoot()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Guid.Empty));
     }
 }

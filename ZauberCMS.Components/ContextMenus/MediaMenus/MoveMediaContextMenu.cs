@@ -3,9 +3,8 @@ using Blazored.Modal.Services;
 using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using ZauberCMS.Components.Admin.Shared.Dialogs;
+using ZauberCMS.Components.Admin.MediaSection.Dialogs;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
@@ -13,18 +12,15 @@ using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Interfaces;
 
-namespace ZauberCMS.Components.ContextMenus.Shared;
+namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
-public class MoveItemContextMenu(NotificationService notificationService, IMediator mediator, AppState appState) : ITreeContextMenu
+public class MoveMediaContextMenu(NotificationService notificationService, IMediator mediator, AppState appState) : ITreeContextMenu
 {
-    public List<string> Sections => [Constants.Sections.ContentSection, Constants.Sections.MediaSection];
+    public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias => [];
     public string Text(TreeItemContextMenuEventArgs args) => "Move";
-
     public string Icon(TreeItemContextMenuEventArgs args) => "move_up";
-
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
-
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
     {
         if(args.Value is Content content)
@@ -45,14 +41,14 @@ public class MoveItemContextMenu(NotificationService notificationService, IMedia
 
         var parameters = new Dictionary<string, object>
         {
-            { nameof(MoveItem.Item), baseItem}
+            { nameof(MoveMedia.Item), baseItem}
         };
         if (baseItem.ParentId != null)
         {
-            parameters.Add(nameof(MoveItem.ParentId), baseItem.ParentId);
+            parameters.Add(nameof(MoveMedia.ParentId), baseItem.ParentId);
         }
 
-        Modal = modalService.OpenSidePanel<MoveItem>(args.Value is Content ? "Move Content" : "Move Media", parameters);
+        Modal = modalService.OpenSidePanel<MoveMedia>(args.Value is Content ? "Move Content" : "Move Media", parameters);
         var result = await Modal.Result;
         if (result is { Confirmed: true, Data: Guid parentId })
         {
@@ -66,20 +62,6 @@ public class MoveItemContextMenu(NotificationService notificationService, IMedia
             }
             
             var user = await mediator.GetCurrentUser();
-            
-            if (args.Value is Content content)
-            {
-                var copyContentResult = await mediator.Send(new SaveContentCommand {Content = content, ExcludePropertyData = true});
-                if (!copyContentResult.Success)
-                {
-                    notificationService.ShowNotifications(copyContentResult.Messages);
-                }
-                else
-                {
-                    notificationService.ShowSuccessNotification("Content Moved");
-                    await appState.NotifyContentChanged(content, user?.UserName ?? "Unknown");
-                }
-            }
 
             if (args.Value is Media media)
             {
