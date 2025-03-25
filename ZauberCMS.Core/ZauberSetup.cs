@@ -81,15 +81,19 @@ public static class ZauberSetup
         var databaseProvider = zauberSettings.DatabaseProvider;
         if (databaseProvider != null)
         {
-            switch (databaseProvider)
+            switch (databaseProvider.ToLower())
             {
-                case "Sqlite":
+                case "sqlite": 
                     builder.Services.AddDbContext<ZauberDbContext, SqliteZauberDbContext>();
                     break;
-                case "SqlServer":
+                case "postgresql": 
+                    builder.Services.AddDbContext<ZauberDbContext, PostgreSqlZauberDbContext>();
+                    break;
+                case "sqlserver":
                     builder.Services.AddDbContext<ZauberDbContext>();
                     break;
             }
+
 
             builder.Services.AddIdentityCore<User>(options =>
                 {

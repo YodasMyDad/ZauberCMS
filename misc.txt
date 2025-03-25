@@ -12,6 +12,13 @@ dotnet ef migrations add InitialCreate --context SqliteZauberDbContext -o "Data/
 "DatabaseProvider": "Sqlite",
 "ConnectionString": "DataSource=app.db;Cache=Shared",
 
+PostgreSql Migrations
+dotnet ef migrations add InitialCreate --context PostgreSqlZauberDbContext -o "Data/Migrations/PostgreSql"
+
+"DatabaseProvider": "PostgreSql",
+"ConnectionString": "Host=localhost;Port=5432;Database=mydb;Username=postgres;Password=yourpassword"
+,
+
 -- Create release nuget packages
 
 dotnet build ZauberCMS.sln -c Release
