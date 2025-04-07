@@ -23,6 +23,7 @@ public class DataGridContentHandler(IServiceProvider serviceProvider) : IRequest
         var query = dbContext.Contents
             .Include(x => x.ContentType)
             .Include(x => x.LastUpdatedBy)
+            .Where(x => x.Deleted == false)
             .AsQueryable();
         
         if (request.IncludeChildren)
