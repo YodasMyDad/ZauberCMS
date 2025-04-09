@@ -1,9 +1,180 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenHtmlEditor @bind-Value="@Value" style="height: 300px;" Input="@OnInput" Change="@OnChange" Paste="@OnPaste" Execute="@OnExecute" UploadUrl="upload/image" />
+<RadzenHtmlEditor @bind-Value="@Value" style="height: 300px;" Input="@OnInput" Change="@OnChange" Paste="@OnPaste"
+                  Execute="@OnExecute">
+
+    @if (HasUndoRedoTools())
+    {
+        if (SettingsModel.AllowUndo)
+        {
+            <RadzenHtmlEditorUndo />
+        }
+        if (SettingsModel.AllowRedo)
+        {
+            <RadzenHtmlEditorRedo />
+        }
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasBasicStyleTools())
+    {
+        if (SettingsModel.AllowBold)
+        {
+            <RadzenHtmlEditorBold />
+        }
+        if (SettingsModel.AllowItalic)
+        {
+            <RadzenHtmlEditorItalic />
+        }
+        if (SettingsModel.AllowUnderline)
+        {
+            <RadzenHtmlEditorUnderline />
+        }
+        if (SettingsModel.AllowStrikeThrough)
+        {
+            <RadzenHtmlEditorStrikeThrough />
+        }
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasAlignmentTools())
+    {
+        if (SettingsModel.AllowAlignLeft)
+        {
+            <RadzenHtmlEditorAlignLeft />
+        }
+        if (SettingsModel.AllowAlignCenter)
+        {
+            <RadzenHtmlEditorAlignCenter />
+        }
+        if (SettingsModel.AllowAlignRight)
+        {
+            <RadzenHtmlEditorAlignRight />
+        }
+        if (SettingsModel.AllowJustify)
+        {
+            <RadzenHtmlEditorJustify />
+        }
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasIndentTools())
+    {
+        if (SettingsModel.AllowIndent)
+        {
+            <RadzenHtmlEditorIndent />
+        }
+        if (SettingsModel.AllowOutdent)
+        {
+            <RadzenHtmlEditorOutdent />
+        }
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasListTools())
+    {
+        if (SettingsModel.AllowUnorderedList)
+        {
+            <RadzenHtmlEditorUnorderedList />
+        }
+        if (SettingsModel.AllowOrderedList)
+        {
+            <RadzenHtmlEditorOrderedList />
+        }
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasColorTools())
+    {
+        if (SettingsModel.AllowColor)
+        {
+            <RadzenHtmlEditorColor />
+        }
+        if (SettingsModel.AllowBackground)
+        {
+            <RadzenHtmlEditorBackground />
+        }
+        if (SettingsModel.AllowRemoveFormat)
+        {
+            <RadzenHtmlEditorRemoveFormat />
+        }
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasFontTools())
+    {
+        if (SettingsModel.AllowFontName)
+        {
+            <RadzenHtmlEditorFontName />
+        }
+        if (SettingsModel.AllowFontSize)
+        {
+            <RadzenHtmlEditorFontSize />
+        }
+        if (SettingsModel.AllowFormatBlock)
+        {
+            <RadzenHtmlEditorFormatBlock />
+        }
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasScriptTools())
+    {
+        if (SettingsModel.AllowSubscript)
+        {
+            <RadzenHtmlEditorSubscript />
+        }
+        if (SettingsModel.AllowSuperscript)
+        {
+            <RadzenHtmlEditorSuperscript />
+        }
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasMediaTools())
+    {
+        if (SettingsModel.AllowLink)
+        {
+            <RadzenHtmlEditorLink />
+        }
+        if (SettingsModel.AllowUnlink)
+        {
+            <RadzenHtmlEditorUnlink />
+        }
+        @*if (SettingsModel.AllowImages)
+        {
+            <RadzenHtmlEditorImage />
+        }*@
+
+        <RadzenHtmlEditorSeparator />
+    }
+
+    @if (HasSourceOrCustomTools())
+    {
+        if (SettingsModel.AllowSourceEdit)
+        {
+            <RadzenHtmlEditorSource />
+        }
+        @*if (SettingsModel.AllowCustomTool)
+        {
+            <RadzenHtmlEditorCustomTool />
+        }*@
+    }
+
+</RadzenHtmlEditor>
 
 @code {
-    
+
     void OnPaste(HtmlEditorPasteEventArgs args)
     {
         //console.Log($"Paste: {args.Html}");
@@ -22,23 +193,60 @@
     void OnExecute(HtmlEditorExecuteEventArgs args)
     {
         //console.Log($"Execute: {args.CommandName}");
-    }    
-    
-    
-    public string Name { get; set; } = "Text Editor (Radzen)";
+    }
 
+    public string Name { get; set; } = "Text Editor (Radzen)";
     public string Alias { get; set; } = "ZauberCMS.RichTextEditor";
 
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
+    
     [CascadingParameter] public IModalService? ModalService { get; set; }
+    
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
     public bool FullWidth { get; set; }
-    
     public string Icon { get; set; } = "edit_note";
     public string Description { get; set; } = "Radzen's Rich Text Editor";
-    public Type? SettingsComponent { get; set; }
+    public Type? SettingsComponent { get; set; } = typeof(RichTextEditorSettings);
+    
+    private RichTextEditorSettingsModel SettingsModel { get; set; } = new();
+    
+    protected override void OnInitialized()
+    {
+        SettingsModel = Settings.FromJson<RichTextEditorSettingsModel>();
+    }
+    
+    private bool HasUndoRedoTools() =>
+        SettingsModel.AllowUndo || SettingsModel.AllowRedo;
+
+    private bool HasBasicStyleTools() =>
+        SettingsModel.AllowBold || SettingsModel.AllowItalic || SettingsModel.AllowUnderline || SettingsModel.AllowStrikeThrough;
+
+    private bool HasAlignmentTools() =>
+        SettingsModel.AllowAlignLeft || SettingsModel.AllowAlignCenter || SettingsModel.AllowAlignRight || SettingsModel.AllowJustify;
+
+    private bool HasIndentTools() =>
+        SettingsModel.AllowIndent || SettingsModel.AllowOutdent;
+
+    private bool HasListTools() =>
+        SettingsModel.AllowUnorderedList || SettingsModel.AllowOrderedList;
+
+    private bool HasColorTools() =>
+        SettingsModel.AllowColor || SettingsModel.AllowBackground || SettingsModel.AllowRemoveFormat;
+
+    private bool HasFontTools() =>
+        SettingsModel.AllowFontName || SettingsModel.AllowFontSize || SettingsModel.AllowFormatBlock;
+
+    private bool HasScriptTools() =>
+        SettingsModel.AllowSubscript || SettingsModel.AllowSuperscript;
+
+    private bool HasMediaTools() =>
+        SettingsModel.AllowLink || SettingsModel.AllowUnlink;
+
+    private bool HasSourceOrCustomTools() =>
+        SettingsModel.AllowSourceEdit;
+
 }

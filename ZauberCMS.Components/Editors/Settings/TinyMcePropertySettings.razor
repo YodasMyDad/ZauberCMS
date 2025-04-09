@@ -56,8 +56,6 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     public TinyMcePropertySettingsModel Settings { get; set; } = new();
     
-
-    
     protected override void OnInitialized()
     {
         Settings = this.GetPropertySettings();

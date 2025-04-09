@@ -1,0 +1,257 @@
+﻿@using ZauberCMS.Components.Editors.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ZauberCMS.Components.Editors.Models.RichTextEditorSettingsModel>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Undo" Description="Button to allow the user to undo the last action"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowUndo" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Show undo button" }})" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Redo" Description="Button to allow the user to redo the last undone action"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowRedo" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Show redo button" }})" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Bold" Description="Toggle bold style for selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowBold" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Italic" Description="Toggle italic style for selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowItalic" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Underline" Description="Toggle underline style for selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowUnderline" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Strikethrough" Description="Toggle strikethrough style for selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowStrikeThrough" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Align Left" Description="Align text to the left"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowAlignLeft" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Align Center" Description="Align text to the center"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowAlignCenter" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Align Right" Description="Align text to the right"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowAlignRight" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Justify" Description="Justify text across the line width"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowJustify" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Indent" Description="Indent selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowIndent" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Outdent" Description="Outdent selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowOutdent" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Unordered List" Description="Insert a bulleted list"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowUnorderedList" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Ordered List" Description="Insert a numbered list"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowOrderedList" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Font Color" Description="Change the color of the selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowColor" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Background Color" Description="Change the background color of selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowBackground" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Remove Format" Description="Clear formatting from selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowRemoveFormat" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Subscript" Description="Format text as subscript"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowSubscript" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Superscript" Description="Format text as superscript"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowSuperscript" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Link" Description="Insert a hyperlink"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowLink" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Unlink" Description="Remove a hyperlink"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowUnlink" />
+    </CentreColumn>
+</EditorRow>
+
+@*<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Images" Description="Insert an image (requires upload config)"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowImages" />
+    </CentreColumn>
+</EditorRow>*@
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Font Name" Description="Choose the font family for selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowFontName" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Font Size" Description="Change font size of selected text"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowFontSize" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Format Block" Description="Apply paragraph or heading format"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowFormatBlock" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Source Edit" Description="Edit the raw HTML source"/>
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@Settings.AllowSourceEdit" />
+    </CentreColumn>
+</EditorRow>
+
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save" />
+</RadzenStack>
+
+@code {
+    [Parameter] public string? SettingsModel { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    public RichTextEditorSettingsModel Settings { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Settings = this.GetPropertySettings();
+    }
+
+    private async Task Save()
+    {
+        await this.SavePropertySettings(Settings);
+    }
+}
