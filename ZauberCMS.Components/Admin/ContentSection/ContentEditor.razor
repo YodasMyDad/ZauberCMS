@@ -189,32 +189,49 @@ else
             </RadzenTabs>
             @if (!Content.Deleted)
             {
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
-                             AlignItems="AlignItems.Center">
-                    @if (Content!.UnpublishedContentId != null)
+                <div class="flex justify-between items-center">
+                    @if (!ElementTypesOnly)
                     {
-                        <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter"
-                                      Text="Clear Changes"/>
+                        <div>
+                            <RadzenBreadCrumb>
+                                <RadzenBreadCrumbItem Text=" " />
+                                @foreach (var content in Breadcrumb.SkipLast(1))
+                                {
+                                    <RadzenBreadCrumbItem
+                                        Path="@($"{Urls.AdminUpdateContent}/{content.Id}")"
+                                        Text="@(content.Name?.Length > 30 ? content.Name[..30] + "..." : content.Name)"/>
+                                }
+                            </RadzenBreadCrumb>
+                        </div>
                     }
-                    @if (Content!.Published)
-                    {
-                        <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
-                    }
-                    @if (IsBlockList == true)
-                    {
-                        <RadzenButton Click=@(() => Save(null, false)) Icon="save" ButtonStyle="ButtonStyle.Success"
-                                      Text="Save"/>
-                    }
-                    else
-                    {
-                        <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save"
-                                           ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
-                            <ChildContent>
-                                <RadzenSplitButtonItem Text="Save Only" Value="1"/>
-                            </ChildContent>
-                        </RadzenSplitButton>
-                    }
-                </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                                 AlignItems="AlignItems.Center">
+                        @if (Content!.UnpublishedContentId != null)
+                        {
+                            <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter"
+                                          Text="Clear Changes"/>
+                        }
+                        @if (Content!.Published)
+                        {
+                            <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
+                        }
+                        @if (IsBlockList == true)
+                        {
+                            <RadzenButton Click=@(() => Save(null, false)) Icon="save" ButtonStyle="ButtonStyle.Success"
+                                          Text="Save"/>
+                        }
+                        else
+                        {
+                            <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save"
+                                               ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
+                                <ChildContent>
+                                    <RadzenSplitButtonItem Text="Save Only" Value="1"/>
+                                </ChildContent>
+                            </RadzenSplitButton>
+                        }
+                    </RadzenStack>
+                </div>
             }
         </EditForm>
     }
@@ -261,6 +278,7 @@ else
     private List<Tab> OrderedTabs { get; set; } = [];
     private List<PropertyType> AllProperties { get; set; } = [];
     private List<ContentType> SelectedCompositions { get; set; } = [];
+    private List<Content> Breadcrumb { get; set; } = [];
     private User? LastUpdatedBy { get; set; }
     private bool Loading { get; set; } = true;
 
@@ -446,6 +464,19 @@ else
         {
             Content.ViewComponent = contentType.AvailableContentViews.FirstOrDefault()!;
         }
+        
+        // Breadcrumb
+        if (Content.Path.Count > 1)
+        {
+            var breadcrumb = await Mediator.QueryContent(new QueryContentCommand { Ids = Content.Path });
+            if (breadcrumb.Items.Any())
+            {
+                Breadcrumb = breadcrumb.Items
+                    .OrderBy(item => Content.Path.IndexOf(item.Id))
+                    .ToList();
+            }   
+        }
+
     }
 
     private async Task UpdateContentTypeId(Guid contentTypeId)
