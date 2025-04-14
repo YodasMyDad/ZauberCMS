@@ -45,7 +45,7 @@
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.4" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-        <PackageReference Include="Radzen.Blazor" Version="6.3.1" />
+        <PackageReference Include="Radzen.Blazor" Version="6.5.2" />
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
         <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.1.4" />
     </ItemGroup>
