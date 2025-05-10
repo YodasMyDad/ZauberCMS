@@ -52,13 +52,13 @@ https://aptitude.gitbook.io/zaubercms
 
 ## Progress & Issues
 
-After v3.0 the next big release will be **v3.5**. You can see the progress and release features here
+Next large release will be **v4.0** with .NET 10. After that release will be **v5.0**. You can see the progress and release features here
 
+**v4.0 Board**  
 https://github.com/users/YodasMyDad/projects/8
 
-And issues found here
-
-https://github.com/YodasMyDad/ZauberCMS/issues
+**v5.0 Board**  
+https://github.com/users/YodasMyDad/projects/9
 
 ## Screenshots
 
