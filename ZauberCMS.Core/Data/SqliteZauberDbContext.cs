@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace ZauberCMS.Core.Data;
 
-public class SqliteZauberDbContext(DbContextOptions options, IConfiguration configuration) 
+public class SqliteZauberDbContext(DbContextOptions<SqliteZauberDbContext> options, IConfiguration configuration) 
     : ZauberDbContext(options, configuration)
 {
     private readonly IConfiguration _configuration = configuration;

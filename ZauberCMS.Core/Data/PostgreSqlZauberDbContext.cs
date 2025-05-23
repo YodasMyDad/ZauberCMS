@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace ZauberCMS.Core.Data;
 
-public class PostgreSqlZauberDbContext(DbContextOptions options, IConfiguration configuration) 
+public class PostgreSqlZauberDbContext(DbContextOptions<PostgreSqlZauberDbContext> options, IConfiguration configuration) 
     : ZauberDbContext(options, configuration)
 {
     private readonly IConfiguration _configuration = configuration;
