@@ -33,7 +33,7 @@ public class SaveMediaHandler(
     public async Task<HandlerResult<Models.Media>> Handle(SaveMediaCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         var result = new HandlerResult<Models.Media>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();

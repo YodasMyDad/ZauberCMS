@@ -15,7 +15,7 @@ public class GetContentLanguagesHandler(IServiceProvider serviceProvider, ICache
     public async Task<Dictionary<object, string>> Handle(GetContentLanguagesCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         var query = dbContext.Contents.AsNoTracking()
             .Include(x => x.Language)

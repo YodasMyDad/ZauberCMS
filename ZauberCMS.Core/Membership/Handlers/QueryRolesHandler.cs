@@ -15,7 +15,7 @@ public class QueryRolesHandler(IServiceProvider serviceProvider)
     public Task<PaginatedList<Role>> Handle(QueryRolesCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Roles.AsQueryable();
 
         if (request.Query != null)

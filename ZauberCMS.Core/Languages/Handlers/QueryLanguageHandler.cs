@@ -15,7 +15,7 @@ public class QueryLanguageHandler(IServiceProvider serviceProvider)
     public Task<PaginatedList<Language>> Handle(QueryLanguageCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Languages.AsQueryable();
 
         if (request.Query != null)

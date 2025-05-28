@@ -11,7 +11,7 @@ public class HasChildMediaHandler(IServiceProvider serviceProvider)  : IRequestH
     public async Task<bool> Handle(HasChildMediaCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         return await dbContext.Medias.AsNoTracking().AnyAsync(c => c.ParentId == request.ParentId, cancellationToken: cancellationToken);
     }
 }

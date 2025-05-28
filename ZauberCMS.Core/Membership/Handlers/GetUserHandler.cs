@@ -17,7 +17,7 @@ public class GetUserHandler(IServiceProvider serviceProvider, ICacheService cach
     public async Task<User?> Handle(GetUserCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = GenerateCacheKey(request, dbContext);
 
         if (request.Cached)
@@ -28,7 +28,7 @@ public class GetUserHandler(IServiceProvider serviceProvider, ICacheService cach
         return await FetchUserAsync(request, dbContext, cancellationToken);
     }
 
-    private static string GenerateCacheKey(GetUserCommand request, ZauberDbContext dbContext)
+    private static string GenerateCacheKey(GetUserCommand request, IZauberDbContext dbContext)
     {
         var query = BuildQuery(request, dbContext);
         var queryString = query.ToQueryString();
@@ -36,7 +36,7 @@ public class GetUserHandler(IServiceProvider serviceProvider, ICacheService cach
         return typeof(User).ToCacheKey(Convert.ToBase64String(hash));
     }
 
-    private static IQueryable<User> BuildQuery(GetUserCommand request, ZauberDbContext dbContext)
+    private static IQueryable<User> BuildQuery(GetUserCommand request, IZauberDbContext dbContext)
     {
         var query = dbContext.Users
             .Include(x => x.UserRoles)
@@ -49,7 +49,7 @@ public class GetUserHandler(IServiceProvider serviceProvider, ICacheService cach
         return query;
     }
 
-    private static async Task<User?> FetchUserAsync(GetUserCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<User?> FetchUserAsync(GetUserCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);

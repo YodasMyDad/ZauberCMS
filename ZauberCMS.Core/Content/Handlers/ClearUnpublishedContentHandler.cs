@@ -18,7 +18,7 @@ public class ClearUnpublishedContentHandler(IServiceProvider serviceProvider, IC
         CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<UnpublishedContent>();
         var content =
             await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == request.ContentId,

@@ -2,5 +2,5 @@
 
 public interface ISeedData
 {
-    void Initialise(ZauberDbContext dbContext);
+    void Initialise(IZauberDbContext dbContext);
 }

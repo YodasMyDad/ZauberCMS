@@ -15,7 +15,7 @@ public class QueryRedirectsHandler(IServiceProvider serviceProvider, ICacheServi
     public async Task<List<SeoRedirect>> Handle(QueryRedirectsCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(request, dbContext);
         var cacheKey = query.GenerateCacheKey(typeof(SeoRedirect));
         
@@ -27,7 +27,7 @@ public class QueryRedirectsHandler(IServiceProvider serviceProvider, ICacheServi
         return await FetchContentAsync(request, dbContext, cancellationToken);
     }
 
-    private static IQueryable<SeoRedirect> BuildQuery(QueryRedirectsCommand request, ZauberDbContext dbContext)
+    private static IQueryable<SeoRedirect> BuildQuery(QueryRedirectsCommand request, IZauberDbContext dbContext)
     {
         var query = dbContext.Redirects.AsQueryable();
 
@@ -59,7 +59,7 @@ public class QueryRedirectsHandler(IServiceProvider serviceProvider, ICacheServi
         return query.Take(request.Amount);
     }
     
-    private static async Task<List<SeoRedirect>> FetchContentAsync(QueryRedirectsCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<List<SeoRedirect>> FetchContentAsync(QueryRedirectsCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return await query.ToListAsync(cancellationToken: cancellationToken);

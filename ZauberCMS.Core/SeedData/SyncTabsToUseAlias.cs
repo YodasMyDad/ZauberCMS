@@ -6,7 +6,7 @@ namespace ZauberCMS.Core.SeedData;
 
 public class SyncTabsToUseAlias : ISeedData
 {
-    public void Initialise(ZauberDbContext dbContext)
+    public void Initialise(IZauberDbContext dbContext)
     {
         // Get all ContentTypes
         // ReSharper disable once EntityFramework.NPlusOne.IncompleteDataQuery

@@ -10,7 +10,7 @@ public class MultiQueryHandler(IServiceProvider serviceProvider)
     public async Task<Dictionary<string, IEnumerable<object>>> Handle(MultiQueryCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         var results = new Dictionary<string, IEnumerable<object>>();
 

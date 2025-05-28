@@ -15,7 +15,7 @@ public class GetGlobalDataHandler(IServiceProvider serviceProvider, ICacheServic
     public async Task<GlobalData?> Handle(GetGlobalDataCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = GenerateCacheKey(request, dbContext);
         
         if (request.Cached)
@@ -26,7 +26,7 @@ public class GetGlobalDataHandler(IServiceProvider serviceProvider, ICacheServic
         return await FetchContentAsync(request, dbContext, cancellationToken);
     }
     
-    private static string GenerateCacheKey(GetGlobalDataCommand request, ZauberDbContext dbContext)
+    private static string GenerateCacheKey(GetGlobalDataCommand request, IZauberDbContext dbContext)
     {
         var query = BuildQuery(request, dbContext);
         var queryString = query.ToQueryString();
@@ -34,13 +34,13 @@ public class GetGlobalDataHandler(IServiceProvider serviceProvider, ICacheServic
         return typeof(GlobalData).ToCacheKey(Convert.ToBase64String(hash));
     }
 
-    private static IQueryable<GlobalData> BuildQuery(GetGlobalDataCommand request, ZauberDbContext dbContext)
+    private static IQueryable<GlobalData> BuildQuery(GetGlobalDataCommand request, IZauberDbContext dbContext)
     {
         return dbContext.GlobalDatas.AsNoTracking()
             .Where(x => x.Alias == request.Alias);
     }
     
-    private static async Task<GlobalData?> FetchContentAsync(GetGlobalDataCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<GlobalData?> FetchContentAsync(GetGlobalDataCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);

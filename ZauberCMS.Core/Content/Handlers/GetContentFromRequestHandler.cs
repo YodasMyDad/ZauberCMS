@@ -20,7 +20,7 @@ public class GetContentFromRequestHandler(
     public async Task<EntryModel> Handle(GetContentFromRequestCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         var entryModel = new EntryModel();
 

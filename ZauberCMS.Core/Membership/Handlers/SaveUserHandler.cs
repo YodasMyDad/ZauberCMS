@@ -29,7 +29,7 @@ public class SaveUserHandler(
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var refreshCurrentUser = false;
         var isUpdate = false;
         var handlerResult = new HandlerResult<User>();
@@ -158,7 +158,7 @@ public class SaveUserHandler(
         return handlerResult;
     }
     
-    private async Task<HandlerResult<User>> UpdateUserPropertyValues(ZauberDbContext dbContext, User requestUser, HandlerResult<User> handlerResult, CancellationToken cancellationToken)
+    private async Task<HandlerResult<User>> UpdateUserPropertyValues(IZauberDbContext dbContext, User requestUser, HandlerResult<User> handlerResult, CancellationToken cancellationToken)
     {
 
         var user = dbContext.Users.Include(x => x.PropertyData).FirstOrDefault(x => x.Id == requestUser.Id);

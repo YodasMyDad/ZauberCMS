@@ -15,7 +15,7 @@ public static class RoleExtensions
             this UserManager<User> userManager,
             RoleManager<Role> roleManager,
             ILogger logger,
-            ZauberDbContext dbContext,
+            IZauberDbContext dbContext,
             IOptions<ZauberSettings> settings,
             IMediator mediator,
             User newUser,

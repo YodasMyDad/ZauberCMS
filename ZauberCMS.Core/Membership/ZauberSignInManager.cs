@@ -24,7 +24,7 @@ public class ZauberSignInManager(
     IUserConfirmation<User> confirmation,
     IOptions<ZauberSettings> options,
     IMediator mediator,
-    ZauberDbContext dbContext,
+    IZauberDbContext dbContext,
     RoleManager<Role> roleManager)
     : SignInManager<User>(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
 {

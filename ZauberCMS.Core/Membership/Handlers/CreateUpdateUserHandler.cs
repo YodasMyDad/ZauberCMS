@@ -31,7 +31,7 @@ public class CreateUpdateUserHandler(
     {
         using var scope = serviceProvider.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
         // Get the current user first via the authstate

@@ -15,7 +15,7 @@ public class QueryMediaHandler(IServiceProvider serviceProvider, ICacheService c
     public async Task<PaginatedList<Models.Media>> Handle(QueryMediaCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(request, dbContext);
         var cacheKey = query.GenerateCacheKey(typeof(Models.Media));
 
@@ -27,7 +27,7 @@ public class QueryMediaHandler(IServiceProvider serviceProvider, ICacheService c
         return await FetchMediaAsync(request, dbContext, cancellationToken);
     }
 
-    private static IQueryable<Models.Media> BuildQuery(QueryMediaCommand request, ZauberDbContext dbContext)
+    private static IQueryable<Models.Media> BuildQuery(QueryMediaCommand request, IZauberDbContext dbContext)
     {
         var query = dbContext.Medias.Include(x => x.Parent).AsQueryable();
 
@@ -78,7 +78,7 @@ public class QueryMediaHandler(IServiceProvider serviceProvider, ICacheService c
         return query;
     }
 
-    private Task<PaginatedList<Models.Media>> FetchMediaAsync(QueryMediaCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private Task<PaginatedList<Models.Media>> FetchMediaAsync(QueryMediaCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));

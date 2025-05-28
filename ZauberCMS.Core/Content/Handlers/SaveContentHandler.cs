@@ -33,7 +33,7 @@ public class SaveContentHandler(
         CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
@@ -136,7 +136,7 @@ public class SaveContentHandler(
         return handlerResult;
     }
 
-    private void UpdateContentRoles(ZauberDbContext dbContext, Models.Content content, SaveContentCommand request)
+    private void UpdateContentRoles(IZauberDbContext dbContext, Models.Content content, SaveContentCommand request)
     {
         // Fetch existing ContentRoles for the content
         var existingRoles = dbContext.ContentRoles
@@ -172,7 +172,7 @@ public class SaveContentHandler(
         }
     }
     
-    private void UpdateContentPropertyValues(ZauberDbContext dbContext, Models.Content content,
+    private void UpdateContentPropertyValues(IZauberDbContext dbContext, Models.Content content,
         List<ContentPropertyValue> newPropertyValues)
     {
         // Remove deleted items
@@ -199,7 +199,7 @@ public class SaveContentHandler(
         }
     }
 
-    private static string GenerateUniqueUrl(ZauberDbContext dbContext, string baseSlug)
+    private static string GenerateUniqueUrl(IZauberDbContext dbContext, string baseSlug)
     {
         var url = baseSlug;
 

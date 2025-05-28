@@ -49,7 +49,7 @@ public class RestrictAccessContextMenu(
         ContextMenuService contextMenuService, IModalService modalService)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var currentUser = await mediator.GetCurrentUser();
         contextMenuService.Close();
         var content = (Content)args.Value!;

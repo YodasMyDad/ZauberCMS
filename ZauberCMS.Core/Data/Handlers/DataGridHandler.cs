@@ -13,7 +13,7 @@ public class DataGridHandler<T>(IServiceProvider serviceProvider) : IRequestHand
     public async Task<DataGridResult<T>> Handle(DataGridCommand<T> request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         // Use reflection to get the DbSet<T>
         var dbSetProperty = dbContext.GetType().GetProperties()

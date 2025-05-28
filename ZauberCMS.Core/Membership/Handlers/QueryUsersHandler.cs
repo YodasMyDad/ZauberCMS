@@ -16,7 +16,7 @@ public class QueryUsersHandler(IServiceProvider serviceProvider, ICacheService c
     public async Task<PaginatedList<User>> Handle(QueryUsersCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(request, dbContext);
         var cacheKey = query.GenerateCacheKey(typeof(User));
 
@@ -28,7 +28,7 @@ public class QueryUsersHandler(IServiceProvider serviceProvider, ICacheService c
         return await FetchUsersAsync(request, dbContext, cancellationToken);
     }
 
-    private static IQueryable<User> BuildQuery(QueryUsersCommand request, ZauberDbContext dbContext)
+    private static IQueryable<User> BuildQuery(QueryUsersCommand request, IZauberDbContext dbContext)
     {
         var query = dbContext.Users.Include(x => x.UserRoles).AsQueryable();
 
@@ -76,7 +76,7 @@ public class QueryUsersHandler(IServiceProvider serviceProvider, ICacheService c
         return query;
     }
 
-    private static Task<PaginatedList<User>> FetchUsersAsync(QueryUsersCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static Task<PaginatedList<User>> FetchUsersAsync(QueryUsersCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));

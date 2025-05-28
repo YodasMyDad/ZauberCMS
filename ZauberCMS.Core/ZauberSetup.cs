@@ -81,21 +81,8 @@ public static class ZauberSetup
         var databaseProvider = zauberSettings.DatabaseProvider;
         if (databaseProvider != null)
         {
-            switch (databaseProvider.ToLower())
+            var identityBuilder = builder.Services.AddIdentityCore<User>(options =>
             {
-                case "sqlite": 
-                    builder.Services.AddDbContext<ZauberDbContext, SqliteZauberDbContext>();
-                    break;
-                case "postgresql": 
-                    builder.Services.AddDbContext<ZauberDbContext, PostgreSqlZauberDbContext>();
-                    break;
-                case "sqlserver":
-                    builder.Services.AddDbContext<ZauberDbContext>();
-                    break;
-            }
-
-
-            builder.Services.AddIdentityCore<User>(options =>
                 {
                     // Password settings.
                     options.Password.RequireDigit = zauberSettings.Identity.PasswordRequireDigit;
@@ -116,12 +103,42 @@ public static class ZauberSetup
 
                     // Email
                     options.SignIn.RequireConfirmedAccount = zauberSettings.Identity.SignInRequireConfirmedAccount;
-                })
-                .AddRoles<Role>()
-                .AddEntityFrameworkStores<ZauberDbContext>()
-                .AddUserStore<UserStore<User, Role, ZauberDbContext, Guid, UserClaim, UserRole, UserLogin, UserToken,
-                    RoleClaim>>()
-                .AddRoleStore<RoleStore<Role, ZauberDbContext, Guid, UserRole, RoleClaim>>()
+                }
+            });
+            
+            identityBuilder.AddRoles<Role>();
+            
+            switch (databaseProvider.ToLower())
+            {
+                case "sqlite":
+                    builder.Services.AddDbContext<SqliteZauberDbContext>();
+                    builder.Services.AddScoped<IZauberDbContext, SqliteZauberDbContext>();
+                    identityBuilder
+                        .AddEntityFrameworkStores<SqliteZauberDbContext>()
+                        .AddUserStore<UserStore<User, Role, SqliteZauberDbContext, Guid, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>>()
+                        .AddRoleStore<RoleStore<Role, SqliteZauberDbContext, Guid, UserRole, RoleClaim>>();
+                    break;
+                case "postgresql":
+                    builder.Services.AddDbContext<PostgreSqlZauberDbContext>();
+                    builder.Services.AddScoped<IZauberDbContext, PostgreSqlZauberDbContext>();
+                    identityBuilder
+                        .AddEntityFrameworkStores<PostgreSqlZauberDbContext>()
+                        .AddUserStore<UserStore<User, Role, PostgreSqlZauberDbContext, Guid, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>>()
+                        .AddRoleStore<RoleStore<Role, PostgreSqlZauberDbContext, Guid, UserRole, RoleClaim>>();
+                    break;
+                case "sqlserver":
+                    builder.Services.AddDbContext<ZauberDbContext>();
+                    builder.Services.AddScoped<IZauberDbContext, ZauberDbContext>();
+                    identityBuilder
+                        .AddEntityFrameworkStores<ZauberDbContext>()
+                        .AddUserStore<UserStore<User, Role, ZauberDbContext, Guid, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>>()
+                        .AddRoleStore<RoleStore<Role, ZauberDbContext, Guid, UserRole, RoleClaim>>();
+                    break;
+                default:
+                    throw new Exception("Unable to find database provider in appSettings");
+            }
+            
+            identityBuilder
                 .AddClaimsPrincipalFactory<ZauberUserClaimsPrincipalFactory>()
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
@@ -237,7 +254,7 @@ public static class ZauberSetup
         
         using (var scope = app.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
             var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
             var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
             var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
