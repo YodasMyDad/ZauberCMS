@@ -15,7 +15,7 @@ public class GetCachedAllLanguageDictionariesHandler(IServiceProvider servicePro
     public async Task<Dictionary<string, Dictionary<string, string>>> Handle(GetCachedAllLanguageDictionariesCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = typeof(LanguageDictionary).ToCacheKey("GetCachedAllLanguageDictionaries");
         
         return (await cacheService.GetSetCachedItemAsync(cacheKey, () =>

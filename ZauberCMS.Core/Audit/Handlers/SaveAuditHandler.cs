@@ -22,7 +22,7 @@ public class SaveAuditHandler(
     public async Task<HandlerResult<Models.Audit>> Handle(SaveAuditCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         var handlerResult = new HandlerResult<Models.Audit>();
 

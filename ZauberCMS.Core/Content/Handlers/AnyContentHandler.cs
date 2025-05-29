@@ -11,7 +11,7 @@ public class AnyContentHandler(IServiceProvider serviceProvider) : IRequestHandl
     public async Task<bool> Handle(AnyContentCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         return await dbContext.Contents.AsNoTracking().AnyAsync(cancellationToken: cancellationToken);
     }
 }

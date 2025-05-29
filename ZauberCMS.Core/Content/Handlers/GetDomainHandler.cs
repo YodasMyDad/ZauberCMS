@@ -12,7 +12,7 @@ public class GetDomainHandler(IServiceProvider serviceProvider) : IRequestHandle
     public async Task<Domain?> Handle(GetDomainCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsQueryable();
 
         if (request.AsNoTracking)

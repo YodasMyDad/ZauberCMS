@@ -15,7 +15,7 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
     public async Task<PaginatedList<Models.Content>> Handle(QueryContentCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(request, dbContext);
         var cacheKey = query.GenerateCacheKey(typeof(Models.Content));
         
@@ -27,7 +27,7 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
         return await FetchContentAsync(request, dbContext, cancellationToken);
     }
 
-    private static IQueryable<Models.Content> BuildQuery(QueryContentCommand request, ZauberDbContext dbContext)
+    private static IQueryable<Models.Content> BuildQuery(QueryContentCommand request, IZauberDbContext dbContext)
     {
         var query = dbContext.Contents.Include(x => x.ContentType)
             .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
@@ -137,7 +137,7 @@ public class QueryContentHandler(IServiceProvider serviceProvider, ICacheService
         return query;
     }
 
-    private static Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));

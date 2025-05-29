@@ -13,7 +13,7 @@ public class GetContentTypeHandler (IServiceProvider serviceProvider)
     public async Task<ContentType?> Handle(GetContentTypeCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         return await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken: cancellationToken);
     }
 }

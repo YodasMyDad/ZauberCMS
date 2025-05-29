@@ -4,8 +4,10 @@ using Microsoft.Extensions.Configuration;
 
 namespace ZauberCMS.Core.Data;
 
-public class PostgreSqlZauberDbContext(DbContextOptions<PostgreSqlZauberDbContext> options, IConfiguration configuration) 
-    : ZauberDbContext(options, configuration)
+public class PostgreSqlZauberDbContext(
+    DbContextOptions<PostgreSqlZauberDbContext> options,
+    IConfiguration configuration)
+    : ZauberDbContextBase(options, configuration), IZauberDbContext
 {
     private readonly IConfiguration _configuration = configuration;
 
@@ -13,12 +15,11 @@ public class PostgreSqlZauberDbContext(DbContextOptions<PostgreSqlZauberDbContex
     {
         var section = _configuration.GetSection("Zauber");
         var connectionString = section.GetValue<string>("ConnectionString");
-        options.UseNpgsql(connectionString, builder => builder.MigrationsHistoryTable(tableName:"ZauberMigrations"));
+        options.UseNpgsql(connectionString, builder => builder.MigrationsHistoryTable(tableName: "ZauberMigrations"));
 #if DEBUG
         options.EnableSensitiveDataLogging();
 #endif
         options
             .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
-
     }
 }

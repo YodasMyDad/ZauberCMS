@@ -15,7 +15,7 @@ public class DataGridContentHandler(IServiceProvider serviceProvider) : IRequest
     public async Task<DataGridResult<Models.Content>> Handle(DataGridContentCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         var result = new DataGridResult<Models.Content>();
 

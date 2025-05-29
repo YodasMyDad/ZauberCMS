@@ -14,7 +14,7 @@ public class QueryAuditsHandler(IServiceProvider serviceProvider)
     public Task<PaginatedList<Models.Audit>> Handle(QueryAuditsCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Audits.AsQueryable();
 
         if (request.Query != null)

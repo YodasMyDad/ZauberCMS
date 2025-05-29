@@ -17,7 +17,7 @@ public class HasChildContentTypeHandler(IServiceProvider serviceProvider, ICache
     public async Task<bool> Handle(HasChildContentTypeCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = GenerateCacheKey(request);
 
         if (request.Cached)
@@ -35,7 +35,7 @@ public class HasChildContentTypeHandler(IServiceProvider serviceProvider, ICache
         return typeof(ContentType).ToCacheKey(Convert.ToBase64String(hash));
     }
 
-    private static async Task<bool> CheckHasChildContentTypeAsync(HasChildContentTypeCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<bool> CheckHasChildContentTypeAsync(HasChildContentTypeCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         return await dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == request.ParentId, cancellationToken: cancellationToken);
     }

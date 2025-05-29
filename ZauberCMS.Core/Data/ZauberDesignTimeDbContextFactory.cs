@@ -2,70 +2,65 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace ZauberCMS.Core.Data;
-
-public class ZauberDesignTimeDbContextFactory : IDesignTimeDbContextFactory<ZauberDbContext>
+namespace ZauberCMS.Core.Data
 {
-    public ZauberDbContext CreateDbContext(string[] args)
+    public class ZauberDesignTimeDbContextFactory : IDesignTimeDbContextFactory<ZauberDbContext>
     {
-        // Get the environment variable
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-        
-        // Build configuration
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
-            .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appSettings.{environment}.json", optional: true)
-            .Build();
+        public ZauberDbContext CreateDbContext(string[] args)
+        {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
+                .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appSettings.{environment}.json", optional: true)
+                .Build();
 
-        // Configure the DbContext based on the provider
-        var optionsBuilder = new DbContextOptionsBuilder<ZauberDbContext>();
+            var connectionString = configuration.GetSection("Zauber").GetValue<string>("ConnectionString");
 
+            var optionsBuilder = new DbContextOptionsBuilder<ZauberDbContext>();
+            optionsBuilder.UseSqlServer(connectionString, builder => builder.MigrationsHistoryTable(tableName: "ZauberMigrations"));
 
-        return new ZauberDbContext(optionsBuilder.Options, configuration);
+            return new ZauberDbContext(optionsBuilder.Options, configuration);
+        }
     }
-}
 
-public class ZauberSqliteDesignTimeDbContextFactory : IDesignTimeDbContextFactory<SqliteZauberDbContext>
-{
-    public SqliteZauberDbContext CreateDbContext(string[] args)
+    public class ZauberSqliteDesignTimeDbContextFactory : IDesignTimeDbContextFactory<SqliteZauberDbContext>
     {
-        // Get the environment variable
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-        
-        // Build configuration
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
-            .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appSettings.{environment}.json", optional: true)
-            .Build();
+        public SqliteZauberDbContext CreateDbContext(string[] args)
+        {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
+                .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appSettings.{environment}.json", optional: true)
+                .Build();
 
-        // Configure the DbContext based on the provider
-        var optionsBuilder = new DbContextOptionsBuilder<SqliteZauberDbContext>();
+            var connectionString = configuration.GetSection("Zauber").GetValue<string>("ConnectionString");
 
+            var optionsBuilder = new DbContextOptionsBuilder<SqliteZauberDbContext>();
+            optionsBuilder.UseSqlite(connectionString);
 
-        return new SqliteZauberDbContext(optionsBuilder.Options, configuration);
+            return new SqliteZauberDbContext(optionsBuilder.Options, configuration);
+        }
     }
-}
 
-public class ZauberPostgreSqlDesignTimeDbContextFactory : IDesignTimeDbContextFactory<PostgreSqlZauberDbContext>
-{
-    public PostgreSqlZauberDbContext CreateDbContext(string[] args)
+    public class ZauberPostgreSqlDesignTimeDbContextFactory : IDesignTimeDbContextFactory<PostgreSqlZauberDbContext>
     {
-        // Get the environment variable
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-        
-        // Build configuration
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
-            .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appSettings.{environment}.json", optional: true)
-            .Build();
+        public PostgreSqlZauberDbContext CreateDbContext(string[] args)
+        {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../ZauberCMS"))
+                .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appSettings.{environment}.json", optional: true)
+                .Build();
 
-        // Configure the DbContext based on the provider
-        var optionsBuilder = new DbContextOptionsBuilder<PostgreSqlZauberDbContext>();
+            var connectionString = configuration.GetSection("Zauber").GetValue<string>("ConnectionString");
 
+            var optionsBuilder = new DbContextOptionsBuilder<PostgreSqlZauberDbContext>();
+            optionsBuilder.UseNpgsql(connectionString, builder => builder.MigrationsHistoryTable(tableName: "ZauberMigrations"));
 
-        return new PostgreSqlZauberDbContext(optionsBuilder.Options, configuration);
+            return new PostgreSqlZauberDbContext(optionsBuilder.Options, configuration);
+        }
     }
 }

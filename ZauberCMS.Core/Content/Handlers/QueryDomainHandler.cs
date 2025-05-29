@@ -15,7 +15,7 @@ public class QueryDomainHandler(IServiceProvider serviceProvider)
     public Task<PaginatedList<Domain>> Handle(QueryDomainCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsQueryable();
 
         if (request.Query != null)

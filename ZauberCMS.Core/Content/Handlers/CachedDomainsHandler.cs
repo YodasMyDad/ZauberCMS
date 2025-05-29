@@ -17,7 +17,7 @@ public class CachedDomainsHandler(IServiceProvider serviceProvider, ICacheServic
     public async Task<List<Domain>> Handle(CachedDomainsCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsNoTracking().Include(x => x.Language);
         var queryString = query.ToQueryString();
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));

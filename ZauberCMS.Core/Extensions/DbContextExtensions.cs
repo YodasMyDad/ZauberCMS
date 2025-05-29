@@ -49,7 +49,7 @@ public static class DbContextExtensions
 #pragma warning restore EF1002
     }
     
-    public static List<Guid> BuildPath<T>(this T entity, ZauberDbContext dbContext, bool isUpdate, IOptions<ZauberSettings> settings)
+    public static List<Guid> BuildPath<T>(this T entity, IZauberDbContext dbContext, bool isUpdate, IOptions<ZauberSettings> settings)
         where T : class, IBaseItem
     {
         var path = new List<Guid>();
@@ -95,7 +95,7 @@ public static class DbContextExtensions
     }
 
     
-    public static IQueryable<T>? ToTyped<T>(this ZauberDbContext context) where T : class
+    public static IQueryable<T>? ToTyped<T>(this IZauberDbContext context) where T : class
     {
         try
         {
@@ -110,7 +110,7 @@ public static class DbContextExtensions
         return null;
     }
     
-    public static async Task<HandlerResult<T>> SaveChangesAndLog<T>(this ZauberDbContext context, T? entity,
+    public static async Task<HandlerResult<T>> SaveChangesAndLog<T>(this IZauberDbContext context, T? entity,
         HandlerResult<T> crudResult, ICacheService cacheService, ExtensionManager extensionManager, CancellationToken cancellationToken)
     {
         try

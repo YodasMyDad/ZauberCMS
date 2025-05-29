@@ -14,7 +14,7 @@ public class DataGridLanguageDictionaryHandler(IServiceProvider serviceProvider)
     public async Task<DataGridResult<LanguageDictionary>> Handle(DataGridLanguageDictionaryCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         var result = new DataGridResult<LanguageDictionary>();
 

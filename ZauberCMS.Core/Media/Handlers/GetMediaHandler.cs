@@ -16,7 +16,7 @@ public class GetMediaHandler(IServiceProvider serviceProvider, ICacheService cac
     public async Task<Models.Media?> Handle(GetMediaCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = GenerateCacheKey(request, dbContext);
 
         if (request.Cached)
@@ -27,7 +27,7 @@ public class GetMediaHandler(IServiceProvider serviceProvider, ICacheService cac
         return await FetchMediaAsync(request, dbContext, cancellationToken);
     }
 
-    private static string GenerateCacheKey(GetMediaCommand request, ZauberDbContext dbContext)
+    private static string GenerateCacheKey(GetMediaCommand request, IZauberDbContext dbContext)
     {
         var query = BuildQuery(request, dbContext);
         var queryString = query.ToQueryString();
@@ -35,7 +35,7 @@ public class GetMediaHandler(IServiceProvider serviceProvider, ICacheService cac
         return typeof(Models.Media).ToCacheKey(Convert.ToBase64String(hash));
     }
 
-    private static IQueryable<Models.Media> BuildQuery(GetMediaCommand request, ZauberDbContext dbContext)
+    private static IQueryable<Models.Media> BuildQuery(GetMediaCommand request, IZauberDbContext dbContext)
     {
         var query = dbContext.Medias.AsQueryable();
 
@@ -72,7 +72,7 @@ public class GetMediaHandler(IServiceProvider serviceProvider, ICacheService cac
         return query;
     }
 
-    private static async Task<Models.Media?> FetchMediaAsync(GetMediaCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<Models.Media?> FetchMediaAsync(GetMediaCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);

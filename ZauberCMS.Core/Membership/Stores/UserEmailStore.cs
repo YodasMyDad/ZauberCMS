@@ -5,21 +5,13 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Membership.Stores
 {
-    public class UserEmailStore : IUserEmailStore<User>
+    public class UserEmailStore(IZauberDbContext db, IUserStore<User> userStore) : IUserEmailStore<User>
     {
         private bool disposedValue;
-        private readonly ZauberDbContext _db;
-        private readonly IUserStore<User> _userStore;
-
-        public UserEmailStore(ZauberDbContext db, IUserStore<User> userStore)
-        {
-            _db = db;
-            _userStore = userStore;
-        }
 
         public async Task<User?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
         {
-            return await _db.Users.FirstOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken: cancellationToken);
+            return await db.Users.FirstOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken: cancellationToken);
         }
 
         public Task<string?> GetEmailAsync(User user, CancellationToken cancellationToken)
@@ -70,7 +62,7 @@ namespace ZauberCMS.Core.Membership.Stores
                     // TODO: dispose managed state (managed objects)
                 }
 
-                _db.Dispose();
+                db.Dispose();
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 // TODO: set large fields to null
@@ -126,27 +118,27 @@ namespace ZauberCMS.Core.Membership.Stores
 
         public Task<IdentityResult> CreateAsync(User user, CancellationToken cancellationToken)
         {
-            return _userStore.CreateAsync(user, cancellationToken);
+            return userStore.CreateAsync(user, cancellationToken);
         }
 
         public Task<IdentityResult> UpdateAsync(User user, CancellationToken cancellationToken)
         {
-            return _userStore.UpdateAsync(user, cancellationToken);
+            return userStore.UpdateAsync(user, cancellationToken);
         }
 
         public Task<IdentityResult> DeleteAsync(User user, CancellationToken cancellationToken)
         {
-            return _userStore.DeleteAsync(user, cancellationToken);
+            return userStore.DeleteAsync(user, cancellationToken);
         }
 
         public Task<User?> FindByIdAsync(string userId, CancellationToken cancellationToken)
         {
-            return _userStore.FindByIdAsync(userId, cancellationToken);
+            return userStore.FindByIdAsync(userId, cancellationToken);
         }
 
         public Task<User?> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
         {
-            return _userStore.FindByNameAsync(normalizedUserName, cancellationToken);
+            return userStore.FindByNameAsync(normalizedUserName, cancellationToken);
         }
     }
 }

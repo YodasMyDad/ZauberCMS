@@ -16,7 +16,7 @@ public class QueryTagHandler(IServiceProvider serviceProvider, ICacheService cac
     public async Task<PaginatedList<Tag>> Handle(QueryTagCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(request, dbContext);
         var cacheKey = query.GenerateCacheKey(typeof(Tag));
 
@@ -28,7 +28,7 @@ public class QueryTagHandler(IServiceProvider serviceProvider, ICacheService cac
         return await FetchTagsAsync(request, dbContext, cancellationToken);
     }
 
-    private static IQueryable<Tag> BuildQuery(QueryTagCommand request, ZauberDbContext dbContext)
+    private static IQueryable<Tag> BuildQuery(QueryTagCommand request, IZauberDbContext dbContext)
     {
         var query = dbContext.Tags.AsQueryable();
 
@@ -83,7 +83,7 @@ public class QueryTagHandler(IServiceProvider serviceProvider, ICacheService cac
         return query;
     }
 
-    private static Task<PaginatedList<Tag>> FetchTagsAsync(QueryTagCommand request, ZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static Task<PaginatedList<Tag>> FetchTagsAsync(QueryTagCommand request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));

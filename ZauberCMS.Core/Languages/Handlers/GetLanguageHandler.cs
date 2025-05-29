@@ -12,7 +12,7 @@ public class GetLanguageHandler(IServiceProvider serviceProvider) : IRequestHand
     public async Task<Language?> Handle(GetLanguageCommand request, CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ZauberDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Languages.AsQueryable();
 
         if (request.AsNoTracking)
