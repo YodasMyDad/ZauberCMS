@@ -22,9 +22,7 @@ You can also find us on [Twitter / X](https://twitter.com/zaubercms) and [Facebo
 
 ## Getting Started
 
-This repo comes with a starter site example, if you clone this repo, build and run the **ZauberCMS.Web** project you will see the starter kit (Go to /admin, register an account to see everything).
-
-However, fastest way to get started building your own website is using the .Net Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one)
+Fastest way to get started building your own website is using the .NET Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one)
 
 ```ps
 # Ensure we have the latest ZauberCMS templates
@@ -38,11 +36,25 @@ You can also use Nuget and full instructions on how to use it are below
 
 https://aptitude.gitbook.io/zaubercms/getting-started/quick-start
 
+**DO NOT USE THE SOURCE CODE TO BUILD YOUR SITE. USE THE TEMPLATE OR NUGET PACKAGE!**
+
 ## Getting Started Video
 
 This video shows building a very simple site from scratch, hopefully you'll see how easy it is!
 
 [![Starter Site Build YouTube Video](https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FVr2cbdfxDGZK1u2Fd59w%2Fuploads%2FPInFco2RCtXOrEN3hFVY%2Fgetting-started.png?alt=media&token=58bcda5e-0cf8-4789-b797-fb0f85a174b4)](https://www.youtube.com/watch?v=x_klA1Podwg)
+
+## Example Site
+
+This repo comes with a starter site example so you can see some of the most common concepts, if you clone this repo, build and run the **ZauberCMS.Web** project you will see the starter kit (Go to /admin, register an account to see everything).
+
+If you want to use this starter site as a starting point for your own website. Remove the project from the source, and remove the project reference in the csproj and uncomment the nuget package reference.
+
+See here
+
+https://github.com/YodasMyDad/ZauberCMS/blob/main-mvc/ZauberCMS.Web/ZauberCMS.Web.csproj#L12
+
+_Again, DO NOT  use the entire source code to build your own site. You are supposed to use the Nuget package like above._ 
 
 ## Documentation
 
