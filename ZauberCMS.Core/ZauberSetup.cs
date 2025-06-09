@@ -340,7 +340,6 @@ public static class ZauberSetup
         
         app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
 
-        //app.UseMiddleware<ContentRoutingMiddleware>();
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=ZauberRender}/{action=Index}/{id?}")
