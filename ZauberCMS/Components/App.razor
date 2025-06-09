@@ -32,7 +32,7 @@
                 return InteractiveServer;
             }
 
-            return HttpContext?.AcceptsInteractiveRouting() == true ? InteractiveServer : null;
+            return IsAdmin ? InteractiveServer : null;
         }
     }
 }
