@@ -1,4 +1,5 @@
 ﻿@page "/{**slug}"
+@attribute [ExcludeFromInteractiveRouting]
 @using ZauberCMS.Components.Pages
 <EntryPage Slug="@Slug" />
 @code{

@@ -202,14 +202,14 @@ public static class ZauberSetup
                 .AddInteractiveServerComponents();
         }
 
-        var mvcBuilder = builder.Services.AddControllersWithViews()
+        builder.Services.AddControllersWithViews()
             .AddRazorOptions(options =>
             {
                 // This adds another search path that looks for views in the root Views folder.
                 options.ViewLocationFormats.Add("/Views/{0}.cshtml");
             });
 
-        foreach (var assembly in ExtensionManager.GetFilteredAssemblies(null).ToArray()!)
+        /*foreach (var assembly in ExtensionManager.GetFilteredAssemblies(null).ToArray()!)
         {
             if (assembly != null)
             {
@@ -218,7 +218,7 @@ public static class ZauberSetup
                 mvcBuilder
                     .ConfigureApplicationPartManager(apm => apm.ApplicationParts.Add(part));
             }
-        }
+        }*/
 
         // Mediatr
         builder.Services.AddMediatR(cfg =>
@@ -303,49 +303,31 @@ public static class ZauberSetup
         app.UseStaticFiles();
         app.UseRouting();
         app.UseAntiforgery();
+        app.MapControllers();
 
         // Add authentication and authorization middleware
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapStaticAssets();
         
-        // We only want to map Blazor routes if its the admin or account section 
-        app.MapWhen(
-            context => context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase) ||
-                       context.Request.Path.StartsWithSegments("/account", StringComparison.OrdinalIgnoreCase),
-            branch =>
-            {
-                // Use MapRazorComponents<T>() ONLY in the branch
-                branch.UseEndpoints(endpoints =>
-                {
-                    endpoints.MapRazorComponents<T>()
-                        .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
-                        .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
-                    
-                    endpoints.MapAdditionalIdentityEndpoints();
-                });
-                
-                /*// Group the admin routes for Blazor
-                app
-                    .MapRazorComponents<T>()
-                    .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
-                    .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);*/
+        app.MapRazorComponents<T>()
+            .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
+            .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
 
-                // Add additional endpoints required by the Identity /Account Razor components.
-                //app.MapAdditionalIdentityEndpoints();
-            }
-        );
+        // Add additional endpoints required by the Identity /Account Razor components.
+        app.MapAdditionalIdentityEndpoints();
+
         
         //app.MapBlazorHub();
         
-        app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
+        //app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
 
-        app.MapControllerRoute(
+        /*app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=ZauberRender}/{action=Index}/{id?}")
             .WithMetadata(new RouteOptions { LowercaseUrls = true }) // Lowercase URLs for better SEO
-            .WithStaticAssets(); // Ensures static files load before hitting controllers; 
+            .WithStaticAssets(); // Ensures static files load before hitting controllers; */
 
-        app.MapFallbackToController("Index", "ZauberRender");
+        //app.MapFallbackToController("Index", "ZauberRender");
     }
 }
