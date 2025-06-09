@@ -14,7 +14,6 @@
     
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\img\missing.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\templates\email\default.html" />
       <_ContentIncludedByDefault Remove="wwwroot\media\078dfd90-1b11-4585-ab00-b1ad008b4b79\post-bg.jpg" />
       <_ContentIncludedByDefault Remove="wwwroot\media\754be272-b250-4c6c-8d6f-b1ad008b4b51\home-bg.jpg" />
       <_ContentIncludedByDefault Remove="Shared\BlogPostPreview.razor" />
@@ -32,7 +31,6 @@
       <_ContentIncludedByDefault Remove="ContentBlocks\QuoteBlock.razor" />
       <_ContentIncludedByDefault Remove="ContentBlocks\RTEBlock.razor" />
       <_ContentIncludedByDefault Remove="Custom\ContactForm.razor" />
-      <_ContentIncludedByDefault Remove="Views\Home\Index.cshtml" />
     </ItemGroup>
     
     <ItemGroup>

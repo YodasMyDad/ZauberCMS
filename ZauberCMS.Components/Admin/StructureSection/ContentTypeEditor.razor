@@ -107,10 +107,12 @@
                                     </LeftColumn>
                                     <CentreColumn>
                                         <RadzenListBox @bind-Value="@ContentType.AvailableContentViews"
-                                                       Data="@ViewFiles"
+                                                       Data="@ContentViews"
                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                        FilterOperator="StringFilterOperator.StartsWith"
                                                        AllowFiltering="true"
+                                                       TextProperty="Name"
+                                                       ValueProperty="FullName"
                                                        Multiple="true"
                                                        AllowClear="true"
                                                        Placeholder="Select Content Views"
@@ -341,7 +343,6 @@
 
     private ContentType ContentType { get; set; } = new();
     private List<ContentViewName> ContentViews { get; set; } = [];
-    private List<string> ViewFiles { get; set; } = [];
     private List<ContentType> ContentTypes { get; set; } = [];
     private List<ContentType> Compositions { get; set; } = [];
     private List<ContentType> SelectedCompositions { get; set; } = [];
@@ -399,7 +400,7 @@
         }
         
         await CompositionsInit();
-        LoadViewFiles();
+        //LoadViewFiles();
         InitializeTabs();
         InitializeContentViews();
         SortTabsInOrder();
@@ -495,10 +496,10 @@
         return contentType;
     }
     
-    private void LoadViewFiles()
+    /*private void LoadViewFiles()
     {
         ViewFiles = ExtensionManager.GetAllowedViews(ContentType.Alias);
-    }
+    }*/
 
     private async Task SelectIcon()
     {
@@ -553,14 +554,18 @@
 
     private void InitializeContentViews()
     {
-        var allContentViews = ExtensionManager.GetImplementations<IContentView>();
+        var allContentViews = ExtensionManager.GetInstances<IContentView>();
         ContentViews = allContentViews.Values
-            .Select(x => new ContentViewName
+            .Select(x =>
             {
-                // Get the name of the component
-                Name = x.Name,
-                // Get the full name of the component
-                FullName = x.FullName!
+                var type = x.GetType();
+                return new ContentViewName
+                {
+                    // Get the name of the component
+                    Name = type.Name,
+                    // Get the full name of the component
+                    FullName = type.FullName!
+                };
             })
             .Where(x => !Constants.InternalContentViews.Contains(x.Name))
             .OrderBy(x => x.Name)
@@ -839,5 +844,4 @@
         CompositionCreate,
         Folder
     }
-
 }
