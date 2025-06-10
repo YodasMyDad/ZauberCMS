@@ -1,14 +1,10 @@
-// Global flag to prevent multiple initializations
-let scriptsInitialized = false;
-
 // Register an afterWebStarted initializer for SSR
 Blazor.addEventListener('afterWebStarted', () => {
-    initializeAllScripts();
+    
 });
 
-// Also handle enhanced navigation updates
+// For initial page load
 document.addEventListener('DOMContentLoaded', () => {
-    // For initial page load
     initializeAllScripts();
 });
 
@@ -18,14 +14,11 @@ Blazor.addEventListener('enhancedload', () => {
 });
 
 window.initializeAllScripts = () => {
-    // Prevent multiple initializations
-    if (scriptsInitialized) {
-        //console.log('Scripts already initialized, skipping...');
-        return;
-    }
 
-    scriptsInitialized = true;
     window.initializeMainNavScript();
+    
+    // Add more scripts here
+    
     console.log('Initialised all scripts');
 };
 
