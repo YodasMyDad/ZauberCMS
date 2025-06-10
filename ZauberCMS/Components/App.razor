@@ -5,7 +5,10 @@
 <CascadingValue Value="IsAdmin">
     <Routes @rendermode="RenderModeForPage"/>
 </CascadingValue>
-<script src="_framework/blazor.web.js"></script>
+@if (IsAdmin)
+{
+    <script src="_framework/blazor.web.js"></script>
+}
 </html>
 
 

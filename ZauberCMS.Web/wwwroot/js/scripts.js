@@ -1,12 +1,51 @@
-/*!
-* Start Bootstrap - Clean Blog v6.0.9 (https://startbootstrap.com/theme/clean-blog)
-* Copyright 2013-2023 Start Bootstrap
-* Licensed under MIT (https://github.com/StartBootstrap/startbootstrap-clean-blog/blob/master/LICENSE)
-*/
+// Global flag to prevent multiple initializations
+let scriptsInitialized = false;
+
+// Register an afterWebStarted initializer for SSR
+Blazor.addEventListener('afterWebStarted', () => {
+    initializeAllScripts();
+});
+
+// Also handle enhanced navigation updates
+document.addEventListener('DOMContentLoaded', () => {
+    // For initial page load
+    initializeAllScripts();
+});
+
+// Listen for enhanced navigation updates
+Blazor.addEventListener('enhancedload', () => {
+    initializeAllScripts();
+});
+
+window.initializeAllScripts = () => {
+    // Prevent multiple initializations
+    if (scriptsInitialized) {
+        //console.log('Scripts already initialized, skipping...');
+        return;
+    }
+
+    scriptsInitialized = true;
+    window.initializeMainNavScript();
+    console.log('Initialised all scripts');
+};
+
 window.initializeMainNavScript = () => {
-    let scrollPos = 0;
     const mainNav = document.getElementById('mainNav');
+    if (!mainNav) {
+        console.warn('mainNav element not found');
+        return;
+    }
+
+    let scrollPos = 0;
     const headerHeight = mainNav.clientHeight;
+
+    // Remove any existing scroll listeners to prevent duplicates
+    const existingHandler = mainNav.getAttribute('data-scroll-initialized');
+    if (existingHandler === 'true') {
+        return;
+    }
+    mainNav.setAttribute('data-scroll-initialized', 'true');
+
     window.addEventListener('scroll', function () {
         const currentTop = document.body.getBoundingClientRect().top * -1;
         if (currentTop < scrollPos) {
@@ -18,7 +57,7 @@ window.initializeMainNavScript = () => {
             }
         } else {
             // Scrolling Down
-            mainNav.classList.remove(['is-visible']);
+            mainNav.classList.remove('is-visible'); // Fixed: removed array brackets
             if (currentTop > headerHeight && !mainNav.classList.contains('is-fixed')) {
                 mainNav.classList.add('is-fixed');
             }

@@ -30,6 +30,20 @@
     private Type LayoutType { get; set; } = null!;
     private PersistingComponentStateSubscription? PersistingSubscription { get; set; }
 
+    private RenderFragment RenderContentWithLayout => builder =>
+    {
+        builder.OpenComponent<LayoutView>(0);
+        builder.AddAttribute(1, "Layout", LayoutType);
+        builder.AddAttribute(2, "ChildContent", (RenderFragment)(childBuilder =>
+        {
+            childBuilder.OpenComponent<DynamicComponent>(0);
+            childBuilder.AddAttribute(1, "Type", ComponentView!.GetType());
+            childBuilder.AddAttribute(2, "Parameters", Parameters);
+            childBuilder.CloseComponent();
+        }));
+        builder.CloseComponent();
+    };
+    
     protected override async Task OnParametersSetAsync()
     {
         PersistingSubscription = ApplicationState.RegisterOnPersisting(PersistState);
