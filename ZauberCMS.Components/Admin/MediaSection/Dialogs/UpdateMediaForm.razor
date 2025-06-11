@@ -88,14 +88,17 @@
                             </CentreColumn>
                         </EditorRow>*@
                     }
-                    <EditorRow>
-                        <LeftColumn>
-                            <PropertyInfo Name="Requires Authentication" Description="Check if the media requires authentication to view" />
-                        </LeftColumn>
-                        <CentreColumn>
-                            <RadzenSwitch @bind-Value="Media.RequiresAuthentication" />
-                        </CentreColumn>
-                    </EditorRow>
+                    @if (Media.MediaType != MediaType.Folder)
+                    {
+                        <EditorRow>
+                            <LeftColumn>
+                                <PropertyInfo Name="Requires Authentication" Description="Check if the media requires authentication to view" />
+                            </LeftColumn>
+                            <CentreColumn>
+                                <RadzenSwitch @bind-Value="Media.RequiresAuthentication" />
+                            </CentreColumn>
+                        </EditorRow>   
+                    }
                 </div>
             </div>
 
