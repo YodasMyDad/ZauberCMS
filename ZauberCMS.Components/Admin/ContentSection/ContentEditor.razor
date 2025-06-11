@@ -111,7 +111,9 @@ else
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenDropDown @bind-Value="@Content.ViewComponent"
-                                                    Data="@ContentType.AvailableContentViews"
+                                                    Data="@ContentViews"
+                                                    TextProperty="Name"
+                                                    ValueProperty="FullName"
                                                     Style="width: 100%; max-width: 400px;"/>
                                 </CentreColumn>
                             </EditorRow>
@@ -266,7 +268,7 @@ else
     private EditForm ContentForm { get; set; } = null!;
     private ContentType? ContentType { get; set; }
     private Dictionary<string, Type> AllContentTypeProperties { get; set; } = new();
-
+    private List<ContentViewName> ContentViews { get; set; } = [];
     private Dictionary<Guid, ContentPropertyValue> AllContentValues { get; set; } = new();
 
     //private Dictionary<string, string> AvailableContentViews { get; set; } = new();
@@ -330,7 +332,22 @@ else
                 await SyncProperties(Content, ContentType);
             }
         }
+
+        InitializeContentViews();
         Loading = false;
+    }
+    
+    private void InitializeContentViews()
+    {
+        ContentViews = ContentType?.AvailableContentViews.Select(x =>
+        {
+            var splitName = x.Split('.');
+            return new ContentViewName
+            {
+                Name = splitName.Last(),
+                FullName = x
+            };
+        }).ToList() ?? [];
     }
 
     private async Task RefreshContent()
