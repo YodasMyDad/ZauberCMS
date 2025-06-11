@@ -1,18 +1,30 @@
 ﻿@using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Sections.Interfaces
+@using ZauberCMS.Core.Shared
 @foreach (var section in Sections.OrderBy(x => x.Value.SortOrder))
 {
-    <RadzenButton Variant="Variant.Text" Text="@(section.Value.Name)" class="@(section.Value.Alias == CurrentSection ? "section-nav-active" : "")" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigationManager.NavigateTo(section.Value.IndexUrl))/>
+    <RadzenButton Variant="Variant.Text" Text="@(section.Value.Name)" class="@(section.Value.Alias == CurrentSection ? "section-nav-active" : "")" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigateTo(section.Value.IndexUrl))/>
 }
 
 @code {
     
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
+    
     private Dictionary<string, ISection> Sections { get; set; } = new();
+    
     [Parameter] public string? CurrentSection { get; set; }
+    
     protected override void OnInitialized()
     {
         Sections = ExtensionManager.GetInstances<ISection>(true);
     }
 
+    private void NavigateTo(string url)
+    {
+        // If we click the top nav items we need to clear the tree state value
+        TreeState.TreeValue = null;
+        StateHasChanged();
+        NavigationManager.NavigateTo(url);
+    }
 }

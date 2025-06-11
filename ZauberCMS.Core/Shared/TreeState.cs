@@ -10,7 +10,7 @@ public class TreeState
     // Initialize the cache
     public readonly ConcurrentDictionary<Guid, bool> HasChildrenCache = new();
 
-    public event Action<object>? OnTreeValueChanged;
+    public event Action<object?>? OnTreeValueChanged;
 
     private object? _treeValue;
 
@@ -22,7 +22,7 @@ public class TreeState
             if (_treeValue != value)
             {
                 _treeValue = value;
-                if (_treeValue != null) OnTreeValueChanged?.Invoke(_treeValue);
+                OnTreeValueChanged?.Invoke(_treeValue);
             }
         }
     }
