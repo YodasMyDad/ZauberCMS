@@ -1,18 +1,20 @@
-﻿# ZauberCMS
+﻿# ZauberCMS - The Blazor CMS
 
-ZauberCMS is a fully featured CMS built in .NET 9. The CMS is inspired by Umbraco, but much faster and easier to extend.
+ZauberCMS is a fully featured CMS built in .NET 10. The CMS is inspired by Umbraco but built entirely in Blazor.
 
-I built this CMS to allow .NET developers to continue building websites just as they always have - with traditional .NET MVC - while also offering a modern, highly customizable, interactive CMS editing experience powered by Blazor.
+**Front End (Your website):** Fast static server-side rendering (static SSR) with the ability to add Blazor components for interactivity (As recommended by MS) using @rendermode, or use your favourite JS framework (Vue, AlpineJS etc...)
+
+**Admin (Manage Website):** Built entirely with InteractiveServer and using Radzen components for the main UI.
 
 The goal is simple: a CMS that’s simple, super easy to extend, highly modular, and doesn’t require learning a verbose front-end framework or dealing with complex build tools. With Blazor, customization is quick, straightforward and very .NET friendly. 
  
-✅ ASP.NET MVC  
-✅ Visual Page Editor (Block List Editor)   
+✅ Built With Blazor  
+✅ Visual Page Builder & Editor (Optional)  
+✅ Manage Media  
 ✅ Custom Languages  
 ✅ Multi Sites  
 ✅ SEO Features Built In  
-✅ Private Members Sections (Role Based)  
-✅ Radzen Blazor Components  
+✅ Private Members Sections (Role Based)   
 ✅ Highly Customizable  
 ✅ Full Documentation
 
@@ -54,7 +56,7 @@ See here
 
 https://github.com/YodasMyDad/ZauberCMS/blob/main-mvc/ZauberCMS.Web/ZauberCMS.Web.csproj#L12
 
-_Again, DO NOT  use the entire source code to build your own site. You are supposed to use the Nuget package like above._ 
+_Again, DO NOT  use the entire source code to build your own site. You are supposed to use the Nuget package (or Template) like above._ 
 
 ## Documentation
 
@@ -64,10 +66,7 @@ https://aptitude.gitbook.io/zaubercms
 
 ## Progress & Issues
 
-Next large release will be **v4.0** with .NET 10. After that release will be **v5.0**. You can see the progress and release features here
-
-**v4.0 Board**  
-https://github.com/users/YodasMyDad/projects/8
+Next large release will be **v5.0**. You can see the progress and release features here
 
 **v5.0 Board**  
 https://github.com/users/YodasMyDad/projects/9
