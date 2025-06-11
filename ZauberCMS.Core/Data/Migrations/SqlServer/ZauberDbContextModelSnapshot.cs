@@ -17,7 +17,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "9.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -476,6 +476,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .IsRequired()
                         .HasMaxLength(3000)
                         .HasColumnType("nvarchar(3000)");
+
+                    b.Property<bool>("RequiresAuthentication")
+                        .HasColumnType("bit");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");

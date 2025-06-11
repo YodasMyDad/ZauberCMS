@@ -122,6 +122,17 @@ public class Media : IBaseItem
     /// Whether this media is set as deleted
     /// </summary>
     public bool Deleted { get; set; }
+
+    /// <summary>
+    /// Indicates whether authentication is required to access or interact with the Media object.
+    /// </summary>
+    /// <value>
+    /// A boolean value where <c>true</c> specifies that authentication is required, and <c>false</c> specifies otherwise.
+    /// </value>
+    /// <remarks>
+    /// The RequiresAuthentication property can be used to enforce security protocols and restrict access to sensitive media content.
+    /// </remarks>
+    public bool RequiresAuthentication { get; set; }
     
     /// <summary>
     /// If parent ids are set this could have children

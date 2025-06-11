@@ -15,7 +15,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
@@ -471,6 +471,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .IsRequired()
                         .HasMaxLength(3000)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("RequiresAuthentication")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
