@@ -23,6 +23,7 @@ using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
+using ZauberCMS.Core.Media.Middleware;
 using ZauberCMS.Core.Media.Processors;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Claims;
@@ -298,8 +299,11 @@ public static class ZauberSetup
         }
 
         app.UseSerilogRequestLogging();
-
         app.UseHttpsRedirection();
+        
+        // Add your custom middleware before static files
+        app.UseMiddleware<RestrictedMediaMiddleware>();
+        
         app.UseStaticFiles();
         app.UseRouting();
         app.UseAntiforgery();
