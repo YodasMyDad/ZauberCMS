@@ -14,9 +14,7 @@ namespace ZauberCMS.Core.Audit.Handlers;
 
 public class CleanupOldAuditsHandler(
     IServiceProvider serviceProvider,
-    ILogger<CleanupOldAuditsHandler> logger,
-    ICacheService cacheService,
-    ExtensionManager extensionManager)
+    ILogger<CleanupOldAuditsHandler> logger)
     : IRequestHandler<CleanupOldAuditsCommand, HandlerResult<int>>
 {
     public async Task<HandlerResult<int>> Handle(CleanupOldAuditsCommand request, CancellationToken cancellationToken)
