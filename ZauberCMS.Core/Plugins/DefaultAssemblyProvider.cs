@@ -29,7 +29,7 @@ public class DefaultAssemblyProvider
         "System", "StackExchange", "SqlLite", "SizLabors", "Serilog", "Radzen", "Pipelines", "Nuget", "Newtonsoft",
         "Microsoft", "Mono", "MimeKit", "Mediatr", "MailKit", "Humanizer", "GaelJ", "FluentValidation", "dotnet",
         "BouncyCastle", "Blazored", "Azure", "AutoMapper", "TinyMCE", "mscorlib", "netstandard", "nlog", "dapper",
-        "Castle.core",
+        "Castle.core", "ConcurrentHashSet",
         "mongodb", "grpc", "ironpython", "roslyn", "DartSassBuilder", "BuildBundlerMinifier", "SQLitePCLRaw"
     ];
 

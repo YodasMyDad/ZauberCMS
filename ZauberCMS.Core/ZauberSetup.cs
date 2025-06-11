@@ -22,6 +22,7 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Jobs;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Media.Middleware;
 using ZauberCMS.Core.Media.Processors;
@@ -69,6 +70,8 @@ public static class ZauberSetup
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
         builder.Services.AddScoped<ZauberRouteValueTransformer>();
 
+        builder.Services.AddHostedService<DailyJob>();
+        
         builder.Services.AddRadzenComponents();
 
         if (!zauberSettings.RedisConnectionString.IsNullOrWhiteSpace())
