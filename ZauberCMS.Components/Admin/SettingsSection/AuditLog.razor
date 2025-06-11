@@ -1,5 +1,5 @@
 ﻿@attribute [Route(Urls.AdminSettingsAuditLog)]
-@using ZauberCMS.Core.Audit.Commands
+@using ZauberCMS.Core.Data.Commands
 @using ZauberCMS.Core.Audit.Models
 @layout SectionLayout
 
@@ -7,13 +7,16 @@
 
 <RadzenPanel Class="rz-mx-auto">
     <RadzenDataGrid AllowFiltering="true"
-                    FilterPopupRenderMode="PopupRenderMode.OnDemand"
+                    FilterPopupRenderMode="PopupRenderMode.Initial"
                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                     AllowPaging="true"
-                    PageSize="20"
+                    PageSize="@AmountPerPage"
                     AllowSorting="true"
+                    LoadData="@LoadData"
+                    IsLoading="@IsLoading"
+                    Count="@Count"
                     Data="@AuditLogs"
-                    SelectionMode="DataGridSelectionMode.Single">
+                    PagerHorizontalAlign="HorizontalAlign.Center">
         <Columns>
             @*<RadzenDataGridColumn Property="Username" Title="Username"/>*@
             <RadzenDataGridColumn Property="Description" Title="Description"/>
@@ -30,11 +33,50 @@
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     private IEnumerable<Audit> AuditLogs { get; set; } = [];
+    private bool IsLoading { get; set; }
+    private int AmountPerPage { get; set; } = 25;
+    private int Count { get; set; } 
     
     protected override async Task OnInitializedAsync()
     {
         Layout?.SetSection(Constants.Sections.SettingsSection);
-        var items = await Mediator.Send(new QueryAuditsCommand{AmountPerPage = 1000});
-        AuditLogs = items.Items;
+        await LoadData(new LoadDataArgs {Top = AmountPerPage});
+        /*var items = await Mediator.Send(new QueryAuditsCommand{AmountPerPage = 1000});
+        AuditLogs = items.Items;*/
+    }
+    
+    async Task LoadData(LoadDataArgs args)
+    {
+        IsLoading = true;
+
+        await Task.Yield();
+
+        var command = new DataGridCommand<Audit>();
+        
+        if (args.Top != null && args.Top != 0)
+        {
+            command.Take = args.Top.Value;
+        }
+
+        if (args.Skip != null)
+        {
+            command.Skip = args.Skip.Value;
+        }
+
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            command.Filter = args.Filter;
+        }
+
+        // Sort via the OrderBy method
+        command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateCreated desc";
+
+        var result = await Mediator.Send(command);
+        
+        Count = result.Count;
+        AuditLogs = result.Items;
+
+        IsLoading = false;
     }
 }

@@ -11,5 +11,7 @@ public class AuditDbMapper : IEntityTypeConfiguration<Models.Audit>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(3000);
+
+        builder.Ignore(x => x.Name);
     }
 }
