@@ -305,15 +305,6 @@ public static class ZauberSetup
         app.UseHttpsRedirection();
         
         app.UseStaticFiles();
-        app.Use(async (context, next) =>
-        {
-            if (context.Request.Path.StartsWithSegments("/.well-known"))
-            {
-                context.Response.StatusCode = 404;
-                return;
-            }
-            await next();
-        });
         app.UseMiddleware<RestrictedMediaMiddleware>();
         
         app.UseRouting();
