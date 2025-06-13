@@ -1,26 +1,17 @@
-// Register an afterWebStarted initializer for SSR
+﻿export function onLoad() {
+    initializeAllScripts();
+}
 
-Blazor.addEventListener('afterWebStarted', () => {
+export function onUpdate() {
+    initializeAllScripts();
+}
+
+export function onDispose() {
     
-});
-
-// For initial page load
-document.addEventListener('DOMContentLoaded', () => {
-    initializeAllScripts();
-});
-
-// Listen for enhanced navigation updates
-Blazor.addEventListener('enhancedload', () => {
-    initializeAllScripts();
-});
+}
 
 window.initializeAllScripts = () => {
-
     window.initializeMainNavScript();
-    
-    // Add more scripts here
-    
-    console.log('Initialised all scripts');
 };
 
 window.initializeMainNavScript = () => {

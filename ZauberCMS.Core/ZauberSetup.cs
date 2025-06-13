@@ -304,10 +304,18 @@ public static class ZauberSetup
         app.UseSerilogRequestLogging();
         app.UseHttpsRedirection();
         
-        // Add your custom middleware before static files
+        app.UseStaticFiles();
+        app.Use(async (context, next) =>
+        {
+            if (context.Request.Path.StartsWithSegments("/.well-known"))
+            {
+                context.Response.StatusCode = 404;
+                return;
+            }
+            await next();
+        });
         app.UseMiddleware<RestrictedMediaMiddleware>();
         
-        app.UseStaticFiles();
         app.UseRouting();
         app.UseAntiforgery();
         app.MapControllers();
@@ -316,6 +324,8 @@ public static class ZauberSetup
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapStaticAssets();
+        
+
         
         app.MapRazorComponents<T>()
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
