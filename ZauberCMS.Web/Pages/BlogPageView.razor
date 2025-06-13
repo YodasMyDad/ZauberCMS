@@ -5,12 +5,12 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout MainLayout
 
-<HeadContent>
+<SectionContent SectionId="MainLayout.Sections.PageHeadContent">
     <RenderSeoTags SeoAlias="SEO" 
                    Content="@Content" 
                    TitleAlias="PageTitle"
                    DescriptionAlias="MetaDescription" />
-</HeadContent>
+</SectionContent>
 
 @*<SectionContent SectionId="MainLayout.Sections.PageBreadcrumbContent">
     <div class="container">

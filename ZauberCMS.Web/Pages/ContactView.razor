@@ -7,12 +7,12 @@
 @layout MainLayout
 
 @* This is where you set Head/Meta information *@
-<HeadContent>
+<SectionContent SectionId="MainLayout.Sections.PageHeadContent">
     <RenderSeoTags SeoAlias="SEO" 
                    Content="@Content" 
                    TitleAlias="PageTitle"
                    DescriptionAlias="MetaDescription" />
-</HeadContent>
+</SectionContent>
 
 @* 
     All properties are available through Content.GetValue<string>("") if your value is saved as a type

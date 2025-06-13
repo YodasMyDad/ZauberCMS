@@ -1,20 +1,16 @@
 ﻿@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Web.Shared
 @inherits LayoutComponentBase
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <base href="/"/>
+
+<HeadContent>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico"/>
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css"/>
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css"/>
     <link rel="stylesheet" href="@Assets["/css/styles.css"]">
     <link rel="stylesheet" href="@Assets["ZauberCMS.Web.styles.css"]">
-    <HeadOutlet />
-</head>
-
-<body>
+    <SectionOutlet SectionId="@Sections.PageHeadContent"/>
+</HeadContent>
 
 <nav class="navbar navbar-expand-lg navbar-light" id="mainNav">
     <div class="container px-4 px-lg-5">
@@ -45,16 +41,15 @@
     </div>
 </footer>
 
-<script src="_framework/blazor.web.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/scripts.js"></script>
+
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
 
-</body>
 
 @code {
     [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
@@ -74,6 +69,7 @@
 
     internal static class Sections
     {
+        internal static SectionOutlet? PageHeadContent = new();
         internal static SectionOutlet? PageBreadcrumbContent = new();
     }
 }

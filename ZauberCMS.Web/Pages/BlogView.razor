@@ -7,12 +7,12 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout MainLayout
 
-<HeadContent>
+<SectionContent SectionId="MainLayout.Sections.PageHeadContent">
     <RenderSeoTags SeoAlias="SEO" 
                    Content="@Content" 
                    TitleAlias="PageTitle"
                    DescriptionAlias="MetaDescription" />
-</HeadContent>
+</SectionContent>
 
 <header class="masthead" style="background-image: url('@(HeaderImage.Url)')">
     <div class="container position-relative px-4 px-lg-5">

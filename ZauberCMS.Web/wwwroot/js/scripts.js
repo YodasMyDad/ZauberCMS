@@ -1,4 +1,5 @@
 // Register an afterWebStarted initializer for SSR
+
 Blazor.addEventListener('afterWebStarted', () => {
     
 });
