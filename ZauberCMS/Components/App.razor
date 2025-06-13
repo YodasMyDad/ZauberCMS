@@ -23,10 +23,11 @@
     }
 </head>
 
-
 <body>
-
-<RadzenComponents @rendermode="InteractiveServer" />
+@if (IsAdmin)
+{
+    <RadzenComponents @rendermode="InteractiveServer" />   
+}
 
 <CascadingValue Value="IsAdmin">
     <Routes @rendermode="RenderModeForPage"/>
