@@ -26,6 +26,13 @@ public class DefaultCacheService : ICacheService
 
     public async Task<T?> GetSetCachedItemAsync<T>(string cacheKey, Func<Task<T>> getCacheItemAsync, int cacheTimeInMinutes = CacheExtensions.MemoryCacheInMinutes)
     {
+        return await GetSetCachedItemAsync(cacheKey, getCacheItemAsync, cacheTimeInMinutes, 0);
+    }
+
+    public async Task<T?> GetSetCachedItemAsync<T>(string cacheKey, Func<Task<T>> getCacheItemAsync, int cacheTimeInMinutes, int cacheTimeInSeconds)
+    {
+        var totalExpiration = CalculateTotalExpiration(cacheTimeInMinutes, cacheTimeInSeconds);
+
         if (_useRedis)
         {
             // Use Redis cache
@@ -39,7 +46,7 @@ public class DefaultCacheService : ICacheService
             var data = Serialize(value);
 
             var options = new DistributedCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(cacheTimeInMinutes));
+                .SetSlidingExpiration(totalExpiration);
 
             await _distributedCache.SetAsync(cacheKey, data, options);
             Keys.TryAdd(cacheKey, default);
@@ -53,7 +60,7 @@ public class DefaultCacheService : ICacheService
             cacheEntry = await getCacheItemAsync();
 
             var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(cacheTimeInMinutes));
+                .SetSlidingExpiration(totalExpiration);
 
             _memoryCache.Set(cacheKey, cacheEntry, cacheEntryOptions);
             Keys.TryAdd(cacheKey, default);
@@ -63,6 +70,13 @@ public class DefaultCacheService : ICacheService
 
     public T? GetSetCachedItem<T>(string cacheKey, Func<T> getCacheItem, int cacheTimeInMinutes = CacheExtensions.MemoryCacheInMinutes)
     {
+        return GetSetCachedItem(cacheKey, getCacheItem, cacheTimeInMinutes, 0);
+    }
+
+    public T? GetSetCachedItem<T>(string cacheKey, Func<T> getCacheItem, int cacheTimeInMinutes, int cacheTimeInSeconds)
+    {
+        var totalExpiration = CalculateTotalExpiration(cacheTimeInMinutes, cacheTimeInSeconds);
+
         if (_useRedis)
         {
             // Use Redis cache
@@ -76,7 +90,7 @@ public class DefaultCacheService : ICacheService
             var data = Serialize(value);
 
             var options = new DistributedCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(cacheTimeInMinutes));
+                .SetSlidingExpiration(totalExpiration);
 
             _distributedCache.Set(cacheKey, data, options);
             Keys.TryAdd(cacheKey, default);
@@ -90,7 +104,7 @@ public class DefaultCacheService : ICacheService
             cacheEntry = getCacheItem();
 
             var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(cacheTimeInMinutes));
+                .SetSlidingExpiration(totalExpiration);
 
             _memoryCache.Set(cacheKey, cacheEntry, cacheEntryOptions);
             Keys.TryAdd(cacheKey, default);
@@ -128,6 +142,11 @@ public class DefaultCacheService : ICacheService
                 Keys.TryRemove(key, out _);
             }
         }
+    }
+
+    private static TimeSpan CalculateTotalExpiration(int cacheTimeInMinutes, int cacheTimeInSeconds)
+    {
+        return TimeSpan.FromMinutes(cacheTimeInMinutes).Add(TimeSpan.FromSeconds(cacheTimeInSeconds));
     }
 
     private static byte[] Serialize<T>(T value)

@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using System.Security.Cryptography;
+using System.Text;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -8,16 +10,30 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Settings;
+using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Core.Content.Handlers;
 
 public class GetContentFromRequestHandler(
     IServiceProvider serviceProvider,
     IMediator mediator,
-    IOptions<ZauberSettings> settings)
+    IOptions<ZauberSettings> settings,
+    ICacheService cacheService)
     : IRequestHandler<GetContentFromRequestCommand, EntryModel>
 {
     public async Task<EntryModel> Handle(GetContentFromRequestCommand request, CancellationToken cancellationToken)
+    {
+        // Generate cache key based on request parameters
+        var cacheKey = GenerateCacheKey(request);
+
+        // Try to get from cache first with 5-second expiration
+        return (await cacheService.GetSetCachedItemAsync(
+            cacheKey,
+            async () => await FetchContentAsync(request, cancellationToken), 0, 5))!;
+    }
+
+    private async Task<EntryModel> FetchContentAsync(GetContentFromRequestCommand request,
+        CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -64,7 +80,7 @@ public class GetContentFromRequestHandler(
         {
             return entryModel;
         }
-        
+
         // Now we perform the more expensive query to fetch the content with includes
         var query = dbContext.Contents
             .AsNoTracking()
@@ -85,7 +101,7 @@ public class GetContentFromRequestHandler(
             .FirstOrDefaultAsync(c => c.Id == content.Id, cancellationToken: cancellationToken);
 
         entryModel.Content = fullContent;
-        
+
         string? languageIsoCode = null;
 
         // Use the matched domain's language if available
@@ -119,9 +135,9 @@ public class GetContentFromRequestHandler(
         }
 
         entryModel.LanguageIsoCode = languageIsoCode;
-        
+
         var allLanguageData = await mediator.Send(new GetCachedAllLanguageDictionariesCommand(), cancellationToken);
-        
+
         if (allLanguageData.TryGetValue(languageIsoCode, out var lng))
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
@@ -130,9 +146,26 @@ public class GetContentFromRequestHandler(
                 entryModel.LanguageKeys = lng;
             }
         }
-        
+
         return entryModel;
     }
+
+
+    private static string GenerateCacheKey(GetContentFromRequestCommand request)
+    {
+        // Create a unique cache key based on the request parameters
+        var keyBuilder = new StringBuilder();
+        keyBuilder.Append($"GetContentFromRequest-");
+        keyBuilder.Append($"Url:{request.Url ?? "null"}-");
+        keyBuilder.Append($"Slug:{request.Slug ?? "null"}-");
+        keyBuilder.Append($"IsRoot:{request.IsRootContent}-");
+        keyBuilder.Append($"IncludeChildren:{request.IncludeChildren}");
+
+        // Hash the key to keep it manageable
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(keyBuilder.ToString()));
+        return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+    }
+
 
     private static Domain? MatchDomainWithContent(string url, List<Domain> domains)
     {
