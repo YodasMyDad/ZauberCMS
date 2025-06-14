@@ -1,6 +1,7 @@
 ﻿@using System.Text
 @using System.Web
 @using ZauberCMS.Core.Seo.Models
+@using ZauberCMS.Core.Media.Models
 @using System.Globalization
 @inject NavigationManager NavigationManager
 @inject IMediator Mediator
@@ -15,6 +16,7 @@
     [Parameter] public Content? Content { get; set; }
     [Parameter] public string? TitleAlias { get; set; }
     [Parameter] public string? DescriptionAlias { get; set; }
+    [Parameter] public Media? ImageFallback { get; set; }
 
     private string _generatedTags = string.Empty;
 
@@ -23,18 +25,18 @@
         if (Content != null)
         {
             var sb = new StringBuilder();
-            await RenderTags(sb, SeoAlias, Content.Name ?? string.Empty, Content.Url, Content, TitleAlias, DescriptionAlias);
+            await RenderTags(sb, SeoAlias, Content.Name ?? string.Empty, Content.Url, Content, TitleAlias, DescriptionAlias, ImageFallback);
             _generatedTags = sb.ToString();
         }
     }
 
     private async Task RenderTags(StringBuilder sb, string? seoAlias, string name, string? url, 
-        Content model, string? titleAlias = null, string? descriptionAlias = null)
+        Content model, string? titleAlias = null, string? descriptionAlias = null, Media? mediaFallback = null)
     {
+        var baseUri = NavigationManager.BaseUri.TrimEnd('/');
         var metaData = !string.IsNullOrEmpty(seoAlias) ? model.GetValue<Meta>(seoAlias) : null;
         if (metaData != null)
         {
-            var baseUri = NavigationManager.BaseUri.TrimEnd('/');
             var currentUri = NavigationManager.Uri;
             var isHomePage = currentUri == NavigationManager.BaseUri || currentUri == baseUri + "/";
 
@@ -53,6 +55,14 @@
                     AddOpenGraphTag(sb, "og:image:type", "image/jpeg");
                     AddMetaTag(sb, "twitter:card", "summary_large_image");
                 }
+            } 
+            else if (mediaFallback != null)
+            {
+                AddOpenGraphTag(sb, "og:image", $"{baseUri}/{mediaFallback.Url}?width=1200&height=630&mode=stretch");
+                AddOpenGraphTag(sb, "og:image:width", "1200");
+                AddOpenGraphTag(sb, "og:image:height", "630");
+                AddOpenGraphTag(sb, "og:image:type", "image/jpeg");
+                AddMetaTag(sb, "twitter:card", "summary_large_image");
             }
 
             AddOpenGraphTag(sb, "og:locale", CultureInfo.CurrentCulture.Name);
@@ -68,9 +78,18 @@
             // Basic meta tags fallback
             sb.AppendLine($"<title>{HttpUtility.HtmlEncode(model.GetValue<string>(titleAlias ?? "") ?? name)}</title>");
             AddMetaTag(sb, "description", model.GetValue<string>(descriptionAlias ?? ""));
+            
+            if (mediaFallback != null)
+            {
+                AddOpenGraphTag(sb, "og:image", $"{baseUri}/{mediaFallback.Url}?width=1200&height=630&mode=stretch");
+                AddOpenGraphTag(sb, "og:image:width", "1200");
+                AddOpenGraphTag(sb, "og:image:height", "630");
+                AddOpenGraphTag(sb, "og:image:type", "image/jpeg");
+                AddMetaTag(sb, "twitter:card", "summary_large_image");
+            }
         }
     }
-
+    
     private static void AddMetaTag(StringBuilder sb, string name, string? content)
     {
         if (!string.IsNullOrWhiteSpace(content))
