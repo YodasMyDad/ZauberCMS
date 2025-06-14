@@ -68,12 +68,12 @@ public class GetContentFromRequestHandler(
         // Now we perform the more expensive query to fetch the content with includes
         var query = dbContext.Contents
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(x => x.PropertyData)
             .Include(x => x.Parent)
             .Include(x => x.ContentType)
             .Include(x => x.Language)
             .Include(x => x.ContentRoles).ThenInclude(x => x.Role)
-            .AsSplitQuery()
             .AsQueryable();
 
         if (request.IncludeChildren || content.IncludeChildren)

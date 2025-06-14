@@ -1,11 +1,17 @@
 ﻿@using System.Collections.Concurrent
+@using System.Globalization
+@using System.Text.RegularExpressions
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
+@using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Seo.Commands
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Services
-@implements IDisposable
 
 @if (ComponentView != null)
 {
@@ -19,18 +25,23 @@
     [Inject] public LayoutResolverService LayoutResolver { get; set; } = null!;
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     [Inject] public PersistentComponentState ApplicationState { get; set; } = null!;
+    [Inject] public ILogger<EntryPage> Logger { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+    
     [Parameter] public string? Slug { get; set; }
 
     private Content? Content { get; set; }
     private Dictionary<string, string> LanguageKeys { get; set; } = [];
+    private string? LanguageIso { get; set; }
     private ConcurrentDictionary<string, IContentView> AllContentViews { get; set; } = new();
     private IContentView? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
     private Type LayoutType { get; set; } = null!;
-    private PersistingComponentStateSubscription? PersistingSubscription { get; set; }
+    private AuthenticationState AuthState { get; set; } = null!;
 
-    private RenderFragment RenderContentWithLayout => builder =>
+    /*private RenderFragment RenderContentWithLayout => builder =>
     {
         builder.OpenComponent<LayoutView>(0);
         builder.AddAttribute(1, "Layout", LayoutType);
@@ -42,27 +53,18 @@
             childBuilder.CloseComponent();
         }));
         builder.CloseComponent();
-    };
+    };*/
     
     protected override async Task OnParametersSetAsync()
     {
-        PersistingSubscription = ApplicationState.RegisterOnPersisting(PersistState);
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var instances = ExtensionManager.GetInstances<IContentView>(true);
         AllContentViews = new ConcurrentDictionary<string, IContentView>(instances);
         
-        if (!ApplicationState.TryTakeFromJson<Content>("ContentState", out var restoredContent))
-        {
-            var entryModel = await Mediator.Send(new GetContentFromRequestCommand { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
-            Content = entryModel.Content;
-            LanguageKeys = entryModel.LanguageKeys;
-        }
-        else
-        {
-            Content = restoredContent;
-            LanguageKeys = ApplicationState.TryTakeFromJson<Dictionary<string, string>>("LanguageKeysState", out var restoredKeys)
-                ? restoredKeys!
-                : new Dictionary<string, string>();
-        }
+        var entryModel = await Mediator.Send(new GetContentFromRequestCommand { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
+        Content = entryModel.Content;
+        LanguageKeys = entryModel.LanguageKeys;
+        LanguageIso = entryModel.LanguageIsoCode ?? Settings.Value.AdminDefaultLanguage;
         
         if (Content != null)
         {
@@ -71,6 +73,47 @@
                 ComponentView = contentView;
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
                 Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };
+                
+                // Set language
+                var cultureInfo = new CultureInfo(LanguageIso);
+                CultureInfo.CurrentCulture = cultureInfo;
+                CultureInfo.CurrentUICulture = cultureInfo;
+                CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+                CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+                
+                // Role-based content restriction
+                if (Content.ContentRoles.Count != 0)
+                {
+                    // Check if the user is authenticated and in a specific role
+                    if (AuthState.User.Identity?.IsAuthenticated == true)
+                    {
+                        // Always allow admins regardless
+                        if (!AuthState.User.IsInRole(Constants.Roles.AdminRoleName))
+                        {
+                            var userIsInRole = false;
+                            
+                            foreach (var contentRole in Content.ContentRoles)
+                            {
+                                if (contentRole.Role.Name != null && AuthState.User.IsInRole(contentRole.Role.Name))
+                                {
+                                    userIsInRole = true;
+                                    break;
+                                }
+                            }   
+                            
+                            if (!userIsInRole)
+                            {
+                                // Redirect if the user is not in the role
+                                NavigationManager.NavigateTo(Settings.Value.Identity.DefaultLoginRedirectUrl);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Handle unauthenticated users (redirect to login)
+                        NavigationManager.NavigateTo(Settings.Value.Identity.DefaultLoginRedirectUrl);
+                    }
+                }
             }
             else if (AllContentViews.TryGetValue(Settings.Value.MissingView!, out var missing))
             {
@@ -84,6 +127,13 @@
             var hasContent = await Mediator.Send(new AnyContentCommand());
             if (hasContent)
             {
+                // Check for redirects
+                var redirectResult = await CheckForRedirects();
+                if (redirectResult)
+                {
+                    return; // Redirect was performed, no need to continue
+                }
+                
                 if (AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
                 {
                     ComponentView = notFound;
@@ -98,15 +148,66 @@
         }
     }
 
-    private Task PersistState()
+    private async Task<bool> CheckForRedirects()
     {
-        ApplicationState.PersistAsJson("ContentState", Content);
-        ApplicationState.PersistAsJson("LanguageKeysState", LanguageKeys);
-        return Task.CompletedTask;
+        try
+        {
+            var allRedirects = await Mediator.Send(new QueryRedirectsCommand());
+            var currentUrl = GetFullUrlPath();
+            
+            foreach (var seoRedirect in allRedirects.Where(seoRedirect => !string.IsNullOrEmpty(seoRedirect.FromUrl)))
+            {
+                if (!string.IsNullOrWhiteSpace(seoRedirect.FromUrl) && !string.IsNullOrWhiteSpace(seoRedirect.ToUrl))
+                {
+                    if (seoRedirect.FromUrl.Equals(currentUrl, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Redirect matches directly
+                        PerformRedirect(seoRedirect.ToUrl!, seoRedirect.IsPermanent);
+                        return true;
+                    }
+
+                    // Attempt to match as a Regular Expression
+                    try
+                    {
+                        if (Regex.IsMatch(currentUrl, seoRedirect.FromUrl, RegexOptions.IgnoreCase))
+                        {
+                            // Redirect matches via regex
+                            PerformRedirect(seoRedirect.ToUrl!, seoRedirect.IsPermanent);
+                            return true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Invalid regex pattern in redirect FromUrl {FromUrl}", seoRedirect.FromUrl);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking redirects");
+        }
+        
+        return false;
     }
 
-    public void Dispose()
+    private void PerformRedirect(string toUrl, bool isPermanent)
     {
-        PersistingSubscription?.Dispose();
+        if (HttpContext is { Response.HasStarted: false })
+        {
+            HttpContext.Response.StatusCode = isPermanent ? 301 : 302;
+            HttpContext.Response.Headers.Location = toUrl;
+            HttpContext.Response.CompleteAsync();
+        }
+        else
+        {
+            NavigationManager.NavigateTo(toUrl, replace: isPermanent);
+        }
+    }
+
+    private string GetFullUrlPath()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        return uri.PathAndQuery;
     }
 }
