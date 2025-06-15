@@ -656,21 +656,23 @@
 
     private async Task ChangeTab(PropertyType property)
     {
+        var tabs = OrderedTabs
+            .Where(x => !x.IsSystemTab)
+            .OrderBy(x => x.SortOrder)
+            .ToList();
         var dialog = DialogService.OpenSidePanel<ChangeTab>("Change Tab",
             new Dictionary<string, object>
             {
                 { nameof(Dialogs.ChangeTab.ContentTypeId), ContentType.Id },
-                {
-                    nameof(Dialogs.ChangeTab.Tabs), OrderedTabs
-                        .Where(x => !x.IsSystemTab)
-                        .OrderBy(x => x.SortOrder)
-                        .ToList()
-                }
+                { nameof(Dialogs.ChangeTab.Tabs), tabs }
             });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: Guid newTabId })
         {
+            // If it's been changed then update it
+            var selectedTab = tabs.FirstOrDefault(x => x.Id == newTabId);
             property.TabId = newTabId;
+            property.TabAlias = selectedTab!.Alias;
             Tabs.Reload();
         }
     }
@@ -717,10 +719,10 @@
                 await Task.Delay(500); // Add a 500ms delay
                 NavigationManager.NavigateTo(NavigationManager.Uri, true);
             }
-            else
+            /*else
             {
                 SelectedTabIndex = 0;
-            }
+            }*/
         }
     }
 
