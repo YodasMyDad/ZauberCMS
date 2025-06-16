@@ -124,7 +124,9 @@ else
                                                   Description="The url in the browser bar to show this page"/>
                                 </LeftColumn>
                                 <CentreColumn>
+                                    @* ReSharper disable CSharpWarnings::CS0618 *@
                                     <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
+                                    @* ReSharper restore CSharpWarnings::CS0618 *@
                                 </CentreColumn>
                             </EditorRow>
 

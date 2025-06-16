@@ -14,6 +14,7 @@ using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace ZauberCMS.Core.Content.Handlers;
 

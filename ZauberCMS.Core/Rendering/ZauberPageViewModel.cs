@@ -2,6 +2,7 @@
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Membership.Models;
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace ZauberCMS.Core.Rendering;
 

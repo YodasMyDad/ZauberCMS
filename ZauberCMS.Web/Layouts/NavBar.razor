@@ -4,10 +4,10 @@
     {
         @foreach (var p in Website.Children.Where(x => !x.HideFromNavigation).OrderBy(x => x.SortOrder))
         {
-            var navLinkClass = "nav-link px-lg-3 py-3 py-lg-4" + (IsPageActive(p.Url) ? " active" : "");
+            var navLinkClass = "nav-link px-lg-3 py-3 py-lg-4" + (IsPageActive(p.Url()) ? " active" : "");
 
             <li class="nav-item">
-                <a class="@navLinkClass" aria-current="page" href="/@p.Url">@p.Name</a>
+                <a class="@navLinkClass" aria-current="page" href="/@p.Url()">@p.Name</a>
             </li>
         }
     }

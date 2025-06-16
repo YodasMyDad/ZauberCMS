@@ -19,6 +19,9 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     /// <summary>
     /// The Url for the content
     /// </summary>
+    [Obsolete("Use the Url() extension method instead of accessing this property directly.")]
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+
     public string? Url { get; set; }
 
     /// <summary>

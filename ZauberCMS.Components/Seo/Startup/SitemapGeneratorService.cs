@@ -132,7 +132,7 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
 
         if (allowInSitemap)
         {
-            var fullUrl = isRootItem ? seoSitemap.Domain : $"{seoSitemap.Domain}/{content.Url}";
+            var fullUrl = isRootItem ? seoSitemap.Domain : $"{seoSitemap.Domain}/{content.Url()}";
             // Add content data to the sitemap list
             sitemapEntries.Add(new XElement(ns + "url",
                 new XElement(ns + "loc", fullUrl),

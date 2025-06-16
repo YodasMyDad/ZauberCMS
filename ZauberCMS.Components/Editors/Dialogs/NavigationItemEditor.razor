@@ -100,7 +100,7 @@
         if (value is Content content)
         {
             NavigationItem!.ContentId = content.Id;
-            NavigationItem.Url = content.Url;
+            NavigationItem.Url = content.Url();
             NavigationItem.Name = content.Name;
         }
 

@@ -1,7 +1,7 @@
 ﻿@if (Content != null)
 {
     <div class="post-preview">
-        <a href="@($"/{Content.Url}")">
+        <a href="@($"/{Content.Url()}")">
             <h2 class="post-title">@Content.Name</h2>
             <h3 class="post-subtitle">@(Content.GetValue<string>("Summary"))</h3>
         </a>

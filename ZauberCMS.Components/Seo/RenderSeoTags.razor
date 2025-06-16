@@ -25,7 +25,7 @@
         if (Content != null)
         {
             var sb = new StringBuilder();
-            await RenderTags(sb, SeoAlias, Content.Name ?? string.Empty, Content.Url, Content, TitleAlias, DescriptionAlias, ImageFallback);
+            await RenderTags(sb, SeoAlias, Content.Name ?? string.Empty, Content.Url(), Content, TitleAlias, DescriptionAlias, ImageFallback);
             _generatedTags = sb.ToString();
         }
     }

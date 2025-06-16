@@ -39,7 +39,7 @@ public class SeoCheckerContextMenu() : ITreeContextMenu
         var content = (Content)args.Value!;
         CopyContentCommand.ContentToCopy = content.Id;
         var currentUri = new Uri(navigationManager.BaseUri);
-        var fullUrl = $"{currentUri}{content.Url}";
+        var fullUrl = $"{currentUri}{content.Url()}";
         var parameters = new Dictionary<string, object>
         {
             { nameof(SeoChecker.FullUrl), fullUrl},

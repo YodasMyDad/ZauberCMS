@@ -26,7 +26,7 @@ public static class HtmlHelperExtensions
             else if (htmlHelper.ViewData.Model is Content.Models.Content contentModel)
             {
                 await RenderTags(htmlHelper, sb, mediator, seoAlias, contentModel.Name ?? string.Empty,
-                    contentModel.Url, contentModel, titleAlias, descriptionAlias);
+                    contentModel.Url(), contentModel, titleAlias, descriptionAlias);
             }
             
             return new HtmlString(sb.ToString());
