@@ -29,7 +29,7 @@
         <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="9.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="9.6.5" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="9.6.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.6">
@@ -45,7 +45,7 @@
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.6" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-        <PackageReference Include="Radzen.Blazor" Version="7.0.8" />
+        <PackageReference Include="Radzen.Blazor" Version="7.1.0" />
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
         <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.1.5" />
     </ItemGroup>
