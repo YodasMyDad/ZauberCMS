@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Radzen.Blazor;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Extensions;
@@ -94,6 +95,35 @@ public static class TreeExtensions
 
                 builder.AddContent(5, content.Name); // the text
                 builder.CloseElement();
+            }
+        };
+    }
+    
+    public static RenderFragment<T> CreateMediaTreeTemplate<T>() where T : class
+    {
+        return context => builder =>
+        {
+            var treeItem = context as RadzenTreeItem;
+            if (treeItem?.Value is Media.Models.Media media)
+            {
+                if (media.MediaType == MediaType.Image)
+                {
+                    builder.OpenComponent<RadzenImage>(0);
+                    builder.AddAttribute(1, "Path", $"{media.Url}??width=25&height=25&rmode=max");
+                    builder.AddAttribute(2, "style", "width: 25px; height: 25px; margin-right:4px;");
+                    builder.AddAttribute(2, "class", "rounded");
+                    builder.AddAttribute(2, "AlternateText", media.Name);
+                    builder.CloseComponent();
+                }
+                else
+                {
+                    builder.OpenComponent<RadzenIcon>(0);
+                    builder.AddAttribute(1, "Icon", media.MediaType.GetIcon());
+                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
+                    builder.CloseComponent();
+                }
+
+                builder.AddContent(3, media.Name);
             }
         };
     }

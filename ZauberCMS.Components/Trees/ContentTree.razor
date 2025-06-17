@@ -1,9 +1,10 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core
+@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Shared
 @implements IDisposable
 
 <BaseTree
-    T="ContentType"
+    T="Content"
     Data="@Data"
     TreeAlias="@Alias"
     Expand="@OnExpandHandler"
@@ -13,47 +14,47 @@
     DisableContextMenu="DisableContextMenu"
     DisableSectionOnlyContextMenu="DisableSectionOnlyContextMenu"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
-    Template="@(TreeExtensions.CreateContentTypeTreeTemplate<object>())">
+    Template="@(TreeExtensions.CreateContentTreeTemplate<object>())">
 </BaseTree>
 
 @code {
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
     
-    [Parameter] public IEnumerable<ContentType> Data { get; set; } = [];
+    [Parameter] public IEnumerable<Content> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
-    [Parameter] public Func<object, bool>? Children { get; set; }
+    [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public object? Value { get; set; }
-    [Parameter] public EventCallback Change { get; set; }
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
     [Parameter] public bool DisableContextMenu { get; set; }
     [Parameter] public bool DisableSectionOnlyContextMenu { get; set; }
-    [Parameter] public string Alias { get; set; } = Constants.Sections.Trees.ContentTypeTree;
+    [Parameter] public string Alias { get; set; } = Constants.Sections.Trees.ContentTree;
     
     // Dictionary to cache HasChildren results
     
     protected override void OnInitialized()
     {
-        AppState.OnContentTypeChanged += HandleContentTypeChanged;
+        AppState.OnContentChanged += HandleContentChanged;
     }
     
     protected override async Task OnParametersSetAsync()
     {
         if (!Data.Any())
         {
-            var items = await Mediator.Send(new QueryContentTypesCommand
+            var items = await Mediator.Send(new QueryContentCommand
             {
                 AmountPerPage = 100,
-                IncludeFolders = true,
-                WhereClause = x => x.ParentId == null,
-                OrderBy = GetContentTypesOrderBy.Name
+                WhereClause = x => x.IsRootContent,
+                IncludeChildren = true,
+                IncludeContentRoles = true, 
+                OrderBy = GetContentsOrderBy.SortOrder
             });
             
             Data = items.Items.ToList();
         }
     }
     
-    private Task HandleContentTypeChanged(ContentType? contentType, string username)
+    private Task HandleContentChanged(Content? media, string username)
     {
         TreeState.ClearChildCache(null);
         return Task.CompletedTask;
@@ -67,18 +68,19 @@
         }
         else
         {
-            if (args.Value is ContentType content)
+            if (args.Value is Content content)
             {
-                var items = Mediator.Send(new QueryContentTypesCommand()
+                var items = Mediator.Send(new QueryContentCommand
                 {
-                    WhereClause = x => x.ParentId == content.Id,
+                    IncludeUnpublished = true,
                     AmountPerPage = 100,
-                    IncludeFolders = true,
-                    OrderBy = GetContentTypesOrderBy.Name
+                    WhereClause = x => x.ParentId == content.Id,
+                    IncludeContentRoles = true,
+                    OrderBy = GetContentsOrderBy.SortOrder
                 }).GetAwaiter().GetResult();
                 args.Children.Data = items.Items;
                 args.Children.TextProperty = "Name";
-                args.Children.Template = TreeExtensions.CreateContentTypeTreeTemplate<RadzenTreeItem>();
+                args.Children.Template = TreeExtensions.CreateContentTreeTemplate<RadzenTreeItem>();
                 args.Children.HasChildren = HasChildren;
                 
                 TreeState.NodeExpanded(content.Id);
@@ -89,43 +91,35 @@
     private async Task OnChangeHandler()
     {
         await ValueChanged.InvokeAsync(Value);
-        if (Change.HasDelegate)
+        if (OnChange.HasDelegate)
         {
-            await Change.InvokeAsync();
+            await OnChange.InvokeAsync();
         }
     }
 
     private bool HasChildren(object data)
     {
-        if (Children != null)
+        if (data is Content content)
         {
-            // Use the user-provided method
-            return Children(data);
-        }
-        else
-        {
-            if (data is ContentType content)
+            // Check if result is cached
+            if (TreeState.HasChildrenCache.TryGetValue(content.Id, out var hasChildren))
             {
-                // Check if result is cached
-                if (TreeState.HasChildrenCache.TryGetValue(content.Id, out var hasChildren))
-                {
-                    return hasChildren;
-                }
-
-                // Calculate result and cache it
-                hasChildren = Task.Run(() => Mediator.Send(new HasChildContentTypeCommand { ParentId = content.Id })).GetAwaiter().GetResult();
-                TreeState.SetChildren(content.Id, hasChildren);
-
-                return hasChildren;
+                return !content.ContentType!.EnableListView && hasChildren;
             }
 
-            return false;   
+            // Calculate result and cache it
+            hasChildren = Task.Run(() => Mediator.Send(new HasChildContentCommand { ParentId = content.Id })).GetAwaiter().GetResult();
+            TreeState.SetChildren(content.Id, hasChildren);
+
+            return !content.ContentType!.EnableListView && hasChildren;
         }
+
+        return false;
     }
 
     private bool ShouldBeExpanded(object data)
     {
-        if (data is ContentType content)
+        if (data is Content content)
         {
             return (HasChildren(content) && content.ParentId == null) || TreeState.IsNodeExpanded(content.Id);
         }
@@ -135,6 +129,6 @@
 
     public void Dispose()
     {
-        AppState.OnContentTypeChanged -= HandleContentTypeChanged;
+        AppState.OnContentChanged -= HandleContentChanged;
     }
 }

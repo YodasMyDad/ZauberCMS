@@ -1,4 +1,5 @@
 ﻿@using System.Collections.Concurrent
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Media.Models
@@ -14,7 +15,7 @@
           ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
           DisableContextMenu="DisableContextMenu"
           DisableSectionOnlyContextMenu="DisableSectionOnlyContextMenu"
-          Template="@(CreateTreeTemplate<object>())">
+          Template="@(TreeExtensions.CreateMediaTreeTemplate<object>())">
 </BaseTree>
 
 @code {
@@ -76,7 +77,16 @@
         });
         Data = items.Items;
     }
-
+    
+    // Public method to allow external refresh
+    public async Task RefreshData()
+    {
+        _hasChildrenCache?.Clear();
+        TreeState.ClearChildCache(null);
+        await DataRefresh();
+        StateHasChanged();
+    }
+    
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (OnExpand.HasDelegate)
@@ -95,41 +105,11 @@
                 }).GetAwaiter().GetResult();
                 args.Children.Data = items.Items;
                 args.Children.TextProperty = "Name";
-                args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
+                args.Children.Template = TreeExtensions.CreateMediaTreeTemplate<RadzenTreeItem>();
                 args.Children.HasChildren = HasChildren;
                 TreeState.NodeExpanded(media.Id);
             }
         }
-    }
-
-
-    private RenderFragment<T> CreateTreeTemplate<T>() where T : class
-    {
-        return context => builder =>
-        {
-            var treeItem = context as RadzenTreeItem;
-            if (treeItem?.Value is Media media)
-            {
-                if (media.MediaType == MediaType.Image)
-                {
-                    builder.OpenComponent<RadzenImage>(0);
-                    builder.AddAttribute(1, "Path", $"{media.Url}??width=25&height=25&rmode=max");
-                    builder.AddAttribute(2, "style", "width: 25px; height: 25px; margin-right:4px;");
-                    builder.AddAttribute(2, "class", "rounded");
-                    builder.AddAttribute(2, "AlternateText", media.Name);
-                    builder.CloseComponent();
-                }
-                else
-                {
-                    builder.OpenComponent<RadzenIcon>(0);
-                    builder.AddAttribute(1, "Icon", media.MediaType.GetIcon());
-                    builder.AddAttribute(2, "style", "font-weight: 300; color: dimgray;");
-                    builder.CloseComponent();
-                }
-
-                builder.AddContent(3, media.Name);
-            }
-        };
     }
 
     private async Task OnChangeHandler()

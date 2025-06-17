@@ -80,6 +80,21 @@
       <UpToDateCheckInput Remove="Admin\Seo\SeoSitemaps.razor" />
       <UpToDateCheckInput Remove="Admin\Seo\SettingsSeoTree.razor" />
       <UpToDateCheckInput Remove="Admin\FormsSection\FormsIndex.razor" />
+      <UpToDateCheckInput Remove="Admin\Trees\BaseTree.razor" />
+      <UpToDateCheckInput Remove="Admin\Trees\ContentTree.razor" />
+      <UpToDateCheckInput Remove="Admin\Trees\ContentTypeTree.razor" />
+      <UpToDateCheckInput Remove="Admin\Trees\GenericTree.razor" />
+      <UpToDateCheckInput Remove="Admin\Trees\MediaTree.razor" />
+      <UpToDateCheckInput Remove="Admin\Trees\UsersTree.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Trees\BaseTree.razor" />
+      <AdditionalFiles Include="Trees\ContentTree.razor" />
+      <AdditionalFiles Include="Trees\ContentTypeTree.razor" />
+      <AdditionalFiles Include="Trees\GenericTree.razor" />
+      <AdditionalFiles Include="Trees\MediaTree.razor" />
+      <AdditionalFiles Include="Trees\UsersTree.razor" />
     </ItemGroup>
     
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">

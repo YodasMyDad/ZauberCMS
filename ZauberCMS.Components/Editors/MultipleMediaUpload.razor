@@ -1,4 +1,5 @@
-﻿@using Microsoft.Extensions.Options
+﻿@using System.Collections.Concurrent
+@using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Settings
@@ -7,12 +8,17 @@
 @using ZauberCMS.Core.Providers
 @implements IAsyncDisposable
 
-@if (ParentFolder != null)
-{
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0" class="pb-1">
-        <RadzenIcon Icon="@ParentFolder.MediaType.GetIcon()" /> @ParentFolder.Name
-    </RadzenStack>
-}
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0" class="pb-1">
+    @if (EnableFolderSelection)
+    {
+            <RadzenButton Click="@(() => AddMedia())" Variant="Variant.Text">Select Folder</RadzenButton> 
+    }
+    @if (ParentFolder != null)
+    {
+        <RadzenIcon Icon="@ParentFolder.MediaType.GetIcon()"/> 
+        @ParentFolder.Name
+    }
+</RadzenStack>
 
 <RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container w-full">
     @foreach (var media in FilesToUpload)
@@ -28,7 +34,6 @@
         </label>
     </div>
 </div>
-
 
 <RadzenButton Click="@(() => Save())">Save</RadzenButton>
 <RadzenButton Click="@(() => Clear())">Clear</RadzenButton>
@@ -48,14 +53,17 @@
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
     
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public int MaxAllowedFiles { get; set; } = 30; // Only allow 30 max at a time, should be setting
     [Parameter] public bool OnlyImages { get; set; }
-    [CascadingParameter] public IModalService? ModalService { get; set; }
+    [Parameter] public bool EnableFolderSelection { get; set; }
     [Parameter] public EventCallback<List<Media>> ValueChanged { get; set; }
     [Parameter] public EventCallback<List<IBrowserFile>> OnSave { get; set; }
     [Parameter] public List<IBrowserFile> FilesToUpload { get; set; } = [];
+    
+    [CascadingParameter] public IModalService? ModalService { get; set; }
     
     private ElementReference FileDropContainer { get; set; }
     private InputFile InputFile { get; set; } = null!;
@@ -64,6 +72,8 @@
     private string HoverClass { get; set; } = string.Empty;
     private List<ResultMessage> ErrorMessages { get; set; } = [];
     private Media? ParentFolder { get; set; }
+    private IModalReference? Modal { get; set; }
+    private ConcurrentDictionary<Guid, bool>? HasChildrenCache { get; set; } = new();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -89,6 +99,77 @@
     void OnDragEnter(DragEventArgs e) => HoverClass = "hover";
     void OnDragLeave(DragEventArgs e) => HoverClass = string.Empty;
 
+    private async Task AddMedia()
+    {
+        var foldersOnly = await Mediator.Send(new QueryMediaCommand
+        {
+            MediaTypes = [MediaType.Folder],
+            OrderBy = GetMediaOrderBy.Name,
+            AmountPerPage = 250,
+            WhereClause = x => x.ParentId == null
+        });
+        
+        var parameters = new Dictionary<string, object>
+        {
+            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) },
+            { nameof(MediaTree.DisableContextMenu), true },
+            { nameof(MediaTree.Data), foldersOnly.Items },
+            { nameof(MediaTree.OnExpand), EventCallback.Factory.Create<TreeExpandEventArgs>(this, OnExpandHandler) }
+        };
+
+        Modal = ModalService?.OpenSidePanel<MediaTree>("Choose Media", parameters);
+    }
+    
+    private void OnValueChangedHandler(object value)
+    { 
+        Modal?.Close();
+        
+        if (value is Media { MediaType: MediaType.Folder } media)
+        {
+            ParentFolder = media;
+        }
+    }
+    
+    private async Task OnExpandHandler(TreeExpandEventArgs args)
+    {
+        if (args.Value is Media media)
+        {
+            var items = await Mediator.Send(new QueryMediaCommand
+            {
+                MediaTypes = [MediaType.Folder],
+                WhereClause = x => x.ParentId == media.Id,
+                OrderBy = GetMediaOrderBy.Name,
+                AmountPerPage = 250
+            });
+            args.Children.Data = items.Items;
+            args.Children.TextProperty = "Name";
+            args.Children.Template = TreeExtensions.CreateMediaTreeTemplate<RadzenTreeItem>();
+            args.Children.HasChildren = HasChildren;
+            TreeState.NodeExpanded(media.Id);
+        }
+    }
+    
+    // Using same method from MediaTree. Would be nice to have a single place, so easier to re-use trees
+    private bool HasChildren(object data)
+    {
+        if (data is Media { MediaType: MediaType.Folder } media)
+        {
+            // Check if result is cached
+            if (HasChildrenCache!.TryGetValue(media.Id, out var hasChildren))
+            {
+                return hasChildren;
+            }
+
+            // Calculate result and cache it
+            hasChildren = Task.Run(() => Mediator.Send(new HasChildMediaCommand { ParentId = media.Id })).GetAwaiter().GetResult();
+            HasChildrenCache[media.Id] = hasChildren;
+
+            return hasChildren;
+        }
+
+        return false;
+    }
+    
     private void RemoveMedia(IBrowserFile media)
     {
         var index = FilesToUpload.FindIndex(c => c.Name == media.Name);

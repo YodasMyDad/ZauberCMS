@@ -1,0 +1,54 @@
+﻿@using ZauberCMS.Core.Media.Models
+<EditorRow>
+    <CentreColumn>
+            <RadzenTabs @bind-SelectedIndex="@SelectedIndex" Change="@OnTabChanged">
+                <Tabs>
+                    <RadzenTabsItem Text="Media">
+                        <MediaTree @ref="MediaTreeRef" ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>                
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="Upload">
+                        <MultipleMediaUpload EnableFolderSelection="true" ParentId="@SelectedFolderId"/>
+                    </RadzenTabsItem>
+                </Tabs>
+            </RadzenTabs>
+    </CentreColumn>
+</EditorRow>
+
+@code {
+    [Parameter] public EventCallback<object> ValueChanged { get; set; }
+
+    private int SelectedIndex { get; set; }
+    private int PreviousSelectedIndex { get; set; } = -1;
+    private Guid? SelectedMediaId { get; set; }
+    private Guid? SelectedFolderId { get; set; }
+    private MediaTree? MediaTreeRef { get; set; }
+    
+    private async Task OnValueChangedHandler(object value)
+    {
+        if (value is Media media)
+        {
+            // Get the media, see if it's a folder
+            SelectedFolderId = media?.MediaType == MediaType.Folder ? SelectedMediaId : null;
+        }
+        
+        // This is actually the media id, so we
+        await ValueChanged.InvokeAsync(value);
+    }
+    
+    private async Task OnTabChanged()
+    {
+        // If we're switching to the Media tab (index 0) from another tab
+        if (SelectedIndex == 0 && PreviousSelectedIndex != 0 && PreviousSelectedIndex != -1)
+        {
+            // Refresh the media tree
+            if (MediaTreeRef != null)
+            {
+                await MediaTreeRef.RefreshData();
+            }
+        }
+        
+        PreviousSelectedIndex = SelectedIndex;
+    }
+
+
+}
