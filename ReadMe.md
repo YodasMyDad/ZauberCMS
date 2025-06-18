@@ -44,7 +44,7 @@ https://aptitude.gitbook.io/zaubercms/getting-started/quick-start
 
 This video shows building a very simple site from scratch, hopefully you'll see how easy it is!
 
-[![Starter Site Build YouTube Video](https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FVr2cbdfxDGZK1u2Fd59w%2Fuploads%2FPInFco2RCtXOrEN3hFVY%2Fgetting-started.png?alt=media&token=58bcda5e-0cf8-4789-b797-fb0f85a174b4)](https://www.youtube.com/watch?v=x_klA1Podwg)
+[![Starter Site Build YouTube Video](https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FVr2cbdfxDGZK1u2Fd59w%2Fuploads%2FPInFco2RCtXOrEN3hFVY%2Fgetting-started.png?alt=media&token=58bcda5e-0cf8-4789-b797-fb0f85a174b4)](https://www.youtube.com/watch?v=BvULaHbiIEU)
 
 ## Example Site
 
