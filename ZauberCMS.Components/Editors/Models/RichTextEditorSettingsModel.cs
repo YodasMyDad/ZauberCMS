@@ -37,6 +37,7 @@ public class RichTextEditorSettingsModel
     // seperator
     public bool AllowLink { get; set; } = true;
     public bool AllowUnlink { get; set; } = true;
+    public bool AllowImages { get; set; } = true;
     
     // seperator
     public bool AllowFontName { get; set; } = true;

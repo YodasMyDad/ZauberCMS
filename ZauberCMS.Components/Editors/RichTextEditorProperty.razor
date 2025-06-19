@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
+@using ZauberCMS.Components.Editors.Settings.RichTextEditor
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenHtmlEditor @bind-Value="@Value" style="height: 300px;" Input="@OnInput" Change="@OnChange" Paste="@OnPaste"
@@ -151,10 +152,10 @@
         {
             <RadzenHtmlEditorUnlink />
         }
-        @*if (SettingsModel.AllowImages)
+        if (SettingsModel.AllowImages)
         {
-            <RadzenHtmlEditorImage />
-        }*@
+            <InsertMedia />
+        }
 
         <RadzenHtmlEditorSeparator />
     }

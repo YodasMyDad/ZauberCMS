@@ -1,6 +1,53 @@
-﻿@implements IRichTextEditorButton
+﻿@using Radzen.Blazor.Rendering
+@inherits RadzenHtmlEditorButtonBase
+@inject DialogService DialogService
 
+<EditorButton Click="@OnClick" Icon="insert_photo" Title="@Title" />
 
 @code {
-    public string Name => "Insert Media";
+    [Parameter] public string Title { get; set; } = "Insert Media";
+    
+    private ImageAttributes? Attributes { get; set; }
+    
+    async Task InsertHtml()
+    {
+        DialogService.Close(true);
+
+        await Editor.RestoreSelectionAsync();
+
+        /*if (!string.IsNullOrEmpty(Attributes.Src))
+        {
+            var html = new StringBuilder();
+            html.AppendFormat("<img src=\"{0}\"", Attributes.Src);
+            if (!string.IsNullOrEmpty(Attributes.Alt))
+            {
+                html.AppendFormat(" alt=\"{0}\"", Attributes.Alt);
+            }
+            if (!string.IsNullOrEmpty(Attributes.Width))
+            {
+                html.AppendFormat(" width=\"{0}\"", Attributes.Width);
+            }
+            if (!string.IsNullOrEmpty(Attributes.Height))
+            {
+                html.AppendFormat(" height=\"{0}\"", Attributes.Height);
+            }
+            html.AppendFormat(">");
+
+            await Editor.ExecuteCommandAsync("insertHTML", html.ToString());
+        }*/
+    }
+
+    protected override async Task OnClick()
+    {
+        await Editor.SaveSelectionAsync();
+        //Attributes = await Editor.GetSelectionAttributes<ImageAttributes>("img", ["src", "alt", "width", "height", "id"]);
+    }
+
+    class ImageAttributes
+    {
+        public Guid Id { get; set; }
+        public string? Alt { get; set; }
+        public string? Width { get; set; }
+        public string? Height { get; set; }
+    }
 }
