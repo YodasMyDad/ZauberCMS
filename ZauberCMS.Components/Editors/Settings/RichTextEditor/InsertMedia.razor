@@ -1,53 +1,98 @@
-﻿@using Radzen.Blazor.Rendering
+﻿
+@using System.Text
+@using System.Text.Json
+@using Radzen.Blazor.Rendering
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Media.Models
 @inherits RadzenHtmlEditorButtonBase
 @inject DialogService DialogService
 
 <EditorButton Click="@OnClick" Icon="insert_photo" Title="@Title" />
 
 @code {
-    [Parameter] public string Title { get; set; } = "Insert Media";
-    
-    private ImageAttributes? Attributes { get; set; }
-    
-    async Task InsertHtml()
-    {
-        DialogService.Close(true);
+    /// <summary>
+    /// Specifies the title (tooltip) displayed when the user hovers the tool. Set to <c>"Insert image"</c> by default.
+    /// </summary>
+    [Parameter]
+    public string Title { get; set; } = "Insert image";
 
-        await Editor.RestoreSelectionAsync();
+    /// <summary>
+    /// Specifies the text of button which inserts the image. Set to <c>"OK"</c> by default.
+    /// </summary>
+    [Parameter]
+    public string OkText { get; set; } = "OK";
 
-        /*if (!string.IsNullOrEmpty(Attributes.Src))
-        {
-            var html = new StringBuilder();
-            html.AppendFormat("<img src=\"{0}\"", Attributes.Src);
-            if (!string.IsNullOrEmpty(Attributes.Alt))
-            {
-                html.AppendFormat(" alt=\"{0}\"", Attributes.Alt);
-            }
-            if (!string.IsNullOrEmpty(Attributes.Width))
-            {
-                html.AppendFormat(" width=\"{0}\"", Attributes.Width);
-            }
-            if (!string.IsNullOrEmpty(Attributes.Height))
-            {
-                html.AppendFormat(" height=\"{0}\"", Attributes.Height);
-            }
-            html.AppendFormat(">");
+    /// <summary>
+    /// Specifies the text of button which cancels image insertion and closes the dialog. Set to <c>"Cancel"</c> by default.
+    /// </summary>
+    [Parameter]
+    public string CancelText { get; set; } = "Cancel";
 
-            await Editor.ExecuteCommandAsync("insertHTML", html.ToString());
-        }*/
-    }
+    private Media? SelectedMedia { get; set; }
+    private Guid? SelectedMediaId { get; set; }
 
     protected override async Task OnClick()
     {
         await Editor.SaveSelectionAsync();
-        //Attributes = await Editor.GetSelectionAttributes<ImageAttributes>("img", ["src", "alt", "width", "height", "id"]);
+
+        var result = await DialogService.OpenAsync(Title, ds => @<div class="rz-html-editor-dialog">
+            <div class="rz-html-editor-dialog-item">
+                <MediaTree ValueChanged="OnMediaIdSelected" DisableContextMenu="@(true)"/>    
+            </div>
+            @if (SelectedMedia != null)
+            {
+                <div class="rz-html-editor-dialog-item">
+                    <div style="margin-top: 10px;">
+                        <strong>Selected Image:</strong>
+                        <div style="margin-top: 5px;">
+                            <img src="@SelectedMedia.Url" alt="Preview" style="max-width: 200px; max-height: 150px; border: 1px solid #ccc;" />
+                        </div>
+                        <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
+                            Dimensions: @SelectedMedia.Width x @SelectedMedia.Height
+                        </div>
+                    </div>
+                </div>
+            }
+            <div class="rz-html-editor-dialog-buttons">
+                <RadzenButton Text=@OkText Click="OnSubmit" Disabled="@(SelectedMedia == null)" />
+                <RadzenButton Text=@CancelText Click="()=> ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" />
+            </div>
+        </div>);
     }
 
-    class ImageAttributes
+    private void OnMediaIdSelected(object value)
     {
-        public Guid Id { get; set; }
-        public string? Alt { get; set; }
-        public string? Width { get; set; }
-        public string? Height { get; set; }
+        if (value is Media media)
+        {
+            SelectedMediaId = media.Id;
+    
+            // Use injected service or fallback to mock service
+            SelectedMedia = media;
+    
+            // Trigger UI update
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        if (SelectedMedia != null)
+        {
+            DialogService.Close(true);
+            await Editor.RestoreSelectionAsync();
+            await InsertImage(SelectedMedia);
+        }
+    }
+
+    private async Task InsertImage(Media media)
+    {
+        var html = new StringBuilder();
+        html.AppendFormat("<img src=\"{0}\"", media.Url);
+        html.AppendFormat(" width=\"{0}\"", media.Width);
+        html.AppendFormat(" height=\"{0}\"", media.Height);
+        html.AppendFormat(" data-media-id=\"{0}\"", media.Id);
+        html.Append(">");
+
+        await Editor.ExecuteCommandAsync("insertHTML", html.ToString());
     }
 }
