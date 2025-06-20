@@ -25,6 +25,7 @@
     [Inject] public NotificationService NotificationService { get; set; } = null!;
 
     [Parameter] public IEnumerable<Media> Data { get; set; } = [];
+    [Parameter] public List<MediaType> MediaTypes { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
     [Parameter] public EventCallback<TreeItemContextMenuEventArgs> OnItemContextMenu { get; set; }
@@ -68,8 +69,11 @@
 
     private async Task DataRefresh()
     {
+        var mediaTypesToQuery = GetMediaTypesForQuery();
+        
         var items = await Mediator.Send(new QueryMediaCommand
         {
+            MediaTypes = mediaTypesToQuery,
             AmountPerPage = 250,
             WhereClause = x => x.ParentId == null,
             IncludeChildren = true,
@@ -97,8 +101,11 @@
         {
             if (args.Value is Media media)
             {
+                var mediaTypesToQuery = GetMediaTypesForQuery();
+                
                 var items = Mediator.Send(new QueryMediaCommand
                 {
+                    MediaTypes = mediaTypesToQuery,
                     WhereClause = x => x.ParentId == media.Id,
                     OrderBy = GetMediaOrderBy.Name,
                     AmountPerPage = 250
@@ -119,6 +126,20 @@
         {
             await OnChange.InvokeAsync();
         }
+    }
+
+    private List<MediaType> GetMediaTypesForQuery()
+    {
+        if (MediaTypes.Any())
+        {
+            // Always include folders for navigation, and add the specified media types
+            var typesToQuery = new List<MediaType> { MediaType.Folder };
+            typesToQuery.AddRange(MediaTypes.Where(mt => mt != MediaType.Folder));
+            return typesToQuery;
+        }
+        
+        // If no MediaTypes specified, return empty list (which means all types)
+        return [];
     }
 
     private bool HasChildren(object data)

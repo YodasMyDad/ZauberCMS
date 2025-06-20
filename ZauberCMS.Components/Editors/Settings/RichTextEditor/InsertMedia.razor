@@ -1,5 +1,4 @@
-﻿
-@using System.Text
+﻿@using System.Text
 @using System.Text.Json
 @using Radzen.Blazor.Rendering
 @using ZauberCMS.Components.Editors.Models
@@ -39,7 +38,8 @@
         var parameters = new Dictionary<string, object>
         {
             { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnMediaIdSelected) },
-            { nameof(MediaTree.DisableContextMenu), true }
+            { nameof(MediaTree.DisableContextMenu), true },
+            { nameof(MediaTree.MediaTypes), new List<MediaType> { MediaType.Image } }
         };
 
         Modal = DialogService.OpenSidePanel<MediaTree>(Title, parameters);
@@ -54,7 +54,7 @@
 
     private void OnMediaIdSelected(object value)
     {
-        if (value is Media media)
+        if (value is Media media && media.MediaType == MediaType.Image)
         {
             SelectedMediaId = media.Id;
             SelectedMedia = media;
