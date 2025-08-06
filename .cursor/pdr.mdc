@@ -1,4 +1,26 @@
+---
+alwaysApply: true
+---
 
+
+
+-----
+
+# Project Name: ZauberCMS
+
+ZauberCMS is a modern CMS using Blazor for the front and back end. It's functionality is similar to Umbraco, with the only difference being that it's built entirely in Blazor.
+
+The front end of this CMS is built using the new Static server-side rendering (static SSR), and the admin is built using Interactive Server Side rendering.  When I say admin, I refer to any page served within the /admin/* url structure.
+
+Always check the codebase and current structure before adding new things
+
+---
+
+# 🧱 Tech Stack, Code & Styling
+
+All tech stack, component structure, and styling choices are defined in `.cursor/rules/setup.mdc`.
+
+Refer to `setup.mdc` for all environment setup and boilerplate guidelines.
 
 -----
 
