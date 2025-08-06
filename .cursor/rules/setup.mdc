@@ -1,0 +1,138 @@
+\---
+
+alwaysApply: true
+
+\---
+
+# Project Setup
+
+All projects must be built based on this ASP.NET Blazor C# solution and project structure in the latest .NET version, currently .NET 9 where the web project has a single program.cs that registers everything. 
+
+Full information about coding practices are defined in `.cursor/rules/developer.mdc` always refer to this. However it's very important you constantly check and follow this document whenever making changes to the application.
+
+The front end of this CMS is built using the new Static server-side rendering (static SSR), and the admin is built using Interactive Server Side rendering.  When I say admin, I refer to any page served within the /admin/* url structure.
+
+Always check the codebase and current structure before adding new things
+
+## Styling, UI & UX
+
+Full information about coding practices for using TailwindCSS for designing all UI and UX are defined in `.cursor/rules/tailwindexamples.mdc` always refer to this. However it's very important you constantly check and follow this document whenever making changes to the application.
+
+## Front End
+
+All front end code must use normal ASP.NET MVC views, and all styling will be done with TailwindCSS. Again See `.cursor/rules/tailwindexamples.mdc` 
+
+## EF Core & Database
+
+Full information about coding practices for using EF Core are defined in `.cursor/rules/efcore.mdc` always refer to this. However it's very important you constantly check and follow this document whenever making changes to the application.
+
+## Source Control
+
+Use Git for all source control.
+
+## Background Jobs
+
+If background jobs are needed to run on a schedule then use the IHostedService pattern. 
+
+## Workflows
+
+If complex workflows are needed on background jobs then use WorkflowCore or code is needed to be run on demand that runs for a long period, also use WorkflowCore - See link below for more information
+
+https://github.com/danielgerlag/workflow-core
+
+And if parallel tasks are needed and can be used then they are used like so, where many workflows are set off at once, example code below
+
+```C#
+public class GetPlanningApplicationsJob(IWorkflowHost workflowHost, IServiceProvider serviceProvider) : IHostedService, IDisposable
+{
+    private Timer? _timer;
+
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromHours(12));
+        return Task.CompletedTask;
+    }
+
+    private void DoWork(object? state)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
+        var allPlannerScrapers = extensionManager.GetInstances<IPlanningApplicationScraper>();
+        
+        // Start a separate workflow instance for each council
+        foreach (var scraperKey in allPlannerScrapers.Keys)
+        {
+            var workflowData = new GetApplicationsWorkflowData 
+            { 
+                CouncilKey = scraperKey 
+            };
+            
+            workflowHost.StartWorkflow(nameof(GetApplicationsWorkflow), 1, workflowData);
+        }
+        
+        Console.WriteLine($"Started {allPlannerScrapers.Keys.Count} workflow instances");
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        _timer?.Change(Timeout.Infinite, 0);
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}
+```
+
+Example of registering workflows in program.cs
+
+```c#
+using (var scope = app.Services.CreateScope())
+{   
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("WorkflowCore");
+    
+    // Start Workflow Core host and register your workflow
+    var workflowHost = scope.ServiceProvider.GetRequiredService<IWorkflowHost>();
+    workflowHost.RegisterWorkflow<GetApplicationsWorkflow, GetApplicationsWorkflowData>();
+    workflowHost.RegisterWorkflow<StatusChangeWorkflow, StatusChangeWorkflowData>();
+    workflowHost.RegisterWorkflow<AppealStatusChangeWorkflow, StatusChangeWorkflowData>();
+    workflowHost.Start();
+
+    // In Program.cs, before starting the workflow
+    workflowHost.OnStepError += (workflow, step, exception) => {
+        logger.LogError(exception, "Error in workflow {WorkflowId}: Step {StepName}", workflow.WorkflowDefinitionId, step.Name);
+    };
+    
+    /*
+    // Optionally start a workflow instance here
+    var initialData = new PlanningWorkflowData();
+    var workflowId = await workflowHost.StartWorkflow(nameof(MainScraperWorkflow), 1, initialData);
+    */
+    
+    // Register during app lifetime events
+    app.Lifetime.ApplicationStopping.Register(() => {
+        workflowHost.Stop();
+    });
+}
+```
+
+## Keys & Secrets
+
+These must be stored in the appsettings.json for general global things, but for api keys make sure you use the appsettings.Development.json so no secret keys are adding into source control.
+
+## Testing
+
+For Testing use NUnit, Moq and Shouldly
+
+https://www.nuget.org/packages/Moq
+
+https://www.nuget.org/packages/Shouldly
+
+## Finally
+
+Write full details of the app, including any future development features and setup information / instructions for the user in a readme.md file in the root off the solution.
+
+**Very important to think carefully and only action the specific task I have given you with the most concise and elegant solution that changes as little code as possible.**

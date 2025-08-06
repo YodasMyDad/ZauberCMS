@@ -1,0 +1,152 @@
+\---
+
+alwaysApply: true
+
+\---
+
+Use SQLite and EF Core for all standard database queries, also use EF Identity if user accounts are needed. For any complex needs where there is complex search or lots of inserts and deletes use ElasticSearch. 
+
+https://www.elastic.co/docs/reference/elasticsearch/clients/dotnet
+
+Nuget package is here
+
+https://www.nuget.org/packages/Elastic.Clients.Elasticsearch
+
+### DbContext
+
+Must be setup with sensitive logging in debug and Ignore(RelationalEventId.PendingModelChangesWarning). Example below
+
+```c#
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"),
+        b => b.MigrationsAssembly("CastSocial.Core"));
+    
+    #if DEBUG
+        options.EnableSensitiveDataLogging();
+    #endif
+        options
+            .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
+});
+```
+
+#### Model Builder
+
+All models should be added to the `Data/Configuration` folder
+
+```c#
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+    modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+}
+```
+
+Then your models should be created like this example, adding indexes where you think appropriate based on the application structure and features.
+
+```c#
+public class PlanningApplicationEntityConfiguration : IEntityTypeConfiguration<PlanningApplication>
+{
+    public void Configure(EntityTypeBuilder<PlanningApplication> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).IsRequired();
+        
+        builder.Property(x => x.ApplicationNumber).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Address).HasMaxLength(400);
+        builder.Property(x => x.Postcode).HasMaxLength(20);
+        builder.Property(x => x.Description).HasMaxLength(3000);
+        builder.Property(x => x.LinkToFullApplication).HasMaxLength(400);
+        
+        builder.HasOne(d => d.CaseOfficer)
+            .WithMany(p => p.PlanningApplications)
+            .HasForeignKey(d => d.CaseOfficerId)
+            .OnDelete(DeleteBehavior.SetNull);
+        
+        builder.HasOne(d => d.Parish)
+            .WithMany(p => p.PlanningApplications)
+            .HasForeignKey(d => d.ParishId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Indexes should only be added where fields are likely to be used in lookups or searches
+        builder.HasIndex(x => x.ApplicationNumber).HasDatabaseName("IX_PlanningApplication_ApplicationNumber");
+        builder.HasIndex(x => x.Longitude).HasDatabaseName("IX_PlanningApplication_Longitude");
+        builder.HasIndex(x => x.Latitude).HasDatabaseName("IX_PlanningApplication_Latitude");
+        builder.HasIndex(x => x.TargetDecisionDate).HasDatabaseName("IX_PlanningApplication_TargetDecisionDate");
+        builder.HasIndex(x => x.DateValidated).HasDatabaseName("IX_PlanningApplication_DateValidated");
+        builder.HasIndex(x => x.Status).HasDatabaseName("IX_PlanningApplication_Status");
+        builder.HasIndex(x => x.CaseOfficerId).HasDatabaseName("IX_PlanningApplication_CaseOfficerId");
+        builder.HasIndex(x => x.ParishId).HasDatabaseName("IX_PlanningApplication_ParishId");
+        builder.HasIndex(x => x.AppealedDate).HasDatabaseName("IX_PlanningApplication_AppealedDate");
+        builder.HasIndex(x => x.AppealStatus).HasDatabaseName("IX_PlanningApplication_AppealStatus");
+        builder.HasIndex(x => x.DateLastChecked).HasDatabaseName("IX_PlanningApplication_DateLastChecked");
+    }
+}
+```
+
+### EF Core Folder Structure
+
+The entity framework context should go in a 'Data' folder within the .Core project. The Classes for the EF core models should go in a Data folder within the Feature Folder. i.e. 
+
+```
+Data
+ -- Migrations
+   -- Migration0231654545.cs
+ -- AppDbContext
+Blog
+ -- Commands
+ -- Handlers
+ -- Data
+```
+
+### Authentication
+
+Use EF Core Identity, and make sure all user models and role models are in the source code, do not auto scaffold any identity pages. Make sure all authenticated / membership pages are styled like the app too. 
+
+Make use of built in authentication attributes and features to secure the app if authentication is needed.
+
+### Migrations
+
+Migrations must go into the Migrations folder under the Data
+
+`Data/Migrations`
+
+Make sure migrations are added to the site, and added in the Migrations folder, within the Data folder (As explained in the EF Core Folder Structure) also make sure they are auto applied on start up like so in the program.cs
+
+```c#
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<TheAppDbContext>();
+    if (dbContext.Database.GetPendingMigrations().Any())
+    {
+        dbContext.Database.Migrate();
+    }
+}
+```
+
+When doing migrations, to get the to work locally you might need to create an IDesignTimeDbContextFactory. Here is an **example** of one
+
+```c#
+public class PlannerStatsDbContextDesignTime : IDesignTimeDbContextFactory<PlannerStatsDbContext>
+{
+    public PlannerStatsDbContext CreateDbContext(string[] args)
+    {
+        // Get the environment variable
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        
+        // Build configuration
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../PlannerStats.Web"))
+            .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appSettings.{environment}.json", optional: true)
+            .Build();
+
+        // Configure the DbContext based on the provider
+        var optionsBuilder = new DbContextOptionsBuilder<PlannerStatsDbContext>();
+
+
+        return new PlannerStatsDbContext(optionsBuilder.Options, configuration);
+    }
+}
+```
+
