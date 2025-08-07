@@ -110,7 +110,7 @@ So tasks that need completing are [] and completed tasks will be [X]
 
 ### Phase 3: Service Implementation
 
-#### Content Service Implementation
+#### Content Service Implementation - Make sure you take the logic from the handlers and put it in the services. Do not use Mediator directly in these services, they are a direct replacement.
 [X] - Create `ContentService` class in `ZauberCMS.Core/Content/Services/`
 [X] - Implement `GetContentAsync` method in `ContentService`
 [X] - Implement `SaveContentAsync` method in `ContentService`
