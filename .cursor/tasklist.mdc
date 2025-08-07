@@ -205,21 +205,21 @@ So tasks that need completing are [] and completed tasks will be [X]
 [X] - Implement `SendEmailConfirmationAsync` method in `EmailService`
 
 ### Phase 3.1: Data verification - It's imperative that this is a like for like change to services. It should be identical just using services and parameter classes. Take time to think and check everything.
-[] - Verify all parameter classes have identical properties to their corresponding command classes (Check inherited classes if there are any) - Do not add any other properties.
-[] - Verify all service methods have identical signatures to their corresponding handler methods - Do not add any other code, remove it if you have added something different
-[] - Verify all service implementations maintain the same business logic as their handler counterparts - Do not add any other code, remove it if you have added something different
+[X] - Verify all parameter classes have identical properties to their corresponding command classes (Check inherited classes if there are any) - Do not add any other properties.
+[X] - Verify all service methods have identical signatures to their corresponding handler methods - Do not add any other code, remove it if you have added something different
+[X] - Verify all service implementations maintain the same business logic as their handler counterparts - Do not add any other code, remove it if you have added something different
 
 ### Phase 4: Service Registration
-[] - Register all service interfaces and implementations in `ZauberSetup.cs`
-[] - Register `IContentService` with `ContentService` implementation
-[] - Register `IMembershipService` with `MembershipService` implementation
-[] - Register `IMediaService` with `MediaService` implementation
-[] - Register `ILanguageService` with `LanguageService` implementation
-[] - Register `ITagService` with `TagService` implementation
-[] - Register `IAuditService` with `AuditService` implementation
-[] - Register `ISeoService` with `SeoService` implementation
-[] - Register `IDataService` with `DataService` implementation
-[] - Register `IEmailService` with `EmailService` implementation
+[X] - Register all service interfaces and implementations in `ZauberSetup.cs`
+[X] - Register `IContentService` with `ContentService` implementation
+[X] - Register `IMembershipService` with `MembershipService` implementation
+[X] - Register `IMediaService` with `MediaService` implementation
+[X] - Register `ILanguageService` with `LanguageService` implementation
+[X] - Register `ITagService` with `TagService` implementation
+[X] - Register `IAuditService` with `AuditService` implementation
+[X] - Register `ISeoService` with `SeoService` implementation
+[X] - Register `IDataService` with `DataService` implementation
+[X] - Register `IEmailService` with `EmailService` implementation
 
 ### Phase 5: Validation and Testing
 [] - Test that all services can be resolved from DI container

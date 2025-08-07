@@ -103,6 +103,9 @@ public class BaseQueryContentParameters
     /// </summary>
     public Guid? LastEditedBy { get; set; }
     
+    /// <summary>
+    /// How to order the content
+    /// </summary>
     public GetContentsOrderBy OrderBy { get; set; } = GetContentsOrderBy.DateUpdatedDescending;
 }
 
