@@ -155,7 +155,7 @@ public class MediaService(
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Models.Media>();
         
-        var media = dbContext.Medias.FirstOrDefault(x => x.Id == parameters.Id);
+        var media = dbContext.Medias.FirstOrDefault(x => x.Id == parameters.MediaId);
         if (media != null)
         {
             //Check if it has children
@@ -187,7 +187,7 @@ public class MediaService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        return await dbContext.Medias.AsNoTracking().AnyAsync(c => c.ParentId == parameters.Id, cancellationToken: cancellationToken);
+        return await dbContext.Medias.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
     }
 
     public async Task<Dictionary<string, Guid>> GetRestrictedMediaUrlsAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default)

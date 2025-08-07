@@ -8,7 +8,7 @@ public interface ITagService
 {
     Task<HandlerResult<Tag>> SaveTagAsync(SaveTagParameters parameters, CancellationToken cancellationToken = default);
     Task<PaginatedList<Tag>> QueryTagAsync(QueryTagParameters parameters, CancellationToken cancellationToken = default);
-    Task<HandlerResult<Tag>> DeleteTagAsync(DeleteTagParameters parameters, CancellationToken cancellationToken = default);
+    Task<HandlerResult<Tag?>> DeleteTagAsync(DeleteTagParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<TagItem>> SaveTagItemAsync(SaveTagItemParameters parameters, CancellationToken cancellationToken = default);
-    Task<HandlerResult<TagItem>> DeleteTagItemAsync(DeleteTagItemParameters parameters, CancellationToken cancellationToken = default);
+    Task<HandlerResult<TagItem?>> DeleteTagItemAsync(DeleteTagItemParameters parameters, CancellationToken cancellationToken = default);
 }
