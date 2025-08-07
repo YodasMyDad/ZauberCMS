@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Content.Parameters;
@@ -64,12 +63,12 @@ public class QueryContentParameters : BaseQueryContentParameters
     /// <summary>
     /// Where clause builder
     /// </summary>
-    public Expression<Func<Content, bool>>? WhereClause { get; set; }
+    public Expression<Func<Models.Content, bool>>? WhereClause { get; set; }
     
     /// <summary>
     /// Optional direct query
     /// </summary>
-    public Func<IQueryable<Content>>? Query { get; set; }
+    public Func<IQueryable<Models.Content>>? Query { get; set; }
 }
 
 public class BaseQueryContentParameters
@@ -100,17 +99,7 @@ public class BaseQueryContentParameters
     public Guid? ParentId { get; set; }
     
     /// <summary>
-    /// Show items that have a domain id matching this
-    /// </summary>
-    public Guid? DomainId { get; set; }
-    
-    /// <summary>
-    /// Show items that have a language id matching this
-    /// </summary>
-    public Guid? LanguageId { get; set; }
-    
-    /// <summary>
-    /// Show items that have a user id matching this
+    /// The Guid of the last edited by user
     /// </summary>
     public Guid? LastEditedBy { get; set; }
     
