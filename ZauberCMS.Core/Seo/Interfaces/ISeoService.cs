@@ -6,7 +6,7 @@ namespace ZauberCMS.Core.Seo.Interfaces;
 
 public interface ISeoService
 {
-    Task<HandlerResult<Redirect>> SaveRedirectAsync(SaveRedirectParameters parameters, CancellationToken cancellationToken = default);
-    Task<HandlerResult<Redirect>> QueryRedirectsAsync(QueryRedirectsParameters parameters, CancellationToken cancellationToken = default);
-    Task<HandlerResult<Redirect>> DeleteRedirectAsync(DeleteRedirectParameters parameters, CancellationToken cancellationToken = default);
+    Task<HandlerResult<SeoRedirect>> SaveRedirectAsync(SaveRedirectParameters parameters, CancellationToken cancellationToken = default);
+    Task<List<SeoRedirect>> QueryRedirectsAsync(QueryRedirectsParameters parameters, CancellationToken cancellationToken = default);
+    Task<HandlerResult<SeoRedirect?>> DeleteRedirectAsync(DeleteRedirectParameters parameters, CancellationToken cancellationToken = default);
 }

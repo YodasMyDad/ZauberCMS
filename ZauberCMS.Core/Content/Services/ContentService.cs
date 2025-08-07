@@ -138,7 +138,7 @@ public class ContentService(
         return handlerResult;
     }
 
-    public async Task<HandlerResult<Content>> QueryContentAsync(QueryContentParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<Content>> QueryContentAsync(QueryContentParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -249,15 +249,7 @@ public class ContentService(
             query = query.Skip(parameters.PageIndex * parameters.AmountPerPage).Take(parameters.AmountPerPage);
         }
 
-        var items = await query.ToListAsync(cancellationToken);
-        
-        return new HandlerResult<Content>
-        {
-            Success = true,
-            Entity = items.FirstOrDefault(),
-            Items = items,
-            TotalCount = totalCount
-        };
+        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
     }
 
     public async Task<HandlerResult<Content>> DeleteContentAsync(DeleteContentParameters parameters, CancellationToken cancellationToken = default)
@@ -335,7 +327,7 @@ public class ContentService(
         return await dbContext.SaveChangesAndLog(copiedContent, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
-    public async Task<Content?> GetContentFromRequestAsync(GetContentFromRequestParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<EntryModel> GetContentFromRequestAsync(GetContentFromRequestParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -441,7 +433,7 @@ public class ContentService(
         return await dbContext.SaveChangesAndLog(parameters.ContentType, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
-    public async Task<HandlerResult<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -557,7 +549,7 @@ public class ContentService(
         return await dbContext.SaveChangesAndLog(parameters.Domain, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
-    public async Task<HandlerResult<Domain>> QueryDomainAsync(QueryDomainParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<Domain>> QueryDomainAsync(QueryDomainParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -652,16 +644,34 @@ public class ContentService(
         return await dbContext.ContentTypes.AnyAsync(x => x.ParentId == parameters.Id, cancellationToken);
     }
 
-    public async Task<List<string>> GetContentLanguagesAsync(GetContentLanguagesParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<Dictionary<object, string>> GetContentLanguagesAsync(GetContentLanguagesParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        
+        var query = dbContext.Contents.AsNoTracking()
+            .Include(x => x.Language)
+            .Select(c => new { c.Id, c.Url, c.Language })
+            .Where(x => x.Language != null && x.Url != null);
+        
+        var queryString = query.ToQueryString();
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
+        var cacheKey = typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+        
+        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
+        {
+            var contentLanguages = await query.ToListAsync(cancellationToken: cancellationToken);
+            var dict = new Dictionary<object, string>();
 
-        return await dbContext.Contents
-            .Where(x => x.Id == parameters.ContentId)
-            .Select(x => x.LanguageCode)
-            .Distinct()
-            .ToListAsync(cancellationToken);
+            // Set the Urls first
+            foreach (var c in contentLanguages)
+            {
+                dict.Add(c.Url!, c.Language!.LanguageIsoCode!);
+                dict.Add(c.Id, c.Language!.LanguageIsoCode!);
+            }
+            
+            return dict;
+        }))!;
     }
 
     public async Task<List<Domain>> GetCachedDomainsAsync(CachedDomainsParameters parameters, CancellationToken cancellationToken = default)
@@ -708,42 +718,76 @@ public class ContentService(
         return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
-    public async Task<HandlerResult<Content>> GetDataGridContentAsync(DataGridContentParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<DataGridResult<Content>> GetDataGridContentAsync(DataGridContentParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        
+        var result = new DataGridResult<Content>();
 
-        var query = dbContext.Contents.AsNoTracking().AsQueryable();
+        var query = dbContext.Contents.Include(x => x.ContentType)
+            .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
 
-        if (!parameters.SearchTerm.IsNullOrWhiteSpace())
+        if (parameters.AsNoTracking)
         {
-            query = query.Where(x => x.Name.Contains(parameters.SearchTerm) || x.Url.Contains(parameters.SearchTerm));
+            query = query.AsNoTracking();
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        if (!parameters.OrderBy.IsNullOrWhiteSpace())
+        if (!parameters.IncludeUnpublished)
         {
-            query = query.OrderBy(parameters.OrderBy);
+            query = query.Where(x => x.Published);
+        }
+
+        if (!parameters.ContentTypeAlias.IsNullOrWhiteSpace())
+        {
+            query = query.Where(x => x.ContentType != null && x.ContentType.Alias == parameters.ContentTypeAlias);
+        }
+
+        if (parameters.ContentTypeId.HasValue)
+        {
+            query = query.Where(x => x.ContentTypeId == parameters.ContentTypeId);
+        }
+
+        if (parameters.ParentId.HasValue)
+        {
+            query = query.Where(x => x.ParentId == parameters.ParentId);
+        }
+
+        if (parameters.LastEditedBy.HasValue)
+        {
+            query = query.Where(x => x.LastEditedBy == parameters.LastEditedBy);
+        }
+
+        if (!parameters.Filter.IsNullOrWhiteSpace())
+        {
+            query = query.Where(parameters.Filter);
+        }
+
+        if (!string.IsNullOrEmpty(parameters.Order))
+        {
+            // Sort via the OrderBy method
+            query = query.OrderBy(parameters.Order);
         }
         else
         {
-            query = query.OrderBy(x => x.Name);
+            query = parameters.OrderBy switch
+            {
+                GetContentsOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
+                GetContentsOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
+                GetContentsOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
+                GetContentsOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+                GetContentsOrderBy.SortOrder => query.OrderBy(p => p.SortOrder),
+                _ => query.OrderByDescending(p => p.DateUpdated)
+            };
         }
 
-        if (parameters.AmountPerPage > 0)
-        {
-            query = query.Skip(parameters.PageIndex * parameters.AmountPerPage).Take(parameters.AmountPerPage);
-        }
+        // Important!!! Make sure the Count property of RadzenDataGrid is set.
+        result.Count = query.Count();
 
-        var items = await query.ToListAsync(cancellationToken);
+        // Perform paging via Skip and Take.
+        result.Items = await query.Skip(parameters.Skip).Take(parameters.Take).ToListAsync(cancellationToken: cancellationToken);
 
-        return new HandlerResult<Content>
-        {
-            Success = true,
-            Items = items,
-            TotalCount = totalCount
-        };
+        return result;
     }
 
     private static string GenerateCacheKey(GetContentParameters parameters, IZauberDbContext dbContext)
