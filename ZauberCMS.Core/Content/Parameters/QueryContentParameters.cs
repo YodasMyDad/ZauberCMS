@@ -1,0 +1,127 @@
+using System.Linq.Expressions;
+using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Shared.Models;
+
+namespace ZauberCMS.Core.Content.Parameters;
+
+public class QueryContentParameters : BaseQueryContentParameters
+{
+    /// <summary>
+    /// Whether this query is to be cached
+    /// </summary>
+    public bool Cached { get; set; } 
+    
+    /// <summary>
+    /// Return content items by id
+    /// </summary>
+    public List<Guid> Ids { get; set; } = [];
+    
+    /// <summary>
+    /// Get content from related Tags picked in the Tag Propertry
+    /// </summary>
+    public List<string> TagSlugs { get; set; } = [];
+    
+    /// <summary>
+    /// Current page to return
+    /// </summary>
+    public int PageIndex { get; set; } = 1;
+    
+    /// <summary>
+    /// The amount of items to return
+    /// </summary>
+    public int AmountPerPage { get; set; } = 10;
+    
+    /// <summary>
+    /// Return content that has this in the name
+    /// </summary>
+    public string? SearchTerm { get; set; }
+    
+    /// <summary>
+    /// Where or not to include unpublished content in this query
+    /// </summary>
+    public bool IncludeUnpublished { get; set; }
+
+    /// <summary>
+    /// Determines whether the query should include associated content roles.
+    /// </summary>
+    public bool IncludeContentRoles { get; set; }
+    
+    /// <summary>
+    /// Return only unpublished content
+    /// </summary>
+    public bool OnlyUnpublished { get; set; }
+
+    /// <summary>
+    /// Whether to get deleted items or not
+    /// </summary>
+    public bool? IsDeleted { get; set; } = false;
+
+    /// <summary>
+    /// Indicates whether the query should retrieve only root-level content items.
+    /// </summary>
+    public bool RootContentOnly { get; set; }
+    
+    /// <summary>
+    /// Where clause builder
+    /// </summary>
+    public Expression<Func<Content, bool>>? WhereClause { get; set; }
+    
+    /// <summary>
+    /// Optional direct query
+    /// </summary>
+    public Func<IQueryable<Content>>? Query { get; set; }
+}
+
+public class BaseQueryContentParameters
+{
+    /// <summary>
+    /// Return all items using this content type alias
+    /// </summary>
+    public string ContentTypeAlias { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Return all items using this content type id
+    /// </summary>
+    public Guid? ContentTypeId { get; set; }
+    
+    /// <summary>
+    /// Make the query AsNoTracking, true by default
+    /// </summary>
+    public bool AsNoTracking { get; set; } = true;
+    
+    /// <summary>
+    /// Include all child items on the content you are querying
+    /// </summary>
+    public bool IncludeChildren { get; set; }
+    
+    /// <summary>
+    /// Show items that have a parent id matching this
+    /// </summary>
+    public Guid? ParentId { get; set; }
+    
+    /// <summary>
+    /// Show items that have a domain id matching this
+    /// </summary>
+    public Guid? DomainId { get; set; }
+    
+    /// <summary>
+    /// Show items that have a language id matching this
+    /// </summary>
+    public Guid? LanguageId { get; set; }
+    
+    /// <summary>
+    /// Show items that have a user id matching this
+    /// </summary>
+    public Guid? LastEditedBy { get; set; }
+    
+    public GetContentsOrderBy OrderBy { get; set; } = GetContentsOrderBy.DateUpdatedDescending;
+}
+
+public enum GetContentsOrderBy
+{
+    DateUpdated,
+    DateUpdatedDescending,
+    DateCreated,
+    DateCreatedDescending,
+    SortOrder
+}

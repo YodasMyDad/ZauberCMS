@@ -1,0 +1,224 @@
+---
+alwaysApply: true
+---
+
+## MediatR to DI Service Migration Task List
+
+You are methodically and without breaking any functionality going to remove mediator from this project by following these tasks.
+
+This task list must be followed exactly, each phase must be complete before moving to the next phase. Each task within the phase must be completed in a step by step format. Once the task is complete it will be marked as complete like so [X] - 
+
+So tasks that need completing are [] and completed tasks will be [X]
+
+### Phase 1: Service Interface Creation
+[X] - Create `IContentService` interface in `ZauberCMS.Core/Content/Interfaces/`
+[X] - Create `IMembershipService` interface in `ZauberCMS.Core/Membership/Interfaces/`
+[X] - Create `IMediaService` interface in `ZauberCMS.Core/Media/Interfaces/`
+[X] - Create `ILanguageService` interface in `ZauberCMS.Core/Languages/Interfaces/`
+[X] - Create `ITagService` interface in `ZauberCMS.Core/Tags/Interfaces/`
+[X] - Create `IAuditService` interface in `ZauberCMS.Core/Audit/Interfaces/`
+[X] - Create `ISeoService` interface in `ZauberCMS.Core/Seo/Interfaces/`
+[X] - Create `IDataService` interface in `ZauberCMS.Core/Data/Interfaces/`
+[X] - Create `IEmailService` interface in `ZauberCMS.Core/Email/Interfaces/`
+
+### Phase 2: Parameter Classes Creation
+
+#### Content Service Parameters
+[X] - Create `GetContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `SaveContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `QueryContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `DeleteContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `CopyContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `GetContentFromRequestParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `GetContentTypeParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `SaveContentTypeParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `QueryContentTypesParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `DeleteContentTypeParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `GetDomainParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `SaveDomainParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `QueryDomainParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `DeleteDomainParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `AnyContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `HasChildContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `HasChildContentTypeParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `GetContentLanguagesParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `CachedDomainsParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `ClearUnpublishedContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+[X] - Create `DataGridContentParameters` class in `ZauberCMS.Core/Content/Parameters/`
+
+#### Membership Service Parameters
+[X] - Create `GetUserParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `SaveUserParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `CreateUpdateUserParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `DeleteUserParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `QueryUsersParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `GetRoleParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `SaveRoleParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `DeleteRoleParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `QueryRolesParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `LoginUserParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `RegisterUserParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `ExternalLoginParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `ConfirmEmailParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `ForgotPasswordParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `ResetPasswordParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+[X] - Create `GetCurrentUserParameters` class in `ZauberCMS.Core/Membership/Parameters/`
+
+#### Media Service Parameters
+[] - Create `GetMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[] - Create `SaveMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[] - Create `QueryMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[] - Create `DeleteMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[] - Create `HasChildMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[] - Create `GetRestrictedMediaUrlsParameters` class in `ZauberCMS.Core/Media/Parameters/`
+
+#### Language Service Parameters
+[] - Create `GetLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[] - Create `SaveLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[] - Create `QueryLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[] - Create `DeleteLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[] - Create `SaveLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[] - Create `DeleteLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[] - Create `GetCachedAllLanguageDictionariesParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[] - Create `DataGridLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+
+#### Tag Service Parameters
+[] - Create `SaveTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[] - Create `QueryTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[] - Create `DeleteTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[] - Create `SaveTagItemParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[] - Create `DeleteTagItemParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+
+#### Audit Service Parameters
+[] - Create `SaveAuditParameters` class in `ZauberCMS.Core/Audit/Parameters/`
+[] - Create `QueryAuditsParameters` class in `ZauberCMS.Core/Audit/Parameters/`
+[] - Create `CleanupOldAuditsParameters` class in `ZauberCMS.Core/Audit/Parameters/`
+
+#### SEO Service Parameters
+[] - Create `SaveRedirectParameters` class in `ZauberCMS.Core/Seo/Parameters/`
+[] - Create `QueryRedirectsParameters` class in `ZauberCMS.Core/Seo/Parameters/`
+[] - Create `DeleteRedirectParameters` class in `ZauberCMS.Core/Seo/Parameters/`
+
+#### Data Service Parameters
+[] - Create `GetGlobalDataParameters` class in `ZauberCMS.Core/Data/Parameters/`
+[] - Create `SaveGlobalDataParameters` class in `ZauberCMS.Core/Data/Parameters/`
+[] - Create `MultiQueryParameters` class in `ZauberCMS.Core/Data/Parameters/`
+[] - Create `DataGridParameters<T>` class in `ZauberCMS.Core/Data/Parameters/`
+
+#### Email Service Parameters
+[] - Create `SendEmailConfirmationParameters` class in `ZauberCMS.Core/Email/Parameters/`
+
+### Phase 3: Service Implementation
+
+#### Content Service Implementation
+[] - Create `ContentService` class in `ZauberCMS.Core/Content/Services/`
+[] - Implement `GetContentAsync` method in `ContentService`
+[] - Implement `SaveContentAsync` method in `ContentService`
+[] - Implement `QueryContentAsync` method in `ContentService`
+[] - Implement `DeleteContentAsync` method in `ContentService`
+[] - Implement `CopyContentAsync` method in `ContentService`
+[] - Implement `GetContentFromRequestAsync` method in `ContentService`
+[] - Implement `GetContentTypeAsync` method in `ContentService`
+[] - Implement `SaveContentTypeAsync` method in `ContentService`
+[] - Implement `QueryContentTypesAsync` method in `ContentService`
+[] - Implement `DeleteContentTypeAsync` method in `ContentService`
+[] - Implement `GetDomainAsync` method in `ContentService`
+[] - Implement `SaveDomainAsync` method in `ContentService`
+[] - Implement `QueryDomainAsync` method in `ContentService`
+[] - Implement `DeleteDomainAsync` method in `ContentService`
+[] - Implement `AnyContentAsync` method in `ContentService`
+[] - Implement `HasChildContentAsync` method in `ContentService`
+[] - Implement `HasChildContentTypeAsync` method in `ContentService`
+[] - Implement `GetContentLanguagesAsync` method in `ContentService`
+[] - Implement `GetCachedDomainsAsync` method in `ContentService`
+[] - Implement `ClearUnpublishedContentAsync` method in `ContentService`
+[] - Implement `GetDataGridContentAsync` method in `ContentService`
+
+#### Membership Service Implementation
+[] - Create `MembershipService` class in `ZauberCMS.Core/Membership/Services/`
+[] - Implement `GetUserAsync` method in `MembershipService`
+[] - Implement `SaveUserAsync` method in `MembershipService`
+[] - Implement `CreateUpdateUserAsync` method in `MembershipService`
+[] - Implement `DeleteUserAsync` method in `MembershipService`
+[] - Implement `QueryUsersAsync` method in `MembershipService`
+[] - Implement `GetRoleAsync` method in `MembershipService`
+[] - Implement `SaveRoleAsync` method in `MembershipService`
+[] - Implement `DeleteRoleAsync` method in `MembershipService`
+[] - Implement `QueryRolesAsync` method in `MembershipService`
+[] - Implement `LoginUserAsync` method in `MembershipService`
+[] - Implement `RegisterUserAsync` method in `MembershipService`
+[] - Implement `ExternalLoginAsync` method in `MembershipService`
+[] - Implement `ConfirmEmailAsync` method in `MembershipService`
+[] - Implement `ForgotPasswordAsync` method in `MembershipService`
+[] - Implement `ResetPasswordAsync` method in `MembershipService`
+[] - Implement `GetCurrentUserAsync` method in `MembershipService`
+
+#### Media Service Implementation
+[] - Create `MediaService` class in `ZauberCMS.Core/Media/Services/`
+[] - Implement `GetMediaAsync` method in `MediaService`
+[] - Implement `SaveMediaAsync` method in `MediaService`
+[] - Implement `QueryMediaAsync` method in `MediaService`
+[] - Implement `DeleteMediaAsync` method in `MediaService`
+[] - Implement `HasChildMediaAsync` method in `MediaService`
+[] - Implement `GetRestrictedMediaUrlsAsync` method in `MediaService`
+
+#### Language Service Implementation
+[] - Create `LanguageService` class in `ZauberCMS.Core/Languages/Services/`
+[] - Implement `GetLanguageAsync` method in `LanguageService`
+[] - Implement `SaveLanguageAsync` method in `LanguageService`
+[] - Implement `QueryLanguageAsync` method in `LanguageService`
+[] - Implement `DeleteLanguageAsync` method in `LanguageService`
+[] - Implement `SaveLanguageDictionaryAsync` method in `LanguageService`
+[] - Implement `DeleteLanguageDictionaryAsync` method in `LanguageService`
+[] - Implement `GetCachedAllLanguageDictionariesAsync` method in `LanguageService`
+[] - Implement `GetDataGridLanguageDictionaryAsync` method in `LanguageService`
+
+#### Tag Service Implementation
+[] - Create `TagService` class in `ZauberCMS.Core/Tags/Services/`
+[] - Implement `SaveTagAsync` method in `TagService`
+[] - Implement `QueryTagAsync` method in `TagService`
+[] - Implement `DeleteTagAsync` method in `TagService`
+[] - Implement `SaveTagItemAsync` method in `TagService`
+[] - Implement `DeleteTagItemAsync` method in `TagService`
+
+#### Audit Service Implementation
+[] - Create `AuditService` class in `ZauberCMS.Core/Audit/Services/`
+[] - Implement `SaveAuditAsync` method in `AuditService`
+[] - Implement `QueryAuditsAsync` method in `AuditService`
+[] - Implement `CleanupOldAuditsAsync` method in `AuditService`
+
+#### SEO Service Implementation
+[] - Create `SeoService` class in `ZauberCMS.Core/Seo/Services/`
+[] - Implement `SaveRedirectAsync` method in `SeoService`
+[] - Implement `QueryRedirectsAsync` method in `SeoService`
+[] - Implement `DeleteRedirectAsync` method in `SeoService`
+
+#### Data Service Implementation
+[] - Create `DataService` class in `ZauberCMS.Core/Data/Services/`
+[] - Implement `GetGlobalDataAsync` method in `DataService`
+[] - Implement `SaveGlobalDataAsync` method in `DataService`
+[] - Implement `MultiQueryAsync` method in `DataService`
+[] - Implement `GetDataGridAsync<T>` method in `DataService`
+
+#### Email Service Implementation
+[] - Create `EmailService` class in `ZauberCMS.Core/Email/Services/`
+[] - Implement `SendEmailConfirmationAsync` method in `EmailService`
+
+### Phase 4: Service Registration
+[] - Register all service interfaces and implementations in `ZauberSetup.cs`
+[] - Register `IContentService` with `ContentService` implementation
+[] - Register `IMembershipService` with `MembershipService` implementation
+[] - Register `IMediaService` with `MediaService` implementation
+[] - Register `ILanguageService` with `LanguageService` implementation
+[] - Register `ITagService` with `TagService` implementation
+[] - Register `IAuditService` with `AuditService` implementation
+[] - Register `ISeoService` with `SeoService` implementation
+[] - Register `IDataService` with `DataService` implementation
+[] - Register `IEmailService` with `EmailService` implementation
+
+### Phase 5: Validation and Testing
+[] - Verify all parameter classes have identical properties to their corresponding command classes
+[] - Verify all service methods have identical signatures to their corresponding handler methods
+[] - Verify all service implementations maintain the same business logic as their handler counterparts
+[] - Test that all services can be resolved from DI container
+[] - Verify that no functionality has been changed or broken during the migration
