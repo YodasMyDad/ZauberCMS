@@ -1,4 +1,5 @@
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Seo.Parameters;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Interfaces;

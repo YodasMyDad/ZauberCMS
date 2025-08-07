@@ -204,6 +204,11 @@ So tasks that need completing are [] and completed tasks will be [X]
 [X] - Create `EmailService` class in `ZauberCMS.Core/Email/Services/`
 [X] - Implement `SendEmailConfirmationAsync` method in `EmailService`
 
+### Phase 3.1: Data verification - It's imperative that this is a like for like change to services. It should be identical just using services and parameter classes. Take time to think and check everything.
+[] - Verify all parameter classes have identical properties to their corresponding command classes (Check inherited classes if there are any) - Do not add any other properties.
+[] - Verify all service methods have identical signatures to their corresponding handler methods - Do not add any other code, remove it if you have added something different
+[] - Verify all service implementations maintain the same business logic as their handler counterparts - Do not add any other code, remove it if you have added something different
+
 ### Phase 4: Service Registration
 [] - Register all service interfaces and implementations in `ZauberSetup.cs`
 [] - Register `IContentService` with `ContentService` implementation
@@ -217,8 +222,5 @@ So tasks that need completing are [] and completed tasks will be [X]
 [] - Register `IEmailService` with `EmailService` implementation
 
 ### Phase 5: Validation and Testing
-[] - Verify all parameter classes have identical properties to their corresponding command classes
-[] - Verify all service methods have identical signatures to their corresponding handler methods
-[] - Verify all service implementations maintain the same business logic as their handler counterparts
 [] - Test that all services can be resolved from DI container
 [] - Verify that no functionality has been changed or broken during the migration

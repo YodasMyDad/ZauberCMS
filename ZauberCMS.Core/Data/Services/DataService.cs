@@ -19,7 +19,7 @@ public class DataService(
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
-        var globalData = await dbContext.GlobalData
+        var globalData = await dbContext.GlobalDatas
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Key == parameters.Key && x.DomainId == parameters.DomainId, cancellationToken);
 
@@ -32,7 +32,7 @@ public class DataService(
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<object>();
 
-        var existingData = await dbContext.GlobalData
+        var existingData = await dbContext.GlobalDatas
             .FirstOrDefaultAsync(x => x.Key == parameters.Key && x.DomainId == parameters.DomainId, cancellationToken);
 
         if (existingData != null)

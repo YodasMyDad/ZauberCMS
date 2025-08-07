@@ -31,7 +31,7 @@ public class MediaService(
     ProviderService providerService,
     ExtensionManager extensionManager) : IMediaService
 {
-    public async Task<Media?> GetMediaAsync(GetMediaParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<Models.Media?> GetMediaAsync(GetMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -45,12 +45,12 @@ public class MediaService(
         return await FetchMediaAsync(parameters, dbContext, cancellationToken);
     }
 
-    public async Task<HandlerResult<Media>> SaveMediaAsync(SaveMediaParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<HandlerResult<Models.Media>> SaveMediaAsync(SaveMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
-        var result = new HandlerResult<Media>();
+        var result = new HandlerResult<Models.Media>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var user = await userManager.GetUserAsync(authState.User);
@@ -131,12 +131,12 @@ public class MediaService(
         return result;
     }
 
-    public async Task<PaginatedList<Media>> QueryMediaAsync(QueryMediaParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<Models.Media>> QueryMediaAsync(QueryMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey(typeof(Media));
+        var cacheKey = query.GenerateCacheKey(typeof(Models.Media));
 
         if (parameters.Cached)
         {
@@ -146,14 +146,14 @@ public class MediaService(
         return await FetchMediaListAsync(parameters, dbContext, cancellationToken);
     }
 
-    public async Task<HandlerResult<Media>> DeleteMediaAsync(DeleteMediaParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<HandlerResult<Models.Media>> DeleteMediaAsync(DeleteMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
-        var handlerResult = new HandlerResult<Media>();
+        var handlerResult = new HandlerResult<Models.Media>();
         
         var media = dbContext.Medias.FirstOrDefault(x => x.Id == parameters.Id);
         if (media != null)
@@ -210,7 +210,7 @@ public class MediaService(
         var query = BuildMediaQuery(parameters, dbContext);
         var queryString = query.ToQueryString();
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(Media).ToCacheKey(Convert.ToBase64String(hash));
+        return typeof(Models.Media).ToCacheKey(Convert.ToBase64String(hash));
     }
 
     private static string GenerateRestrictedMediaCacheKey(IZauberDbContext dbContext)
@@ -218,10 +218,10 @@ public class MediaService(
         var query = BuildRestrictedMediaQuery(dbContext);
         var queryString = query.ToQueryString();
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(Media).ToCacheKey(Convert.ToBase64String(hash));
+        return typeof(Models.Media).ToCacheKey(Convert.ToBase64String(hash));
     }
 
-    private static IQueryable<Media> BuildMediaQuery(GetMediaParameters parameters, IZauberDbContext dbContext)
+    private static IQueryable<Models.Media> BuildMediaQuery(GetMediaParameters parameters, IZauberDbContext dbContext)
     {
         var query = dbContext.Medias.AsQueryable();
 
@@ -258,7 +258,7 @@ public class MediaService(
         return query;
     }
 
-    private static IQueryable<Media> BuildQuery(QueryMediaParameters parameters, IZauberDbContext dbContext)
+    private static IQueryable<Models.Media> BuildQuery(QueryMediaParameters parameters, IZauberDbContext dbContext)
     {
         var query = dbContext.Medias.Include(x => x.Parent).AsQueryable();
 
@@ -320,18 +320,18 @@ public class MediaService(
         return query;
     }
 
-    private static IQueryable<Media> BuildRestrictedMediaQuery(IZauberDbContext dbContext)
+    private static IQueryable<Models.Media> BuildRestrictedMediaQuery(IZauberDbContext dbContext)
     {
         return dbContext.Medias.AsNoTracking().Where(x => x.RequiresAuthentication);
     }
 
-    private static async Task<Media?> FetchMediaAsync(GetMediaParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<Models.Media?> FetchMediaAsync(GetMediaParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildMediaQuery(parameters, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
-    private static Task<PaginatedList<Media>> FetchMediaListAsync(QueryMediaParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
+    private static Task<PaginatedList<Models.Media>> FetchMediaListAsync(QueryMediaParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(parameters, dbContext);
         return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));

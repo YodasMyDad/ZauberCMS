@@ -1,3 +1,4 @@
+using ZauberCMS.Core.Email.Parameters;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Email.Interfaces;
