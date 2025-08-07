@@ -267,7 +267,7 @@ public class MembershipService(
 
         var user = await dbContext.Users
             .Include(u => u.UserRoles) // Include UserRoles to delete related roles
-            .FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == parameters.UserId, cancellationToken);
 
         if (user != null)
         {
