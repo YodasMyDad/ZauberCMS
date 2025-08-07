@@ -49,13 +49,13 @@ public class MediaService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
         var result = new HandlerResult<Models.Media>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var user = await userManager.GetUserAsync(authState.User);
 
-        // If we are either creating a new file or over writing the current one
         if (parameters.FileStream != null)
         {
             result = await providerService.StorageProvider!.SaveFile(parameters.FileStream, parameters.Media);
@@ -78,15 +78,12 @@ public class MediaService(
 
             result.Entity.LastUpdatedById = user!.Id;
 
-            // Now update or add the media item
             if (parameters.IsUpdate)
             {
-                // Get the DB version
                 var dbMedia = dbContext.Medias
                     .FirstOrDefault(x => x.Id == result.Entity.Id);
                 if (dbMedia != null)
                 {
-                    // Map the updated properties
                     mapper.Map(result.Entity, dbMedia);
                     dbMedia.DateUpdated = DateTime.UtcNow;
 
@@ -96,9 +93,8 @@ public class MediaService(
                         return result;
                     }
 
-                    // Calculate and set the Path property
                     dbMedia.Path = result.Entity.BuildPath(dbContext, parameters.IsUpdate, settings);
-                    await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Update, null,
+                    await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Update, mediator,
                         cancellationToken);
                     result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, extensionManager,
                         cancellationToken);
@@ -112,10 +108,9 @@ public class MediaService(
             }
             else
             {
-                // Calculate and set the Path property
                 result.Entity.Path = result.Entity.BuildPath(dbContext, parameters.IsUpdate, settings);
                 dbContext.Medias.Add(result.Entity);
-                await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Create, null,
+                await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Create, mediator,
                     cancellationToken);
                 result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, extensionManager,
                     cancellationToken);
@@ -150,6 +145,7 @@ public class MediaService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
@@ -158,7 +154,6 @@ public class MediaService(
         var media = dbContext.Medias.FirstOrDefault(x => x.Id == parameters.MediaId);
         if (media != null)
         {
-            //Check if it has children
             var children = dbContext.Medias.AsNoTracking().Where(x => x.ParentId == media.Id);
             if (children.Any())
             {
@@ -167,7 +162,7 @@ public class MediaService(
             }
 
             var filePathToDelete = media.Url;
-            await user.AddAudit(media, media.Name, AuditExtensions.AuditAction.Delete, null, cancellationToken);
+            await user.AddAudit(media, media.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
             dbContext.Medias.Remove(media);
             await appState.NotifyMediaDeleted(null, authState.User.Identity?.Name!);
             var result = await dbContext.SaveChangesAndLog(media, handlerResult, cacheService, extensionManager, cancellationToken);
@@ -287,17 +282,6 @@ public class MediaService(
             if (parameters.MediaTypes.Count != 0)
             {
                 query = query.Where(x => parameters.MediaTypes.Contains(x.MediaType));
-            }
-
-            if (parameters.ParentId.HasValue)
-            {
-                query = query.Where(x => x.ParentId == parameters.ParentId);
-            }
-
-            if (!parameters.SearchTerm.IsNullOrWhiteSpace())
-            {
-                query = query.Where(x => x.Name.Contains(parameters.SearchTerm) || 
-                                         x.Url.Contains(parameters.SearchTerm));
             }
         }
 

@@ -34,9 +34,9 @@ public class LanguageService(
             query = query.AsNoTracking();
         }
 
-        if (!parameters.IsoCode.IsNullOrWhiteSpace())
+        if (parameters.LanguageIsoCode != null)
         {
-            return await query.FirstOrDefaultAsync(x => x.LanguageIsoCode == parameters.IsoCode, cancellationToken: cancellationToken);
+            return await query.FirstOrDefaultAsync(x => x.LanguageIsoCode == parameters.LanguageIsoCode, cancellationToken: cancellationToken);
         }
 
         if (parameters.Id != null)
@@ -51,26 +51,25 @@ public class LanguageService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Language>();
 
-        if (parameters.Language != null)
+        if (parameters.CultureInfo != null)
         {
             var isUpdate = false;
 
             var language = new Language();
-            if (parameters.Language.Id != Guid.Empty)
+            if (parameters.Id != null)
             {
-                var lang = dbContext.Languages.FirstOrDefault(x => x.Id == parameters.Language.Id);
+                var lang = dbContext.Languages.FirstOrDefault(x => x.Id == parameters.Id);
                 if (lang != null)
                 {
-                    if (parameters.Language.LanguageIsoCode == lang.LanguageIsoCode)
+                    if (parameters.CultureInfo.Name == lang.LanguageIsoCode)
                     {
-                        // Just return if they are trying to save the same culture
                         handlerResult.Success = true;
-                        handlerResult.Entity = lang;
                         return handlerResult;
                     }
 
@@ -79,32 +78,32 @@ public class LanguageService(
                 }
             }
 
-            // Does this already exist
-            var existing = dbContext.Languages.FirstOrDefault(x => x.LanguageIsoCode == parameters.Language.LanguageIsoCode);
-            if (existing != null && existing.Id != parameters.Language.Id)
+            var existing = dbContext.Languages.FirstOrDefault(x => x.LanguageIsoCode == parameters.CultureInfo.Name);
+            if (existing != null)
             {
                 handlerResult.AddMessage("Language already exists", ResultMessageType.Error);
                 return handlerResult;
             }
 
-            if (isUpdate)
+            language.LanguageCultureName = parameters.CultureInfo.EnglishName;
+            language.LanguageIsoCode = parameters.CultureInfo.Name;
+
+            if (!isUpdate)
             {
-                mapper.Map(parameters.Language, language);
-                language.DateUpdated = DateTime.UtcNow;
+                dbContext.Languages.Add(language);
             }
             else
             {
-                language = parameters.Language;
-                dbContext.Languages.Add(language);
+                language.DateUpdated = DateTime.UtcNow;
             }
 
             await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
-                isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, null,
+                isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator,
                 cancellationToken);
             return await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
-        handlerResult.AddMessage("Language is null", ResultMessageType.Error);
+        handlerResult.AddMessage("CultureInfo is null", ResultMessageType.Error);
         return handlerResult;
     }
 
@@ -132,10 +131,10 @@ public class LanguageService(
                 parameters.AmountPerPage = idCount;
             }
 
-            if (!parameters.SearchTerm.IsNullOrWhiteSpace())
+            if (parameters.LanguageIsoCodes.Count != 0)
             {
-                query = query.Where(x => x.LanguageCultureName.Contains(parameters.SearchTerm) || 
-                                         x.LanguageIsoCode.Contains(parameters.SearchTerm));
+                query = query.Where(x =>
+                    x.LanguageIsoCode != null && parameters.LanguageIsoCodes.Contains(x.LanguageIsoCode));
             }
         }
 
@@ -160,69 +159,108 @@ public class LanguageService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Language>();
 
-        var language = await dbContext.Languages
-            .FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
-
-        if (language != null)
+        Language? language = null;
+        if (parameters.Id != null)
         {
-            // Check if this language is being used by content
-            var hasContent = await dbContext.Contents.AnyAsync(x => x.LanguageCode == language.LanguageIsoCode, cancellationToken);
-            if (hasContent)
+            language =
+                await dbContext.Languages.FirstOrDefaultAsync(l => l.Id == parameters.Id,
+                    cancellationToken: cancellationToken);
+            if (language != null)
             {
-                handlerResult.AddMessage("Cannot delete language that has content", ResultMessageType.Error);
-                return handlerResult;
+                await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
+                    AuditExtensions.AuditAction.Delete, mediator,
+                    cancellationToken);
+                dbContext.Languages.Remove(language);
             }
-
-            await user.AddAudit(language, $"Language ({language.LanguageCultureName})", AuditExtensions.AuditAction.Delete, null, cancellationToken);
-            dbContext.Languages.Remove(language);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            handlerResult.Messages.Add(new ResultMessage("Language deleted successfully", ResultMessageType.Success));
-            handlerResult.Success = true;
         }
         else
         {
-            handlerResult.AddMessage("Language not found", ResultMessageType.Error);
+            language = await dbContext.Languages.FirstOrDefaultAsync(
+                l => l.LanguageIsoCode == parameters.LanguageIsoCode, cancellationToken: cancellationToken);
+            if (language != null)
+            {
+                await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
+                    AuditExtensions.AuditAction.Delete, mediator,
+                    cancellationToken);
+                dbContext.Languages.Remove(language);
+            }
         }
 
-        return handlerResult;
+        return (await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 
     public async Task<HandlerResult<LanguageDictionary>> SaveLanguageDictionaryAsync(SaveLanguageDictionaryParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var handlerResult = new HandlerResult<LanguageDictionary>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
 
         if (parameters.LanguageDictionary != null)
         {
-            var isUpdate = false;
-            var languageDictionary = parameters.LanguageDictionary;
+            var langTexts = parameters.LanguageDictionary.Texts;
+            parameters.LanguageDictionary.Texts = [];
 
-            // Check if it exists
-            var existing = await dbContext.LanguageDictionaries
-                .FirstOrDefaultAsync(x => x.Id == languageDictionary.Id, cancellationToken);
-
-            if (existing != null)
+            var langDictionary =
+                dbContext.LanguageDictionaries.FirstOrDefault(x => x.Id == parameters.LanguageDictionary.Id);
+            if (langDictionary == null)
             {
-                isUpdate = true;
-                mapper.Map(languageDictionary, existing);
-                existing.DateUpdated = DateTime.UtcNow;
-                languageDictionary = existing;
+                langDictionary = parameters.LanguageDictionary;
+                dbContext.LanguageDictionaries.Add(langDictionary);
             }
             else
             {
-                dbContext.LanguageDictionaries.Add(languageDictionary);
+                mapper.Map(parameters.LanguageDictionary, langDictionary);
             }
 
-            return await dbContext.SaveChangesAndLog(languageDictionary, handlerResult, cacheService, extensionManager, cancellationToken);
+            await user.AddAudit(langDictionary, $"Language Dictionary ({langDictionary.Key})",
+                AuditExtensions.AuditAction.Update, mediator,
+                cancellationToken);
+            handlerResult = await dbContext.SaveChangesAndLog(langDictionary, handlerResult, cacheService, extensionManager, cancellationToken);
+            if (handlerResult.Success)
+            {
+                var langTextResult = new HandlerResult<LanguageText>();
+                foreach (var languageText in langTexts)
+                {
+                    var lt = dbContext.LanguageTexts.FirstOrDefault(x => x.Id == languageText.Id);
+                    if (lt == null)
+                    {
+                        lt = languageText;
+                        dbContext.LanguageTexts.Add(lt);
+                    }
+                    else
+                    {
+                        mapper.Map(languageText, lt);
+                    }
+
+                    var saveResult = await dbContext.SaveChangesAndLog(lt, langTextResult, cacheService, extensionManager, cancellationToken);
+                    if (!saveResult.Success)
+                    {
+                        handlerResult.Success = false;
+                        handlerResult.Messages = saveResult.Messages;
+                        return handlerResult;
+                    }
+                }
+            }
+            else
+            {
+                return handlerResult;
+            }
+
+            cacheService.ClearCachedItemsWithPrefix(nameof(LanguageDictionary));
+            return handlerResult;
         }
 
-        handlerResult.AddMessage("LanguageDictionary is null", ResultMessageType.Error);
+        handlerResult.Success = false;
         return handlerResult;
     }
 
@@ -230,24 +268,27 @@ public class LanguageService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var handlerResult = new HandlerResult<LanguageDictionary>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
 
-        var languageDictionary = await dbContext.LanguageDictionaries
-            .FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
-
-        if (languageDictionary != null)
+        LanguageDictionary? langDict = null;
+        if (parameters.Id != null)
         {
-            dbContext.LanguageDictionaries.Remove(languageDictionary);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            handlerResult.Messages.Add(new ResultMessage("Language dictionary deleted successfully", ResultMessageType.Success));
-            handlerResult.Success = true;
-        }
-        else
-        {
-            handlerResult.AddMessage("Language dictionary not found", ResultMessageType.Error);
+            langDict = await dbContext.LanguageDictionaries.FirstOrDefaultAsync(l => l.Id == parameters.Id,
+                cancellationToken: cancellationToken);
+            if (langDict != null)
+            {
+                await user.AddAudit(langDict, $"Language Dictionary ({langDict.Key})",
+                    AuditExtensions.AuditAction.Delete, mediator,
+                    cancellationToken);
+                dbContext.LanguageDictionaries.Remove(langDict);
+            }
         }
 
-        return handlerResult;
+        return (await dbContext.SaveChangesAndLog(langDict, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 
     public async Task<Dictionary<string, Dictionary<string, string>>> GetCachedAllLanguageDictionariesAsync(GetCachedAllLanguageDictionariesParameters parameters, CancellationToken cancellationToken = default)
@@ -279,32 +320,32 @@ public class LanguageService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var query = dbContext.LanguageDictionaries.AsQueryable();
+        var query = dbContext.LanguageDictionaries
+            .Include(x => x.Texts)
+            .AsSplitQuery()
+            .AsTracking()
+            .AsQueryable();
 
-        if (parameters.AsNoTracking)
+        if (!string.IsNullOrWhiteSpace(parameters.Filter))
         {
-            query = query.AsNoTracking();
+            query = query.Where(parameters.Filter);
         }
 
-        if (!parameters.SearchTerm.IsNullOrWhiteSpace())
+        if (!string.IsNullOrWhiteSpace(parameters.Order))
         {
-            query = query.Where(x => x.Key.Contains(parameters.SearchTerm) || x.Value.Contains(parameters.SearchTerm));
-        }
-
-        if (parameters.WhereClause != null)
-        {
-            query = query.Where(parameters.WhereClause);
-        }
-
-        if (!parameters.OrderBy.IsNullOrWhiteSpace())
-        {
-            query = query.OrderBy(parameters.OrderBy);
+            query = query.OrderBy(parameters.Order);
         }
         else
         {
             query = query.OrderBy(x => x.Key);
         }
 
-        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
+        var result = new DataGridResult<LanguageDictionary>
+        {
+            Count = await query.CountAsync(cancellationToken)
+        };
+
+        result.Items = await query.Skip(parameters.Skip).Take(parameters.Take).ToListAsync(cancellationToken: cancellationToken);
+        return result;
     }
 }
