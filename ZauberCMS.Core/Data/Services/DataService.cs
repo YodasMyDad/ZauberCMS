@@ -1,9 +1,14 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Data.Interfaces;
+using ZauberCMS.Core.Data.Models;
 using ZauberCMS.Core.Data.Parameters;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Plugins;
+using ZauberCMS.Core.Shared.Interfaces;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -14,108 +19,126 @@ public class DataService(
     ICacheService cacheService,
     ExtensionManager extensionManager) : IDataService
 {
-    public async Task<object?> GetGlobalDataAsync(GetGlobalDataParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<GlobalData?> GetGlobalDataAsync(GetGlobalDataParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
-        var globalData = await dbContext.GlobalDatas
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Key == parameters.Key && x.DomainId == parameters.DomainId, cancellationToken);
+        var cacheKey = GenerateCacheKey(parameters, dbContext);
 
-        return globalData?.Value;
+        if (parameters.Cached)
+        {
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchGlobalDataAsync(parameters, dbContext, cancellationToken));
+        }
+
+        return await FetchGlobalDataAsync(parameters, dbContext, cancellationToken);
     }
 
-    public async Task<HandlerResult<object>> SaveGlobalDataAsync(SaveGlobalDataParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<HandlerResult<GlobalData>> SaveGlobalDataAsync(SaveGlobalDataParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var handlerResult = new HandlerResult<object>();
 
-        var existingData = await dbContext.GlobalDatas
-            .FirstOrDefaultAsync(x => x.Key == parameters.Key && x.DomainId == parameters.DomainId, cancellationToken);
+        var handlerResult = new HandlerResult<GlobalData>();
 
-        if (existingData != null)
+        if (!parameters.Alias.IsNullOrWhiteSpace() && !parameters.Data.IsNullOrWhiteSpace())
         {
-            existingData.Value = parameters.Value;
-            existingData.DateUpdated = DateTime.UtcNow;
-        }
-        else
-        {
-            var newData = new Models.GlobalData
+            var globalData = dbContext.GlobalDatas
+                .FirstOrDefault(x => x.Alias == parameters.Alias);
+
+            if (globalData == null)
             {
-                Key = parameters.Key,
-                Value = parameters.Value,
-                DomainId = parameters.DomainId
-            };
-            dbContext.GlobalData.Add(newData);
+                globalData = new GlobalData { Alias = parameters.Alias, Data = parameters.Data };
+                dbContext.GlobalDatas.Add(globalData);
+            }
+            else
+            {
+                globalData.Data = parameters.Data;
+                globalData.DateUpdated = DateTime.UtcNow;
+            }
+
+            return await dbContext.SaveChangesAndLog(globalData, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        handlerResult.Success = true;
-        handlerResult.Entity = parameters.Value;
-
+        handlerResult.AddMessage("GlobalData is null", ResultMessageType.Error);
         return handlerResult;
     }
 
-    public async Task<HandlerResult<object>> MultiQueryAsync(MultiQueryParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<Dictionary<string, IEnumerable<object>>> MultiQueryAsync(MultiQueryParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var handlerResult = new HandlerResult<object>();
-        var results = new List<object>();
+
+        var results = new Dictionary<string, IEnumerable<object>>();
 
         foreach (var query in parameters.Queries)
         {
-            // This would need to be implemented based on the specific query requirements
-            // For now, just return empty results
-            results.Add(new { Query = query, Results = new List<object>() });
+            var queryResult = await query.ExecuteQuery(dbContext, cancellationToken);
+            if (query.Name != null)
+            {
+                results.Add(query.Name, queryResult);
+            }
         }
 
-        handlerResult.Success = true;
-        handlerResult.Items = results;
-
-        return handlerResult;
+        return results;
     }
 
-    public async Task<HandlerResult<T>> GetDataGridAsync<T>(DataGridParameters<T> parameters, CancellationToken cancellationToken = default)
+    public async Task<DataGridResult<T>> GetDataGridAsync<T>(DataGridParameters<T> parameters, CancellationToken cancellationToken = default) where T : class, ITreeItem
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var handlerResult = new HandlerResult<T>();
 
-        // Get the DbSet for the type T
-        var dbSet = dbContext.Set<T>();
+        // Use reflection to get the DbSet<T>
+        var dbSetProperty = dbContext.GetType().GetProperties()
+            .FirstOrDefault(p => p.PropertyType == typeof(DbSet<T>));
+
+        if (dbSetProperty == null)
+        {
+            throw new InvalidOperationException($"DbSet<{typeof(T).Name}> is not found in the DbContext.");
+        }
+
+        if (dbSetProperty.GetValue(dbContext) is not DbSet<T> dbSet)
+        {
+            throw new InvalidOperationException($"Unable to get the DbSet<{typeof(T).Name}> from the DbContext.");
+        }
+
+        var result = new DataGridResult<T>();
+
         var query = dbSet.AsQueryable();
 
-        if (parameters.AsNoTracking)
+        if (!string.IsNullOrEmpty(parameters.Filter))
         {
-            query = query.AsNoTracking();
+            query = query.Where(parameters.Filter);
         }
 
-        if (parameters.WhereClause != null)
-        {
-            query = query.Where(parameters.WhereClause);
-        }
-
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        if (!parameters.OrderBy.IsNullOrWhiteSpace())
+        if (!string.IsNullOrEmpty(parameters.OrderBy))
         {
             query = query.OrderBy(parameters.OrderBy);
         }
 
-        if (parameters.AmountPerPage > 0)
-        {
-            query = query.Skip(parameters.PageIndex * parameters.AmountPerPage).Take(parameters.AmountPerPage);
-        }
+        result.Count = query.Count();
+        result.Items = await query.Skip(parameters.Skip).Take(parameters.Take).ToListAsync(cancellationToken: cancellationToken);
 
-        var items = await query.ToListAsync(cancellationToken);
+        return result;
+    }
 
-        handlerResult.Success = true;
-        handlerResult.Items = items;
-        handlerResult.TotalCount = totalCount;
+    private static string GenerateCacheKey(GetGlobalDataParameters parameters, IZauberDbContext dbContext)
+    {
+        var query = BuildGlobalDataQuery(parameters, dbContext);
+        var queryString = query.ToQueryString();
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
+        return typeof(GlobalData).ToCacheKey(Convert.ToBase64String(hash));
+    }
 
-        return handlerResult;
+    private static IQueryable<GlobalData> BuildGlobalDataQuery(GetGlobalDataParameters parameters, IZauberDbContext dbContext)
+    {
+        return dbContext.GlobalDatas.AsNoTracking()
+            .Where(x => x.Alias == parameters.Alias);
+    }
+
+    private static async Task<GlobalData?> FetchGlobalDataAsync(GetGlobalDataParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var query = BuildGlobalDataQuery(parameters, dbContext);
+        return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 }
