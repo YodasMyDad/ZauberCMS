@@ -65,48 +65,48 @@ So tasks that need completing are [] and completed tasks will be [X]
 [X] - Create `GetCurrentUserParameters` class in `ZauberCMS.Core/Membership/Parameters/`
 
 #### Media Service Parameters
-[] - Create `GetMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
-[] - Create `SaveMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
-[] - Create `QueryMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
-[] - Create `DeleteMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
-[] - Create `HasChildMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
-[] - Create `GetRestrictedMediaUrlsParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[X] - Create `GetMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[X] - Create `SaveMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[X] - Create `QueryMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[X] - Create `DeleteMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[X] - Create `HasChildMediaParameters` class in `ZauberCMS.Core/Media/Parameters/`
+[X] - Create `GetRestrictedMediaUrlsParameters` class in `ZauberCMS.Core/Media/Parameters/`
 
 #### Language Service Parameters
-[] - Create `GetLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
-[] - Create `SaveLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
-[] - Create `QueryLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
-[] - Create `DeleteLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
-[] - Create `SaveLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
-[] - Create `DeleteLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
-[] - Create `GetCachedAllLanguageDictionariesParameters` class in `ZauberCMS.Core/Languages/Parameters/`
-[] - Create `DataGridLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[X] - Create `GetLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[X] - Create `SaveLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[X] - Create `QueryLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[X] - Create `DeleteLanguageParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[X] - Create `SaveLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[X] - Create `DeleteLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[X] - Create `GetCachedAllLanguageDictionariesParameters` class in `ZauberCMS.Core/Languages/Parameters/`
+[X] - Create `DataGridLanguageDictionaryParameters` class in `ZauberCMS.Core/Languages/Parameters/`
 
 #### Tag Service Parameters
-[] - Create `SaveTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
-[] - Create `QueryTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
-[] - Create `DeleteTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
-[] - Create `SaveTagItemParameters` class in `ZauberCMS.Core/Tags/Parameters/`
-[] - Create `DeleteTagItemParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[X] - Create `SaveTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[X] - Create `QueryTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[X] - Create `DeleteTagParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[X] - Create `SaveTagItemParameters` class in `ZauberCMS.Core/Tags/Parameters/`
+[X] - Create `DeleteTagItemParameters` class in `ZauberCMS.Core/Tags/Parameters/`
 
 #### Audit Service Parameters
-[] - Create `SaveAuditParameters` class in `ZauberCMS.Core/Audit/Parameters/`
-[] - Create `QueryAuditsParameters` class in `ZauberCMS.Core/Audit/Parameters/`
-[] - Create `CleanupOldAuditsParameters` class in `ZauberCMS.Core/Audit/Parameters/`
+[X] - Create `SaveAuditParameters` class in `ZauberCMS.Core/Audit/Parameters/`
+[X] - Create `QueryAuditsParameters` class in `ZauberCMS.Core/Audit/Parameters/`
+[X] - Create `CleanupOldAuditsParameters` class in `ZauberCMS.Core/Audit/Parameters/`
 
 #### SEO Service Parameters
-[] - Create `SaveRedirectParameters` class in `ZauberCMS.Core/Seo/Parameters/`
-[] - Create `QueryRedirectsParameters` class in `ZauberCMS.Core/Seo/Parameters/`
-[] - Create `DeleteRedirectParameters` class in `ZauberCMS.Core/Seo/Parameters/`
+[X] - Create `SaveRedirectParameters` class in `ZauberCMS.Core/Seo/Parameters/`
+[X] - Create `QueryRedirectsParameters` class in `ZauberCMS.Core/Seo/Parameters/`
+[X] - Create `DeleteRedirectParameters` class in `ZauberCMS.Core/Seo/Parameters/`
 
 #### Data Service Parameters
-[] - Create `GetGlobalDataParameters` class in `ZauberCMS.Core/Data/Parameters/`
-[] - Create `SaveGlobalDataParameters` class in `ZauberCMS.Core/Data/Parameters/`
-[] - Create `MultiQueryParameters` class in `ZauberCMS.Core/Data/Parameters/`
-[] - Create `DataGridParameters<T>` class in `ZauberCMS.Core/Data/Parameters/`
+[X] - Create `GetGlobalDataParameters` class in `ZauberCMS.Core/Data/Parameters/`
+[X] - Create `SaveGlobalDataParameters` class in `ZauberCMS.Core/Data/Parameters/`
+[X] - Create `MultiQueryParameters` class in `ZauberCMS.Core/Data/Parameters/`
+[X] - Create `DataGridParameters<T>` class in `ZauberCMS.Core/Data/Parameters/`
 
 #### Email Service Parameters
-[] - Create `SendEmailConfirmationParameters` class in `ZauberCMS.Core/Email/Parameters/`
+[X] - Create `SendEmailConfirmationParameters` class in `ZauberCMS.Core/Email/Parameters/`
 
 ### Phase 3: Service Implementation
 
