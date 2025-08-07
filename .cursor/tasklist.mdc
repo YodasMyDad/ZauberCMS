@@ -111,98 +111,98 @@ So tasks that need completing are [] and completed tasks will be [X]
 ### Phase 3: Service Implementation
 
 #### Content Service Implementation
-[] - Create `ContentService` class in `ZauberCMS.Core/Content/Services/`
-[] - Implement `GetContentAsync` method in `ContentService`
-[] - Implement `SaveContentAsync` method in `ContentService`
-[] - Implement `QueryContentAsync` method in `ContentService`
-[] - Implement `DeleteContentAsync` method in `ContentService`
-[] - Implement `CopyContentAsync` method in `ContentService`
-[] - Implement `GetContentFromRequestAsync` method in `ContentService`
-[] - Implement `GetContentTypeAsync` method in `ContentService`
-[] - Implement `SaveContentTypeAsync` method in `ContentService`
-[] - Implement `QueryContentTypesAsync` method in `ContentService`
-[] - Implement `DeleteContentTypeAsync` method in `ContentService`
-[] - Implement `GetDomainAsync` method in `ContentService`
-[] - Implement `SaveDomainAsync` method in `ContentService`
-[] - Implement `QueryDomainAsync` method in `ContentService`
-[] - Implement `DeleteDomainAsync` method in `ContentService`
-[] - Implement `AnyContentAsync` method in `ContentService`
-[] - Implement `HasChildContentAsync` method in `ContentService`
-[] - Implement `HasChildContentTypeAsync` method in `ContentService`
-[] - Implement `GetContentLanguagesAsync` method in `ContentService`
-[] - Implement `GetCachedDomainsAsync` method in `ContentService`
-[] - Implement `ClearUnpublishedContentAsync` method in `ContentService`
-[] - Implement `GetDataGridContentAsync` method in `ContentService`
+[X] - Create `ContentService` class in `ZauberCMS.Core/Content/Services/`
+[X] - Implement `GetContentAsync` method in `ContentService`
+[X] - Implement `SaveContentAsync` method in `ContentService`
+[X] - Implement `QueryContentAsync` method in `ContentService`
+[X] - Implement `DeleteContentAsync` method in `ContentService`
+[X] - Implement `CopyContentAsync` method in `ContentService`
+[X] - Implement `GetContentFromRequestAsync` method in `ContentService`
+[X] - Implement `GetContentTypeAsync` method in `ContentService`
+[X] - Implement `SaveContentTypeAsync` method in `ContentService`
+[X] - Implement `QueryContentTypesAsync` method in `ContentService`
+[X] - Implement `DeleteContentTypeAsync` method in `ContentService`
+[X] - Implement `GetDomainAsync` method in `ContentService`
+[X] - Implement `SaveDomainAsync` method in `ContentService`
+[X] - Implement `QueryDomainAsync` method in `ContentService`
+[X] - Implement `DeleteDomainAsync` method in `ContentService`
+[X] - Implement `AnyContentAsync` method in `ContentService`
+[X] - Implement `HasChildContentAsync` method in `ContentService`
+[X] - Implement `HasChildContentTypeAsync` method in `ContentService`
+[X] - Implement `GetContentLanguagesAsync` method in `ContentService`
+[X] - Implement `GetCachedDomainsAsync` method in `ContentService`
+[X] - Implement `ClearUnpublishedContentAsync` method in `ContentService`
+[X] - Implement `GetDataGridContentAsync` method in `ContentService`
 
 #### Membership Service Implementation
-[] - Create `MembershipService` class in `ZauberCMS.Core/Membership/Services/`
-[] - Implement `GetUserAsync` method in `MembershipService`
-[] - Implement `SaveUserAsync` method in `MembershipService`
-[] - Implement `CreateUpdateUserAsync` method in `MembershipService`
-[] - Implement `DeleteUserAsync` method in `MembershipService`
-[] - Implement `QueryUsersAsync` method in `MembershipService`
-[] - Implement `GetRoleAsync` method in `MembershipService`
-[] - Implement `SaveRoleAsync` method in `MembershipService`
-[] - Implement `DeleteRoleAsync` method in `MembershipService`
-[] - Implement `QueryRolesAsync` method in `MembershipService`
-[] - Implement `LoginUserAsync` method in `MembershipService`
-[] - Implement `RegisterUserAsync` method in `MembershipService`
-[] - Implement `ExternalLoginAsync` method in `MembershipService`
-[] - Implement `ConfirmEmailAsync` method in `MembershipService`
-[] - Implement `ForgotPasswordAsync` method in `MembershipService`
-[] - Implement `ResetPasswordAsync` method in `MembershipService`
-[] - Implement `GetCurrentUserAsync` method in `MembershipService`
+[X] - Create `MembershipService` class in `ZauberCMS.Core/Membership/Services/`
+[X] - Implement `GetUserAsync` method in `MembershipService`
+[X] - Implement `SaveUserAsync` method in `MembershipService`
+[X] - Implement `CreateUpdateUserAsync` method in `MembershipService`
+[X] - Implement `DeleteUserAsync` method in `MembershipService`
+[X] - Implement `QueryUsersAsync` method in `MembershipService`
+[X] - Implement `GetRoleAsync` method in `MembershipService`
+[X] - Implement `SaveRoleAsync` method in `MembershipService`
+[X] - Implement `DeleteRoleAsync` method in `MembershipService`
+[X] - Implement `QueryRolesAsync` method in `MembershipService`
+[X] - Implement `LoginUserAsync` method in `MembershipService`
+[X] - Implement `RegisterUserAsync` method in `MembershipService`
+[X] - Implement `ExternalLoginAsync` method in `MembershipService`
+[X] - Implement `ConfirmEmailAsync` method in `MembershipService`
+[X] - Implement `ForgotPasswordAsync` method in `MembershipService`
+[X] - Implement `ResetPasswordAsync` method in `MembershipService`
+[X] - Implement `GetCurrentUserAsync` method in `MembershipService`
 
 #### Media Service Implementation
-[] - Create `MediaService` class in `ZauberCMS.Core/Media/Services/`
-[] - Implement `GetMediaAsync` method in `MediaService`
-[] - Implement `SaveMediaAsync` method in `MediaService`
-[] - Implement `QueryMediaAsync` method in `MediaService`
-[] - Implement `DeleteMediaAsync` method in `MediaService`
-[] - Implement `HasChildMediaAsync` method in `MediaService`
-[] - Implement `GetRestrictedMediaUrlsAsync` method in `MediaService`
+[X] - Create `MediaService` class in `ZauberCMS.Core/Media/Services/`
+[X] - Implement `GetMediaAsync` method in `MediaService`
+[X] - Implement `SaveMediaAsync` method in `MediaService`
+[X] - Implement `QueryMediaAsync` method in `MediaService`
+[X] - Implement `DeleteMediaAsync` method in `MediaService`
+[X] - Implement `HasChildMediaAsync` method in `MediaService`
+[X] - Implement `GetRestrictedMediaUrlsAsync` method in `MediaService`
 
 #### Language Service Implementation
-[] - Create `LanguageService` class in `ZauberCMS.Core/Languages/Services/`
-[] - Implement `GetLanguageAsync` method in `LanguageService`
-[] - Implement `SaveLanguageAsync` method in `LanguageService`
-[] - Implement `QueryLanguageAsync` method in `LanguageService`
-[] - Implement `DeleteLanguageAsync` method in `LanguageService`
-[] - Implement `SaveLanguageDictionaryAsync` method in `LanguageService`
-[] - Implement `DeleteLanguageDictionaryAsync` method in `LanguageService`
-[] - Implement `GetCachedAllLanguageDictionariesAsync` method in `LanguageService`
-[] - Implement `GetDataGridLanguageDictionaryAsync` method in `LanguageService`
+[X] - Create `LanguageService` class in `ZauberCMS.Core/Languages/Services/`
+[X] - Implement `GetLanguageAsync` method in `LanguageService`
+[X] - Implement `SaveLanguageAsync` method in `LanguageService`
+[X] - Implement `QueryLanguageAsync` method in `LanguageService`
+[X] - Implement `DeleteLanguageAsync` method in `LanguageService`
+[X] - Implement `SaveLanguageDictionaryAsync` method in `LanguageService`
+[X] - Implement `DeleteLanguageDictionaryAsync` method in `LanguageService`
+[X] - Implement `GetCachedAllLanguageDictionariesAsync` method in `LanguageService`
+[X] - Implement `GetDataGridLanguageDictionaryAsync` method in `LanguageService`
 
 #### Tag Service Implementation
-[] - Create `TagService` class in `ZauberCMS.Core/Tags/Services/`
-[] - Implement `SaveTagAsync` method in `TagService`
-[] - Implement `QueryTagAsync` method in `TagService`
-[] - Implement `DeleteTagAsync` method in `TagService`
-[] - Implement `SaveTagItemAsync` method in `TagService`
-[] - Implement `DeleteTagItemAsync` method in `TagService`
+[X] - Create `TagService` class in `ZauberCMS.Core/Tags/Services/`
+[X] - Implement `SaveTagAsync` method in `TagService`
+[X] - Implement `QueryTagAsync` method in `TagService`
+[X] - Implement `DeleteTagAsync` method in `TagService`
+[X] - Implement `SaveTagItemAsync` method in `TagService`
+[X] - Implement `DeleteTagItemAsync` method in `TagService`
 
 #### Audit Service Implementation
-[] - Create `AuditService` class in `ZauberCMS.Core/Audit/Services/`
-[] - Implement `SaveAuditAsync` method in `AuditService`
-[] - Implement `QueryAuditsAsync` method in `AuditService`
-[] - Implement `CleanupOldAuditsAsync` method in `AuditService`
+[X] - Create `AuditService` class in `ZauberCMS.Core/Audit/Services/`
+[X] - Implement `SaveAuditAsync` method in `AuditService`
+[X] - Implement `QueryAuditsAsync` method in `AuditService`
+[X] - Implement `CleanupOldAuditsAsync` method in `AuditService`
 
 #### SEO Service Implementation
-[] - Create `SeoService` class in `ZauberCMS.Core/Seo/Services/`
-[] - Implement `SaveRedirectAsync` method in `SeoService`
-[] - Implement `QueryRedirectsAsync` method in `SeoService`
-[] - Implement `DeleteRedirectAsync` method in `SeoService`
+[X] - Create `SeoService` class in `ZauberCMS.Core/Seo/Services/`
+[X] - Implement `SaveRedirectAsync` method in `SeoService`
+[X] - Implement `QueryRedirectsAsync` method in `SeoService`
+[X] - Implement `DeleteRedirectAsync` method in `SeoService`
 
 #### Data Service Implementation
-[] - Create `DataService` class in `ZauberCMS.Core/Data/Services/`
-[] - Implement `GetGlobalDataAsync` method in `DataService`
-[] - Implement `SaveGlobalDataAsync` method in `DataService`
-[] - Implement `MultiQueryAsync` method in `DataService`
-[] - Implement `GetDataGridAsync<T>` method in `DataService`
+[X] - Create `DataService` class in `ZauberCMS.Core/Data/Services/`
+[X] - Implement `GetGlobalDataAsync` method in `DataService`
+[X] - Implement `SaveGlobalDataAsync` method in `DataService`
+[X] - Implement `MultiQueryAsync` method in `DataService`
+[X] - Implement `GetDataGridAsync<T>` method in `DataService`
 
 #### Email Service Implementation
-[] - Create `EmailService` class in `ZauberCMS.Core/Email/Services/`
-[] - Implement `SendEmailConfirmationAsync` method in `EmailService`
+[X] - Create `EmailService` class in `ZauberCMS.Core/Email/Services/`
+[X] - Implement `SendEmailConfirmationAsync` method in `EmailService`
 
 ### Phase 4: Service Registration
 [] - Register all service interfaces and implementations in `ZauberSetup.cs`
