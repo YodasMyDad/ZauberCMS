@@ -5,5 +5,6 @@ namespace ZauberCMS.Core.Membership.Parameters;
 public class GetUserParameters
 {
     public bool Cached { get; set; }
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
+    public string? Email { get; set; }
 }
