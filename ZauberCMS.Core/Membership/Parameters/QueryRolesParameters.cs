@@ -17,6 +17,7 @@ public class QueryRolesParameters
     public GetRolesOrderBy OrderBy { get; set; } = GetRolesOrderBy.DateUpdatedDescending;
     public Expression<Func<Role, bool>>? WhereClause { get; set; }
     public Func<IQueryable<Role>>? Query { get; set; }
+    public string? SearchTerm { get; set; }
 }
 
 public enum GetRolesOrderBy
@@ -25,5 +26,6 @@ public enum GetRolesOrderBy
     DateUpdatedDescending,
     DateCreated,
     DateCreatedDescending,
-    Name
+    Name,
+    NameDescending
 }

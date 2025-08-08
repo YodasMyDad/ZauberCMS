@@ -27,4 +27,6 @@ public class RegisterUserParameters
     public string? ReturnUrl { get; set; }
 
     public bool AutoLogin { get; set; } = true;
+    
+    public string? Name { get; set; }
 }

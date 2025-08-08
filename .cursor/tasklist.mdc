@@ -135,23 +135,23 @@ When you are ready, got through each of the tasks and complete all phases. Do al
 [X] - Implement `GetDataGridContentAsync` method in `ContentService`
 
 #### Membership Service Implementation - Make sure you take the logic from each of the handlers in this section (IRequestHandler<>) and put it in the services. Do not use Mediator directly in these services, these methods in the service are a direct replacement.
-[] - Create `MembershipService` class in `ZauberCMS.Core/Membership/Services/`
-[] - Implement `GetUserAsync` method in `MembershipService`
-[] - Implement `SaveUserAsync` method in `MembershipService`
-[] - Implement `CreateUpdateUserAsync` method in `MembershipService`
-[] - Implement `DeleteUserAsync` method in `MembershipService`
-[] - Implement `QueryUsersAsync` method in `MembershipService`
-[] - Implement `GetRoleAsync` method in `MembershipService`
-[] - Implement `SaveRoleAsync` method in `MembershipService`
-[] - Implement `DeleteRoleAsync` method in `MembershipService`
-[] - Implement `QueryRolesAsync` method in `MembershipService`
-[] - Implement `LoginUserAsync` method in `MembershipService`
-[] - Implement `RegisterUserAsync` method in `MembershipService`
-[] - Implement `ExternalLoginAsync` method in `MembershipService`
-[] - Implement `ConfirmEmailAsync` method in `MembershipService`
-[] - Implement `ForgotPasswordAsync` method in `MembershipService`
-[] - Implement `ResetPasswordAsync` method in `MembershipService`
-[] - Implement `GetCurrentUserAsync` method in `MembershipService`
+[X] - Create `MembershipService` class in `ZauberCMS.Core/Membership/Services/`
+[X] - Implement `GetUserAsync` method in `MembershipService`
+[X] - Implement `SaveUserAsync` method in `MembershipService`
+[X] - Implement `CreateUpdateUserAsync` method in `MembershipService`
+[X] - Implement `DeleteUserAsync` method in `MembershipService`
+[X] - Implement `QueryUsersAsync` method in `MembershipService`
+[X] - Implement `GetRoleAsync` method in `MembershipService`
+[X] - Implement `SaveRoleAsync` method in `MembershipService`
+[X] - Implement `DeleteRoleAsync` method in `MembershipService`
+[X] - Implement `QueryRolesAsync` method in `MembershipService`
+[X] - Implement `LoginUserAsync` method in `MembershipService`
+[X] - Implement `RegisterUserAsync` method in `MembershipService`
+[X] - Implement `ExternalLoginAsync` method in `MembershipService`
+[X] - Implement `ConfirmEmailAsync` method in `MembershipService`
+[X] - Implement `ForgotPasswordAsync` method in `MembershipService`
+[X] - Implement `ResetPasswordAsync` method in `MembershipService`
+[X] - Implement `GetCurrentUserAsync` method in `MembershipService`
 
 #### Media Service Implementation - Make sure you take the logic from each of the handlers in this section (IRequestHandler<>) and put it in the services. Do not use Mediator directly in these services, these methods in the service are a direct replacement.
 [] - Create `MediaService` class in `ZauberCMS.Core/Media/Services/`

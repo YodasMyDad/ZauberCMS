@@ -11,4 +11,6 @@ public class CreateUpdateUserParameters
     public string? NewPasswordConfirmation { get; set; }
     public User User { get; set; } = new();
     public IBrowserFile? ProfileImageUpload { get; set; }
+    public string? Password { get; set; }
+    public List<string>? Roles { get; set; }
 }
