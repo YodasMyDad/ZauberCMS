@@ -15,7 +15,11 @@ public class PostgreSqlZauberDbContext(
     {
         var section = _configuration.GetSection("Zauber");
         var connectionString = section.GetValue<string>("ConnectionString");
-        options.UseNpgsql(connectionString, builder => builder.MigrationsHistoryTable(tableName: "ZauberMigrations"));
+        options.UseNpgsql(connectionString, builder =>
+        {
+            builder.MigrationsHistoryTable(tableName: "ZauberMigrations");
+            builder.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        });
 #if DEBUG
         options.EnableSensitiveDataLogging();
 #endif

@@ -15,7 +15,11 @@ public class SqliteZauberDbContext(
     {
         var section = _configuration.GetSection("Zauber");
         var connectionString = section.GetValue<string>("ConnectionString");
-        options.UseSqlite(connectionString, builder => builder.MigrationsHistoryTable(tableName:"ZauberMigrations"));
+        options.UseSqlite(connectionString, builder =>
+        {
+            builder.MigrationsHistoryTable(tableName: "ZauberMigrations");
+            builder.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        });
         #if DEBUG
                 options.EnableSensitiveDataLogging();
         #endif
