@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text;
+using System.Text.Encodings.Web;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Email.Parameters;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Providers;
-using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Email.Services;
 
@@ -15,43 +17,38 @@ public class EmailService(
     ProviderService providerService,
     IHttpContextAccessor httpContextAccessor) : IEmailService
 {
-    public async Task<HandlerResult<object>> SendEmailConfirmationAsync(SendEmailConfirmationParameters parameters, CancellationToken cancellationToken = default)
+    public async Task SendEmailConfirmationAsync(SendEmailConfirmationParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var handlerResult = new HandlerResult<object>();
 
-        if (!parameters.UserId.IsNullOrWhiteSpace())
+        var userId = await userManager.GetUserIdAsync(parameters.User!);
+
+        string code;
+        string email;
+
+        var isChange = "false";
+        if (parameters.NewEmailAddress.IsNullOrWhiteSpace())
         {
-            var user = await userManager.FindByIdAsync(parameters.UserId);
-            if (user != null)
-            {
-                var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ConfirmEmail, new { userId = parameters.UserId, code = token });
-
-                var paragraphs = new List<string> 
-                { 
-                    $"Please confirm your account by <a class=\"underline\" href=\"{callbackUrl}\">clicking here</a>." 
-                };
-
-                await providerService.EmailProvider!.SendEmailWithTemplateAsync(
-                    parameters.Email ?? user.Email, 
-                    "Confirm your email", 
-                    paragraphs);
-
-                handlerResult.Success = true;
-                handlerResult.AddMessage("Confirmation email sent", ResultMessageType.Success);
-            }
-            else
-            {
-                handlerResult.AddMessage("User not found", ResultMessageType.Error);
-            }
+            code = await userManager.GenerateEmailConfirmationTokenAsync(parameters.User!);
+            email = parameters.User!.Email!;
         }
         else
         {
-            handlerResult.AddMessage("User ID is required", ResultMessageType.Error);
+            isChange = "true";
+            code = await userManager.GenerateChangeEmailTokenAsync(parameters.User!, parameters.NewEmailAddress);
+            email = parameters.NewEmailAddress!;
         }
 
-        return handlerResult;
+        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+        var callbackUrl = $"{httpContextAccessor.ToAbsoluteUrl(Urls.Account.ConfirmEmail)}?userId={userId}&code={code}&change={isChange}&returnUrl={parameters.ReturnUrl}";
+
+        var paragraphs = new List<string>
+        {
+            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>."
+        };
+
+        await providerService.EmailProvider!.SendEmailWithTemplateAsync(email, "Confirm your email", paragraphs);
     }
 }

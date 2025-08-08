@@ -55,6 +55,7 @@ public class MembershipService(
     {
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -76,7 +77,6 @@ public class MembershipService(
                     return handlerResult;
                 }
 
-                // set the default starting role if no roles are set
                 parameters.Roles ??= [Constants.Roles.StandardRoleName];
             }
             else
@@ -112,7 +112,6 @@ public class MembershipService(
                     }
                 }
 
-                // Update other properties
                 mapper.Map(parameters.User, user);
                 user.DateUpdated = DateTime.UtcNow;
                 
@@ -123,13 +122,11 @@ public class MembershipService(
                     return handlerResult;
                 }
                 
-                await loggedInUser.AddAudit(parameters.User, parameters.User.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, null, cancellationToken);
+                await loggedInUser.AddAudit(parameters.User, parameters.User.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
                 
-                // Finally update property data
                 handlerResult = await UpdateUserPropertyValues(dbContext, parameters.User, handlerResult, cancellationToken);
             }
 
-            // Handle roles
             if (parameters.Roles != null)
             {
                 var currentRoles = await userManager.GetRolesAsync(user);
@@ -169,7 +166,6 @@ public class MembershipService(
                 }
             }
 
-            // Update security stamp if needed
             if (refreshCurrentUser == false && userManager.SupportsUserSecurityStamp)
             {
                 await userManager.UpdateSecurityStampAsync(user);
@@ -192,8 +188,8 @@ public class MembershipService(
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-        // Get the current user first via the authstate
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var handlerResult = new HandlerResult<User>();
 
@@ -201,13 +197,11 @@ public class MembershipService(
             .FirstOrDefaultAsync(x => x.Id == authState.User.GetUserId(), cancellationToken: cancellationToken);
         if (user == null)
         {
-            // new users should only be created by the register page
             handlerResult.Success = false;
             handlerResult.AddMessage("Unable to create a new user, use the registration form", ResultMessageType.Error);
             return handlerResult;
         }
 
-        // Map the updated properties
         mapper.Map(parameters.User, user);
         user.DateUpdated = DateTime.UtcNow;
 
@@ -218,7 +212,6 @@ public class MembershipService(
             return handlerResult;
         }
 
-        // Handle roles if provided
         if (parameters.Roles != null)
         {
             var currentRoles = await userManager.GetRolesAsync(user);
@@ -246,7 +239,6 @@ public class MembershipService(
             }
         }
 
-        // Update property data
         handlerResult = await UpdateUserPropertyValues(dbContext, parameters.User, handlerResult, cancellationToken);
 
         handlerResult.Entity = user;
@@ -261,17 +253,17 @@ public class MembershipService(
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<User>();
 
         var user = await dbContext.Users
-            .Include(u => u.UserRoles) // Include UserRoles to delete related roles
+            .Include(u => u.UserRoles)
             .FirstOrDefaultAsync(x => x.Id == parameters.UserId, cancellationToken);
 
         if (user != null)
         {
-            // Now delete the PropertyData
             var propertyDataToDelete = dbContext.UserPropertyValues.Where(x => x.UserId == user.Id);
             foreach (var propertyValue in propertyDataToDelete)
             {
@@ -279,7 +271,7 @@ public class MembershipService(
             }
 
             user.PropertyData.Clear();
-            await loggedInUser.AddAudit(user, user.Name, AuditExtensions.AuditAction.Delete, null, cancellationToken);
+            await loggedInUser.AddAudit(user, user.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
             dbContext.Users.Remove(user);
             await dbContext.SaveChangesAsync(cancellationToken);
             handlerResult.Messages.Add(new ResultMessage("User deleted successfully", ResultMessageType.Success));
@@ -337,6 +329,7 @@ public class MembershipService(
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Role>();
@@ -344,7 +337,6 @@ public class MembershipService(
         
         if (parameters.Role != null)
         {
-            // Get the DB version
             var role = dbContext.Roles
                 .FirstOrDefault(x => x.Id == parameters.Role.Id);
 
@@ -356,12 +348,11 @@ public class MembershipService(
             else
             {
                 isUpdate = true;
-                // Map the updated properties
                 mapper.Map(parameters.Role, role);
                 role.DateUpdated = DateTime.UtcNow;
             }
             
-            await loggedInUser.AddAudit(role, role.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, null, cancellationToken);
+            await loggedInUser.AddAudit(role, role.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
             return await dbContext.SaveChangesAndLog(role, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
@@ -374,26 +365,26 @@ public class MembershipService(
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Role>();
 
         var role = await dbContext.Roles
-            .Include(r => r.UserRoles) // Include UserRoles to delete related user-role relationships
-            .FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
+            .Include(r => r.UserRoles)
+            .FirstOrDefaultAsync(x => x.Id == parameters.RoleId, cancellationToken);
 
         if (role != null)
         {
             var usersInThisRole = await QueryUsersAsync(new QueryUsersParameters { Roles = [role.Name!] }, cancellationToken);
             if (usersInThisRole.Items.Any())
             {
-                // Display error message
                 handlerResult.Messages.Add(new ResultMessage("Unable to delete as users are in this role",
                     ResultMessageType.Error));
                 return handlerResult;
             }
 
-            await loggedInUser.AddAudit(role, role.Name, AuditExtensions.AuditAction.Delete, null, cancellationToken);
+            await loggedInUser.AddAudit(role, role.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
             dbContext.Roles.Remove(role);
             await dbContext.SaveChangesAsync(cancellationToken);
             handlerResult.Messages.Add(new ResultMessage("Role deleted successfully", ResultMessageType.Success));
@@ -453,11 +444,10 @@ public class MembershipService(
     public async Task<AuthenticationResult> LoginUserAsync(LoginUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
         
-        // This doesn't count login failures towards account lockout
-        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
         var loginResult = new AuthenticationResult();
         
         try
@@ -486,8 +476,13 @@ public class MembershipService(
                         {
                             loginResult.AddMessage("Email isn't confirmed. Check your inbox for a confirmation email", ResultMessageType.Warning);
 
-                            // Resend confirmation email - would need to implement email service call here
-                            // For now, just add the message
+                            var sendConfirmationEmailCommand = new SendEmailConfirmationCommand
+                            {
+                                ReturnUrl = parameters.ReturnUrl,
+                                User = user
+                            };
+
+                            await mediator.Send(sendConfirmationEmailCommand, cancellationToken);
                         }
                     }
                     else if (signInResult.IsLockedOut)
@@ -497,7 +492,6 @@ public class MembershipService(
                     }
                     else if (signInResult.RequiresTwoFactor)
                     {
-                        // This is currently not supported
                         loginResult.NavigateToUrl = $"{Urls.Account.LoginWith2Fa}?returnUrl={parameters.ReturnUrl}&rememberMe={parameters.RememberMe}";
                     }
                     else
@@ -524,26 +518,16 @@ public class MembershipService(
     public async Task<AuthenticationResult> RegisterUserAsync(RegisterUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
+        var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
             
-        var newUser = new User 
-        { 
-            Id = Guid.NewGuid().NewSequentialGuid(), 
-            Email = parameters.Email, 
-            UserName = parameters.Email,
-            FirstName = parameters.FirstName,
-            LastName = parameters.LastName,
-            PhoneNumber = parameters.PhoneNumber,
-            DateOfBirth = parameters.DateOfBirth,
-            Bio = parameters.Bio,
-            Headline = parameters.Headline
-        };
-        
+        var newUser = new User { Id = Guid.NewGuid().NewSequentialGuid(), Email = parameters.Email, UserName = parameters.Username };
         var loginResult = new AuthenticationResult();
-        var createResult = await userManager.CreateAsync(newUser, parameters.Password);
+        var createResult = 
+            await userManager.CreateAsync(newUser, parameters.Password);
 
         loginResult.Success = createResult.Succeeded;
         if (loginResult.Success)
@@ -553,7 +537,7 @@ public class MembershipService(
                                             logger,
                                             dbContext,
                                             settings,
-                                            null,
+                                            mediatr,
                                             newUser,
                                             loginResult);
 
@@ -562,29 +546,41 @@ public class MembershipService(
                 return loginResult;
             }
 
-            // Handle email confirmation
-            if (parameters.SendConfirmationEmail && !parameters.AutoConfirmEmail)
-            {
-                // Would need to implement email confirmation sending here
-                // For now just set the result
-                loginResult.AddMessage("Please check your email to confirm your account", ResultMessageType.Success);
-            }
-            else if (parameters.AutoConfirmEmail)
-            {
-                var token = await userManager.GenerateEmailConfirmationTokenAsync(newUser);
-                await userManager.ConfirmEmailAsync(newUser, token);
-            }
+            var user = await userManager.FindByEmailAsync(parameters.Email);
 
-            // Auto sign in if requested
-            if (parameters.AutoLogin && loginResult.Success)
+            if (userManager.Options.SignIn.RequireConfirmedAccount)
             {
-                await signInManager.SignInAsync(newUser, isPersistent: false);
-                loginResult.NavigateToUrl = Urls.AdminBaseUrl;
+                var sendConfirmationEmailCommand = new SendEmailConfirmationCommand
+                {
+                    ReturnUrl = parameters.ReturnUrl,
+                    User = user
+                };
+
+                await mediatr.Send(sendConfirmationEmailCommand, cancellationToken);
+
+                loginResult.AddMessage("Please check your email and click the link to confirm your account", ResultMessageType.Success);
+            }
+            else
+            {
+                if (parameters.AutoLogin)
+                {
+                    var signInResult = await signInManager.PasswordSignInAsync(user!, parameters.Password, parameters.RememberMe, false);
+                    loginResult.Success = signInResult.Succeeded;
+                    
+                    if (parameters.ReturnUrl.IsNullOrWhiteSpace() && await userManager.IsInRoleAsync(user!, Constants.Roles.AdminRoleName))
+                    {
+                        parameters.ReturnUrl = Urls.AdminBaseUrl;
+                    }
+                }
+                    
+                loginResult.NavigateToUrl = parameters.ReturnUrl ?? "/";   
+                    
             }
         }
         else
         {
-            loginResult.AddMessage(createResult.Errors.Select(e => e.Description).ToList(), ResultMessageType.Error);
+            createResult.LogErrors();
+            loginResult.AddMessage(createResult.ToErrorsList(), ResultMessageType.Error);
         }
 
         return loginResult;
@@ -600,8 +596,6 @@ public class MembershipService(
 
         var authenticationResult = new AuthenticationResult();
 
-        // This would need to be implemented based on the actual external login info
-        // For now, just return a basic implementation
         authenticationResult.Success = false;
         authenticationResult.AddMessage("External login not fully implemented", ResultMessageType.Error);
         
@@ -632,9 +626,8 @@ public class MembershipService(
 
         parameters.Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(parameters.Code!));
 
-        if (parameters.ChangedEmail.IsNotNullOrWhiteSpace())
+        if (parameters.IsEmailUpdate)
         {
-            // Get the new email from the extended data
             var newEmail = user!.ExtendedData.Get(Constants.ExtendedDataKeys.NewEmailAddress);
             if (!newEmail.IsNullOrWhiteSpace())
             {
@@ -647,7 +640,6 @@ public class MembershipService(
                     return result;
                 }
 
-                // Clear new email from user
                 user.ExtendedData.Remove(Constants.ExtendedDataKeys.NewEmailAddress);
                 var updateResult = await userManager.UpdateAsync(user);
                 if (!updateResult.Succeeded)
@@ -658,12 +650,10 @@ public class MembershipService(
 
                 await signInManager.RefreshSignInAsync(user);
 
-                // return success message
                 result.AddMessage("Email address changed", ResultMessageType.Success);
             }
             else
             {
-                // error unable to get new email address
                 result.Success = false;
                 result.AddMessage("Unable to get users new email address", ResultMessageType.Error);
                 return result;
@@ -691,6 +681,7 @@ public class MembershipService(
         var result = new AuthenticationResult();
 
         using var scope = serviceProvider.CreateScope();
+        var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
         if (parameters.Email != null)
@@ -703,12 +694,10 @@ public class MembershipService(
                     result.Success = false;
                     result.AddMessage("Please check your email to confirm your account", ResultMessageType.Success);
 
-                    // Would need to implement resend confirmation email here
+                    await mediatr.Send(new SendEmailConfirmationCommand { ReturnUrl = "~/", User = user }, cancellationToken);
                     return result;
                 }
 
-                // For more information on how to enable account confirmation and password reset please
-                // visit https://go.microsoft.com/fwlink/?LinkID=532713
                 var code = await userManager.GeneratePasswordResetTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                 var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ResetPassword, new { code = code, email = parameters.Email });
@@ -732,7 +721,7 @@ public class MembershipService(
         var user = await userManager.FindByEmailAsync(parameters.Email!);
         if (user != null)
         {
-            var resetResult = await userManager.ResetPasswordAsync(user, parameters.ResetCode!, parameters.NewPassword!);
+            var resetResult = await userManager.ResetPasswordAsync(user, parameters.Code!, parameters.Password!);
             if (resetResult.Succeeded == false)
             {
                 result.Success = false;
@@ -768,7 +757,6 @@ public class MembershipService(
         return user;
     }
 
-    // Private helper methods
     private static string GenerateCacheKey(GetUserParameters parameters, IZauberDbContext dbContext)
     {
         var query = BuildUserQuery(parameters, dbContext);
@@ -790,11 +778,6 @@ public class MembershipService(
         if (parameters.Id.HasValue)
         {
             return query.Where(x => x.Id == parameters.Id);
-        }
-        
-        if (!parameters.Email.IsNullOrWhiteSpace())
-        {
-            return query.Where(x => x.Email == parameters.Email);
         }
 
         return query;
@@ -864,25 +847,21 @@ public class MembershipService(
     {
         var user = dbContext.Users.Include(x => x.PropertyData).FirstOrDefault(x => x.Id == requestUser.Id);
 
-        // Remove deleted items
         var deletedItems = user!.PropertyData.Where(epv => requestUser.PropertyData.All(npv => npv.Id != epv.Id)).ToList();
         foreach (var deletedItem in deletedItems)
         {
             dbContext.UserPropertyValues.Remove(deletedItem);
         }
 
-        // Add or update items
         foreach (var newPropertyValue in requestUser.PropertyData)
         {
             var existingPropertyValue = user!.PropertyData.FirstOrDefault(epv => epv.Id == newPropertyValue.Id);
             if (existingPropertyValue == null)
             {
-                // New property value
                 dbContext.UserPropertyValues.Add(newPropertyValue);
             }
             else
             {
-                // Existing property value, update its properties
                 mapper.Map(newPropertyValue, existingPropertyValue);
             }
         }

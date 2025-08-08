@@ -16,6 +16,7 @@ using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace ZauberCMS.Core.Content.Services;
 
@@ -130,7 +131,9 @@ public class ContentService(
             
             content.Path = content.BuildPath(dbContext, isUpdate, settings);
             
-            // TODO: Add audit logging - need to inject IAuditService and create AddAudit extension that uses it
+            // Match handler: add audit
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            await user.AddAudit(content, content.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
             return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
@@ -149,105 +152,92 @@ public class ContentService(
             .AsSplitQuery()
             .AsQueryable();
 
-        if (parameters.AsNoTracking)
+        if (parameters.Query != null)
         {
-            query = query.AsNoTracking();
-        }
-
-        if (!parameters.IncludeUnpublished)
-        {
-            query = query.Where(x => x.Published);
-        }
-
-        if (parameters.IncludeUnpublishedContent)
-        {
-            query = query.Include(x => x.UnpublishedContent);
-        }
-
-        if (parameters.IncludeParent)
-        {
-            query = query.Include(x => x.Parent);
-        }
-
-        if (parameters.IncludeChildren)
-        {
-            query = parameters.IncludeUnpublished ? query.Include(x => x.Children) 
-                : query.Include(x => x.Children.Where(c => c.Published));
-            query = query.AsSplitQuery();
-        }
-
-        if (parameters.IncludeContentRoles)
-        {
-            query = query.Include(x => x.ContentRoles).ThenInclude(x => x.Role);
-            query = query.AsSplitQuery();
-        }
-
-        if (!parameters.ContentTypeAlias.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.ContentType != null && x.ContentType.Alias == parameters.ContentTypeAlias);
-        }
-
-        if (parameters.ContentTypeAliases?.Any() == true)
-        {
-            query = query.Where(x => x.ContentType != null && parameters.ContentTypeAliases.Contains(x.ContentType.Alias));
-        }
-
-        if (parameters.ParentId.HasValue)
-        {
-            query = query.Where(x => x.ParentId == parameters.ParentId);
-        }
-
-        if (parameters.DomainId.HasValue)
-        {
-            query = query.Where(x => x.DomainId == parameters.DomainId);
-        }
-
-        if (!parameters.LanguageCode.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.LanguageCode == parameters.LanguageCode);
-        }
-
-        if (!parameters.SearchTerm.IsNullOrWhiteSpace())
-        {
-            if (parameters.SearchFields?.Any() == true)
-            {
-                var searchPredicate = parameters.SearchFields.Aggregate<string, IQueryable<Content>>(null, (current, field) =>
-                {
-                    var fieldQuery = query.Where(x => EF.Property<string>(x, field).Contains(parameters.SearchTerm));
-                    return current == null ? fieldQuery : current.Union(fieldQuery);
-                });
-                if (searchPredicate != null)
-                {
-                    query = searchPredicate;
-                }
-            }
-            else
-            {
-                query = query.Where(x => x.Name.Contains(parameters.SearchTerm) || 
-                                         x.Url.Contains(parameters.SearchTerm));
-            }
-        }
-
-        if (!parameters.Tag.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.Tags.Any(t => t.Tag.Name == parameters.Tag));
-        }
-
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        if (!parameters.OrderBy.IsNullOrWhiteSpace())
-        {
-            query = query.OrderBy(parameters.OrderBy);
+            query = parameters.Query.Invoke();
         }
         else
         {
-            query = query.OrderBy(x => x.SortOrder).ThenBy(x => x.Name);
+            if (parameters.IncludeContentRoles)
+            {
+                query = query.Include(x => x.ContentRoles);
+            }
+
+            if (parameters.OnlyUnpublished)
+            {
+                query = query.Include(x => x.UnpublishedContent);
+                query = query.Where(x => x.UnpublishedContentId != null || x.Published == false);
+            }
+            else
+            {
+                query = !parameters.IncludeUnpublished ? query.Where(x => x.Published) : query.Include(x => x.UnpublishedContent);
+            }
+
+            if (parameters.IsDeleted != null)
+            {
+                query = query.Where(x => x.Deleted == parameters.IsDeleted);
+            }
+            
+            if (parameters.IncludeChildren)
+            {
+                query = parameters.IncludeUnpublished ? query.Include(x => x.Children)
+                        .ThenInclude(x => x.UnpublishedContent) 
+                    : query.Include(x => x.Children.Where(c => c.Published));
+            }
+
+            if (parameters.RootContentOnly)
+            {
+                query = query.Where(x => x.ParentId == null);
+            }
+
+            if (parameters.AsNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
+                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(parameters.SearchTerm.ToLower()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.ContentTypeAlias))
+            {
+                var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == parameters.ContentTypeAlias);
+                parameters.ContentTypeId = contentType?.Id ?? Guid.Empty;
+            }
+
+            if (parameters.ContentTypeId != null)
+            {
+                query = query.Where(x => x.ContentTypeId == parameters.ContentTypeId);
+            }
+
+            if (parameters.ParentId != null)
+            {
+                query = query.Where(x => x.ParentId == parameters.ParentId);
+            }
+
+            var idCount = parameters.Ids.Count;
+            if (idCount != 0)
+            {
+                query = query.Where(x => parameters.Ids.Contains(x.Id));
+                parameters.AmountPerPage = idCount;
+            }
         }
 
-        if (parameters.AmountPerPage > 0)
+        if (parameters.WhereClause != null)
         {
-            query = query.Skip(parameters.PageIndex * parameters.AmountPerPage).Take(parameters.AmountPerPage);
+            query = query.Where(parameters.WhereClause);
         }
+
+        query = parameters.OrderBy switch
+        {
+            GetContentsOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
+            GetContentsOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
+            GetContentsOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
+            GetContentsOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+            GetContentsOrderBy.SortOrder => query.OrderBy(p => p.SortOrder),
+            _ => query.OrderByDescending(p => p.DateUpdated)
+        };
 
         return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
     }
@@ -256,134 +246,168 @@ public class ContentService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var appState = scope.ServiceProvider.GetRequiredService<AppState>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Content>();
 
-        var content = await dbContext.Contents
-            .Include(x => x.Children)
-            .FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
-
-        if (content == null)
+        var content = dbContext.Contents.FirstOrDefault(x => x.Id == parameters.ContentId);
+        if (content != null)
         {
-            handlerResult.AddMessage("Content not found", ResultMessageType.Error);
-            return handlerResult;
+            if (parameters.MoveToRecycleBin)
+            {
+                content.Deleted = true;
+                await user.AddAudit(content, content.Name, AuditExtensions.AuditAction.RecycleBin, mediator, cancellationToken);
+            }
+            else
+            {
+                var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
+                if (children.Any())
+                {
+                    handlerResult.AddMessage("Unable to delete content with child content, delete or move those items first", ResultMessageType.Error);
+                    return handlerResult;
+                }
+
+                var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
+                foreach (var contentPropertyValue in propertyDataToDelete)
+                {
+                    dbContext.ContentPropertyValues.Remove(contentPropertyValue);
+                }
+            
+                if (content.UnpublishedContentId != null)
+                {
+                    var unpublishedContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == content.UnpublishedContentId);
+                    if (unpublishedContent != null) dbContext.UnpublishedContent.Remove(unpublishedContent);
+                }
+
+                content.PropertyData.Clear();
+                await user.AddAudit(content, content.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
+                dbContext.Contents.Remove(content);
+                await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
+            }
+            
+            return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
-        if (content.Children.Any())
-        {
-            handlerResult.AddMessage("Cannot delete content that has children", ResultMessageType.Error);
-            return handlerResult;
-        }
-
-        dbContext.Contents.Remove(content);
-        return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
+        handlerResult.AddMessage("Unable to delete, as no Content with that id exists", ResultMessageType.Warning);
+        return handlerResult;
     }
 
     public async Task<HandlerResult<Content>> CopyContentAsync(CopyContentParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var handlerResult = new HandlerResult<Content>();
 
-        var sourceContent = await dbContext.Contents
-            .Include(x => x.PropertyData)
-            .Include(x => x.Children)
-            .FirstOrDefaultAsync(x => x.Id == parameters.ContentId, cancellationToken);
+        var contentToCopy = await dbContext.Contents
+            .AsNoTracking()
+            .Include(content => content.PropertyData)
+            .FirstOrDefaultAsync(x => x.Id == parameters.ContentToCopy, cancellationToken);
 
-        if (sourceContent == null)
+        if (contentToCopy == null)
         {
-            handlerResult.AddMessage("Source content not found", ResultMessageType.Error);
+            handlerResult.Success = false;
+            handlerResult.AddMessage("Unable to copy, as no Content with that ID exists", ResultMessageType.Error);
             return handlerResult;
         }
 
-        var copiedContent = mapper.Map<Content>(sourceContent);
-        copiedContent.Id = Guid.NewGuid();
-        copiedContent.ParentId = parameters.ParentId;
-        copiedContent.Name = $"{sourceContent.Name} (Copy)";
-        copiedContent.Url = GenerateUniqueUrl(dbContext, _slugHelper.GenerateSlug(copiedContent.Name));
-        copiedContent.DateCreated = DateTime.UtcNow;
-        copiedContent.DateUpdated = DateTime.UtcNow;
+        var idMap = new Dictionary<Guid, Guid>();
+        var newParentId = parameters.CopyTo ?? contentToCopy.ParentId;
+        var copiedContent = CreateCopy(contentToCopy, newParentId);
+        idMap[contentToCopy.Id] = copiedContent.Id;
 
-        dbContext.Contents.Add(copiedContent);
-
-        if (parameters.IncludeChildren && sourceContent.Children.Any())
+        if (newParentId.HasValue)
         {
-            foreach (var child in sourceContent.Children)
+            var parentContent = await dbContext.Contents
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == newParentId, cancellationToken);
+
+            if (parentContent != null)
             {
-                var copyChildResult = await CopyContentAsync(new CopyContentParameters 
-                { 
-                    ContentId = child.Id, 
-                    ParentId = copiedContent.Id, 
-                    IncludeChildren = true 
-                }, cancellationToken);
-                
-                if (!copyChildResult.Success)
+                copiedContent.Path = [..parentContent.Path, copiedContent.Id];
+            }
+        }
+        else
+        {
+            copiedContent.Path = [copiedContent.Id];
+        }
+
+        dbContext.Add(copiedContent);
+
+        if (parameters.IncludeDescendants)
+        {
+            var descendants = await dbContext.Contents
+                .WherePathLike(contentToCopy.Id)
+                .AsNoTracking()
+                .Include(content => content.PropertyData)
+                .ToListAsync(cancellationToken);
+            
+            foreach (var descendant in descendants.Where(x => x.Id != contentToCopy.Id))
+            {
+                if (descendant.ParentId != null)
                 {
-                    handlerResult.Messages.AddRange(copyChildResult.Messages);
-                    return handlerResult;
+                    var newParentIdForDescendant = idMap[descendant.ParentId.Value];
+                    var copiedDescendant = CreateCopy(descendant, newParentIdForDescendant);
+                    copiedDescendant.Path = descendant.Path
+                        .Select(id => idMap.TryGetValue(id, out var value) ? value : id)
+                        .ToList();
+                    idMap[descendant.Id] = copiedDescendant.Id;
+                    dbContext.Add(copiedDescendant);
                 }
             }
         }
 
-        return await dbContext.SaveChangesAndLog(copiedContent, handlerResult, cacheService, extensionManager, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await user.AddAudit(contentToCopy, contentToCopy.Name, AuditExtensions.AuditAction.Copy, mediator, cancellationToken);
+
+        handlerResult.Success = true;
+        handlerResult.AddMessage("Content copied successfully.", ResultMessageType.Success);
+        return handlerResult;
+
+        Content CreateCopy(Content original, Guid? parentId = null)
+        {
+            var copy = mapper.Map<Content>(original);
+            copy.Id = Guid.NewGuid();
+            copy.Name = original.Name + " (Copy)";
+            copy.Url = original.Url + "-copy";
+            copy.LastUpdatedById = user?.Id;
+            copy.ParentId = parentId;
+            copy.DateCreated = DateTime.UtcNow;
+            copy.DateUpdated = DateTime.UtcNow;
+            copy.Path = [];
+            copy.Published = false;
+            copy.Deleted = false;
+            copy.PropertyData = original.PropertyData.Select(p => new ContentPropertyValue
+            {
+                Id = Guid.NewGuid(),
+                DateUpdated = p.DateUpdated,
+                DateCreated = p.DateCreated,
+                ContentTypePropertyId = p.ContentTypePropertyId,
+                Value = p.Value,
+                ContentId = p.ContentId,
+                Alias = p.Alias
+            }).ToList();
+
+            return copy;
+        }
     }
 
     public async Task<EntryModel> GetContentFromRequestAsync(GetContentFromRequestParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-        var query = dbContext.Contents
-            .Include(x => x.ContentType)
-            .Include(x => x.PropertyData)
-            .AsSplitQuery()
-            .AsQueryable();
-
-        if (parameters.AsNoTracking)
-        {
-            query = query.AsNoTracking();
-        }
-
-        if (!parameters.IncludeUnpublished)
-        {
-            query = query.Where(x => x.Published);
-        }
-
-        if (parameters.IncludeUnpublishedContent)
-        {
-            query = query.Include(x => x.UnpublishedContent);
-        }
-
-        if (parameters.IncludeParent)
-        {
-            query = query.Include(x => x.Parent);
-        }
-
-        if (parameters.IncludeChildren)
-        {
-            query = parameters.IncludeUnpublished ? query.Include(x => x.Children) 
-                : query.Include(x => x.Children.Where(c => c.Published));
-            query = query.AsSplitQuery();
-        }
-
-        if (parameters.IncludeContentRoles)
-        {
-            query = query.Include(x => x.ContentRoles).ThenInclude(x => x.Role);
-            query = query.AsSplitQuery();
-        }
-
-        query = query.Where(x => x.Url == parameters.Url);
-
-        if (parameters.DomainId.HasValue)
-        {
-            query = query.Where(x => x.DomainId == parameters.DomainId);
-        }
-
-        if (!parameters.LanguageCode.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.LanguageCode == parameters.LanguageCode);
-        }
-
-        return await query.FirstOrDefaultAsync(cancellationToken);
+        var cacheKey = GenerateCacheKey(parameters);
+        return (await cacheService.GetSetCachedItemAsync(
+            cacheKey,
+            async () => await FetchContentAsync(parameters, mediator, dbContext, cancellationToken), 0, 5))!;
     }
 
     public async Task<ContentType?> GetContentTypeAsync(GetContentTypeParameters parameters, CancellationToken cancellationToken = default)
@@ -410,6 +434,9 @@ public class ContentService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
 
         if (parameters.ContentType == null)
@@ -418,19 +445,39 @@ public class ContentService(
             return handlerResult;
         }
 
-        var existingContentType = await dbContext.ContentTypes
-            .FirstOrDefaultAsync(x => x.Id == parameters.ContentType.Id, cancellationToken);
-
-        if (existingContentType == null)
+        var isUpdate = false;
+        if (parameters.ContentType.Alias.IsNullOrWhiteSpace())
         {
-            dbContext.ContentTypes.Add(parameters.ContentType);
+            parameters.ContentType.Alias = parameters.ContentType.Name.ToAlias();
+        }
+
+        var contentType = dbContext.ContentTypes
+            .FirstOrDefault(x => x.Id == parameters.ContentType.Id);
+
+        if (contentType == null)
+        {
+            var containsAlias = dbContext.ContentTypes.Any(x => x.Alias == parameters.ContentType.Alias);
+            if (containsAlias)
+            {
+                handlerResult.AddMessage("Content Type Alias already exists, change the content type name", ResultMessageType.Error);
+                return handlerResult;
+            }
+
+            contentType = parameters.ContentType;
+            contentType.LastUpdatedById = user!.Id;
+            dbContext.ContentTypes.Add(contentType);
         }
         else
         {
-            mapper.Map(parameters.ContentType, existingContentType);
+            isUpdate = true;
+            mapper.Map(parameters.ContentType, contentType);
+            contentType.LastUpdatedById = user!.Id;
+            contentType.DateUpdated = DateTime.UtcNow;
         }
 
-        return await dbContext.SaveChangesAndLog(parameters.ContentType, handlerResult, cacheService, extensionManager, cancellationToken);
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        await user.AddAudit(contentType, contentType.Name, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
+        return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
     public async Task<PaginatedList<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters, CancellationToken cancellationToken = default)
@@ -440,66 +487,130 @@ public class ContentService(
 
         var query = dbContext.ContentTypes.AsQueryable();
 
-        if (parameters.AsNoTracking)
+        if (parameters.Query != null)
         {
-            query = query.AsNoTracking();
-        }
-
-        if (!parameters.SearchTerm.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.Name.Contains(parameters.SearchTerm) || x.Alias.Contains(parameters.SearchTerm));
-        }
-
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        if (!parameters.OrderBy.IsNullOrWhiteSpace())
-        {
-            query = query.OrderBy(parameters.OrderBy);
+            query = parameters.Query.Invoke();
         }
         else
         {
-            query = query.OrderBy(x => x.Name);
+            if (parameters.AsNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+
+            if (parameters.Ids.Count != 0)
+            {
+                query = query.Where(x => parameters.Ids.Contains(x.Id));
+            }
+
+            if (!parameters.SearchTerm.IsNullOrWhiteSpace())
+            {
+                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(parameters.SearchTerm.ToLower()));
+            }
+
+            if (parameters.OnlyElementTypes)
+            {
+                query = query.Where(x => x.IsElementType == true);
+            }
+            else if (parameters.IncludeElementTypes == false)
+            {
+                query = query.Where(x => x.IsElementType == false);
+            }
+            
+            if (parameters.OnlyCompositions)
+            {
+                query = query.Where(x => x.IsComposition == true);
+            }
+            else if (parameters.IncludeCompositions == false)
+            {
+                query = query.Where(x => x.IsComposition == false);
+            }
+            
+            if (parameters.RootOnly)
+            {
+                query = query.Where(x => x.AllowAtRoot);
+            }
+
+            if (parameters.OnlyFolders)
+            {
+                query = query.Where(x => x.IsFolder == true);
+            }
+            else if (parameters.IncludeFolders == false)
+            {
+                query = query.Where(x => x.IsFolder == false);
+            }
+
+            if (parameters.ParentId != null)
+            {
+                query = query.Where(x => x.ParentId == parameters.ParentId);
+            }
         }
 
-        if (parameters.AmountPerPage > 0)
+        if (parameters.WhereClause != null)
         {
-            query = query.Skip(parameters.PageIndex * parameters.AmountPerPage).Take(parameters.AmountPerPage);
+            query = query.Where(parameters.WhereClause);
         }
 
-        var items = await query.ToListAsync(cancellationToken);
-
-        return new HandlerResult<ContentType>
+        query = parameters.OrderBy switch
         {
-            Success = true,
-            Items = items,
-            TotalCount = totalCount
+            GetContentTypesOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
+            GetContentTypesOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
+            GetContentTypesOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
+            GetContentTypesOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+            GetContentTypesOrderBy.Name => query.OrderBy(p => p.Name),
+            _ => query.OrderByDescending(p => p.DateUpdated)
         };
+
+        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
     }
 
     public async Task<HandlerResult<ContentType>> DeleteContentTypeAsync(DeleteContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
 
-        var contentType = await dbContext.ContentTypes
-            .FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
-
-        if (contentType == null)
+        var contentUsingContentType = await QueryContentAsync(new QueryContentParameters { ContentTypeId = parameters.Id }, cancellationToken);
+        if (contentUsingContentType.Items.Any())
         {
-            handlerResult.AddMessage("ContentType not found", ResultMessageType.Error);
+            handlerResult.Success = false;
+            handlerResult.AddMessage("Unable to delete, because this ContentType is being used", ResultMessageType.Warning);
             return handlerResult;
         }
 
-        var hasContent = await dbContext.Contents.AnyAsync(x => x.ContentTypeId == parameters.Id, cancellationToken);
-        if (hasContent)
+        var children = await QueryContentTypesAsync(new QueryContentTypesParameters { Query = () => dbContext.ContentTypes.Where(x => x.ParentId == parameters.Id)}, cancellationToken);
+        if (children.Items.Any())
         {
-            handlerResult.AddMessage("Cannot delete content type that has content", ResultMessageType.Error);
+            handlerResult.Success = false;
+            handlerResult.AddMessage("Unable to delete, because this ContentType has children", ResultMessageType.Warning);
             return handlerResult;
         }
 
-        dbContext.ContentTypes.Remove(contentType);
-        return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager, cancellationToken);
+        var contentType = dbContext.ContentTypes.FirstOrDefault(x => x.Id == parameters.Id);
+        if (contentType != null)
+        {
+            if (contentType.IsComposition)
+            {
+                var anyUsingThisComposition = await QueryContentTypesAsync(new QueryContentTypesParameters { Query = () => dbContext.ContentTypes.WhereHasCompositionsUsing(contentType.Id)}, cancellationToken);
+                if (anyUsingThisComposition.Items.Any())
+                {
+                    handlerResult.Success = false;
+                    handlerResult.AddMessage("Unable to delete, because there are content types using this composition, remove it first", ResultMessageType.Warning);
+                    return handlerResult;
+                }
+            }
+            
+            await user.AddAudit(contentType, contentType.Name, AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
+            dbContext.ContentTypes.Remove(contentType);
+            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager, cancellationToken);
+        }
+
+        handlerResult.AddMessage("Unable to delete, as no ContentType with that id exists", ResultMessageType.Warning);
+        return handlerResult;
     }
 
     public async Task<Domain?> GetDomainAsync(GetDomainParameters parameters, CancellationToken cancellationToken = default)
@@ -526,6 +637,9 @@ public class ContentService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Domain>();
 
         if (parameters.Domain == null)
@@ -534,19 +648,23 @@ public class ContentService(
             return handlerResult;
         }
 
-        var existingDomain = await dbContext.Domains
-            .FirstOrDefaultAsync(x => x.Id == parameters.Domain.Id, cancellationToken);
-
-        if (existingDomain == null)
+        var isUpdate = false;
+        var domain = dbContext.Domains.FirstOrDefault(x => x.Id == parameters.Domain.Id);
+        if (domain == null)
         {
-            dbContext.Domains.Add(parameters.Domain);
+            domain = parameters.Domain;
+            dbContext.Domains.Add(domain);
         }
         else
         {
-            mapper.Map(parameters.Domain, existingDomain);
+            isUpdate = true;
+            mapper.Map(parameters.Domain, domain);
+            domain.DateUpdated = DateTime.UtcNow;
         }
 
-        return await dbContext.SaveChangesAndLog(parameters.Domain, handlerResult, cacheService, extensionManager, cancellationToken);
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        await user.AddAudit(domain, $"Domain ({domain.Url})", isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, mediator, cancellationToken);
+        return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
     public async Task<PaginatedList<Domain>> QueryDomainAsync(QueryDomainParameters parameters, CancellationToken cancellationToken = default)
@@ -556,92 +674,117 @@ public class ContentService(
 
         var query = dbContext.Domains.AsQueryable();
 
-        if (parameters.AsNoTracking)
+        if (parameters.Query != null)
         {
-            query = query.AsNoTracking();
-        }
-
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        if (!parameters.OrderBy.IsNullOrWhiteSpace())
-        {
-            query = query.OrderBy(parameters.OrderBy);
+            query = parameters.Query.Invoke();
         }
         else
         {
-            query = query.OrderBy(x => x.DomainName);
+            if (parameters.AsNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+
+            var idCount = parameters.Ids.Count;
+            if (parameters.Ids.Count != 0)
+            {
+                query = query.Where(x => parameters.Ids.Contains(x.Id));
+                parameters.AmountPerPage = idCount;
+            }
+
+            if (parameters.ContentId != null)
+            {
+                query = query.Where(x => x.ContentId == parameters.ContentId);
+            }
+
+            if (parameters.LanguageId != null)
+            {
+                query = query.Where(x => x.LanguageId == parameters.LanguageId);
+            }
         }
 
-        if (parameters.AmountPerPage > 0)
+        if (parameters.WhereClause != null)
         {
-            query = query.Skip(parameters.PageIndex * parameters.AmountPerPage).Take(parameters.AmountPerPage);
+            query = query.Where(parameters.WhereClause);
         }
 
-        var items = await query.ToListAsync(cancellationToken);
-
-        return new HandlerResult<Domain>
+        query = parameters.OrderBy switch
         {
-            Success = true,
-            Items = items,
-            TotalCount = totalCount
+            GetDomainOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
+            GetDomainOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+            GetDomainOrderBy.Url => query.OrderBy(p => p.Url),
+            _ => query.OrderByDescending(p => p.DateCreated)
         };
+
+        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
     }
 
     public async Task<HandlerResult<Domain>> DeleteDomainAsync(DeleteDomainParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Domain>();
 
-        var domain = await dbContext.Domains
-            .FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
-
-        if (domain == null)
+        Domain? domain = null;
+        if (parameters.Id != null)
         {
-            handlerResult.AddMessage("Domain not found", ResultMessageType.Error);
-            return handlerResult;
+            domain = await dbContext.Domains.FirstOrDefaultAsync(l => l.Id == parameters.Id, cancellationToken: cancellationToken);
+            if (domain != null)
+            {
+                await user.AddAudit(domain, $"Domain ({domain.Url})", AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
+                dbContext.Domains.Remove(domain);
+            }
+        }
+        else
+        {
+            domain = await dbContext.Domains.FirstOrDefaultAsync(l => l.ContentId == parameters.ContentId, cancellationToken: cancellationToken);
+            if (domain != null)
+            {
+                await user.AddAudit(domain, $"Domain ({domain.Url})", AuditExtensions.AuditAction.Delete, mediator, cancellationToken);
+                dbContext.Domains.Remove(domain);
+            }
         }
 
-        var hasContent = await dbContext.Contents.AnyAsync(x => x.DomainId == parameters.Id, cancellationToken);
-        if (hasContent)
-        {
-            handlerResult.AddMessage("Cannot delete domain that has content", ResultMessageType.Error);
-            return handlerResult;
-        }
-
-        dbContext.Domains.Remove(domain);
-        return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken);
+        return (await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 
     public async Task<bool> AnyContentAsync(AnyContentParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-
-        var query = dbContext.Contents.AsQueryable();
-
-        if (!parameters.ContentTypeAlias.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.ContentType != null && x.ContentType.Alias == parameters.ContentTypeAlias);
-        }
-
-        return await query.AnyAsync(cancellationToken);
+        return await dbContext.Contents.AsNoTracking().AnyAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<bool> HasChildContentAsync(HasChildContentParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var cacheKey = GenerateHasChildContentCacheKey(parameters);
 
-        return await dbContext.Contents.AnyAsync(x => x.ParentId == parameters.Id, cancellationToken);
+        if (parameters.Cached)
+        {
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken));
+        }
+
+        return await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
     }
 
     public async Task<bool> HasChildContentTypeAsync(HasChildContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var cacheKey = GenerateHasChildContentTypeCacheKey(parameters);
 
-        return await dbContext.ContentTypes.AnyAsync(x => x.ParentId == parameters.Id, cancellationToken);
+        if (parameters.Cached)
+        {
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken));
+        }
+
+        return await dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
     }
 
     public async Task<Dictionary<object, string>> GetContentLanguagesAsync(GetContentLanguagesParameters parameters, CancellationToken cancellationToken = default)
@@ -663,7 +806,6 @@ public class ContentService(
             var contentLanguages = await query.ToListAsync(cancellationToken: cancellationToken);
             var dict = new Dictionary<object, string>();
 
-            // Set the Urls first
             foreach (var c in contentLanguages)
             {
                 dict.Add(c.Url!, c.Language!.LanguageIsoCode!);
@@ -678,19 +820,11 @@ public class ContentService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = $"domains_{parameters.LanguageCode}";
-
-        return await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
-        {
-            var query = dbContext.Domains.AsNoTracking();
-            
-            if (!parameters.LanguageCode.IsNullOrWhiteSpace())
-            {
-                query = query.Where(x => x.LanguageCode == parameters.LanguageCode);
-            }
-
-            return await query.ToListAsync(cancellationToken);
-        });
+        var query = dbContext.Domains.AsNoTracking().Include(x => x.Language);
+        var queryString = query.ToQueryString();
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
+        var cacheKey = typeof(Domain).ToCacheKey(Convert.ToBase64String(hash));
+        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToListAsync(cancellationToken: cancellationToken)))!;
     }
 
     public async Task<HandlerResult<Content>> ClearUnpublishedContentAsync(ClearUnpublishedContentParameters parameters, CancellationToken cancellationToken = default)
@@ -725,47 +859,54 @@ public class ContentService(
         
         var result = new DataGridResult<Content>();
 
-        var query = dbContext.Contents.Include(x => x.ContentType)
-            .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
-
+        var query = dbContext.Contents
+            .Include(x => x.ContentType)
+            .Include(x => x.LastUpdatedBy)
+            .Where(x => x.Deleted == false)
+            .AsQueryable();
+        
+        if (parameters.IncludeChildren)
+        {
+            query = query.Include(x => x.Children);
+            query = query.AsSplitQuery();
+        }
+        
         if (parameters.AsNoTracking)
         {
             query = query.AsNoTracking();
         }
-
-        if (!parameters.IncludeUnpublished)
-        {
-            query = query.Where(x => x.Published);
-        }
-
+        
         if (!parameters.ContentTypeAlias.IsNullOrWhiteSpace())
         {
-            query = query.Where(x => x.ContentType != null && x.ContentType.Alias == parameters.ContentTypeAlias);
+            var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == parameters.ContentTypeAlias);
+            if (contentType != null)
+            {
+                parameters.ContentTypeId = contentType.Id;
+            }
         }
 
-        if (parameters.ContentTypeId.HasValue)
+        if (parameters.LastEditedBy != null)
+        {
+            query = query.Where(x => x.LastUpdatedById == parameters.LastEditedBy.Value);
+        }
+        
+        if(parameters.ContentTypeId != null)
         {
             query = query.Where(x => x.ContentTypeId == parameters.ContentTypeId);
         }
-
-        if (parameters.ParentId.HasValue)
+            
+        if(parameters.ParentId != null)
         {
             query = query.Where(x => x.ParentId == parameters.ParentId);
         }
-
-        if (parameters.LastEditedBy.HasValue)
-        {
-            query = query.Where(x => x.LastEditedBy == parameters.LastEditedBy);
-        }
-
-        if (!parameters.Filter.IsNullOrWhiteSpace())
+        
+        if (!string.IsNullOrEmpty(parameters.Filter))
         {
             query = query.Where(parameters.Filter);
         }
 
         if (!string.IsNullOrEmpty(parameters.Order))
         {
-            // Sort via the OrderBy method
             query = query.OrderBy(parameters.Order);
         }
         else
@@ -781,10 +922,7 @@ public class ContentService(
             };
         }
 
-        // Important!!! Make sure the Count property of RadzenDataGrid is set.
         result.Count = query.Count();
-
-        // Perform paging via Skip and Take.
         result.Items = await query.Skip(parameters.Skip).Take(parameters.Take).ToListAsync(cancellationToken: cancellationToken);
 
         return result;
@@ -931,5 +1069,160 @@ public class ContentService(
         }
 
         return url;
+    }
+
+    private static string GenerateHasChildContentCacheKey(HasChildContentParameters parameters)
+    {
+        var key = $"HasChild-{parameters.ParentId}";
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+        return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+    }
+
+    private static string GenerateHasChildContentTypeCacheKey(HasChildContentTypeParameters parameters)
+    {
+        var key = $"HasContentTypeChild-{parameters.ParentId}";
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+        return typeof(ContentType).ToCacheKey(Convert.ToBase64String(hash));
+    }
+
+    private static string GenerateCacheKey(GetContentFromRequestParameters parameters)
+    {
+        var keyBuilder = new StringBuilder();
+        keyBuilder.Append($"GetContentFromRequest-");
+        keyBuilder.Append($"Url:{parameters.Url ?? "null"}-");
+        keyBuilder.Append($"Slug:{parameters.Slug ?? "null"}-");
+        keyBuilder.Append($"IsRoot:{parameters.IsRootContent}-");
+        keyBuilder.Append($"IncludeChildren:{parameters.IncludeChildren}");
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(keyBuilder.ToString()));
+        return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+    }
+
+    private static async Task<EntryModel> FetchContentAsync(GetContentFromRequestParameters parameters, IMediator mediator, IZauberDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entryModel = new EntryModel();
+
+        var contentQueryable = dbContext.Contents
+            .AsNoTracking()
+            .Include(x => x.ContentType);
+
+        var domains = await mediator.Send(new CachedDomainsCommand(), cancellationToken);
+        var contentWithLanguages = await mediator.Send(new GetContentLanguagesCommand(), cancellationToken);
+
+        var matchedDomain = MatchDomainWithContent(parameters.Url ?? string.Empty, domains);
+
+        var content = parameters.IsRootContent
+            ? matchedDomain != null
+                ? await contentQueryable
+                    .Select(c => new
+                        { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
+                    .FirstOrDefaultAsync(x => x.Id == matchedDomain.ContentId, cancellationToken)
+                : await contentQueryable
+                    .Where(c => c.IsRootContent && c.Published)
+                    .Select(c => new
+                        { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
+                    .FirstOrDefaultAsync(cancellationToken)
+            : await contentQueryable
+                .Where(c => c.Url == parameters.Slug && c.Published)
+                .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
+                .FirstOrDefaultAsync(cancellationToken);
+
+        if (content?.InternalRedirectId != null && content.InternalRedirectId != Guid.Empty && parameters.IgnoreInternalRedirect == false)
+        {
+            var internalRedirectIdValue = content.InternalRedirectId.Value;
+            content = await contentQueryable
+                .Where(c => c.Id == internalRedirectIdValue)
+                .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (content == null)
+        {
+            return entryModel;
+        }
+
+        var query = dbContext.Contents
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(x => x.PropertyData)
+            .Include(x => x.Parent)
+            .Include(x => x.ContentType)
+            .Include(x => x.Language)
+            .Include(x => x.ContentRoles).ThenInclude(x => x.Role)
+            .AsQueryable();
+
+        if (parameters.IncludeChildren || content.IncludeChildren)
+        {
+            query = query.Include(x => x.Children);
+        }
+
+        var fullContent = await query
+            .FirstOrDefaultAsync(c => c.Id == content.Id, cancellationToken: cancellationToken);
+
+        entryModel.Content = fullContent;
+
+        string? languageIsoCode = null;
+
+        if (matchedDomain?.Language?.LanguageIsoCode != null)
+        {
+            languageIsoCode = matchedDomain.Language.LanguageIsoCode;
+        }
+        else if (contentWithLanguages.TryGetValue(parameters.Slug ?? string.Empty, out var contentLanguage))
+        {
+            languageIsoCode = contentLanguage;
+        }
+
+        if (languageIsoCode.IsNullOrWhiteSpace())
+        {
+            foreach (var guid in content.Path)
+            {
+                if (contentWithLanguages.TryGetValue(guid, out var language))
+                {
+                    languageIsoCode = language;
+                    break;
+                }
+            }
+
+            if (languageIsoCode.IsNullOrWhiteSpace())
+            {
+                // Set to default
+                languageIsoCode = settings.Value.AdminDefaultLanguage;
+            }
+        }
+
+        entryModel.LanguageIsoCode = languageIsoCode;
+
+        var allLanguageData = await mediator.Send(new GetCachedAllLanguageDictionariesCommand(), cancellationToken);
+
+        if (allLanguageData.TryGetValue(languageIsoCode, out var lng))
+        {
+            if (lng != null)
+            {
+                entryModel.LanguageKeys = lng;
+            }
+        }
+
+        return entryModel;
+    }
+
+    private static Domain? MatchDomainWithContent(string url, List<Domain> domains)
+    {
+        var uri = new Uri(url);
+        var requestHost = uri.Host.ToLower();
+        var requestPath = uri.AbsolutePath.TrimStart('/').ToLower();
+
+        return domains.FirstOrDefault(domain =>
+        {
+            var domainUrl = domain.Url?.ToLower();
+            if (domainUrl != null && domainUrl.Contains('/'))
+            {
+                var parts = domainUrl.Split('/', 2);
+                var domainHost = parts[0];
+                var domainPath = parts.Length > 1 ? parts[1] : string.Empty;
+
+                return requestHost == domainHost && requestPath.StartsWith(domainPath);
+            }
+
+            return requestHost == domainUrl;
+        });
     }
 }
