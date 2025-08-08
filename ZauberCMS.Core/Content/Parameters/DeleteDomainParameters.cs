@@ -1,0 +1,11 @@
+using System;
+using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Shared.Models;
+
+namespace ZauberCMS.Core.Content.Parameters;
+
+public class DeleteDomainParameters
+{
+    public Guid? Id { get; set; }
+    public Guid? ContentId { get; set; }
+}
