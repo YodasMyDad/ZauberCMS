@@ -9,7 +9,7 @@ namespace ZauberCMS.Core.Languages.Interfaces;
 
 public interface ILanguageService
 {
-    Task<Language> GetLanguageAsync(GetLanguageParameters parameters, CancellationToken cancellationToken = default);
+    Task<Language?> GetLanguageAsync(GetLanguageParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<Language>> SaveLanguageAsync(SaveLanguageParameters parameters, CancellationToken cancellationToken = default);
     Task<PaginatedList<Language>> QueryLanguageAsync(QueryLanguageParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<Language?>> DeleteLanguageAsync(DeleteLanguageParameters parameters, CancellationToken cancellationToken = default);

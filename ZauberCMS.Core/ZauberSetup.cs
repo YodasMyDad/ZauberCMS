@@ -22,6 +22,23 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Services;
+using ZauberCMS.Core.Membership.Interfaces;
+using ZauberCMS.Core.Membership.Services;
+using ZauberCMS.Core.Media.Interfaces;
+using ZauberCMS.Core.Media.Services;
+using ZauberCMS.Core.Languages.Interfaces;
+using ZauberCMS.Core.Languages.Services;
+using ZauberCMS.Core.Tags.Interfaces;
+using ZauberCMS.Core.Tags.Services;
+using ZauberCMS.Core.Audit.Interfaces;
+using ZauberCMS.Core.Audit.Services;
+using ZauberCMS.Core.Seo.Interfaces;
+using ZauberCMS.Core.Seo.Services;
+using ZauberCMS.Core.Data.Services;
+using ZauberCMS.Core.Email.Interfaces;
+using ZauberCMS.Core.Email.Services;
 using ZauberCMS.Core.Jobs;
 using ZauberCMS.Core.Languages.Commands;
 using ZauberCMS.Core.Media.Middleware;
@@ -167,6 +184,17 @@ public static class ZauberSetup
         builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
         builder.Services.AddScoped<TreeState>();
         builder.Services.AddScoped<ContentFinderPipeline>();
+
+        // Register Service Interfaces and Implementations
+        builder.Services.AddScoped<IContentService, ContentService>();
+        builder.Services.AddScoped<IMembershipService, MembershipService>();
+        builder.Services.AddScoped<IMediaService, MediaService>();
+        builder.Services.AddScoped<ILanguageService, LanguageService>();
+        builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<IAuditService, AuditService>();
+        builder.Services.AddScoped<ISeoService, SeoService>();
+        builder.Services.AddScoped<IDataService, DataService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
 
         builder.Services.AddSingleton<LayoutResolverService>();
         builder.Services.AddSingleton<AppState>();

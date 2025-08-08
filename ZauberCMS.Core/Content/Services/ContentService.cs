@@ -82,10 +82,12 @@ public class ContentService(
             return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
-        if (parameters.Content.Url.IsNullOrWhiteSpace())
+        if (parameters.Content.Url().IsNullOrWhiteSpace())
         {
             var baseSlug = new SlugHelper().GenerateSlug(parameters.Content.Name);
+#pragma warning disable CS0618 // Type or member is obsolete
             parameters.Content.Url = GenerateUniqueUrl(dbContext, baseSlug);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         if (parameters.Content.ContentTypeAlias.IsNullOrWhiteSpace())
@@ -276,7 +278,9 @@ public class ContentService(
             var copy = mapper.Map<Models.Content>(original);
             copy.Id = Guid.NewGuid();
             copy.Name = original.Name + " (Copy)";
+#pragma warning disable CS0618 // Type or member is obsolete
             copy.Url = original.Url + "-copy";
+#pragma warning restore CS0618 // Type or member is obsolete
             copy.LastUpdatedById = currentUser?.Id;
             copy.ParentId = parentId;
             copy.DateCreated = DateTime.UtcNow;
@@ -632,8 +636,10 @@ public class ContentService(
     {
         var query = dbContext.Contents.AsNoTracking()
             .Include(x => x.Language)
+#pragma warning disable CS0618 // Type or member is obsolete
             .Select(c => new { c.Id, c.Url, c.Language })
             .Where(x => x.Language != null && x.Url != null);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         var queryString = query.ToQueryString();
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
@@ -941,7 +947,9 @@ public class ContentService(
                 : await contentQueryable.Where(c => c.IsRootContent && c.Published)
                     .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(cancellationToken)
+#pragma warning disable CS0618 // Type or member is obsolete
             : await contentQueryable.Where(c => c.Url == request.Slug && c.Published)
+#pragma warning restore CS0618 // Type or member is obsolete
                 .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -1059,13 +1067,17 @@ public class ContentService(
     private static string GenerateUniqueUrl(IZauberDbContext dbContext, string baseSlug)
     {
         var url = baseSlug;
+#pragma warning disable CS0618 // Type or member is obsolete
         if (!dbContext.Contents.Any(c => c.Url == url))
+#pragma warning restore CS0618 // Type or member is obsolete
         {
             return url;
         }
 
         var counter = 1;
+#pragma warning disable CS0618 // Type or member is obsolete
         while (dbContext.Contents.Any(c => c.Url == url))
+#pragma warning restore CS0618 // Type or member is obsolete
         {
             url = $"{baseSlug}-{counter}";
             counter++;
