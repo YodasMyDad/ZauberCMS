@@ -1,3 +1,4 @@
+using System.Linq.Dynamic.Core;
 using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
@@ -16,60 +17,39 @@ using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Core.Content.Services;
 
-public class ContentService : IContentService
+public class ContentService(
+    IServiceProvider serviceProvider,
+    IZauberDbContext dbContext,
+    ICacheService cacheService,
+    IMapper mapper,
+    IOptions<ZauberSettings> settings,
+    AuthenticationStateProvider authenticationStateProvider,
+    UserManager<User> userManager,
+    ExtensionManager extensionManager,
+    AppState appState,
+    ILanguageService languageService)
+    : IContentService
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IZauberDbContext _dbContext;
-    private readonly ICacheService _cacheService;
-    private readonly IMapper _mapper;
-    private readonly IOptions<ZauberSettings> _settings;
-    private readonly AuthenticationStateProvider _authenticationStateProvider;
-    private readonly UserManager<User> _userManager;
-    private readonly ExtensionManager _extensionManager;
-    private readonly AppState _appState;
-    private readonly ILanguageService _languageService;
-
-    public ContentService(
-        IServiceProvider serviceProvider,
-        IZauberDbContext dbContext,
-        ICacheService cacheService,
-        IMapper mapper,
-        IOptions<ZauberSettings> settings,
-        AuthenticationStateProvider authenticationStateProvider,
-        UserManager<User> userManager,
-        ExtensionManager extensionManager,
-        AppState appState,
-        ILanguageService languageService)
-    {
-        _serviceProvider = serviceProvider;
-        _dbContext = dbContext;
-        _cacheService = cacheService;
-        _mapper = mapper;
-        _settings = settings;
-        _authenticationStateProvider = authenticationStateProvider;
-        _userManager = userManager;
-        _extensionManager = extensionManager;
-        _appState = appState;
-        _languageService = languageService;
-    }
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
 
     public async Task<Models.Content?> GetContentAsync(GetContentParameters parameters, CancellationToken cancellationToken = default)
     {
-        var cacheKey = GenerateGetContentCacheKey(parameters, _dbContext);
+        var cacheKey = GenerateGetContentCacheKey(parameters, dbContext);
         if (parameters.Cached)
         {
-            return await _cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, cancellationToken));
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, cancellationToken));
         }
         return await FetchContentAsync(parameters, cancellationToken);
     }
 
     public async Task<HandlerResult<Models.Content>> SaveContentAsync(SaveContentParameters parameters, CancellationToken cancellationToken = default)
     {
-        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userManager.GetUserAsync(authState.User);
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var isUpdate = true;
         var handlerResult = new HandlerResult<Models.Content>();
 
@@ -79,43 +59,43 @@ public class ContentService : IContentService
             return handlerResult;
         }
 
-        var unpublishedContent = _dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == parameters.Content.UnpublishedContentId);
+        var unpublishedContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == parameters.Content.UnpublishedContentId);
 
         if (parameters.SaveUnpublishedOnly)
         {
             var isNew = parameters.Content.UnpublishedContentId == null;
             unpublishedContent ??= new UnpublishedContent();
-            _mapper.Map(parameters.Content, unpublishedContent.JsonContent);
+            mapper.Map(parameters.Content, unpublishedContent.JsonContent);
             unpublishedContent.JsonContent.PropertyData = parameters.Content.PropertyData;
             unpublishedContent.JsonContent.UnpublishedContentId = unpublishedContent.Id;
 
             if (isNew)
             {
-                var dbContent = _dbContext.Contents.FirstOrDefault(x => parameters.Content.Id == x.Id);
+                var dbContent = dbContext.Contents.FirstOrDefault(x => parameters.Content.Id == x.Id);
                 if (dbContent != null)
                 {
                     dbContent.UnpublishedContentId = unpublishedContent.Id;
                 }
-                _dbContext.UnpublishedContent.Add(unpublishedContent);
+                dbContext.UnpublishedContent.Add(unpublishedContent);
             }
 
-            return await _dbContext.SaveChangesAndLog(null, handlerResult, _cacheService, _extensionManager, cancellationToken);
+            return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         if (parameters.Content.Url.IsNullOrWhiteSpace())
         {
             var baseSlug = new SlugHelper().GenerateSlug(parameters.Content.Name);
-            parameters.Content.Url = GenerateUniqueUrl(_dbContext, baseSlug);
+            parameters.Content.Url = GenerateUniqueUrl(dbContext, baseSlug);
         }
 
         if (parameters.Content.ContentTypeAlias.IsNullOrWhiteSpace())
         {
-            var contentType = _dbContext.ContentTypes.AsTracking()
+            var contentType = dbContext.ContentTypes.AsTracking()
                 .FirstOrDefault(x => x.Id == parameters.Content.ContentTypeId);
             parameters.Content.ContentTypeAlias = contentType?.Alias;
         }
 
-        var content = _dbContext.Contents
+        var content = dbContext.Contents
             .Include(x => x.PropertyData)
             .Include(x => x.ContentRoles).ThenInclude(x => x.Role)
             .FirstOrDefault(x => x.Id == parameters.Content.Id);
@@ -125,11 +105,11 @@ public class ContentService : IContentService
             isUpdate = false;
             content = parameters.Content;
             content.LastUpdatedById = user!.Id;
-            _dbContext.Contents.Add(content);
+            dbContext.Contents.Add(content);
         }
         else
         {
-            _mapper.Map(parameters.Content, content);
+            mapper.Map(parameters.Content, content);
             content.LastUpdatedById = user!.Id;
             content.DateUpdated = DateTime.UtcNow;
 
@@ -146,10 +126,10 @@ public class ContentService : IContentService
 
         if (unpublishedContent != null)
         {
-            _dbContext.UnpublishedContent.Remove(unpublishedContent);
+            dbContext.UnpublishedContent.Remove(unpublishedContent);
         }
 
-        content.Path = content.BuildPath(_dbContext, isUpdate, _settings);
+        content.Path = content.BuildPath(dbContext, isUpdate, settings);
 
         // Log audit without Mediator
         if (user != null)
@@ -159,7 +139,7 @@ public class ContentService : IContentService
             await SaveAuditAsync($"{user.Name} {actionText} {nameText}", cancellationToken);
         }
 
-        return await _dbContext.SaveChangesAndLog(content, handlerResult, _cacheService, _extensionManager, cancellationToken);
+        return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
     public async Task<PaginatedList<Models.Content>> QueryContentAsync(QueryContentParameters parameters, CancellationToken cancellationToken = default)
@@ -168,18 +148,18 @@ public class ContentService : IContentService
         var cacheKey = query.GenerateCacheKey(typeof(Models.Content));
         if (parameters.Cached)
         {
-            return (await _cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, cancellationToken)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, cancellationToken)))!;
         }
         return await FetchContentAsync(parameters, cancellationToken);
     }
 
     public async Task<HandlerResult<Models.Content>> DeleteContentAsync(DeleteContentParameters parameters, CancellationToken cancellationToken = default)
     {
-        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var loggedInUser = await _userManager.GetUserAsync(authState.User);
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var loggedInUser = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Models.Content>();
 
-        var content = _dbContext.Contents.FirstOrDefault(x => x.Id == parameters.ContentId);
+        var content = dbContext.Contents.FirstOrDefault(x => x.Id == parameters.ContentId);
         if (content == null)
         {
             handlerResult.AddMessage("Unable to delete, as no Content with that id exists", ResultMessageType.Warning);
@@ -193,41 +173,41 @@ public class ContentService : IContentService
         }
         else
         {
-            var children = _dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
+            var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
             if (children.Any())
             {
                 handlerResult.AddMessage("Unable to delete content with child content, delete or move those items first", ResultMessageType.Error);
                 return handlerResult;
             }
 
-            var propertyDataToDelete = _dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
+            var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
             foreach (var contentPropertyValue in propertyDataToDelete)
             {
-                _dbContext.ContentPropertyValues.Remove(contentPropertyValue);
+                dbContext.ContentPropertyValues.Remove(contentPropertyValue);
             }
 
             if (content.UnpublishedContentId != null)
             {
-                var uContent = _dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == content.UnpublishedContentId);
-                if (uContent != null) _dbContext.UnpublishedContent.Remove(uContent);
+                var uContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == content.UnpublishedContentId);
+                if (uContent != null) dbContext.UnpublishedContent.Remove(uContent);
             }
 
             content.PropertyData.Clear();
             await SaveAuditIfUser(loggedInUser, content.Name, "Deleted", cancellationToken);
-            _dbContext.Contents.Remove(content);
-            await _appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
+            dbContext.Contents.Remove(content);
+            await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
         }
 
-        return await _dbContext.SaveChangesAndLog(content, handlerResult, _cacheService, _extensionManager, cancellationToken);
+        return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
     public async Task<HandlerResult<Models.Content>> CopyContentAsync(CopyContentParameters parameters, CancellationToken cancellationToken = default)
     {
-        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userManager.GetUserAsync(authState.User);
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Models.Content>();
 
-        var contentToCopy = await _dbContext.Contents
+        var contentToCopy = await dbContext.Contents
             .AsNoTracking()
             .Include(content => content.PropertyData)
             .FirstOrDefaultAsync(x => x.Id == parameters.ContentToCopy, cancellationToken);
@@ -247,7 +227,7 @@ public class ContentService : IContentService
 
         if (newParentId.HasValue)
         {
-            var parentContent = await _dbContext.Contents.AsNoTracking().FirstOrDefaultAsync(x => x.Id == newParentId, cancellationToken);
+            var parentContent = await dbContext.Contents.AsNoTracking().FirstOrDefaultAsync(x => x.Id == newParentId, cancellationToken);
             if (parentContent != null)
             {
                 copiedContent.Path = [.. parentContent.Path, copiedContent.Id];
@@ -258,11 +238,11 @@ public class ContentService : IContentService
             copiedContent.Path = [copiedContent.Id];
         }
 
-        _dbContext.Add(copiedContent);
+        dbContext.Add(copiedContent);
 
         if (parameters.IncludeDescendants)
         {
-            var descendants = await _dbContext.Contents
+            var descendants = await dbContext.Contents
                 .WherePathLike(contentToCopy.Id)
                 .AsNoTracking()
                 .Include(content => content.PropertyData)
@@ -276,12 +256,12 @@ public class ContentService : IContentService
                     var copiedDescendant = CreateCopy(descendant, user, newParentIdForDescendant);
                     copiedDescendant.Path = descendant.Path.Select(id => idMap.TryGetValue(id, out var value) ? value : id).ToList();
                     idMap[descendant.Id] = copiedDescendant.Id;
-                    _dbContext.Add(copiedDescendant);
+                    dbContext.Add(copiedDescendant);
                 }
             }
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         if (user != null)
         {
             await SaveAuditAsync($"{user.Name} Copied {contentToCopy.Name}", cancellationToken);
@@ -293,7 +273,7 @@ public class ContentService : IContentService
 
         Models.Content CreateCopy(Models.Content original, User? currentUser, Guid? parentId = null)
         {
-            var copy = _mapper.Map<Models.Content>(original);
+            var copy = mapper.Map<Models.Content>(original);
             copy.Id = Guid.NewGuid();
             copy.Name = original.Name + " (Copy)";
             copy.Url = original.Url + "-copy";
@@ -321,18 +301,18 @@ public class ContentService : IContentService
     public async Task<EntryModel> GetContentFromRequestAsync(GetContentFromRequestParameters parameters, CancellationToken cancellationToken = default)
     {
         var cacheKey = GenerateGetContentFromRequestCacheKey(parameters);
-        return (await _cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchEntryModelAsync(parameters, cancellationToken), 0, 5))!;
+        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchEntryModelAsync(parameters, cancellationToken), 0, 5))!;
     }
 
     public async Task<ContentType?> GetContentTypeAsync(GetContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken: cancellationToken);
+        return await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken: cancellationToken);
     }
 
     public async Task<HandlerResult<ContentType>> SaveContentTypeAsync(SaveContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
-        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userManager.GetUserAsync(authState.User);
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
         var isUpdate = false;
 
@@ -347,10 +327,10 @@ public class ContentService : IContentService
             parameters.ContentType.Alias = parameters.ContentType.Name.ToAlias();
         }
 
-        var contentType = _dbContext.ContentTypes.FirstOrDefault(x => x.Id == parameters.ContentType.Id);
+        var contentType = dbContext.ContentTypes.FirstOrDefault(x => x.Id == parameters.ContentType.Id);
         if (contentType == null)
         {
-            var containsAlias = _dbContext.ContentTypes.Any(x => x.Alias == parameters.ContentType.Alias);
+            var containsAlias = dbContext.ContentTypes.Any(x => x.Alias == parameters.ContentType.Alias);
             if (containsAlias)
             {
                 handlerResult.AddMessage("Content Type Alias already exists, change the content type name", ResultMessageType.Error);
@@ -359,12 +339,12 @@ public class ContentService : IContentService
 
             contentType = parameters.ContentType;
             contentType.LastUpdatedById = user!.Id;
-            _dbContext.ContentTypes.Add(contentType);
+            dbContext.ContentTypes.Add(contentType);
         }
         else
         {
             isUpdate = true;
-            _mapper.Map(parameters.ContentType, contentType);
+            mapper.Map(parameters.ContentType, contentType);
             contentType.LastUpdatedById = user!.Id;
             contentType.DateUpdated = DateTime.UtcNow;
         }
@@ -375,12 +355,12 @@ public class ContentService : IContentService
             await SaveAuditAsync($"{user.Name} {actionText} {contentType.Name}", cancellationToken);
         }
 
-        return await _dbContext.SaveChangesAndLog(contentType, handlerResult, _cacheService, _extensionManager, cancellationToken);
+        return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
     public Task<PaginatedList<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.ContentTypes.AsQueryable();
+        var query = dbContext.ContentTypes.AsQueryable();
 
         if (parameters.AsNoTracking)
         {
@@ -449,8 +429,8 @@ public class ContentService : IContentService
 
     public async Task<HandlerResult<ContentType>> DeleteContentTypeAsync(DeleteContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
-        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userManager.GetUserAsync(authState.User);
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
 
         var contentUsingContentType = await QueryContentAsync(new QueryContentParameters { ContentTypeId = parameters.ContentTypeId }, cancellationToken);
@@ -469,7 +449,7 @@ public class ContentService : IContentService
             return handlerResult;
         }
 
-        var contentType = _dbContext.ContentTypes.FirstOrDefault(x => x.Id == parameters.ContentTypeId);
+        var contentType = dbContext.ContentTypes.FirstOrDefault(x => x.Id == parameters.ContentTypeId);
         if (contentType != null)
         {
             if (contentType.IsComposition)
@@ -488,8 +468,8 @@ public class ContentService : IContentService
                 await SaveAuditAsync($"{user.Name} Deleted {contentType.Name}", cancellationToken);
             }
 
-            _dbContext.ContentTypes.Remove(contentType);
-            return await _dbContext.SaveChangesAndLog(contentType, handlerResult, _cacheService, _extensionManager, cancellationToken);
+            dbContext.ContentTypes.Remove(contentType);
+            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("Unable to delete, as no ContentType with that id exists", ResultMessageType.Warning);
@@ -498,7 +478,7 @@ public class ContentService : IContentService
 
     public async Task<Domain> GetDomainAsync(GetDomainParameters parameters, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Domains.AsQueryable();
+        var query = dbContext.Domains.AsQueryable();
         if (parameters.AsNoTracking)
         {
             query = query.AsNoTracking();
@@ -519,8 +499,8 @@ public class ContentService : IContentService
 
     public async Task<HandlerResult<Domain>> SaveDomainAsync(SaveDomainParameters parameters, CancellationToken cancellationToken = default)
     {
-        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userManager.GetUserAsync(authState.User);
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Domain>();
         var isUpdate = false;
 
@@ -530,16 +510,16 @@ public class ContentService : IContentService
             return handlerResult;
         }
 
-        var domain = _dbContext.Domains.FirstOrDefault(x => x.Id == parameters.Domain.Id);
+        var domain = dbContext.Domains.FirstOrDefault(x => x.Id == parameters.Domain.Id);
         if (domain == null)
         {
             domain = parameters.Domain;
-            _dbContext.Domains.Add(domain);
+            dbContext.Domains.Add(domain);
         }
         else
         {
             isUpdate = true;
-            _mapper.Map(parameters.Domain, domain);
+            mapper.Map(parameters.Domain, domain);
             domain.DateUpdated = DateTime.UtcNow;
         }
 
@@ -549,12 +529,12 @@ public class ContentService : IContentService
             await SaveAuditAsync($"{user.Name} {actionText} Domain ({domain.Url})", cancellationToken);
         }
 
-        return await _dbContext.SaveChangesAndLog(domain, handlerResult, _cacheService, _extensionManager, cancellationToken);
+        return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
     public Task<PaginatedList<Domain>> QueryDomainAsync(QueryDomainParameters parameters, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Domains.AsQueryable();
+        var query = dbContext.Domains.AsQueryable();
         if (parameters.AsNoTracking)
         {
             query = query.AsNoTracking();
@@ -595,18 +575,18 @@ public class ContentService : IContentService
 
     public async Task<HandlerResult<Domain?>> DeleteDomainAsync(DeleteDomainParameters parameters, CancellationToken cancellationToken = default)
     {
-        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userManager.GetUserAsync(authState.User);
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Domain?>();
 
         Domain? domain = null;
         if (parameters.Id != null)
         {
-            domain = await _dbContext.Domains.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken: cancellationToken);
+            domain = await dbContext.Domains.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken: cancellationToken);
         }
         else if (parameters.ContentId != null)
         {
-            domain = await _dbContext.Domains.FirstOrDefaultAsync(x => x.ContentId == parameters.ContentId, cancellationToken: cancellationToken);
+            domain = await dbContext.Domains.FirstOrDefaultAsync(x => x.ContentId == parameters.ContentId, cancellationToken: cancellationToken);
         }
 
         if (domain != null)
@@ -615,8 +595,8 @@ public class ContentService : IContentService
             {
                 await SaveAuditAsync($"{user.Name} Deleted Domain ({domain.Url})", cancellationToken);
             }
-            _dbContext.Domains.Remove(domain);
-            return await _dbContext.SaveChangesAndLog(domain, handlerResult, _cacheService, _extensionManager, cancellationToken);
+            dbContext.Domains.Remove(domain);
+            return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("Unable to delete, as no Domain with that id exists", ResultMessageType.Warning);
@@ -625,7 +605,7 @@ public class ContentService : IContentService
 
     public async Task<bool> AnyContentAsync(AnyContentParameters parameters, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Contents.AsNoTracking().AnyAsync(cancellationToken: cancellationToken);
+        return await dbContext.Contents.AsNoTracking().AnyAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<bool> HasChildContentAsync(HasChildContentParameters parameters, CancellationToken cancellationToken = default)
@@ -633,9 +613,9 @@ public class ContentService : IContentService
         var cacheKey = GenerateHasChildContentCacheKey(parameters);
         if (parameters.Cached)
         {
-            return await _cacheService.GetSetCachedItemAsync(cacheKey, async () => await _dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken));
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken));
         }
-        return await _dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
+        return await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
     }
 
     public async Task<bool> HasChildContentTypeAsync(HasChildContentTypeParameters parameters, CancellationToken cancellationToken = default)
@@ -643,14 +623,14 @@ public class ContentService : IContentService
         var cacheKey = GenerateHasChildContentTypeCacheKey(parameters);
         if (parameters.Cached)
         {
-            return await _cacheService.GetSetCachedItemAsync(cacheKey, async () => await _dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken));
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken));
         }
-        return await _dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
+        return await dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
     }
 
     public async Task<Dictionary<object, string>> GetContentLanguagesAsync(GetContentLanguagesParameters parameters, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Contents.AsNoTracking()
+        var query = dbContext.Contents.AsNoTracking()
             .Include(x => x.Language)
             .Select(c => new { c.Id, c.Url, c.Language })
             .Where(x => x.Language != null && x.Url != null);
@@ -659,7 +639,7 @@ public class ContentService : IContentService
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
         var cacheKey = typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
 
-        return (await _cacheService.GetSetCachedItemAsync(cacheKey, async () =>
+        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
             var contentLanguages = await query.ToListAsync(cancellationToken: cancellationToken);
             var dict = new Dictionary<object, string>();
@@ -674,22 +654,22 @@ public class ContentService : IContentService
 
     public async Task<List<Domain>> GetCachedDomainsAsync(CachedDomainsParameters parameters, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Domains.AsNoTracking().Include(x => x.Language);
+        var query = dbContext.Domains.AsNoTracking().Include(x => x.Language);
         var queryString = query.ToQueryString();
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
         var cacheKey = typeof(Domain).ToCacheKey(Convert.ToBase64String(hash));
-        return (await _cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToListAsync(cancellationToken: cancellationToken)))!;
+        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToListAsync(cancellationToken: cancellationToken)))!;
     }
 
     public async Task<HandlerResult<UnpublishedContent>> ClearUnpublishedContentAsync(ClearUnpublishedContentParameters parameters, CancellationToken cancellationToken = default)
     {
         var handlerResult = new HandlerResult<UnpublishedContent>();
-        var content = await _dbContext.Contents.FirstOrDefaultAsync(x => x.Id == parameters.ContentId, cancellationToken: cancellationToken);
+        var content = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == parameters.ContentId, cancellationToken: cancellationToken);
         if (content?.UnpublishedContentId != null)
         {
-            var uContent = await _dbContext.UnpublishedContent.FirstOrDefaultAsync(x => x.Id == content.UnpublishedContentId, cancellationToken: cancellationToken);
-            if (uContent != null) _dbContext.UnpublishedContent.Remove(uContent);
-            var result = (await _dbContext.SaveChangesAndLog(uContent, handlerResult, _cacheService, _extensionManager, cancellationToken))!;
+            var uContent = await dbContext.UnpublishedContent.FirstOrDefaultAsync(x => x.Id == content.UnpublishedContentId, cancellationToken: cancellationToken);
+            if (uContent != null) dbContext.UnpublishedContent.Remove(uContent);
+            var result = (await dbContext.SaveChangesAndLog(uContent, handlerResult, cacheService, extensionManager, cancellationToken))!;
             return result;
         }
         return handlerResult;
@@ -698,7 +678,7 @@ public class ContentService : IContentService
     public async Task<DataGridResult<Models.Content>> GetDataGridContentAsync(DataGridContentParameters parameters, CancellationToken cancellationToken = default)
     {
         var result = new DataGridResult<Models.Content>();
-        var query = _dbContext.Contents
+        var query = dbContext.Contents
             .Include(x => x.ContentType)
             .Include(x => x.LastUpdatedBy)
             .Where(x => x.Deleted == false)
@@ -716,7 +696,7 @@ public class ContentService : IContentService
 
         if (!parameters.ContentTypeAlias.IsNullOrWhiteSpace())
         {
-            var contentType = _dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == parameters.ContentTypeAlias);
+            var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == parameters.ContentTypeAlias);
             if (contentType != null)
             {
                 parameters.ContentTypeId = contentType.Id;
@@ -829,7 +809,7 @@ public class ContentService : IContentService
 
     private IQueryable<Models.Content> BuildQuery(QueryContentParameters request)
     {
-        var query = _dbContext.Contents.Include(x => x.ContentType)
+        var query = dbContext.Contents.Include(x => x.ContentType)
             .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
 
         if (request.Query != null)
@@ -873,8 +853,8 @@ public class ContentService : IContentService
             if (request.TagSlugs.Any())
             {
                 query = (from content in query
-                        join tagItem in _dbContext.TagItems on content.Id equals tagItem.ItemId
-                        join tag in _dbContext.Tags on tagItem.TagId equals tag.Id
+                        join tagItem in dbContext.TagItems on content.Id equals tagItem.ItemId
+                        join tag in dbContext.Tags on tagItem.TagId equals tag.Id
                         where request.TagSlugs.Contains(tag.Slug)
                         select content)
                     .Distinct();
@@ -892,7 +872,7 @@ public class ContentService : IContentService
 
             if (!string.IsNullOrWhiteSpace(request.ContentTypeAlias))
             {
-                var contentType = _dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == request.ContentTypeAlias);
+                var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == request.ContentTypeAlias);
                 request.ContentTypeId = contentType?.Id ?? Guid.Empty;
             }
 
@@ -940,14 +920,14 @@ public class ContentService : IContentService
 
     private async Task<Models.Content?> FetchContentAsync(GetContentParameters request, CancellationToken cancellationToken)
     {
-        var query = BuildQuery(request, _dbContext);
+        var query = BuildQuery(request, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
     private async Task<EntryModel> FetchEntryModelAsync(GetContentFromRequestParameters request, CancellationToken cancellationToken)
     {
         var entryModel = new EntryModel();
-        var contentQueryable = _dbContext.Contents.AsNoTracking().Include(x => x.ContentType);
+        var contentQueryable = dbContext.Contents.AsNoTracking().Include(x => x.ContentType);
 
         var domains = await GetCachedDomainsAsync(new CachedDomainsParameters(), cancellationToken);
         var contentWithLanguages = await GetContentLanguagesAsync(new GetContentLanguagesParameters(), cancellationToken);
@@ -978,7 +958,7 @@ public class ContentService : IContentService
             return entryModel;
         }
 
-        var query = _dbContext.Contents.AsNoTracking().AsSplitQuery()
+        var query = dbContext.Contents.AsNoTracking().AsSplitQuery()
             .Include(x => x.PropertyData)
             .Include(x => x.Parent)
             .Include(x => x.ContentType)
@@ -1017,12 +997,12 @@ public class ContentService : IContentService
 
             if (languageIsoCode.IsNullOrWhiteSpace())
             {
-                languageIsoCode = _settings.Value.AdminDefaultLanguage;
+                languageIsoCode = settings.Value.AdminDefaultLanguage;
             }
         }
 
         entryModel.LanguageIsoCode = languageIsoCode;
-        var allLanguageData = await _languageService.GetCachedAllLanguageDictionariesAsync(new ZauberCMS.Core.Languages.Parameters.GetCachedAllLanguageDictionariesParameters(), cancellationToken);
+        var allLanguageData = await languageService.GetCachedAllLanguageDictionariesAsync(new ZauberCMS.Core.Languages.Parameters.GetCachedAllLanguageDictionariesParameters(), cancellationToken);
         if (allLanguageData.TryGetValue(languageIsoCode, out var lng) && lng != null)
         {
             entryModel.LanguageKeys = lng;
@@ -1095,11 +1075,11 @@ public class ContentService : IContentService
 
     private void UpdateContentRoles(Models.Content content, SaveContentParameters request)
     {
-        var existingRoles = _dbContext.ContentRoles.Where(r => r.ContentId == content.Id).ToList();
+        var existingRoles = dbContext.ContentRoles.Where(r => r.ContentId == content.Id).ToList();
         var rolesToRemove = existingRoles.Where(er => request.Roles.All(rr => rr.Id != er.RoleId)).ToList();
         if (rolesToRemove.Count != 0)
         {
-            _dbContext.ContentRoles.RemoveRange(rolesToRemove);
+            dbContext.ContentRoles.RemoveRange(rolesToRemove);
         }
         var rolesToAdd = request.Roles.Where(rr => existingRoles.All(er => er.RoleId != rr.Id)).ToList();
         if (rolesToAdd.Count != 0)
@@ -1107,7 +1087,7 @@ public class ContentService : IContentService
             foreach (var role in rolesToAdd)
             {
                 var contentRole = new ContentRole { ContentId = content.Id, RoleId = role.Id };
-                _dbContext.ContentRoles.Add(contentRole);
+                dbContext.ContentRoles.Add(contentRole);
             }
         }
     }
@@ -1117,7 +1097,7 @@ public class ContentService : IContentService
         var deletedItems = content.PropertyData.Where(epv => newPropertyValues.All(npv => npv.Id != epv.Id)).ToList();
         foreach (var deletedItem in deletedItems)
         {
-            _dbContext.ContentPropertyValues.Remove(deletedItem);
+            dbContext.ContentPropertyValues.Remove(deletedItem);
         }
 
         foreach (var newPropertyValue in newPropertyValues)
@@ -1125,18 +1105,18 @@ public class ContentService : IContentService
             var existingPropertyValue = content.PropertyData.FirstOrDefault(epv => epv.Id == newPropertyValue.Id);
             if (existingPropertyValue == null)
             {
-                _dbContext.ContentPropertyValues.Add(newPropertyValue);
+                dbContext.ContentPropertyValues.Add(newPropertyValue);
             }
             else
             {
-                _mapper.Map(newPropertyValue, existingPropertyValue);
+                mapper.Map(newPropertyValue, existingPropertyValue);
             }
         }
     }
 
     private PaginatedList<ContentType> QueryContentTypesForComposition(Guid compositionId)
     {
-        var query = _dbContext.ContentTypes.WhereHasCompositionsUsing(compositionId);
+        var query = dbContext.ContentTypes.WhereHasCompositionsUsing(compositionId);
         return query.ToPaginatedList(1, int.MaxValue);
     }
 
@@ -1149,7 +1129,7 @@ public class ContentService : IContentService
     private async Task SaveAuditAsync(string description, CancellationToken cancellationToken)
     {
         // Inline minimal audit creation to avoid Mediator usage in services
-        _dbContext.Audits.Add(new ZauberCMS.Core.Audit.Models.Audit { Description = description });
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Audits.Add(new ZauberCMS.Core.Audit.Models.Audit { Description = description });
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
