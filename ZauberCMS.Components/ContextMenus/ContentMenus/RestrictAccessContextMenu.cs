@@ -1,16 +1,17 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 using ZauberCMS.Components.Admin.ContentSection.Dialogs;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared;
 
@@ -19,7 +20,8 @@ namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 public class RestrictAccessContextMenu(
     IServiceProvider serviceProvider,
     NotificationService notificationService,
-    IMediator mediator,
+    IMembershipService membershipService,
+    IContentService contentService,
     AppState appState)
     : ITreeContextMenu
 {
@@ -50,7 +52,7 @@ public class RestrictAccessContextMenu(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var currentUser = await mediator.GetCurrentUser();
+        var currentUser = await membershipService.GetCurrentUser();
         contextMenuService.Close();
         var content = (Content)args.Value!;
         var parameters = new Dictionary<string, object>
@@ -114,7 +116,7 @@ public class RestrictAccessContextMenu(
                     // Add the content roles to the content and descendants 
                     foreach (var descendant in descendants)
                     {
-                        var saveResult = await mediator.Send(new SaveContentCommand
+                        var saveResult = await contentService.SaveContentAsync(new SaveContentParameters
                         {
                             Content = descendant,
                             Roles = selectedRoles,

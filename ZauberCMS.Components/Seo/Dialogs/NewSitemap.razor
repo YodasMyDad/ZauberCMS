@@ -1,7 +1,7 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Components.Seo.Models
-@using ZauberCMS.Core.Content.Commands
 
 <EditorRow>
     <LeftColumn>
@@ -73,7 +73,7 @@
         if (Guid.TryParse(e, out var contentId))
         {
             SeoSitemap!.RootContentId = contentId;
-            SeoSitemap.RootContent = await Mediator.GetContent(contentId);
+            SeoSitemap.RootContent = await ContentService.GetContent(contentId);
         }
     }
     
@@ -91,7 +91,7 @@
             };
         }
         
-        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000});
+        var contentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters { OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000});
         ContentTypes = contentTypes.Items.ToList();
     }
 

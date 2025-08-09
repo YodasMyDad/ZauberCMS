@@ -2,8 +2,8 @@
 @using ZauberCMS.Components.Seo.Dialogs
 @using ZauberCMS.Core.Seo.Models
 @using ZauberCMS.Core.Data.Commands
-@using ZauberCMS.Core.Content.Commands
 @using ZauberCMS.Core.Seo.Commands
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core
 
 @layout SectionLayout
@@ -90,7 +90,7 @@
     {
         await LoadData(new LoadDataArgs {Top = AmountPerPage});
         Layout?.SetSection(Constants.Sections.SettingsSection);
-        var domains = await Mediator.Send(new QueryDomainCommand{AmountPerPage = 100});
+        var domains = await ContentService.QueryDomainAsync(new QueryDomainParameters{AmountPerPage = 100});
         Domains = domains.Items.ToDictionary(x => x.Id, x => x);
     }
     

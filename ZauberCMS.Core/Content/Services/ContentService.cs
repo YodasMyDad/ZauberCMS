@@ -5,6 +5,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
@@ -23,7 +24,6 @@ namespace ZauberCMS.Core.Content.Services;
 
 public class ContentService(
     IServiceProvider serviceProvider,
-    IZauberDbContext dbContext,
     ICacheService cacheService,
     IMapper mapper,
     IOptions<ZauberSettings> settings,
@@ -36,18 +36,34 @@ public class ContentService(
 {
     private readonly IServiceProvider _serviceProvider = serviceProvider;
 
+    /// <summary>
+    /// Retrieves a single content item based on the provided parameters. Can optionally use cache.
+    /// </summary>
+    /// <param name="parameters">Query options such as id, type, includes, and caching.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The matching content item or null.</returns>
     public async Task<Models.Content?> GetContentAsync(GetContentParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = GenerateGetContentCacheKey(parameters, dbContext);
         if (parameters.Cached)
         {
-            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, cancellationToken));
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, dbContext, cancellationToken));
         }
-        return await FetchContentAsync(parameters, cancellationToken);
+        return await FetchContentAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Creates or updates a content item, including property data and roles. Logs audit entries and invalidates cache.
+    /// </summary>
+    /// <param name="parameters">The content to save and related options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success state and messages.</returns>
     public async Task<HandlerResult<Models.Content>> SaveContentAsync(SaveContentParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var isUpdate = true;
@@ -117,13 +133,13 @@ public class ContentService(
 
             if (!parameters.ExcludePropertyData)
             {
-                UpdateContentPropertyValues(content, parameters.Content.PropertyData);
+                UpdateContentPropertyValues(dbContext, content, parameters.Content.PropertyData, mapper);
             }
         }
 
         if (parameters.UpdateContentRoles)
         {
-            UpdateContentRoles(content, parameters);
+            UpdateContentRoles(dbContext, content, parameters);
         }
 
         if (unpublishedContent != null)
@@ -138,25 +154,41 @@ public class ContentService(
         {
             var nameText = content.Name ?? nameof(Models.Content);
             var actionText = isUpdate ? "Updated" : "Created";
-            await SaveAuditAsync($"{user.Name} {actionText} {nameText}", cancellationToken);
+            await SaveAuditAsync(dbContext, $"{user.Name} {actionText} {nameText}", cancellationToken);
         }
 
         return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
+    /// <summary>
+    /// Queries content items with filtering, paging and ordering. Can optionally use cache.
+    /// </summary>
+    /// <param name="parameters">Query options including filters, includes and paging.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of content items.</returns>
     public async Task<PaginatedList<Models.Content>> QueryContentAsync(QueryContentParameters parameters, CancellationToken cancellationToken = default)
     {
-        var query = BuildQuery(parameters);
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var query = BuildQuery(parameters, dbContext);
         var cacheKey = query.GenerateCacheKey(typeof(Models.Content));
         if (parameters.Cached)
         {
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, cancellationToken)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, dbContext, cancellationToken)))!;
         }
-        return await FetchContentAsync(parameters, cancellationToken);
+        return await FetchContentAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes a content item or moves it to recycle bin. Prevents deletion when children exist. Logs audit entries.
+    /// </summary>
+    /// <param name="parameters">Options including content id and whether to recycle bin.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success state and messages.</returns>
     public async Task<HandlerResult<Models.Content>> DeleteContentAsync(DeleteContentParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Models.Content>();
@@ -171,22 +203,19 @@ public class ContentService(
         if (parameters.MoveToRecycleBin)
         {
             content.Deleted = true;
-            await SaveAuditIfUser(loggedInUser, content.Name, "Recycle Binned", cancellationToken);
+            await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Recycle Binned", cancellationToken);
         }
         else
         {
             var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
-            if (children.Any())
+            if (await children.AnyAsync(cancellationToken))
             {
                 handlerResult.AddMessage("Unable to delete content with child content, delete or move those items first", ResultMessageType.Error);
                 return handlerResult;
             }
 
             var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
-            foreach (var contentPropertyValue in propertyDataToDelete)
-            {
-                dbContext.ContentPropertyValues.Remove(contentPropertyValue);
-            }
+            dbContext.ContentPropertyValues.RemoveRange(propertyDataToDelete);
 
             if (content.UnpublishedContentId != null)
             {
@@ -195,7 +224,7 @@ public class ContentService(
             }
 
             content.PropertyData.Clear();
-            await SaveAuditIfUser(loggedInUser, content.Name, "Deleted", cancellationToken);
+            await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Deleted", cancellationToken);
             dbContext.Contents.Remove(content);
             await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
         }
@@ -203,8 +232,16 @@ public class ContentService(
         return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
+    /// <summary>
+    /// Creates a copy of a content item and optionally all descendants. Copies property data and updates paths.
+    /// </summary>
+    /// <param name="parameters">Copy options including source, destination parent and whether to include descendants.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success state and messages.</returns>
     public async Task<HandlerResult<Models.Content>> CopyContentAsync(CopyContentParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Models.Content>();
@@ -266,7 +303,7 @@ public class ContentService(
         await dbContext.SaveChangesAsync(cancellationToken);
         if (user != null)
         {
-            await SaveAuditAsync($"{user.Name} Copied {contentToCopy.Name}", cancellationToken);
+            await SaveAuditAsync(dbContext, $"{user.Name} Copied {contentToCopy.Name}", cancellationToken);
         }
 
         handlerResult.Success = true;
@@ -302,19 +339,46 @@ public class ContentService(
         }
     }
 
+    /// <summary>
+    /// Resolves content for a frontend request (domain + slug) and builds the corresponding entry model with language.
+    /// </summary>
+    /// <param name="parameters">Request details such as Url, Slug and child include flags.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Entry model with content and localization information.</returns>
     public async Task<EntryModel> GetContentFromRequestAsync(GetContentFromRequestParameters parameters, CancellationToken cancellationToken = default)
     {
         var cacheKey = GenerateGetContentFromRequestCacheKey(parameters);
-        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchEntryModelAsync(parameters, cancellationToken), 0, 5))!;
+        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+            return await FetchEntryModelAsync(parameters, dbContext, cancellationToken);
+        }, 0, 5))!;
     }
 
+    /// <summary>
+    /// Retrieves a single content type by id.
+    /// </summary>
+    /// <param name="parameters">Parameters containing the content type id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The content type or null.</returns>
     public async Task<ContentType?> GetContentTypeAsync(GetContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
-        return await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken: cancellationToken);
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        return await dbContext.ContentTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Creates or updates a content type and logs audit entries. Ensures alias uniqueness.
+    /// </summary>
+    /// <param name="parameters">The content type to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success state and messages.</returns>
     public async Task<HandlerResult<ContentType>> SaveContentTypeAsync(SaveContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
@@ -356,14 +420,22 @@ public class ContentService(
         if (user != null)
         {
             var actionText = isUpdate ? "Updated" : "Created";
-            await SaveAuditAsync($"{user.Name} {actionText} {contentType.Name}", cancellationToken);
+            await SaveAuditAsync(dbContext, $"{user.Name} {actionText} {contentType.Name}", cancellationToken);
         }
 
         return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
+    /// <summary>
+    /// Queries content types with filtering and paging.
+    /// </summary>
+    /// <param name="parameters">Query options including filters and paging.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of content types.</returns>
     public Task<PaginatedList<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.ContentTypes.AsQueryable();
 
         if (parameters.AsNoTracking)
@@ -431,8 +503,16 @@ public class ContentService(
         return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
 
+    /// <summary>
+    /// Deletes a content type if it is unused and has no children. Logs audit entries.
+    /// </summary>
+    /// <param name="parameters">Parameters containing the content type id to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success state and messages.</returns>
     public async Task<HandlerResult<ContentType>> DeleteContentTypeAsync(DeleteContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
@@ -458,7 +538,7 @@ public class ContentService(
         {
             if (contentType.IsComposition)
             {
-                var anyUsingThisComposition = QueryContentTypesForComposition(parameters.ContentTypeId);
+                var anyUsingThisComposition = QueryContentTypesForComposition(dbContext, parameters.ContentTypeId);
                 if (anyUsingThisComposition.Items.Any())
                 {
                     handlerResult.Success = false;
@@ -469,7 +549,7 @@ public class ContentService(
 
             if (user != null)
             {
-                await SaveAuditAsync($"{user.Name} Deleted {contentType.Name}", cancellationToken);
+                await SaveAuditAsync(dbContext, $"{user.Name} Deleted {contentType.Name}", cancellationToken);
             }
 
             dbContext.ContentTypes.Remove(contentType);
@@ -480,8 +560,16 @@ public class ContentService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Retrieves a domain by url or id. Returns an empty domain when not found.
+    /// </summary>
+    /// <param name="parameters">Query options including url or id, and tracking flag.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A domain instance (empty if not found).</returns>
     public async Task<Domain> GetDomainAsync(GetDomainParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsQueryable();
         if (parameters.AsNoTracking)
         {
@@ -501,8 +589,16 @@ public class ContentService(
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken) ?? new Domain();
     }
 
+    /// <summary>
+    /// Creates or updates a domain and logs audit entries.
+    /// </summary>
+    /// <param name="parameters">The domain to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success state and messages.</returns>
     public async Task<HandlerResult<Domain>> SaveDomainAsync(SaveDomainParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Domain>();
@@ -530,14 +626,22 @@ public class ContentService(
         if (user != null)
         {
             var actionText = isUpdate ? "Updated" : "Created";
-            await SaveAuditAsync($"{user.Name} {actionText} Domain ({domain.Url})", cancellationToken);
+            await SaveAuditAsync(dbContext, $"{user.Name} {actionText} Domain ({domain.Url})", cancellationToken);
         }
 
         return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken);
     }
 
+    /// <summary>
+    /// Queries domains with filtering and paging.
+    /// </summary>
+    /// <param name="parameters">Query options including ids, where clause and ordering.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of domains.</returns>
     public Task<PaginatedList<Domain>> QueryDomainAsync(QueryDomainParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsQueryable();
         if (parameters.AsNoTracking)
         {
@@ -577,8 +681,16 @@ public class ContentService(
         return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
 
+    /// <summary>
+    /// Deletes a domain by id or by content id and logs an audit entry.
+    /// </summary>
+    /// <param name="parameters">Parameters to identify the domain.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success state and messages.</returns>
     public async Task<HandlerResult<Domain?>> DeleteDomainAsync(DeleteDomainParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Domain?>();
@@ -597,7 +709,7 @@ public class ContentService(
         {
             if (user != null)
             {
-                await SaveAuditAsync($"{user.Name} Deleted Domain ({domain.Url})", cancellationToken);
+                await SaveAuditAsync(dbContext, $"{user.Name} Deleted Domain ({domain.Url})", cancellationToken);
             }
             dbContext.Domains.Remove(domain);
             return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager, cancellationToken);
@@ -607,13 +719,28 @@ public class ContentService(
         return handlerResult;
     }
 
-    public async Task<bool> AnyContentAsync(AnyContentParameters parameters, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Checks whether any content exists.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if any content exists.</returns>
+    public async Task<bool> AnyContentAsync(CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         return await dbContext.Contents.AsNoTracking().AnyAsync(cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Checks whether a content item has child items.
+    /// </summary>
+    /// <param name="parameters">Parent id and caching flag.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True when child content exists.</returns>
     public async Task<bool> HasChildContentAsync(HasChildContentParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = GenerateHasChildContentCacheKey(parameters);
         if (parameters.Cached)
         {
@@ -622,8 +749,16 @@ public class ContentService(
         return await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Checks whether a content type has child content types.
+    /// </summary>
+    /// <param name="parameters">Parent id and caching flag.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True when child content types exist.</returns>
     public async Task<bool> HasChildContentTypeAsync(HasChildContentTypeParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = GenerateHasChildContentTypeCacheKey(parameters);
         if (parameters.Cached)
         {
@@ -632,8 +767,16 @@ public class ContentService(
         return await dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Returns a dictionary mapping content ids and urls to language ISO codes. Uses caching.
+    /// </summary>
+    /// <param name="parameters">Unused. Reserved for future options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dictionary of content identifiers to language codes.</returns>
     public async Task<Dictionary<object, string>> GetContentLanguagesAsync(GetContentLanguagesParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Contents.AsNoTracking()
             .Include(x => x.Language)
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -658,8 +801,16 @@ public class ContentService(
         }))!;
     }
 
+    /// <summary>
+    /// Returns all domains with languages from cache.
+    /// </summary>
+    /// <param name="parameters">Unused. Reserved for future options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of domains.</returns>
     public async Task<List<Domain>> GetCachedDomainsAsync(CachedDomainsParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsNoTracking().Include(x => x.Language);
         var queryString = query.ToQueryString();
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
@@ -667,8 +818,16 @@ public class ContentService(
         return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToListAsync(cancellationToken: cancellationToken)))!;
     }
 
+    /// <summary>
+    /// Clears the unpublished content record for a content item, if it exists.
+    /// </summary>
+    /// <param name="parameters">The content id to clear unpublished content for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<UnpublishedContent>> ClearUnpublishedContentAsync(ClearUnpublishedContentParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<UnpublishedContent>();
         var content = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == parameters.ContentId, cancellationToken: cancellationToken);
         if (content?.UnpublishedContentId != null)
@@ -681,8 +840,16 @@ public class ContentService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Returns content for a data grid with server-side filtering, ordering and paging.
+    /// </summary>
+    /// <param name="parameters">Grid options including filter, order and paging.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Data grid result with total count and items.</returns>
     public async Task<DataGridResult<Models.Content>> GetDataGridContentAsync(DataGridContentParameters parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var result = new DataGridResult<Models.Content>();
         var query = dbContext.Contents
             .Include(x => x.ContentType)
@@ -702,7 +869,7 @@ public class ContentService(
 
         if (!parameters.ContentTypeAlias.IsNullOrWhiteSpace())
         {
-            var contentType = dbContext.ContentTypes.AsNoTracking().FirstOrDefault(x => x.Alias == parameters.ContentTypeAlias);
+            var contentType = await dbContext.ContentTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Alias == parameters.ContentTypeAlias, cancellationToken);
             if (contentType != null)
             {
                 parameters.ContentTypeId = contentType.Id;
@@ -746,7 +913,7 @@ public class ContentService(
             };
         }
 
-        result.Count = query.Count();
+        result.Count = await query.CountAsync(cancellationToken);
         result.Items = await query.Skip(parameters.Skip).Take(parameters.Take).ToListAsync(cancellationToken: cancellationToken);
         return result;
     }
@@ -813,7 +980,7 @@ public class ContentService(
         return query;
     }
 
-    private IQueryable<Models.Content> BuildQuery(QueryContentParameters request)
+    private static IQueryable<Models.Content> BuildQuery(QueryContentParameters request, IZauberDbContext dbContext)
     {
         var query = dbContext.Contents.Include(x => x.ContentType)
             .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
@@ -918,19 +1085,19 @@ public class ContentService(
         return query;
     }
 
-    private Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentParameters request, CancellationToken cancellationToken)
+    private static Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
-        var query = BuildQuery(request);
+        var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));
     }
 
-    private async Task<Models.Content?> FetchContentAsync(GetContentParameters request, CancellationToken cancellationToken)
+    private static async Task<Models.Content?> FetchContentAsync(GetContentParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
-    private async Task<EntryModel> FetchEntryModelAsync(GetContentFromRequestParameters request, CancellationToken cancellationToken)
+    private async Task<EntryModel> FetchEntryModelAsync(GetContentFromRequestParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var entryModel = new EntryModel();
         var contentQueryable = dbContext.Contents.AsNoTracking().Include(x => x.ContentType);
@@ -1085,7 +1252,7 @@ public class ContentService(
         return url;
     }
 
-    private void UpdateContentRoles(Models.Content content, SaveContentParameters request)
+    private static void UpdateContentRoles(IZauberDbContext dbContext, Models.Content content, SaveContentParameters request)
     {
         var existingRoles = dbContext.ContentRoles.Where(r => r.ContentId == content.Id).ToList();
         var rolesToRemove = existingRoles.Where(er => request.Roles.All(rr => rr.Id != er.RoleId)).ToList();
@@ -1104,7 +1271,7 @@ public class ContentService(
         }
     }
 
-    private void UpdateContentPropertyValues(Models.Content content, List<ContentPropertyValue> newPropertyValues)
+    private static void UpdateContentPropertyValues(IZauberDbContext dbContext, Models.Content content, List<ContentPropertyValue> newPropertyValues, IMapper mapper)
     {
         var deletedItems = content.PropertyData.Where(epv => newPropertyValues.All(npv => npv.Id != epv.Id)).ToList();
         foreach (var deletedItem in deletedItems)
@@ -1126,19 +1293,19 @@ public class ContentService(
         }
     }
 
-    private PaginatedList<ContentType> QueryContentTypesForComposition(Guid compositionId)
+    private static PaginatedList<ContentType> QueryContentTypesForComposition(IZauberDbContext dbContext, Guid compositionId)
     {
         var query = dbContext.ContentTypes.WhereHasCompositionsUsing(compositionId);
         return query.ToPaginatedList(1, int.MaxValue);
     }
 
-    private async Task SaveAuditIfUser(User? user, string? name, string action, CancellationToken cancellationToken)
+    private async Task SaveAuditIfUser(IZauberDbContext dbContext, User? user, string? name, string action, CancellationToken cancellationToken)
     {
         if (user == null) return;
-        await SaveAuditAsync($"{user.Name} {action} {name ?? string.Empty}", cancellationToken);
+        await SaveAuditAsync(dbContext, $"{user.Name} {action} {name ?? string.Empty}", cancellationToken);
     }
 
-    private async Task SaveAuditAsync(string description, CancellationToken cancellationToken)
+    private static async Task SaveAuditAsync(IZauberDbContext dbContext, string description, CancellationToken cancellationToken)
     {
         // Inline minimal audit creation to avoid Mediator usage in services
         dbContext.Audits.Add(new ZauberCMS.Core.Audit.Models.Audit { Description = description });

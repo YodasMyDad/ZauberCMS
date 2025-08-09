@@ -20,6 +20,12 @@ public class DataService(
     ExtensionManager extensionManager)
     : IDataService
 {
+    /// <summary>
+    /// Retrieves global data by alias, optionally from cache.
+    /// </summary>
+    /// <param name="parameters">Alias and caching flag.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Global data or null.</returns>
     public async Task<GlobalData?> GetGlobalDataAsync(GetGlobalDataParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -34,6 +40,12 @@ public class DataService(
         return await FetchContentAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Creates or updates a global data value by alias.
+    /// </summary>
+    /// <param name="parameters">Alias and value.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<GlobalData>> SaveGlobalDataAsync(SaveGlobalDataParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -65,6 +77,12 @@ public class DataService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Executes a batch of queries and returns a named result set for each.
+    /// </summary>
+    /// <param name="parameters">Collection of named queries to execute.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dictionary of name to query results.</returns>
     public async Task<Dictionary<string, IEnumerable<object>>> MultiQueryAsync(MultiQueryParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -81,6 +99,13 @@ public class DataService(
         return results;
     }
 
+    /// <summary>
+    /// Generic data grid query for any DbSet<T> with dynamic filtering, ordering and paging.
+    /// </summary>
+    /// <param name="parameters">Grid options including filter, orderBy, skip and take.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <typeparam name="T">Entity type which implements ITreeItem.</typeparam>
+    /// <returns>Data grid result including total count and items.</returns>
     public async Task<DataGridResult<T>> GetDataGridAsync<T>(DataGridParameters<T> parameters, CancellationToken cancellationToken = default) where T : class, ITreeItem
     {
         using var scope = serviceProvider.CreateScope();
@@ -118,7 +143,7 @@ public class DataService(
         }
 
         // Important!!! Make sure the Count property of RadzenDataGrid is set.
-        result.Count = query.Count();
+        result.Count = await query.CountAsync(cancellationToken);
 
         // Perform paging via Skip and Take.
         result.Items = await query.Skip(parameters.Skip).Take(parameters.Take).ToListAsync(cancellationToken: cancellationToken);

@@ -28,6 +28,12 @@ public class MembershipService(
     ILogger<MembershipService> logger)
     : IMembershipService
 {
+    /// <summary>
+    /// Retrieves a single user with roles and property data, optionally from cache.
+    /// </summary>
+    /// <param name="parameters">User id and caching flag.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>User or null.</returns>
     public async Task<User?> GetUserAsync(GetUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -42,6 +48,12 @@ public class MembershipService(
         return await FetchUserAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Updates core properties, email/username and roles for an existing user. Also persists user property values.
+    /// </summary>
+    /// <param name="parameters">User to update and optional password/roles.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<User>> SaveUserAsync(SaveUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -179,6 +191,12 @@ public class MembershipService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Creates a new user or updates an existing one, including roles and property values.
+    /// </summary>
+    /// <param name="parameters">User, password (for create), and role set.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<User>> CreateUpdateUserAsync(CreateUpdateUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -316,6 +334,12 @@ public class MembershipService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Deletes a user account.
+    /// </summary>
+    /// <param name="parameters">Parameters containing the user id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<User>> DeleteUserAsync(DeleteUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -349,6 +373,12 @@ public class MembershipService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Queries users with filtering, ordering and paging. Can use cache.
+    /// </summary>
+    /// <param name="parameters">Query options including roles and ids.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of users.</returns>
     public async Task<PaginatedList<User>> QueryUsersAsync(QueryUsersParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -364,6 +394,12 @@ public class MembershipService(
         return await FetchUsersAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets a role and its users.
+    /// </summary>
+    /// <param name="parameters">Role id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Role or null.</returns>
     public async Task<Role?> GetRoleAsync(GetRoleParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -379,6 +415,12 @@ public class MembershipService(
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Creates or updates a role.
+    /// </summary>
+    /// <param name="parameters">Role to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Role>> SaveRoleAsync(SaveRoleParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -431,6 +473,12 @@ public class MembershipService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Deletes a role.
+    /// </summary>
+    /// <param name="parameters">Parameters containing the role id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Role>> DeleteRoleAsync(DeleteRoleParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -464,6 +512,12 @@ public class MembershipService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Queries roles with filtering, ordering and paging.
+    /// </summary>
+    /// <param name="parameters">Query options including search and ids.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of roles.</returns>
     public Task<PaginatedList<Role>> QueryRolesAsync(QueryRolesParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -515,6 +569,12 @@ public class MembershipService(
         return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
 
+    /// <summary>
+    /// Signs a user in with email/password and returns navigation outcome.
+    /// </summary>
+    /// <param name="parameters">Email, password and return url.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> LoginUserAsync(LoginUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -591,6 +651,12 @@ public class MembershipService(
         return loginResult;
     }
 
+    /// <summary>
+    /// Registers a new user and signs them in.
+    /// </summary>
+    /// <param name="parameters">User details and return url.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> RegisterUserAsync(RegisterUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -635,6 +701,12 @@ public class MembershipService(
         return registrationResult;
     }
 
+    /// <summary>
+    /// Signs in a user via external provider, creating a local account if needed.
+    /// </summary>
+    /// <param name="parameters">Return url.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ExternalLoginAsync(ExternalLoginParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -703,6 +775,12 @@ public class MembershipService(
         return loginResult;
     }
 
+    /// <summary>
+    /// Confirms a user's email address.
+    /// </summary>
+    /// <param name="parameters">User id, confirmation code and return url.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ConfirmEmailAsync(ConfirmEmailParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -738,6 +816,12 @@ public class MembershipService(
         return confirmationResult;
     }
 
+    /// <summary>
+    /// Starts the password reset flow by generating a token and emailing a link.
+    /// </summary>
+    /// <param name="parameters">Email and return url.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ForgotPasswordAsync(ForgotPasswordParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -773,6 +857,12 @@ public class MembershipService(
         return forgotPasswordResult;
     }
 
+    /// <summary>
+    /// Completes the password reset using the provided token.
+    /// </summary>
+    /// <param name="parameters">User id, reset token and new password.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ResetPasswordAsync(ResetPasswordParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -808,7 +898,12 @@ public class MembershipService(
         return resetPasswordResult;
     }
 
-    public async Task<User?> GetCurrentUserAsync(GetCurrentUserParameters parameters, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Returns the currently authenticated user.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>User or null.</returns>
+    public async Task<User?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();

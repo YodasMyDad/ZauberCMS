@@ -17,6 +17,11 @@ public class EmailService(
     ProviderService providerService)
     : IEmailService
 {
+    /// <summary>
+    /// Sends an email confirmation (or change email) message to a user using the configured provider.
+    /// </summary>
+    /// <param name="parameters">Target user, optional new email and return url.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SendEmailConfirmationAsync(SendEmailConfirmationParameters parameters, CancellationToken cancellationToken = default)
     {
         var userId = await userManager.GetUserIdAsync(parameters.User!);

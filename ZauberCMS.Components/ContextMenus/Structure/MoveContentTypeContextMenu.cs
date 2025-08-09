@@ -1,18 +1,19 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.StructureSection.Dialogs;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.Structure;
 
-public class MoveContentTypeContextMenu(NotificationService notificationService, IMediator mediator, AppState appState)
+public class MoveContentTypeContextMenu(NotificationService notificationService, IContentService contentService, IMembershipService membershipService, AppState appState)
     : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
@@ -35,7 +36,8 @@ public class MoveContentTypeContextMenu(NotificationService notificationService,
 
     public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e,
         NavigationManager navigationManager,
-        ContextMenuService contextMenuService, IModalService modalService)
+        ContextMenuService contextMenuService, 
+        IModalService modalService)
     {
         contextMenuService.Close();
         var baseItem = (ContentType)args.Value!;
@@ -65,9 +67,9 @@ public class MoveContentTypeContextMenu(NotificationService notificationService,
                 baseItem.ParentId = parentId;
             }
 
-            var user = await mediator.GetCurrentUser();
+            var user = await membershipService.GetCurrentUser();
 
-            var copyContentTypeResult = await mediator.Send(new SaveContentTypeCommand
+            var copyContentTypeResult = await contentService.SaveContentTypeAsync(new SaveContentTypeParameters
                 { ContentType = baseItem });
             if (!copyContentTypeResult.Success)
             {

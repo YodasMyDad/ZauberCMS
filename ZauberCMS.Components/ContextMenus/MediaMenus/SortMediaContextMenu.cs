@@ -6,12 +6,15 @@ using ZauberCMS.Components.Admin.Shared;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
+using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
+using ZauberCMS.Core.Media.Parameters;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
-public class SortMediaContextMenu(IMediator mediator, NotificationService notificationService, AppState appState)
+public class SortMediaContextMenu(IMembershipService membershipService, IMediaService mediaService, NotificationService notificationService, AppState appState)
     : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
@@ -35,8 +38,8 @@ public class SortMediaContextMenu(IMediator mediator, NotificationService notifi
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var content = (Media)args.Value!;
-        var dbContent = await mediator.Send(new GetMediaCommand { Id = content.Id, IncludeChildren = true });
-        var currentUser = await mediator.GetCurrentUser();
+        var dbContent = await mediaService.GetMediaAsync(new GetMediaParameters { Id = content.Id, IncludeChildren = true });
+        var currentUser = await membershipService.GetCurrentUser();
         if (!dbContent!.Children.Any())
         {
             // Show message if no children
@@ -60,7 +63,7 @@ public class SortMediaContextMenu(IMediator mediator, NotificationService notifi
             {
                 foreach (var c in sortedMedia)
                 {
-                    var saveResult = await mediator.Send(new SaveMediaCommand { MediaToSave = c, IsUpdate = true });
+                    var saveResult = await mediaService.SaveMediaAsync(new SaveMediaParameters { MediaToSave = c, IsUpdate = true });
                     if (!saveResult.Success)
                     {
                         notificationService.ShowNotifications(saveResult.Messages);

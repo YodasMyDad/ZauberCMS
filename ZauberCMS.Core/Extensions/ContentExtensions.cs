@@ -1,6 +1,6 @@
 ﻿using MediatR;
-using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
@@ -28,25 +28,25 @@ public static class ContentExtensions
         return url;
     }
 
-    
+
     /// <summary>
     /// Gets navigation items making sure picked content is up to date
     /// </summary>
     /// <param name="content"></param>
     /// <param name="alias"></param>
-    /// <param name="mediator"></param>
+    /// <param name="contentService"></param>
     /// <returns></returns>
-    public static async Task<List<NavigationItem>> NavigationItems(this IHasPropertyValues content, string alias, IMediator mediator)
+    public static async Task<List<NavigationItem>> NavigationItems(this IHasPropertyValues content, string alias, IContentService contentService)
     {
         var navItems = content.GetValue<List<NavigationItem>>(alias);
         if (navItems?.Count > 0)
         {
-            await ProcessNavigationItems(navItems, mediator);
+            await ProcessNavigationItems(navItems, contentService);
         }
         return navItems ?? [];
     }
 
-    private static async Task ProcessNavigationItems(List<NavigationItem> navItems, IMediator mediator)
+    private static async Task ProcessNavigationItems(List<NavigationItem> navItems, IContentService contentService)
     {
         // Collect all ContentIds from this level
         var navWithContent = navItems.Where(x => x.ContentId != null).Select(x => x.ContentId!.Value).ToList();
@@ -54,7 +54,7 @@ public static class ContentExtensions
         // Process this level's ContentIds
         if (navWithContent.Count > 0)
         {
-            var contentItems = await mediator.Send(new QueryContentCommand
+            var contentItems = await contentService.QueryContentAsync(new QueryContentParameters
             {
                 Ids = navWithContent,
                 AmountPerPage = navWithContent.Count,
@@ -75,7 +75,7 @@ public static class ContentExtensions
                 // Recursively process children if they exist
                 if (navigationItem.Children?.Count > 0)
                 {
-                    await ProcessNavigationItems(navigationItem.Children, mediator);
+                    await ProcessNavigationItems(navigationItem.Children, contentService);
                 }
             }
         }
@@ -86,7 +86,7 @@ public static class ContentExtensions
             {
                 if (navigationItem.Children?.Count > 0)
                 {
-                    await ProcessNavigationItems(navigationItem.Children, mediator);
+                    await ProcessNavigationItems(navigationItem.Children, contentService);
                 }
             }
         }
@@ -159,9 +159,9 @@ public static class ContentExtensions
     /// </summary>
     /// <param name="content"></param>
     /// <param name="propertyAlias"></param>
-    /// <param name="mediator"></param>
+    /// <param name="contentService"></param>
     /// <returns></returns>
-    public static async Task<List<Content.Models.Content>> GetContentItems(this IHasPropertyValues content, string? propertyAlias, IMediator mediator)
+    public static async Task<List<Content.Models.Content>> GetContentItems(this IHasPropertyValues content, string? propertyAlias, IContentService contentService)
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
@@ -173,7 +173,7 @@ public static class ContentExtensions
                     var ids = content.GetValue<List<Guid>>(propertyAlias);
                     if (ids != null && ids.Count != 0)
                     {
-                        var result = await mediator.Send(new QueryContentCommand { Ids = ids, AmountPerPage = ids.Count, Cached = true});
+                        var result = await contentService.QueryContentAsync(new QueryContentParameters { Ids = ids, AmountPerPage = ids.Count, Cached = true});
                         return result.Items.ToList();
                     }
                 }
@@ -182,7 +182,7 @@ public static class ContentExtensions
                     var id = content.GetValue<Guid>(propertyAlias);
                     if (id != Guid.Empty)
                     {
-                        var media = await mediator.GetContent(id);
+                        var media = await contentService.GetContent(id);
                         if (media != null)
                         {
                             return [media];
@@ -248,11 +248,11 @@ public static class ContentExtensions
     /// </summary>
     /// <param name="content">The content containing content data</param>
     /// <param name="propertyAlias">The property alias to retrieve content ids</param>
-    /// <param name="mediator">The mediator to handle content queries</param>
+    /// <param name="contentService">The content service</param>
     /// <returns>A single content item or null if no content items are found</returns>
-    public static async Task<Content.Models.Content?> GetContent(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
+    public static async Task<Content.Models.Content?> GetContent(this IHasPropertyValues content, string propertyAlias, IContentService contentService)
     {
-        return (await content.GetContentItems(propertyAlias, mediator)).FirstOrDefault();
+        return (await content.GetContentItems(propertyAlias, contentService)).FirstOrDefault();
     }
 
     /// <summary>

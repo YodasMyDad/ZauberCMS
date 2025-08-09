@@ -6,8 +6,7 @@
 @using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core
-@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Seo.Commands
 @using ZauberCMS.Core.Settings
@@ -40,20 +39,6 @@
     private Dictionary<string, object> Parameters { get; set; } = new();
     private Type LayoutType { get; set; } = null!;
     private AuthenticationState AuthState { get; set; } = null!;
-
-    /*private RenderFragment RenderContentWithLayout => builder =>
-    {
-        builder.OpenComponent<LayoutView>(0);
-        builder.AddAttribute(1, "Layout", LayoutType);
-        builder.AddAttribute(2, "ChildContent", (RenderFragment)(childBuilder =>
-        {
-            childBuilder.OpenComponent<DynamicComponent>(0);
-            childBuilder.AddAttribute(1, "Type", ComponentView!.GetType());
-            childBuilder.AddAttribute(2, "Parameters", Parameters);
-            childBuilder.CloseComponent();
-        }));
-        builder.CloseComponent();
-    };*/
     
     protected override async Task OnParametersSetAsync()
     {
@@ -61,7 +46,7 @@
         var instances = ExtensionManager.GetInstances<IContentView>(true);
         AllContentViews = new ConcurrentDictionary<string, IContentView>(instances);
         
-        var entryModel = await Mediator.Send(new GetContentFromRequestCommand { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
+        var entryModel = await ContentService.GetContentFromRequestAsync(new GetContentFromRequestParameters { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
         Content = entryModel.Content;
         LanguageKeys = entryModel.LanguageKeys;
         LanguageIso = entryModel.LanguageIsoCode ?? Settings.Value.AdminDefaultLanguage;
@@ -124,7 +109,7 @@
         }
         else
         {
-            var hasContent = await Mediator.Send(new AnyContentCommand());
+            var hasContent = await ContentService.AnyContentAsync();
             if (hasContent)
             {
                 // Check for redirects

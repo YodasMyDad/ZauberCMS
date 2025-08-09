@@ -32,6 +32,12 @@ public class MediaService(
     ExtensionManager extensionManager)
     : IMediaService
 {
+    /// <summary>
+    /// Retrieves a media item with optional includes and caching.
+    /// </summary>
+    /// <param name="parameters">Query options including id and include flags.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Media or null.</returns>
     public async Task<Models.Media?> GetMediaAsync(GetMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -46,6 +52,12 @@ public class MediaService(
         return await FetchMediaAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Creates or updates a media item, saving or deleting the backing file via provider when needed.
+    /// </summary>
+    /// <param name="parameters">Media to save and storage options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Models.Media>> SaveMediaAsync(SaveMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -134,6 +146,12 @@ public class MediaService(
         return result;
     }
 
+    /// <summary>
+    /// Queries media items with filtering, ordering and paging. Can use cache.
+    /// </summary>
+    /// <param name="parameters">Query options including includes and paging.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of media.</returns>
     public async Task<PaginatedList<Models.Media>> QueryMediaAsync(QueryMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -149,6 +167,12 @@ public class MediaService(
         return await FetchMediaAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes a media item and optionally its physical file. Logs audit and notifies state.
+    /// </summary>
+    /// <param name="parameters">Media id and whether to delete the file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Models.Media>> DeleteMediaAsync(DeleteMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -163,7 +187,7 @@ public class MediaService(
         {
             //Check if it has children
             var children = dbContext.Medias.AsNoTracking().Where(x => x.ParentId == media.Id);
-            if (children.Any())
+            if (await children.AnyAsync(cancellationToken))
             {
                 handlerResult.AddMessage("Unable to delete media with child content, delete or move those items first", ResultMessageType.Error);
                 return handlerResult;
@@ -188,6 +212,12 @@ public class MediaService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Checks if a media item has child media.
+    /// </summary>
+    /// <param name="parameters">Parent id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True when children exist.</returns>
     public async Task<bool> HasChildMediaAsync(HasChildMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -195,6 +225,12 @@ public class MediaService(
         return await dbContext.Medias.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Returns a dictionary of restricted media URLs to ids. Uses cache.
+    /// </summary>
+    /// <param name="parameters">Caching flag.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dictionary URL -> MediaId.</returns>
     public async Task<Dictionary<string, Guid>> GetRestrictedMediaUrlsAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();

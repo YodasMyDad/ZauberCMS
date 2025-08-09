@@ -1,5 +1,5 @@
 ﻿@using ZauberCMS.Core
-@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Shared
 @implements IDisposable
 
@@ -42,7 +42,7 @@
     {
         if (!Data.Any())
         {
-            var items = await Mediator.Send(new QueryContentTypesCommand
+            var items = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
             {
                 AmountPerPage = 100,
                 IncludeFolders = true,
@@ -70,7 +70,7 @@
         {
             if (args.Value is ContentType content)
             {
-                var items = Mediator.Send(new QueryContentTypesCommand()
+                var items = ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
                 {
                     WhereClause = x => x.ParentId == content.Id,
                     AmountPerPage = 100,
@@ -114,7 +114,7 @@
                 }
 
                 // Calculate result and cache it
-                hasChildren = Task.Run(() => Mediator.Send(new HasChildContentTypeCommand { ParentId = content.Id })).GetAwaiter().GetResult();
+                hasChildren = Task.Run(() => ContentService.HasChildContentTypeAsync(new HasChildContentTypeParameters { ParentId = content.Id })).GetAwaiter().GetResult();
                 TreeState.SetChildren(content.Id, hasChildren);
 
                 return hasChildren;

@@ -1,12 +1,11 @@
-﻿using MediatR;
-using Microsoft.Extensions.DependencyInjection;
-using ZauberCMS.Core.Content.Commands;
+﻿using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 
 namespace ZauberCMS.Components.DataSources;
 
-public class ContentTypesDataSource(IMediator mediator) : IDataListSource
+public class ContentTypesDataSource(IContentService contentService) : IDataListSource
 {
     public string Name => "Content Types";
     public string Description => "List of all content types";
@@ -15,7 +14,7 @@ public class ContentTypesDataSource(IMediator mediator) : IDataListSource
 
     public IEnumerable<DataListItem> GetItems(IServiceScope scope, Content? currentContent)
     {
-        var contentTypes = mediator.Send(new QueryContentTypesCommand
+        var contentTypes = contentService.QueryContentTypesAsync(new QueryContentTypesParameters
         {
             OrderBy = GetContentTypesOrderBy.Name,
             AmountPerPage = 300,

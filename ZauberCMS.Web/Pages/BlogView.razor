@@ -1,8 +1,8 @@
-﻿@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Media.Models
+﻿@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Web.Layouts
 @using ZauberCMS.Web.Shared
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Components.Seo
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout MainLayout
@@ -56,7 +56,7 @@
     protected override async Task OnParametersSetAsync()
     {
         var amountPerPage = Content!.GetValue<int>("AmountPerPage");
-        var queryContentCommand = new QueryContentCommand
+        var queryContentCommand = new QueryContentParameters
         {
             OrderBy = GetContentsOrderBy.DateCreated,
             AmountPerPage = amountPerPage,
@@ -67,7 +67,7 @@
                 queryContentCommand.PageIndex = page;
                 CurrentPage = page;
         }
-        BlogPages = await Mediator.Send(queryContentCommand);
+        BlogPages = await ContentService.QueryContentAsync(queryContentCommand);
         HeaderImage = (await Content!.GetMediaItems("HeaderImage", Mediator, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
     }
 }

@@ -1,16 +1,17 @@
 ﻿using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Components.ContextMenus.RecycleBinMenus;
 
-public class RestoreContextMenu(IMediator mediator, AppState appState) : ITreeContextMenu
+public class RestoreContextMenu(IContentService contentService, IMembershipService membershipService, AppState appState) : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.RecycleBinTree];
@@ -29,11 +30,11 @@ public class RestoreContextMenu(IMediator mediator, AppState appState) : ITreeCo
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var branch = (TreeBranch)args.Value;
-        var dbContent = await mediator.Send(new GetContentCommand { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true});
-        var currentUser = await mediator.GetCurrentUser();
+        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true});
+        var currentUser = await membershipService.GetCurrentUser();
         contextMenuService.Close();
         dbContent!.Deleted = false;
-        var saveResult = await mediator.Send(new SaveContentCommand{ Content = dbContent, ExcludePropertyData = true});
+        var saveResult = await contentService.SaveContentAsync(new SaveContentParameters { Content = dbContent, ExcludePropertyData = true});
         if (saveResult.Success)
         {
             await appState.NotifyContentChanged(dbContent, currentUser?.Name ?? "Unknown");

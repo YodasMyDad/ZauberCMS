@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Seo.Models
 
 <EditorRow>
@@ -54,7 +54,7 @@
     private Guid SelectedDomainId { get; set; }
     protected override async Task OnInitializedAsync()
     {
-        var domains = await Mediator.Send(new QueryDomainCommand
+        var domains = await ContentService.QueryDomainAsync(new QueryDomainParameters 
         {
             AmountPerPage = 1000
         });

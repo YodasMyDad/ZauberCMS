@@ -1,17 +1,18 @@
 ﻿using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.Shared;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
-public class SortContentContextMenu(IMediator mediator, NotificationService notificationService, AppState appState)
+public class SortContentContextMenu(IContentService contentService, IMembershipService membershipService, NotificationService notificationService, AppState appState)
     : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
@@ -35,8 +36,8 @@ public class SortContentContextMenu(IMediator mediator, NotificationService noti
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var content = (Content)args.Value!;
-        var dbContent = await mediator.Send(new GetContentCommand { Id = content.Id, IncludeChildren = true });
-        var currentUser = await mediator.GetCurrentUser();
+        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = content.Id, IncludeChildren = true });
+        var currentUser = await membershipService.GetCurrentUser();
         if (!dbContent!.Children.Any())
         {
             // Show message if no children
@@ -60,7 +61,7 @@ public class SortContentContextMenu(IMediator mediator, NotificationService noti
             {
                 foreach (var c in sortedContent)
                 {
-                    var saveResult = await mediator.Send(new SaveContentCommand
+                    var saveResult = await contentService.SaveContentAsync(new SaveContentParameters
                         { Content = c, ExcludePropertyData = true });
                     if (!saveResult.Success)
                     {

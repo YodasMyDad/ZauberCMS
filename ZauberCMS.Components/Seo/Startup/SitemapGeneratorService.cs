@@ -2,14 +2,15 @@
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
-using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Components.Seo.Models;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
+using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Seo.Models;
 
@@ -43,10 +44,11 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
         try
         {
             using var scope = serviceProvider.CreateScope();
-            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var contentService = scope.ServiceProvider.GetRequiredService<IContentService>();
+            var dataService = scope.ServiceProvider.GetRequiredService<IDataService>();
 
             // Firstly get the site map data
-            var sitemapGlobalData = await mediator.GetGlobalData<List<SeoSitemap>>(SeoConstants.SeoSitemapName) ?? [];
+            var sitemapGlobalData = await dataService.GetGlobalData<List<SeoSitemap>>(SeoConstants.SeoSitemapName) ?? [];
             foreach (var seoSitemap in sitemapGlobalData)
             {
                 // Define your namespace for sitemap
@@ -58,17 +60,17 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                 // Prepare a list to hold sitemap entries
                 var sitemapEntries = new List<XElement>();
                 
-                var rootPage = await mediator.GetContent(seoSitemap.RootContentId);
+                var rootPage = await contentService.GetContent(seoSitemap.RootContentId);
                 if (rootPage == null) continue;
                 
                 if (rootPage.InternalRedirectId != null)
                 {
-                    rootPage = await mediator.GetContent(rootPage.InternalRedirectId);
+                    rootPage = await contentService.GetContent(rootPage.InternalRedirectId);
                 }
 
                 if (rootPage != null) AddPageToSitemap(rootPage, sitemapEntries, seoSitemap, ns, true);
 
-                var contentItems = await mediator.QueryContent(new QueryContentCommand
+                var contentItems = await contentService.QueryContentAsync(new QueryContentParameters
                 {
                     AmountPerPage = 2000,
                     WhereClause = content => seoSitemap.ContentTypeIds.Contains(content.ContentTypeId)

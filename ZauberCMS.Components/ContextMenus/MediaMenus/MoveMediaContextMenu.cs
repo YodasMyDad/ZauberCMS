@@ -8,13 +8,16 @@ using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Commands;
+using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
+using ZauberCMS.Core.Media.Parameters;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
-public class MoveMediaContextMenu(NotificationService notificationService, IMediator mediator, AppState appState) : ITreeContextMenu
+public class MoveMediaContextMenu(NotificationService notificationService, IMembershipService membershipService, IMediaService mediaService, AppState appState) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias => [];
@@ -61,11 +64,11 @@ public class MoveMediaContextMenu(NotificationService notificationService, IMedi
                 baseItem.ParentId = parentId;
             }
             
-            var user = await mediator.GetCurrentUser();
+            var user = await membershipService.GetCurrentUser();
 
             if (args.Value is Media media)
             {
-                var copyMediaResult = await mediator.Send(new SaveMediaCommand { MediaToSave = media, IsUpdate = true });
+                var copyMediaResult = await mediaService.SaveMediaAsync(new SaveMediaParameters { MediaToSave = media, IsUpdate = true });
                 if (!copyMediaResult.Success)
                 {
                     notificationService.ShowNotifications(copyMediaResult.Messages);

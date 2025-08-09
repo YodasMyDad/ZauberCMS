@@ -61,10 +61,10 @@
 
     async Task LoadData(LoadDataArgs args)
     {
-        Sitemaps = await Mediator.GetGlobalData<List<SeoSitemap>>(SeoConstants.SeoSitemapName) ?? [];
+        Sitemaps = await DataService.GetGlobalData<List<SeoSitemap>>(SeoConstants.SeoSitemapName) ?? [];
         foreach (var seoSitemap in Sitemaps)
         {
-            seoSitemap.RootContent = await Mediator.GetContent(seoSitemap.RootContentId);
+            seoSitemap.RootContent = await ContentService.GetContent(seoSitemap.RootContentId);
         }
     }
 

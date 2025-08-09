@@ -1,18 +1,19 @@
 ﻿using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.Shared;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Sections.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.SectionNavGroups;
 
-public class SortRootContentContextMenu(IMediator mediator, NotificationService notificationService, AppState appState) : ISectionNavGroupAction
+public class SortRootContentContextMenu(IContentService contentService, IMembershipService membershipService, NotificationService notificationService, AppState appState) : ISectionNavGroupAction
 {
     public string Text => "Sort Content";
     public string Icon => "swap_vert";
@@ -28,8 +29,8 @@ public class SortRootContentContextMenu(IMediator mediator, NotificationService 
         // If there is only one root, show message
         
         // Open the sort dialog
-        var rootItems = await mediator.Send(new QueryContentCommand { RootContentOnly = true, AmountPerPage = 100 });
-        var currentUser = await mediator.GetCurrentUser();
+        var rootItems = await contentService.QueryContentAsync(new QueryContentParameters { RootContentOnly = true, AmountPerPage = 100 });
+        var currentUser = await membershipService.GetCurrentUser();
         if (rootItems.Items.Count() <= 1)
         {
             // Show message if no children
@@ -52,7 +53,7 @@ public class SortRootContentContextMenu(IMediator mediator, NotificationService 
             {
                 foreach (var c in sortedContent)
                 {
-                    var saveResult = await mediator.Send(new SaveContentCommand
+                    var saveResult = await contentService.SaveContentAsync(new SaveContentParameters
                         { Content = c, ExcludePropertyData = true });
                     if (!saveResult.Success)
                     {

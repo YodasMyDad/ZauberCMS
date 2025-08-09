@@ -26,7 +26,7 @@ public interface IContentService
     Task<PaginatedList<Domain>> QueryDomainAsync(QueryDomainParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<Domain?>> DeleteDomainAsync(DeleteDomainParameters parameters, CancellationToken cancellationToken = default);
 
-    Task<bool> AnyContentAsync(AnyContentParameters parameters, CancellationToken cancellationToken = default);
+    Task<bool> AnyContentAsync(CancellationToken cancellationToken = default);
     Task<bool> HasChildContentAsync(HasChildContentParameters parameters, CancellationToken cancellationToken = default);
     Task<bool> HasChildContentTypeAsync(HasChildContentTypeParameters parameters, CancellationToken cancellationToken = default);
     Task<Dictionary<object, string>> GetContentLanguagesAsync(GetContentLanguagesParameters parameters, CancellationToken cancellationToken = default);

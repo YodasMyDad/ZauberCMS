@@ -24,6 +24,12 @@ public class TagService(
 {
     private readonly SlugHelper _slugHelper = new();
 
+    /// <summary>
+    /// Creates or updates a tag, generating a slug. Logs audit.
+    /// </summary>
+    /// <param name="parameters">Tag name, sort order and optional id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Tag>> SaveTagAsync(SaveTagParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -84,6 +90,12 @@ public class TagService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Queries tags with filtering, ordering and paging. Can use cache.
+    /// </summary>
+    /// <param name="parameters">Query options including names, slugs and item ids.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of tags.</returns>
     public async Task<PaginatedList<Tag>> QueryTagAsync(QueryTagParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -99,6 +111,12 @@ public class TagService(
         return await FetchTagsAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes a tag by id or name. Logs audit.
+    /// </summary>
+    /// <param name="parameters">Tag id or name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Tag?>> DeleteTagAsync(DeleteTagParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -140,6 +158,12 @@ public class TagService(
         return (await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 
+    /// <summary>
+    /// Synchronizes tag assignments for a given item id by adding/removing TagItems. Logs audit entries.
+    /// </summary>
+    /// <param name="parameters">Item id and desired tag id set.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<TagItem>> SaveTagItemAsync(SaveTagItemParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -201,6 +225,12 @@ public class TagService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Deletes a tag item by id or all tag items for a given item id. Logs audit.
+    /// </summary>
+    /// <param name="parameters">TagItem id or item id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<TagItem?>> DeleteTagItemAsync(DeleteTagItemParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();

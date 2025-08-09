@@ -1,21 +1,20 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Routing;
-using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Content.ContentFinders;
 
-public class DefaultContentFinder(IMediator mediator) 
+public class DefaultContentFinder(IContentService contentService) 
     : IContentFinder
 {
     public async Task<RouteValueDictionary?> TryFindContent(HttpContext httpContext)
     {
         var slug = httpContext.Request.Path.Value?.TrimStart('/');
         var url = httpContext.Request.GetDisplayUrl();
-        var entryModel = await mediator.Send(new GetContentFromRequestCommand
+        var entryModel = await contentService.GetContentFromRequestAsync(new GetContentFromRequestParameters
         {
             Slug = slug?.ToLower(), 
             IsRootContent = slug.IsNullOrWhiteSpace(), 

@@ -1,5 +1,5 @@
 ﻿@using ZauberCMS.Components.Editors.Models
-@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Content.Parameters
 @implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ContentPickerSettings>
 
 <EditorRow>
@@ -41,7 +41,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var contentTypes = await Mediator.Send(new QueryContentTypesCommand
+        var contentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
         {
             OrderBy = GetContentTypesOrderBy.Name,
             AmountPerPage = 200

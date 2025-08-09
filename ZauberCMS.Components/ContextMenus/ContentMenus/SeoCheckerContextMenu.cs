@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Seo;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
@@ -30,7 +30,7 @@ public class SeoCheckerContextMenu() : ITreeContextMenu
     }
 
     private IModalReference? Modal { get; set; }
-    private CopyContentCommand CopyContentCommand { get; set; } = new();
+    private CopyContentParameters CopyContentCommand { get; set; } = new();
     
     public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)

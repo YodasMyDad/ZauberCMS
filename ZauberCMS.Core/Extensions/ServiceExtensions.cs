@@ -1,17 +1,21 @@
 ﻿using System.Text.Json;
 using MediatR;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data.Commands;
-using ZauberCMS.Core.Data.Models;
+using ZauberCMS.Core.Data.Interfaces;
+using ZauberCMS.Core.Data.Parameters;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Membership.Commands;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Membership.Parameters;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Extensions;
 
-public static class MediatorExtensions
+public static class ServiceExtensions
 {
     /// <summary>
     /// Retrieves the global settings from the mediator.
@@ -48,13 +52,13 @@ public static class MediatorExtensions
     /// <summary>
     /// Retrieves global data from the mediator using the specified alias.
     /// </summary>
-    /// <param name="mediator">The mediator instance used to send the GetGlobalDataCommand.</param>
+    /// <param name="dataService">The dataService instance used to send the GetGlobalDataCommand.</param>
     /// <param name="alias">The alias associated with the global data to be retrieved.</param>
     /// <typeparam name="T">The type to which the global data should be converted.</typeparam>
     /// <returns>A task that represents the asynchronous operation. The task result contains an instance of the specified type.</returns>
-    public static async Task<T?> GetGlobalData<T>(this IMediator mediator, string alias)
+    public static async Task<T?> GetGlobalData<T>(this IDataService dataService, string alias)
     {
-        var globalData = await mediator.Send(new GetGlobalDataCommand { Alias = alias });
+        var globalData = await dataService.GetGlobalDataAsync(new GetGlobalDataParameters { Alias = alias });
         if (globalData?.Data != null)
         {
             return globalData.GetValue<T>();
@@ -66,11 +70,11 @@ public static class MediatorExtensions
     /// <summary>
     /// Gets the currently logged in user
     /// </summary>
-    /// <param name="mediator"></param>
+    /// <param name="membershipService"></param>
     /// <returns></returns>
-    public static async Task<User?> GetCurrentUser(this IMediator mediator)
+    public static async Task<User?> GetCurrentUser(this IMembershipService membershipService)
     {
-        return await mediator.Send(new GetCurrentUserCommand());
+        return await membershipService.GetCurrentUserAsync();
     }
 
     /// <summary>
@@ -110,29 +114,17 @@ public static class MediatorExtensions
     /// <summary>
     /// Retrieves content information based on the provided content ID.
     /// </summary>
-    /// <param name="mediator">The mediator instance used to send the GetContentCommand.</param>
+    /// <param name="contentService">The content service</param>
     /// <param name="id">The unique identifier of the content to retrieve.</param>
     /// <param name="cached">Indicates whether to use cached content data or not.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains an instance of Content if found; otherwise, null.</returns>
-    public static async Task<Content.Models.Content?> GetContent(this IMediator mediator, Guid? id, bool cached = true)
+    public static async Task<Content.Models.Content?> GetContent(this IContentService contentService, Guid? id, bool cached = true)
     {
         if (id != null)
         {
-            return await mediator.Send(new GetContentCommand { Id = id.Value, Cached = cached });
+            return await contentService.GetContentAsync(new GetContentParameters { Id = id.Value, Cached = cached });
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Queries content based on the provided command parameters.
-    /// </summary>
-    /// <param name="mediator">The mediator instance used to send the QueryContentCommand.</param>
-    /// <param name="command">The QueryContentCommand containing the parameters for the query.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a paginated list of content items.</returns>
-    public static async Task<PaginatedList<Content.Models.Content>> QueryContent(this IMediator mediator,
-        QueryContentCommand command)
-    {
-        return await mediator.Send(command);
     }
 }

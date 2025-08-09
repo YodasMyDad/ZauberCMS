@@ -24,6 +24,12 @@ public class LanguageService(
     ExtensionManager extensionManager)
     : ILanguageService
 {
+    /// <summary>
+    /// Retrieves a language by id or ISO code.
+    /// </summary>
+    /// <param name="parameters">Id or ISO code, and tracking flag.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Language or null.</returns>
     public async Task<Language?> GetLanguageAsync(GetLanguageParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -49,6 +55,12 @@ public class LanguageService(
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Creates or updates a language from a CultureInfo. Prevents duplicates and logs audit.
+    /// </summary>
+    /// <param name="parameters">CultureInfo and optional id to update.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Language>> SaveLanguageAsync(SaveLanguageParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -111,6 +123,12 @@ public class LanguageService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Queries languages with filtering, ordering and paging.
+    /// </summary>
+    /// <param name="parameters">Query options including ids and ISO codes.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of languages.</returns>
     public Task<PaginatedList<Language>> QueryLanguageAsync(QueryLanguageParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -159,6 +177,12 @@ public class LanguageService(
         return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
 
+    /// <summary>
+    /// Deletes a language by id or ISO code. Logs audit.
+    /// </summary>
+    /// <param name="parameters">Id or ISO code to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Language?>> DeleteLanguageAsync(DeleteLanguageParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -200,6 +224,12 @@ public class LanguageService(
         return (await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 
+    /// <summary>
+    /// Creates or updates a language dictionary and its texts. Clears relevant cache.
+    /// </summary>
+    /// <param name="parameters">Dictionary with texts to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<LanguageDictionary>> SaveLanguageDictionaryAsync(SaveLanguageDictionaryParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -275,6 +305,12 @@ public class LanguageService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Deletes a language dictionary by id and logs audit.
+    /// </summary>
+    /// <param name="parameters">Dictionary id to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<LanguageDictionary?>> DeleteLanguageDictionaryAsync(DeleteLanguageDictionaryParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -301,6 +337,12 @@ public class LanguageService(
         return (await dbContext.SaveChangesAndLog(langDict, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 
+    /// <summary>
+    /// Returns a nested dictionary of all language keys and values per language from cache.
+    /// </summary>
+    /// <param name="parameters">Unused. Reserved for future options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dictionary ISO -> (Key -> Value).</returns>
     public async Task<Dictionary<string, Dictionary<string, string>>> GetCachedAllLanguageDictionariesAsync(GetCachedAllLanguageDictionariesParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -326,6 +368,12 @@ public class LanguageService(
         }))!;
     }
 
+    /// <summary>
+    /// Returns language dictionaries for a data grid with filtering, sort and paging.
+    /// </summary>
+    /// <param name="parameters">Grid options including filter and order.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Data grid result including total count and items.</returns>
     public async Task<DataGridResult<LanguageDictionary>> GetDataGridLanguageDictionaryAsync(DataGridLanguageDictionaryParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -357,7 +405,7 @@ public class LanguageService(
         }
 
         // Important!!! Make sure the Count property of RadzenDataGrid is set.
-        result.Count = query.Count();
+        result.Count = await query.CountAsync(cancellationToken);
 
         // Perform paging via Skip and Take.
         result.Items = await query.Skip(parameters.Skip).Take(parameters.Take).ToListAsync(cancellationToken: cancellationToken);

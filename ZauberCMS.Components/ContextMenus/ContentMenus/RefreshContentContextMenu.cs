@@ -1,18 +1,20 @@
 ﻿using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Services;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
 public class RefreshContentContextMenu(
-    IMediator mediator,
+    IMembershipService membershipService,
+    IContentService contentService,
     ICacheService cacheService,
     TreeState treeState,
     AppState appState) : ITreeContextMenu
@@ -40,8 +42,8 @@ public class RefreshContentContextMenu(
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var content = (Content)args.Value!;
-        var dbContent = await mediator.Send(new GetContentCommand { Id = content.Id, IncludeChildren = true });
-        var currentUser = await mediator.GetCurrentUser();
+        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = content.Id, IncludeChildren = true });
+        var currentUser = await membershipService.GetCurrentUser();
         contextMenuService.Close();
         cacheService.ClearCachedItemsWithPrefix(nameof(Core.Content));
         treeState.ClearChildCache(null);

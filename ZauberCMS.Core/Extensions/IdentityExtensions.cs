@@ -2,7 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Membership.Models;
 
@@ -45,9 +46,9 @@ public static class IdentityExtensions
     /// </summary>
     /// <param name="user">The User to get the media item from</param>
     /// <param name="alias">The property alias</param>
-    /// <param name="mediator">An injected IMediatr</param>
+    /// <param name="contentService">An injected contentService</param>
     /// <returns>List of Content</returns>
-    public static async Task<IEnumerable<Content.Models.Content>> GetContent(this User user, string alias, IMediator mediator)
+    public static async Task<IEnumerable<Content.Models.Content>> GetContent(this User user, string alias, IContentService contentService)
     {
         var contentIds = user.GetValue<List<Guid>?>(alias);
         if (contentIds != null)
@@ -56,7 +57,7 @@ public static class IdentityExtensions
             if (contentCount > 0)
             {
                 // TODO - Look at caching these
-                var contentItems=  await mediator.Send(new QueryContentCommand{Ids = contentIds, AmountPerPage = contentCount});
+                var contentItems=  await contentService.QueryContentAsync(new QueryContentParameters {Ids = contentIds, AmountPerPage = contentCount});
                 return contentItems.Items;
             }
         }

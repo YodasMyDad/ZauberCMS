@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
 
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -28,7 +28,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var items = await Mediator.Send(new QueryContentCommand { Ids = Path, AmountPerPage = 10 });
+        var items = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = Path, AmountPerPage = 10 });
         BreadcrumbItems = items.Items.Reverse();
     }
 

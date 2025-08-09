@@ -23,6 +23,12 @@ public class SeoService(
     ExtensionManager extensionManager)
     : ISeoService
 {
+    /// <summary>
+    /// Creates or updates an SEO redirect. Logs audit and saves changes.
+    /// </summary>
+    /// <param name="parameters">Redirect to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<SeoRedirect>> SaveRedirectAsync(SaveRedirectParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -62,6 +68,12 @@ public class SeoService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Queries redirects with filtering, ordering and amount limiting. Can use cache.
+    /// </summary>
+    /// <param name="parameters">Query options including ids and amount.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of redirects.</returns>
     public async Task<List<SeoRedirect>> QueryRedirectsAsync(QueryRedirectsParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -77,6 +89,12 @@ public class SeoService(
         return await FetchContentAsync(parameters, dbContext, cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes a redirect by id. Logs audit.
+    /// </summary>
+    /// <param name="parameters">Redirect id to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<SeoRedirect?>> DeleteRedirectAsync(DeleteRedirectParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -130,7 +148,7 @@ public class SeoService(
             GetSeoRedirectOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
             GetSeoRedirectOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
             GetSeoRedirectOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
-            GetSeoRedirectOrderBy.DateUpdatedDescending => query.OrderBy(p => p.DateUpdated),
+            GetSeoRedirectOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
             _ => query.OrderByDescending(p => p.FromUrl)
         };
 

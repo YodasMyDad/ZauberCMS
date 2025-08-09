@@ -1,12 +1,12 @@
-﻿using MediatR;
-using ZauberCMS.Core.Content.Commands;
+﻿using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Validation.Interfaces;
 using ZauberCMS.Core.Shared.Validation.Models;
 
 namespace ZauberCMS.Core.Content.Validation;
 
-public class ValidateContent(IMediator mediator) : IValidate<Models.Content>
+public class ValidateContent(IContentService contentService) : IValidate<Models.Content>
 {
     public async Task<ValidateResult> Validate(Models.Content item)
     {
@@ -17,7 +17,7 @@ public class ValidateContent(IMediator mediator) : IValidate<Models.Content>
         }
         
         // This might be new content, so we need to get the content type manually! 
-        var contentType = await mediator.Send(new GetContentTypeCommand { Id = item.ContentTypeId });
+        var contentType = await contentService.GetContentTypeAsync(new GetContentTypeParameters { Id = item.ContentTypeId });
         if (contentType == null)
         {
             validateResult.ErrorMessages.Add("Content type not found");

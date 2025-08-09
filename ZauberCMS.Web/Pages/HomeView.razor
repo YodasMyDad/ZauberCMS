@@ -1,7 +1,7 @@
-﻿@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Media.Models
+﻿@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Web.Layouts
 @using ZauberCMS.Web.Shared
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Components.Seo
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
 @* This is the layout you want to use *@
@@ -60,7 +60,7 @@
     protected override async Task OnInitializedAsync()
     {
         // Get the blog posts
-        var posts = await Mediator.Send(new QueryContentCommand
+        var posts = await ContentService.QueryContentAsync(new QueryContentParameters
         {
             AmountPerPage = 4,
             ContentTypeAlias = "BlogPage",

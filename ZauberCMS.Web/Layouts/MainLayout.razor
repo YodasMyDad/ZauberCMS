@@ -1,5 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Web.Shared
+﻿@using ZauberCMS.Core.Content.Parameters
 @inherits LayoutComponentBase
 
 <HeadContent>
@@ -59,7 +58,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Content = await Mediator.Send(new GetContentCommand
+        Content = await ContentService.GetContentAsync(new GetContentParameters
         {
             ContentTypeAlias = "Website",
             IncludeChildren = true,

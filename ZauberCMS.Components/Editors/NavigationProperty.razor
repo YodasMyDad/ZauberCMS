@@ -55,7 +55,7 @@
             {
                 if (navItem.ContentId != null)
                 {
-                    var content = await Mediator.GetContent(navItem.ContentId.Value);
+                    var content = await ContentService.GetContent(navItem.ContentId.Value);
                     if (content != null)
                     {
                         // Re-sync url's in case those have been changed.

@@ -19,6 +19,12 @@ public class AuditService(
     ILogger<AuditService> logger)
     : IAuditService
 {
+    /// <summary>
+    /// Creates or updates an audit record and persists it.
+    /// </summary>
+    /// <param name="parameters">Audit model to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Models.Audit>> SaveAuditAsync(SaveAuditParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -52,6 +58,12 @@ public class AuditService(
         return handlerResult;
     }
 
+    /// <summary>
+    /// Queries audits with optional where clause and ordering; returns paged list.
+    /// </summary>
+    /// <param name="parameters">Query options including paging.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of audits.</returns>
     public Task<PaginatedList<Models.Audit>> QueryAuditsAsync(QueryAuditsParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
@@ -91,6 +103,12 @@ public class AuditService(
         return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
 
+    /// <summary>
+    /// Deletes audit records older than the specified retention window and returns the count removed.
+    /// </summary>
+    /// <param name="parameters">Number of days to keep.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result containing the number of deleted rows.</returns>
     public async Task<HandlerResult<int>> CleanupOldAuditsAsync(CleanupOldAuditsParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();

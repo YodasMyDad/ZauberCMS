@@ -3,8 +3,7 @@
 @using ZauberCMS.Components.ContentComponents
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
-@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Content.Parameters
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -78,7 +77,7 @@
 
     private async Task PopulateContentTypes()
     {
-        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { AmountPerPage = 300, OnlyElementTypes = true});
+        var contentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters { AmountPerPage = 300, OnlyElementTypes = true});
         ContentTypes = contentTypes.Items.ToDictionary(x => x.Id, x => x);
     }
     

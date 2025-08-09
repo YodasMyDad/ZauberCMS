@@ -52,7 +52,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="ContextMenus\Shared\" />
       <Folder Include="wwwroot\css\" />
     </ItemGroup>
 
