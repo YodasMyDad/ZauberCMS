@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Languages.Commands
 @using ZauberCMS.Core.Languages.Models
 
@@ -82,13 +82,13 @@
         var allLangs = await Mediator.Send(new QueryLanguageCommand { OrderBy = GetLanguageOrderBy.LanguageCultureName, AmountPerPage = 200 });
         Languages = allLangs.Items;
 
-        var allDomains = await Mediator.Send(new QueryDomainCommand { OrderBy = GetDomainOrderBy.DateCreatedDescending, AmountPerPage = 200, ContentId = Content.Id });
+        var allDomains = await ContentService.QueryDomainAsync(new QueryDomainParameters { OrderBy = GetDomainOrderBy.DateCreatedDescending, AmountPerPage = 200, ContentId = Content.Id });
         Domains = allDomains.Items.ToList();
     }
 
     private async Task Delete(Guid id)
     {
-        var deleteDomainResult = await Mediator.Send(new DeleteDomainCommand { Id = id });
+        var deleteDomainResult = await ContentService.DeleteDomainAsync(new DeleteDomainParameters { Id = id });
         if (!deleteDomainResult.Success)
         {
             NotificationService.ShowNotifications(deleteDomainResult.Messages);
@@ -109,13 +109,13 @@
     private async Task Save()
     {
         // Save the content, if the language has been set
-        var saveContentResult = await Mediator.Send(new SaveContentCommand { Content = Content });
+        var saveContentResult = await ContentService.SaveContentAsync(new SaveContentParameters { Content = Content });
         if (saveContentResult.Success)
         {
             // Save domains
             foreach (var domain in Domains)
             {
-                var domainSave = await Mediator.Send(new SaveDomainCommand { Domain = domain });
+                var domainSave = await ContentService.SaveDomainAsync(new SaveDomainParameters { Domain = domain });
                 if (!domainSave.Success)
                 {
                     NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = domainSave.Messages.MessagesAsString(), Duration = 4000 });

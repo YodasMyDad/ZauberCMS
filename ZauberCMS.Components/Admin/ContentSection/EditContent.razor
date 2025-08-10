@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Plugins
 @attribute [Route(Urls.AdminCreateContent)]
 @attribute [Route($"{Urls.AdminCreateContent}/{{ParentId:guid}}")]
@@ -39,7 +39,7 @@
         if (ContentId != null)
         {
             // Have to get the content to see which view to show
-            Content = await Mediator.Send(new GetContentCommand { Id = ContentId, IncludeUnpublished = true });
+            Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId, IncludeUnpublished = true });
             ShowListView = Content?.ContentType?.EnableListView ?? false;
         }
     }

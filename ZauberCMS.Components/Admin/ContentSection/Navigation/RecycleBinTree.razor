@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Models
@@ -32,7 +32,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentUser = await Mediator.GetCurrentUser();
+        CurrentUser = await MembershipService.GetCurrentUser();
         await DataRefresh();
         TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
         AppState.OnContentChanged += HandleContentChanged;
@@ -53,7 +53,7 @@
     
     private async Task DataRefresh()
     {
-        var deletedContent = await Mediator.Send(new QueryContentCommand
+        var deletedContent = await ContentService.QueryContentAsync(new QueryContentParameters
         {
             OrderBy = GetContentsOrderBy.DateUpdated,
             IsDeleted = true, // Only get deleted items

@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
+
 <RadzenTabs RenderMode="TabRenderMode.Client">
     <Tabs>
         <RadzenTabsItem Text="Edit">
@@ -64,7 +65,7 @@
     
     private async Task Delete(Guid id)
     {
-        var result = await Mediator.Send(new DeleteContentCommand { ContentId = id, MoveToRecycleBin = true});
+        var result = await ContentService.DeleteContentAsync(new DeleteContentParameters { ContentId = id, MoveToRecycleBin = true});
         if (result.Success)
         {
             await LoadAllUserData(new LoadDataArgs { Top = AmountPerPage });
@@ -87,7 +88,7 @@
 
         await Task.Yield();
 
-        var command = new DataGridContentCommand();
+        var command = new DataGridContentParameters();
 
         if (ContentId != null)
         {
@@ -116,7 +117,7 @@
             command.Order = args.OrderBy;
         }
 
-        var result = await Mediator.Send(command);
+        var result = await ContentService.GetDataGridContentAsync(command);
         AllUserCount = result.Count;
         AllUserContents = result.Items;
 

@@ -3,12 +3,11 @@
 @using AutoMapper
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.Extensions.Localization
-@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Content.Interfaces
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
@@ -324,7 +323,7 @@ else
         else
         {
             // We have a content item passed in
-            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content.ContentTypeId });
+            ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = Content.ContentTypeId });
             if (ContentType == null)
             {
                 NotificationService.ShowErrorNotification("Unable to find a content type for the content?");
@@ -356,8 +355,8 @@ else
     {
         if (ContentId != null)
         {
-            Content = await Mediator.Send(new GetContentCommand { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true });
-            ContentType = await Mediator.Send(new GetContentTypeCommand { Id = Content!.ContentTypeId });
+            Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true });
+            ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = Content!.ContentTypeId });
             if (ContentType == null)
             {
                 NotificationService.ShowErrorNotification("Unable to find conent type for this content");
@@ -400,7 +399,7 @@ else
 
         if (!ContentType.IsComposition)
         {
-            var compositions = await Mediator.Send(new QueryContentTypesCommand { OnlyCompositions = true, AmountPerPage = 100 });
+            var compositions = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters { OnlyCompositions = true, AmountPerPage = 100 });
 
             if (ContentType.CompositionIds.Any())
             {
@@ -487,7 +486,7 @@ else
         // Breadcrumb
         if (Content.Path.Count > 1)
         {
-            var breadcrumb = await Mediator.QueryContent(new QueryContentCommand { Ids = Content.Path });
+            var breadcrumb = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = Content.Path });
             if (breadcrumb.Items.Any())
             {
                 Breadcrumb = breadcrumb.Items
@@ -500,7 +499,7 @@ else
 
     private async Task UpdateContentTypeId(Guid contentTypeId)
     {
-        ContentType = await Mediator.Send(new GetContentTypeCommand { Id = contentTypeId });
+        ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = contentTypeId });
         if (ContentType == null)
         {
             NotificationService.ShowErrorNotification("Content Type does not exist");
@@ -519,7 +518,7 @@ else
 
     private async Task ClearUnpublishedChanges()
     {
-        var removeUnpublishedContent = await Mediator.Send(new ClearUnpublishedContentCommand { ContentId = Content!.Id });
+        var removeUnpublishedContent = await ContentService.ClearUnpublishedContentAsync(new ClearUnpublishedContentParameters { ContentId = Content!.Id });
         if (removeUnpublishedContent.Success)
         {
             await RefreshContent();
@@ -541,7 +540,7 @@ else
             }
             else
             {
-                var saveContentCommand = new SaveContentCommand();
+                var saveContentCommand = new SaveContentParameters();
 
                 if (unpublish)
                 {
@@ -561,7 +560,7 @@ else
                 }
 
                 saveContentCommand.Content = Content;
-                var result = await Mediator.Send(saveContentCommand);
+                var result = await ContentService.SaveContentAsync(saveContentCommand);
                 NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
 
                 if (ParentId != null)

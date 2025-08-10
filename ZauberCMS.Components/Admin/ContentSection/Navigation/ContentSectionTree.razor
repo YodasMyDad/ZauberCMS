@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
@@ -55,7 +55,7 @@
     
     private async Task DataRefresh()
     {
-        var items = await Mediator.Send(new QueryContentCommand
+        var items = await ContentService.QueryContentAsync(new QueryContentParameters
         {
             AmountPerPage = 1000,
             WhereClause = x => x.IsRootContent,

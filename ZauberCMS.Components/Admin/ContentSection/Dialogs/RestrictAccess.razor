@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared.Comparers
@@ -34,7 +34,7 @@
     
     protected override async Task OnInitializedAsync()
     {
-        var content = await Mediator.Send(new GetContentCommand { Id = ContentId, IncludeContentRoles = true });
+        var content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId, IncludeContentRoles = true });
         if (content != null)
         {
             var allRoles = await Mediator.Send(new QueryRolesCommand { AmountPerPage = 250, OrderBy = GetRolesOrderBy.Name});
