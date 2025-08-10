@@ -1,16 +1,17 @@
 ﻿using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
-public class DeleteContentContextMenu(IMediator mediator, DialogService confirmService, NotificationService notificationService, AppState appState) : ITreeContextMenu
+public class DeleteContentContextMenu(IContentService contentService, IMembershipService membershipService, DialogService confirmService, NotificationService notificationService, AppState appState) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias { get; } = [];
@@ -28,8 +29,8 @@ public class DeleteContentContextMenu(IMediator mediator, DialogService confirmS
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var content = (Content)args.Value!;
-        var dbContent = await mediator.Send(new GetContentCommand { Id = content.Id, IncludeChildren = true, IncludeUnpublished = true, Cached = false});
-        var currentUser = await mediator.GetCurrentUser();
+        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = content.Id, IncludeChildren = true, IncludeUnpublished = true, Cached = false});
+        var currentUser = await membershipService.GetCurrentUser();
         // Confirm dialogue, say if there are children, and confirm then delete all
         var hasChildren = dbContent!.Children.Count != 0;
         var message = hasChildren
@@ -38,7 +39,7 @@ public class DeleteContentContextMenu(IMediator mediator, DialogService confirmS
         var delete = await confirmService.Confirm(message, "Move to recycle bin", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
         if (delete == true)
         {
-            var result = await mediator.Send(new DeleteContentCommand{ContentId = dbContent.Id, MoveToRecycleBin = true});
+            var result = await contentService.DeleteContentAsync(new DeleteContentParameters {ContentId = dbContent.Id, MoveToRecycleBin = true});
             notificationService.Notify(new NotificationMessage { 
                 Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
                 Summary = result.Success ? "Success" : "Error", 

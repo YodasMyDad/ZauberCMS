@@ -1,18 +1,19 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.ContentSection.Dialogs;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
-public class CopyContentContextMenu(NotificationService notificationService, IMediator mediator, AppState appState) : ITreeContextMenu
+public class CopyContentContextMenu(NotificationService notificationService, IContentService contentService, IMembershipService membershipService, AppState appState) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias => [];
@@ -32,7 +33,7 @@ public class CopyContentContextMenu(NotificationService notificationService, IMe
     }
 
     private IModalReference? Modal { get; set; }
-    private CopyContentCommand CopyContentCommand { get; set; } = new();
+    private CopyContentParameters CopyContentCommand { get; set; } = new();
     
     public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
@@ -48,9 +49,9 @@ public class CopyContentContextMenu(NotificationService notificationService, IMe
 
         Modal = modalService.OpenSidePanel<CopyContent>("Copy Content", parameters);
         var result = await Modal.Result;
-        if (result is { Confirmed: true, Data: CopyContentCommand copyContentModel })
+        if (result is { Confirmed: true, Data: CopyContentParameters copyContentModel })
         {
-            var copyContentResult = await mediator.Send(copyContentModel);
+            var copyContentResult = await contentService.CopyContentAsync(copyContentModel);
             if (!copyContentResult.Success)
             {
                 notificationService.ShowNotifications(copyContentResult.Messages);
@@ -58,7 +59,7 @@ public class CopyContentContextMenu(NotificationService notificationService, IMe
             else
             {
                 notificationService.ShowSuccessNotification("Content copied");
-                var user = await mediator.GetCurrentUser();
+                var user = await membershipService.GetCurrentUser();
                 await appState.NotifyContentChanged(content, user?.UserName ?? "Unknown");
             }
         }

@@ -14,8 +14,7 @@
 @using ZauberCMS.Components.Admin.StructureSection.Dialogs
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
-@using ZauberCMS.Core.Content.Commands
-@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
@@ -366,7 +365,7 @@
 
         if (ContentTypeId != null)
         {
-            var contentType = await Mediator.Send(new GetContentTypeCommand { Id = ContentTypeId.Value });
+            var contentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = ContentTypeId.Value });
             if (contentType != null)
             {
                 ContentType = contentType;
@@ -381,7 +380,7 @@
         if (CopyContentTypeId != null)
         {
             // Should this be done here?
-            var contentTypeToCopy = await Mediator.Send(new GetContentTypeCommand { Id = CopyContentTypeId.Value });
+            var contentTypeToCopy = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = CopyContentTypeId.Value });
             if (contentTypeToCopy != null)
             {
                 ContentType = contentTypeToCopy;
@@ -391,7 +390,7 @@
             }
         }
 
-        var contentTypes = await Mediator.Send(new QueryContentTypesCommand { OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000 });
+        var contentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters { OrderBy = GetContentTypesOrderBy.Name, AmountPerPage = 1000 });
         ContentTypes = contentTypes.Items.ToList();
 
         if (ContentTypes.Count <= 0)
@@ -432,7 +431,7 @@
      
         if (!ContentType.IsComposition)
         {
-            var compositions = await Mediator.Send(new QueryContentTypesCommand { OnlyCompositions = true, AmountPerPage = 100 });
+            var compositions = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters { OnlyCompositions = true, AmountPerPage = 100 });
             Compositions = compositions.Items.ToList();
 
             if (ContentType.CompositionIds.Any())
@@ -460,7 +459,7 @@
             contentType.ParentId = ParentId.Value;
             
             // Need to update foldertype from the parent
-            var parentContentType = await Mediator.Send(new GetContentTypeCommand{ Id = ParentId.Value});
+            var parentContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = ParentId.Value});
             if (parentContentType != null)
             {
                 contentType.IsElementType = parentContentType.IsElementType;
@@ -708,8 +707,8 @@
         if (await ValidateService.CanSave(ContentType))
         {
             ContentType.ContentProperties = ContentType.IsComposition ? AllProperties : AllProperties.Where(x => x.IsFromComposition == false).ToList();
-            var saveContentTypeCommand = new SaveContentTypeCommand { ContentType = ContentType };
-            var result = await Mediator.Send(saveContentTypeCommand);
+            var saveContentTypeCommand = new SaveContentTypeParameters { ContentType = ContentType };
+            var result = await ContentService.SaveContentTypeAsync(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             await AppState.NotifyContentTypeSaved(ContentType, AuthState.User.Identity?.Name!);
 
@@ -728,7 +727,7 @@
 
     private async Task DeleteContentType()
     {
-        var result = await Mediator.Send(new DeleteContentTypeCommand { ContentTypeId = ContentType.Id });
+        var result = await ContentService.DeleteContentTypeAsync(new DeleteContentTypeParameters { ContentTypeId = ContentType.Id });
         if (result.Success)
         {            
             NotificationService.ShowSuccessNotification("Content Type Deleted");

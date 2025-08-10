@@ -1,5 +1,5 @@
 ﻿@using ZauberCMS.Components.Admin.ContentSection.Dialogs
-@using ZauberCMS.Core.Content.Commands
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Membership.Models
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
@@ -111,7 +111,7 @@
 
         await Task.Yield();
 
-        var command = new DataGridContentCommand();
+        var command = new DataGridContentParameters();
 
         if (ParentId != null)
         {
@@ -140,7 +140,7 @@
             command.Order = args.OrderBy;
         }
 
-        var result = await Mediator.Send(command);
+        var result = await ContentService.GetDataGridContentAsync(command);
         AllUserCount = result.Count;
         AllUserContents = result.Items;
 
@@ -153,7 +153,7 @@
 
         await Task.Yield();
 
-        var command = new DataGridContentCommand();
+        var command = new DataGridContentParameters();
 
         if (ParentId != null)
         {
@@ -184,7 +184,7 @@
 
         command.LastEditedBy = CurrentUser?.Id;
 
-        var result = await Mediator.Send(command);
+        var result = await ContentService.GetDataGridContentAsync(command);
         YourUserCount = result.Count;
         YourUserContents = result.Items;
 
@@ -193,10 +193,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentUser = await Mediator.GetCurrentUser();
+        CurrentUser = await MembershipService.GetCurrentUser();
         await LoadAllUserData(new LoadDataArgs { Top = AmountPerPage });
         await LoadYourUserData(new LoadDataArgs { Top = AmountPerPage });
-        var items = await Mediator.Send(new QueryContentCommand { AmountPerPage = 100, OnlyUnpublished = true });
+        var items = await ContentService.QueryContentAsync(new QueryContentParameters { AmountPerPage = 100, OnlyUnpublished = true });
         UnpublishedContent = items.Items.Select(x => x.Id).ToList();
     }
 

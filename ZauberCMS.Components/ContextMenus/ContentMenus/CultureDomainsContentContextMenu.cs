@@ -1,18 +1,20 @@
 ﻿using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.ContentSection.Dialogs;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
 public class CultureDomainsContentContextMenu(
-    IMediator mediator,
+    IContentService contentService,
+    IMembershipService membershipService,
     NotificationService notificationService,
     AppState appState) : ITreeContextMenu
 {
@@ -43,8 +45,8 @@ public class CultureDomainsContentContextMenu(
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var content = (Content)args.Value!;
-        var dbContent = await mediator.Send(new GetContentCommand { Id = content.Id, IncludeChildren = true });
-        var currentUser = await mediator.GetCurrentUser();
+        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = content.Id, IncludeChildren = true });
+        var currentUser = await membershipService.GetCurrentUser();
         contextMenuService.Close();
         var languageDialog = modalService.OpenSidePanel<CultureDomains>("Domains & Culture",
             new Dictionary<string, object>
@@ -59,7 +61,7 @@ public class CultureDomainsContentContextMenu(
             if (savedContent?.LanguageId != null)
             {
                 // Save the content
-                var saveResult = await mediator.Send(new SaveContentCommand
+                var saveResult = await contentService.SaveContentAsync(new SaveContentParameters
                     { Content = savedContent, ExcludePropertyData = true });
                 if (!saveResult.Success)
                 {

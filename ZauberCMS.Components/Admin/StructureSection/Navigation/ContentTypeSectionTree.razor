@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Commands
+﻿@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Shared
 
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
@@ -63,7 +63,7 @@
     
     private async Task DataRefresh()
     {
-        var items = await Mediator.Send(new QueryContentTypesCommand
+        var items = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
         {
             AmountPerPage = 1000,
             IncludeFolders = true,

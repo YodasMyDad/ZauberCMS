@@ -1,19 +1,20 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.ContentSection.Dialogs;
 using ZauberCMS.Core;
-using ZauberCMS.Core.Content.Commands;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Models;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
-public class MoveContentContextMenu(NotificationService notificationService, IMediator mediator, AppState appState) : ITreeContextMenu
+public class MoveContentContextMenu(NotificationService notificationService, IContentService contentService, IMembershipService membershipService, AppState appState) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias => [];
@@ -58,7 +59,7 @@ public class MoveContentContextMenu(NotificationService notificationService, IMe
             {
                 // If this is null, they are trying to put it in the root
                 // get the content type and see if it's allowed in the root
-                var contentType = await mediator.Send(new GetContentTypeCommand { Id = baseItem.ContentTypeId });
+                var contentType = await contentService.GetContentTypeAsync(new GetContentTypeParameters { Id = baseItem.ContentTypeId });
                 if (contentType?.AllowAtRoot == true)
                 {
                     baseItem.ParentId = null;
@@ -78,11 +79,11 @@ public class MoveContentContextMenu(NotificationService notificationService, IMe
                 baseItem.IsRootContent = false;
             }
             
-            var user = await mediator.GetCurrentUser();
+            var user = await membershipService.GetCurrentUser();
             
             if (args.Value is Content content)
             {
-                var copyContentResult = await mediator.Send(new SaveContentCommand {Content = content, ExcludePropertyData = true});
+                var copyContentResult = await contentService.SaveContentAsync(new SaveContentParameters {Content = content, ExcludePropertyData = true});
                 if (!copyContentResult.Success)
                 {
                     notificationService.ShowNotifications(copyContentResult.Messages);
