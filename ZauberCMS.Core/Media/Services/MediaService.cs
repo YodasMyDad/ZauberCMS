@@ -247,9 +247,7 @@ public class MediaService(
     private static string GenerateCacheKey(GetMediaParameters parameters, IZauberDbContext dbContext)
     {
         var query = BuildQuery(parameters, dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(Models.Media).ToCacheKey(Convert.ToBase64String(hash));
+        return query.GenerateCacheKey<Models.Media>();
     }
 
     private static IQueryable<Models.Media> BuildQuery(GetMediaParameters parameters, IZauberDbContext dbContext)
@@ -355,9 +353,7 @@ public class MediaService(
     private static string GenerateCacheKey(IZauberDbContext dbContext)
     {
         var query = BuildQuery(dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(Models.Media).ToCacheKey(Convert.ToBase64String(hash));
+        return query.GenerateCacheKey<Models.Media>();
     }
 
     private static IQueryable<Models.Media> BuildQuery(IZauberDbContext dbContext)

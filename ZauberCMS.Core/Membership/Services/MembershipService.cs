@@ -913,9 +913,7 @@ public class MembershipService(
     private static string GenerateCacheKey(GetUserParameters parameters, IZauberDbContext dbContext)
     {
         var query = BuildQuery(parameters, dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(User).ToCacheKey(Convert.ToBase64String(hash));
+        return query.GenerateCacheKey<User>();
     }
 
     private static IQueryable<User> BuildQuery(GetUserParameters parameters, IZauberDbContext dbContext)

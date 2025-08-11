@@ -154,9 +154,7 @@ public class DataService(
     private static string GenerateCacheKey(GetGlobalDataParameters parameters, IZauberDbContext dbContext)
     {
         var query = BuildQuery(parameters, dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(GlobalData).ToCacheKey(Convert.ToBase64String(hash));
+        return query.GenerateCacheKey<GlobalData>();
     }
 
     private static IQueryable<GlobalData> BuildQuery(GetGlobalDataParameters parameters, IZauberDbContext dbContext)

@@ -783,9 +783,7 @@ public class ContentService(
             .Where(x => x.Language != null && x.Url != null);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        var cacheKey = typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+        var cacheKey = query.GenerateCacheKey<Models.Content>();
 
         return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
@@ -811,9 +809,7 @@ public class ContentService(
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsNoTracking().Include(x => x.Language);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        var cacheKey = typeof(Domain).ToCacheKey(Convert.ToBase64String(hash));
+        var cacheKey = query.GenerateCacheKey<Domain>();
         return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToListAsync(cancellationToken: cancellationToken)))!;
     }
 
@@ -921,9 +917,7 @@ public class ContentService(
     private static string GenerateGetContentCacheKey(GetContentParameters request, IZauberDbContext dbContext)
     {
         var query = BuildQuery(request, dbContext);
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+        return query.GenerateCacheKey<Models.Content>();
     }
 
     private static IQueryable<Models.Content> BuildQuery(GetContentParameters request, IZauberDbContext dbContext)
@@ -1022,7 +1016,7 @@ public class ContentService(
                 query = query.Where(x => x.ParentId == null);
             }
 
-            if (request.TagSlugs.Any())
+            if (request.TagSlugs.Count != 0)
             {
                 query = (from content in query
                         join tagItem in dbContext.TagItems on content.Id equals tagItem.ItemId
@@ -1187,14 +1181,7 @@ public class ContentService(
 
     private static string GenerateGetContentFromRequestCacheKey(GetContentFromRequestParameters request)
     {
-        var keyBuilder = new StringBuilder();
-        keyBuilder.Append($"GetContentFromRequest-");
-        keyBuilder.Append($"Url:{request.Url ?? "null"}-");
-        keyBuilder.Append($"Slug:{request.Slug ?? "null"}-");
-        keyBuilder.Append($"IsRoot:{request.IsRootContent}-");
-        keyBuilder.Append($"IncludeChildren:{request.IncludeChildren}");
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(keyBuilder.ToString()));
-        return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+        return request.GenerateCacheKey<Models.Content>("GetContentFromRequest");
     }
 
     private static Domain? MatchDomainWithContent(string url, List<Domain> domains)
@@ -1218,16 +1205,12 @@ public class ContentService(
 
     private static string GenerateHasChildContentCacheKey(HasChildContentParameters request)
     {
-        var key = $"HasChild-{request.ParentId}";
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
-        return typeof(Models.Content).ToCacheKey(Convert.ToBase64String(hash));
+        return request.GenerateCacheKey<Models.Content>("HasChild");
     }
 
     private static string GenerateHasChildContentTypeCacheKey(HasChildContentTypeParameters request)
     {
-        var key = $"HasContentTypeChild-{request.ParentId}";
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
-        return typeof(ContentType).ToCacheKey(Convert.ToBase64String(hash));
+        return request.GenerateCacheKey<ContentType>("HasContentTypeChild");
     }
 
     private static string GenerateUniqueUrl(IZauberDbContext dbContext, string baseSlug)
