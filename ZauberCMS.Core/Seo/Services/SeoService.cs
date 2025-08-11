@@ -60,7 +60,7 @@ public class SeoService(
             }
             
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-            await user.AddAuditWithService(redirect, redirect.FromUrl, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, auditService, cancellationToken);
+            await user.AddAudit(redirect, redirect.FromUrl, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, auditService, cancellationToken);
             return await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
@@ -113,7 +113,7 @@ public class SeoService(
             if (redirect != null)
             {
                 var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await user.AddAuditWithService(redirect, $"Redirect ({redirect.FromUrl} -> {redirect.ToUrl})",
+                await user.AddAudit(redirect, $"Redirect ({redirect.FromUrl} -> {redirect.ToUrl})",
                     AuditExtensions.AuditAction.Delete, auditService,
                     cancellationToken);
                 dbContext.Redirects.Remove(redirect);

@@ -1,14 +1,11 @@
 using System.Reflection;
 using Blazored.Modal;
-using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,7 +37,7 @@ using ZauberCMS.Core.Data.Services;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Email.Services;
 using ZauberCMS.Core.Jobs;
-using ZauberCMS.Core.Languages.Commands;
+using ZauberCMS.Core.Languages.Parameters;
 using ZauberCMS.Core.Media.Middleware;
 using ZauberCMS.Core.Media.Processors;
 using ZauberCMS.Core.Membership;
@@ -289,7 +286,7 @@ public static class ZauberSetup
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
             var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
-            var mediatr = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var languageService = scope.ServiceProvider.GetRequiredService<ILanguageService>();
             var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
 
             try
@@ -307,7 +304,7 @@ public static class ZauberSetup
                 }
 
                 // Is this ok to use the awaiter and result here?
-                var langs = mediatr.Send(new QueryLanguageCommand { AmountPerPage = 200 }).GetAwaiter().GetResult();
+                var langs = languageService.QueryLanguageAsync(new QueryLanguageParameters { AmountPerPage = 200 }).GetAwaiter().GetResult();
 
                 // en-US must be the default culture as that's what the backoffice resource is
                 var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };

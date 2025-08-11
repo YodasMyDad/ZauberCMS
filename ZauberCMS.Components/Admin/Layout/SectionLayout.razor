@@ -55,7 +55,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        var globalSettingsRequest = await Mediator.GetGlobalSettings();
+        var globalSettingsRequest = await DataService.GetGlobalSettings();
         if (globalSettingsRequest.AllowedAdminIpAddress.Any() && HttpContext != null)
         {
             // Someone has set an ip address, so check this persons IP

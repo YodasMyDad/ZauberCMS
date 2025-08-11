@@ -1,7 +1,7 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
-@using ZauberCMS.Core.Tags.Commands
+@using ZauberCMS.Core.Tags.Parameters
 @using ZauberCMS.Core.Tags.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -55,7 +55,7 @@
         var selectedValues = SelectedValues as Guid[] ?? SelectedValues.ToArray();
         if (selectedValues.Any())
         {
-            var result = await Mediator.Send(new SaveTagItemCommand { ItemId = Content!.Id, TagIds = selectedValues.ToList()});
+            var result = await TagService.SaveTagItemAsync(new SaveTagItemParameters { ItemId = Content!.Id, TagIds = selectedValues.ToList()});
             if (!result.Success)
             {
                 NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
@@ -71,7 +71,7 @@
 
     private async Task SetTags()
     {
-        var tags = await Mediator.Send(new QueryTagCommand { AmountPerPage = 200, OrderBy = GetTagOrderBy.SortOrder});
+        var tags = await TagService.QueryTagAsync(new QueryTagParameters { AmountPerPage = 200, OrderBy = GetTagOrderBy.SortOrder});
         Tags = tags.Items.ToList();
     }
     
@@ -80,7 +80,7 @@
         Value = JsonSerializer.Serialize(SelectedValues);
         
         // Now save the tag items
-        var result = await Mediator.Send(new SaveTagItemCommand { ItemId = Content!.Id, TagIds = SelectedValues.ToList()});
+        var result = await TagService.SaveTagItemAsync(new SaveTagItemParameters { ItemId = Content!.Id, TagIds = SelectedValues.ToList()});
         if (result.Success)
         {
             await ValueChanged.InvokeAsync(Value);

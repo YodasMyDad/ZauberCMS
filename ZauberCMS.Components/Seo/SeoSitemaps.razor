@@ -1,9 +1,8 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.Seo.Dialogs
 @using ZauberCMS.Components.Seo.Models
+@using ZauberCMS.Core.Data.Parameters
 @using ZauberCMS.Core
-@using ZauberCMS.Core.Data.Models
-@using ZauberCMS.Core.Data.Commands
 
 @attribute [Route(Urls.AdminSeoSitemaps)]
 
@@ -105,7 +104,7 @@
             sitemap.FileName = _slugHelper.GenerateSlug(sitemap.Name);
         }
 
-        var saveResult = await Mediator.Send(new SaveGlobalDataCommand { Alias = SeoConstants.SeoSitemapName, Data = JsonSerializer.Serialize(Sitemaps) });
+        var saveResult = await DataService.SaveGlobalDataAsync(new SaveGlobalDataParameters { Alias = SeoConstants.SeoSitemapName, Data = JsonSerializer.Serialize(Sitemaps) });
         if (saveResult.Success)
         {
             NotificationService.ShowSuccessNotification("Sitemaps updated");

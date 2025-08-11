@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
+using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
@@ -17,14 +18,14 @@ public static class RoleExtensions
             ILogger logger,
             IZauberDbContext dbContext,
             IOptions<ZauberSettings> settings,
-            IMediator mediator,
+            IDataService dataService,
             User newUser,
             AuthenticationResult loginResult)
         {
             // Log new account creation
             logger.LogInformation("{RequestUsername} created a new account", newUser.UserName);
 
-            var globalSettings = await mediator.GetGlobalSettings();
+            var globalSettings = await dataService.GetGlobalSettings();
             
             // Determine starting role name
             var startingRoleName = settings.Value.NewUserStartingRole ?? Constants.Roles.StandardRoleName;

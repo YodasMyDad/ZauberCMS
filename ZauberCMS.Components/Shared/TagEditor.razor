@@ -1,5 +1,5 @@
-﻿@using ZauberCMS.Core.Tags.Commands
-@using ZauberCMS.Core.Tags.Models
+﻿@using ZauberCMS.Core.Tags.Models
+@using ZauberCMS.Core.Tags.Parameters
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 <div>
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" class="mb-4">
@@ -33,7 +33,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var tags = await Mediator.Send(new QueryTagCommand { AmountPerPage = 200, OrderBy = GetTagOrderBy.SortOrder});
+        var tags = await TagService.QueryTagAsync(new QueryTagParameters { AmountPerPage = 200, OrderBy = GetTagOrderBy.SortOrder});
         Tags = tags.Items.ToList(); 
     }
 
@@ -41,7 +41,7 @@
     {
         if (!string.IsNullOrWhiteSpace(_newItem.TagName))
         {
-            var result = await Mediator.Send(new SaveTagCommand { TagName = _newItem.TagName, SortOrder = Tags.Count + 1});
+            var result = await TagService.SaveTagAsync(new SaveTagParameters { TagName = _newItem.TagName, SortOrder = Tags.Count + 1});
             if (result.Success)
             {
                 Tags.Add(_newItem);
@@ -61,7 +61,7 @@
         if (delete == true)
         {
             // Are you sure
-            var result = await Mediator.Send(new DeleteTagCommand { Id = item.Id});
+            var result = await TagService.DeleteTagAsync(new DeleteTagParameters { Id = item.Id});
             if (result.Success)
             {
                 Tags.Remove(item);
@@ -73,7 +73,7 @@
 
     private async Task OnValueChanged(string newValue, Tag tag)
     {
-        var result = await Mediator.Send(new SaveTagCommand { TagName = newValue, Id = tag.Id});
+        var result = await TagService.SaveTagAsync(new SaveTagParameters { TagName = newValue, Id = tag.Id});
         if (result.Success)
         {
             tag.TagName = newValue;
@@ -99,7 +99,7 @@
             var tag = Tags[index];
             tag.SortOrder = index;
             
-            var result = await Mediator.Send(new SaveTagCommand { Id = tag.Id, TagName = tag.TagName, SortOrder = tag.SortOrder});
+            var result = await TagService.SaveTagAsync(new SaveTagParameters { Id = tag.Id, TagName = tag.TagName, SortOrder = tag.SortOrder});
             if (!result.Success)
             {
                 NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });

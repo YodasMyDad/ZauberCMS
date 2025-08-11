@@ -44,7 +44,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var globalSettingsRequest = await Mediator.GetGlobalSettings();
+        var globalSettingsRequest = await DataService.GetGlobalSettings();
         if (globalSettingsRequest.ApiKeys.TryGetValue("TinyMCE", out var apiKey))
         {
             ApiKey = apiKey;    

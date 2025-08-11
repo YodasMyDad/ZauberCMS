@@ -1,8 +1,8 @@
-﻿using MediatR;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ZauberCMS.Core.Audit.Commands;
+using ZauberCMS.Core.Audit.Interfaces;
+using ZauberCMS.Core.Audit.Parameters;
 
 namespace ZauberCMS.Core.Jobs;
 
@@ -21,8 +21,8 @@ public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger
         try
         {
             using var scope = serviceProvider.CreateScope();
-            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            await mediator.Send(new CleanupOldAuditsCommand());
+            var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
+            await auditService.CleanupOldAuditsAsync(new CleanupOldAuditsParameters());
         }
         catch (Exception e)
         {

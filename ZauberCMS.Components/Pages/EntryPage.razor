@@ -8,7 +8,7 @@
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Plugins
-@using ZauberCMS.Core.Seo.Commands
+@using ZauberCMS.Core.Seo.Parameters
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Services
 
@@ -137,7 +137,7 @@
     {
         try
         {
-            var allRedirects = await Mediator.Send(new QueryRedirectsCommand());
+            var allRedirects = await SeoService.QueryRedirectsAsync(new QueryRedirectsParameters());
             var currentUrl = GetFullUrlPath();
             
             foreach (var seoRedirect in allRedirects.Where(seoRedirect => !string.IsNullOrEmpty(seoRedirect.FromUrl)))

@@ -1,6 +1,7 @@
 ﻿@using System.Globalization
-@using ZauberCMS.Core.Languages.Commands
+@using ZauberCMS.Core.Languages.Parameters
 @using ZauberCMS.Core.Languages.Models
+
 <EditorRow>
     <LeftColumn>
         <PropertyInfo Name="Create Language" />
@@ -59,7 +60,7 @@
     private async Task Save()
     {
         // Is this an update, and if so, have they changed the language
-        var language = await Mediator.Send(new SaveLanguageCommand
+        var language = await LanguageService.SaveLanguageAsync(new SaveLanguageParameters
         {
             CultureInfo = Languages.FirstOrDefault(x => x.Name == Selected), 
             Id = Language?.Id

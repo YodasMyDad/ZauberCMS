@@ -113,7 +113,7 @@ public class LanguageService(
             }
 
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-            await user.AddAuditWithService(language, $"Language ({language.LanguageCultureName})",
+            await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
                 isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, auditService,
                 cancellationToken);
             return await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken);
@@ -201,7 +201,7 @@ public class LanguageService(
             if (language != null)
             {
                 var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await user.AddAuditWithService(language, $"Language ({language.LanguageCultureName})",
+                await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
                     AuditExtensions.AuditAction.Delete, auditService,
                     cancellationToken);
                 dbContext.Languages.Remove(language);
@@ -214,7 +214,7 @@ public class LanguageService(
             if (language != null)
             {
                 var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await user.AddAuditWithService(language, $"Language ({language.LanguageCultureName})",
+                await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
                     AuditExtensions.AuditAction.Delete, auditService,
                     cancellationToken);
                 dbContext.Languages.Remove(language);
@@ -261,7 +261,7 @@ public class LanguageService(
             }
 
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-            await user.AddAuditWithService(langDictionary, $"Language Dictionary ({langDictionary.Key})",
+            await user.AddAudit(langDictionary, $"Language Dictionary ({langDictionary.Key})",
                 AuditExtensions.AuditAction.Update, auditService,
                 cancellationToken);
             handlerResult = await dbContext.SaveChangesAndLog(langDictionary, handlerResult, cacheService, extensionManager, cancellationToken);

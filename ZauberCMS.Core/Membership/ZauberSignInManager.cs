@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
+using ZauberCMS.Core.Data.Interfaces;
+using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Settings;
@@ -23,7 +25,7 @@ public class ZauberSignInManager(
     IAuthenticationSchemeProvider schemes,
     IUserConfirmation<User> confirmation,
     IOptions<ZauberSettings> options,
-    IMediator mediator,
+    IDataService dataService,
     IZauberDbContext dbContext,
     RoleManager<Role> roleManager)
     : SignInManager<User>(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
@@ -87,7 +89,7 @@ public class ZauberSignInManager(
                     logger,
                     dbContext,
                     options,
-                    mediator,
+                    dataService,
                     user,
                     new AuthenticationResult{Success = true});
 

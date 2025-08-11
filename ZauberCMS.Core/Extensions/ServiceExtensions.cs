@@ -2,7 +2,6 @@
 using MediatR;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
-using ZauberCMS.Core.Data.Commands;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Data.Parameters;
 using ZauberCMS.Core.Media.Interfaces;
@@ -19,11 +18,11 @@ public static class ServiceExtensions
     /// <summary>
     /// Retrieves the global settings from the mediator.
     /// </summary>
-    /// <param name="mediator">The mediator instance used to send the GetGlobalDataCommand.</param>
+    /// <param name="dataService">The dataService instance</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains an instance of GlobalSettings.</returns>
-    public static async Task<GlobalSettings> GetGlobalSettings(this IMediator mediator)
+    public static async Task<GlobalSettings> GetGlobalSettings(this IDataService dataService)
     {
-        var globalData = await mediator.Send(new GetGlobalDataCommand { Alias = Constants.GlobalSettings });
+        var globalData = await dataService.GetGlobalDataAsync(new GetGlobalDataParameters { Alias = Constants.GlobalSettings });
         if (globalData?.Data != null)
         {
             return globalData.GetValue<GlobalSettings>() ?? new GlobalSettings();
@@ -35,12 +34,12 @@ public static class ServiceExtensions
     /// <summary>
     /// Saves the global settings using the mediator.
     /// </summary>
-    /// <param name="mediator">The mediator instance used to send the SaveGlobalDataCommand.</param>
+    /// <param name="dataService">The dataService instance.</param>
     /// <param name="settings">The global settings to be saved.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a boolean indicating the success of the save operation.</returns>
-    public static async Task<bool> SaveGlobalSettings(this IMediator mediator, GlobalSettings settings)
+    public static async Task<bool> SaveGlobalSettings(this IDataService dataService, GlobalSettings settings)
     {
-        var result = await mediator.Send(new SaveGlobalDataCommand
+        var result = await dataService.SaveGlobalDataAsync(new SaveGlobalDataParameters
         {
             Alias = Constants.GlobalSettings,
             Data = JsonSerializer.Serialize(settings)

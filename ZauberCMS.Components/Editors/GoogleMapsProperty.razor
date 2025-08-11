@@ -57,7 +57,7 @@
     protected override async Task OnParametersSetAsync()
     {
         MapId = Guid.NewGuid();
-        var globalSettingsRequest = await Mediator.GetGlobalSettings();
+        var globalSettingsRequest = await DataService.GetGlobalSettings();
         if (globalSettingsRequest.ApiKeys.TryGetValue("GoogleMaps", out var apiKey))
         {
             ApiKey = apiKey;

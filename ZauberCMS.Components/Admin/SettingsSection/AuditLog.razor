@@ -1,5 +1,5 @@
 ﻿@attribute [Route(Urls.AdminSettingsAuditLog)]
-@using ZauberCMS.Core.Data.Commands
+@using ZauberCMS.Core.Data.Parameters
 @using ZauberCMS.Core.Audit.Models
 @layout SectionLayout
 
@@ -51,7 +51,7 @@
 
         await Task.Yield();
 
-        var command = new DataGridCommand<Audit>();
+        var command = new DataGridParameters<Audit>();
         
         if (args.Top != null && args.Top != 0)
         {
@@ -72,7 +72,7 @@
         // Sort via the OrderBy method
         command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateCreated desc";
 
-        var result = await Mediator.Send(command);
+        var result = await DataService.GetDataGridAsync(command);
         
         Count = result.Count;
         AuditLogs = result.Items;

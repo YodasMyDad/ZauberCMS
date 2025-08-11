@@ -79,13 +79,13 @@
     
     protected override async Task OnInitializedAsync()
     {
-        GlobalSettingsModel = await Mediator.GetGlobalSettings();
+        GlobalSettingsModel = await DataService.GetGlobalSettings();
         Layout?.SetSection(Constants.Sections.SettingsSection);
     }
 
     private async Task Save()
     {
-        var result = await Mediator.SaveGlobalSettings(GlobalSettingsModel);
+        var result = await DataService.SaveGlobalSettings(GlobalSettingsModel);
         NotificationService.Notify(result ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Saved", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "There was an error", Duration = 4000 });
     }
 }

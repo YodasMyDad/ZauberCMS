@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Data;
-using ZauberCMS.Core.Email.Commands;
+using ZauberCMS.Core.Email.Interfaces;
+using ZauberCMS.Core.Email.Parameters;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
@@ -580,6 +581,7 @@ public class MembershipService(
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
+        var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
         var loginResult = new AuthenticationResult();
         
         try
@@ -609,15 +611,12 @@ public class MembershipService(
                             loginResult.AddMessage("Email isn't confirmed. Check your inbox for a confirmation email", ResultMessageType.Warning);
 
                             // Resend confirmation email
-                            var sendConfirmationEmailCommand = new SendEmailConfirmationCommand
+                            var sendConfirmationEmailCommand = new SendEmailConfirmationParameters
                             {
                                 ReturnUrl = parameters.ReturnUrl,
                                 User = user
                             };
-
-                            // Note: This would need to be handled differently without mediator
-                            // For now, we'll just log that this needs to be implemented
-                            logger.LogWarning("Email confirmation sending needs to be implemented without mediator");
+                            await emailService.SendEmailConfirmationAsync(sendConfirmationEmailCommand, cancellationToken);
                         }
                     }
                     else if (signInResult.IsLockedOut)

@@ -21,7 +21,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var globalSettingsRequest = await Mediator.GetGlobalSettings();
+        var globalSettingsRequest = await DataService.GetGlobalSettings();
         ApiKeys = globalSettingsRequest.ApiKeys;
     }
     

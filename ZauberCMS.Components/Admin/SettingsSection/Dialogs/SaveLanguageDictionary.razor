@@ -1,5 +1,5 @@
-﻿@using ZauberCMS.Core.Languages.Commands
-@using ZauberCMS.Core.Languages.Models
+﻿@using ZauberCMS.Core.Languages.Models
+@using ZauberCMS.Core.Languages.Parameters
 @using ZauberCMS.Core.Shared.Services
 
 <EditorRow>
@@ -73,7 +73,7 @@
     private Dictionary<Language, LanguageText> AllLanguages { get; set; } = [];
     protected override async Task OnInitializedAsync()
     {
-        var allLangs = await Mediator.Send(new QueryLanguageCommand { AmountPerPage = 200, OrderBy = GetLanguageOrderBy.LanguageCultureName });
+        var allLangs = await LanguageService.QueryLanguageAsync(new QueryLanguageParameters { AmountPerPage = 200, OrderBy = GetLanguageOrderBy.LanguageCultureName });
         var allTextsDict = LanguageDictionary.Texts.ToDictionary(x => x.LanguageId, x => x);
         foreach (var lang in allLangs.Items)
         {
@@ -89,7 +89,7 @@
         LanguageDictionary.Texts = allTexts;
         if (await ValidateService.CanSave(LanguageDictionary))
         {
-            var saveResult = await Mediator.Send(new SaveLanguageDictionaryCommand { LanguageDictionary = LanguageDictionary });
+            var saveResult = await LanguageService.SaveLanguageDictionaryAsync(new SaveLanguageDictionaryParameters { LanguageDictionary = LanguageDictionary });
             if (!saveResult.Success)
             {
                 NotificationService.ShowErrorNotification(saveResult.Messages.MessagesAsString());

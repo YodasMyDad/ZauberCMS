@@ -80,7 +80,7 @@ public class TagService(
             }
 
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-            await user.AddAuditWithService(tag, $"Tag ({tag.TagName})",
+            await user.AddAudit(tag, $"Tag ({tag.TagName})",
                 isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, auditService,
                 cancellationToken);
             return await dbContext.SaveChangesAndLog(tag, handlerResult, cacheService, extensionManager, cancellationToken);
@@ -134,7 +134,7 @@ public class TagService(
             if (tag != null)
             {
                 var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await user.AddAuditWithService(tag, $"Tag ({tag.TagName})",
+                await user.AddAudit(tag, $"Tag ({tag.TagName})",
                     AuditExtensions.AuditAction.Delete, auditService,
                     cancellationToken);
                 dbContext.Tags.Remove(tag);
@@ -148,7 +148,7 @@ public class TagService(
             if (tag != null)
             {
                 var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await user.AddAuditWithService(tag, $"Tag ({tag.TagName})",
+                await user.AddAudit(tag, $"Tag ({tag.TagName})",
                     AuditExtensions.AuditAction.Delete, auditService,
                     cancellationToken);
                 dbContext.Tags.Remove(tag);
@@ -198,7 +198,7 @@ public class TagService(
             dbContext.TagItems.Add(tagItem);
 
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-            await user.AddAuditWithService(tagItem, $"Tag Item (TagId: {tagId}) added",
+            await user.AddAudit(tagItem, $"Tag Item (TagId: {tagId}) added",
                 AuditExtensions.AuditAction.Create, auditService,
                 cancellationToken);
         }
@@ -212,7 +212,7 @@ public class TagService(
                 dbContext.TagItems.Remove(tagItem);
 
                 var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await user.AddAuditWithService(tagItem, $"Tag Item (TagId: {tagId}) removed",
+                await user.AddAudit(tagItem, $"Tag Item (TagId: {tagId}) removed",
                     AuditExtensions.AuditAction.Delete, auditService,
                     cancellationToken);
             }

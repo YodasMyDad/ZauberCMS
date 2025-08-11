@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Data.Commands
+﻿@using ZauberCMS.Core.Data.Parameters
 @using ZauberCMS.Core.Membership.Models
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
@@ -50,7 +50,7 @@
 
         await Task.Yield();
 
-        var command = new DataGridCommand<User>();
+        var command = new DataGridParameters<User>();
         
         if (args.Top != null && args.Top != 0)
         {
@@ -71,7 +71,7 @@
         // Sort via the OrderBy method
         command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateCreated desc";
 
-        var result = await Mediator.Send(command);
+        var result = await DataService.GetDataGridAsync(command);
         Count = result.Count;
         Users = result.Items;
 

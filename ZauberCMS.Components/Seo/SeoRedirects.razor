@@ -1,9 +1,9 @@
 ﻿@attribute [Route(Urls.AdminSeoRedirects)]
 @using ZauberCMS.Components.Seo.Dialogs
 @using ZauberCMS.Core.Seo.Models
-@using ZauberCMS.Core.Data.Commands
-@using ZauberCMS.Core.Seo.Commands
 @using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Seo.Parameters
+@using ZauberCMS.Core.Data.Parameters
 @using ZauberCMS.Core
 
 @layout SectionLayout
@@ -100,7 +100,7 @@
 
         await Task.Yield();
 
-        var command = new DataGridCommand<SeoRedirect>();
+        var command = new DataGridParameters<SeoRedirect>();
         
         if (args.Top != null && args.Top != 0)
         {
@@ -122,7 +122,7 @@
         // Sort via the OrderBy method
         command.OrderBy = !string.IsNullOrEmpty(args.OrderBy) ? args.OrderBy : "DateUpdated desc";
 
-        var result = await Mediator.Send(command);
+        var result = await DataService.GetDataGridAsync(command);
         Count = result.Count;
         SeoRedirectsList = result.Items;
 
@@ -150,7 +150,7 @@
         var result = await modal.Result;
         if (result is { Confirmed: true, Data: SeoRedirect redirect })
         {
-            var saveResult = await Mediator.Send(new SaveRedirectCommand { Redirect = redirect });
+            var saveResult = await SeoService.SaveRedirectAsync(new SaveRedirectParameters { Redirect = redirect });
             if (saveResult.Success)
             {
                 NotificationService.ShowSuccessNotification("Redirect Saved");
@@ -165,7 +165,7 @@
     
     private async Task Delete(Guid id)
     {
-        var deleteRedirectResult = await Mediator.Send(new DeleteRedirectCommand{ Id = id });
+        var deleteRedirectResult = await SeoService.DeleteRedirectAsync(new DeleteRedirectParameters { Id = id });
         if (!deleteRedirectResult.Success)
         {
             NotificationService.ShowNotifications(deleteRedirectResult.Messages);

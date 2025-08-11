@@ -1,5 +1,5 @@
 ﻿@using ZauberCMS.Core.Content.Parameters
-@using ZauberCMS.Core.Languages.Commands
+@using ZauberCMS.Core.Languages.Parameters
 @using ZauberCMS.Core.Languages.Models
 
 <EditorRow>
@@ -79,7 +79,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var allLangs = await Mediator.Send(new QueryLanguageCommand { OrderBy = GetLanguageOrderBy.LanguageCultureName, AmountPerPage = 200 });
+        var allLangs = await LanguageService.QueryLanguageAsync(new QueryLanguageParameters { OrderBy = GetLanguageOrderBy.LanguageCultureName, AmountPerPage = 200 });
         Languages = allLangs.Items;
 
         var allDomains = await ContentService.QueryDomainAsync(new QueryDomainParameters { OrderBy = GetDomainOrderBy.DateCreatedDescending, AmountPerPage = 200, ContentId = Content.Id });

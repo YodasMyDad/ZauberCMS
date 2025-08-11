@@ -1,5 +1,5 @@
 ﻿@attribute [Route(Urls.AdminSettingsLanguageDictionaries)]
-@using ZauberCMS.Core.Languages.Commands
+@using ZauberCMS.Core.Languages.Parameters
 @using ZauberCMS.Core.Languages.Models
 @layout SectionLayout
 
@@ -64,7 +64,7 @@
 
         await Task.Yield();
 
-        var command = new DataGridLanguageDictionaryCommand();
+        var command = new DataGridLanguageDictionaryParameters();
 
         if (args.Top != null && args.Top != 0)
         {
@@ -85,7 +85,7 @@
         // Sort via the OrderBy method
         command.Order = args.OrderBy;
 
-        var result = await Mediator.Send(command);
+        var result = await LanguageService.GetDataGridLanguageDictionaryAsync(command);
         Count = result.Count;
         LanguageDicts = result.Items;
 
@@ -108,7 +108,7 @@
 
     private async Task Delete(Guid id)
     {
-        var result = await Mediator.Send(new DeleteLanguageDictionaryCommand { Id = id });
+        var result = await LanguageService.DeleteLanguageDictionaryAsync(new DeleteLanguageDictionaryParameters { Id = id });
         if (result.Success)
         {
             await LoadData(new LoadDataArgs { Top = AmountPerPage });

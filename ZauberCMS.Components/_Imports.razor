@@ -37,10 +37,18 @@
 @using ZauberCMS.Core.Membership.Interfaces
 @using ZauberCMS.Core.Media.Services
 @using ZauberCMS.Core.Media.Interfaces
+@using ZauberCMS.Core.Languages.Interfaces
+@using ZauberCMS.Core.Tags.Interfaces
+@using ZauberCMS.Core.Seo.Interfaces
+@using ZauberCMS.Core.Email.Interfaces
 @using Blazored.Modal.Services
 @inject IMediator Mediator
 @inject IContentService ContentService
-@inject IDataService DataService
 @inject IMembershipService MembershipService
 @inject IMediaService MediaService
+@inject ILanguageService LanguageService
+@inject ITagService TagService
+@inject ISeoService SeoService
+@inject IEmailService EmailService
+@inject IDataService DataService
 @inject NavigationManager NavigationManager

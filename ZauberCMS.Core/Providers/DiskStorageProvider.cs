@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
@@ -11,7 +12,7 @@ namespace ZauberCMS.Core.Providers;
 
 public class DiskStorageProvider(
     IWebHostEnvironment env,
-    IMediator mediator,
+    IDataService dataService,
     IOptions<ZauberSettings> settings)
     : IStorageProvider
 {
@@ -20,7 +21,7 @@ public class DiskStorageProvider(
     /// <inheritdoc />
     public async Task<HandlerResult<Media.Models.Media>> CanUseFile(IBrowserFile file, bool onlyImages = false)
     {
-        var globalSettingsRequest = await mediator.GetGlobalSettings();
+        var globalSettingsRequest = await dataService.GetGlobalSettings();
 
         var result = new HandlerResult<Media.Models.Media> { Success = true };
 
@@ -115,7 +116,7 @@ public class DiskStorageProvider(
                     di.Create();
                 }
                 
-                var globalSettingsRequest = await mediator.GetGlobalSettings();
+                var globalSettingsRequest = await dataService.GetGlobalSettings();
                 var filePath = Path.Combine(dirToSave, file.Name);
                 await using (var stream = file.OpenReadStream(globalSettingsRequest.MaxUploadFileSizeInBytes))
                 {

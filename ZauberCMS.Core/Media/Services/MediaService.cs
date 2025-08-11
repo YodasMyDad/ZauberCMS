@@ -112,7 +112,7 @@ public class MediaService(
                     // Calculate and set the Path property
                     dbMedia.Path = result.Entity.BuildPath(dbContext, parameters.IsUpdate, settings);
                     var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                    await user.AddAuditWithService(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Update, auditService,
+                    await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Update, auditService,
                         cancellationToken);
                     result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, extensionManager,
                         cancellationToken);
@@ -130,7 +130,7 @@ public class MediaService(
                 result.Entity.Path = result.Entity.BuildPath(dbContext, parameters.IsUpdate, settings);
                 dbContext.Medias.Add(result.Entity);
                 var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await user.AddAuditWithService(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Create, auditService,
+                await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Create, auditService,
                     cancellationToken);
                 result = await dbContext.SaveChangesAndLog(result.Entity, result, cacheService, extensionManager,
                     cancellationToken);
@@ -196,7 +196,7 @@ public class MediaService(
             
             var filePathToDelete = media.Url;
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-            await user.AddAuditWithService(media, media.Name, AuditExtensions.AuditAction.Delete, auditService, cancellationToken);
+            await user.AddAudit(media, media.Name, AuditExtensions.AuditAction.Delete, auditService, cancellationToken);
             dbContext.Medias.Remove(media);
             await appState.NotifyMediaDeleted(null, authState.User.Identity?.Name!);
             var result = await dbContext.SaveChangesAndLog(media, handlerResult, cacheService, extensionManager, cancellationToken);
