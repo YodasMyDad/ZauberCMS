@@ -1,9 +1,9 @@
 ﻿@using System.Text.Json
-@using AutoMapper
 @using ZauberCMS.Components.ContentComponents
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Content.Mapping
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -53,7 +53,7 @@
     
     [CascadingParameter] public IModalService? ModalService { get; set; }
     
-    [Inject] public IMapper Mapper { get; set; } = null!;
+
     [Inject] public DialogService DialogService { get; set; } = null!;
     
     public List<string> Scripts { get; set; } = [];
@@ -125,7 +125,7 @@
                     {
                         // Needs to be looked into, only way to get the UI to update is to create a new instance
                         var changedContent = new Content();
-                        Mapper.Map(content, changedContent);
+                        content.MapTo(changedContent);
                         changedContent.PropertyData = content.PropertyData;
                         ContentItems[index] = changedContent;
                     }

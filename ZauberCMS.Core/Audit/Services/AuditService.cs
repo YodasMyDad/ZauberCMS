@@ -1,9 +1,9 @@
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Audit.Parameters;
+using ZauberCMS.Core.Audit.Mapping;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Plugins;
@@ -45,9 +45,7 @@ public class AuditService(
             }
             else
             {
-                // Note: We need to get IMapper from the service provider since it's not injected directly
-                var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
-                mapper.Map(parameters.Audit, audit);
+                parameters.Audit.MapTo(audit);
                 audit.DateUpdated = DateTime.UtcNow;                
             }
             

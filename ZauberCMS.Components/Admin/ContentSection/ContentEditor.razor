@@ -1,6 +1,5 @@
 ﻿@using System.Globalization
 @using System.Text.Json
-@using AutoMapper
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.Extensions.Localization
 @using ZauberCMS.Core.Shared
@@ -8,6 +7,7 @@
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Content.Mapping
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
@@ -257,7 +257,7 @@ else
     [Inject] public TreeState TreeState { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public ValidateService<Content> ValidateService { get; set; } = null!;
-    [Inject] public IMapper Mapper { get; set; } = null!;
+
     [Inject] public IStringLocalizer<SharedResource> Localizer { get; set; } = null!;
 
     [Parameter] public Guid? ContentId { get; set; }
@@ -366,7 +366,7 @@ else
                 if (Content.UnpublishedContent != null)
                 {
                     // Replace the Content with the Json one
-                    Mapper.Map(Content.UnpublishedContent.JsonContent, Content);
+                    Content.UnpublishedContent.JsonContent.MapTo(Content);
                     Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
                 }
 

@@ -1,4 +1,4 @@
-using AutoMapper;
+
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +10,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Languages.Parameters;
+using ZauberCMS.Core.Languages.Mapping;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
@@ -255,9 +256,7 @@ public class LanguageService(
             }
             else
             {
-                // Note: We need to get IMapper from the service provider since it's not injected directly
-                var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
-                mapper.Map(parameters.LanguageDictionary, langDictionary);
+                parameters.LanguageDictionary.MapTo(langDictionary);
             }
 
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
@@ -278,8 +277,7 @@ public class LanguageService(
                     }
                     else
                     {
-                        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
-                        mapper.Map(languageText, lt);
+                        languageText.MapTo(lt);
                     }
 
                     var saveResult = await dbContext.SaveChangesAndLog(lt, langTextResult, cacheService, extensionManager, cancellationToken);

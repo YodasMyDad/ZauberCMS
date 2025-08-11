@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using AutoMapper;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +13,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Membership.Parameters;
+using ZauberCMS.Core.Membership.Mapping;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -22,7 +22,6 @@ namespace ZauberCMS.Core.Membership.Services;
 
 public class MembershipService(
     IServiceProvider serviceProvider,
-    IMapper mapper,
     ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider,
     ExtensionManager extensionManager,
@@ -117,7 +116,7 @@ public class MembershipService(
                 }
 
                 // Update other properties
-                mapper.Map(parameters.User, user);
+                parameters.User.MapTo(user);
                 user.DateUpdated = DateTime.UtcNow;
                 
                 var updateResult = await userManager.UpdateAsync(user);
@@ -260,7 +259,7 @@ public class MembershipService(
                 }
 
                 // Update other properties
-                mapper.Map(parameters.User, user);
+                parameters.User.MapTo(user);
                 user.DateUpdated = DateTime.UtcNow;
                 
                 var updateResult = await userManager.UpdateAsync(user);
@@ -1015,7 +1014,7 @@ public class MembershipService(
             else
             {
                 // Existing property value, update its properties
-                mapper.Map(newPropertyValue, existingPropertyValue);
+                newPropertyValue.MapTo(existingPropertyValue);
             }
         }
         

@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using AutoMapper;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +9,7 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Parameters;
+using ZauberCMS.Core.Media.Mapping;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Providers;
@@ -24,7 +24,6 @@ namespace ZauberCMS.Core.Media.Services;
 public class MediaService(
     ProviderService providerService,
     IServiceProvider serviceProvider,
-    IMapper mapper,
     AppState appState,
     IOptions<ZauberSettings> settings,
     ICacheService cacheService,
@@ -100,7 +99,7 @@ public class MediaService(
                 if (dbMedia != null)
                 {
                     // Map the updated properties
-                    mapper.Map(result.Entity, dbMedia);
+                    result.Entity.MapTo(dbMedia);
                     dbMedia.DateUpdated = DateTime.UtcNow;
 
                     if (result.Entity.Url.IsNullOrWhiteSpace() && result.Entity.MediaType != Models.MediaType.Folder)

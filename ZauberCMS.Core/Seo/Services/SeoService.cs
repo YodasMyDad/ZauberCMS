@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +10,7 @@ using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Seo.Interfaces;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Seo.Parameters;
+using ZauberCMS.Core.Seo.Mapping;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -53,9 +53,7 @@ public class SeoService(
             else
             {
                 isUpdate = true;
-                // Note: We need to get IMapper from the service provider since it's not injected directly
-                var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
-                mapper.Map(parameters.Redirect, redirect);
+                parameters.Redirect.MapTo(redirect);
                 redirect.DateUpdated = DateTime.UtcNow;                
             }
             

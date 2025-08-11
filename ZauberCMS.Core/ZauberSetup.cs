@@ -239,8 +239,7 @@ public static class ZauberSetup
                 options.ViewLocationFormats.Add("/Views/{0}.cshtml");
             });
         
-        // Automapper
-        builder.Services.AddAutoMapper(discoverAssemblies);
+
 
         // Start up items
         var startUpItems = extensionManager.GetInstances<IStartupPlugin>();

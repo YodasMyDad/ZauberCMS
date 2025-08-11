@@ -1,7 +1,6 @@
 using System.Linq.Dynamic.Core;
 using System.Security.Cryptography;
 using System.Text;
-using AutoMapper;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +9,7 @@ using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
+using ZauberCMS.Core.Content.Mapping;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Interfaces;
@@ -25,7 +25,6 @@ namespace ZauberCMS.Core.Content.Services;
 public class ContentService(
     IServiceProvider serviceProvider,
     ICacheService cacheService,
-    IMapper mapper,
     IOptions<ZauberSettings> settings,
     AuthenticationStateProvider authenticationStateProvider,
     UserManager<User> userManager,
@@ -81,7 +80,7 @@ public class ContentService(
         {
             var isNew = parameters.Content.UnpublishedContentId == null;
             unpublishedContent ??= new UnpublishedContent();
-            mapper.Map(parameters.Content, unpublishedContent.JsonContent);
+            parameters.Content.MapTo(unpublishedContent.JsonContent);
             unpublishedContent.JsonContent.PropertyData = parameters.Content.PropertyData;
             unpublishedContent.JsonContent.UnpublishedContentId = unpublishedContent.Id;
 
@@ -127,13 +126,13 @@ public class ContentService(
         }
         else
         {
-            mapper.Map(parameters.Content, content);
+            parameters.Content.MapTo(content);
             content.LastUpdatedById = user!.Id;
             content.DateUpdated = DateTime.UtcNow;
 
             if (!parameters.ExcludePropertyData)
             {
-                UpdateContentPropertyValues(dbContext, content, parameters.Content.PropertyData, mapper);
+                UpdateContentPropertyValues(dbContext, content, parameters.Content.PropertyData);
             }
         }
 
@@ -312,7 +311,7 @@ public class ContentService(
 
         Models.Content CreateCopy(Models.Content original, User? currentUser, Guid? parentId = null)
         {
-            var copy = mapper.Map<Models.Content>(original);
+            var copy = original.MapToNew();
             copy.Id = Guid.NewGuid();
             copy.Name = original.Name + " (Copy)";
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -412,7 +411,7 @@ public class ContentService(
         else
         {
             isUpdate = true;
-            mapper.Map(parameters.ContentType, contentType);
+            parameters.ContentType.MapTo(contentType);
             contentType.LastUpdatedById = user!.Id;
             contentType.DateUpdated = DateTime.UtcNow;
         }
@@ -619,7 +618,7 @@ public class ContentService(
         else
         {
             isUpdate = true;
-            mapper.Map(parameters.Domain, domain);
+            parameters.Domain.MapTo(domain);
             domain.DateUpdated = DateTime.UtcNow;
         }
 
@@ -1271,7 +1270,7 @@ public class ContentService(
         }
     }
 
-    private static void UpdateContentPropertyValues(IZauberDbContext dbContext, Models.Content content, List<ContentPropertyValue> newPropertyValues, IMapper mapper)
+    private static void UpdateContentPropertyValues(IZauberDbContext dbContext, Models.Content content, List<ContentPropertyValue> newPropertyValues)
     {
         var deletedItems = content.PropertyData.Where(epv => newPropertyValues.All(npv => npv.Id != epv.Id)).ToList();
         foreach (var deletedItem in deletedItems)
@@ -1288,7 +1287,7 @@ public class ContentService(
             }
             else
             {
-                mapper.Map(newPropertyValue, existingPropertyValue);
+                newPropertyValue.MapTo(existingPropertyValue);
             }
         }
     }
