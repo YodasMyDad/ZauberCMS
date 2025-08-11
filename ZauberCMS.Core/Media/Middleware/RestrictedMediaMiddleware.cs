@@ -1,9 +1,9 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Media.Commands;
+using ZauberCMS.Core.Media.Interfaces;
+using ZauberCMS.Core.Media.Parameters;
 using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Media.Middleware;
@@ -16,14 +16,14 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
         if (context.Request.Path.StartsWithSegments($"/{settings.Value.UploadFolderName}", StringComparison.OrdinalIgnoreCase))
         {
             using var scope = serviceProvider.CreateScope();
-            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var mediaService = scope.ServiceProvider.GetRequiredService<IMediaService>();
             
             // Extract media ID or filename from the path
             var mediaPath = context.Request.Path.Value;
             
             // Check if this media item is restricted
             // You'll need to implement this logic based on your data structure
-            var isRestricted = await IsMediaRestrictedAsync(mediator, mediaPath);
+            var isRestricted = await IsMediaRestrictedAsync(mediaService, mediaPath);
             
             if (isRestricted && context.User.Identity?.IsAuthenticated == false)
             {
@@ -36,11 +36,11 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
         await next(context);
     }
 
-    private static async Task<bool> IsMediaRestrictedAsync(IMediator mediator, string? mediaPath)
+    private static async Task<bool> IsMediaRestrictedAsync(IMediaService mediaService, string? mediaPath)
     {
         if (!mediaPath.IsNullOrWhiteSpace())
         {
-            var mediaDict = await mediator.Send(new GetRestrictedMediaUrls());
+            var mediaDict = await mediaService.GetRestrictedMediaUrlsAsync(new GetRestrictedMediaUrlsParameters());
             return mediaDict.ContainsKey(mediaPath);
 
         }
