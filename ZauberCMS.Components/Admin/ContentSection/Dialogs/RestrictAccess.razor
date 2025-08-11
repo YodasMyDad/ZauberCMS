@@ -1,6 +1,6 @@
 ﻿@using ZauberCMS.Core.Content.Parameters
-@using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Shared.Comparers
 
 <div class="font-medium mb-1">Pick the roles who have access to this page</div>
@@ -37,7 +37,7 @@
         var content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId, IncludeContentRoles = true });
         if (content != null)
         {
-            var allRoles = await Mediator.Send(new QueryRolesCommand { AmountPerPage = 250, OrderBy = GetRolesOrderBy.Name});
+            var allRoles = await MembershipService.QueryRolesAsync(new QueryRolesParameters { AmountPerPage = 250, OrderBy = GetRolesOrderBy.Name});
             AllRoles = allRoles.Items;
             SelectedRoles = content.ContentRoles.Select(x => x.Role);
             var selectedRoles = SelectedRoles as Role[] ?? SelectedRoles.ToArray();

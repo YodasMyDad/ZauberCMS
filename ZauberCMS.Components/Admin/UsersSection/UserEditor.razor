@@ -1,9 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Components.Admin.UsersSection.Dialogs
-@using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
@@ -153,7 +152,7 @@
         AllProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (UserId != null)
         {
-            User = await Mediator.Send(new GetUserCommand { Id = UserId.Value });
+            User = await MembershipService.GetUserAsync(new GetUserParameters { Id = UserId.Value });
             InitialUsername = User?.UserName;
             InitialEmail = User?.Email;
             SyncProperties();
@@ -204,9 +203,9 @@
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: List<Guid> roles })
         {
-            var allRoles = await Mediator.Send(new QueryRolesCommand { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200 });
+            var allRoles = await MembershipService.QueryRolesAsync(new QueryRolesParameters { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200 });
             var roleNames = allRoles.Items.Where(x => roles.Contains(x.Id)).Select(x => x.Name).ToList();
-            var roleUpdateResult = await Mediator.Send(new SaveUserCommand { User = User, Roles = roleNames! });
+            var roleUpdateResult = await MembershipService.SaveUserAsync(new SaveUserParameters { User = User, Roles = roleNames! });
             if (!roleUpdateResult.Success)
             {
                 NotificationService.ShowErrorNotification(roleUpdateResult.Messages.MessagesAsString());
@@ -230,7 +229,7 @@
         var delete = await DialogService.Confirm("Do you really want to delete this user?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
         if (delete == true)
         {
-            var roleUpdateResult = await Mediator.Send(new DeleteUserCommand { UserId = User!.Id });
+            var roleUpdateResult = await MembershipService.DeleteUserAsync(new DeleteUserParameters { UserId = User!.Id });
             if (!roleUpdateResult.Success)
             {
                 await AppState.NotifyUserDeleted(User, AuthState.User.Identity?.Name!);
@@ -307,8 +306,8 @@
     {
         if (await ValidateService.CanSave(User!))
         {
-            var saveUserCommand = new SaveUserCommand { User = User };
-            var result = await Mediator.Send(saveUserCommand);
+            var saveUserCommand = new SaveUserParameters { User = User };
+            var result = await MembershipService.SaveUserAsync(saveUserCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{User?.UserName} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{User?.UserName} Error", Detail = "", Duration = 4000 });
             await AppState.NotifyUserSaved(User, AuthState.User.Identity?.Name!);
             if (result is { Success: true, RefreshSignIn: true })

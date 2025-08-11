@@ -235,6 +235,7 @@ public class TagService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var user = await userManager.GetUserAsync(authState.User);
@@ -249,7 +250,7 @@ public class TagService(
             if (tagItem != null)
             {
                 await user.AddAudit(tagItem, $"TagItem ({tagItem.TagId})",
-                    AuditExtensions.AuditAction.Delete, null,
+                    AuditExtensions.AuditAction.Delete, auditService,
                     cancellationToken);
                 dbContext.TagItems.Remove(tagItem);
             }
@@ -263,7 +264,7 @@ public class TagService(
                 foreach (var ti in tagItems)
                 {
                     await user.AddAudit(ti, $"TagItem ({ti.TagId})",
-                        AuditExtensions.AuditAction.Delete, null,
+                        AuditExtensions.AuditAction.Delete, auditService,
                         cancellationToken);
                     dbContext.TagItems.Remove(ti);
                 }

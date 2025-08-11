@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Membership.Commands
+﻿@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Membership.Models
 
 @if (User != null)
@@ -21,12 +21,12 @@
     private IEnumerable<Guid> UsersRoles { get; set; } = [];
     protected override async Task OnInitializedAsync()
     {
-        User = await Mediator.Send(new GetUserCommand
+        User = await MembershipService.GetUserAsync(new GetUserParameters
         {
             Id = UserId
         });
         if (User != null) UsersRoles = User.UserRoles.Select(x => x.Role.Id);
-        var roles = await Mediator.Send(new QueryRolesCommand { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200});
+        var roles = await MembershipService.QueryRolesAsync(new QueryRolesParameters { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200});
         Roles = roles.Items;
     }
 

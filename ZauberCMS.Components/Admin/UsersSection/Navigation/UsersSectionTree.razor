@@ -1,5 +1,5 @@
-﻿@using ZauberCMS.Core.Membership.Commands
-@using ZauberCMS.Core.Membership.Models
+﻿@using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
@@ -39,7 +39,7 @@
 
     private async Task DataRefresh()
     {
-        var allRoles = await Mediator.Send(new QueryRolesCommand
+        var allRoles = await MembershipService.QueryRolesAsync(new QueryRolesParameters
         {
             OrderBy = GetRolesOrderBy.Name,
             AmountPerPage = 100 // Should never be more than 100 roles!

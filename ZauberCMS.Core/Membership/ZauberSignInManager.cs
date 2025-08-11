@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -9,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
-using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Settings;

@@ -1,5 +1,5 @@
-﻿@using ZauberCMS.Core.Membership.Models
-@using ZauberCMS.Core.Membership.Commands
+﻿@using ZauberCMS.Core.Membership.Parameters
+@using ZauberCMS.Core.Membership.Models
 
 @attribute [Route($"{Urls.AdminUsersList}/{{RoleId:guid}}")]
 
@@ -41,14 +41,17 @@
     {
         if (RoleId != null)
         {
-            var role = await Mediator.Send(new GetRoleCommand {Id = RoleId.Value});
-            var items = await Mediator.Send(new QueryUsersCommand
+            var role = await MembershipService.GetRoleAsync(new GetRoleParameters {Id = RoleId.Value});
+            if (role?.Name != null)
             {
-                AmountPerPage = 200,
-                OrderBy = GetUsersOrderBy.DateCreatedDescending,
-                Roles = [role.Name!]
-            });
-            Users = items.Items;   
+                var items = await MembershipService.QueryUsersAsync(new QueryUsersParameters
+                {
+                    AmountPerPage = 200,
+                    OrderBy = GetUsersOrderBy.DateCreatedDescending,
+                    Roles = [role.Name]
+                });
+                Users = items.Items;
+            }
         }
     }
 

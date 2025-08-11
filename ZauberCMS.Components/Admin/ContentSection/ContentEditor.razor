@@ -434,7 +434,7 @@ else
     {
         if (content.LastUpdatedById != null)
         {
-            LastUpdatedBy = await Mediator.GetUser(content.LastUpdatedById);
+            LastUpdatedBy = await MembershipService.GetUser(content.LastUpdatedById);
         }
 
         var toRemove = new List<ContentPropertyValue>();

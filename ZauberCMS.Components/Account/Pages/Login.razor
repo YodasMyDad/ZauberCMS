@@ -3,8 +3,7 @@
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Membership
-@using ZauberCMS.Core.Membership.Commands
-@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
@@ -68,7 +67,7 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
-    [SupplyParameterFromForm] private LoginUserCommand LoginUserCommand { get; set; } = new();
+    [SupplyParameterFromForm] private LoginUserParameters LoginUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
@@ -94,7 +93,7 @@
     {
         if (editContext.Validate())
         {
-            var result = await Mediator.Send(LoginUserCommand);
+            var result = await MembershipService.LoginUserAsync(LoginUserCommand);
 
             if (result.Messages.ErrorMessages().Any() == false && result.Success)
             {

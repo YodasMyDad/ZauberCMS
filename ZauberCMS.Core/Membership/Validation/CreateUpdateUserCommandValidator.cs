@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Membership.Commands;
+using ZauberCMS.Core.Membership.Parameters;
 using ZauberCMS.Core.Shared.Validation;
 
 namespace ZauberCMS.Core.Membership.Validation
 {
-    public class CreateUpdateUserCommandValidator : BaseFluentValidator<CreateUpdateUserCommand>
+    public class CreateUpdateUserCommandValidator : BaseFluentValidator<CreateUpdateUserParameters>
     {
         public CreateUpdateUserCommandValidator()
         {

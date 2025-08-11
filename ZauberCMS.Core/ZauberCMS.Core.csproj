@@ -23,7 +23,6 @@
         <PackageReference Include="FluentValidation" Version="12.0.0" />
         <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
         <PackageReference Include="MailKit" Version="4.12.1" />
-        <PackageReference Include="MediatR" Version="12.5.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="9.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="9.0.6" />

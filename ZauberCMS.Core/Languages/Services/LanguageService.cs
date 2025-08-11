@@ -316,6 +316,7 @@ public class LanguageService(
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<LanguageDictionary>();
@@ -328,7 +329,7 @@ public class LanguageService(
             if (langDict != null)
             {
                 await user.AddAudit(langDict, $"Language Dictionary ({langDict.Key})",
-                    AuditExtensions.AuditAction.Delete, null,
+                    AuditExtensions.AuditAction.Delete, auditService,
                     cancellationToken);
                 dbContext.LanguageDictionaries.Remove(langDict);
             }

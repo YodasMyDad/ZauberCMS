@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Web;
-using MediatR;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ZauberCMS.Core.Content.Interfaces;

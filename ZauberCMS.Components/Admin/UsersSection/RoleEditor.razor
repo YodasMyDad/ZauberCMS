@@ -1,9 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Components.Admin.StructureSection.Dialogs
 @using ZauberCMS.Components.Editors.Dialogs
-@using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Membership.Commands
 @using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
@@ -149,7 +148,7 @@
     {
         if (RoleId != null)
         {
-            Role = await Mediator.Send(new GetRoleCommand { Id = RoleId.Value });
+            Role = await MembershipService.GetRoleAsync(new GetRoleParameters { Id = RoleId.Value });
             ShowDeleteButton = true;
         }
 
@@ -304,8 +303,8 @@
     {
         if (await ValidateService.CanSave(Role!))
         {
-            var saveContentTypeCommand = new SaveRoleCommand { Role = Role };
-            var result = await Mediator.Send(saveContentTypeCommand);
+            var saveContentTypeCommand = new SaveRoleParameters { Role = Role };
+            var result = await MembershipService.SaveRoleAsync(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Role?.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role?.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
@@ -313,7 +312,7 @@
     private async Task DeleteRole()
     {
         // Check no content is using it first
-        var result = await Mediator.Send(new DeleteRoleCommand { RoleId = Role!.Id });
+        var result = await MembershipService.DeleteRoleAsync(new DeleteRoleParameters { RoleId = Role!.Id });
         if (result.Success)
         {
             NavigationManager.NavigateTo(Urls.AdminUsersBaseUrl);

@@ -1,8 +1,7 @@
 ﻿@page "/Account/ConfirmEmail"
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core
-@using ZauberCMS.Core.Membership.Commands
-@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared.Models
@@ -44,14 +43,14 @@
         }
         else
         {
-            var confirmEmailCommand = new ConfirmEmailCommand
+            var confirmEmailCommand = new ConfirmEmailParameters
             {
                 Code = Code,
                 UserId = UserId,
                 IsEmailUpdate = Change ?? false
             };
 
-            var result = await Mediator.Send(confirmEmailCommand);
+            var result = await MembershipService.ConfirmEmailAsync(confirmEmailCommand);
             ResultMessages = result.Messages;
         }
     }

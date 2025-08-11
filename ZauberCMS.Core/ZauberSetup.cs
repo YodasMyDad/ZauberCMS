@@ -238,25 +238,7 @@ public static class ZauberSetup
                 // This adds another search path that looks for views in the root Views folder.
                 options.ViewLocationFormats.Add("/Views/{0}.cshtml");
             });
-
-        /*foreach (var assembly in ExtensionManager.GetFilteredAssemblies(null).ToArray()!)
-        {
-            if (assembly != null)
-            {
-                // This creates an AssemblyPart, but does not create any related parts for items such as views.
-                var part = new AssemblyPart(assembly);
-                mvcBuilder
-                    .ConfigureApplicationPartManager(apm => apm.ApplicationParts.Add(part));
-            }
-        }*/
-
-        // Mediatr
-        builder.Services.AddMediatR(cfg =>
-        {
-            cfg.RegisterGenericHandlers = true;
-            cfg.RegisterServicesFromAssemblies(discoverAssemblies);
-        });
-
+        
         // Automapper
         builder.Services.AddAutoMapper(discoverAssemblies);
 

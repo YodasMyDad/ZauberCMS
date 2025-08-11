@@ -1,10 +1,10 @@
-﻿using MediatR;
-using ZauberCMS.Core.Content.Interfaces;
+﻿using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Parameters;
-using ZauberCMS.Core.Membership.Commands;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Membership.Parameters;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Extensions;
@@ -201,16 +201,16 @@ public static class ContentExtensions
     /// </summary>
     /// <param name="content"></param>
     /// <param name="propertyAlias"></param>
-    /// <param name="mediator"></param>
+    /// <param name="membershipService"></param>
     /// <returns></returns>
-    public static async Task<List<User>> GetUsers(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
+    public static async Task<List<User>> GetUsers(this IHasPropertyValues content, string propertyAlias, IMembershipService membershipService)
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
             var ids = content.GetValue<List<Guid>>(propertyAlias);
             if (ids != null && ids.Count != 0)
             {
-                var result = await mediator.Send(new QueryUsersCommand { Ids = ids, AmountPerPage = ids.Count, Cached = true});
+                var result = await membershipService.QueryUsersAsync(new QueryUsersParameters { Ids = ids, AmountPerPage = ids.Count, Cached = true});
                 return result.Items.ToList();
             }
         }
@@ -223,11 +223,11 @@ public static class ContentExtensions
     /// </summary>
     /// <param name="content">The content containing user data</param>
     /// <param name="propertyAlias">The property alias to retrieve user ids</param>
-    /// <param name="mediator">The mediator to handle user queries</param>
+    /// <param name="membershipService">The membershipService to handle user queries</param>
     /// <returns>A single user or null if no users are found</returns>
-    public static async Task<User?> GetUser(this IHasPropertyValues content, string propertyAlias, IMediator mediator)
+    public static async Task<User?> GetUser(this IHasPropertyValues content, string propertyAlias, IMembershipService membershipService)
     {
-        return (await content.GetUsers(propertyAlias, mediator)).FirstOrDefault();
+        return (await content.GetUsers(propertyAlias, membershipService)).FirstOrDefault();
     }
 
 

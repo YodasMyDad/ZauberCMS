@@ -1,5 +1,4 @@
-﻿using MediatR;
-using ZauberCMS.Core.Content.Models;
+﻿using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Validation.Interfaces;
 using ZauberCMS.Core.Shared.Validation.Models;

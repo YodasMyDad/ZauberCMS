@@ -1,14 +1,13 @@
 ﻿using System.Text.Json;
-using MediatR;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Data.Parameters;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Parameters;
-using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Membership.Parameters;
 using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Extensions;
@@ -78,15 +77,15 @@ public static class ServiceExtensions
     /// <summary>
     /// Retrieves a user based on the specified ID.
     /// </summary>
-    /// <param name="mediator">The mediator instance used to send the GetUserCommand.</param>
+    /// <param name="membershipService">The membershipService instance used.</param>
     /// <param name="id">The unique identifier of the user to retrieve. If null, no user will be returned.</param>
     /// <param name="cached">Indicates whether to use cached data. Default value is true.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains an instance of User, or null if no user is found.</returns>
-    public static async Task<User?> GetUser(this IMediator mediator, Guid? id, bool cached = true)
+    public static async Task<User?> GetUser(this IMembershipService membershipService, Guid? id, bool cached = true)
     {
         if (id != null)
         {
-            return await mediator.Send(new GetUserCommand { Id = id.Value, Cached = cached});
+            return await membershipService.GetUserAsync(new GetUserParameters { Id = id.Value, Cached = cached});
         }
 
         return null;

@@ -2,8 +2,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Membership
-@using ZauberCMS.Core.Membership.Commands
-@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
@@ -44,7 +43,7 @@
 </LayoutView>
 
 @code {
-    [SupplyParameterFromForm] public RegisterUserCommand RegisterUserCommand { get; set; } = new();
+    [SupplyParameterFromForm] public RegisterUserParameters RegisterUserCommand { get; set; } = new();
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     [Inject] public IdentityRedirectManager RedirectManager { get; set; } = null!;
@@ -75,7 +74,7 @@
         if (editContext.Validate())
         {
             RegisterUserCommand.AutoLogin = true;
-            var result = await Mediator.Send(RegisterUserCommand);
+            var result = await MembershipService.RegisterUserAsync(RegisterUserCommand);
 
             if (result.Success)
             {
