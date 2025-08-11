@@ -1,7 +1,7 @@
 ﻿@using System.Collections.Concurrent
 @using ZauberCMS.Core
-@using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Media.Models
 @implements IDisposable
 
@@ -71,7 +71,7 @@
     {
         var mediaTypesToQuery = GetMediaTypesForQuery();
         
-        var items = await Mediator.Send(new QueryMediaCommand
+        var items = await MediaService.QueryMediaAsync(new QueryMediaParameters
         {
             MediaTypes = mediaTypesToQuery,
             AmountPerPage = 250,
@@ -103,7 +103,7 @@
             {
                 var mediaTypesToQuery = GetMediaTypesForQuery();
                 
-                var items = Mediator.Send(new QueryMediaCommand
+                var items = MediaService.QueryMediaAsync(new QueryMediaParameters
                 {
                     MediaTypes = mediaTypesToQuery,
                     WhereClause = x => x.ParentId == media.Id,
@@ -153,7 +153,7 @@
             }
 
             // Calculate result and cache it
-            hasChildren = Task.Run(() => Mediator.Send(new HasChildMediaCommand { ParentId = media.Id })).GetAwaiter().GetResult();
+            hasChildren = Task.Run(() => MediaService.HasChildMediaAsync(new HasChildMediaParameters { ParentId = media.Id })).GetAwaiter().GetResult();
             _hasChildrenCache[media.Id] = hasChildren;
 
             return hasChildren;

@@ -1,6 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
-@using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Shared.Services
 
 <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
@@ -184,7 +184,7 @@
         if (MediaId != null)
         {
             IsUpdate = true;
-            Media = (await Mediator.Send(new GetMediaCommand { Id = MediaId }))!;
+            Media = (await MediaService.GetMediaAsync(new GetMediaParameters { Id = MediaId }))!;
         }
     }
 
@@ -221,14 +221,14 @@
     {
         if (await ValidateService.CanSave(Media!))
         {
-            var saveCommand = new SaveMediaCommand
+            var saveCommand = new SaveMediaParameters
             {
                 ParentFolderId = ParentId,
                 MediaToSave = Media,
                 IsUpdate = IsUpdate,
                 FileToSave = NewFile
             };
-            var result = await Mediator.Send(saveCommand);
+            var result = await MediaService.SaveMediaAsync(saveCommand);
             if (result.Success)
             {
                 NotificationService.ShowSuccessNotification("Saved");

@@ -1,11 +1,9 @@
 ﻿using Blazored.Modal.Services;
-using MediatR;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using ZauberCMS.Components.Admin.Shared;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Media.Commands;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;

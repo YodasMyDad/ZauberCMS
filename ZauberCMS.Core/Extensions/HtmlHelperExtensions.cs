@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Rendering;
 using ZauberCMS.Core.Seo.Models;
 
@@ -12,7 +13,7 @@ namespace ZauberCMS.Core.Extensions;
 public static class HtmlHelperExtensions
 {
     public static async Task<IHtmlContent> GenerateMetaTags(this IHtmlHelper<dynamic> htmlHelper, string seoAlias,
-        IMediator mediator, string? titleAlias = null, string? descriptionAlias = null)
+        IMediaService mediaService, string? titleAlias = null, string? descriptionAlias = null)
     {
         if (htmlHelper.ViewData.Model is ZauberPageViewModel or Content.Models.Content)
         {
@@ -20,12 +21,12 @@ public static class HtmlHelperExtensions
 
             if (htmlHelper.ViewData.Model is ZauberPageViewModel viewModel)
             {
-                await RenderTags(htmlHelper, sb, mediator, seoAlias, viewModel.Name ?? string.Empty,
+                await RenderTags(htmlHelper, sb, mediaService, seoAlias, viewModel.Name ?? string.Empty,
                     viewModel.Url, viewModel, titleAlias, descriptionAlias);
             }
             else if (htmlHelper.ViewData.Model is Content.Models.Content contentModel)
             {
-                await RenderTags(htmlHelper, sb, mediator, seoAlias, contentModel.Name ?? string.Empty,
+                await RenderTags(htmlHelper, sb, mediaService, seoAlias, contentModel.Name ?? string.Empty,
                     contentModel.Url(), contentModel, titleAlias, descriptionAlias);
             }
             
@@ -35,7 +36,7 @@ public static class HtmlHelperExtensions
         return new HtmlString(string.Empty);
     }
 
-    private static async Task RenderTags(IHtmlHelper<dynamic> htmlHelper, StringBuilder sb, IMediator mediator,
+    private static async Task RenderTags(IHtmlHelper<dynamic> htmlHelper, StringBuilder sb, IMediaService mediaService,
         string seoAlias, string name, string? url, IHasPropertyValues model, string? titleAlias = null,
         string? descriptionAlias = null)
     {
@@ -55,7 +56,7 @@ public static class HtmlHelperExtensions
 
             if (metaData.OpenGraphImage != null)
             {
-                var result = await mediator.GetMedia(metaData.OpenGraphImage.Value);
+                var result = await mediaService.GetMedia(metaData.OpenGraphImage.Value);
                 if (result != null)
                 {
                     AddOpenGraphTag(sb, "og:image", $"{domain}/{result.Url}?width=1200&height=630&mode=stretch");

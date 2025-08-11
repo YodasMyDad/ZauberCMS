@@ -85,6 +85,18 @@ public static class ZauberSetup
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+        
+        // Register Service Interfaces and Implementations
+        builder.Services.AddScoped<IContentService, ContentService>();
+        builder.Services.AddScoped<IMembershipService, MembershipService>();
+        builder.Services.AddScoped<IMediaService, MediaService>();
+        builder.Services.AddScoped<ILanguageService, LanguageService>();
+        builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<IAuditService, AuditService>();
+        builder.Services.AddScoped<ISeoService, SeoService>();
+        builder.Services.AddScoped<IDataService, DataService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        
         builder.Services.AddScoped<ZauberRouteValueTransformer>();
 
         builder.Services.AddHostedService<DailyJob>();
@@ -184,17 +196,6 @@ public static class ZauberSetup
         builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
         builder.Services.AddScoped<TreeState>();
         builder.Services.AddScoped<ContentFinderPipeline>();
-
-        // Register Service Interfaces and Implementations
-        builder.Services.AddScoped<IContentService, ContentService>();
-        builder.Services.AddScoped<IMembershipService, MembershipService>();
-        builder.Services.AddScoped<IMediaService, MediaService>();
-        builder.Services.AddScoped<ILanguageService, LanguageService>();
-        builder.Services.AddScoped<ITagService, TagService>();
-        builder.Services.AddScoped<IAuditService, AuditService>();
-        builder.Services.AddScoped<ISeoService, SeoService>();
-        builder.Services.AddScoped<IDataService, DataService>();
-        builder.Services.AddScoped<IEmailService, EmailService>();
 
         builder.Services.AddSingleton<LayoutResolverService>();
         builder.Services.AddSingleton<AppState>();

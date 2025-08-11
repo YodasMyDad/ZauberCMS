@@ -1,8 +1,8 @@
 ﻿@using System.Text.Json
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
-@using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Media.Parameters
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -52,7 +52,7 @@
             if (Guid.TryParse(Value, out var singleId)) 
             {
                 // Value is a single guid
-                var mediaItem = await Mediator.Send(new QueryMediaCommand
+                var mediaItem = await MediaService.QueryMediaAsync(new QueryMediaParameters
                 {
                     Ids = [singleId]
                 });
@@ -65,7 +65,7 @@
                 var mediaIds = JsonSerializer.Deserialize<List<Guid>>(Value);
                 if (mediaIds != null && mediaIds.Any())
                 {
-                    var mediaItems = await Mediator.Send(new QueryMediaCommand
+                    var mediaItems = await MediaService.QueryMediaAsync(new QueryMediaParameters
                     {
                         Ids = mediaIds
                     });

@@ -1,10 +1,10 @@
-using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
-using ZauberCMS.Core.Media.Commands;
+using ZauberCMS.Core.Media.Interfaces;
+using ZauberCMS.Core.Media.Parameters;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Extensions;
@@ -16,10 +16,10 @@ public static class IdentityExtensions
     /// </summary>
     /// <param name="user">The User to get the media item from</param>
     /// <param name="alias">The property alias</param>
-    /// <param name="mediator">An injected IMediatr</param>
+    /// <param name="mediaService">An injected mediaService</param>
     /// <param name="fallBackUrl">Fallback url in case the media item is null</param>
     /// <returns>List on media</returns>
-    public static async Task<IEnumerable<Media.Models.Media?>> GetMedia(this User user, string alias, IMediator mediator, string? fallBackUrl = null)
+    public static async Task<IEnumerable<Media.Models.Media?>> GetMedia(this User user, string alias, IMediaService mediaService, string? fallBackUrl = null)
     {
         var mediaIds = user.GetValue<List<Guid>?>(alias);
         if (mediaIds != null)
@@ -28,7 +28,7 @@ public static class IdentityExtensions
             if (mediaCount > 0)
             {
                 // TODO - Look at caching these
-                var mediaItems=  await mediator.Send(new QueryMediaCommand{Ids = mediaIds, AmountPerPage = mediaCount});
+                var mediaItems=  await mediaService.QueryMediaAsync(new QueryMediaParameters {Ids = mediaIds, AmountPerPage = mediaCount});
                 return mediaItems.Items;
             }
         }

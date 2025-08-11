@@ -18,5 +18,8 @@
 @using Radzen.Blazor
 @using Blazored.Modal
 @using Blazored.Modal.Services
-@inject IMediator Mediator
+@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Media.Interfaces
+@inject IContentService ContentService
+@inject IMediaService MediaService
 @inject NavigationManager NavigationManager

@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Media.Commands
+﻿@using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Media.Models
 <RadzenSplitButton Click=@(args => OnClick(args, "CreateMedia"))
                    Text="Create Folder">
@@ -17,7 +17,7 @@
     {
         if (ParentId != null)
         {
-            Media = await Mediator.Send(new GetMediaCommand { Id = ParentId.Value });
+            Media = await MediaService.GetMediaAsync(new GetMediaParameters { Id = ParentId.Value });
         }
     }
 

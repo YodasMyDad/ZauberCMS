@@ -62,6 +62,6 @@
         {
             ContentBlocks = blocks;
         }
-        HeaderImage = (await Content!.GetMediaItems("HeaderImage", Mediator, "/assets/img/post-sample-image.jpg")).FirstOrDefault()!;
+        HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "/assets/img/post-sample-image.jpg")).FirstOrDefault()!;
     }
 }

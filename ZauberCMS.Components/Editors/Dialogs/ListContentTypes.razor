@@ -180,7 +180,7 @@ else
         {
             if (contentType.MediaId != null && contentType.MediaId != Guid.Empty)
             {
-                var coverImage = await Mediator.GetMedia(contentType.MediaId);
+                var coverImage = await MediaService.GetMedia(contentType.MediaId);
                 if (coverImage != null) CoverImages.Add(contentType.Id, coverImage);
             }
         }

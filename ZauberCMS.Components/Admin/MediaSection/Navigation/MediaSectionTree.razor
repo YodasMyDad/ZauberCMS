@@ -1,5 +1,5 @@
-﻿@using ZauberCMS.Core.Media.Commands
-@using ZauberCMS.Core.Media.Models
+﻿@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
@@ -35,7 +35,7 @@
 
     private async Task DataRefresh()
     {
-        var items = await Mediator.Send(new QueryMediaCommand
+        var items = await MediaService.QueryMediaAsync(new QueryMediaParameters
         {
             AmountPerPage = 250,
             WhereClause = x => x.ParentId == null,

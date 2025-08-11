@@ -1,7 +1,8 @@
 ﻿using MediatR;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
-using ZauberCMS.Core.Media.Commands;
+using ZauberCMS.Core.Media.Interfaces;
+using ZauberCMS.Core.Media.Parameters;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
@@ -110,11 +111,11 @@ public static class ContentExtensions
     /// </summary>
     /// <param name="content">The content item that holds the media property.</param>
     /// <param name="alias">The alias of the media property to fetch.</param>
-    /// <param name="mediator">The mediator to send queries to retrieve media information.</param>
+    /// <param name="mediaService">The mediator to send queries to retrieve media information.</param>
     /// <param name="fallBackUrl">A fallback URL to use if no media is found.</param>
     /// <returns>Returns a list of media items if found; otherwise, returns a list containing a single media item with the fallback URL.</returns>
     public static async Task<List<Media.Models.Media>> GetMediaItems(this IHasPropertyValues content, string? alias,
-        IMediator mediator, string? fallBackUrl = null)
+        IMediaService mediaService, string? fallBackUrl = null)
     {
         if (!string.IsNullOrEmpty(alias))
         {
@@ -126,7 +127,7 @@ public static class ContentExtensions
                     var mediaIds = content.GetValue<List<Guid>>(alias);
                     if (mediaIds != null && mediaIds.Count != 0)
                     {
-                        var result = await mediator.Send(new QueryMediaCommand { Ids = mediaIds, AmountPerPage = mediaIds.Count, Cached = true });
+                        var result = await mediaService.QueryMediaAsync(new QueryMediaParameters { Ids = mediaIds, AmountPerPage = mediaIds.Count, Cached = true });
                         return result.Items.ToList();
                     }                      
                 }
@@ -135,7 +136,7 @@ public static class ContentExtensions
                     var mediaId = content.GetValue<Guid>(alias);
                     if (mediaId != Guid.Empty)
                     {
-                        var media = await mediator.GetMedia(mediaId);
+                        var media = await mediaService.GetMediaAsync(new GetMediaParameters {Id = mediaId});
                         if (media != null)
                         {
                             return [media];
@@ -235,12 +236,12 @@ public static class ContentExtensions
     /// </summary>
     /// <param name="content">The content containing media data</param>
     /// <param name="propertyAlias">The property alias to retrieve media ids</param>
-    /// <param name="mediator">The mediator to handle media queries</param>
+    /// <param name="mediaService">The mediaService to handle media queries</param>
     /// <param name="fallBackUrl"></param>
     /// <returns>A single media item or null if no media items are found</returns>
-    public static async Task<Media.Models.Media?> GetMedia(this IHasPropertyValues content, string propertyAlias, IMediator mediator, string? fallBackUrl = null)
+    public static async Task<Media.Models.Media?> GetMedia(this IHasPropertyValues content, string propertyAlias, IMediaService mediaService, string? fallBackUrl = null)
     {
-        return (await content.GetMediaItems(propertyAlias, mediator, fallBackUrl)).FirstOrDefault();
+        return (await content.GetMediaItems(propertyAlias, mediaService, fallBackUrl)).FirstOrDefault();
     }
 
     /// <summary>

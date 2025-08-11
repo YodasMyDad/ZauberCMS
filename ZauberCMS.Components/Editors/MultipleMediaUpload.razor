@@ -1,7 +1,7 @@
 ﻿@using System.Collections.Concurrent
 @using Microsoft.Extensions.Options
-@using ZauberCMS.Core.Media.Commands
 @using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared
@@ -79,7 +79,7 @@
     {
         if (ParentId != null)
         {
-            var media = await Mediator.Send(new GetMediaCommand { Id = ParentId.Value });
+            var media = await MediaService.GetMediaAsync(new GetMediaParameters { Id = ParentId.Value });
             if (media is { MediaType: MediaType.Folder })
             {
                 ParentFolder = media;
@@ -101,7 +101,7 @@
 
     private async Task AddMedia()
     {
-        var foldersOnly = await Mediator.Send(new QueryMediaCommand
+        var foldersOnly = await MediaService.QueryMediaAsync(new QueryMediaParameters
         {
             MediaTypes = [MediaType.Folder],
             OrderBy = GetMediaOrderBy.Name,
@@ -134,7 +134,7 @@
     {
         if (args.Value is Media media)
         {
-            var items = await Mediator.Send(new QueryMediaCommand
+            var items = await MediaService.QueryMediaAsync(new QueryMediaParameters
             {
                 MediaTypes = [MediaType.Folder],
                 WhereClause = x => x.ParentId == media.Id,
@@ -161,7 +161,7 @@
             }
 
             // Calculate result and cache it
-            hasChildren = Task.Run(() => Mediator.Send(new HasChildMediaCommand { ParentId = media.Id })).GetAwaiter().GetResult();
+            hasChildren = Task.Run(() => MediaService.HasChildMediaAsync(new HasChildMediaParameters { ParentId = media.Id })).GetAwaiter().GetResult();
             HasChildrenCache[media.Id] = hasChildren;
 
             return hasChildren;
@@ -220,7 +220,7 @@
             var savedMediaItems = new List<Media>();
             foreach (var browserFile in FilesToUpload)
             {
-                var result = await Mediator.Send(new SaveMediaCommand
+                var result = await MediaService.SaveMediaAsync(new SaveMediaParameters
                 {
                     FileToSave = browserFile,
                     ParentFolderId = ParentFolder?.Id

@@ -5,13 +5,12 @@ using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data.Commands;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Data.Parameters;
-using ZauberCMS.Core.Media.Commands;
+using ZauberCMS.Core.Media.Interfaces;
+using ZauberCMS.Core.Media.Parameters;
 using ZauberCMS.Core.Membership.Commands;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
-using ZauberCMS.Core.Membership.Parameters;
 using ZauberCMS.Core.Settings;
-using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Extensions;
 
@@ -97,15 +96,15 @@ public static class ServiceExtensions
     /// <summary>
     /// Retrieves the media with the specified ID from the mediator.
     /// </summary>
-    /// <param name="mediator">The mediator instance used to send the GetMediaCommand.</param>
+    /// <param name="mediaService">The mediaService instance used.</param>
     /// <param name="id">The ID of the media to retrieve.</param>
     /// <param name="cached">A boolean value indicating whether the cached version should be retrieved if available.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains an instance of Media or null if the ID is null or the media is not found.</returns>
-    public static async Task<Media.Models.Media?> GetMedia(this IMediator mediator, Guid? id, bool cached = true)
+    public static async Task<Media.Models.Media?> GetMedia(this IMediaService mediaService, Guid? id, bool cached = true)
     {
         if (id != null)
         {
-            return await mediator.Send(new GetMediaCommand { Id = id.Value, Cached = cached });
+            return await mediaService.GetMediaAsync(new GetMediaParameters { Id = id.Value, Cached = cached });
         }
 
         return null;
