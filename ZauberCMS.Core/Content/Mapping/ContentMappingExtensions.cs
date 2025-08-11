@@ -1,5 +1,3 @@
-using ZauberCMS.Core.Content.Models;
-
 namespace ZauberCMS.Core.Content.Mapping;
 
 /// <summary>
