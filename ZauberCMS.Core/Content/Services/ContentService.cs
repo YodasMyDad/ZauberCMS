@@ -1,6 +1,4 @@
 using System.Linq.Dynamic.Core;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,14 +36,15 @@ public class ContentService(
     /// <summary>
     /// Retrieves a single content item based on the provided parameters. Can optionally use cache.
     /// </summary>
-    /// <param name="parameters">Query options such as id, type, includes, and caching.</param>
+    /// <param name="parameters">Query options such as id, type, includes and caching.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The matching content item or null.</returns>
     public async Task<Models.Content?> GetContentAsync(GetContentParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = GenerateGetContentCacheKey(parameters, dbContext);
+        var query = BuildQuery(parameters, dbContext);
+        var cacheKey = query.GenerateCacheKey<Models.Content>();
         if (parameters.Cached)
         {
             return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, dbContext, cancellationToken));
@@ -64,7 +63,7 @@ public class ContentService(
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        User? user = await userManager.GetUserAsync(authState.User);
         var isUpdate = true;
         var handlerResult = new HandlerResult<Models.Content>();
 
@@ -346,7 +345,7 @@ public class ContentService(
     /// <returns>Entry model with content and localization information.</returns>
     public async Task<EntryModel> GetContentFromRequestAsync(GetContentFromRequestParameters parameters, CancellationToken cancellationToken = default)
     {
-        var cacheKey = GenerateGetContentFromRequestCacheKey(parameters);
+        var cacheKey = parameters.GenerateCacheKey<Models.Content>("GetContentFromRequest");
         return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
             using var scope = _serviceProvider.CreateScope();
@@ -740,7 +739,7 @@ public class ContentService(
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = GenerateHasChildContentCacheKey(parameters);
+        var cacheKey = parameters.GenerateCacheKey<Models.Content>("HasChild");
         if (parameters.Cached)
         {
             return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken));
@@ -758,7 +757,7 @@ public class ContentService(
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = GenerateHasChildContentTypeCacheKey(parameters);
+        var cacheKey = parameters.GenerateCacheKey<ContentType>("HasContentTypeChild");
         if (parameters.Cached)
         {
             return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken));
@@ -913,14 +912,9 @@ public class ContentService(
         return result;
     }
 
-    // Helpers
-    private static string GenerateGetContentCacheKey(GetContentParameters request, IZauberDbContext dbContext)
-    {
-        var query = BuildQuery(request, dbContext);
-        return query.GenerateCacheKey<Models.Content>();
-    }
 
-    private static IQueryable<Models.Content> BuildQuery(GetContentParameters request, IZauberDbContext dbContext)
+
+    private IQueryable<Models.Content> BuildQuery(GetContentParameters request, IZauberDbContext dbContext)
     {
         var query = dbContext.Contents
             .Include(x => x.ContentType)
@@ -973,7 +967,7 @@ public class ContentService(
         return query;
     }
 
-    private static IQueryable<Models.Content> BuildQuery(QueryContentParameters request, IZauberDbContext dbContext)
+    private IQueryable<Models.Content> BuildQuery(QueryContentParameters request, IZauberDbContext dbContext)
     {
         var query = dbContext.Contents.Include(x => x.ContentType)
             .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
@@ -1078,13 +1072,13 @@ public class ContentService(
         return query;
     }
 
-    private static Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
+    private Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));
     }
 
-    private static async Task<Models.Content?> FetchContentAsync(GetContentParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
+    private async Task<Models.Content?> FetchContentAsync(GetContentParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
         var query = BuildQuery(request, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
@@ -1179,11 +1173,6 @@ public class ContentService(
         return entryModel;
     }
 
-    private static string GenerateGetContentFromRequestCacheKey(GetContentFromRequestParameters request)
-    {
-        return request.GenerateCacheKey<Models.Content>("GetContentFromRequest");
-    }
-
     private static Domain? MatchDomainWithContent(string url, List<Domain> domains)
     {
         var uri = new Uri(url);
@@ -1202,17 +1191,7 @@ public class ContentService(
             return requestHost == domainUrl;
         });
     }
-
-    private static string GenerateHasChildContentCacheKey(HasChildContentParameters request)
-    {
-        return request.GenerateCacheKey<Models.Content>("HasChild");
-    }
-
-    private static string GenerateHasChildContentTypeCacheKey(HasChildContentTypeParameters request)
-    {
-        return request.GenerateCacheKey<ContentType>("HasContentTypeChild");
-    }
-
+    
     private static string GenerateUniqueUrl(IZauberDbContext dbContext, string baseSlug)
     {
         var url = baseSlug;
@@ -1281,7 +1260,7 @@ public class ContentService(
         return query.ToPaginatedList(1, int.MaxValue);
     }
 
-    private async Task SaveAuditIfUser(IZauberDbContext dbContext, User? user, string? name, string action, CancellationToken cancellationToken)
+    private static async Task SaveAuditIfUser(IZauberDbContext dbContext, User? user, string? name, string action, CancellationToken cancellationToken)
     {
         if (user == null) return;
         await SaveAuditAsync(dbContext, $"{user.Name} {action} {name ?? string.Empty}", cancellationToken);
