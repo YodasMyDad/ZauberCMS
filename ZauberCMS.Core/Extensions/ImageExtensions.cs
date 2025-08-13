@@ -1,3 +1,6 @@
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+
 namespace ZauberCMS.Core.Extensions;
 
 public static class ImageExtensions
