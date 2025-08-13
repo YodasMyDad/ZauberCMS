@@ -991,7 +991,9 @@ public class ContentService(
             var exp = new ContentExport
             {
                 Name = content.Name ?? string.Empty,
+#pragma warning disable CS0618 // Type or member is obsolete
                 Url = content.Url ?? string.Empty,
+#pragma warning restore CS0618 // Type or member is obsolete
                 ContentTypeAlias = content.ContentTypeAlias ?? string.Empty,
                 Published = content.Published,
                 Deleted = content.Deleted,
@@ -1152,12 +1154,14 @@ public class ContentService(
         return typeResult;
     }
 
-    private static async Task<Guid> ImportContentRecursive(ContentExport exp, Guid? parentId, ContentType contentType, IZauberDbContext dbContext, User user, Dictionary<string, Guid> propMap, HandlerResult<ContentType> handlerResult)
+    private static async Task<Guid> ImportContentRecursive(ContentExport exp, Guid? parentId, ContentType contentType, IZauberDbContext dbContext, User? user, Dictionary<string, Guid> propMap, HandlerResult<ContentType> handlerResult)
     {
         var content = new Models.Content
         {
             Name = exp.Name,
+#pragma warning disable CS0618 // Type or member is obsolete
             Url = exp.Url, // May need uniqueness check
+#pragma warning restore CS0618 // Type or member is obsolete
             ContentTypeId = contentType.Id,
             ContentTypeAlias = contentType.Alias,
             Published = exp.Published,
@@ -1167,7 +1171,7 @@ public class ContentService(
             SortOrder = exp.SortOrder,
             ViewComponent = exp.ViewComponent,
             ParentId = parentId,
-            LastUpdatedById = user.Id,
+            LastUpdatedById = user?.Id ?? Guid.Empty,
             DateCreated = DateTime.UtcNow,
             DateUpdated = DateTime.UtcNow
         };
