@@ -1,8 +1,7 @@
 ﻿@using System.Globalization
 @using Microsoft.AspNetCore.Http
 @using ZauberCMS.Core.Settings
-@using ZauberCMS.Core.Plugins
-@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Shared
 @using Microsoft.Extensions.Options
 @inherits LayoutComponentBase
 
@@ -49,9 +48,10 @@
 
 @code {
     [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = null!;
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
     
     [CascadingParameter] public HttpContext? HttpContext { get; set; }
-    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -85,6 +85,7 @@
     public void SetSection(string value)
     {
         SectionAlias = value;
+        TreeState.CurrentSection = value;
         StateHasChanged();
     }
 
