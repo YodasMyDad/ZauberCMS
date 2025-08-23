@@ -1087,7 +1087,7 @@ public class ContentService(
         contentType.ContentProperties = export.ContentProperties;
 
         // Map CompositionAliases to Ids
-        contentType.CompositionIds = new List<Guid>();
+        contentType.CompositionIds = [];
         foreach (var compAlias in export.CompositionAliases)
         {
             var comp = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == compAlias);
@@ -1361,6 +1361,8 @@ public class ContentService(
                 query = query.Where(x => request.Ids.Contains(x.Id));
                 request.AmountPerPage = idCount;
             }
+            
+            query = ApplyNestedFilter(query, request.NestedFilter);
         }
 
         if (request.WhereClause != null)
@@ -1580,5 +1582,15 @@ public class ContentService(
         // Inline minimal audit creation to avoid Mediator usage in services
         dbContext.Audits.Add(new ZauberCMS.Core.Audit.Models.Audit { Description = description });
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private IQueryable<Models.Content> ApplyNestedFilter(IQueryable<Models.Content> query, BaseQueryContentParameters.NestedContentFilter filter)
+    {
+        return filter switch
+        {
+            BaseQueryContentParameters.NestedContentFilter.Exclude => query.Where(c => !c.IsNestedContent),
+            BaseQueryContentParameters.NestedContentFilter.Only => query.Where(c => c.IsNestedContent),
+            _ => query // Include does nothing
+        };
     }
 }

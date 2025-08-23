@@ -70,6 +70,11 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     public bool IsRootContent { get; set; }
     
     /// <summary>
+    /// Is this content nested in another content item (Blocklist for example)
+    /// </summary>
+    public bool IsNestedContent { get; set; }
+    
+    /// <summary>
     /// Whether this content item is published or not
     /// </summary>
     public bool Published { get; set; }
@@ -125,8 +130,7 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     /// Gets or sets the date and time of the last update for the content.
     /// </summary>
     public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
-
-
+    
     /// <summary>
     /// The component used to render the content
     /// </summary>

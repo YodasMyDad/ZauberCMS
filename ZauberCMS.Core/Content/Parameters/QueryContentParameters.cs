@@ -31,6 +31,8 @@ public class BaseQueryContentParameters
     public Guid? ParentId { get; set; }
     public Guid? LastEditedBy { get; set; }
     public GetContentsOrderBy OrderBy { get; set; } = GetContentsOrderBy.DateUpdatedDescending;
+    public enum NestedContentFilter { Include, Exclude, Only }
+    public NestedContentFilter NestedFilter { get; set; } = NestedContentFilter.Exclude;
 }
 
 public enum GetContentsOrderBy

@@ -17,7 +17,7 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.6")
+                .HasAnnotation("ProductVersion", "9.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -85,6 +85,9 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
 
                     b.Property<Guid?>("InternalRedirectId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsNestedContent")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsRootContent")
                         .HasColumnType("boolean");

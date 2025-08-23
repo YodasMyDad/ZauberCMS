@@ -17,7 +17,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.6")
+                .HasAnnotation("ProductVersion", "9.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -85,6 +85,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
 
                     b.Property<Guid?>("InternalRedirectId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsNestedContent")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsRootContent")
                         .HasColumnType("bit");
