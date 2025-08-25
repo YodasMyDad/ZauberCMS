@@ -107,6 +107,28 @@ public static class ContentExtensions
     }
 
     /// <summary>
+    /// Retrieves a collection of content blocks based on the specified alias and associated content IDs.
+    /// </summary>
+    /// <param name="content">The content instance implementing <see cref="IHasPropertyValues"/>.</param>
+    /// <param name="alias">The alias of the property containing the block IDs.</param>
+    /// <param name="contentService">The service for querying content blocks.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a collection of content blocks.</returns>
+    public static async Task<IEnumerable<Content.Models.Content>> GetBlocks(this IHasPropertyValues content,
+        string alias,
+        IContentService contentService)
+    {
+        var ids = content.GetValue<List<Guid>>(alias);
+        if (ids != null && ids.Count != 0)
+        {
+            var blockList =
+                await contentService.QueryContentAsync(new QueryContentParameters { Ids = ids, AmountPerPage = 150, NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only});
+            return blockList.Items;
+        }
+
+        return [];
+    } 
+    
+    /// <summary>
     /// Retrieves a list of media items from a content property.
     /// </summary>
     /// <param name="content">The content item that holds the media property.</param>

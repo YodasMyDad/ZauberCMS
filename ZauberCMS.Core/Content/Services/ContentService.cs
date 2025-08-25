@@ -48,9 +48,9 @@ public class ContentService(
         var cacheKey = query.GenerateCacheKey<Models.Content>();
         if (parameters.Cached)
         {
-            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, dbContext, cancellationToken));
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(query, cancellationToken));
         }
-        return await FetchContentAsync(parameters, dbContext, cancellationToken);
+        return await FetchContentAsync(query, cancellationToken);
     }
 
     /// <summary>
@@ -173,9 +173,9 @@ public class ContentService(
         var cacheKey = query.GenerateCacheKey(typeof(Models.Content));
         if (parameters.Cached)
         {
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, dbContext, cancellationToken)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(query, parameters, cancellationToken)))!;
         }
-        return await FetchContentAsync(parameters, dbContext, cancellationToken);
+        return await FetchContentAsync(query, parameters, cancellationToken);
     }
 
     /// <summary>
@@ -1087,7 +1087,7 @@ public class ContentService(
         contentType.ContentProperties = export.ContentProperties;
 
         // Map CompositionAliases to Ids
-        contentType.CompositionIds = new List<Guid>();
+        contentType.CompositionIds = [];
         foreach (var compAlias in export.CompositionAliases)
         {
             var comp = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == compAlias);
@@ -1167,7 +1167,7 @@ public class ContentService(
             Published = exp.Published,
             Deleted = exp.Deleted,
             HideFromNavigation = exp.HideFromNavigation,
-            InternalRedirectIdAsString = exp.InternalRedirectIdAsString, // TODO: Map if possible
+            InternalRedirectIdAsString = exp.InternalRedirectIdAsString,
             SortOrder = exp.SortOrder,
             ViewComponent = exp.ViewComponent,
             ParentId = parentId,
@@ -1361,6 +1361,8 @@ public class ContentService(
                 query = query.Where(x => request.Ids.Contains(x.Id));
                 request.AmountPerPage = idCount;
             }
+            
+            query = ApplyNestedFilter(query, request.NestedFilter);
         }
 
         if (request.WhereClause != null)
@@ -1381,15 +1383,13 @@ public class ContentService(
         return query;
     }
 
-    private Task<PaginatedList<Models.Content>> FetchContentAsync(QueryContentParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
+    private Task<PaginatedList<Models.Content>> FetchContentAsync(IQueryable<Models.Content> query, QueryContentParameters request, CancellationToken cancellationToken)
     {
-        var query = BuildQuery(request, dbContext);
         return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));
     }
 
-    private async Task<Models.Content?> FetchContentAsync(GetContentParameters request, IZauberDbContext dbContext, CancellationToken cancellationToken)
+    private async Task<Models.Content?> FetchContentAsync(IQueryable<Models.Content> query, CancellationToken cancellationToken)
     {
-        var query = BuildQuery(request, dbContext);
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
@@ -1580,5 +1580,15 @@ public class ContentService(
         // Inline minimal audit creation to avoid Mediator usage in services
         dbContext.Audits.Add(new ZauberCMS.Core.Audit.Models.Audit { Description = description });
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private IQueryable<Models.Content> ApplyNestedFilter(IQueryable<Models.Content> query, BaseQueryContentParameters.NestedContentFilter filter)
+    {
+        return filter switch
+        {
+            BaseQueryContentParameters.NestedContentFilter.Exclude => query.Where(c => c.RelatedContentId == null),
+            BaseQueryContentParameters.NestedContentFilter.Only => query.Where(c => c.RelatedContentId != null),
+            _ => query // Include does nothing
+        };
     }
 }

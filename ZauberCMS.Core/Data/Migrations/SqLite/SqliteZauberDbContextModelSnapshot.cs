@@ -15,7 +15,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
@@ -104,6 +104,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Property<bool>("Published")
                         .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("RelatedContentId")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");

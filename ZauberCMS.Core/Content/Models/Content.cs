@@ -115,6 +115,11 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     public Guid? ParentId { get; set; }
     
     public Content? Parent { get; set; }
+    
+    /// <summary>
+    /// If this content related to another content item 
+    /// </summary>
+    public Guid? RelatedContentId { get; set; }
 
     /// <summary>
     /// The date and time when the content was created.
@@ -125,8 +130,7 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     /// Gets or sets the date and time of the last update for the content.
     /// </summary>
     public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
-
-
+    
     /// <summary>
     /// The component used to render the content
     /// </summary>

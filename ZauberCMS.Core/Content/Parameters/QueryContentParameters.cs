@@ -30,6 +30,11 @@ public class BaseQueryContentParameters
     public bool IncludeChildren { get; set; }
     public Guid? ParentId { get; set; }
     public Guid? LastEditedBy { get; set; }
+    public enum NestedContentFilter { Include, Exclude, Only }
+    public NestedContentFilter NestedFilter { get; set; } = NestedContentFilter.Exclude;
+    /*public enum PublishedContentFilter { OnlyPublished, IncludeUnpublished, OnlyUnpublished }
+    public PublishedContentFilter PublishedFilter { get; set; } = PublishedContentFilter.OnlyPublished;*/
+
     public GetContentsOrderBy OrderBy { get; set; } = GetContentsOrderBy.DateUpdatedDescending;
 }
 

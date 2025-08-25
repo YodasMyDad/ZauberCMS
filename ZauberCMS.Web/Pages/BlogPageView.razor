@@ -1,5 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Interfaces
-@using ZauberCMS.Core.Media.Models
+﻿@using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Web.Layouts
 @using ZauberCMS.Components.Seo
 @implements ZauberCMS.Core.Content.Interfaces.IContentView
@@ -52,16 +51,13 @@
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
     
-    private List<Content> ContentBlocks { get; set; } = [];
+    private IEnumerable<Content> ContentBlocks { get; set; } = [];
     private Media HeaderImage { get; set; } = new();
     
     protected override async Task OnInitializedAsync()
     {
-        var blocks = Content!.GetValue<List<Content>>("Content");
-        if (blocks != null && blocks.Any())
-        {
-            ContentBlocks = blocks;
-        }
+        var blocks = await Content!.GetBlocks("Content", ContentService);
+        ContentBlocks = blocks;
         HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "/assets/img/post-sample-image.jpg")).FirstOrDefault()!;
     }
 }

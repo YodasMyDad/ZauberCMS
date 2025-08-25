@@ -53,8 +53,8 @@
     
     [CascadingParameter] public IModalService? ModalService { get; set; }
     
-
     [Inject] public DialogService DialogService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
     
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
@@ -69,7 +69,17 @@
         await PopulateContentTypes();
         if (!Value.IsNullOrWhiteSpace())
         {
-            ContentItems = JsonSerializer.Deserialize<List<Content>>(Value) ?? [];
+            // Get content
+            var contentIds= JsonSerializer.Deserialize<List<Guid>>(Value) ?? [];
+            var content = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = contentIds, AmountPerPage = 100, NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only});
+            // Build an index map so we can preserve the original order of IDs
+            var idOrder = contentIds
+                .Select((id, index) => new { id, index })
+                .ToDictionary(x => x.id, x => x.index);
+
+            ContentItems = content.Items
+                .OrderBy(item => idOrder.TryGetValue(item.Id, out var idx) ? idx : int.MaxValue)
+                .ToList();
         }
         
         SettingsModel = Settings.FromJson<BlockListEditorSettingsModel>();
@@ -98,11 +108,13 @@
     {
         var contentParams = new Dictionary<string, object>
         {
-            { nameof(ContentEditor.IsBlockList), true }
+            { nameof(ContentEditor.IsBlockList), true },
+            { nameof(ContentEditor.NestedParentId), Content!.Id },
         };
+
         if (contentUpdate != null)
         {
-            contentParams.Add(nameof(ContentEditor.Content), contentUpdate);
+            contentParams.Add(nameof(ContentEditor.ContentId), contentUpdate.Id);
         }
         else
         {
@@ -147,14 +159,26 @@
 
     private async Task SaveItems()
     {
+        var idsToSave = new List<Guid>();
+        
         foreach (var content in ContentItems)
         {
-            // Remove content type and content values as don't want to serialise this
-            content.ContentType = null;
-            content.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
+            var saveContentCommand = new SaveContentParameters
+            {
+                Content = content
+            };
+            var result = await ContentService.SaveContentAsync(saveContentCommand);
+            if (result.Success)
+            {
+                idsToSave.Add(content.Id);
+            }
+            else
+            {
+                NotificationService.ShowNotifications(result.Messages);
+            }
         }
         
-        Value = JsonSerializer.Serialize(ContentItems);
+        Value = JsonSerializer.Serialize(idsToSave);
         await ValueChanged.InvokeAsync(Value);
     }
     
@@ -173,8 +197,9 @@
             content.ContentType = null;
             content.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
         }
-        
-        Value = JsonSerializer.Serialize(clonedList);
+
+        var clonedIds = clonedList.Select(x => x.Id);
+        Value = JsonSerializer.Serialize(clonedIds);
         await ValueChanged.InvokeAsync(Value);
     }
 
