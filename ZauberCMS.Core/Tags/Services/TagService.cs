@@ -96,20 +96,20 @@ public class TagService(
     /// <param name="parameters">Query options including names, slugs and item ids.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged list of tags.</returns>
+    #pragma warning disable CS1998
     public async Task<PaginatedList<Tag>> QueryTagAsync(QueryTagParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey(typeof(Tag));
-
+        var cacheKey = query.GenerateCacheKey<Tag>();
         if (parameters.Cached)
         {
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchTagsAsync(parameters, dbContext, cancellationToken)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
         }
-
-        return await FetchTagsAsync(parameters, dbContext, cancellationToken);
+        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
     }
+    #pragma warning restore CS1998
 
     /// <summary>
     /// Deletes a tag by id or name. Logs audit.
@@ -327,11 +327,5 @@ public class TagService(
         };
 
         return query;
-    }
-
-    private static Task<PaginatedList<Tag>> FetchTagsAsync(QueryTagParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
 }

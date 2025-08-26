@@ -30,14 +30,15 @@ public class DataService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = GenerateCacheKey(parameters, dbContext);
+        var query = BuildQuery(parameters, dbContext);
+        var cacheKey = query.GenerateCacheKey<GlobalData>();
         
         if (parameters.Cached)
         {
-            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, dbContext, cancellationToken));
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.FirstOrDefaultAsync(cancellationToken: cancellationToken));
         }
 
-        return await FetchContentAsync(parameters, dbContext, cancellationToken);
+        return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -151,21 +152,9 @@ public class DataService(
         return result;
     }
 
-    private static string GenerateCacheKey(GetGlobalDataParameters parameters, IZauberDbContext dbContext)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return query.GenerateCacheKey<GlobalData>();
-    }
-
     private static IQueryable<GlobalData> BuildQuery(GetGlobalDataParameters parameters, IZauberDbContext dbContext)
     {
         return dbContext.GlobalDatas.AsNoTracking()
             .Where(x => x.Alias == parameters.Alias);
-    }
-    
-    private static async Task<GlobalData?> FetchContentAsync(GetGlobalDataParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 }

@@ -41,14 +41,15 @@ public class MediaService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = GenerateCacheKey(parameters, dbContext);
+        var query = BuildQuery(parameters, dbContext);
+        var cacheKey = query.GenerateCacheKey();
 
         if (parameters.Cached)
         {
-            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchMediaAsync(parameters, dbContext, cancellationToken));
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.FirstOrDefaultAsync(cancellationToken));
         }
 
-        return await FetchMediaAsync(parameters, dbContext, cancellationToken);
+        return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
     /// <summary>
@@ -151,20 +152,22 @@ public class MediaService(
     /// <param name="parameters">Query options including includes and paging.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged list of media.</returns>
+#pragma warning disable CS1998
     public async Task<PaginatedList<Models.Media>> QueryMediaAsync(QueryMediaParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey(typeof(Models.Media));
+        var cacheKey = query.GenerateCacheKey<Models.Media>();
 
         if (parameters.Cached)
         {
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchMediaAsync(parameters, dbContext, cancellationToken)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
         }
 
-        return await FetchMediaAsync(parameters, dbContext, cancellationToken);
+        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
     }
+#pragma warning restore CS1998
 
     /// <summary>
     /// Deletes a media item and optionally its physical file. Logs audit and notifies state.
@@ -234,20 +237,15 @@ public class MediaService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = GenerateCacheKey(dbContext);
+        var query = BuildQuery(dbContext);
+        var cacheKey = query.GenerateCacheKey<Models.Media>();
 
         if (parameters.Cached)
         {
-            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchRestrictedMediaUrlsAsync(dbContext, cancellationToken)) ?? new Dictionary<string, Guid>();
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.Select(x => new { x.Url, x.Id }).ToDictionaryAsync(x => x.Url ?? string.Empty, x => x.Id, cancellationToken: cancellationToken)) ?? new Dictionary<string, Guid>();
         }
 
-        return await FetchRestrictedMediaUrlsAsync(dbContext, cancellationToken);
-    }
-
-    private static string GenerateCacheKey(GetMediaParameters parameters, IZauberDbContext dbContext)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return query.GenerateCacheKey<Models.Media>();
+        return await query.Select(x => new { x.Url, x.Id }).ToDictionaryAsync(x => x.Url ?? string.Empty, x => x.Id, cancellationToken: cancellationToken);
     }
 
     private static IQueryable<Models.Media> BuildQuery(GetMediaParameters parameters, IZauberDbContext dbContext)
@@ -285,12 +283,6 @@ public class MediaService(
         }
 
         return query;
-    }
-
-    private static async Task<Models.Media?> FetchMediaAsync(GetMediaParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
     private static IQueryable<Models.Media> BuildQuery(QueryMediaParameters parameters, IZauberDbContext dbContext)
@@ -344,28 +336,8 @@ public class MediaService(
         return query;
     }
 
-    private Task<PaginatedList<Models.Media>> FetchMediaAsync(QueryMediaParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
-    }
-
-    private static string GenerateCacheKey(IZauberDbContext dbContext)
-    {
-        var query = BuildQuery(dbContext);
-        return query.GenerateCacheKey<Models.Media>();
-    }
-
     private static IQueryable<Models.Media> BuildQuery(IZauberDbContext dbContext)
     {
         return dbContext.Medias.AsNoTracking().Where(x => x.RequiresAuthentication);
-    }
-
-    private static async Task<Dictionary<string, Guid>> FetchRestrictedMediaUrlsAsync(IZauberDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var query = BuildQuery(dbContext);
-        return await query
-            .Select(x => new { x.Url, x.Id })
-            .ToDictionaryAsync(x => x.Url ?? string.Empty, x => x.Id, cancellationToken: cancellationToken);
     }
 }

@@ -77,14 +77,14 @@ public class SeoService(
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey(typeof(SeoRedirect));
+        var cacheKey = query.GenerateCacheKey<SeoRedirect>();
         
         if (parameters.Cached)
         {
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchContentAsync(parameters, dbContext, cancellationToken)))!;
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToListAsync(cancellationToken: cancellationToken)) ?? new List<SeoRedirect>();
         }
 
-        return await FetchContentAsync(parameters, dbContext, cancellationToken);
+        return await query.ToListAsync(cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -151,11 +151,5 @@ public class SeoService(
         };
 
         return query.Take(parameters.Amount);
-    }
-    
-    private static async Task<List<SeoRedirect>> FetchContentAsync(QueryRedirectsParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return await query.ToListAsync(cancellationToken: cancellationToken);
     }
 }

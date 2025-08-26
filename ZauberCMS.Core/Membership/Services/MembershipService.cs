@@ -38,14 +38,15 @@ public class MembershipService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = GenerateCacheKey(parameters, dbContext);
+        var query = BuildQuery(parameters, dbContext);
+        var cacheKey = query.GenerateCacheKey<User>();
 
         if (parameters.Cached)
         {
-            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchUserAsync(parameters, dbContext, cancellationToken));
+            return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.FirstOrDefaultAsync(cancellationToken: cancellationToken));
         }
 
-        return await FetchUserAsync(parameters, dbContext, cancellationToken);
+        return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -379,20 +380,22 @@ public class MembershipService(
     /// <param name="parameters">Query options including roles and ids.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged list of users.</returns>
+    #pragma warning disable CS1998
     public async Task<PaginatedList<User>> QueryUsersAsync(QueryUsersParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey(typeof(User));
+        var cacheKey = query.GenerateCacheKey<User>();
 
         if (parameters.Cached)
         {
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await FetchUsersAsync(parameters, dbContext, cancellationToken)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
         }
 
-        return await FetchUsersAsync(parameters, dbContext, cancellationToken);
+        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
     }
+    #pragma warning restore CS1998
 
     /// <summary>
     /// Gets a role and its users.
@@ -910,12 +913,6 @@ public class MembershipService(
         return await userManager.GetUserAsync(authState.User);
     }
 
-    private static string GenerateCacheKey(GetUserParameters parameters, IZauberDbContext dbContext)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return query.GenerateCacheKey<User>();
-    }
-
     private static IQueryable<User> BuildQuery(GetUserParameters parameters, IZauberDbContext dbContext)
     {
         var query = dbContext.Users
@@ -927,12 +924,6 @@ public class MembershipService(
             .Where(x => x.Id == parameters.Id);
 
         return query;
-    }
-
-    private static async Task<User?> FetchUserAsync(GetUserParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
 
     private static IQueryable<User> BuildQuery(QueryUsersParameters parameters, IZauberDbContext dbContext)
@@ -981,12 +972,6 @@ public class MembershipService(
         };
 
         return query;
-    }
-
-    private static Task<PaginatedList<User>> FetchUsersAsync(QueryUsersParameters parameters, IZauberDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var query = BuildQuery(parameters, dbContext);
-        return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
 
     private async Task<HandlerResult<User>> UpdateUserPropertyValues(IZauberDbContext dbContext, User requestUser, HandlerResult<User> handlerResult, CancellationToken cancellationToken)
