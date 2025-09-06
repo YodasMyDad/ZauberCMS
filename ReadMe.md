@@ -1,4 +1,12 @@
-﻿# ZauberCMS
+# Important - Please Note
+
+v4 is coming with .NET 10 and brings a complete change to how this CMS functions. We are moving away from MVC and back to full Blazor. Front end Blazor SSR, and admin will be Blazor Server. Because this, I made a big change for V4 which will make it difficult to be backwards compatible. 
+
+I have put some time into the BlockListEditor and now the content stored from that, will be actual content in the database instead of serialised on a property like it is currently. This opens up a lot of avenues for customisation and querying just block list content (Nested content). 
+
+In addition to this, due to their license changes, I have removed Mediator and Automapper from the project. I'm also 'potentially' going to remove Imagesharp due to the same reasons.
+ 
+# ZauberCMS
 
 ZauberCMS is a fully featured CMS built in .NET 9. The CMS is inspired by Umbraco, but much faster and easier to extend.
 
