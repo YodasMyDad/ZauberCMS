@@ -1,6 +1,6 @@
 # Important - Please Note
 
-v4 is coming with .NET 10 and brings a complete change to how this CMS functions. We are moving away from MVC and back to full Blazor. Front end Blazor SSR, and admin will be Blazor Server. Because this, I made a big change for V4 which will make it difficult to be backwards compatible. 
+v4 is coming with .NET 10 and brings a complete change to how this CMS functions. We are moving away from MVC and back to full Blazor. Front end Blazor SSR, and admin will be Blazor Server. Because of this, I made a big change for V4 which will make it difficult to be backwards compatible. 
 
 I have put some time into the BlockListEditor and now the content stored from that, will be actual content in the database instead of serialised on a property like it is currently. This opens up a lot of avenues for customisation and querying just block list content (Nested content). 
 
