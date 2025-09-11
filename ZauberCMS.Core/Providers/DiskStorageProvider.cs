@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Components.Forms;
+﻿using ImageResize.Core.Extensions;
+using ImageResize.Interfaces;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using SixLabors.ImageSharp;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Settings;
@@ -13,7 +14,8 @@ namespace ZauberCMS.Core.Providers;
 public class DiskStorageProvider(
     IWebHostEnvironment env,
     IDataService dataService,
-    IOptions<ZauberSettings> settings)
+    IOptions<ZauberSettings> settings,
+    IImageResizerService imageResizerService)
     : IStorageProvider
 {
     private readonly ZauberSettings _settings = settings.Value;
@@ -122,8 +124,8 @@ public class DiskStorageProvider(
                 {
                     if (file.IsImage())
                     {
-                        using var image = await Image.LoadAsync(stream);
-                        image.OverMaxSizeCheck(globalSettingsRequest.MaxImageSizeInPixels);
+                        using var image = await stream.OverMaxSizeCheckAsync(
+                            globalSettingsRequest.MaxImageSizeInPixels, imageResizerService);
                         await image.SaveAsync(filePath);
                         media.Width = image.Width;
                         media.Height = image.Height;

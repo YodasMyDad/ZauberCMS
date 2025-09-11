@@ -1,5 +1,6 @@
 using System.Reflection;
 using Blazored.Modal;
+using ImageResize.Core.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -12,8 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Radzen;
 using Serilog;
-using SixLabors.ImageSharp.Web.DependencyInjection;
-using SixLabors.ImageSharp.Web.Providers;
 using ZauberCMS.Core.Content.ContentFinders;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
@@ -39,7 +38,6 @@ using ZauberCMS.Core.Email.Services;
 using ZauberCMS.Core.Jobs;
 using ZauberCMS.Core.Languages.Parameters;
 using ZauberCMS.Core.Media.Middleware;
-using ZauberCMS.Core.Media.Processors;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Claims;
 using ZauberCMS.Core.Membership.Models;
@@ -57,10 +55,14 @@ public static class ZauberSetup
 {
     public static void AddZauberCms(this WebApplicationBuilder builder)
     {
-        builder.Services.AddImageSharp()
-            .ClearProviders()
-            .AddProvider<WebRootImageProvider>()
-            .AddProcessor<CropWebProcessor>();
+        builder.Services.AddImageResize(o =>
+        {
+            o.RequestPathPrefix = "/media";
+            o.ContentRoot = Path.Combine(builder.Environment.WebRootPath, "media");
+            o.CacheRoot = Path.Combine(builder.Environment.WebRootPath, "_mediacache");
+            o.AllowUpscale = true;
+            o.DefaultQuality = 90;
+        });
         
         builder.Host.UseSerilog((context, configuration) =>
             configuration.ReadFrom.Configuration(context.Configuration));
@@ -261,7 +263,7 @@ public static class ZauberSetup
 
     public static void AddZauberCms<T>(this WebApplication app)
     {
-        app.UseImageSharp();
+        app.UseImageResize(); 
         
         using (var scope = app.Services.CreateScope())
         {
