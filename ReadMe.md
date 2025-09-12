@@ -4,7 +4,7 @@ v4 is coming with .NET 10 and brings a complete change to how this CMS functions
 
 I have put some time into the BlockListEditor and now the content stored from that, will be actual content in the database instead of serialised on a property like it is currently. This opens up a lot of avenues for customisation and querying just block list content (Nested content). 
 
-In addition to this, due to their license changes, I have removed Mediator and Automapper from the project. I have also removed ImageSharp and replace it with [ImageResize](https://github.com/YodasMyDad/ImageResize).
+In addition to this, due to their license changes, I have removed Mediator and Automapper from the project. I have also removed ImageSharp and replaced it with [ImageResize](https://github.com/YodasMyDad/ImageResize).
  
 # ZauberCMS
 
