@@ -518,7 +518,35 @@ Every dialog component should include the `BlazoredModalInstance` cascading para
 
 ### Opening Dialogs
 
-Use the `IModalService` to open dialogs:
+Use the `IModalService` to open dialogs.
+
+#### Side panel dialogs (preferred)
+
+The standard pattern is to open dialogs as a side panel using `OpenSidePanel<TComponent>()` and await the result's `Confirmed` flag:
+
+```csharp
+@code {
+    [Inject] public IModalService DialogService { get; set; } = null!;
+
+    private async Task CreateLanguageDictionary()
+    {
+        var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>("Create Language Dictionary", 
+            new Dictionary<string, object>
+            {
+                {nameof(SaveLanguageDictionary.LanguageDictionary), new LanguageDictionary()}
+            });
+        var result = await dialog.Result;
+        if (result is { Confirmed: true })
+        {
+            await LoadData(new LoadDataArgs { Top = AmountPerPage });
+        }
+    }
+}
+```
+
+#### Standard modal dialogs
+
+You can still open centered modals when appropriate:
 
 ```csharp
 @code {
@@ -540,7 +568,6 @@ Use the `IModalService` to open dialogs:
         
         if (result.Confirmed)
         {
-            // Handle successful result
             var data = result.Data;
             if (data is (bool hadRoles, List<Role> selectedRoles))
             {
@@ -549,20 +576,32 @@ Use the `IModalService` to open dialogs:
             }
         }
     }
-    
-    private async Task OpenConfirmDialog(string message, Func<Task> onConfirm)
+}
+```
+
+### OpenSidePanel defaults
+
+`OpenSidePanel<T>()` is an extension on `IModalService` that sets consistent side-panel options by default (large size, custom position with the `side-panel` class) and maps a `Dictionary<string, object>` to `ModalParameters`:
+
+```9:27:ZauberCMS.Core/Extensions/DialogExtensions.cs
+public static IModalReference OpenSidePanel<T>(this IModalService dialogService, string title, Dictionary<string, object>? parameters = null) where T : ComponentBase
+{
+    var modalParameters = new ModalParameters();
+    if (parameters != null)
     {
-        var parameters = new ModalParameters()
-            .Add("Message", message);
-            
-        var modal = ModalService.Show<ConfirmDialog>("Confirm", parameters);
-        var result = await modal.Result;
-        
-        if (result.Confirmed)
+        foreach (var p in parameters)
         {
-            await onConfirm();
+            modalParameters.Add(p.Key, p.Value);
         }
+        
     }
+    var options = new ModalOptions
+    { 
+        Size = ModalSize.Large,
+        Position = ModalPosition.Custom,
+        PositionCustomClass = "side-panel"
+    };
+    return dialogService.Show<T>(title, modalParameters, options);
 }
 ```
 

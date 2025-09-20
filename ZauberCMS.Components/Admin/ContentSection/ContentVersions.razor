@@ -1,6 +1,7 @@
 @using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Content.Models
 @using ZauberCMS.Core.Shared
+@using ZauberCMS.Components.Admin.ContentSection.Dialogs
 
 @if (Loading)
 {
@@ -70,25 +71,39 @@ else
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn Title="Actions" Width="120px">
+                <RadzenDataGridColumn Title="Actions" Width="280px">
                     <Template Context="version">
-                        @if (CanRollback(version))
-                        {
-                            <RadzenButton ButtonStyle="ButtonStyle.Warning"
-                                          Size="ButtonSize.Small"
-                                          Icon="restore"
-                                          Text="Restore"
-                                          Click="() => RestoreToVersion(version.Id)"
-                                          Title="Restore content to this version"/>
-                        }
-                        else if (version.IsCurrentPublished)
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Current" Size="BadgeSize.Small"/>
-                        }
-                        else
-                        {
-                            <small class="text-muted">Cannot restore</small>
-                        }
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Stretch">
+                            @if (!version.IsCurrentPublished)
+                            {
+                                <RadzenButton ButtonStyle="ButtonStyle.Info"
+                                              Size="ButtonSize.Small"
+                                              Icon="compare"
+                                              Text="Compare"
+                                              Click="() => CompareWithCurrent(version)"
+                                              Title="Compare this version with current"
+                                              Style="width: 100%; justify-content: flex-start;"/>
+                            }
+
+                            @if (CanRollback(version))
+                            {
+                                <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                              Size="ButtonSize.Small"
+                                              Icon="restore"
+                                              Text="Restore"
+                                              Click="() => RestoreToVersion(version.Id)"
+                                              Title="Restore content to this version"
+                                              Style="width: 100%; justify-content: flex-start;"/>
+                            }
+                            else if (version.IsCurrentPublished)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Current" Size="BadgeSize.Small"/>
+                            }
+                            else
+                            {
+                                <small class="text-muted">Cannot restore</small>
+                            }
+                        </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
@@ -115,6 +130,7 @@ else
     [Inject] public IContentVersioningService ContentVersioningService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Inject] public AppState AppState { get; set; } = null!;
+    [CascadingParameter] public IModalService ModalService { get; set; } = null!;
 
     private bool Loading { get; set; } = true;
     private List<ContentVersion> Versions { get; set; } = [];
@@ -231,6 +247,52 @@ else
     private async Task RefreshVersions()
     {
         await LoadVersionsAsync();
+    }
+
+    private async Task CompareWithCurrent(ContentVersion version)
+    {
+        try
+        {
+            // Find the current published version
+            var currentVersion = Versions.FirstOrDefault(v => v.IsCurrentPublished);
+            if (currentVersion == null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "No Current Version",
+                    Detail = "Cannot compare - no current published version found.",
+                    Duration = 4000
+                });
+                return;
+            }
+
+            // Compare the selected version with the current version
+            var comparison = await ContentVersioningService.CompareVersionsAsync(new CompareContentVersionsParameters
+            {
+                VersionId1 = version.Id,
+                VersionId2 = currentVersion.Id
+            });
+
+            var parameters = new Dictionary<string, object>
+            {
+                { nameof(VersionComparison.Comparison), comparison },
+                { nameof(VersionComparison.Loading), false }
+            };
+
+            var modal = ModalService.OpenSidePanel<VersionComparison>("Version Comparison", parameters);
+            var result = await modal.Result;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Comparison Failed",
+                Detail = "Failed to compare versions. Please try again.",
+                Duration = 4000
+            });
+        }
     }
 
 }
