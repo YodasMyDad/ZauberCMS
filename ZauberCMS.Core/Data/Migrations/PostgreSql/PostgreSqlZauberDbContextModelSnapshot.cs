@@ -17,7 +17,7 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.8")
+                .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -279,6 +279,102 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                         .HasDatabaseName("IX_ZauberContentTypes_Name");
 
                     b.ToTable("ZauberContentTypes", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ContentSize")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DatePublished")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsAutoSave")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsCurrentPublished")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsLatestDraft")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("ParentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PropertySnapshots")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Snapshot")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("VersionName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
+                        .HasFilter("[IsLatestDraft] = 1");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DateCreated")
+                        .HasDatabaseName("IX_ContentVersion_DateCreated");
+
+                    b.HasIndex("ParentVersionId");
+
+                    b.HasIndex("ContentId", "IsCurrentPublished")
+                        .HasDatabaseName("IX_ContentVersion_CurrentPublished");
+
+                    b.HasIndex("ContentId", "IsLatestDraft")
+                        .HasDatabaseName("IX_ContentVersion_LatestDraft");
+
+                    b.HasIndex("ContentId", "Status")
+                        .HasDatabaseName("IX_ContentVersion_ContentId_Status");
+
+                    b.HasIndex("ContentId", "VersionNumber")
+                        .HasDatabaseName("IX_ContentVersion_ContentId_Version");
+
+                    b.ToTable("ZauberContentVersions", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
@@ -995,6 +1091,23 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("LastUpdatedBy");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentVersion", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Membership.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("ZauberCMS.Core.Content.Models.ContentVersion", "ParentVersion")
+                        .WithMany()
+                        .HasForeignKey("ParentVersionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ParentVersion");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>

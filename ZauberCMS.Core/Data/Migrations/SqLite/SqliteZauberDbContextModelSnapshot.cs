@@ -15,7 +15,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
@@ -274,6 +274,102 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasDatabaseName("IX_ZauberContentTypes_Name");
 
                     b.ToTable("ZauberContentTypes", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ContentSize")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DatePublished")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAutoSave")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsCurrentPublished")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsLatestDraft")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("ParentVersionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PropertySnapshots")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Snapshot")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VersionName")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
+                        .HasFilter("[IsLatestDraft] = 1");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DateCreated")
+                        .HasDatabaseName("IX_ContentVersion_DateCreated");
+
+                    b.HasIndex("ParentVersionId");
+
+                    b.HasIndex("ContentId", "IsCurrentPublished")
+                        .HasDatabaseName("IX_ContentVersion_CurrentPublished");
+
+                    b.HasIndex("ContentId", "IsLatestDraft")
+                        .HasDatabaseName("IX_ContentVersion_LatestDraft");
+
+                    b.HasIndex("ContentId", "Status")
+                        .HasDatabaseName("IX_ContentVersion_ContentId_Status");
+
+                    b.HasIndex("ContentId", "VersionNumber")
+                        .HasDatabaseName("IX_ContentVersion_ContentId_Version");
+
+                    b.ToTable("ZauberContentVersions", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
@@ -986,6 +1082,23 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("LastUpdatedBy");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentVersion", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Membership.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("ZauberCMS.Core.Content.Models.ContentVersion", "ParentVersion")
+                        .WithMany()
+                        .HasForeignKey("ParentVersionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ParentVersion");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>

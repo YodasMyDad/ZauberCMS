@@ -26,6 +26,7 @@ namespace ZauberCMS.Core.Data
         public DbSet<GlobalData> GlobalDatas => Set<GlobalData>();
         public DbSet<ContentPropertyValue> ContentPropertyValues => Set<ContentPropertyValue>();
         public DbSet<UnpublishedContent> UnpublishedContent => Set<UnpublishedContent>();
+        public DbSet<ContentVersion> ContentVersions => Set<ContentVersion>();
         public DbSet<UserPropertyValue> UserPropertyValues => Set<UserPropertyValue>();
         public DbSet<Domain> Domains => Set<Domain>();
         public DbSet<Language> Languages => Set<Language>();

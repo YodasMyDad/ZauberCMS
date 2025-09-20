@@ -1,0 +1,236 @@
+@using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Content.Models
+@using ZauberCMS.Core.Shared
+
+@if (Loading)
+{
+    <div class="pt-4 flex items-center justify-center">
+        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate"
+                                   Size="ProgressBarCircularSize.Medium">
+            <Template>Loading versions...</Template>
+        </RadzenProgressBarCircular>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <RadzenText TextStyle="TextStyle.H5">Version History</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" class="text-muted">Restore to any previous version</RadzenText>
+        </div>
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
+                      Icon="refresh" Text="Refresh" Click="RefreshVersions"/>
+    </div>
+
+    @if (Versions.Any())
+    {
+        <RadzenDataGrid AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="10"
+                        Data="Versions"
+                        TItem="ContentVersion">
+            <Columns>
+                <RadzenDataGridColumn Property="VersionNumber" Title="Version" Width="90px" Sortable="true">
+                    <Template Context="version">
+                        <div class="d-flex align-items-center">
+                            @if (version.IsCurrentPublished)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success"
+                                             Text="@version.VersionNumber.ToString()"/>
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Secondary"
+                                             Text="@version.VersionNumber.ToString()"/>
+                            }
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn Property="DateCreated" Title="Date" Sortable="true" Width="150px">
+                    <Template Context="version">
+                        @version.DateCreated.Humanize()
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn Property="CreatedBy.Name" Title="Author" Sortable="true">
+                    <Template Context="version">
+                        @if (version.CreatedBy != null)
+                        {
+                            <div class="d-flex align-items-center">
+                                <RadzenGravatar Email="@version.CreatedBy.Email" Style="width: 24px; height: 24px;"
+                                                class="me-2"/>
+                                <span>@version.CreatedBy.Name</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">System</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn Title="Actions" Width="120px">
+                    <Template Context="version">
+                        @if (CanRollback(version))
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                          Size="ButtonSize.Small"
+                                          Icon="restore"
+                                          Text="Restore"
+                                          Click="() => RestoreToVersion(version.Id)"
+                                          Title="Restore content to this version"/>
+                        }
+                        else if (version.IsCurrentPublished)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Current" Size="BadgeSize.Small"/>
+                        }
+                        else
+                        {
+                            <small class="text-muted">Cannot restore</small>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <RadzenIcon Icon="history" Size="IconSize.XLarge" class="text-muted mb-3"/>
+            <RadzenText TextStyle="TextStyle.H6" class="text-muted mb-2">
+                No version history yet
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" class="text-muted">
+                Versions are automatically created when you save or publish content changes.<br/>
+                Make some changes and save to see your version history here.
+            </RadzenText>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public Guid ContentId { get; set; }
+
+    [Inject] public IContentVersioningService ContentVersioningService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+
+    private bool Loading { get; set; } = true;
+    private List<ContentVersion> Versions { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to content change events to refresh versions when content is saved
+        AppState.OnContentSaved += HandleContentSaved;
+        AppState.OnContentChanged += HandleContentChanged;
+
+        await LoadVersionsAsync();
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe from events
+        AppState.OnContentSaved -= HandleContentSaved;
+        AppState.OnContentChanged -= HandleContentChanged;
+    }
+
+    private async Task HandleContentSaved(ZauberCMS.Core.Content.Models.Content? content, string username)
+    {
+        // Refresh versions when any content is saved
+        await LoadVersionsAsync();
+    }
+
+    private async Task HandleContentChanged(ZauberCMS.Core.Content.Models.Content? content, string username)
+    {
+        // Refresh versions when any content changes
+        await LoadVersionsAsync();
+    }
+
+    private async Task LoadVersionsAsync()
+    {
+        Loading = true;
+        try
+        {
+            var parameters = new QueryContentVersionsParameters
+            {
+                ContentId = ContentId,
+                AmountPerPage = 100,
+                OrderBy = ContentVersionOrderBy.DateCreated
+            };
+            var result = await ContentVersioningService.GetContentVersionsAsync(parameters);
+            Versions = result.Items.ToList();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error Loading Versions",
+                Detail = "Failed to load version history. Please try refreshing."
+            });
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+
+    private bool CanRollback(ContentVersion version)
+    {
+        // Can only rollback to versions that aren't currently published
+        return !version.IsCurrentPublished;
+    }
+
+    private async Task RestoreToVersion(Guid versionId)
+    {
+        try
+        {
+            var parameters = new PublishContentVersionParameters { VersionId = versionId };
+            var result = await ContentVersioningService.PublishVersionAsync(parameters);
+
+            if (result.Success)
+            {
+                await LoadVersionsAsync();
+
+                // Notify other components that content has changed
+                await AppState.NotifyContentChanged(null, "system");
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Version Restored",
+                    Detail = "Content has been restored to the selected version.",
+                    Duration = 4000
+                });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Restore Failed",
+                    Detail = "Failed to restore to the selected version. Please try again.",
+                    Duration = 4000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "An error occurred while restoring the version.",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task RefreshVersions()
+    {
+        await LoadVersionsAsync();
+    }
+
+}

@@ -87,6 +87,7 @@ public static class ZauberSetup
         
         // Register Service Interfaces and Implementations
         builder.Services.AddScoped<IContentService, ContentService>();
+        builder.Services.AddScoped<IContentVersioningService, ContentVersioningService>();
         builder.Services.AddScoped<IMembershipService, MembershipService>();
         builder.Services.AddScoped<IMediaService, MediaService>();
         builder.Services.AddScoped<ILanguageService, LanguageService>();

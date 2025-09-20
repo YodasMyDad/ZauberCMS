@@ -20,6 +20,7 @@ namespace ZauberCMS.Core.Data
         DbSet<GlobalData> GlobalDatas { get; }
         DbSet<ContentPropertyValue> ContentPropertyValues { get; }
         DbSet<UnpublishedContent> UnpublishedContent { get; }
+        DbSet<ContentVersion> ContentVersions { get; }
         DbSet<UserPropertyValue> UserPropertyValues { get; }
         DbSet<Domain> Domains { get; }
         DbSet<Language> Languages { get; }

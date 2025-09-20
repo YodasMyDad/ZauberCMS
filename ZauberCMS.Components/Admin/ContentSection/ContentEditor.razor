@@ -12,6 +12,8 @@
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
 
+@implements IDisposable
+
 @if (Loading)
 {
     <div class="pt-4 flex items-center justify-center">
@@ -187,6 +189,10 @@ else
                             }
 
                         </RadzenTabsItem>
+
+                        <RadzenTabsItem Text="Versions">
+                            <ContentVersions ContentId="@Content.Id" />
+                        </RadzenTabsItem>
                     }
                 </Tabs>
             </RadzenTabs>
@@ -289,6 +295,10 @@ else
     protected override async Task OnParametersSetAsync()
     {
         Loading = true;
+
+        // Subscribe to content change events to refresh when content is modified externally
+        AppState.OnContentChanged += HandleContentChanged;
+
         AllContentTypeProperties = ExtensionManager.GetImplementations<IContentProperty>(true);
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (Content == null)
@@ -534,6 +544,16 @@ else
         }
     }
 
+    private async Task HandleContentChanged(ZauberCMS.Core.Content.Models.Content? content, string username)
+    {
+        // Refresh content when it changes externally (e.g., version restored)
+        // Only refresh if this is the currently loaded content
+        if (ContentId != null && (content == null || content.Id == ContentId))
+        {
+            await RefreshContent();
+        }
+    }
+
     private async Task Save(RadzenSplitButtonItem? item, bool unpublish)
     {
         if (await ValidateService.CanSave(Content!))
@@ -583,4 +603,9 @@ else
         }
     }
 
+    public void Dispose()
+    {
+        // Unsubscribe from events
+        AppState.OnContentChanged -= HandleContentChanged;
+    }
 }

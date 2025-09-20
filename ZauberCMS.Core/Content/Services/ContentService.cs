@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
+using ZauberCMS.Core.Content.Services;
 using ZauberCMS.Core.Content.Mapping;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
@@ -94,7 +95,35 @@ public class ContentService(
                 dbContext.UnpublishedContent.Add(unpublishedContent);
             }
 
-            return await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, extensionManager, cancellationToken);
+            var unpublishedResult = await dbContext.SaveChangesAndLog(null, handlerResult, cacheService, extensionManager, cancellationToken);
+
+            // Create version for unpublished content too
+            if (unpublishedResult.Success)
+            {
+                try
+                {
+                    var versioningService = _serviceProvider.GetService<IContentVersioningService>();
+                    if (versioningService != null)
+                    {
+                        // Use the parameter content which has the updated PropertyData from the UI
+                        var versionParameters = new CreateContentVersionParameters
+                        {
+                            Content = parameters.Content,
+                            Status = ContentVersionStatus.Draft,
+                            IsAutoSave = false,
+                            Comments = "Draft saved - unpublished changes"
+                        };
+
+                        var versionResult = await versioningService.CreateVersionAsync(versionParameters, cancellationToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log version creation error but don't fail the content save
+                }
+            }
+
+            return unpublishedResult;
         }
 
         if (parameters.Content.Url().IsNullOrWhiteSpace())
@@ -156,7 +185,43 @@ public class ContentService(
             await SaveAuditAsync(dbContext, $"{user.Name} {actionText} {nameText}", cancellationToken);
         }
 
-        return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
+        var saveResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager, cancellationToken);
+
+        // Create version after successful save
+        if (saveResult.Success && saveResult.Entity != null)
+        {
+            try
+            {
+                // Get the versioning service and create a version
+                var versioningService = _serviceProvider.GetService<IContentVersioningService>();
+                if (versioningService != null)
+                {
+                    // Use the parameter content which has the updated PropertyData from the UI
+                    // If content is currently published, create a published version to replace it
+                    // Otherwise create a draft version
+                    var shouldCreatePublishedVersion = content != null && content.Published;
+                    var versionParameters = new CreateContentVersionParameters
+                    {
+                        Content = parameters.Content, // Use the original parameter content with updated values
+                        Status = shouldCreatePublishedVersion ? ContentVersionStatus.Published : ContentVersionStatus.Draft,
+                        IsAutoSave = false,
+                        Comments = isUpdate ? "Auto-saved during content update" : "Initial version created"
+                    };
+
+                    var versionResult = await versioningService.CreateVersionAsync(versionParameters, cancellationToken);
+                }
+                else
+                {
+                    // Versioning service not available
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log version creation error but don't fail the content save
+            }
+        }
+
+        return saveResult;
     }
 
     /// <summary>
