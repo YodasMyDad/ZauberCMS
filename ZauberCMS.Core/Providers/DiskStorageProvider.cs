@@ -1,5 +1,5 @@
 ﻿using ImageResize.Core.Extensions;
-using ImageResize.Interfaces;
+using ImageResize.Core.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;

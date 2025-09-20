@@ -325,15 +325,12 @@ public static class ZauberSetup
         app.UseAuthorization();
         app.MapStaticAssets();
         
-
-        
         app.MapRazorComponents<T>()
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
             .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
 
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
-
         
         //app.MapBlazorHub();
         
