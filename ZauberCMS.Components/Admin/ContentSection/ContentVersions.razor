@@ -177,7 +177,7 @@ else
             var result = await ContentVersioningService.GetContentVersionsAsync(parameters);
             Versions = result.Items.ToList();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             NotificationService.Notify(new NotificationMessage
             {
@@ -232,7 +232,7 @@ else
                 });
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             NotificationService.Notify(new NotificationMessage
             {
@@ -283,7 +283,7 @@ else
             var modal = ModalService.OpenSidePanel<VersionComparison>("Version Comparison", parameters);
             var result = await modal.Result;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             NotificationService.Notify(new NotificationMessage
             {

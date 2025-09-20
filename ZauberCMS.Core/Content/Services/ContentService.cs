@@ -117,7 +117,7 @@ public class ContentService(
                         var versionResult = await versioningService.CreateVersionAsync(versionParameters, cancellationToken);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Log version creation error but don't fail the content save
                 }
@@ -215,7 +215,7 @@ public class ContentService(
                     // Versioning service not available
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log version creation error but don't fail the content save
             }
