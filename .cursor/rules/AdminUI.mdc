@@ -270,6 +270,400 @@ Data grids follow consistent patterns for filtering, sorting, and pagination:
 </RadzenDataGrid>
 ```
 
+## State Management
+
+ZauberCMS uses two main state management services to coordinate UI updates and maintain consistency across the admin interface.
+
+### AppState Service
+
+The `AppState` service provides a centralized event-driven system for notifying components when data changes occur. It handles notifications for Content, ContentTypes, Users, and Media.
+
+#### Key Events
+
+- **OnContentChanged/OnContentSaved/OnContentDeleted**: Content-related events
+- **OnContentTypeChanged/OnContentTypeSaved/OnContentTypeDeleted**: ContentType-related events  
+- **OnUserChanged/OnUserSaved/OnUserDeleted**: User-related events
+- **OnMediaChanged/OnMediaSaved/OnMediaDeleted**: Media-related events
+
+#### Usage Pattern
+
+```csharp
+@code {
+    [Inject] public AppState AppState { get; set; } = null!;
+    
+    protected override void OnInitialized()
+    {
+        // Subscribe to events
+        AppState.OnContentChanged += HandleContentChanged;
+        AppState.OnContentDeleted += HandleContentDeleted;
+    }
+    
+    private async Task HandleContentChanged(Content.Models.Content? content, string username)
+    {
+        // Refresh data, update UI, etc.
+        await RefreshData();
+        StateHasChanged();
+    }
+    
+    private async Task HandleContentDeleted(Content.Models.Content? content, string username)
+    {
+        // Handle deletion - remove from lists, navigate away, etc.
+        if (content?.Id == CurrentContentId)
+        {
+            NavigationManager.NavigateTo("/admin/content");
+        }
+        StateHasChanged();
+    }
+    
+    private async Task SaveContent()
+    {
+        // Save your content
+        var savedContent = await ContentService.SaveAsync(content);
+        
+        // Notify all subscribers about the change
+        await AppState.NotifyContentSaved(savedContent, CurrentUser.Email);
+    }
+    
+    public void Dispose()
+    {
+        // Always unsubscribe to prevent memory leaks
+        AppState.OnContentChanged -= HandleContentChanged;
+        AppState.OnContentDeleted -= HandleContentDeleted;
+    }
+}
+```
+
+#### Notification Methods
+
+When you make changes to data, always notify other components:
+
+```csharp
+// For saves (triggers both Saved and Changed events)
+await AppState.NotifyContentSaved(content, username);
+await AppState.NotifyContentTypeSaved(contentType, username);
+await AppState.NotifyUserSaved(user, username);
+await AppState.NotifyMediaSaved(media, username);
+
+// For deletions (triggers both Deleted and Changed events)
+await AppState.NotifyContentDeleted(content, username);
+await AppState.NotifyContentTypeDeleted(contentType, username);
+await AppState.NotifyUserDeleted(user, username);
+await AppState.NotifyMediaDeleted(media, username);
+
+// For general changes
+await AppState.NotifyContentChanged(content, username);
+await AppState.NotifyContentTypeChanged(contentType, username);
+await AppState.NotifyUserChanged(user, username);
+await AppState.NotifyMediaChanged(media, username);
+```
+
+### TreeState Service
+
+The `TreeState` service manages tree navigation state, including expanded/collapsed nodes and selected values. It's essential for maintaining tree state across navigation and updates.
+
+#### Key Features
+
+- **Node Expansion**: Track which tree nodes are expanded/collapsed
+- **Selection Management**: Manage currently selected tree items
+- **Children Cache**: Cache whether nodes have children for performance
+- **Section Tracking**: Track current admin section
+
+#### Usage Pattern
+
+```csharp
+@code {
+    [Inject] public TreeState TreeState { get; set; } = null!;
+    
+    protected override void OnInitialized()
+    {
+        // Subscribe to tree value changes
+        TreeState.OnTreeValueChanged += HandleTreeValueChanged;
+        
+        // Set current section
+        TreeState.CurrentSection = Constants.Sections.ContentSection;
+    }
+    
+    private void HandleTreeValueChanged(object? value)
+    {
+        if (value is Content.Models.Content content)
+        {
+            SelectedContent = content;
+            NavigationManager.NavigateTo($"/admin/content/edit/{content.Id}");
+        }
+        StateHasChanged();
+    }
+    
+    private void OnNodeExpanded(Guid nodeId)
+    {
+        TreeState.NodeExpanded(nodeId);
+    }
+    
+    private void OnNodeCollapsed(Guid nodeId)
+    {
+        TreeState.NodeCollapsed(nodeId);
+    }
+    
+    private bool IsNodeExpanded(Guid nodeId)
+    {
+        return TreeState.IsNodeExpanded(nodeId);
+    }
+    
+    // Set tree selection
+    private void SelectNode(Content.Models.Content content)
+    {
+        TreeState.TreeValue = content;
+    }
+    
+    // Cache children information for performance
+    private void SetNodeHasChildren(Guid nodeId, bool hasChildren)
+    {
+        TreeState.SetChildren(nodeId, hasChildren);
+    }
+    
+    // Clear cache when content structure changes
+    private void ClearChildrenCache(Guid? contentId = null)
+    {
+        TreeState.ClearChildCache(contentId); // null clears all
+    }
+    
+    public void Dispose()
+    {
+        TreeState.OnTreeValueChanged -= HandleTreeValueChanged;
+    }
+}
+```
+
+#### Tree Integration Example
+
+```csharp
+<RadzenTree @ref="ContentTreeRef" Data="@TreeData" @bind-Value="@TreeState.TreeValue"
+            Expand="@OnExpand" Collapse="@OnCollapse">
+    <RadzenTreeLevel>
+        <Template Context="data">
+            @if (data is Content.Models.Content content)
+            {
+                <RadzenIcon Icon="@GetContentIcon(content)" />
+                @content.Name
+            }
+        </Template>
+    </RadzenTreeLevel>
+</RadzenTree>
+
+@code {
+    private async Task OnExpand(TreeExpandEventArgs args)
+    {
+        if (args.Value is Content.Models.Content content)
+        {
+            TreeState.NodeExpanded(content.Id);
+            
+            // Load children if not already loaded
+            if (!TreeState.HasChildren(content.Id))
+            {
+                var children = await LoadChildren(content.Id);
+                TreeState.SetChildren(content.Id, children.Any());
+            }
+        }
+    }
+    
+    private void OnCollapse(TreeExpandEventArgs args)
+    {
+        if (args.Value is Content.Models.Content content)
+        {
+            TreeState.NodeCollapsed(content.Id);
+        }
+    }
+}
+```
+
+## Modal Dialog Management
+
+ZauberCMS uses Blazored.Modal for dialog management. All dialogs follow a consistent pattern using cascading parameters and result handling.
+
+### Basic Dialog Pattern
+
+Every dialog component should include the `BlazoredModalInstance` cascading parameter:
+
+```csharp
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    
+    // Your dialog parameters
+    [Parameter, EditorRequired] public Guid ContentId { get; set; }
+    [Parameter] public string? Title { get; set; }
+    
+    private async Task Save()
+    {
+        try
+        {
+            // Perform your save operation
+            var result = await SaveData();
+            
+            // Close dialog with success result
+            await BlazoredModal.CloseAsync(ModalResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            // Handle errors - you can either show error in dialog or close with error
+            await BlazoredModal.CloseAsync(ModalResult.Cancel());
+            // Or show error notification and keep dialog open
+        }
+    }
+    
+    private async Task Cancel()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Cancel());
+    }
+}
+```
+
+### Opening Dialogs
+
+Use the `IModalService` to open dialogs:
+
+```csharp
+@code {
+    [CascadingParameter] public IModalService ModalService { get; set; } = null!;
+    
+    private async Task OpenRestrictAccessDialog(Guid contentId)
+    {
+        var parameters = new ModalParameters()
+            .Add(nameof(RestrictAccess.ContentId), contentId);
+            
+        var options = new ModalOptions
+        {
+            Size = ModalSize.Large,
+            DisableBackgroundCancel = true
+        };
+        
+        var modal = ModalService.Show<RestrictAccess>("Restrict Access", parameters, options);
+        var result = await modal.Result;
+        
+        if (result.Confirmed)
+        {
+            // Handle successful result
+            var data = result.Data;
+            if (data is (bool hadRoles, List<Role> selectedRoles))
+            {
+                await ProcessRoleRestrictions(contentId, hadRoles, selectedRoles);
+                await AppState.NotifyContentChanged(content, CurrentUser.Email);
+            }
+        }
+    }
+    
+    private async Task OpenConfirmDialog(string message, Func<Task> onConfirm)
+    {
+        var parameters = new ModalParameters()
+            .Add("Message", message);
+            
+        var modal = ModalService.Show<ConfirmDialog>("Confirm", parameters);
+        var result = await modal.Result;
+        
+        if (result.Confirmed)
+        {
+            await onConfirm();
+        }
+    }
+}
+```
+
+### Dialog Return Values
+
+Dialogs can return different types of data:
+
+```csharp
+// Simple confirmation
+await BlazoredModal.CloseAsync(ModalResult.Ok());
+
+// Return single value
+await BlazoredModal.CloseAsync(ModalResult.Ok(selectedItem));
+
+// Return multiple values using tuples
+await BlazoredModal.CloseAsync(ModalResult.Ok((hadPreviousData, selectedItems, additionalInfo)));
+
+// Return complex objects
+var result = new DialogResult 
+{ 
+    Success = true, 
+    Data = complexObject,
+    Message = "Operation completed"
+};
+await BlazoredModal.CloseAsync(ModalResult.Ok(result));
+
+// Cancel/Error
+await BlazoredModal.CloseAsync(ModalResult.Cancel());
+```
+
+### Complete Dialog Example
+
+```csharp
+// RestrictAccess.razor
+<div class="font-medium mb-1">Pick the roles who have access to this page</div>
+
+<RadzenPickList @bind-Source="@AllRoles" @bind-Target="@SelectedRoles" 
+                Style="height:500px; width:100%;"
+                TextProperty="@nameof(Role.Name)">
+    <SourceHeader>Available Roles:</SourceHeader>
+    <TargetHeader>Selected Roles:</TargetHeader>
+</RadzenPickList>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" 
+             AlignItems="AlignItems.Center" class="rz-mt-3">
+    <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Click="Cancel"/>
+    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+</RadzenStack>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    [Parameter, EditorRequired] public Guid ContentId { get; set; }
+    
+    [Inject] public IContentService ContentService { get; set; } = null!;
+    [Inject] public IMembershipService MembershipService { get; set; } = null!;
+    
+    private IEnumerable<Role> AllRoles { get; set; } = [];
+    private IEnumerable<Role>? SelectedRoles { get; set; } = [];
+    private bool AlreadyHadContentRoles { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var content = await ContentService.GetContentAsync(new GetContentParameters 
+        { 
+            Id = ContentId, 
+            IncludeContentRoles = true 
+        });
+        
+        if (content != null)
+        {
+            var allRoles = await MembershipService.QueryRolesAsync(new QueryRolesParameters 
+            { 
+                AmountPerPage = 250, 
+                OrderBy = GetRolesOrderBy.Name
+            });
+            
+            AllRoles = allRoles.Items;
+            SelectedRoles = content.ContentRoles.Select(x => x.Role);
+            
+            var selectedRoles = SelectedRoles as Role[] ?? SelectedRoles.ToArray();
+            if (selectedRoles.Any())
+            {
+                AlreadyHadContentRoles = true;
+                AllRoles = AllRoles.Except(selectedRoles, new ITreeEqualityComparer<Role>()).ToList();
+            }
+        }
+    }
+
+    private async Task Save()
+    {
+        var result = (AlreadyHadContentRoles, SelectedRoles?.ToList() ?? []);
+        await BlazoredModal.CloseAsync(ModalResult.Ok(result));
+    }
+    
+    private async Task Cancel()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Cancel());
+    }
+}
+```
+
 ## Best Practices
 
 ### Component Structure
@@ -286,12 +680,13 @@ Data grids follow consistent patterns for filtering, sorting, and pagination:
 3. **Responsive Design**: Ensure components work on mobile and desktop
 4. **Accessibility**: Include proper ARIA labels and keyboard navigation
 
-### State Management
+### State Management Best Practices
 
-1. **Tree State**: Use `TreeState` for navigation state management
-2. **App State**: Use `AppState` for global application state
-3. **Local State**: Keep component-specific state in the component
-4. **State Synchronization**: Ensure state changes trigger appropriate UI updates
+1. **Always Notify**: Use AppState notifications when data changes
+2. **Subscribe/Unsubscribe**: Always unsubscribe from events in Dispose() to prevent memory leaks
+3. **Tree State**: Use TreeState for navigation state management
+4. **Local State**: Keep component-specific state in the component
+5. **State Synchronization**: Ensure state changes trigger appropriate UI updates
 
 ### Code Organization
 
