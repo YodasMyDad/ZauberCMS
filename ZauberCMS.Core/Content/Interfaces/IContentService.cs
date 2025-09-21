@@ -35,4 +35,5 @@ public interface IContentService
     Task<List<Domain>> GetCachedDomainsAsync(CachedDomainsParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<UnpublishedContent>> ClearUnpublishedContentAsync(ClearUnpublishedContentParameters parameters, CancellationToken cancellationToken = default);
     Task<DataGridResult<Models.Content>> GetDataGridContentAsync(DataGridContentParameters parameters, CancellationToken cancellationToken = default);
+    Task<HandlerResult<int>> CleanupOrphanedRelatedContentAsync(CleanupOrphanedRelatedContentParameters parameters, CancellationToken cancellationToken = default);
 }

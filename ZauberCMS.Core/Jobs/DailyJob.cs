@@ -3,6 +3,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Audit.Parameters;
+using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Parameters;
 
 namespace ZauberCMS.Core.Jobs;
 
@@ -22,7 +24,13 @@ public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger
         {
             using var scope = serviceProvider.CreateScope();
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
+            var contentService = scope.ServiceProvider.GetRequiredService<IContentService>();
+
+            // Cleanup old audit records
             await auditService.CleanupOldAuditsAsync(new CleanupOldAuditsParameters());
+
+            // Cleanup orphaned RelatedContentId references
+            await contentService.CleanupOrphanedRelatedContentAsync(new CleanupOrphanedRelatedContentParameters());
         }
         catch (Exception e)
         {
