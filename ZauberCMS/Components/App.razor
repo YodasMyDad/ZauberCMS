@@ -11,7 +11,7 @@
     <ImportMap />
     @if (IsAdmin)
     {
-        <RadzenTheme Theme="material" />
+        <RadzenTheme Theme="material" @rendermode="InteractiveServer" />
         <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css"]">
         <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
         <link rel="stylesheet" href="@Assets["_content/Blazored.Modal/Blazored.Modal.bundle.scp.css"]">
@@ -24,10 +24,6 @@
 </head>
 
 <body>
-@if (IsAdmin)
-{
-    <RadzenComponents @rendermode="InteractiveServer" />   
-}
 
 <CascadingValue Value="IsAdmin">
     <Routes @rendermode="RenderModeForPage"/>

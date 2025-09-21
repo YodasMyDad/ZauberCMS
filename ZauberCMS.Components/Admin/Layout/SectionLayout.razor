@@ -5,6 +5,9 @@
 @using Microsoft.Extensions.Options
 @inherits LayoutComponentBase
 
+
+<RadzenComponents @rendermode="InteractiveServer" />   
+
 <HeadContent>
     <SectionOutlet SectionId="@Sections.PageHeadContent"/>
 </HeadContent>
@@ -23,6 +26,7 @@
                 </RadzenStack>
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
                              Style="height: 100%;">
+                    <RadzenAppearanceToggle />
                     <UserProfile/>
                 </RadzenStack>
             </RadzenHeader>
