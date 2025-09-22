@@ -1,9 +1,10 @@
-﻿@using System.Text.Json
+﻿    @using System.Text.Json
 @using ZauberCMS.Components.ContentComponents
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Content.Mapping
+@using ZauberCMS.Core.Content.Models
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -70,7 +71,15 @@
         if (!Value.IsNullOrWhiteSpace())
         {
             // Get content
-            var contentIds= JsonSerializer.Deserialize<List<Guid>>(Value) ?? [];
+            List<Guid> contentIds;
+            try
+            {
+                contentIds = JsonSerializer.Deserialize<List<Guid>>(Value!) ?? [];
+            }
+            catch (JsonException)
+            {
+                contentIds = [];
+            }
             var content = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = contentIds, AmountPerPage = 100, NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only});
             // Build an index map so we can preserve the original order of IDs
             var idOrder = contentIds
@@ -100,6 +109,21 @@
             if (index != -1)
             {
                 ContentItems.RemoveAt(index);
+            }
+
+            // Update the Value to persist the deletion
+            var remainingIds = ContentItems.Select(c => c.Id).ToList();
+            Value = JsonSerializer.Serialize(remainingIds);
+            await ValueChanged.InvokeAsync(Value);
+
+            // Actually delete the content from the database
+            var deleteParams = new DeleteContentParameters { ContentId = content.Id, MoveToRecycleBin = false };
+            var result = await ContentService.DeleteContentAsync(deleteParams);
+            if (!result.Success)
+            {
+                NotificationService.ShowNotifications(result.Messages);
+                // If deletion failed, we might want to restore the item in the UI
+                // But for now, we'll just show the error
             }
         }
     }

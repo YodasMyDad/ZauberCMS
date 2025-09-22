@@ -33,7 +33,7 @@
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.9" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
         <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
-        <PackageReference Include="Radzen.Blazor" Version="7.3.4" />
+        <PackageReference Include="Radzen.Blazor" Version="7.3.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
             <PrivateAssets>all</PrivateAssets>
