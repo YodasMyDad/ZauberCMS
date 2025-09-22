@@ -1,4 +1,6 @@
-﻿<CascadingValue Value="this">
+﻿@using ZauberCMS.Core.Content.Models
+
+<CascadingValue Value="this">
     <DynamicComponent Type="@ComponentType" Parameters="@GetParameters()"/>
 </CascadingValue>
 
@@ -8,15 +10,24 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public Action<BlockListChanges>? ChangesPending { get; set; }
 
     private Dictionary<string, object> GetParameters()
     {
-        return new Dictionary<string, object>
+        var parameters = new Dictionary<string, object>
         {
             ["Value"] = Value,
             ["ValueChanged"] = ValueChanged,
             ["Settings"] = Settings,
             ["Content"] = Content!
         };
+
+        // Add ChangesPending callback only for BlockListEditor
+        if (ChangesPending != null && ComponentType?.Name == "BlockListEditorProperty")
+        {
+            parameters["ChangesPending"] = ChangesPending;
+        }
+
+        return parameters;
     }
 }

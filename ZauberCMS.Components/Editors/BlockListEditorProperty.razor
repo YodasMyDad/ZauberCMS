@@ -1,4 +1,4 @@
-﻿    @using System.Text.Json
+﻿@using System.Text.Json
 @using ZauberCMS.Components.ContentComponents
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
@@ -13,11 +13,15 @@
         @if (ContentTypes.ContainsKey(item!.ContentTypeId))
         {
             <div>
-                <div class="w-full flex justify-between items-start border border-gray-200 border-solid my-1 notextselection cursor-grab">
-                    <div class="p-3 flex items-center justify-center">
+                <div class="w-full flex justify-between items-start border @(item.Published ? "border-gray-200" : "border-orange-300 bg-orange-50") border-solid my-1 notextselection cursor-grab">
+                    <div class="p-3 flex items-center justify-center relative">
                         <RadzenIcon Icon="@(ContentTypes[item!.ContentTypeId].Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600"/>
+                        @if (!item.Published)
+                        {
+                            <RadzenIcon Icon="unpublished" Style="font-size: 1rem; position: absolute; top: 0; right: 0;" class="text-orange-600"/>
+                        }
                     </div>
-                    <div class="p-3 flex-1 col-span-8 border border-y-0 border-gray-200 border-solid">
+                    <div class="p-3 flex-1 col-span-8 border border-y-0 @(item.Published ? "border-gray-200" : "border-orange-200") border-solid">
                         <RenderBlock Content="@(item)" Stylesheets="@SettingsModel.Styleheets"
                                      TView="IContentBlockPreview"
                                      FallbackComponentType="@(typeof(ContentBlockPreviewFallback))"
@@ -51,6 +55,7 @@
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
+    [Parameter] public Action<BlockListChanges>? ChangesPending { get; set; }
     
     [CascadingParameter] public IModalService? ModalService { get; set; }
     
@@ -64,6 +69,11 @@
     private List<Content> ContentItems { get; set; } = [];
     private Dictionary<Guid, ContentType> ContentTypes { get; set; } = [];
     private BlockListEditorSettingsModel SettingsModel { get; set; } = new();
+
+    // Change tracking for deferred saves
+    private List<Content> AddedItems { get; set; } = [];
+    private List<Content> UpdatedItems { get; set; } = [];
+    private List<Content> DeletedItems { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -80,7 +90,7 @@
             {
                 contentIds = [];
             }
-            var content = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = contentIds, AmountPerPage = 100, NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only});
+            var content = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = contentIds, AmountPerPage = 100, NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only, IncludeUnpublished = true });
             // Build an index map so we can preserve the original order of IDs
             var idOrder = contentIds
                 .Select((id, index) => new { id, index })
@@ -89,8 +99,26 @@
             ContentItems = content.Items
                 .OrderBy(item => idOrder.TryGetValue(item.Id, out var idx) ? idx : int.MaxValue)
                 .ToList();
+
+            // Ensure all ContentTypes are loaded for preview
+            foreach (var item in ContentItems)
+            {
+                if (!ContentTypes.ContainsKey(item.ContentTypeId))
+                {
+                    var contentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = item.ContentTypeId });
+                    if (contentType != null)
+                    {
+                        ContentTypes[item.ContentTypeId] = contentType;
+                    }
+                }
+                // Ensure ContentTypeAlias is set for preview rendering
+                if (ContentTypes.ContainsKey(item.ContentTypeId))
+                {
+                    item.ContentTypeAlias = ContentTypes[item.ContentTypeId].Alias;
+                }
+            }
         }
-        
+
         SettingsModel = Settings.FromJson<BlockListEditorSettingsModel>();
     }
 
@@ -111,20 +139,16 @@
                 ContentItems.RemoveAt(index);
             }
 
+            // Track the deletion for deferred processing instead of immediate delete
+            DeletedItems.Add(content);
+
             // Update the Value to persist the deletion
             var remainingIds = ContentItems.Select(c => c.Id).ToList();
             Value = JsonSerializer.Serialize(remainingIds);
             await ValueChanged.InvokeAsync(Value);
 
-            // Actually delete the content from the database
-            var deleteParams = new DeleteContentParameters { ContentId = content.Id, MoveToRecycleBin = false };
-            var result = await ContentService.DeleteContentAsync(deleteParams);
-            if (!result.Success)
-            {
-                NotificationService.ShowNotifications(result.Messages);
-                // If deletion failed, we might want to restore the item in the UI
-                // But for now, we'll just show the error
-            }
+            // Notify parent of pending changes
+            NotifyParentOfChanges();
         }
     }
 
@@ -164,6 +188,24 @@
                         content.MapTo(changedContent);
                         changedContent.PropertyData = content.PropertyData;
                         ContentItems[index] = changedContent;
+
+                        // Track the update for deferred processing
+                        UpdatedItems.Add(changedContent);
+
+                        // Ensure ContentType is loaded for preview
+                        if (!ContentTypes.ContainsKey(content.ContentTypeId))
+                        {
+                            var contentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = content.ContentTypeId });
+                            if (contentType != null)
+                            {
+                                ContentTypes[content.ContentTypeId] = contentType;
+                            }
+                        }
+                        // Ensure ContentTypeAlias is set for preview rendering
+                        if (ContentTypes.ContainsKey(content.ContentTypeId))
+                        {
+                            changedContent.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
+                        }
                     }
                     else
                     {
@@ -174,36 +216,46 @@
                 else
                 {
                     ContentItems.Add(content);
+
+                    // Track the addition for deferred processing
+                    AddedItems.Add(content);
+
+                    // Ensure ContentType is loaded for preview
+                    if (!ContentTypes.ContainsKey(content.ContentTypeId))
+                    {
+                        var contentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = content.ContentTypeId });
+                        if (contentType != null)
+                        {
+                            ContentTypes[content.ContentTypeId] = contentType;
+                        }
+                    }
+                    // Ensure ContentTypeAlias is set for preview rendering
+                    if (ContentTypes.ContainsKey(content.ContentTypeId))
+                    {
+                        content.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
+                    }
                 }
 
-                await SaveItems();
+                NotifyParentOfChanges();
             }
         }
     }
 
-    private async Task SaveItems()
+    private void NotifyParentOfChanges()
     {
-        var idsToSave = new List<Guid>();
-        
-        foreach (var content in ContentItems)
+        var changes = new BlockListChanges
         {
-            var saveContentCommand = new SaveContentParameters
-            {
-                Content = content
-            };
-            var result = await ContentService.SaveContentAsync(saveContentCommand);
-            if (result.Success)
-            {
-                idsToSave.Add(content.Id);
-            }
-            else
-            {
-                NotificationService.ShowNotifications(result.Messages);
-            }
-        }
-        
-        Value = JsonSerializer.Serialize(idsToSave);
-        await ValueChanged.InvokeAsync(Value);
+            AddedItems = AddedItems,
+            UpdatedItems = UpdatedItems,
+            DeletedItems = DeletedItems
+        };
+
+        ChangesPending?.Invoke(changes);
+
+        // Update the Value property to reflect current order
+        var currentIds = ContentItems.Select(c => c.Id).ToList();
+        Value = JsonSerializer.Serialize(currentIds);
+        ValueChanged.InvokeAsync(Value);
     }
     
     private async Task SortList((int oldIndex, int newIndex) indices)
@@ -225,6 +277,9 @@
         var clonedIds = clonedList.Select(x => x.Id);
         Value = JsonSerializer.Serialize(clonedIds);
         await ValueChanged.InvokeAsync(Value);
+
+        // Notify parent that order has changed (this affects the UpdatedItems)
+        NotifyParentOfChanges();
     }
 
 

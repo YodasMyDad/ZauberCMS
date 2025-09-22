@@ -8,6 +8,7 @@
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Content.Mapping
+@using ZauberCMS.Core.Content.Models
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
@@ -80,7 +81,8 @@ else
                                                                 Settings="@property.Settings"
                                                                 Content="@Content"
                                                                 Value="@contentValue.Value"
-                                                                ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
+                                                                ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"
+                                                                ChangesPending="@HandleBlockListChanges"/>
                                                         </CentreColumn>
                                                     </EditorRow>
                                                 }
@@ -271,6 +273,7 @@ else
     [Parameter] public Guid? NestedParentId { get; set; }
     [Parameter] public bool? IsBlockList { get; set; }
     [Parameter] public string? DefaultName { get; set; }
+    [Parameter] public Action<BlockListChanges>? OnBlockListChanges { get; set; }
 
     private EditForm ContentForm { get; set; } = null!;
     private ContentType? ContentType { get; set; }
@@ -291,6 +294,7 @@ else
     private User? LastUpdatedBy { get; set; }
     private bool Loading { get; set; } = true;
     private Content? Content { get; set; }
+    private BlockListChanges? PendingBlockListChanges { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -554,16 +558,75 @@ else
         }
     }
 
+    private void HandleBlockListChanges(BlockListChanges changes)
+    {
+        // Store the pending changes to be processed during save
+        PendingBlockListChanges = changes;
+        OnBlockListChanges?.Invoke(changes);
+    }
+
+    private async Task ProcessBlockListChanges()
+    {
+        if (PendingBlockListChanges == null) return;
+
+        // Process added items
+        foreach (var addedItem in PendingBlockListChanges.AddedItems)
+        {
+            var saveParams = new SaveContentParameters { Content = addedItem };
+            var result = await ContentService.SaveContentAsync(saveParams);
+            if (!result.Success)
+            {
+                NotificationService.ShowNotifications(result.Messages);
+            }
+        }
+
+        // Process updated items
+        foreach (var updatedItem in PendingBlockListChanges.UpdatedItems)
+        {
+            var saveParams = new SaveContentParameters { Content = updatedItem };
+            var result = await ContentService.SaveContentAsync(saveParams);
+            if (!result.Success)
+            {
+                NotificationService.ShowNotifications(result.Messages);
+            }
+        }
+
+        // Process deleted items
+        foreach (var deletedItem in PendingBlockListChanges.DeletedItems)
+        {
+            var deleteParams = new DeleteContentParameters { ContentId = deletedItem.Id, MoveToRecycleBin = false };
+            var result = await ContentService.DeleteContentAsync(deleteParams);
+            if (!result.Success)
+            {
+                NotificationService.ShowNotifications(result.Messages);
+            }
+        }
+
+        // Clear the pending changes after processing
+        PendingBlockListChanges = null;
+    }
+
     private async Task Save(RadzenSplitButtonItem? item, bool unpublish)
     {
         if (await ValidateService.CanSave(Content!))
         {
             if (IsBlockList == true)
             {
+                // Handle unpublish for block list items
+                if (unpublish)
+                {
+                    Content!.Published = false;
+                }
                 await ContentEditorModal.CloseAsync(ModalResult.Ok(Content));
             }
             else
             {
+                // Process any pending block list changes first
+                if (PendingBlockListChanges != null)
+                {
+                    await ProcessBlockListChanges();
+                }
+
                 var saveContentCommand = new SaveContentParameters();
 
                 if (unpublish)
