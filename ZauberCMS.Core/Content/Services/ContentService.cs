@@ -192,6 +192,12 @@ public class ContentService(
         var saveResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
             cancellationToken);
 
+        // Recursively process BlockListEditor changes for nested content
+        if (saveResult.Success && !parameters.SaveUnpublishedOnly)
+        {
+            await ProcessBlockListEditorChangesAsync(content, dbContext, user!, cancellationToken);
+        }
+
         // Create version after successful save
         if (saveResult is { Success: true, Entity: not null })
         {
@@ -1796,5 +1802,54 @@ public class ContentService(
             BaseQueryContentParameters.NestedContentFilter.Only => query.Where(c => c.RelatedContentId != null),
             _ => query // Include does nothing
         };
+    }
+
+    private async Task ProcessBlockListEditorChangesAsync(Models.Content content, IZauberDbContext dbContext, User user, CancellationToken cancellationToken)
+    {
+        // Find BlockListEditor properties in this content
+        var blockListProperties = content.PropertyData
+            .Where(p => p.Alias == "ZauberCMS.BlockListEditor")
+            .ToList();
+
+        foreach (var property in blockListProperties)
+        {
+            if (string.IsNullOrWhiteSpace(property.Value))
+                continue;
+
+            try
+            {
+                // Parse the JSON array of content IDs
+                var contentIds = JsonSerializer.Deserialize<List<Guid>>(property.Value);
+                if (contentIds == null || !contentIds.Any())
+                    continue;
+
+                // Load and save each referenced content (recursive processing)
+                foreach (var contentId in contentIds)
+                {
+                    var nestedContent = await dbContext.Contents
+                        .Include(c => c.PropertyData)
+                        .FirstOrDefaultAsync(c => c.Id == contentId, cancellationToken);
+
+                    if (nestedContent != null)
+                    {
+                        // Recursively save this content, which will process its own BlockListEditor properties
+                        var nestedSaveParams = new SaveContentParameters
+                        {
+                            Content = nestedContent,
+                            ExcludePropertyData = false,
+                            UpdateContentRoles = false,
+                            SaveUnpublishedOnly = false
+                        };
+
+                        await SaveContentAsync(nestedSaveParams, cancellationToken);
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Skip invalid JSON - not a breaking error for the main save
+                continue;
+            }
+        }
     }
 }
