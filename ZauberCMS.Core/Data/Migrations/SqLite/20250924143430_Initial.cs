@@ -1,13 +1,12 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace ZauberCMS.Core.Data.Migrations.PostgreSql
+namespace ZauberCMS.Core.Data.Migrations.SqLite
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,11 +15,11 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberGlobalData",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Alias = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    Data = table.Column<string>(type: "text", nullable: true),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Data = table.Column<string>(type: "TEXT", nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -31,8 +30,8 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberLanguageDictionaries",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Key = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Key = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,11 +42,11 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberLanguages",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    LanguageIsoCode = table.Column<string>(type: "character varying(14)", maxLength: 14, nullable: true),
-                    LanguageCultureName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    LanguageIsoCode = table.Column<string>(type: "TEXT", maxLength: 14, nullable: true),
+                    LanguageCultureName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -58,17 +57,17 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberRoles",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Icon = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExtendedData = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: false),
-                    Properties = table.Column<string>(type: "text", nullable: false),
-                    Tabs = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
-                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Icon = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExtendedData = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: false),
+                    Properties = table.Column<string>(type: "TEXT", nullable: false),
+                    Tabs = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -79,12 +78,12 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberTags",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TagName = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    Slug = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    SortOrder = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TagName = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Slug = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    SortOrder = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -95,10 +94,10 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberUnpublishedContent",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    JsonContent = table.Column<string>(type: "text", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    JsonContent = table.Column<string>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -109,24 +108,24 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberUsers",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExtendedData = table.Column<string>(type: "character varying(3500)", maxLength: 3500, nullable: false),
-                    UserName = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
-                    PasswordHash = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
-                    SecurityStamp = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
-                    PhoneNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExtendedData = table.Column<string>(type: "TEXT", maxLength: 3500, nullable: false),
+                    UserName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", maxLength: 300, nullable: true),
+                    SecurityStamp = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true),
+                    PhoneNumber = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -137,12 +136,12 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberDomains",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Url = table.Column<string>(type: "character varying(350)", maxLength: 350, nullable: true),
-                    LanguageId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ContentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Url = table.Column<string>(type: "TEXT", maxLength: 350, nullable: true),
+                    LanguageId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -158,16 +157,16 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberLanguageTexts",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    LanguageDictionaryId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LanguageId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Value = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    LanguageDictionaryId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    LanguageId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ZauberLanguageTexts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ZauberLanguageTexts_ZauberLanguageDictionaries_LanguageDict~",
+                        name: "FK_ZauberLanguageTexts_ZauberLanguageDictionaries_LanguageDictionaryId",
                         column: x => x.LanguageDictionaryId,
                         principalTable: "ZauberLanguageDictionaries",
                         principalColumn: "Id",
@@ -184,11 +183,11 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberRoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClaimType = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
-                    ClaimValue = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RoleId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ClaimType = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true),
+                    ClaimValue = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -205,11 +204,11 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberTagItems",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TagId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ItemId = table.Column<Guid>(type: "uuid", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TagId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ItemId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -226,27 +225,27 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberContentTypes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Description = table.Column<string>(type: "character varying(1500)", maxLength: 1500, nullable: true),
-                    Alias = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Icon = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    IsElementType = table.Column<bool>(type: "boolean", nullable: false),
-                    AllowAtRoot = table.Column<bool>(type: "boolean", nullable: false),
-                    EnableListView = table.Column<bool>(type: "boolean", nullable: false),
-                    IncludeChildren = table.Column<bool>(type: "boolean", nullable: false),
-                    LastUpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ContentProperties = table.Column<string>(type: "text", nullable: false),
-                    AvailableContentViews = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
-                    AllowedChildContentTypes = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
-                    Tabs = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
-                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsFolder = table.Column<bool>(type: "boolean", nullable: false),
-                    IsComposition = table.Column<bool>(type: "boolean", nullable: false),
-                    CompositionIds = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
-                    MediaId = table.Column<Guid>(type: "uuid", nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1500, nullable: true),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Icon = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    IsElementType = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AllowAtRoot = table.Column<bool>(type: "INTEGER", nullable: false),
+                    EnableListView = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IncludeChildren = table.Column<bool>(type: "INTEGER", nullable: false),
+                    LastUpdatedById = table.Column<Guid>(type: "TEXT", nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ContentProperties = table.Column<string>(type: "TEXT", nullable: false),
+                    AvailableContentViews = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false),
+                    AllowedChildContentTypes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    Tabs = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false),
+                    ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    IsFolder = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsComposition = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CompositionIds = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    MediaId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -259,25 +258,64 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 });
 
             migrationBuilder.CreateTable(
+                name: "ZauberContentVersions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ContentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    VersionNumber = table.Column<int>(type: "INTEGER", nullable: false),
+                    VersionName = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
+                    Snapshot = table.Column<string>(type: "TEXT", maxLength: 5000, nullable: false),
+                    PropertySnapshots = table.Column<string>(type: "TEXT", nullable: false),
+                    BlockListSnapshots = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "TEXT", nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DatePublished = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Comments = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
+                    IsCurrentPublished = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsLatestDraft = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ParentVersionId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    Tags = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    IsAutoSave = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    ContentSize = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ZauberContentVersions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ZauberContentVersions_ZauberContentVersions_ParentVersionId",
+                        column: x => x.ParentVersionId,
+                        principalTable: "ZauberContentVersions",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ZauberContentVersions_ZauberUsers_CreatedById",
+                        column: x => x.CreatedById,
+                        principalTable: "ZauberUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ZauberMedia",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Url = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    SortOrder = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    AltTag = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    MediaType = table.Column<int>(type: "integer", nullable: false),
-                    FileSize = table.Column<long>(type: "bigint", nullable: false),
-                    Width = table.Column<long>(type: "bigint", nullable: false),
-                    Height = table.Column<long>(type: "bigint", nullable: false),
-                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Path = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: false),
-                    LastUpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExtendedData = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
-                    Deleted = table.Column<bool>(type: "boolean", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Url = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    SortOrder = table.Column<int>(type: "INTEGER", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    AltTag = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    MediaType = table.Column<int>(type: "INTEGER", nullable: false),
+                    FileSize = table.Column<long>(type: "INTEGER", nullable: false),
+                    Width = table.Column<long>(type: "INTEGER", nullable: false),
+                    Height = table.Column<long>(type: "INTEGER", nullable: false),
+                    ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    Path = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: false),
+                    LastUpdatedById = table.Column<Guid>(type: "TEXT", nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExtendedData = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false),
+                    Deleted = table.Column<bool>(type: "INTEGER", nullable: false),
+                    RequiresAuthentication = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -298,11 +336,11 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberUserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClaimType = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
-                    ClaimValue = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ClaimType = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true),
+                    ClaimValue = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -319,10 +357,10 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "text", nullable: false),
-                    ProviderKey = table.Column<string>(type: "text", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
+                    ProviderKey = table.Column<string>(type: "TEXT", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true),
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -339,12 +377,12 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberUserPropertyValues",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Alias = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ContentTypePropertyId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Value = table.Column<string>(type: "text", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ContentTypePropertyId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -360,8 +398,8 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false)
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    RoleId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -384,10 +422,10 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LoginProvider = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Value = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true)
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -404,13 +442,13 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberRedirects",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    DomainId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FromUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ToUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    IsPermanent = table.Column<bool>(type: "boolean", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    DomainId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    FromUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ToUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    IsPermanent = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -427,25 +465,27 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberContent",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Url = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    ContentTypeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContentTypeAlias = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    LastUpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
-                    UnpublishedContentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Path = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: false),
-                    SortOrder = table.Column<int>(type: "integer", nullable: false),
-                    IsRootContent = table.Column<bool>(type: "boolean", nullable: false),
-                    Published = table.Column<bool>(type: "boolean", nullable: false),
-                    Deleted = table.Column<bool>(type: "boolean", nullable: false),
-                    HideFromNavigation = table.Column<bool>(type: "boolean", nullable: false),
-                    InternalRedirectId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ViewComponent = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    LanguageId = table.Column<Guid>(type: "uuid", nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Url = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    ContentTypeId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ContentTypeAlias = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    LastUpdatedById = table.Column<Guid>(type: "TEXT", nullable: true),
+                    UnpublishedContentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    Path = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: false),
+                    SortOrder = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsRootContent = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Published = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Deleted = table.Column<bool>(type: "INTEGER", nullable: false),
+                    HideFromNavigation = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsNestedContent = table.Column<bool>(type: "INTEGER", nullable: false),
+                    InternalRedirectId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    ParentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    RelatedContentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ViewComponent = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    LanguageId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -482,8 +522,8 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberMediaRole",
                 columns: table => new
                 {
-                    MediaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false)
+                    MediaId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    RoleId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -506,13 +546,13 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberAudits",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
-                    ContentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    MediaId = table.Column<Guid>(type: "uuid", nullable: true),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: true),
+                    ContentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    MediaId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -538,13 +578,13 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberContentPropertyValues",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Alias = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ContentTypePropertyId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Value = table.Column<string>(type: "text", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ContentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Alias = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ContentTypePropertyId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    DateUpdated = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -560,8 +600,8 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "ZauberContentRole",
                 columns: table => new
                 {
-                    ContentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false)
+                    ContentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    RoleId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -599,6 +639,11 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "IX_ZauberContent_ContentTypeId",
                 table: "ZauberContent",
                 column: "ContentTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContent_IsNestedContent",
+                table: "ZauberContent",
+                column: "IsNestedContent");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberContent_LanguageId",
@@ -664,6 +709,48 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 name: "IX_ZauberContentTypes_Name",
                 table: "ZauberContentTypes",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContentVersion_ContentId_Status",
+                table: "ZauberContentVersions",
+                columns: new[] { "ContentId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContentVersion_ContentId_Version",
+                table: "ZauberContentVersions",
+                columns: new[] { "ContentId", "VersionNumber" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContentVersion_CurrentPublished",
+                table: "ZauberContentVersions",
+                columns: new[] { "ContentId", "IsCurrentPublished" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContentVersion_DateCreated",
+                table: "ZauberContentVersions",
+                column: "DateCreated");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContentVersion_LatestDraft",
+                table: "ZauberContentVersions",
+                columns: new[] { "ContentId", "IsLatestDraft" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContentVersion_UniqueLatestDraft",
+                table: "ZauberContentVersions",
+                column: "ContentId",
+                unique: true,
+                filter: "[IsLatestDraft] = 1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContentVersions_CreatedById",
+                table: "ZauberContentVersions",
+                column: "CreatedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ZauberContentVersions_ParentVersionId",
+                table: "ZauberContentVersions",
+                column: "ParentVersionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberDomains_LanguageId",
@@ -814,6 +901,9 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
 
             migrationBuilder.DropTable(
                 name: "ZauberContentRole");
+
+            migrationBuilder.DropTable(
+                name: "ZauberContentVersions");
 
             migrationBuilder.DropTable(
                 name: "ZauberGlobalData");

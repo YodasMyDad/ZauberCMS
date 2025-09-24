@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
+using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Email.Parameters;
 using ZauberCMS.Core.Extensions;
@@ -15,6 +17,7 @@ using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Membership.Parameters;
 using ZauberCMS.Core.Membership.Mapping;
 using ZauberCMS.Core.Plugins;
+using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
 
@@ -25,6 +28,9 @@ public class MembershipService(
     ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider,
     ExtensionManager extensionManager,
+    IDataService dataService,
+    IEmailService emailService,
+    IOptions<ZauberSettings> settings,
     ILogger<MembershipService> logger)
     : IMembershipService
 {
@@ -662,36 +668,70 @@ public class MembershipService(
     {
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
         var registrationResult = new AuthenticationResult();
 
         try
         {
-            var user = new User
-            {
-                UserName = parameters.Email,
-                Email = parameters.Email,
-                Name = parameters.Name,
-                DateCreated = DateTime.UtcNow,
-                DateUpdated = DateTime.UtcNow
-            };
-
-            var result = await userManager.CreateAsync(user, parameters.Password);
-            if (result.Succeeded)
+            var newUser = new User { Id = Guid.NewGuid().NewSequentialGuid(), Email = parameters.Email, UserName = parameters.Username };
+            var result = await userManager.CreateAsync(newUser, parameters.Password);
+            registrationResult.Success = result.Succeeded;
+            
+            if (registrationResult.Success)
             {
                 // Add default role
-                await userManager.AddToRoleAsync(user, Constants.Roles.StandardRoleName);
+                registrationResult = await userManager.AssignStartingRoleAsync(
+                                        roleManager,
+                                        logger,
+                                        dbContext,
+                                        settings,
+                                        dataService,
+                                        newUser,
+                                        registrationResult);
 
-                // Sign in the user
-                await signInManager.SignInAsync(user, isPersistent: false);
+                if (!registrationResult.Success)
+                {
+                    return registrationResult;
+                }
 
-                registrationResult.Success = true;
-                registrationResult.NavigateToUrl = parameters.ReturnUrl;
+                var user = await userManager.FindByEmailAsync(parameters.Email);
+
+                if (userManager.Options.SignIn.RequireConfirmedAccount)
+                {
+                    var sendConfirmationEmailCommand = new SendEmailConfirmationParameters
+                    {
+                        ReturnUrl = parameters.ReturnUrl,
+                        User = user
+                    };
+                    
+                    await emailService.SendEmailConfirmationAsync(sendConfirmationEmailCommand, cancellationToken);
+
+                    registrationResult.AddMessage("Please check your email and click the link to confirm your account", ResultMessageType.Success);
+                }
+                else
+                {
+                    if (parameters.AutoLogin)
+                    {
+                        var signInResult = await signInManager.PasswordSignInAsync(user!, parameters.Password, parameters.RememberMe, false);
+                        registrationResult.Success = signInResult.Succeeded;
+                    
+                        if (parameters.ReturnUrl.IsNullOrWhiteSpace() && await userManager.IsInRoleAsync(user!, Constants.Roles.AdminRoleName))
+                        {
+                            parameters.ReturnUrl = Urls.AdminBaseUrl;
+                        }
+                    }
+                    
+                    registrationResult.NavigateToUrl = parameters.ReturnUrl ?? "/";   
+                    
+                }
             }
             else
             {
                 registrationResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
             }
+            
         }
         catch (Exception e)
         {

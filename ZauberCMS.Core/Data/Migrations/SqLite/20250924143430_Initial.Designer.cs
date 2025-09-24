@@ -11,14 +11,14 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.SqLite
 {
     [DbContext(typeof(SqliteZauberDbContext))]
-    [Migration("20241002164301_TagJoins")]
-    partial class TagJoins
+    [Migration("20250924143430_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
@@ -84,6 +84,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<Guid?>("InternalRedirectId")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsNestedContent")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsRootContent")
                         .HasColumnType("INTEGER");
 
@@ -108,6 +111,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<bool>("Published")
                         .HasColumnType("INTEGER");
 
+                    b.Property<Guid?>("RelatedContentId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 
@@ -127,6 +133,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.HasIndex("ContentTypeId");
 
+                    b.HasIndex("IsNestedContent")
+                        .HasDatabaseName("IX_ZauberContent_IsNestedContent");
+
                     b.HasIndex("LanguageId");
 
                     b.HasIndex("LastUpdatedById");
@@ -135,6 +144,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasDatabaseName("IX_ZauberContent_Name");
 
                     b.HasIndex("ParentId");
+
+                    b.HasIndex("Path")
+                        .HasDatabaseName("IX_ZauberContent_Path");
 
                     b.HasIndex("UnpublishedContentId");
 
@@ -204,16 +216,23 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CompositionIds")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ContentProperties")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("DateCreated")
-                        .IsRequired()
+                    b.Property<DateTime>("DateCreated")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("DateUpdated")
-                        .IsRequired()
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1500)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("EnableListView")
@@ -226,14 +245,26 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<bool>("IncludeChildren")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsComposition")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsElementType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsFolder")
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid?>("LastUpdatedById")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("MediaId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ParentId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Tabs")
@@ -252,6 +283,106 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasDatabaseName("IX_ZauberContentTypes_Name");
 
                     b.ToTable("ZauberContentTypes", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BlockListSnapshots")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ContentSize")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DatePublished")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAutoSave")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsCurrentPublished")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsLatestDraft")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("ParentVersionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PropertySnapshots")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Snapshot")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VersionName")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
+                        .HasFilter("[IsLatestDraft] = 1");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DateCreated")
+                        .HasDatabaseName("IX_ContentVersion_DateCreated");
+
+                    b.HasIndex("ParentVersionId");
+
+                    b.HasIndex("ContentId", "IsCurrentPublished")
+                        .HasDatabaseName("IX_ContentVersion_CurrentPublished");
+
+                    b.HasIndex("ContentId", "IsLatestDraft")
+                        .HasDatabaseName("IX_ContentVersion_LatestDraft");
+
+                    b.HasIndex("ContentId", "Status")
+                        .HasDatabaseName("IX_ContentVersion_ContentId_Status");
+
+                    b.HasIndex("ContentId", "VersionNumber")
+                        .HasDatabaseName("IX_ContentVersion_ContentId_Version");
+
+                    b.ToTable("ZauberContentVersions", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
@@ -448,6 +579,17 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("RequiresAuthentication")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Url")
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
@@ -464,10 +606,43 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.HasIndex("ParentId");
 
+                    b.HasIndex("Path")
+                        .HasDatabaseName("IX_ZauberMedia_Path");
+
                     b.HasIndex("Url")
                         .HasDatabaseName("IX_ZauberMedia_Url");
 
                     b.ToTable("ZauberMedia", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.ContentRole", b =>
+                {
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ContentId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("ZauberContentRole", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.MediaRole", b =>
+                {
+                    b.Property<Guid>("MediaId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("MediaId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("ZauberMediaRole", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.Role", b =>
@@ -745,6 +920,44 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.ToTable("ZauberUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Seo.Models.SeoRedirect", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("DomainId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FromUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsPermanent")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ToUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DomainId");
+
+                    b.HasIndex("FromUrl")
+                        .HasDatabaseName("IX_ZauberRedirects_FromUrl");
+
+                    b.ToTable("ZauberRedirects", (string)null);
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>
                 {
                     b.Property<Guid>("Id")
@@ -801,7 +1014,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ItemId");
+                    b.HasIndex("ItemId")
+                        .HasDatabaseName("IX_ZauberTagItems_ItemId");
 
                     b.HasIndex("TagId");
 
@@ -883,6 +1097,23 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("LastUpdatedBy");
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentVersion", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Membership.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("ZauberCMS.Core.Content.Models.ContentVersion", "ParentVersion")
+                        .WithMany()
+                        .HasForeignKey("ParentVersionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ParentVersion");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
                 {
                     b.HasOne("ZauberCMS.Core.Languages.Models.Language", "Language")
@@ -928,6 +1159,44 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("LastUpdatedBy");
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.ContentRole", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Content.Models.Content", "Content")
+                        .WithMany("ContentRoles")
+                        .HasForeignKey("ContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZauberCMS.Core.Membership.Models.Role", "Role")
+                        .WithMany("ContentRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Content");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.MediaRole", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Media.Models.Media", "Media")
+                        .WithMany("MediaRoles")
+                        .HasForeignKey("MediaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZauberCMS.Core.Membership.Models.Role", "Role")
+                        .WithMany("MediaRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Media");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.RoleClaim", b =>
@@ -996,21 +1265,23 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Seo.Models.SeoRedirect", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Content.Models.Domain", "Domain")
+                        .WithMany("Redirects")
+                        .HasForeignKey("DomainId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Domain");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Tags.Models.TagItem", b =>
                 {
-                    b.HasOne("ZauberCMS.Core.Content.Models.Content", "Content")
-                        .WithMany("TagItems")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("ZauberCMS.Core.Tags.Models.Tag", "Tag")
                         .WithMany("TagItems")
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Content");
 
                     b.Navigation("Tag");
                 });
@@ -1021,14 +1292,19 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.Navigation("Children");
 
-                    b.Navigation("PropertyData");
+                    b.Navigation("ContentRoles");
 
-                    b.Navigation("TagItems");
+                    b.Navigation("PropertyData");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>
                 {
                     b.Navigation("LinkedContent");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
+                {
+                    b.Navigation("Redirects");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Languages.Models.Language", b =>
@@ -1048,10 +1324,16 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("Audits");
 
                     b.Navigation("Children");
+
+                    b.Navigation("MediaRoles");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.Role", b =>
                 {
+                    b.Navigation("ContentRoles");
+
+                    b.Navigation("MediaRoles");
+
                     b.Navigation("UserRoles");
                 });
 

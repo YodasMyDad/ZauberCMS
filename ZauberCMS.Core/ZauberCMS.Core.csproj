@@ -50,8 +50,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Data\Migrations\PostgreSql\" />
       <Folder Include="Data\Migrations\SqLite\" />
       <Folder Include="Data\Migrations\SqlServer\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Data\Migrations\SqlServer\ZauberDbContextModelSnapshot.cs" />
     </ItemGroup>
 
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">

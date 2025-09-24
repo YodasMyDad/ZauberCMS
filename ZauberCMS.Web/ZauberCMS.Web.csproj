@@ -38,4 +38,8 @@
       <Folder Include="wwwroot\media\" />
     </ItemGroup>
     
+    <ItemGroup>
+      <None Remove="app.db" />
+    </ItemGroup>
+    
 </Project>

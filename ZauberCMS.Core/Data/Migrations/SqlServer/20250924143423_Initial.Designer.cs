@@ -2,48 +2,53 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZauberCMS.Core.Data;
 
 #nullable disable
 
-namespace ZauberCMS.Core.Data.Migrations.SqLite
+namespace ZauberCMS.Core.Data.Migrations.SqlServer
 {
-    [DbContext(typeof(SqliteZauberDbContext))]
-    [Migration("20240909135412_Inital")]
-    partial class Inital
+    [DbContext(typeof(ZauberDbContext))]
+    [Migration("20250924143423_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ContentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<Guid?>("MediaId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -60,72 +65,81 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ContentTypeAlias")
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<Guid>("ContentTypeId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("Deleted")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("HideFromNavigation")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("InternalRedirectId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsNestedContent")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsRootContent")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("LanguageId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("LastUpdatedById")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<Guid?>("ParentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Path")
                         .IsRequired()
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<bool>("Published")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("RelatedContentId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("SortOrder")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("UnpublishedContentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Url")
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("ViewComponent")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ContentTypeId");
+
+                    b.HasIndex("IsNestedContent")
+                        .HasDatabaseName("IX_ZauberContent_IsNestedContent");
 
                     b.HasIndex("LanguageId");
 
@@ -135,6 +149,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .HasDatabaseName("IX_ZauberContent_Name");
 
                     b.HasIndex("ParentId");
+
+                    b.HasIndex("Path")
+                        .HasDatabaseName("IX_ZauberContent_Path");
 
                     b.HasIndex("UnpublishedContentId");
 
@@ -148,28 +165,28 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Alias")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<Guid>("ContentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ContentTypePropertyId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Value")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -185,61 +202,80 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Alias")
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool>("AllowAtRoot")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<string>("AllowedChildContentTypes")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<string>("AvailableContentViews")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("CompositionIds")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<string>("ContentProperties")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("DateCreated")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DateUpdated")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1500)
+                        .HasColumnType("nvarchar(1500)");
 
                     b.Property<bool>("EnableListView")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IncludeChildren")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsComposition")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsElementType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFolder")
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("LastUpdatedById")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("MediaId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Tabs")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(4000)");
 
                     b.HasKey("Id");
 
@@ -254,27 +290,127 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.ToTable("ZauberContentTypes", (string)null);
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BlockListSnapshots")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ContentSize")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DatePublished")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsAutoSave")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsCurrentPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsLatestDraft")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("ParentVersionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PropertySnapshots")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Snapshot")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("VersionName")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
+                        .HasFilter("[IsLatestDraft] = 1");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DateCreated")
+                        .HasDatabaseName("IX_ContentVersion_DateCreated");
+
+                    b.HasIndex("ParentVersionId");
+
+                    b.HasIndex("ContentId", "IsCurrentPublished")
+                        .HasDatabaseName("IX_ContentVersion_CurrentPublished");
+
+                    b.HasIndex("ContentId", "IsLatestDraft")
+                        .HasDatabaseName("IX_ContentVersion_LatestDraft");
+
+                    b.HasIndex("ContentId", "Status")
+                        .HasDatabaseName("IX_ContentVersion_ContentId_Status");
+
+                    b.HasIndex("ContentId", "VersionNumber")
+                        .HasDatabaseName("IX_ContentVersion_ContentId_Version");
+
+                    b.ToTable("ZauberContentVersions", (string)null);
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ContentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("LanguageId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Url")
                         .HasMaxLength(350)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(350)");
 
                     b.HasKey("Id");
 
@@ -287,17 +423,17 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("JsonContent")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -308,21 +444,21 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Alias")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("Data")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -336,21 +472,21 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("LanguageCultureName")
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("LanguageIsoCode")
                         .HasMaxLength(14)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(14)");
 
                     b.HasKey("Id");
 
@@ -361,12 +497,12 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
 
@@ -380,18 +516,18 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("LanguageDictionaryId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("LanguageId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
 
@@ -409,51 +545,62 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AltTag")
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("Deleted")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<long>("FileSize")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.Property<long>("Height")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.Property<Guid?>("LastUpdatedById")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("MediaType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<Guid?>("ParentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
+
+                    b.Property<bool>("RequiresAuthentication")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
 
                     b.Property<string>("Url")
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<long>("Width")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -464,64 +611,98 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.HasIndex("ParentId");
 
+                    b.HasIndex("Path")
+                        .HasDatabaseName("IX_ZauberMedia_Path");
+
                     b.HasIndex("Url")
                         .HasDatabaseName("IX_ZauberMedia_Url");
 
                     b.ToTable("ZauberMedia", (string)null);
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.ContentRole", b =>
+                {
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ContentId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("ZauberContentRole", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.MediaRole", b =>
+                {
+                    b.Property<Guid>("MediaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("MediaId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("ZauberMediaRole", (string)null);
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.Role", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Properties")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Tabs")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(4000)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("ZauberRoles", (string)null);
                 });
@@ -530,18 +711,20 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ClaimType")
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<string>("ClaimValue")
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<Guid>("RoleId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -554,69 +737,69 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AccessFailedCount")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<string>("ExtendedData")
                         .IsRequired()
                         .HasMaxLength(3500)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3500)");
 
                     b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(300)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<string>("SecurityStamp")
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(150)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(150)");
 
                     b.HasKey("Id");
 
@@ -625,7 +808,8 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasDatabaseName("UserNameIndex");
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("ZauberUsers", (string)null);
                 });
@@ -634,18 +818,20 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ClaimType")
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<string>("ClaimValue")
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -657,17 +843,17 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.UserLogin", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasMaxLength(3000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -680,25 +866,25 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Alias")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<Guid>("ContentTypePropertyId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Value")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -713,10 +899,10 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.UserRole", b =>
                 {
                     b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RoleId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -728,21 +914,123 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.UserToken", b =>
                 {
                     b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Value")
                         .HasMaxLength(4000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(4000)");
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("ZauberUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Seo.Models.SeoRedirect", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DomainId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FromUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsPermanent")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ToUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DomainId");
+
+                    b.HasIndex("FromUrl")
+                        .HasDatabaseName("IX_ZauberRedirects_FromUrl");
+
+                    b.ToTable("ZauberRedirects", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .HasDatabaseName("IX_ZauberTag_Slug");
+
+                    b.HasIndex("TagName")
+                        .HasDatabaseName("IX_ZauberTag_TagName");
+
+                    b.ToTable("ZauberTags", (string)null);
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Tags.Models.TagItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId")
+                        .HasDatabaseName("IX_ZauberTagItems_ItemId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("ZauberTagItems", (string)null);
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
@@ -820,6 +1108,23 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("LastUpdatedBy");
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentVersion", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Membership.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("ZauberCMS.Core.Content.Models.ContentVersion", "ParentVersion")
+                        .WithMany()
+                        .HasForeignKey("ParentVersionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ParentVersion");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
                 {
                     b.HasOne("ZauberCMS.Core.Languages.Models.Language", "Language")
@@ -865,6 +1170,44 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("LastUpdatedBy");
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.ContentRole", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Content.Models.Content", "Content")
+                        .WithMany("ContentRoles")
+                        .HasForeignKey("ContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZauberCMS.Core.Membership.Models.Role", "Role")
+                        .WithMany("ContentRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Content");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Membership.Models.MediaRole", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Media.Models.Media", "Media")
+                        .WithMany("MediaRoles")
+                        .HasForeignKey("MediaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZauberCMS.Core.Membership.Models.Role", "Role")
+                        .WithMany("MediaRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Media");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.RoleClaim", b =>
@@ -933,11 +1276,34 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ZauberCMS.Core.Seo.Models.SeoRedirect", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Content.Models.Domain", "Domain")
+                        .WithMany("Redirects")
+                        .HasForeignKey("DomainId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Domain");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Tags.Models.TagItem", b =>
+                {
+                    b.HasOne("ZauberCMS.Core.Tags.Models.Tag", "Tag")
+                        .WithMany("TagItems")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
+                });
+
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.Content", b =>
                 {
                     b.Navigation("Audits");
 
                     b.Navigation("Children");
+
+                    b.Navigation("ContentRoles");
 
                     b.Navigation("PropertyData");
                 });
@@ -945,6 +1311,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
             modelBuilder.Entity("ZauberCMS.Core.Content.Models.ContentType", b =>
                 {
                     b.Navigation("LinkedContent");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Content.Models.Domain", b =>
+                {
+                    b.Navigation("Redirects");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Languages.Models.Language", b =>
@@ -964,10 +1335,16 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("Audits");
 
                     b.Navigation("Children");
+
+                    b.Navigation("MediaRoles");
                 });
 
             modelBuilder.Entity("ZauberCMS.Core.Membership.Models.Role", b =>
                 {
+                    b.Navigation("ContentRoles");
+
+                    b.Navigation("MediaRoles");
+
                     b.Navigation("UserRoles");
                 });
 
@@ -978,6 +1355,11 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Navigation("PropertyData");
 
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("ZauberCMS.Core.Tags.Models.Tag", b =>
+                {
+                    b.Navigation("TagItems");
                 });
 #pragma warning restore 612, 618
         }
