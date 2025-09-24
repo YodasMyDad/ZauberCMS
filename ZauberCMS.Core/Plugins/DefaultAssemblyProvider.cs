@@ -30,7 +30,8 @@ public class DefaultAssemblyProvider
         "Microsoft", "Mono", "MimeKit", "Mediatr", "MailKit", "Humanizer", "GaelJ", "FluentValidation", "dotnet",
         "BouncyCastle", "Blazored", "Azure", "AutoMapper", "TinyMCE", "mscorlib", "netstandard", "nlog", "dapper",
         "Castle.core", "ConcurrentHashSet",
-        "mongodb", "grpc", "ironpython", "roslyn", "DartSassBuilder", "BuildBundlerMinifier", "SQLitePCLRaw"
+        "mongodb", "grpc", "ironpython", "roslyn", "DartSassBuilder", "BuildBundlerMinifier", "SQLitePCLRaw", "ImageResize",
+        "SkiaSharp"
     ];
 
     /// <summary>

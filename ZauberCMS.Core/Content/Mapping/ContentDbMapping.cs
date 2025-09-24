@@ -53,6 +53,7 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.HasIndex(x => x.Url).HasDatabaseName("IX_ZauberContent_Url");
         builder.HasIndex(x => x.Name).HasDatabaseName("IX_ZauberContent_Name");
         builder.HasIndex(x => x.Path).HasDatabaseName("IX_ZauberContent_Path");
+        builder.HasIndex(x => x.IsNestedContent).HasDatabaseName("IX_ZauberContent_IsNestedContent");
         
         builder.Ignore(x => x.InternalRedirectIdAsString);
     }

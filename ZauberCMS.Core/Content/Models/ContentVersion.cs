@@ -113,6 +113,7 @@ public class ContentSnapshot
     public Guid? LanguageId { get; set; }
     public Guid? ParentId { get; set; }
     public Guid? RelatedContentId { get; set; }
+    public bool IsNestedContent { get; set; }
     public List<Guid> Path { get; set; } = [];
     public int SortOrder { get; set; }
 }

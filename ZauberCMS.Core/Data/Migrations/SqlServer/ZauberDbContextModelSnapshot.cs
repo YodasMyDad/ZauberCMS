@@ -86,6 +86,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<Guid?>("InternalRedirectId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsNestedContent")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsRootContent")
                         .HasColumnType("bit");
 
@@ -131,6 +134,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.HasKey("Id");
 
                     b.HasIndex("ContentTypeId");
+
+                    b.HasIndex("IsNestedContent")
+                        .HasDatabaseName("IX_ZauberContent_IsNestedContent");
 
                     b.HasIndex("LanguageId");
 

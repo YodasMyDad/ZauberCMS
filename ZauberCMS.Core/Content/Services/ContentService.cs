@@ -1798,8 +1798,8 @@ public class ContentService(
     {
         return filter switch
         {
-            BaseQueryContentParameters.NestedContentFilter.Exclude => query.Where(c => c.RelatedContentId == null),
-            BaseQueryContentParameters.NestedContentFilter.Only => query.Where(c => c.RelatedContentId != null),
+            BaseQueryContentParameters.NestedContentFilter.Exclude => query.Where(c => !c.IsNestedContent),
+            BaseQueryContentParameters.NestedContentFilter.Only => query.Where(c => c.IsNestedContent),
             _ => query // Include does nothing
         };
     }

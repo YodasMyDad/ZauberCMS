@@ -331,6 +331,7 @@ else
             if (IsBlockList == true)
             {
                 Content!.RelatedContentId = NestedParentId;
+                Content!.IsNestedContent = true;
                 Content!.Published = true;
                 if(Content?.Name.IsNullOrWhiteSpace() == true && !DefaultName.IsNullOrWhiteSpace())
                 {

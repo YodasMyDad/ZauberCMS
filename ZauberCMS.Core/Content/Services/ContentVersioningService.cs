@@ -416,6 +416,7 @@ public class ContentVersioningService(
             LanguageId = content.LanguageId,
             ParentId = content.ParentId,
             RelatedContentId = content.RelatedContentId,
+            IsNestedContent = content.IsNestedContent,
             Path = [..content.Path],
             SortOrder = content.SortOrder
         };
@@ -566,6 +567,7 @@ public class ContentVersioningService(
                     LanguageId = blockListSnapshot.ContentSnapshot.LanguageId,
                     ParentId = blockListSnapshot.ContentSnapshot.ParentId,
                     RelatedContentId = blockListSnapshot.ContentSnapshot.RelatedContentId,
+                    IsNestedContent = blockListSnapshot.ContentSnapshot.IsNestedContent,
                     Path = blockListSnapshot.ContentSnapshot.Path,
                     SortOrder = blockListSnapshot.ContentSnapshot.SortOrder,
                     DateCreated = DateTime.UtcNow,
@@ -603,6 +605,7 @@ public class ContentVersioningService(
                 existingContent.LanguageId = blockListSnapshot.ContentSnapshot.LanguageId;
                 existingContent.ParentId = blockListSnapshot.ContentSnapshot.ParentId;
                 existingContent.RelatedContentId = blockListSnapshot.ContentSnapshot.RelatedContentId;
+                existingContent.IsNestedContent = blockListSnapshot.ContentSnapshot.IsNestedContent;
                 existingContent.Path = blockListSnapshot.ContentSnapshot.Path;
                 existingContent.SortOrder = blockListSnapshot.ContentSnapshot.SortOrder;
                 existingContent.LastUpdatedById = version.CreatedById;

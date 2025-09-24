@@ -83,6 +83,12 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     /// Gets or sets a value indicating whether the content should be hidden from navigation.
     /// </summary>
     public bool HideFromNavigation { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this content is nested (used within block lists).
+    /// Nested content is excluded from regular content queries by default.
+    /// </summary>
+    public bool IsNestedContent { get; set; }
     
     /// <summary>
     /// Redirects behind the scenes to another content node
