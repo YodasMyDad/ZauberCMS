@@ -287,6 +287,10 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("BlockListSnapshots")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Comments")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");

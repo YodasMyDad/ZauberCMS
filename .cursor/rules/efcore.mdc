@@ -10,6 +10,8 @@ Based on my analysis of the ZauberCMS data layer, here's a comprehensive develop
 
 This guide outlines the patterns and practices for making database changes in ZauberCMS, ensuring consistency across all supported database providers (SQL Server, SQLite, PostgreSQL).
 
+DO NOT add new tables or properties unless it is absolutely necessary. 
+
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)

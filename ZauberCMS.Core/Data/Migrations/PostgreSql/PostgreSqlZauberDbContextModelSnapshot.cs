@@ -287,6 +287,10 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BlockListSnapshots")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Comments")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");

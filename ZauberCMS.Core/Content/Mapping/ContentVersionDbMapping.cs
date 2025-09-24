@@ -25,6 +25,7 @@ public class ContentVersionDbMapping : IEntityTypeConfiguration<ContentVersion>
         // JSON columns for snapshots
         builder.Property(e => e.Snapshot).ToJsonConversion(5000);
         builder.Property(e => e.PropertySnapshots).ToJsonConversion(null); // Unlimited for property data
+        builder.Property(e => e.BlockListSnapshots).ToJsonConversion(null); // Unlimited for block list data
         builder.Property(e => e.Tags).ToJsonConversion(2000);
 
         // Indexes for performance

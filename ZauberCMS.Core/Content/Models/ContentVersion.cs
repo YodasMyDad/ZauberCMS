@@ -35,6 +35,11 @@ public class ContentVersion
     public List<ContentPropertySnapshot> PropertySnapshots { get; set; } = [];
 
     /// <summary>
+    /// Snapshots of nested content affected by block list changes in this version
+    /// </summary>
+    public List<BlockListContentSnapshot> BlockListSnapshots { get; set; } = [];
+
+    /// <summary>
     /// User who created this version
     /// </summary>
     public Guid? CreatedById { get; set; }
@@ -107,6 +112,7 @@ public class ContentSnapshot
     public bool HideFromNavigation { get; set; }
     public Guid? LanguageId { get; set; }
     public Guid? ParentId { get; set; }
+    public Guid? RelatedContentId { get; set; }
     public List<Guid> Path { get; set; } = [];
     public int SortOrder { get; set; }
 }
@@ -119,3 +125,22 @@ public class ContentPropertySnapshot
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
     public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
 }
+
+public class BlockListContentSnapshot
+{
+    /// <summary>
+    /// The ID of the nested content item
+    /// </summary>
+    public Guid ContentId { get; set; }
+
+    /// <summary>
+    /// Full snapshot of the nested content at this version
+    /// </summary>
+    public ContentSnapshot ContentSnapshot { get; set; } = new();
+
+    /// <summary>
+    /// Property values of the nested content at this version
+    /// </summary>
+    public List<ContentPropertySnapshot> PropertySnapshots { get; set; } = [];
+}
+

@@ -93,6 +93,7 @@ public class ContentVersioningService(
                 DateCreated = p.DateCreated ?? DateTime.UtcNow,
                 DateUpdated = p.DateUpdated ?? DateTime.UtcNow
             }).ToList() ?? [],
+            BlockListSnapshots = await CreateBlockListSnapshotsAsync(dbContext, content),
             ContentSize = CalculateContentSize(content)
         };
 
@@ -165,12 +166,20 @@ public class ContentVersioningService(
         // Publish to content
         PublishVersionToContentAsync(dbContext, version, content, cancellationToken);
 
-        var result = await dbContext.SaveChangesAndLog(version, handlerResult, cacheService, extensionManager, cancellationToken);
+        // Restore block list content from snapshots
+        await RestoreBlockListContentAsync(dbContext, version, cancellationToken);
+
+        // Save all changes
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Update the result to indicate success
+        handlerResult.Entity = version;
+        handlerResult.Success = true;
 
         // Clear content cache
         cacheService.ClearCachedItemsWithPrefix($"Content_{content.Id}");
 
-        return result;
+        return handlerResult;
     }
 
     /// <summary>
@@ -406,6 +415,7 @@ public class ContentVersioningService(
             HideFromNavigation = content.HideFromNavigation,
             LanguageId = content.LanguageId,
             ParentId = content.ParentId,
+            RelatedContentId = content.RelatedContentId,
             Path = [..content.Path],
             SortOrder = content.SortOrder
         };
@@ -473,6 +483,171 @@ public class ContentVersioningService(
         }
 
         return differences;
+    }
+
+    private static async Task<List<BlockListContentSnapshot>> CreateBlockListSnapshotsAsync(IZauberDbContext dbContext, Models.Content content)
+    {
+        var snapshots = new List<BlockListContentSnapshot>();
+
+        // Find all block list properties in the content
+        var blockListProperties = content.PropertyData.Where(p =>
+            !string.IsNullOrEmpty(p.Value) &&
+            p.Value.TrimStart().StartsWith('[') &&
+            p.Value.TrimEnd().EndsWith(']'));
+
+        foreach (var blockListProperty in blockListProperties)
+        {
+            try
+            {
+                // Parse the JSON array of content IDs
+                var contentIds = System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(blockListProperty.Value);
+                if (contentIds != null && contentIds.Any())
+                {
+                    // Get all the block list content items
+                    var blockListContent = await dbContext.Contents
+                        .Include(c => c.PropertyData)
+                        .Where(c => contentIds.Contains(c.Id))
+                        .ToListAsync();
+
+                    // Create snapshots for each content item
+                    foreach (var blockContent in blockListContent)
+                    {
+                        snapshots.Add(new BlockListContentSnapshot
+                        {
+                            ContentId = blockContent.Id,
+                            ContentSnapshot = CreateContentSnapshot(blockContent),
+                            PropertySnapshots = blockContent.PropertyData?.Select(p => new ContentPropertySnapshot
+                            {
+                                ContentTypePropertyId = p.ContentTypePropertyId,
+                                Alias = p.Alias,
+                                Value = p.Value,
+                                DateCreated = p.DateCreated ?? DateTime.UtcNow,
+                                DateUpdated = p.DateUpdated ?? DateTime.UtcNow
+                            }).ToList() ?? []
+                        });
+                    }
+                }
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // Skip invalid JSON
+                continue;
+            }
+        }
+
+        return snapshots;
+    }
+
+    private async Task RestoreBlockListContentAsync(IZauberDbContext dbContext, ContentVersion version, CancellationToken cancellationToken)
+    {
+        foreach (var blockListSnapshot in version.BlockListSnapshots)
+        {
+            // Always restore the content from the snapshot - this ensures the block list content
+            // matches exactly what was saved in the version
+            var existingContent = await dbContext.Contents
+                .Include(c => c.PropertyData)
+                .FirstOrDefaultAsync(c => c.Id == blockListSnapshot.ContentId, cancellationToken);
+
+            if (existingContent == null)
+            {
+                // Create new content from snapshot
+                existingContent = new Models.Content
+                {
+                    Id = blockListSnapshot.ContentId,
+                    Name = blockListSnapshot.ContentSnapshot.Name,
+#pragma warning disable CS0618 // Type or member is obsolete
+                    Url = blockListSnapshot.ContentSnapshot.Url, // Restore URL from snapshot
+#pragma warning restore CS0618 // Type or member is obsolete
+                    ContentTypeId = blockListSnapshot.ContentSnapshot.ContentTypeId,
+                    ContentTypeAlias = blockListSnapshot.ContentSnapshot.ContentTypeAlias,
+                    DateUpdated = blockListSnapshot.ContentSnapshot.DateUpdated,
+                    Published = blockListSnapshot.ContentSnapshot.Published,
+                    HideFromNavigation = blockListSnapshot.ContentSnapshot.HideFromNavigation,
+                    LanguageId = blockListSnapshot.ContentSnapshot.LanguageId,
+                    ParentId = blockListSnapshot.ContentSnapshot.ParentId,
+                    RelatedContentId = blockListSnapshot.ContentSnapshot.RelatedContentId,
+                    Path = blockListSnapshot.ContentSnapshot.Path,
+                    SortOrder = blockListSnapshot.ContentSnapshot.SortOrder,
+                    DateCreated = DateTime.UtcNow,
+                    LastUpdatedById = version.CreatedById
+                };
+
+                // Add property data from snapshot
+                foreach (var propSnapshot in blockListSnapshot.PropertySnapshots)
+                {
+                    existingContent.PropertyData.Add(new ContentPropertyValue
+                    {
+                        ContentId = existingContent.Id,
+                        ContentTypePropertyId = propSnapshot.ContentTypePropertyId,
+                        Alias = propSnapshot.Alias,
+                        Value = propSnapshot.Value,
+                        DateCreated = propSnapshot.DateCreated,
+                        DateUpdated = propSnapshot.DateUpdated
+                    });
+                }
+
+                dbContext.Contents.Add(existingContent);
+            }
+            else
+            {
+                // Update existing content from snapshot
+                existingContent.Name = blockListSnapshot.ContentSnapshot.Name;
+#pragma warning disable CS0618 // Type or member is obsolete
+                existingContent.Url = blockListSnapshot.ContentSnapshot.Url; // Restore URL from snapshot
+#pragma warning restore CS0618 // Type or member is obsolete
+                existingContent.ContentTypeId = blockListSnapshot.ContentSnapshot.ContentTypeId;
+                existingContent.ContentTypeAlias = blockListSnapshot.ContentSnapshot.ContentTypeAlias;
+                existingContent.DateUpdated = blockListSnapshot.ContentSnapshot.DateUpdated;
+                existingContent.Published = blockListSnapshot.ContentSnapshot.Published;
+                existingContent.HideFromNavigation = blockListSnapshot.ContentSnapshot.HideFromNavigation;
+                existingContent.LanguageId = blockListSnapshot.ContentSnapshot.LanguageId;
+                existingContent.ParentId = blockListSnapshot.ContentSnapshot.ParentId;
+                existingContent.RelatedContentId = blockListSnapshot.ContentSnapshot.RelatedContentId;
+                existingContent.Path = blockListSnapshot.ContentSnapshot.Path;
+                existingContent.SortOrder = blockListSnapshot.ContentSnapshot.SortOrder;
+                existingContent.LastUpdatedById = version.CreatedById;
+
+                // Update properties: remove old ones and add snapshot versions
+                // First, remove properties that don't exist in the snapshot
+                var snapshotPropertyIds = blockListSnapshot.PropertySnapshots.Select(p => p.ContentTypePropertyId).ToHashSet();
+                var propertiesToRemove = existingContent.PropertyData
+                    .Where(p => !snapshotPropertyIds.Contains(p.ContentTypePropertyId))
+                    .ToList();
+
+                foreach (var property in propertiesToRemove)
+                {
+                    dbContext.ContentPropertyValues.Remove(property);
+                }
+
+                // Then update or add properties from snapshot
+                foreach (var propSnapshot in blockListSnapshot.PropertySnapshots)
+                {
+                    var existingProperty = existingContent.PropertyData
+                        .FirstOrDefault(p => p.ContentTypePropertyId == propSnapshot.ContentTypePropertyId);
+
+                    if (existingProperty != null)
+                    {
+                        // Update existing property
+                        existingProperty.Alias = propSnapshot.Alias;
+                        existingProperty.Value = propSnapshot.Value;
+                        existingProperty.DateUpdated = propSnapshot.DateUpdated;
+                    }
+                    else
+                    {
+                        // Add new property
+                        existingContent.PropertyData.Add(new ContentPropertyValue
+                        {
+                            ContentId = existingContent.Id,
+                            ContentTypePropertyId = propSnapshot.ContentTypePropertyId,
+                            Alias = propSnapshot.Alias,
+                            Value = propSnapshot.Value,
+                            DateCreated = propSnapshot.DateCreated,
+                            DateUpdated = propSnapshot.DateUpdated
+                        });
+                    }
+                }
+            }
+        }
     }
 
     #endregion
