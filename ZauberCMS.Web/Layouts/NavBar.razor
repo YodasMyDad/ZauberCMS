@@ -4,10 +4,15 @@
     {
         @foreach (var p in Website.Children.Where(x => !x.HideFromNavigation).OrderBy(x => x.SortOrder))
         {
-            var navLinkClass = "nav-link px-lg-3 py-3 py-lg-4" + (IsPageActive(p.Url()) ? " active" : "");
+            var pageUrl = p.Url();
+            // If this is the home page (URL is "home"), use root path "/"
+            var hrefUrl = pageUrl?.ToLower() == "home" ? "/" : $"/{pageUrl}";
+            // For IsPageActive, use the effective URL (empty string for home page root)
+            var activeCheckUrl = pageUrl?.ToLower() == "home" ? null : pageUrl;
+            var navLinkClass = "nav-link px-lg-3 py-3 py-lg-4" + (IsPageActive(activeCheckUrl) ? " active" : "");
 
             <li class="nav-item">
-                <a class="@navLinkClass" aria-current="page" href="/@p.Url()">@p.Name</a>
+                <a class="@navLinkClass" aria-current="page" href="@hrefUrl">@p.Name</a>
             </li>
         }
     }
@@ -18,8 +23,11 @@
 
     bool IsPageActive(string? pageUrl)
     {
-        var uri = NavigationManager.ToAbsoluteUri($"/{pageUrl}");
-        return uri.AbsolutePath == NavigationManager.Uri;
+        // Handle home page (null/empty URL should match root path)
+        var pathToCheck = string.IsNullOrEmpty(pageUrl) ? "/" : $"/{pageUrl}";
+        var uri = NavigationManager.ToAbsoluteUri(pathToCheck);
+        var currentUri = new Uri(NavigationManager.Uri);
+        return uri.AbsolutePath == currentUri.AbsolutePath;
     }
 
 }

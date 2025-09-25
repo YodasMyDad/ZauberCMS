@@ -71,7 +71,7 @@
         var posts = await ContentService.QueryContentAsync(new QueryContentParameters
         {
             AmountPerPage = 4,
-            ContentTypeAlias = "BlogPage",
+            ContentTypeAlias = "BlogPost",
             OrderBy = GetContentsOrderBy.DateUpdatedDescending,
             Cached = true
         });

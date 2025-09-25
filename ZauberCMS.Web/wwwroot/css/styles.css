@@ -3617,6 +3617,7 @@ textarea.form-control-lg {
 .nav-pills .show > .nav-link {
   color: var(--bs-nav-pills-link-active-color);
   background-color: var(--bs-nav-pills-link-active-bg);
+    text-decoration: underline;
 }
 
 .nav-fill > .nav-link,
@@ -3712,6 +3713,7 @@ textarea.form-control-lg {
 .navbar-nav .show > .nav-link,
 .navbar-nav .nav-link.active {
   color: var(--bs-navbar-active-color);
+  text-decoration: underline;
 }
 .navbar-nav .dropdown-menu {
   position: static;

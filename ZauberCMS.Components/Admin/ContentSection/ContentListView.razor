@@ -1,14 +1,21 @@
 ﻿@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Components.Admin.ContentSection
+@using Humanizer
 
-<!-- Header Bar -->
-<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center"
-             class="rz-p-4 rz-background-color-primary rz-mb-4 rz-border-radius-4">
-    <RadzenText TextStyle="TextStyle.H4" Style="color: white; margin: 0;">
-        @Content?.Name
-    </RadzenText>
-    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="edit" Text="@($"Edit {Content?.Name}")" Click="OpenContentEditor" />
-</RadzenStack>
+<!-- Header -->
+<div class="rz-mb-4 rz-p-3 border-b border-gray-200">
+    <div class="flex justify-between items-start">
+        <div>
+            <RadzenText TextStyle="TextStyle.H5" class="font-medium text-gray-900">
+                @Content?.Name
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" class="text-gray-500 mt-1">
+                Last updated @Content?.DateUpdated.Humanize()
+            </RadzenText>
+        </div>
+        <RadzenButton Variant="Variant.Filled" Icon="edit" Text="@($"Edit {Content?.Name}")" Click="OpenContentEditor" />
+    </div>
+</div>
 
 <!-- Child Content Data Grid -->
 <RadzenDataGrid AllowFiltering="true"

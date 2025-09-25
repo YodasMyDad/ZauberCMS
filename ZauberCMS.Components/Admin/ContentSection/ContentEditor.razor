@@ -665,7 +665,16 @@ else
                 }
 
                 await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
-                NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{Content.Id}");
+
+                // If opened as a dialog, close it instead of navigating
+                if (ContentEditorModal != null)
+                {
+                    await ContentEditorModal.CloseAsync(ModalResult.Ok(Content));
+                }
+                else
+                {
+                    NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{Content.Id}");
+                }
             }
         }
     }
