@@ -261,12 +261,15 @@
         NestedDeletedItems.AddRange(nestedChanges.DeletedItems);
     }
 
-    private async Task NotifyParentOfChanges()
+    private async Task NotifyParentOfChanges(bool updateValue = true)
     {
-        // Update the Value property to reflect current ContentItems (needed for additions/updates)
-        var currentIds = ContentItems.Select(c => c.Id).ToList();
-        Value = JsonSerializer.Serialize(currentIds);
-        await ValueChanged.InvokeAsync(Value);
+        if (updateValue)
+        {
+            // Update the Value property to reflect current ContentItems (needed for additions/updates)
+            var currentIds = ContentItems.Select(c => c.Id).ToList();
+            Value = JsonSerializer.Serialize(currentIds);
+            await ValueChanged.InvokeAsync(Value);
+        }
 
         var changes = new BlockListChanges
         {
@@ -297,7 +300,7 @@
         clonedList.AddRange(ContentItems);
         
         TupleExtensions.SortList(indices, clonedList);
-        
+
         foreach (var content in clonedList)
         {
             // Remove content type and content values as don't want to serialise this
@@ -310,7 +313,8 @@
         await ValueChanged.InvokeAsync(Value);
 
         // Notify parent that order has changed (this affects the UpdatedItems)
-        await NotifyParentOfChanges();
+        // Don't update Value again since we just set it above
+        await NotifyParentOfChanges(updateValue: false);
     }
 
 
