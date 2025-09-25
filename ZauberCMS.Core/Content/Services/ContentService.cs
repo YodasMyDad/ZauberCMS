@@ -156,6 +156,13 @@ public class ContentService(
         {
             isUpdate = false;
             content = parameters.Content;
+
+            // Auto-assign sort order for new content items (only for regular content, not element types/block lists)
+            if (content.SortOrder == 0 && !content.IsNestedContent)
+            {
+                content.SortOrder = await GetNextSortOrderAsync(dbContext, content.ParentId, content.IsRootContent, cancellationToken) + 1;
+            }
+
             content.LastUpdatedById = user!.Id;
             dbContext.Contents.Add(content);
         }
@@ -1721,6 +1728,21 @@ public class ContentService(
                 dbContext.ContentRoles.Add(contentRole);
             }
         }
+    }
+
+    private async Task<int> GetNextSortOrderAsync(IZauberDbContext dbContext, Guid? parentId, bool isRootContent, CancellationToken cancellationToken)
+    {
+        var query = parentId == null
+            ? dbContext.Contents.Where(c => c.ParentId == null && c.IsRootContent && !c.Deleted)
+            : dbContext.Contents.Where(c => c.ParentId == parentId && !c.Deleted);
+
+        // Get the highest sort order by ordering descending and taking the first result
+        var maxSortOrder = await query
+            .OrderByDescending(c => c.SortOrder)
+            .Select(c => c.SortOrder)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return maxSortOrder;
     }
 
     private static void UpdateContentPropertyValues(IZauberDbContext dbContext, Models.Content content,

@@ -154,16 +154,9 @@ else
     {
         var qctc = new QueryContentTypesParameters { AmountPerPage = int.MaxValue, RootOnly = RootOnly, OrderBy = GetContentTypesOrderBy.Name };
 
-        if (ElementTypesOnly != null)
+        if (ElementTypesOnly is true)
         {
-            if (ElementTypesOnly == true)
-            {
-                qctc.OnlyElementTypes = true;
-            }
-            else
-            {
-                qctc.IncludeElementTypes = true;
-            }
+            qctc.OnlyElementTypes = true;
         }
 
         var items = await ContentService.QueryContentTypesAsync(qctc);
