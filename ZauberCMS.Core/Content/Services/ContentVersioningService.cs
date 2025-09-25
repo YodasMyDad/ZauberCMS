@@ -489,7 +489,15 @@ public class ContentVersioningService(
     private static async Task<List<BlockListContentSnapshot>> CreateBlockListSnapshotsAsync(IZauberDbContext dbContext, Models.Content content)
     {
         var snapshots = new List<BlockListContentSnapshot>();
+        var processedContentIds = new HashSet<Guid>(); // Prevent infinite recursion
 
+        await CreateBlockListSnapshotsRecursiveAsync(dbContext, content, snapshots, processedContentIds);
+
+        return snapshots;
+    }
+
+    private static async Task CreateBlockListSnapshotsRecursiveAsync(IZauberDbContext dbContext, Models.Content content, List<BlockListContentSnapshot> snapshots, HashSet<Guid> processedContentIds)
+    {
         // Find all block list properties in the content
         var blockListProperties = content.PropertyData.Where(p =>
             !string.IsNullOrEmpty(p.Value) &&
@@ -513,6 +521,14 @@ public class ContentVersioningService(
                     // Create snapshots for each content item
                     foreach (var blockContent in blockListContent)
                     {
+                        // Skip if already processed to prevent infinite recursion
+                        if (processedContentIds.Contains(blockContent.Id))
+                        {
+                            continue;
+                        }
+
+                        processedContentIds.Add(blockContent.Id);
+
                         snapshots.Add(new BlockListContentSnapshot
                         {
                             ContentId = blockContent.Id,
@@ -526,6 +542,9 @@ public class ContentVersioningService(
                                 DateUpdated = p.DateUpdated ?? DateTime.UtcNow
                             }).ToList() ?? []
                         });
+
+                        // Recursively process nested block list content
+                        await CreateBlockListSnapshotsRecursiveAsync(dbContext, blockContent, snapshots, processedContentIds);
                     }
                 }
             }
@@ -535,8 +554,6 @@ public class ContentVersioningService(
                 continue;
             }
         }
-
-        return snapshots;
     }
 
     private async Task RestoreBlockListContentAsync(IZauberDbContext dbContext, ContentVersion version, CancellationToken cancellationToken)
