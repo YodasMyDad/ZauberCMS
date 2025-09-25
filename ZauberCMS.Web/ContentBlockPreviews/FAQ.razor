@@ -5,8 +5,8 @@
     @foreach (var faq in FaqItems)
     {
         <div>
-            <h2>@(Content.GetValue<string>("Question"))</h2>
-            <RTEBlock Content="@Content" PropertyName="Answer" />
+            <h2>@(faq.GetValue<string>("Question"))</h2>
+            <RTEBlock Content="@faq" PropertyName="Answer" />
         </div>
     }
 }
