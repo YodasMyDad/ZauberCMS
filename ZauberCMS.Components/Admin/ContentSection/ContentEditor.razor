@@ -251,7 +251,8 @@ else
         <ListContentTypes ContentTypeSelected="@UpdateContentTypeId"
                           RootOnly="@RootOnly"
                           ElementTypesOnly="@ElementTypesOnly"
-                          ParentId="@ParentId"/>
+                          ParentId="@ParentId"
+                          AllowedElementTypeIds="@AllowedElementTypeIds"/>
     }
 }
 
@@ -273,6 +274,7 @@ else
     [Parameter] public Guid? NestedParentId { get; set; }
     [Parameter] public bool? IsBlockList { get; set; }
     [Parameter] public string? DefaultName { get; set; }
+    [Parameter] public List<Guid>? AllowedElementTypeIds { get; set; }
     [Parameter] public Action<BlockListChanges>? OnBlockListChanges { get; set; }
 
     private EditForm ContentForm { get; set; } = null!;

@@ -160,6 +160,12 @@
             { nameof(ContentEditor.NestedParentId), Content!.Id },
         };
 
+        // Add allowed ElementType IDs if specified in settings
+        if (SettingsModel.AllowedElementTypeIds.Any())
+        {
+            contentParams.Add(nameof(ContentEditor.AllowedElementTypeIds), SettingsModel.AllowedElementTypeIds);
+        }
+
         if (contentUpdate != null)
         {
             contentParams.Add(nameof(ContentEditor.ContentId), contentUpdate.Id);

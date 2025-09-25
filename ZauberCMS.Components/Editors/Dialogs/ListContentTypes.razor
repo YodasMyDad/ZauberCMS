@@ -140,6 +140,7 @@ else
     [Parameter] public bool RootOnly { get; set; }
     [Parameter] public bool? ElementTypesOnly { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
+    [Parameter] public List<Guid>? AllowedElementTypeIds { get; set; }
     [Parameter] public EventCallback<Guid> ContentTypeSelected { get; set; } // add this line
 
     private IEnumerable<ContentType> ContentTypes { get; set; } = [];
@@ -167,6 +168,8 @@ else
 
         var items = await ContentService.QueryContentTypesAsync(qctc);
         ContentTypes = items.Items;
+
+        // Apply parent restrictions if specified
         if (ParentId != null)
         {
             var content = await ContentService.GetContentAsync(new GetContentParameters { Id = ParentId.Value });
@@ -174,6 +177,12 @@ else
             {
                 ContentTypes = ContentTypes.Where(x => content.ContentType.AllowedChildContentTypes.Contains(x.Id));
             }
+        }
+
+        // Apply allowed ElementType restrictions if specified
+        if (AllowedElementTypeIds != null && AllowedElementTypeIds.Any())
+        {
+            ContentTypes = ContentTypes.Where(x => AllowedElementTypeIds.Contains(x.Id));
         }
 
         foreach (var contentType in ContentTypes)
