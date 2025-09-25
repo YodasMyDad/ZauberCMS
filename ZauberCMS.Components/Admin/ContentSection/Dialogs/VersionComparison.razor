@@ -1,5 +1,6 @@
 @using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Content.Models
+@using static ZauberCMS.Core.Content.Parameters.BlockListContentChangeType
 
 <div class="rz-p-4">
     @if (Loading)
@@ -13,55 +14,50 @@
     }
     else if (Comparison != null)
     {
-        <RadzenTabs RenderMode="TabRenderMode.Client">
-            <Tabs>
-                <RadzenTabsItem Text="Overview">
-                    <ChildContent>
+                        <!-- Version Overview -->
                         <RadzenRow Gap="1rem" class="rz-mb-4">
                             <RadzenColumn Size="6">
-                                <div class="rz-p-4 rz-border rz-border-gray-200 rz-rounded">
+                                <div class="rz-p-4 rz-border rz-border-gray-200 rz-rounded" style="word-break: break-word; overflow-wrap: break-word;">
                                     <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-1">Version @(Comparison.Version1.VersionNumber)</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-3">@Comparison.Version1.DateCreated.ToString("g")</RadzenText>
                                     <RadzenStack Gap="0.5rem">
                                         <div><strong>Status:</strong> <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@Comparison.Version1.Status.ToString()"/></div>
-                                        <div><strong>Created by:</strong> @Comparison.Version1.CreatedBy?.Name</div>
+                                        <div style="word-break: break-word;"><strong>Created by:</strong> @Comparison.Version1.CreatedBy?.Name</div>
                                         @if (!string.IsNullOrWhiteSpace(Comparison.Version1.VersionName))
                                         {
-                                            <div><strong>Name:</strong> @Comparison.Version1.VersionName</div>
+                                            <div style="word-break: break-word;"><strong>Name:</strong> @Comparison.Version1.VersionName</div>
                                         }
                                         @if (!string.IsNullOrWhiteSpace(Comparison.Version1.Comments))
                                         {
-                                            <div><strong>Comments:</strong> @Comparison.Version1.Comments</div>
+                                            <div style="word-break: break-word;"><strong>Comments:</strong> @Comparison.Version1.Comments</div>
                                         }
                                     </RadzenStack>
                                 </div>
                             </RadzenColumn>
                             <RadzenColumn Size="6">
-                                <div class="rz-p-4 rz-border rz-border-gray-200 rz-rounded">
+                                <div class="rz-p-4 rz-border rz-border-gray-200 rz-rounded" style="word-break: break-word; overflow-wrap: break-word;">
                                     <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-1">Version @(Comparison.Version2.VersionNumber)</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-3">@Comparison.Version2.DateCreated.ToString("g")</RadzenText>
                                     <RadzenStack Gap="0.5rem">
                                         <div><strong>Status:</strong> <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@Comparison.Version2.Status.ToString()"/></div>
-                                        <div><strong>Created by:</strong> @Comparison.Version2.CreatedBy?.Name</div>
+                                        <div style="word-break: break-word;"><strong>Created by:</strong> @Comparison.Version2.CreatedBy?.Name</div>
                                         @if (!string.IsNullOrWhiteSpace(Comparison.Version2.VersionName))
                                         {
-                                            <div><strong>Name:</strong> @Comparison.Version2.VersionName</div>
+                                            <div style="word-break: break-word;"><strong>Name:</strong> @Comparison.Version2.VersionName</div>
                                         }
                                         @if (!string.IsNullOrWhiteSpace(Comparison.Version2.Comments))
                                         {
-                                            <div><strong>Comments:</strong> @Comparison.Version2.Comments</div>
+                                            <div style="word-break: break-word;"><strong>Comments:</strong> @Comparison.Version2.Comments</div>
                                         }
                                     </RadzenStack>
                                 </div>
                             </RadzenColumn>
                         </RadzenRow>
-                    </ChildContent>
-                </RadzenTabsItem>
 
-                <RadzenTabsItem Text="Content Changes">
-                    <ChildContent>
+                        <!-- Content Differences -->
                         @if (Comparison.Differences.Any())
                         {
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-3">Content Field Changes</RadzenText>
                             <RadzenDataList Data="Comparison.Differences" TItem="ContentDifference">
                                 <Template Context="diff">
                                     <div class="rz-p-4 rz-border rz-border-gray-200 rz-rounded rz-mb-2">
@@ -70,13 +66,13 @@
                                                 <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-text-primary">@diff.Field</RadzenText>
                                                 <RadzenRow class="rz-mt-2">
                                                     <RadzenColumn Size="6">
-                                                        <div class="rz-p-2 rz-bg-light rz-border rz-border-start rz-border-3 rz-border-danger">
+                                                        <div class="rz-p-2 rz-bg-light rz-border rz-border-start rz-border-3 rz-border-danger" style="word-break: break-word; overflow-wrap: break-word;">
                                                             <small class="rz-text-secondary">Version @(Comparison.Version1.VersionNumber)</small>
                                                             <div class="rz-text-danger">@(diff.OldValue ?? "(empty)")</div>
                                                         </div>
                                                     </RadzenColumn>
                                                     <RadzenColumn Size="6">
-                                                        <div class="rz-p-2 rz-bg-light rz-border rz-border-start rz-border-3 rz-border-success">
+                                                        <div class="rz-p-2 rz-bg-light rz-border rz-border-start rz-border-3 rz-border-success" style="word-break: break-word; overflow-wrap: break-word;">
                                                             <small class="rz-text-secondary">Version @(Comparison.Version2.VersionNumber)</small>
                                                             <div class="rz-text-success">@(diff.NewValue ?? "(empty)")</div>
                                                         </div>
@@ -88,61 +84,113 @@
                                 </Template>
                             </RadzenDataList>
                         }
-                        else
-                        {
-                            <div class="rz-text-center rz-p-4">
-                                <RadzenIcon Icon="check_circle" Size="IconSize.XLarge" class="rz-text-success"/>
-                                <RadzenText TextStyle="TextStyle.H6" class="rz-text-success rz-mt-2">
-                                    No content differences found
-                                </RadzenText>
-                            </div>
-                        }
-                    </ChildContent>
-                </RadzenTabsItem>
 
-                <RadzenTabsItem Text="Property Changes">
-                    <ChildContent>
-                        @if (Comparison.PropertyDifferences.Any())
+                        <!-- Property and Block List Differences -->
+                        @if (Comparison.PropertyDifferences.Any() || Comparison.BlockListDifferences.Any())
                         {
-                            <RadzenDataList Data="Comparison.PropertyDifferences" TItem="PropertyDifference">
-                                <Template Context="diff">
-                                    <div class="rz-p-4 rz-border rz-border-gray-200 rz-rounded rz-mb-2">
-                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Start">
-                                            <div style="flex: 1;">
-                                                <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-text-primary">@diff.Alias</RadzenText>
-                                                <RadzenRow class="rz-mt-2">
-                                                    <RadzenColumn Size="6">
-                                                        <div class="rz-p-2 rz-bg-light rz-border rz-border-start rz-border-3 rz-border-danger">
-                                                            <small class="rz-text-secondary">Version @(Comparison.Version1.VersionNumber)</small>
-                                                            <div class="rz-text-danger">@diff.OldValue</div>
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-3 rz-mt-4">Property Changes</RadzenText>
+
+                            <!-- Regular Property Differences -->
+                            @foreach (var diff in Comparison.PropertyDifferences)
+                            {
+                                <div class="rz-p-4 rz-border rz-border-gray-200 rz-rounded rz-mb-2">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Start">
+                                        <div style="flex: 1;">
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-text-primary">@diff.Alias</RadzenText>
+                                            <RadzenRow class="rz-mt-2">
+                                                <RadzenColumn Size="6">
+                                                    <div class="rz-p-2 rz-bg-light rz-border rz-border-start rz-border-3 rz-border-danger" style="word-break: break-word; overflow-wrap: break-word;">
+                                                        <small class="rz-text-secondary">Version @(Comparison.Version1.VersionNumber)</small>
+                                                        <div class="rz-text-danger" style="word-break: break-word; overflow-wrap: break-word;">@diff.OldValue</div>
+                                                    </div>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="6">
+                                                    <div class="rz-p-2 rz-bg-light rz-border rz-border-start rz-border-3 rz-border-success" style="word-break: break-word; overflow-wrap: break-word;">
+                                                        <small class="rz-text-secondary">Version @(Comparison.Version2.VersionNumber)</small>
+                                                        <div class="rz-text-success" style="word-break: break-word; overflow-wrap: break-word;">@diff.NewValue</div>
+                                                    </div>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+                                        </div>
+                                    </RadzenStack>
+                                </div>
+                            }
+
+                            <!-- Block List Differences -->
+                            @foreach (var blockListDiff in Comparison.BlockListDifferences)
+                            {
+                                <div class="rz-p-4 rz-border rz-border-gray-200 rz-rounded rz-mb-3">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-text-primary rz-mb-3">
+                                        @blockListDiff.PropertyName
+                                    </RadzenText>
+
+                                    @foreach (var contentChange in blockListDiff.ContentChanges)
+                                    {
+                                        <div class="rz-p-3 rz-border rz-border-gray-100 rz-rounded rz-mb-2">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                                                @switch (contentChange.ChangeType)
+                                                {
+                                                    case BlockListContentChangeType.Added:
+                                                        <RadzenIcon Icon="add_circle" class="rz-text-success" Size="IconSize.Medium"/>
+                                                        break;
+                                                    case BlockListContentChangeType.Removed:
+                                                        <RadzenIcon Icon="remove_circle" class="rz-text-danger" Size="IconSize.Medium"/>
+                                                        break;
+                                                    case BlockListContentChangeType.Modified:
+                                                        <RadzenIcon Icon="edit" class="rz-text-warning" Size="IconSize.Medium"/>
+                                                        break;
+                                                }
+
+                                                <div style="flex: 1; word-break: break-word; overflow-wrap: break-word;">
+                                                    <div class="rz-mb-1">
+                                                        <RadzenBadge
+                                                            BadgeStyle="@(contentChange.ChangeType switch {
+                                                                BlockListContentChangeType.Added => BadgeStyle.Success,
+                                                                BlockListContentChangeType.Removed => BadgeStyle.Danger,
+                                                                BlockListContentChangeType.Modified => BadgeStyle.Warning,
+                                                                _ => BadgeStyle.Info
+                                                            })"
+                                                            Text="@contentChange.ChangeType.ToString()"
+                                                            Size="BadgeSize.Small"/>
+                                                        <strong style="word-break: break-word;">@contentChange.ContentName</strong>
+                                                        <small class="rz-text-secondary">(@contentChange.ContentTypeAlias)</small>
+                                                    </div>
+
+                                                    @if (contentChange.PropertyChanges?.Any() == true)
+                                                    {
+                                                        <div class="rz-ml-4 rz-mt-2">
+                                                            <small class="rz-text-secondary">Property changes:</small>
+                                                            @foreach (var propChange in contentChange.PropertyChanges)
+                                                            {
+                                                                <div class="rz-p-2 rz-bg-light rz-rounded rz-mt-1" style="word-break: break-word; overflow-wrap: break-word;">
+                                                                    <small><strong>@propChange.Alias:</strong></small>
+                                                                    <div class="rz-text-danger rz-mt-1" style="word-break: break-word;">
+                                                                        <small>Before: @propChange.OldValue</small>
+                                                                    </div>
+                                                                    <div class="rz-text-success" style="word-break: break-word;">
+                                                                        <small>After: @propChange.NewValue</small>
+                                                                    </div>
+                                                                </div>
+                                                            }
                                                         </div>
-                                                    </RadzenColumn>
-                                                    <RadzenColumn Size="6">
-                                                        <div class="rz-p-2 rz-bg-light rz-border rz-border-start rz-border-3 rz-border-success">
-                                                            <small class="rz-text-secondary">Version @(Comparison.Version2.VersionNumber)</small>
-                                                            <div class="rz-text-success">@diff.NewValue</div>
-                                                        </div>
-                                                    </RadzenColumn>
-                                                </RadzenRow>
-                                            </div>
-                                        </RadzenStack>
-                                    </div>
-                                </Template>
-                            </RadzenDataList>
+                                                    }
+                                                </div>
+                                            </RadzenStack>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         }
-                        else
+
+                        @if (!Comparison.Differences.Any() && !Comparison.PropertyDifferences.Any() && !Comparison.BlockListDifferences.Any())
                         {
                             <div class="rz-text-center rz-p-4">
                                 <RadzenIcon Icon="check_circle" Size="IconSize.XLarge" class="rz-text-success"/>
                                 <RadzenText TextStyle="TextStyle.H6" class="rz-text-success rz-mt-2">
-                                    No property differences found
+                                    No changes found between versions
                                 </RadzenText>
                             </div>
                         }
-                    </ChildContent>
-                </RadzenTabsItem>
-            </Tabs>
-        </RadzenTabs>
     }
 
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" AlignItems="AlignItems.Center" class="rz-mt-3">

@@ -218,7 +218,9 @@ public class ContentService(
                             ? ContentVersionStatus.Published
                             : ContentVersionStatus.Draft,
                         IsAutoSave = false,
-                        Comments = isUpdate ? "Auto-saved during content update" : "Initial version created"
+                        Comments = shouldCreatePublishedVersion
+                            ? (isUpdate ? "Content updated and published" : "Content created and published")
+                            : (isUpdate ? "Content updated" : "Content created")
                     };
 
                     await versioningService.CreateVersionAsync(versionParameters, cancellationToken);

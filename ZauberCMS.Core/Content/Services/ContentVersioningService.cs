@@ -327,7 +327,8 @@ public class ContentVersioningService(
             Version1 = version1,
             Version2 = version2,
             Differences = CompareSnapshots(version1.Snapshot, version2.Snapshot),
-            PropertyDifferences = ComparePropertySnapshots(version1.PropertySnapshots, version2.PropertySnapshots)
+            PropertyDifferences = ComparePropertySnapshots(version1.PropertySnapshots, version2.PropertySnapshots),
+            BlockListDifferences = await CompareBlockListSnapshotsAsync(version1, version2, cancellationToken)
         };
     }
 
@@ -484,6 +485,146 @@ public class ContentVersioningService(
         }
 
         return differences;
+    }
+
+    private async Task<List<BlockListDifference>> CompareBlockListSnapshotsAsync(ContentVersion version1, ContentVersion version2, CancellationToken cancellationToken)
+    {
+        var differences = new List<BlockListDifference>();
+
+        // Group snapshots by property alias (we need to know which property each snapshot belongs to)
+        // This is tricky because snapshots don't store which property they came from
+        // We need to find BlockListEditor properties and match snapshots to them
+
+        var version1PropsByAlias = version1.PropertySnapshots.ToDictionary(p => p.Alias);
+        var version2PropsByAlias = version2.PropertySnapshots.ToDictionary(p => p.Alias);
+
+        // Find properties that exist in both versions and are BlockListEditor properties (JSON arrays)
+        var commonPropertyAliases = version1PropsByAlias.Keys.Intersect(version2PropsByAlias.Keys);
+
+        foreach (var propertyAlias in commonPropertyAliases)
+        {
+            var prop1 = version1PropsByAlias[propertyAlias];
+            var prop2 = version2PropsByAlias[propertyAlias];
+
+            // Check if this property contains JSON array (BlockListEditor property)
+            if (IsBlockListProperty(prop1.Value) || IsBlockListProperty(prop2.Value))
+            {
+                var contentChanges = CompareBlockListPropertyAsync(
+                    prop1, prop2,
+                    version1.BlockListSnapshots, version2.BlockListSnapshots);
+
+                if (contentChanges.Any())
+                {
+                    differences.Add(new BlockListDifference
+                    {
+                        PropertyAlias = propertyAlias,
+                        PropertyName = prop1.Alias,
+                        ContentChanges = contentChanges
+                    });
+                }
+            }
+        }
+
+        return differences;
+    }
+
+    private bool IsBlockListProperty(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+               value.TrimStart().StartsWith('[') &&
+               value.TrimEnd().EndsWith(']');
+    }
+
+    private List<BlockListContentChange> CompareBlockListPropertyAsync(
+        ContentPropertySnapshot prop1, ContentPropertySnapshot prop2,
+        List<BlockListContentSnapshot> snapshots1, List<BlockListContentSnapshot> snapshots2)
+    {
+        var changes = new List<BlockListContentChange>();
+
+        try
+        {
+            // Parse the JSON arrays to get content IDs
+            var contentIds1 = ParseContentIds(prop1.Value);
+            var contentIds2 = ParseContentIds(prop2.Value);
+
+            // Create dictionaries for quick lookup
+            var snapshots1Dict = snapshots1.ToDictionary(s => s.ContentId);
+            var snapshots2Dict = snapshots2.ToDictionary(s => s.ContentId);
+
+            // Find added content (in version2 but not version1)
+            var addedIds = contentIds2.Except(contentIds1);
+            foreach (var contentId in addedIds)
+            {
+                if (snapshots2Dict.TryGetValue(contentId, out var snapshot))
+                {
+                    changes.Add(new BlockListContentChange
+                    {
+                        ChangeType = BlockListContentChangeType.Added,
+                        ContentName = snapshot.ContentSnapshot.Name,
+                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias,
+                        ContentId = contentId
+                    });
+                }
+            }
+
+            // Find removed content (in version1 but not version2)
+            var removedIds = contentIds1.Except(contentIds2);
+            foreach (var contentId in removedIds)
+            {
+                if (snapshots1Dict.TryGetValue(contentId, out var snapshot))
+                {
+                    changes.Add(new BlockListContentChange
+                    {
+                        ChangeType = BlockListContentChangeType.Removed,
+                        ContentName = snapshot.ContentSnapshot.Name,
+                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias,
+                        ContentId = contentId
+                    });
+                }
+            }
+
+            // Find modified content (in both versions, but content changed)
+            var commonIds = contentIds1.Intersect(contentIds2);
+            foreach (var contentId in commonIds)
+            {
+                if (snapshots1Dict.TryGetValue(contentId, out var snapshot1) &&
+                    snapshots2Dict.TryGetValue(contentId, out var snapshot2))
+                {
+                    var contentDiffs = CompareSnapshots(snapshot1.ContentSnapshot, snapshot2.ContentSnapshot);
+                    var propertyDiffs = ComparePropertySnapshots(snapshot1.PropertySnapshots, snapshot2.PropertySnapshots);
+
+                    if (contentDiffs.Any() || propertyDiffs.Any())
+                    {
+                        changes.Add(new BlockListContentChange
+                        {
+                            ChangeType = BlockListContentChangeType.Modified,
+                            ContentName = snapshot2.ContentSnapshot.Name,
+                            ContentTypeAlias = snapshot2.ContentSnapshot.ContentTypeAlias,
+                            PropertyChanges = propertyDiffs,
+                            ContentId = contentId
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // If parsing fails, skip this property
+        }
+
+        return changes;
+    }
+
+    private List<Guid> ParseContentIds(string jsonValue)
+    {
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(jsonValue) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private static async Task<List<BlockListContentSnapshot>> CreateBlockListSnapshotsAsync(IZauberDbContext dbContext, Models.Content content)
