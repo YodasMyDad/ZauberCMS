@@ -75,6 +75,11 @@
     private List<Content> UpdatedItems { get; set; } = [];
     private List<Content> DeletedItems { get; set; } = [];
 
+    // Nested changes tracking - accumulates changes from nested block list editors
+    private List<Content> NestedAddedItems { get; set; } = [];
+    private List<Content> NestedUpdatedItems { get; set; } = [];
+    private List<Content> NestedDeletedItems { get; set; } = [];
+
     protected override async Task OnInitializedAsync()
     {
         await PopulateContentTypes();
@@ -158,6 +163,7 @@
         {
             { nameof(ContentEditor.IsBlockList), true },
             { nameof(ContentEditor.NestedParentId), Content!.Id },
+            { nameof(ContentEditor.OnBlockListChanges), new Action<BlockListChanges>(HandleNestedBlockListChanges) }
         };
 
         // Add allowed ElementType IDs if specified in settings
@@ -247,21 +253,40 @@
         }
     }
 
+    private void HandleNestedBlockListChanges(BlockListChanges nestedChanges)
+    {
+        // Accumulate nested changes - these will be included in our parent changes
+        NestedAddedItems.AddRange(nestedChanges.AddedItems);
+        NestedUpdatedItems.AddRange(nestedChanges.UpdatedItems);
+        NestedDeletedItems.AddRange(nestedChanges.DeletedItems);
+    }
+
     private void NotifyParentOfChanges()
     {
         var changes = new BlockListChanges
         {
-            AddedItems = AddedItems,
-            UpdatedItems = UpdatedItems,
-            DeletedItems = DeletedItems
+            // Include both direct changes and nested changes
+            AddedItems = AddedItems.Concat(NestedAddedItems).ToList(),
+            UpdatedItems = UpdatedItems.Concat(NestedUpdatedItems).ToList(),
+            DeletedItems = DeletedItems.Concat(NestedDeletedItems).ToList()
         };
 
         ChangesPending?.Invoke(changes);
+
+        // Clear nested changes after sending them to parent
+        ClearNestedChanges();
 
         // Update the Value property to reflect current order
         var currentIds = ContentItems.Select(c => c.Id).ToList();
         Value = JsonSerializer.Serialize(currentIds);
         ValueChanged.InvokeAsync(Value);
+    }
+
+    private void ClearNestedChanges()
+    {
+        NestedAddedItems.Clear();
+        NestedUpdatedItems.Clear();
+        NestedDeletedItems.Clear();
     }
     
     private async Task SortList((int oldIndex, int newIndex) indices)
