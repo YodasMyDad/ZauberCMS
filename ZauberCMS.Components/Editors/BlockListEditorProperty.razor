@@ -153,7 +153,7 @@
             await ValueChanged.InvokeAsync(Value);
 
             // Notify parent of pending changes
-            NotifyParentOfChanges();
+            await NotifyParentOfChanges();
         }
     }
 
@@ -248,7 +248,7 @@
                     }
                 }
 
-                NotifyParentOfChanges();
+                await NotifyParentOfChanges();
             }
         }
     }
@@ -261,8 +261,13 @@
         NestedDeletedItems.AddRange(nestedChanges.DeletedItems);
     }
 
-    private void NotifyParentOfChanges()
+    private async Task NotifyParentOfChanges()
     {
+        // Update the Value property to reflect current ContentItems (needed for additions/updates)
+        var currentIds = ContentItems.Select(c => c.Id).ToList();
+        Value = JsonSerializer.Serialize(currentIds);
+        await ValueChanged.InvokeAsync(Value);
+
         var changes = new BlockListChanges
         {
             // Include both direct changes and nested changes
@@ -275,8 +280,6 @@
 
         // Clear nested changes after sending them to parent
         ClearNestedChanges();
-
-        // Value is already correctly set in SortList, don't override it
     }
 
     private void ClearNestedChanges()
@@ -307,7 +310,7 @@
         await ValueChanged.InvokeAsync(Value);
 
         // Notify parent that order has changed (this affects the UpdatedItems)
-        NotifyParentOfChanges();
+        await NotifyParentOfChanges();
     }
 
 

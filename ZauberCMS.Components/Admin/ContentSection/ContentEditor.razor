@@ -624,12 +624,6 @@ else
             }
             else
             {
-                // Process any pending block list changes first
-                if (PendingBlockListChanges != null)
-                {
-                    await ProcessBlockListChanges();
-                }
-
                 var saveContentCommand = new SaveContentParameters();
 
                 if (unpublish)
@@ -651,6 +645,13 @@ else
 
                 saveContentCommand.Content = Content;
                 var result = await ContentService.SaveContentAsync(saveContentCommand);
+
+                // Process any pending block list changes after main content is saved (so block list items get correct parent ID)
+                if (PendingBlockListChanges != null)
+                {
+                    await ProcessBlockListChanges();
+                }
+
                 NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
 
                 if (ParentId != null)

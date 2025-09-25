@@ -1,56 +1,59 @@
 ﻿@using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Components.Admin.ContentSection
 
-<RadzenTabs RenderMode="TabRenderMode.Client">
-    <Tabs>
-        <RadzenTabsItem Text="Edit">
-            <ContentEditor @key="GetCompositeKey(ContentId, ParentId)" ParentId="@ParentId" ContentId="@ContentId"/>
-        </RadzenTabsItem>
-        <RadzenTabsItem Text="Child Content">
-            <RadzenDataGrid AllowFiltering="true"
-                            FilterPopupRenderMode="PopupRenderMode.Initial"
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            AllowPaging="true"
-                            PageSize="@AmountPerPage"
-                            AllowSorting="true"
-                            LoadData="@LoadAllUserData"
-                            IsLoading="@IsLoading"
-                            Count="@AllUserCount"
-                            Data="@AllUserContents"
-                            SelectionMode="DataGridSelectionMode.Single"
-                            RowSelect="@((Content value) => OnRowSelect(value))"
-                            PagerHorizontalAlign="HorizontalAlign.Center">
-                @*@bind-Value="@SelectedContent"*@
-                <Columns>
-                    <RadzenDataGridColumn Property="Name" Title="Name"/>
-                    <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
-                        <Template Context="data">
-                            @data.DateUpdated.Humanize()
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="LastUpdatedBy" Title="Updated By">
-                        <Template Context="data">
-                            <RadzenGravatar Email="@data.LastUpdatedBy?.Email" Style="width: 25px; height: 25px;"/>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="Id" Title="Delete">
-                        <Template Context="data">
-                            <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
-                        </Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
-        </RadzenTabsItem>
-    </Tabs>
-</RadzenTabs>
+<!-- Header Bar -->
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center"
+             class="rz-p-4 rz-background-color-primary rz-mb-4 rz-border-radius-4">
+    <RadzenText TextStyle="TextStyle.H4" Style="color: white; margin: 0;">
+        @Content?.Name
+    </RadzenText>
+    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="edit" Text="@($"Edit {Content?.Name}")" Click="OpenContentEditor" />
+</RadzenStack>
+
+<!-- Child Content Data Grid -->
+<RadzenDataGrid AllowFiltering="true"
+                FilterPopupRenderMode="PopupRenderMode.Initial"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                AllowPaging="true"
+                PageSize="@AmountPerPage"
+                AllowSorting="true"
+                LoadData="@LoadAllUserData"
+                IsLoading="@IsLoading"
+                Count="@AllUserCount"
+                Data="@AllUserContents"
+                SelectionMode="DataGridSelectionMode.Single"
+                RowSelect="@((Content value) => OnRowSelect(value))"
+                PagerHorizontalAlign="HorizontalAlign.Center">
+    @*@bind-Value="@SelectedContent"*@
+    <Columns>
+        <RadzenDataGridColumn Property="Name" Title="Name"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+            <Template Context="data">
+                @data.DateUpdated.Humanize()
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="LastUpdatedBy" Title="Updated By">
+            <Template Context="data">
+                <RadzenGravatar Email="@data.LastUpdatedBy?.Email" Style="width: 25px; height: 25px;"/>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="Id" Title="Delete">
+            <Template Context="data">
+                <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
 
 @code {
 
     [Inject] public NotificationService NotificationService { get; set; } = null!;
-    
+    [Inject] public IModalService ModalService { get; set; } = null!;
+
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public Content? Content { get; set; }
-    
+
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
 
@@ -124,6 +127,30 @@
         IsLoading = false;
     }
     
+    private async Task OpenContentEditor()
+    {
+        if (ContentId.HasValue)
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "ContentId", ContentId.Value }
+            };
+
+            if (ParentId.HasValue)
+            {
+                parameters.Add("ParentId", ParentId.Value);
+            }
+
+            var dialog = ModalService.OpenSidePanel<ContentEditor>($"Edit {Content?.Name}", parameters);
+            var result = await dialog.Result;
+            if (result.Confirmed)
+            {
+                // Refresh the data grid if content was updated
+                await LoadAllUserData(new LoadDataArgs { Top = AmountPerPage });
+            }
+        }
+    }
+
     private void OnRowSelect(object value)
     {
         if (value is Content selectedRow)
