@@ -3,11 +3,11 @@
 
 @if (Content != null)
 {
-    <RTEBlock Content="@Content" />
+    <RTEBlock Content="@Content" PropertyName="Text" />
 }
 
 @code {
     [Parameter] public Content? Content { get; set; }
     [Parameter] public ContentType? ContentType { get; set; }
-    public string ContentTypeAlias => "RTEBlock";
+    public string ContentTypeAlias => "RichTextEditor";
 }

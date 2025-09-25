@@ -15,11 +15,10 @@
     private Media? Media { get; set; }
     protected override async Task OnInitializedAsync()
     {
-        @if (Content != null)
+        if (Content != null)
         {
             var media = await Content.GetMediaItems("Image", MediaService);
             Media = media.FirstOrDefault();
         }
     }
-
 }

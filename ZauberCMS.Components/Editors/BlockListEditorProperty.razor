@@ -276,10 +276,7 @@
         // Clear nested changes after sending them to parent
         ClearNestedChanges();
 
-        // Update the Value property to reflect current order
-        var currentIds = ContentItems.Select(c => c.Id).ToList();
-        Value = JsonSerializer.Serialize(currentIds);
-        ValueChanged.InvokeAsync(Value);
+        // Value is already correctly set in SortList, don't override it
     }
 
     private void ClearNestedChanges()

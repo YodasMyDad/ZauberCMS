@@ -1005,7 +1005,7 @@ public class ContentService(
         var query = dbContext.Contents
             .Include(x => x.ContentType)
             .Include(x => x.LastUpdatedBy)
-            .Where(x => x.Deleted == false)
+            .Where(x => x.Deleted == false && !x.IsNestedContent)
             .AsQueryable();
 
         if (parameters.IncludeChildren)
