@@ -9,7 +9,7 @@
 
 @code {
     [Parameter] public Content? Content { get; set; }
-    [Parameter] public string PropertyName { get; set; } = "Content";
-    public string ContentTypeAlias => "RTEBlock";
+    [Parameter] public string PropertyName { get; set; } = "Text";
+    public string ContentTypeAlias => "RichTextEditor";
     public RenderMode RenderMode => RenderMode.Static;
 }

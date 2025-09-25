@@ -10,7 +10,7 @@
 
 @code {
     [Parameter] public Content? Content { get; set; }
-    public string ContentTypeAlias => "ImageBlock";
+    public string ContentTypeAlias => "Image";
     public RenderMode RenderMode => RenderMode.Static;
     private Media? Media { get; set; }
     protected override async Task OnInitializedAsync()

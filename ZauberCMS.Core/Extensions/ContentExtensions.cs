@@ -122,11 +122,13 @@ public static class ContentExtensions
         {
             var blockList =
                 await contentService.QueryContentAsync(new QueryContentParameters { Ids = ids, AmountPerPage = 150, NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only});
-            return blockList.Items;
+            // Ensure the returned items are in the same order as the input ids
+            var dict = blockList.Items.ToDictionary(x => x.Id, x => x);
+            return ids.Where(dict.ContainsKey).Select(id => dict[id]);
         }
 
         return [];
-    } 
+    }
     
     /// <summary>
     /// Retrieves a list of media items from a content property.
