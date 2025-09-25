@@ -48,10 +48,6 @@ public class MoveContentTypeContextMenu(NotificationService notificationService,
             { nameof(MoveContentType.IsElementType), baseItem.IsElementType },
             { nameof(MoveContentType.IsComposition), baseItem.IsComposition }
         };
-        if (baseItem.ParentId != null)
-        {
-            parameters.Add(nameof(MoveContentType.ParentId), baseItem.ParentId);
-        }
 
         Modal = modalService.OpenSidePanel<MoveContentType>("Move Content Type", parameters);
         var result = await Modal.Result;

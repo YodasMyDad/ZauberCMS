@@ -523,69 +523,85 @@ public class ContentService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var query = dbContext.ContentTypes.AsQueryable();
 
-        if (parameters.AsNoTracking)
-        {
-            query = query.AsNoTracking();
-        }
+        IQueryable<ContentType> query;
 
-        if (parameters.Ids.Count != 0)
+        // Start from external query if provided, otherwise from DbSet
+        if (parameters.Query is not null)
         {
-            query = query.Where(x => parameters.Ids.Contains(x.Id));
+            query = parameters.Query.Invoke();
         }
+        else
+        {
+            query = dbContext.ContentTypes.AsQueryable();
 
-        if (!parameters.SearchTerm.IsNullOrWhiteSpace())
-        {
-            query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(parameters.SearchTerm.ToLower()));
-        }
+            if (parameters.AsNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
 
-        if (parameters.OnlyElementTypes)
-        {
-            query = query.Where(x => x.IsElementType == true);
-        }
-        else if (!parameters.IncludeElementTypes)
-        {
-            query = query.Where(x => x.IsElementType == false);
-        }
+            if (parameters.Ids.Count != 0)
+            {
+                query = query.Where(x => parameters.Ids.Contains(x.Id));
+            }
 
-        if (parameters.OnlyCompositions)
-        {
-            query = query.Where(x => x.IsComposition == true);
-        }
-        else if (!parameters.IncludeCompositions)
-        {
-            query = query.Where(x => x.IsComposition == false);
-        }
+            if (!parameters.SearchTerm.IsNullOrWhiteSpace())
+            {
+                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(parameters.SearchTerm.ToLower()));
+            }
 
-        if (parameters.RootOnly)
-        {
-            query = query.Where(x => x.AllowAtRoot);
-        }
+            if (parameters.OnlyElementTypes)
+            {
+                query = query.Where(x => x.IsElementType == true);
+            }
+            else if (!parameters.IncludeElementTypes)
+            {
+                query = query.Where(x => x.IsElementType == false);
+            }
 
-        if (parameters.OnlyFolders)
-        {
-            query = query.Where(x => x.IsFolder == true);
-        }
-        else if (!parameters.IncludeFolders)
-        {
-            query = query.Where(x => x.IsFolder == false);
-        }
+            if (parameters.OnlyCompositions)
+            {
+                query = query.Where(x => x.IsComposition == true);
+            }
+            else if (!parameters.IncludeCompositions)
+            {
+                query = query.Where(x => x.IsComposition == false);
+            }
 
-        if (parameters.ParentId != null)
-        {
-            query = query.Where(x => x.ParentId == parameters.ParentId);
-        }
+            if (parameters.RootOnly)
+            {
+                query = query.Where(x => x.AllowAtRoot);
+            }
 
-        query = parameters.OrderBy switch
-        {
-            GetContentTypesOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
-            GetContentTypesOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
-            GetContentTypesOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
-            GetContentTypesOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
-            GetContentTypesOrderBy.Name => query.OrderBy(p => p.Name),
-            _ => query.OrderByDescending(p => p.DateUpdated)
-        };
+            if (parameters.OnlyFolders)
+            {
+                query = query.Where(x => x.IsFolder == true);
+            }
+            else if (!parameters.IncludeFolders)
+            {
+                query = query.Where(x => x.IsFolder == false);
+            }
+
+            if (parameters.ParentId != null)
+            {
+                query = query.Where(x => x.ParentId == parameters.ParentId);
+            }
+
+            if (parameters.WhereClause != null)
+            {
+                query = query.Where(parameters.WhereClause);
+            }
+
+            query = parameters.OrderBy switch
+            {
+                GetContentTypesOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
+                GetContentTypesOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
+                GetContentTypesOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
+                GetContentTypesOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+                GetContentTypesOrderBy.Name => query.OrderBy(p => p.Name),
+                _ => query.OrderByDescending(p => p.DateUpdated)
+            };
+        }
 
         return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
@@ -746,41 +762,49 @@ public class ContentService(
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsQueryable();
-        if (parameters.AsNoTracking)
+        
+        if (parameters.Query != null)
         {
-            query = query.AsNoTracking();
+            query = parameters.Query.Invoke();
         }
-
-        var idCount = parameters.Ids.Count;
-        if (idCount != 0)
+        else
         {
-            query = query.Where(x => parameters.Ids.Contains(x.Id));
-            parameters.AmountPerPage = idCount;
+            if (parameters.AsNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+
+            var idCount = parameters.Ids.Count;
+            if (idCount != 0)
+            {
+                query = query.Where(x => parameters.Ids.Contains(x.Id));
+                parameters.AmountPerPage = idCount;
+            }
+
+            if (parameters.ContentId != null)
+            {
+                query = query.Where(x => x.ContentId == parameters.ContentId);
+            }
+
+            if (parameters.LanguageId != null)
+            {
+                query = query.Where(x => x.LanguageId == parameters.LanguageId);
+            }
+
+            if (parameters.WhereClause != null)
+            {
+                query = query.Where(parameters.WhereClause);
+            }
+
+            query = parameters.OrderBy switch
+            {
+                GetDomainOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
+                GetDomainOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
+                GetDomainOrderBy.Url => query.OrderBy(p => p.Url),
+                _ => query.OrderByDescending(p => p.DateCreated)
+            };    
         }
-
-        if (parameters.ContentId != null)
-        {
-            query = query.Where(x => x.ContentId == parameters.ContentId);
-        }
-
-        if (parameters.LanguageId != null)
-        {
-            query = query.Where(x => x.LanguageId == parameters.LanguageId);
-        }
-
-        if (parameters.WhereClause != null)
-        {
-            query = query.Where(parameters.WhereClause);
-        }
-
-        query = parameters.OrderBy switch
-        {
-            GetDomainOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
-            GetDomainOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
-            GetDomainOrderBy.Url => query.OrderBy(p => p.Url),
-            _ => query.OrderByDescending(p => p.DateCreated)
-        };
-
+        
         return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
     }
 
@@ -1627,7 +1651,7 @@ public class ContentService(
         {
             if (lng != null)
             {
-                entryModel.LanguageKeys = lng;   
+                entryModel.LanguageKeys = lng;
             }
         }
 
@@ -1804,7 +1828,8 @@ public class ContentService(
         };
     }
 
-    private async Task ProcessBlockListEditorChangesAsync(Models.Content content, IZauberDbContext dbContext, User user, CancellationToken cancellationToken)
+    private async Task ProcessBlockListEditorChangesAsync(Models.Content content, IZauberDbContext dbContext, User user,
+        CancellationToken cancellationToken)
     {
         // Find BlockListEditor properties in this content
         var blockListProperties = content.PropertyData

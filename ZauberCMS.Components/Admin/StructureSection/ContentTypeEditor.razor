@@ -325,14 +325,15 @@
 </RadzenPanel>
 
 @code {
-    [Inject] public IModalService DialogService { get; set; } = null!;
+    [Inject] public IModalService ModalService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public ValidateService<ContentType> ValidateService { get; set; } = null!;
     [Inject] public IWebHostEnvironment Env { get; set; } = null!;
-
+    [Inject] public DialogService DialogService { get; set; } = null!;
+    
     [Parameter] public Guid? ContentTypeId { get; set; }
     [Parameter] public Guid? CopyContentTypeId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }
@@ -502,7 +503,7 @@
 
     private async Task SelectIcon()
     {
-        var dialog = DialogService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
+        var dialog = ModalService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: string icon })
         {
@@ -659,7 +660,7 @@
             .Where(x => !x.IsSystemTab)
             .OrderBy(x => x.SortOrder)
             .ToList();
-        var dialog = DialogService.OpenSidePanel<ChangeTab>("Change Tab",
+        var dialog = ModalService.OpenSidePanel<ChangeTab>("Change Tab",
             new Dictionary<string, object>
             {
                 { nameof(Dialogs.ChangeTab.ContentTypeId), ContentType.Id },
@@ -678,7 +679,7 @@
 
     private async Task Settings(PropertyType property)
     {
-        var dialog = DialogService.OpenSidePanel<ContentTypePropertySettingsEditor>("Edit Settings",
+        var dialog = ModalService.OpenSidePanel<ContentTypePropertySettingsEditor>("Edit Settings",
             new Dictionary<string, object> { { nameof(ContentTypePropertySettingsEditor.PropertyType), property } });
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: string settings })
@@ -727,22 +728,27 @@
 
     private async Task DeleteContentType()
     {
-        var result = await ContentService.DeleteContentTypeAsync(new DeleteContentTypeParameters { ContentTypeId = ContentType.Id });
-        if (result.Success)
-        {            
-            NotificationService.ShowSuccessNotification("Content Type Deleted");
-            await AppState.NotifyContentTypeDeleted(null, AuthState.User.Identity?.Name!);
-            NavigationManager.NavigateTo(Urls.AdminStructureBaseUrl, true);
-        }
-        else
+        var result = await ContentService.DeleteContentTypeAsync(new DeleteContentTypeParameters { ContentTypeId = ContentType.Id });        
+
+        var delete = await DialogService.Confirm("Do you really want to delete content type?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (delete == true)
         {
-            NotificationService.ShowNotifications(result.Messages);
+            if (result.Success)
+            {            
+                NotificationService.ShowSuccessNotification("Content Type Deleted");
+                await AppState.NotifyContentTypeDeleted(null, AuthState.User.Identity?.Name!);
+                NavigationManager.NavigateTo(Urls.AdminStructureBaseUrl, true);
+            }
+            else
+            {
+                NotificationService.ShowNotifications(result.Messages);
+            }   
         }
     }
 
     private async Task AddEditTab(Tab? tab)
     {
-        var dialog = DialogService.OpenSidePanel<AddTab>("Update Tab",
+        var dialog = ModalService.OpenSidePanel<AddTab>("Update Tab",
             new Dictionary<string, object>
             {
                 { nameof(AddTab.Tab), tab! },
@@ -792,7 +798,7 @@
         }
         else
         {
-            var dialog = DialogService.OpenSidePanel<ListContentTypeProperties>("Add Property");
+            var dialog = ModalService.OpenSidePanel<ListContentTypeProperties>("Add Property");
             var result = await dialog.Result;
             if (result is { Confirmed: true, Data: IContentProperty property })
             {
