@@ -1,0 +1,48 @@
+﻿@using RenderMode = Microsoft.AspNetCore.Mvc.Rendering.RenderMode
+@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+
+@if (Content != null && FaqItems.Any())
+{
+  <div class="accordion" id="accordion@(Content.Id)">
+    @foreach (var faq in FaqItems.Select((item, index) => new { item, index }))
+    {
+      var collapseId = $"collapse-{Content!.Id}-{faq.index}";
+      var headingId = $"heading-{Content!.Id}-{faq.index}";
+      var isFirst = faq.index == 0;
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="@headingId">
+          <button class="accordion-button @(isFirst ? "" : "collapsed")"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#@collapseId"
+                  aria-expanded="@(isFirst.ToString().ToLower())"
+                  aria-controls="@collapseId">
+            @(faq.item.GetValue<string>("Question"))
+          </button>
+        </h2>
+        <div id="@collapseId"
+             class="accordion-collapse collapse @(isFirst ? "show" : "")"
+             data-bs-parent="#accordion@(Content.Id)"
+             aria-labelledby="@headingId">
+          <div class="accordion-body">
+            <RTEBlock Content="@faq.item" PropertyName="Answer" />
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@code {
+  [Parameter] public Content? Content { get; set; }
+  public string ContentTypeAlias => "FAQ";
+  public RenderMode RenderMode => RenderMode.Static;
+
+  private IEnumerable<Content> FaqItems { get; set; } = [];
+
+  protected override async Task OnInitializedAsync()
+  {
+    FaqItems = await Content!.GetBlocks("FAQs", ContentService);
+  }
+
+}
