@@ -29,7 +29,12 @@
 
     <div class="row gx-4 gx-lg-5 justify-content-center">
         <div class="col-md-10 col-lg-8 col-xl-7">
-            
+            @foreach (var block in ContentBlocks)
+            {
+                <div class="pb-3">
+                    <RenderBlock Content="@(block)" TView="IContentBlockView"/>
+                </div>
+            }
             @foreach (var post in BlogPages.Items)
             {
                 <BlogPostPreview Content="@post"/>
@@ -51,6 +56,7 @@
 
     private PaginatedList<Content> BlogPages { get; set; } = new();
     private Media HeaderImage { get; set; } = new();
+    private IEnumerable<Content> ContentBlocks { get; set; } = [];
     private int CurrentPage { get; set; } = 1;
     
     protected override async Task OnParametersSetAsync()
@@ -69,5 +75,6 @@
         }
         BlogPages = await ContentService.QueryContentAsync(queryContentCommand);
         HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
+        ContentBlocks = await Content!.GetBlocks("Content", ContentService);
     }
 }

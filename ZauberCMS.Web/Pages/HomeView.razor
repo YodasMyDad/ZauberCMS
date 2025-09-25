@@ -80,8 +80,7 @@
 
         HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "/assets/img/home-bg.jpg")).FirstOrDefault()!;
         
-        var blocks = await Content!.GetBlocks("Content", ContentService);
-        ContentBlocks = blocks;
+        ContentBlocks = await Content!.GetBlocks("Content", ContentService);
     }
 
 }

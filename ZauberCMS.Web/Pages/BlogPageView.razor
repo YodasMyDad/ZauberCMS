@@ -56,8 +56,7 @@
     
     protected override async Task OnInitializedAsync()
     {
-        var blocks = await Content!.GetBlocks("Content", ContentService);
-        ContentBlocks = blocks;
+        ContentBlocks = await Content!.GetBlocks("Content", ContentService);
         HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "/assets/img/post-sample-image.jpg")).FirstOrDefault()!;
     }
 }
