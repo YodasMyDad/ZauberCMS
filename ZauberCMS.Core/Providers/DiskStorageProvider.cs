@@ -1,5 +1,4 @@
-﻿using System.IO;
-using ImageResize.Core.Extensions;
+﻿using ImageResize.Core.Extensions;
 using ImageResize.Core.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
@@ -126,8 +125,7 @@ public class DiskStorageProvider(
                 {
                     if (file.IsImage())
                     {
-                        using var image = await stream.OverMaxSizeCheckAsync(
-                            globalSettingsRequest.MaxImageSizeInPixels, imageResizerService);
+                        using var image = await stream.OverMaxSizeCheckAsync(globalSettingsRequest.MaxImageSizeInPixels, imageResizerService);
                         await image.SaveAsync(filePath);
                         media.Width = image.Width;
                         media.Height = image.Height;

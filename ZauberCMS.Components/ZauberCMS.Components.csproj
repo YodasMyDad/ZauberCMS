@@ -38,7 +38,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="ImageResize" Version="1.2.1" />
+        <PackageReference Include="ImageResize" Version="1.2.2" />
         <PackageReference Include="TinyMCE.Blazor" Version="2.2.1" />
     </ItemGroup>
 
