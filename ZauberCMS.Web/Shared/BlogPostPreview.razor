@@ -1,9 +1,10 @@
-﻿@if (Content != null)
+﻿@using ZauberCMS.Core.Seo.Models
+@if (Content != null)
 {
     <div class="post-preview">
         <a href="@($"/{Content.Url()}")">
             <h2 class="post-title">@Content.Name</h2>
-            <h3 class="post-subtitle">@(Content.GetValue<string>("Summary"))</h3>
+            <h3 class="post-subtitle">@(Content.GetValue<Meta>("SEO")?.MetaDescription)</h3>
         </a>
         <p class="post-meta">
             Posted @Content.DateCreated.Humanize()
