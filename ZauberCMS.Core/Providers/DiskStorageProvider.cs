@@ -1,4 +1,5 @@
-﻿using ImageResize.Core.Extensions;
+﻿using System.IO;
+using ImageResize.Core.Extensions;
 using ImageResize.Core.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
@@ -39,7 +40,8 @@ public class DiskStorageProvider(
         else
         {
             // Check allowed filetypes
-            if (file.Name.Contains(globalSettingsRequest.AllowedFileTypes))
+            var fileExtension = Path.GetExtension(file.Name).ToLower();
+            if (globalSettingsRequest.AllowedFileTypes.Contains(fileExtension))
             {
                 if (file.Size > globalSettingsRequest.MaxUploadFileSizeInBytes)
                 {

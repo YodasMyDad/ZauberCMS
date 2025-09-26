@@ -328,7 +328,7 @@ public class ContentVersioningService(
             Version2 = version2,
             Differences = CompareSnapshots(version1.Snapshot, version2.Snapshot),
             PropertyDifferences = ComparePropertySnapshots(version1.PropertySnapshots, version2.PropertySnapshots),
-            BlockListDifferences = await CompareBlockListSnapshotsAsync(version1, version2, cancellationToken)
+            BlockListDifferences = CompareBlockListSnapshots(version1, version2)
         };
     }
 
@@ -487,7 +487,7 @@ public class ContentVersioningService(
         return differences;
     }
 
-    private async Task<List<BlockListDifference>> CompareBlockListSnapshotsAsync(ContentVersion version1, ContentVersion version2, CancellationToken cancellationToken)
+    private List<BlockListDifference> CompareBlockListSnapshots(ContentVersion version1, ContentVersion version2)
     {
         var differences = new List<BlockListDifference>();
 
@@ -509,7 +509,7 @@ public class ContentVersioningService(
             // Check if this property contains JSON array (BlockListEditor property)
             if (IsBlockListProperty(prop1.Value) || IsBlockListProperty(prop2.Value))
             {
-                var contentChanges = CompareBlockListPropertyAsync(
+                var contentChanges = CompareBlockListProperty(
                     prop1, prop2,
                     version1.BlockListSnapshots, version2.BlockListSnapshots);
 
@@ -535,7 +535,7 @@ public class ContentVersioningService(
                value.TrimEnd().EndsWith(']');
     }
 
-    private List<BlockListContentChange> CompareBlockListPropertyAsync(
+    private List<BlockListContentChange> CompareBlockListProperty(
         ContentPropertySnapshot prop1, ContentPropertySnapshot prop2,
         List<BlockListContentSnapshot> snapshots1, List<BlockListContentSnapshot> snapshots2)
     {
@@ -555,13 +555,13 @@ public class ContentVersioningService(
             var addedIds = contentIds2.Except(contentIds1);
             foreach (var contentId in addedIds)
             {
-                if (snapshots2Dict.TryGetValue(contentId, out var snapshot))
+                if (snapshots2Dict.TryGetValue(contentId, out var snapshot) && snapshot != null)
                 {
                     changes.Add(new BlockListContentChange
                     {
                         ChangeType = BlockListContentChangeType.Added,
-                        ContentName = snapshot.ContentSnapshot.Name,
-                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias,
+                        ContentName = snapshot.ContentSnapshot.Name ?? "Unnamed Content",
+                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias ?? "Unknown",
                         ContentId = contentId
                     });
                 }
@@ -571,13 +571,13 @@ public class ContentVersioningService(
             var removedIds = contentIds1.Except(contentIds2);
             foreach (var contentId in removedIds)
             {
-                if (snapshots1Dict.TryGetValue(contentId, out var snapshot))
+                if (snapshots1Dict.TryGetValue(contentId, out var snapshot) && snapshot != null)
                 {
                     changes.Add(new BlockListContentChange
                     {
                         ChangeType = BlockListContentChangeType.Removed,
-                        ContentName = snapshot.ContentSnapshot.Name,
-                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias,
+                        ContentName = snapshot.ContentSnapshot.Name ?? "Unnamed Content",
+                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias ?? "Unknown",
                         ContentId = contentId
                     });
                 }
@@ -587,8 +587,8 @@ public class ContentVersioningService(
             var commonIds = contentIds1.Intersect(contentIds2);
             foreach (var contentId in commonIds)
             {
-                if (snapshots1Dict.TryGetValue(contentId, out var snapshot1) &&
-                    snapshots2Dict.TryGetValue(contentId, out var snapshot2))
+                if (snapshots1Dict.TryGetValue(contentId, out var snapshot1) && snapshot1 != null &&
+                    snapshots2Dict.TryGetValue(contentId, out var snapshot2) && snapshot2 != null)
                 {
                     var contentDiffs = CompareSnapshots(snapshot1.ContentSnapshot, snapshot2.ContentSnapshot);
                     var propertyDiffs = ComparePropertySnapshots(snapshot1.PropertySnapshots, snapshot2.PropertySnapshots);
@@ -598,8 +598,8 @@ public class ContentVersioningService(
                         changes.Add(new BlockListContentChange
                         {
                             ChangeType = BlockListContentChangeType.Modified,
-                            ContentName = snapshot2.ContentSnapshot.Name,
-                            ContentTypeAlias = snapshot2.ContentSnapshot.ContentTypeAlias,
+                            ContentName = snapshot2.ContentSnapshot.Name ?? "Unnamed Content",
+                            ContentTypeAlias = snapshot2.ContentSnapshot.ContentTypeAlias ?? "Unknown",
                             PropertyChanges = propertyDiffs,
                             ContentId = contentId
                         });
