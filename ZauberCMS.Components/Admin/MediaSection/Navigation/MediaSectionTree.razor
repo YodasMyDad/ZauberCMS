@@ -3,7 +3,8 @@
 @using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 
-<MediaTree Data="@MediaItems"
+<MediaTree @ref="MediaTreeComponent"
+           Data="@MediaItems"
            OnChange="OnChange"
            @bind-Value="@Selection" />
 
@@ -15,6 +16,7 @@
 
     private List<Media> MediaItems { get; set; } = [];
     private object? Selection { get; set; }
+    private MediaTree? MediaTreeComponent { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -30,6 +32,13 @@
     private async Task HandleMediaChanged(Media? media, string username)
     {
         await DataRefresh();
+
+        // Refresh the MediaTree component to update child data and caches
+        if (MediaTreeComponent != null)
+        {
+            await MediaTreeComponent.RefreshData();
+        }
+
         StateHasChanged();
     }
 
