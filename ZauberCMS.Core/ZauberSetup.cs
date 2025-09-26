@@ -61,7 +61,6 @@ public static class ZauberSetup
             o.ContentRoot = Path.Combine(builder.Environment.WebRootPath, "media");
             o.CacheRoot = Path.Combine(builder.Environment.WebRootPath, "_mediacache");
             o.AllowUpscale = true;
-            o.DefaultQuality = 90;
         });
         
         builder.Host.UseSerilog((context, configuration) =>

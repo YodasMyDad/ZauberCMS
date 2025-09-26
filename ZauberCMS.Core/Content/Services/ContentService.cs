@@ -887,12 +887,12 @@ public class ContentService(
         if (parameters.Cached)
         {
             return await cacheService.GetSetCachedItemAsync(cacheKey,
-                async () => await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId,
+                async () => await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId && !c.Deleted,
                     cancellationToken: cancellationToken));
         }
 
         return await dbContext.Contents.AsNoTracking()
-            .AnyAsync(c => c.ParentId == parameters.ParentId, cancellationToken: cancellationToken);
+            .AnyAsync(c => c.ParentId == parameters.ParentId && !c.Deleted, cancellationToken: cancellationToken);
     }
 
     /// <summary>
