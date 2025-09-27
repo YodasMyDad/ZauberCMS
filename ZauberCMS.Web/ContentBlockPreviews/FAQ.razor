@@ -2,11 +2,54 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
 @if (Content != null)
 {
-    @foreach (var faq in FaqItems)
+    @if (FaqItems.Any())
     {
-        <div>
-            <h2>@(faq.GetValue<string>("Question"))</h2>
-            <RTEBlock Content="@faq" PropertyName="Answer" />
+        @foreach (var faq in FaqItems)
+        {
+            <div>
+                <h2>@(faq.GetValue<string>("Question"))</h2>
+                <RTEBlock Content="@faq" PropertyName="Answer" />
+            </div>
+        }
+
+        @if (FaqItems.Count() < ExpectedCount)
+        {
+            <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-sm text-orange-700">
+                <div class="flex items-center space-x-1">
+                    <span>ℹ️</span>
+                    <span>Showing @FaqItems.Count() of @ExpectedCount FAQ items</span>
+                </div>
+                <div class="text-xs text-orange-600 mt-1">
+                    Save and publish to see the new FAQ content
+                </div>
+            </div>
+        }
+    }
+    else if (ExpectedCount > 0)
+    {
+        <div class="border border-orange-200 rounded p-4 bg-orange-50">
+            <div class="flex items-center space-x-2">
+                <span class="text-lg font-medium">FAQ Block</span>
+                <span class="text-sm text-orange-600">(@ExpectedCount items)</span>
+            </div>
+            <div class="mt-2 text-sm text-orange-700">
+                Contains @ExpectedCount FAQ item@(ExpectedCount == 1 ? "" : "s")
+            </div>
+            <div class="mt-1 text-xs text-orange-600 italic">
+                Save and publish to see the FAQ content
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="border border-gray-200 rounded p-4 bg-gray-50">
+            <div class="flex items-center space-x-2">
+                <span class="text-lg font-medium">FAQ Block</span>
+                <span class="text-sm text-gray-600">(0 items)</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-500 italic">
+                No FAQ items added yet
+            </div>
         </div>
     }
 }
@@ -15,11 +58,25 @@
     [Parameter] public Content? Content { get; set; }
     [Parameter] public ContentType? ContentType { get; set; }
     public string ContentTypeAlias => "FAQ";
-    
-    private IEnumerable<Content> FaqItems { get; set; } = [];
 
-    protected override async Task OnInitializedAsync()
+    private IEnumerable<Content> FaqItems { get; set; } = [];
+    private int ExpectedCount { get; set; }
+
+    protected override async Task OnParametersSetAsync()
     {
-        FaqItems = await Content!.GetBlocks("FAQs", ContentService);
+        if (Content != null)
+        {
+            // Try to load FAQ items from database
+            FaqItems = await Content.GetBlocks("FAQs", ContentService);
+
+            // Get expected count from PropertyData
+            var faqIds = Content.GetValue<List<Guid>>("FAQs");
+            ExpectedCount = faqIds?.Count ?? 0;
+        }
+        else
+        {
+            FaqItems = [];
+            ExpectedCount = 0;
+        }
     }
 }
