@@ -31,8 +31,9 @@ function Update-VersionInCsproj {
 
     $content = Get-Content $CsprojPath -Raw
 
-    # Update the Version tag
+    # Update the Version or PackageVersion tag
     $content = $content -replace '<Version>.*?</Version>', "<Version>$NewVersion</Version>"
+    $content = $content -replace '<PackageVersion>.*?</PackageVersion>', "<PackageVersion>$NewVersion</PackageVersion>"
 
     # Update package references to internal packages
     $projectName = [System.IO.Path]::GetFileNameWithoutExtension($CsprojPath)
@@ -47,6 +48,9 @@ function Update-VersionInCsproj {
         "ZauberCMS" {
             $content = $content -replace 'PackageReference Include="ZauberCMS\.Components" Version="[^"]*"', "PackageReference Include=`"ZauberCMS.Components`" Version=`"$NewVersion`""
             $content = $content -replace 'PackageReference Include="ZauberCMS\.Routing" Version="[^"]*"', "PackageReference Include=`"ZauberCMS.Routing`" Version=`"$NewVersion`""
+        }
+        "ZauberCMSTemplate.Site" {
+            $content = $content -replace 'PackageReference Include="ZauberCMS" Version="[^"]*"', "PackageReference Include=`"ZauberCMS`" Version=`"$NewVersion`""
         }
     }
 
@@ -99,7 +103,9 @@ try {
         "ZauberCMS.Core\ZauberCMS.Core.csproj",
         "ZauberCMS.Components\ZauberCMS.Components.csproj",
         "ZauberCMS.Routing\ZauberCMS.Routing.csproj",
-        "ZauberCMS\ZauberCMS.csproj"
+        "ZauberCMS\ZauberCMS.csproj",
+        "ZauberCMS.Template\ZauberCMS.Template.csproj",
+        "ZauberCMS.Template\template\ZauberCMSTemplate.Site\ZauberCMSTemplate.Site.csproj"
     )
 
     # Update versions in all projects
