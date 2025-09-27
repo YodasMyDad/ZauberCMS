@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS</PackageId>
-        <Version>4.0.0-beta4</Version>
+        <Version>4.0.0-beta6</Version>
         <Authors>Lee Messenger</Authors>
         <Description>The main ZauberCMS nuget package</Description>
         <PackageTags>Web</PackageTags>
@@ -58,8 +58,8 @@
         <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Components" Version="4.0.0-beta4"/>
-        <PackageReference Include="ZauberCMS.Routing" Version="4.0.0-beta4"/>
+        <PackageReference Include="ZauberCMS.Components" Version="4.0.0-beta6"/>
+        <PackageReference Include="ZauberCMS.Routing" Version="4.0.0-beta6"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -95,3 +95,4 @@
     </Target>
 
 </Project>
+

@@ -18,6 +18,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Template", "Zaube
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS.Routing", "ZauberCMS.Routing\ZauberCMS.Routing.csproj", "{BE1379BA-AD20-474B-BFA5-46D6D81AB489}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{4AE105FD-0B51-454D-8A1E-B620790085A7}"
+	ProjectSection(SolutionItems) = preProject
+		migrations.ps1 = migrations.ps1
+		release.ps1 = release.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
