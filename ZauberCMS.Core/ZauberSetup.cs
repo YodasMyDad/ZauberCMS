@@ -263,8 +263,6 @@ public static class ZauberSetup
 
     public static void AddZauberCms<T>(this WebApplication app)
     {
-        app.UseImageResize(); 
-        
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -312,17 +310,23 @@ public static class ZauberSetup
 
         app.UseSerilogRequestLogging();
         app.UseHttpsRedirection();
-        
-        app.UseStaticFiles();
-        app.UseMiddleware<RestrictedMediaMiddleware>();
-        
+
         app.UseRouting();
+
+        app.UseAuthentication();
+
+        // Our middleware must run before ImageResize to check restricted media
+        app.UseMiddleware<RestrictedMediaMiddleware>();
+
+        app.UseImageResize();
+
+        app.UseStaticFiles();
+
+        app.UseAuthorization();
+
         app.UseAntiforgery();
         app.MapControllers();
 
-        // Add authentication and authorization middleware
-        app.UseAuthentication();
-        app.UseAuthorization();
         app.MapStaticAssets();
         
         app.MapRazorComponents<T>()

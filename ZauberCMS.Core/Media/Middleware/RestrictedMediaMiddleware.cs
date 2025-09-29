@@ -17,19 +17,28 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
         {
             using var scope = serviceProvider.CreateScope();
             var mediaService = scope.ServiceProvider.GetRequiredService<IMediaService>();
-            
+
             // Extract media ID or filename from the path
             var mediaPath = context.Request.Path.Value;
-            
+
             // Check if this media item is restricted
-            // You'll need to implement this logic based on your data structure
             var isRestricted = await IsMediaRestrictedAsync(mediaService, mediaPath);
-            
-            if (isRestricted && context.User.Identity?.IsAuthenticated == false)
+
+            if (isRestricted)
             {
-                context.Response.StatusCode = 401;
-                await context.Response.WriteAsync("Unauthorized access to media");
-                return;
+                if (context.User.Identity?.IsAuthenticated == false)
+                {
+                    context.Response.StatusCode = 401;
+                    context.Response.ContentType = "text/plain";
+                    await context.Response.WriteAsync("Unauthorized access to media");
+                    return;
+                }
+                else
+                {
+                    // User is authenticated, let ImageResize handle the request normally
+                    // Add a marker to indicate authentication passed
+                    context.Items["ZauberMediaAuthenticated"] = true;
+                }
             }
         }
 
@@ -41,9 +50,11 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
         if (!mediaPath.IsNullOrWhiteSpace())
         {
             var mediaDict = await mediaService.GetRestrictedMediaUrlsAsync(new GetRestrictedMediaUrlsParameters());
-            return mediaDict.ContainsKey(mediaPath);
 
+            // Check both with and without leading slash
+            return mediaDict.ContainsKey(mediaPath) || mediaDict.ContainsKey(mediaPath.TrimStart('/'));
         }
         return false;
     }
+
 }

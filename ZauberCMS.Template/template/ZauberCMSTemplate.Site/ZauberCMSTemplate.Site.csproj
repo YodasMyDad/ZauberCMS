@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ZauberCMS" Version="4.0.0-beta7"/>
+        <PackageReference Include="ZauberCMS" Version="4.0.0-beta8"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -26,5 +26,6 @@
     </Target>
     
 </Project>
+
 
 
