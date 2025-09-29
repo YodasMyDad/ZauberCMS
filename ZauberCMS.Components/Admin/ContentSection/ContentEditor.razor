@@ -252,7 +252,7 @@ else
                           RootOnly="@RootOnly"
                           ElementTypesOnly="@ElementTypesOnly"
                           ParentId="@ParentId"
-                          AllowedElementTypeIds="@AllowedElementTypeIds"/>
+                          AllowedElementTypeIds="@AllowedElementTypeIds" />
     }
 }
 
@@ -355,26 +355,6 @@ else
             }
         }
 
-        // Auto-select content type if only one is available to improve UX
-        if (ContentType == null && Content != null)
-        {
-            var availableContentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
-            {
-                OnlyElementTypes = ElementTypesOnly,
-                AmountPerPage = 100
-            });
-
-            var filteredTypes = AllowedElementTypeIds?.Any() == true
-                ? availableContentTypes.Items.Where(ct => AllowedElementTypeIds.Contains(ct.Id)).ToList()
-                : availableContentTypes.Items;
-
-            if (filteredTypes.Count() == 1)
-            {
-                await UpdateContentTypeId(filteredTypes.First().Id);
-            }
-        }
-
-        InitializeContentViews();
         Loading = false;
     }
     
@@ -411,6 +391,7 @@ else
                 }
 
                 await SyncProperties(Content, ContentType);
+                InitializeContentViews();
             }
         }
     }
@@ -553,6 +534,7 @@ else
             }
 
             await SyncProperties(Content!, ContentType);
+            InitializeContentViews();
         }
     }
 

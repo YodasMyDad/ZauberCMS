@@ -42,6 +42,12 @@
             Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId, IncludeUnpublished = true });
             ShowListView = Content?.ContentType?.EnableListView ?? false;
         }
+        else
+        {
+            // Reset when creating new content
+            Content = null;
+            ShowListView = false;
+        }
     }
 
     private static string GetCompositeKey(Guid? contentId, Guid? parentId)

@@ -178,13 +178,21 @@ else
             ContentTypes = ContentTypes.Where(x => AllowedElementTypeIds.Contains(x.Id));
         }
 
-        foreach (var contentType in ContentTypes)
+        var contentTypes = ContentTypes as ContentType[] ?? ContentTypes.ToArray();
+        foreach (var contentType in contentTypes)
         {
             if (contentType.MediaId != null && contentType.MediaId != Guid.Empty)
             {
                 var coverImage = await MediaService.GetMedia(contentType.MediaId);
                 if (coverImage != null) CoverImages.Add(contentType.Id, coverImage);
             }
+        }
+
+        // Auto-select if only one content type is available
+        if (contentTypes.Length == 1)
+        {
+            await ContentTypeSelected.InvokeAsync(contentTypes.First().Id);
+            return;
         }
 
         var elementTypeFolders = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters { AmountPerPage = 100, OnlyFolders = true, OnlyElementTypes = true, OrderBy = GetContentTypesOrderBy.Name });
