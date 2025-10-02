@@ -48,6 +48,7 @@ using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Services;
+using ZauberCMS.RTE.Services;
 
 namespace ZauberCMS.Core;
 
@@ -210,6 +211,9 @@ public static class ZauberSetup
         /*services.AddAuthorizationBuilder()
                     .AddPolicy("AdminOnly", policy => policy.RequireRole(Constants.Roles.AdminRoleName));*/
 
+        // Add Zauber RTE services
+        builder.Services.AddZauberRte();
+        
         // Build the service provider and get the extension manager
         var serviceProvider = builder.Services.BuildServiceProvider();
         var extensionManager = serviceProvider.GetRequiredService<ExtensionManager>();

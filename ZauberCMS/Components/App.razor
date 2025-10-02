@@ -12,14 +12,16 @@
     @if (IsAdmin)
     {
         <RadzenTheme Theme="material" @rendermode="InteractiveServer" />
+        
         <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css"]">
         <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
         <link rel="stylesheet" href="@Assets["_content/Blazored.Modal/Blazored.Modal.bundle.scp.css"]">
-        <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
         @foreach (var style in PageStyles)
         {
             <link rel="stylesheet" href="@style">
         }   
+        <link rel="stylesheet" href="_content/ZauberCMS.RTE/css/fontawesome.min.css" />
+        <link rel="stylesheet" href="_content/ZauberCMS.RTE/css/zauber-editor.css" />
     }
 </head>
 
@@ -39,6 +41,8 @@
     {
         <script src="@script"></script>
     }
+    <script src="_content/ZauberCMS.RTE/js/lib/purify.min.js"></script>
+    <script src="_content/ZauberCMS.RTE/js/zauber-rte.js"></script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>   
 }
 

@@ -1,0 +1,93 @@
+@using ZauberCMS.Components.Editors.Models
+@using ZauberCMS.Components.Editors.Settings
+@using ZauberCMS.RTE.Components
+@using ZauberCMS.RTE.Models
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+
+<ZauberRichTextEditor @bind-Value="@Value"
+                      Settings="@EditorSettings"
+                      OnChange="@OnChange" />
+
+@code {
+    [Parameter] public string? Value { get; set; } = string.Empty;
+    [Parameter] public string? Settings { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Content? Content { get; set; }
+    
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    
+    public string Name { get; set; } = "Text Editor (ZauberCMS RTE)";
+    public string Alias { get; set; } = "ZauberCMS.ZauberRTE";
+    public string Icon { get; set; } = "edit_note";
+    public string Description { get; set; } = "ZauberCMS Rich Text Editor - Modern Blazor native editor";
+    public Type? SettingsComponent { get; set; } = typeof(ZauberCMSEditorSettings);
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
+    
+    private ZauberCMSEditorSettingsModel SettingsModel { get; set; } = new();
+    private EditorSettings EditorSettings { get; set; } = new();
+    private bool _initialized;
+
+    protected override void OnParametersSet()
+    {
+        if (!_initialized)
+        {
+            SettingsModel = Settings.FromJson<ZauberCMSEditorSettingsModel>();
+            EditorSettings = BuildEditorSettings();
+            _initialized = true;
+        }
+    }
+
+    private EditorSettings BuildEditorSettings()
+    {
+        // Start with CMS defaults or minimal based on settings
+        var settings = SettingsModel.UseCmsDefaults 
+            ? EditorSettings.CmsDefault() 
+            : EditorSettings.Minimal();
+
+        // Apply custom capabilities if not using defaults
+        if (!SettingsModel.UseCmsDefaults)
+        {
+            settings.Capabilities = new EditorCapabilities
+            {
+                TextFormatting = SettingsModel.TextFormatting,
+                InteractiveElements = SettingsModel.InteractiveElements,
+                EmbedsAndMedia = SettingsModel.EmbedsAndMedia,
+                Subscript = SettingsModel.Subscript,
+                Superscript = SettingsModel.Superscript,
+                TextAlign = SettingsModel.TextAlign,
+                Underline = SettingsModel.Underline,
+                Strike = SettingsModel.Strike,
+                ClearFormatting = SettingsModel.ClearFormatting
+            };
+        }
+
+        // Always apply dimension settings
+        settings.Dimensions = new EditorDimensions
+        {
+            Width = SettingsModel.Width,
+            Height = SettingsModel.Height,
+            MinHeight = SettingsModel.MinHeight,
+            MaxHeight = SettingsModel.MaxHeight
+        };
+
+        // Always apply image constraints
+        settings.ImageConstraints = new ImageConstraints
+        {
+            MaxWidth = SettingsModel.MaxImageWidth,
+            MaxHeight = SettingsModel.MaxImageHeight,
+            MaintainAspectRatio = SettingsModel.MaintainAspectRatio,
+            AllowBase64ImageUpload = SettingsModel.AllowBase64ImageUpload,
+            AllowedImageTypes = [".jpg", ".jpeg", ".gif", ".png", ".webp"]
+        };
+
+        return settings;
+    }
+
+    private async Task OnChange(EditorChangeArgs args)
+    {
+        await ValueChanged.InvokeAsync(args.Html);
+    }
+}
+
