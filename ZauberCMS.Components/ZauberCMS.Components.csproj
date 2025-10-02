@@ -29,7 +29,7 @@
         <PackageReference Include="Humanizer" Version="2.14.1" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.9" />
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.9" />
-        <PackageReference Include="Radzen.Blazor" Version="7.4.2" />
+        <PackageReference Include="Radzen.Blazor" Version="7.4.3" />
         <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.9" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
@@ -40,6 +40,7 @@
         </PackageReference>
         <PackageReference Include="ImageResize" Version="1.2.3" />
         <PackageReference Include="TinyMCE.Blazor" Version="2.2.1" />
+        <PackageReference Include="ZauberCMS.RTE" Version="1.0.0-beta3" />
     </ItemGroup>
 
     <ItemGroup>
@@ -67,32 +68,6 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>SharedResource.resx</DependentUpon>
         </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\js\boot.js" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <UpToDateCheckInput Remove="Admin\Seo\Dialogs\NewSitemap.razor" />
-      <UpToDateCheckInput Remove="Admin\Seo\SeoSitemaps.razor" />
-      <UpToDateCheckInput Remove="Admin\Seo\SettingsSeoTree.razor" />
-      <UpToDateCheckInput Remove="Admin\FormsSection\FormsIndex.razor" />
-      <UpToDateCheckInput Remove="Admin\Trees\BaseTree.razor" />
-      <UpToDateCheckInput Remove="Admin\Trees\ContentTree.razor" />
-      <UpToDateCheckInput Remove="Admin\Trees\ContentTypeTree.razor" />
-      <UpToDateCheckInput Remove="Admin\Trees\GenericTree.razor" />
-      <UpToDateCheckInput Remove="Admin\Trees\MediaTree.razor" />
-      <UpToDateCheckInput Remove="Admin\Trees\UsersTree.razor" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <AdditionalFiles Include="Trees\BaseTree.razor" />
-      <AdditionalFiles Include="Trees\ContentTree.razor" />
-      <AdditionalFiles Include="Trees\ContentTypeTree.razor" />
-      <AdditionalFiles Include="Trees\GenericTree.razor" />
-      <AdditionalFiles Include="Trees\MediaTree.razor" />
-      <AdditionalFiles Include="Trees\UsersTree.razor" />
     </ItemGroup>
     
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">

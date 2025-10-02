@@ -22,13 +22,13 @@
         <PackageReference Include="Blazored.Modal" Version="7.3.1" />
         <PackageReference Include="FluentValidation" Version="12.0.0" />
         <PackageReference Include="HtmlAgilityPack" Version="1.12.3" />
-        <PackageReference Include="MailKit" Version="4.13.0" />
+        <PackageReference Include="MailKit" Version="4.14.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="9.0.9" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.9" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="9.0.9" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.9" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.9" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="9.6.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="9.6.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
@@ -44,7 +44,7 @@
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.9" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-        <PackageReference Include="Radzen.Blazor" Version="7.4.2" />
+        <PackageReference Include="Radzen.Blazor" Version="7.4.3" />
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
         <PackageReference Include="ImageResize" Version="1.2.3" />
     </ItemGroup>
