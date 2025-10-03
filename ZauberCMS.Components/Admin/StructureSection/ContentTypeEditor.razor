@@ -708,7 +708,69 @@
         if (await ValidateService.CanSave(ContentType))
         {
             var isNewContentType = ContentTypeId == null;
-            ContentType.ContentProperties = ContentType.IsComposition ? AllProperties : AllProperties.Where(x => x.IsFromComposition == false).ToList();
+            
+            // Get properties that belong to this content type (not from compositions)
+            var ownProperties = ContentType.IsComposition ? AllProperties : AllProperties.Where(x => x.IsFromComposition == false).ToList();
+            
+            // Check for orphaned properties - properties whose tabs no longer exist
+            var validTabAliases = ContentType.Tabs.Select(t => t.Alias).ToHashSet();
+            var orphanedProperties = ownProperties.Where(p => !string.IsNullOrEmpty(p.TabAlias) && !validTabAliases.Contains(p.TabAlias)).ToList();
+            
+            if (orphanedProperties.Any())
+            {
+                // Group orphaned properties by their original tab alias
+                var propertiesByTab = orphanedProperties.GroupBy(p => p.TabAlias!).ToList();
+                var reassignedCount = 0;
+                
+                foreach (var tabGroup in propertiesByTab)
+                {
+                    // Try to find an existing non-system tab to use
+                    var targetTab = ContentType.Tabs.FirstOrDefault(t => !t.IsSystemTab);
+                    
+                    if (targetTab == null)
+                    {
+                        // Create a new tab based on the original tab alias
+                        // Convert alias back to a readable name (e.g., "my-tab" -> "My Tab")
+                        var tabName = string.Join(" ", tabGroup.Key.Split('-')
+                            .Where(word => !string.IsNullOrWhiteSpace(word))
+                            .Select(word => word.Length == 1 
+                                ? word.ToUpper() 
+                                : char.ToUpper(word[0]) + word.Substring(1).ToLower()));
+                        
+                        // Fallback if the conversion results in an empty string
+                        if (string.IsNullOrWhiteSpace(tabName))
+                        {
+                            tabName = "Content";
+                        }
+                        
+                        targetTab = new Tab
+                        {
+                            Name = tabName,
+                            SortOrder = ContentType.Tabs.Count + 1,
+                            IsSystemTab = false
+                        };
+                        ContentType.Tabs.Add(targetTab);
+                    }
+                    
+                    // Reassign properties to the target tab
+                    foreach (var orphanedProperty in tabGroup)
+                    {
+                        orphanedProperty.TabId = targetTab.Id;
+                        orphanedProperty.TabAlias = targetTab.Alias;
+                        reassignedCount++;
+                    }
+                }
+                
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Properties Reassigned",
+                    Detail = $"{reassignedCount} orphaned {(reassignedCount == 1 ? "property was" : "properties were")} reassigned to {(propertiesByTab.Count == 1 ? "a tab" : "tabs")}",
+                    Duration = 6000
+                });
+            }
+            
+            ContentType.ContentProperties = ownProperties;
             var saveContentTypeCommand = new SaveContentTypeParameters { ContentType = ContentType };
             var result = await ContentService.SaveContentTypeAsync(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{ContentType.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{ContentType.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
@@ -803,7 +865,7 @@
 
     private async Task AddProperty()
     {
-        if (ContentType.Tabs.All(x => x.IsSystemTab))
+        if (OrderedTabs.All(x => x.IsSystemTab))
         {
             NotificationService.ShowNotification("You need to add a tab", NotificationSeverity.Info);
         }
