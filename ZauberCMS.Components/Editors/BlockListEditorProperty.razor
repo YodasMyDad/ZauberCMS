@@ -174,7 +174,8 @@
 
         if (contentUpdate != null)
         {
-            contentParams.Add(nameof(ContentEditor.ContentId), contentUpdate.Id);
+            // Pass the actual Content object to preserve in-memory changes
+            contentParams.Add(nameof(ContentEditor.Content), contentUpdate);
         }
         else
         {

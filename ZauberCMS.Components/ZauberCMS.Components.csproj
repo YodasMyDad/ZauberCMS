@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Components</PackageId>
-        <Version>4.0.0-beta8</Version>
+        <Version>4.0.0-beta9</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS components package</Description>
         <PackageTags>Web</PackageTags>
@@ -40,7 +40,7 @@
         </PackageReference>
         <PackageReference Include="ImageResize" Version="1.2.3" />
         <PackageReference Include="TinyMCE.Blazor" Version="2.2.1" />
-        <PackageReference Include="ZauberCMS.RTE" Version="1.0.0-beta7" />
+        <PackageReference Include="ZauberCMS.RTE" Version="1.0.0-beta8" />
     </ItemGroup>
 
     <ItemGroup>
@@ -48,7 +48,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Core" Version="4.0.0-beta8" />
+        <PackageReference Include="ZauberCMS.Core" Version="4.0.0-beta9" />
     </ItemGroup>
 
     <ItemGroup>
@@ -79,6 +79,7 @@
     </Target>
     
 </Project>
+
 
 
 

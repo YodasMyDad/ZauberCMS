@@ -118,13 +118,15 @@ public static class DbContextExtensions
             cacheService.ClearCachedItemsWithPrefix(typeof(T).Name);
             
             var canSave = true;
+            var entityState = entity != null ? context.Entry(entity).State : EntityState.Unchanged;
+            
             // Find any before save plugins
             if (entity != null)
             {
                 var beforeSaves = extensionManager.GetInstances<IBeforeEntitySave<T>>(true);
                 foreach (var kvp in beforeSaves.OrderBy(x => x.Value.SortOrder))
                 {
-                    canSave = kvp.Value.BeforeSave(entity, context.Entry(entity).State);
+                    canSave = kvp.Value.BeforeSave(entity, entityState);
                     if (!canSave)
                     {
                         break;
@@ -140,9 +142,12 @@ public static class DbContextExtensions
                 {
                     crudResult.Entity = entity;
                 }
-                if (isSaved <= 0)
+                
+                // Only warn if we expected changes but got none (e.g., trying to add a new entity but 0 rows affected)
+                // Don't warn for Modified/Unchanged states as no changes is normal for already-synced entities
+                if (isSaved <= 0 && entityState == EntityState.Added)
                 {
-                    Log.Warning($"{typeof(T).Name} returned 0 items saved when creating or updating");
+                    Log.Warning($"{typeof(T).Name} returned 0 items saved when creating or updating (EntityState was {entityState})");
                 }   
                 
                 // After save plugins

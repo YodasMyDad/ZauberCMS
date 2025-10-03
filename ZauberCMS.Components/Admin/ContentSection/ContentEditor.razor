@@ -276,6 +276,7 @@ else
     [Parameter] public string? DefaultName { get; set; }
     [Parameter] public List<Guid>? AllowedElementTypeIds { get; set; }
     [Parameter] public Action<BlockListChanges>? OnBlockListChanges { get; set; }
+    [Parameter] public Content? Content { get; set; }
 
     private EditForm ContentForm { get; set; } = null!;
     private ContentType? ContentType { get; set; }
@@ -295,7 +296,6 @@ else
     private List<Content> Breadcrumb { get; set; } = [];
     private User? LastUpdatedBy { get; set; }
     private bool Loading { get; set; } = true;
-    private Content? Content { get; set; }
     private BlockListChanges? PendingBlockListChanges { get; set; }
 
     protected override async Task OnParametersSetAsync()
@@ -573,8 +573,29 @@ else
     {
         if (PendingBlockListChanges == null) return;
 
+        // Deduplicate change lists by ContentId to avoid saving the same item multiple times
+        var addedItems = PendingBlockListChanges.AddedItems
+            .GroupBy(x => x.Id)
+            .Select(g => g.Last())
+            .ToList();
+
+        var updatedItems = PendingBlockListChanges.UpdatedItems
+            .GroupBy(x => x.Id)
+            .Select(g => g.Last())
+            .ToList();
+
+        var deletedItems = PendingBlockListChanges.DeletedItems
+            .GroupBy(x => x.Id)
+            .Select(g => g.Last())
+            .ToList();
+
+        // Remove any items from added/updated that are in the deleted list
+        var deletedIds = deletedItems.Select(x => x.Id).ToHashSet();
+        addedItems = addedItems.Where(x => !deletedIds.Contains(x.Id)).ToList();
+        updatedItems = updatedItems.Where(x => !deletedIds.Contains(x.Id)).ToList();
+
         // Process added items
-        foreach (var addedItem in PendingBlockListChanges.AddedItems)
+        foreach (var addedItem in addedItems)
         {
             var saveParams = new SaveContentParameters { Content = addedItem };
             var result = await ContentService.SaveContentAsync(saveParams);
@@ -585,7 +606,7 @@ else
         }
 
         // Process updated items
-        foreach (var updatedItem in PendingBlockListChanges.UpdatedItems)
+        foreach (var updatedItem in updatedItems)
         {
             var saveParams = new SaveContentParameters { Content = updatedItem };
             var result = await ContentService.SaveContentAsync(saveParams);
@@ -596,7 +617,7 @@ else
         }
 
         // Process deleted items
-        foreach (var deletedItem in PendingBlockListChanges.DeletedItems)
+        foreach (var deletedItem in deletedItems)
         {
             var deleteParams = new DeleteContentParameters { ContentId = deletedItem.Id, MoveToRecycleBin = false };
             var result = await ContentService.DeleteContentAsync(deleteParams);
