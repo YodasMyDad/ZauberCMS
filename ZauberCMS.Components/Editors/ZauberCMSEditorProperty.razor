@@ -41,45 +41,24 @@
 
     private EditorSettings BuildEditorSettings()
     {
-        // Start with CMS defaults or minimal based on settings
-        var settings = SettingsModel.UseCmsDefaults 
-            ? EditorSettings.CmsDefault() 
-            : EditorSettings.Minimal();
+        // Use Full or Simple layout based on settings
+        var settings = SettingsModel.ToolbarLayout == "Minimal" 
+            ? EditorSettings.Minimal() 
+            : EditorSettings.CmsDefault();
 
-        // Apply custom capabilities if not using defaults
-        if (!SettingsModel.UseCmsDefaults)
+        // Apply height if specified
+        if (!string.IsNullOrWhiteSpace(SettingsModel.Height))
         {
-            settings.Capabilities = new EditorCapabilities
+            settings.Dimensions = new EditorDimensions
             {
-                TextFormatting = SettingsModel.TextFormatting,
-                InteractiveElements = SettingsModel.InteractiveElements,
-                EmbedsAndMedia = SettingsModel.EmbedsAndMedia,
-                Subscript = SettingsModel.Subscript,
-                Superscript = SettingsModel.Superscript,
-                TextAlign = SettingsModel.TextAlign,
-                Underline = SettingsModel.Underline,
-                Strike = SettingsModel.Strike,
-                ClearFormatting = SettingsModel.ClearFormatting
+                Height = SettingsModel.Height
             };
         }
 
-        // Always apply dimension settings
-        settings.Dimensions = new EditorDimensions
-        {
-            Width = SettingsModel.Width,
-            Height = SettingsModel.Height,
-            MinHeight = SettingsModel.MinHeight,
-            MaxHeight = SettingsModel.MaxHeight
-        };
-
-        // Always apply image constraints
+        // Apply image constraints
         settings.ImageConstraints = new ImageConstraints
         {
-            MaxWidth = SettingsModel.MaxImageWidth,
-            MaxHeight = SettingsModel.MaxImageHeight,
-            MaintainAspectRatio = SettingsModel.MaintainAspectRatio,
-            AllowBase64ImageUpload = SettingsModel.AllowBase64ImageUpload,
-            AllowedImageTypes = [".jpg", ".jpeg", ".gif", ".png", ".webp"]
+            AllowBase64ImageUpload = SettingsModel.AllowBase64ImageUpload
         };
 
         return settings;
@@ -90,4 +69,3 @@
         await ValueChanged.InvokeAsync(args.Html);
     }
 }
-

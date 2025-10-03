@@ -3,176 +3,32 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Height" Description="Editor height (e.g., 300px, 50vh)"/>
+        <PropertyInfo Name="Height" Description="Optional initial height (e.g., 300px, 50vh). Leave empty for default."/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenTextBox @bind-Value="@Settings.Height" Style="width: 100%;" />
+        <RadzenTextBox @bind-Value="@Settings.Height" Style="width: 100%;" Placeholder="e.g., 300px" />
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Width" Description="Editor width (e.g., 100%, 800px)"/>
+        <PropertyInfo Name="Toolbar Layout" Description="Choose between full-featured or simple toolbar"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenTextBox @bind-Value="@Settings.Width" Style="width: 100%;" />
+        <RadzenDropDown @bind-Value="@Settings.ToolbarLayout" 
+                        Data="@ToolbarLayouts" 
+                        Style="width: 100%;" />
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Min Height" Description="Minimum height in pixels"/>
+        <PropertyInfo Name="Allow Base64 Upload" Description="Allow uploading images as base64 (requires increased SignalR message size)"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.MinHeight" Style="width: 100%;" />
+        <RadzenSwitch @bind-Value="@Settings.AllowBase64ImageUpload" />
     </CentreColumn>
 </EditorRow>
-
-<EditorRow>
-    <LeftColumn>
-        <PropertyInfo Name="Max Height" Description="Maximum height in pixels"/>
-    </LeftColumn>
-    <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.MaxHeight" Style="width: 100%;" />
-    </CentreColumn>
-</EditorRow>
-
-<EditorRow>
-    <LeftColumn>
-        <PropertyInfo Name="Use CMS Defaults" Description="Use the CMS default configuration with all features enabled"/>
-    </LeftColumn>
-    <CentreColumn>
-        <RadzenSwitch @bind-Value="@Settings.UseCmsDefaults" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Use CMS defaults" }})" />
-    </CentreColumn>
-</EditorRow>
-
-@if (!Settings.UseCmsDefaults)
-{
-    <div class="rz-mt-3">
-        <h4 class="rz-mb-2">Custom Capabilities</h4>
-        
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Text Formatting" Description="Enable bold, italic, and basic text formatting"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.TextFormatting" />
-            </CentreColumn>
-        </EditorRow>
-
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Text Align" Description="Enable text alignment options"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.TextAlign" />
-            </CentreColumn>
-        </EditorRow>
-
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Underline" Description="Enable underline formatting"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.Underline" />
-            </CentreColumn>
-        </EditorRow>
-
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Strikethrough" Description="Enable strikethrough formatting"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.Strike" />
-            </CentreColumn>
-        </EditorRow>
-
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Subscript" Description="Enable subscript formatting"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.Subscript" />
-            </CentreColumn>
-        </EditorRow>
-
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Superscript" Description="Enable superscript formatting"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.Superscript" />
-            </CentreColumn>
-        </EditorRow>
-
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Clear Formatting" Description="Enable clear formatting button"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.ClearFormatting" />
-            </CentreColumn>
-        </EditorRow>
-
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Embeds & Media" Description="Enable media embeds"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.EmbedsAndMedia" />
-            </CentreColumn>
-        </EditorRow>
-
-        <EditorRow>
-            <LeftColumn>
-                <PropertyInfo Name="Interactive Elements" Description="Enable interactive elements"/>
-            </LeftColumn>
-            <CentreColumn>
-                <RadzenSwitch @bind-Value="@Settings.InteractiveElements" />
-            </CentreColumn>
-        </EditorRow>
-    </div>
-}
-
-<div class="rz-mt-3">
-    <h4 class="rz-mb-2">Image Settings</h4>
-    
-    <EditorRow>
-        <LeftColumn>
-            <PropertyInfo Name="Max Image Width" Description="Maximum image width in pixels"/>
-        </LeftColumn>
-        <CentreColumn>
-            <RadzenNumeric @bind-Value="@Settings.MaxImageWidth" Style="width: 100%;" />
-        </CentreColumn>
-    </EditorRow>
-
-    <EditorRow>
-        <LeftColumn>
-            <PropertyInfo Name="Max Image Height" Description="Maximum image height in pixels"/>
-        </LeftColumn>
-        <CentreColumn>
-            <RadzenNumeric @bind-Value="@Settings.MaxImageHeight" Style="width: 100%;" />
-        </CentreColumn>
-    </EditorRow>
-
-    <EditorRow>
-        <LeftColumn>
-            <PropertyInfo Name="Maintain Aspect Ratio" Description="Maintain image aspect ratio when resizing"/>
-        </LeftColumn>
-        <CentreColumn>
-            <RadzenSwitch @bind-Value="@Settings.MaintainAspectRatio" />
-        </CentreColumn>
-    </EditorRow>
-
-    <EditorRow>
-        <LeftColumn>
-            <PropertyInfo Name="Allow Base64 Upload" Description="Allow uploading images as base64 (requires increased SignalR message size)"/>
-        </LeftColumn>
-        <CentreColumn>
-            <RadzenSwitch @bind-Value="@Settings.AllowBase64ImageUpload" />
-        </CentreColumn>
-    </EditorRow>
-</div>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
     <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save" />
@@ -182,6 +38,8 @@
     [Parameter] public string? SettingsModel { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     public ZauberCMSEditorSettingsModel Settings { get; set; } = new();
+
+    private List<string> ToolbarLayouts = ["Full", "Minimal"];
 
     protected override void OnInitialized()
     {
@@ -193,4 +51,3 @@
         await this.SavePropertySettings(Settings);
     }
 }
-
