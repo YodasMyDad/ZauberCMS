@@ -1,5 +1,6 @@
 ﻿@page "/Account/Login"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.RateLimiting
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Membership
@@ -8,6 +9,7 @@
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
 @attribute [ExcludeFromInteractiveRouting]
+@attribute [EnableRateLimiting("login")]
 
 <LayoutView Layout="LayoutType">
     <PageTitle>Log in</PageTitle>

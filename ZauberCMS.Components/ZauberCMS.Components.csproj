@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Components</PackageId>
-        <Version>4.0.0-rc.2</Version>
+        <Version>4.0.0-rc.3</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS components package</Description>
         <PackageTags>Web</PackageTags>
@@ -48,7 +48,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Core" Version="4.0.0-rc.2" />
+        <PackageReference Include="ZauberCMS.Core" Version="4.0.0-rc.3" />
     </ItemGroup>
 
     <ItemGroup>
@@ -69,6 +69,11 @@
             <DependentUpon>SharedResource.resx</DependentUpon>
         </Compile>
     </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="..\..\..\Users\LeeMessenger\.nuget\packages\zaubercms.rte\1.0.0-beta9\contentFiles\any\net9.0\package-lock.json" />
+      <Content Remove="..\..\..\Users\LeeMessenger\.nuget\packages\zaubercms.rte\1.0.0-beta9\contentFiles\any\net9.0\package.json" />
+    </ItemGroup>
     
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
         <PropertyGroup>
@@ -79,6 +84,7 @@
     </Target>
     
 </Project>
+
 
 
 

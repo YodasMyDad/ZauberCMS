@@ -60,7 +60,15 @@ public class DefaultCacheService : ICacheService
             cacheEntry = await getCacheItemAsync();
 
             var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(totalExpiration);
+                .SetSlidingExpiration(totalExpiration)
+                .RegisterPostEvictionCallback((key, value, reason, state) =>
+                {
+                    // Clean up the key tracking dictionary when item is evicted
+                    if (key is string keyStr)
+                    {
+                        Keys.TryRemove(keyStr, out _);
+                    }
+                });
 
             _memoryCache.Set(cacheKey, cacheEntry, cacheEntryOptions);
             Keys.TryAdd(cacheKey, default);
@@ -104,7 +112,15 @@ public class DefaultCacheService : ICacheService
             cacheEntry = getCacheItem();
 
             var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(totalExpiration);
+                .SetSlidingExpiration(totalExpiration)
+                .RegisterPostEvictionCallback((key, value, reason, state) =>
+                {
+                    // Clean up the key tracking dictionary when item is evicted
+                    if (key is string keyStr)
+                    {
+                        Keys.TryRemove(keyStr, out _);
+                    }
+                });
 
             _memoryCache.Set(cacheKey, cacheEntry, cacheEntryOptions);
             Keys.TryAdd(cacheKey, default);

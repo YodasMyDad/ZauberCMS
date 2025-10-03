@@ -1860,6 +1860,9 @@ public class ContentService(
             .Where(p => p.Alias == "ZauberCMS.BlockListEditor")
             .ToList();
 
+        // Collect all content IDs from all BlockListEditor properties
+        var allContentIds = new List<Guid>();
+        
         foreach (var property in blockListProperties)
         {
             if (string.IsNullOrWhiteSpace(property.Value))
@@ -1869,29 +1872,9 @@ public class ContentService(
             {
                 // Parse the JSON array of content IDs
                 var contentIds = JsonSerializer.Deserialize<List<Guid>>(property.Value);
-                if (contentIds == null || !contentIds.Any())
-                    continue;
-
-                // Load and save each referenced content (recursive processing)
-                foreach (var contentId in contentIds)
+                if (contentIds != null && contentIds.Any())
                 {
-                    var nestedContent = await dbContext.Contents
-                        .Include(c => c.PropertyData)
-                        .FirstOrDefaultAsync(c => c.Id == contentId, cancellationToken);
-
-                    if (nestedContent != null)
-                    {
-                        // Recursively save this content, which will process its own BlockListEditor properties
-                        var nestedSaveParams = new SaveContentParameters
-                        {
-                            Content = nestedContent,
-                            ExcludePropertyData = false,
-                            UpdateContentRoles = false,
-                            SaveUnpublishedOnly = false
-                        };
-
-                        await SaveContentAsync(nestedSaveParams, cancellationToken);
-                    }
+                    allContentIds.AddRange(contentIds);
                 }
             }
             catch (JsonException)
@@ -1899,6 +1882,30 @@ public class ContentService(
                 // Skip invalid JSON - not a breaking error for the main save
                 continue;
             }
+        }
+        
+        if (!allContentIds.Any())
+            return;
+            
+        // Batch load all nested content in a single query to prevent N+1
+        var nestedContents = await dbContext.Contents
+            .Include(c => c.PropertyData)
+            .Where(c => allContentIds.Contains(c.Id))
+            .ToListAsync(cancellationToken);
+        
+        // Process each nested content recursively
+        foreach (var nestedContent in nestedContents)
+        {
+            // Recursively save this content, which will process its own BlockListEditor properties
+            var nestedSaveParams = new SaveContentParameters
+            {
+                Content = nestedContent,
+                ExcludePropertyData = false,
+                UpdateContentRoles = false,
+                SaveUnpublishedOnly = false
+            };
+
+            await SaveContentAsync(nestedSaveParams, cancellationToken);
         }
     }
 }

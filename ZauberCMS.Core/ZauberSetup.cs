@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Threading.RateLimiting;
 using Blazored.Modal;
 using ImageResize.Core.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -187,11 +189,31 @@ public static class ZauberSetup
         builder.Services.AddAntiforgery();
         builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         builder.Services.AddBlazoredModal();
+        
+        // Add rate limiting for authentication endpoints
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            
+            // Sliding window rate limiter for login attempts
+            options.AddPolicy("login", httpContext =>
+                RateLimitPartition.GetSlidingWindowLimiter(
+                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    factory: _ => new SlidingWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10, // 10 attempts
+                        Window = TimeSpan.FromMinutes(5), // per 5 minutes
+                        SegmentsPerWindow = 5,
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0 // No queueing
+                    }));
+        });
 
         builder.Services.AddScoped<ExtensionManager>();
         builder.Services.AddScoped<ProviderService>();
         builder.Services.AddScoped(typeof(ValidateService<>));
         builder.Services.AddScoped<ICacheService, DefaultCacheService>();
+        builder.Services.AddScoped<IHtmlSanitizerService, DefaultHtmlSanitizerService>();
         builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
         builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
         builder.Services.AddScoped<TreeState>();
@@ -316,6 +338,8 @@ public static class ZauberSetup
         app.UseHttpsRedirection();
 
         app.UseRouting();
+        
+        app.UseRateLimiter();
 
         app.UseAuthentication();
 

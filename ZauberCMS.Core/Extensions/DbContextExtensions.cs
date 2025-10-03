@@ -26,26 +26,29 @@ public static class DbContextExtensions
         where T : class, IBaseItem
     {
         var tableName = typeof(T) == typeof(Content.Models.Content) ? "ZauberContent" : "ZauberMedia";
+        var searchPattern = $"%\"{itemId}\"%";
 
-        // Use EF.Functions.Like to avoid in-memory computation
+        // Use parameterized query to prevent SQL injection
 #pragma warning disable EF1002
-        return source.FromSqlRaw($"""
+        return source.FromSqlRaw($$"""
                                       SELECT * 
-                                      FROM {tableName}
-                                      WHERE Path LIKE '%"{itemId}"%'
-                                  """);
+                                      FROM {{tableName}}
+                                      WHERE Path LIKE {0}
+                                  """, searchPattern);
 #pragma warning restore EF1002
     }
     
     public static IQueryable<ContentType> WhereHasCompositionsUsing(this DbSet<ContentType> source, Guid itemId)
     {
-        // Use EF.Functions.Like to avoid in-memory computation
+        var searchPattern = $"%\"{itemId}\"%";
+        
+        // Use parameterized query to prevent SQL injection
 #pragma warning disable EF1002
-        return source.FromSqlRaw($"""
+        return source.FromSqlRaw($$"""
                                       SELECT * 
                                       FROM ZauberContentTypes
-                                      WHERE CompositionIds LIKE '%"{itemId}"%'
-                                  """);
+                                      WHERE CompositionIds LIKE {0}
+                                  """, searchPattern);
 #pragma warning restore EF1002
     }
     
