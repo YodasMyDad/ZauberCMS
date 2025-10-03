@@ -24,7 +24,7 @@ using ZauberCMS.Core.Shared.Services;
 namespace ZauberCMS.Core.Membership.Services;
 
 public class MembershipService(
-    IServiceProvider serviceProvider,
+    IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     AuthenticationStateProvider authenticationStateProvider,
     ExtensionManager extensionManager,
@@ -42,7 +42,7 @@ public class MembershipService(
     /// <returns>User or null.</returns>
     public async Task<User?> GetUserAsync(GetUserParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
         var cacheKey = query.GenerateCacheKey<User>();
@@ -63,7 +63,7 @@ public class MembershipService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<User>> SaveUserAsync(SaveUserParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
@@ -206,7 +206,7 @@ public class MembershipService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<User>> CreateUpdateUserAsync(CreateUpdateUserParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
@@ -349,7 +349,7 @@ public class MembershipService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<User>> DeleteUserAsync(DeleteUserParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
@@ -389,7 +389,7 @@ public class MembershipService(
     #pragma warning disable CS1998
     public async Task<PaginatedList<User>> QueryUsersAsync(QueryUsersParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
         var cacheKey = query.GenerateCacheKey<User>();
@@ -411,7 +411,7 @@ public class MembershipService(
     /// <returns>Role or null.</returns>
     public async Task<Role?> GetRoleAsync(GetRoleParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         var query = dbContext.Roles
@@ -432,7 +432,7 @@ public class MembershipService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Role>> SaveRoleAsync(SaveRoleParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
@@ -490,7 +490,7 @@ public class MembershipService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Role>> DeleteRoleAsync(DeleteRoleParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
@@ -529,7 +529,7 @@ public class MembershipService(
     /// <returns>Paged list of roles.</returns>
     public Task<PaginatedList<Role>> QueryRolesAsync(QueryRolesParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         var query = dbContext.Roles
@@ -586,7 +586,7 @@ public class MembershipService(
     /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> LoginUserAsync(LoginUserParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
         var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
@@ -666,7 +666,7 @@ public class MembershipService(
     /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> RegisterUserAsync(RegisterUserParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
@@ -750,7 +750,7 @@ public class MembershipService(
     /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ExternalLoginAsync(ExternalLoginParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
         var loginResult = new AuthenticationResult();
@@ -824,7 +824,7 @@ public class MembershipService(
     /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ConfirmEmailAsync(ConfirmEmailParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var confirmationResult = new AuthenticationResult();
 
@@ -865,7 +865,7 @@ public class MembershipService(
     /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ForgotPasswordAsync(ForgotPasswordParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var forgotPasswordResult = new AuthenticationResult();
 
@@ -906,7 +906,7 @@ public class MembershipService(
     /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ResetPasswordAsync(ResetPasswordParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var resetPasswordResult = new AuthenticationResult();
 
@@ -946,7 +946,7 @@ public class MembershipService(
     /// <returns>User or null.</returns>
     public async Task<User?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         

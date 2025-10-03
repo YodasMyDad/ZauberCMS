@@ -23,7 +23,7 @@ using System.Text.Json;
 namespace ZauberCMS.Core.Content.Services;
 
 public class ContentService(
-    IServiceProvider serviceProvider,
+    IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     IOptions<ZauberSettings> settings,
     AuthenticationStateProvider authenticationStateProvider,
@@ -43,7 +43,7 @@ public class ContentService(
     public async Task<Models.Content?> GetContentAsync(GetContentParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
         var cacheKey = query.GenerateCacheKey();
@@ -65,7 +65,7 @@ public class ContentService(
     public async Task<HandlerResult<Models.Content>> SaveContentAsync(SaveContentParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         User? user = await userManager.GetUserAsync(authState.User);
@@ -108,7 +108,7 @@ public class ContentService(
             {
                 try
                 {
-                    var versioningService = serviceProvider.GetService<IContentVersioningService>();
+                    var versioningService = scope.ServiceProvider.GetService<IContentVersioningService>();
                     if (versioningService != null)
                     {
                         // Use the parameter content which has the updated PropertyData from the UI
@@ -211,7 +211,7 @@ public class ContentService(
             try
             {
                 // Get the versioning service and create a version
-                var versioningService = serviceProvider.GetService<IContentVersioningService>();
+                var versioningService = scope.ServiceProvider.GetService<IContentVersioningService>();
                 if (versioningService != null)
                 {
                     // Use the parameter content which has the updated PropertyData from the UI
@@ -251,7 +251,7 @@ public class ContentService(
     public async Task<PaginatedList<Models.Content>> QueryContentAsync(QueryContentParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
         var cacheKey = query.GenerateCacheKey(typeof(Models.Content));
@@ -273,7 +273,7 @@ public class ContentService(
     public async Task<HandlerResult<Models.Content>> DeleteContentAsync(DeleteContentParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var loggedInUser = await userManager.GetUserAsync(authState.User);
@@ -330,7 +330,7 @@ public class ContentService(
     public async Task<HandlerResult<Models.Content>> CopyContentAsync(CopyContentParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
@@ -443,7 +443,7 @@ public class ContentService(
         var cacheKey = parameters.GenerateCacheKey<Models.Content>("GetContentFromRequest");
         return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
-            using var scope = serviceProvider.CreateScope();
+            using var scope = serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
             return await FetchEntryModelAsync(parameters, dbContext, cancellationToken);
         }, 0, 5))!;
@@ -458,7 +458,7 @@ public class ContentService(
     public async Task<ContentType?> GetContentTypeAsync(GetContentTypeParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         return await dbContext.ContentTypes.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken: cancellationToken);
@@ -473,7 +473,7 @@ public class ContentService(
     public async Task<HandlerResult<ContentType>> SaveContentTypeAsync(SaveContentTypeParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
@@ -530,7 +530,7 @@ public class ContentService(
     public Task<PaginatedList<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         IQueryable<ContentType> query;
@@ -624,7 +624,7 @@ public class ContentService(
     public async Task<HandlerResult<ContentType>> DeleteContentTypeAsync(DeleteContentTypeParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
@@ -691,7 +691,7 @@ public class ContentService(
     public async Task<Domain> GetDomainAsync(GetDomainParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsQueryable();
         if (parameters.AsNoTracking)
@@ -723,7 +723,7 @@ public class ContentService(
     public async Task<HandlerResult<Domain>> SaveDomainAsync(SaveDomainParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
@@ -768,7 +768,7 @@ public class ContentService(
     public Task<PaginatedList<Domain>> QueryDomainAsync(QueryDomainParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsQueryable();
         
@@ -826,7 +826,7 @@ public class ContentService(
     public async Task<HandlerResult<Domain?>> DeleteDomainAsync(DeleteDomainParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
@@ -867,7 +867,7 @@ public class ContentService(
     /// <returns>True if any content exists.</returns>
     public async Task<bool> AnyContentAsync(CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         return await dbContext.Contents.AsNoTracking().AnyAsync(cancellationToken: cancellationToken);
     }
@@ -881,7 +881,7 @@ public class ContentService(
     public async Task<bool> HasChildContentAsync(HasChildContentParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = parameters.GenerateCacheKey<Models.Content>("HasChild");
         if (parameters.Cached)
@@ -904,7 +904,7 @@ public class ContentService(
     public async Task<bool> HasChildContentTypeAsync(HasChildContentTypeParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = parameters.GenerateCacheKey<ContentType>("HasContentTypeChild");
         if (parameters.Cached)
@@ -927,7 +927,7 @@ public class ContentService(
     public async Task<Dictionary<object, string>> GetContentLanguagesAsync(GetContentLanguagesParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Contents.AsNoTracking()
             .Include(x => x.Language)
@@ -961,7 +961,7 @@ public class ContentService(
     public async Task<List<Domain>> GetCachedDomainsAsync(CachedDomainsParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Domains.AsNoTracking().Include(x => x.Language);
         var cacheKey = query.GenerateCacheKey();
@@ -978,7 +978,7 @@ public class ContentService(
     public async Task<HandlerResult<UnpublishedContent>> ClearUnpublishedContentAsync(
         ClearUnpublishedContentParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<UnpublishedContent>();
         var content = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == parameters.ContentId,
@@ -1006,7 +1006,7 @@ public class ContentService(
     public async Task<DataGridResult<Models.Content>> GetDataGridContentAsync(DataGridContentParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var result = new DataGridResult<Models.Content>();
         var query = dbContext.Contents
@@ -1080,7 +1080,7 @@ public class ContentService(
 
     public async Task<string?> ExportContentTypeAsync(string alias, bool includeContent = false)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         var contentType = await dbContext.ContentTypes
@@ -1205,7 +1205,7 @@ public class ContentService(
             return handlerResult;
         }
 
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
@@ -1793,7 +1793,7 @@ public class ContentService(
     public async Task<HandlerResult<int>> CleanupOrphanedRelatedContentAsync(
         CleanupOrphanedRelatedContentParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<int>();
 

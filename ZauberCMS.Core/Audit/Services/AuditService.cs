@@ -13,7 +13,7 @@ using ZauberCMS.Core.Shared.Services;
 namespace ZauberCMS.Core.Audit.Services;
 
 public class AuditService(
-    IServiceProvider serviceProvider,
+    IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     ExtensionManager extensionManager,
     ILogger<AuditService> logger)
@@ -27,7 +27,7 @@ public class AuditService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Models.Audit>> SaveAuditAsync(SaveAuditParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         var handlerResult = new HandlerResult<Models.Audit>();
@@ -64,7 +64,7 @@ public class AuditService(
     /// <returns>Paged list of audits.</returns>
     public Task<PaginatedList<Models.Audit>> QueryAuditsAsync(QueryAuditsParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Audits.AsQueryable();
 
@@ -109,7 +109,7 @@ public class AuditService(
     /// <returns>Result containing the number of deleted rows.</returns>
     public async Task<HandlerResult<int>> CleanupOldAuditsAsync(CleanupOldAuditsParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<int>();
 

@@ -15,7 +15,7 @@ using ZauberCMS.Core.Shared.Services;
 namespace ZauberCMS.Core.Data.Services;
 
 public class DataService(
-    IServiceProvider serviceProvider,
+    IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     ExtensionManager extensionManager)
     : IDataService
@@ -28,7 +28,7 @@ public class DataService(
     /// <returns>Global data or null.</returns>
     public async Task<GlobalData?> GetGlobalDataAsync(GetGlobalDataParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
         var cacheKey = query.GenerateCacheKey<GlobalData>();
@@ -49,7 +49,7 @@ public class DataService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<GlobalData>> SaveGlobalDataAsync(SaveGlobalDataParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         var handlerResult = new HandlerResult<GlobalData>();
@@ -86,7 +86,7 @@ public class DataService(
     /// <returns>Dictionary of name to query results.</returns>
     public async Task<Dictionary<string, IEnumerable<object>>> MultiQueryAsync(MultiQueryParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         var results = new Dictionary<string, IEnumerable<object>>();
@@ -109,7 +109,7 @@ public class DataService(
     /// <returns>Data grid result including total count and items.</returns>
     public async Task<DataGridResult<T>> GetDataGridAsync<T>(DataGridParameters<T> parameters, CancellationToken cancellationToken = default) where T : class, ITreeItem
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
         // Use reflection to get the DbSet<T>

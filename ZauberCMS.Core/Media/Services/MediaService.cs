@@ -23,7 +23,7 @@ namespace ZauberCMS.Core.Media.Services;
 
 public class MediaService(
     ProviderService providerService,
-    IServiceProvider serviceProvider,
+    IServiceScopeFactory serviceScopeFactory,
     AppState appState,
     IOptions<ZauberSettings> settings,
     ICacheService cacheService,
@@ -39,7 +39,7 @@ public class MediaService(
     /// <returns>Media or null.</returns>
     public async Task<Models.Media?> GetMediaAsync(GetMediaParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
         var cacheKey = query.GenerateCacheKey();
@@ -60,7 +60,7 @@ public class MediaService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Models.Media>> SaveMediaAsync(SaveMediaParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         var result = new HandlerResult<Models.Media>();
@@ -155,7 +155,7 @@ public class MediaService(
 #pragma warning disable CS1998
     public async Task<PaginatedList<Models.Media>> QueryMediaAsync(QueryMediaParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
         var cacheKey = query.GenerateCacheKey<Models.Media>();
@@ -177,7 +177,7 @@ public class MediaService(
     /// <returns>Result including success and messages.</returns>
     public async Task<HandlerResult<Models.Media>> DeleteMediaAsync(DeleteMediaParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
@@ -222,7 +222,7 @@ public class MediaService(
     /// <returns>True when children exist.</returns>
     public async Task<bool> HasChildMediaAsync(HasChildMediaParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         return await dbContext.Medias.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId && !c.Deleted, cancellationToken: cancellationToken);
     }
@@ -235,7 +235,7 @@ public class MediaService(
     /// <returns>Dictionary URL -> MediaId.</returns>
     public async Task<Dictionary<string, Guid>> GetRestrictedMediaUrlsAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(dbContext);
         var cacheKey = query.GenerateCacheKey<Models.Media>();
