@@ -7,7 +7,7 @@ public class GlobalSettings
     
     // Media    
     public long MaxUploadFileSizeInBytes { get; set; } = 5242880;
-    public int MaxImageSizeInPixels { get; set; } = 1500;
+    public int MaxImageSizeInPixels { get; set; } = 2500;
     public List<string> AllowedFileTypes { get; set; } = [".jpg", ".jpeg", ".png", ".gif", ".svg"];
     
     // Identity

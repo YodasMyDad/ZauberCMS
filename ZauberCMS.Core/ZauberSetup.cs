@@ -60,8 +60,6 @@ public static class ZauberSetup
     {
         builder.Services.AddImageResize(o =>
         {
-            o.RequestPathPrefix = "/media";
-            o.ContentRoot = Path.Combine(builder.Environment.WebRootPath, "media");
             o.CacheRoot = Path.Combine(builder.Environment.WebRootPath, "_mediacache");
             o.AllowUpscale = true;
         });
