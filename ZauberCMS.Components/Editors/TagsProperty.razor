@@ -71,7 +71,7 @@
 
     private async Task SetTags()
     {
-        var tags = await TagService.QueryTagAsync(new QueryTagParameters { AmountPerPage = 200, OrderBy = GetTagOrderBy.SortOrder});
+        var tags = await TagService.QueryTagAsync(new QueryTagParameters { AmountPerPage = 200, OrderBy = GetTagOrderBy.SortOrder, Cached = false});
         Tags = tags.Items.ToList();
     }
     
@@ -95,10 +95,9 @@
     {
         var modalRef = ModalService!.OpenSidePanel<TagEditor>("Edit Tags");
         var result = await modalRef.Result;
-        if (result.Cancelled)
-        {
-            await SetTags();
-        }
+        // Refresh tags regardless of whether they saved or cancelled
+        await SetTags();
+        StateHasChanged();
     }
 
 }
