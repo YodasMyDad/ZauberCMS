@@ -58,12 +58,6 @@ public static class ZauberSetup
 {
     public static void AddZauberCms(this WebApplicationBuilder builder)
     {
-        builder.Services.AddImageResize(o =>
-        {
-            o.CacheRoot = Path.Combine(builder.Environment.WebRootPath, "_mediacache");
-            o.AllowUpscale = true;
-        });
-        
         builder.Host.UseSerilog((context, configuration) =>
             configuration.ReadFrom.Configuration(context.Configuration));
 
@@ -71,6 +65,25 @@ public static class ZauberSetup
         var zauberSettings = new ZauberSettings();
         builder.Configuration.GetSection(Constants.SettingsConfigName).Bind(zauberSettings);
         builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
+
+        // Configure ImageResize with settings from ZauberSettings
+        builder.Services.AddImageResize(o =>
+        {
+            o.EnableMiddleware = zauberSettings.ImageResize.EnableMiddleware;
+            o.ContentRoots = zauberSettings.ImageResize.ContentRoots;
+            o.WebRoot = zauberSettings.ImageResize.WebRoot ?? builder.Environment.WebRootPath;
+            o.CacheRoot = zauberSettings.ImageResize.CacheRoot ?? Path.Combine(builder.Environment.WebRootPath, "_mediacache");
+            o.AllowUpscale = zauberSettings.ImageResize.AllowUpscale;
+            o.DefaultQuality = zauberSettings.ImageResize.DefaultQuality;
+            o.PngCompressionLevel = zauberSettings.ImageResize.PngCompressionLevel;
+            o.HashOriginalContent = zauberSettings.ImageResize.HashOriginalContent;
+            o.Cache.FolderSharding = zauberSettings.ImageResize.Cache.FolderSharding;
+            o.Cache.PruneOnStartup = zauberSettings.ImageResize.Cache.PruneOnStartup;
+            o.Cache.MaxCacheBytes = zauberSettings.ImageResize.Cache.MaxCacheBytes;
+            o.ResponseCache.ClientCacheSeconds = zauberSettings.ImageResize.ResponseCache.ClientCacheSeconds;
+            o.ResponseCache.SendETag = zauberSettings.ImageResize.ResponseCache.SendETag;
+            o.ResponseCache.SendLastModified = zauberSettings.ImageResize.ResponseCache.SendLastModified;
+        });
 
         builder.Services.AddHttpClient();
 
