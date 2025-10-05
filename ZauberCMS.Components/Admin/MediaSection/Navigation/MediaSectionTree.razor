@@ -31,13 +31,14 @@
 
     private async Task HandleMediaChanged(Media? media, string username)
     {
-        await DataRefresh();
-
-        // Refresh the MediaTree component to update child data and caches
+        // Refresh the MediaTree component to clear caches first
         if (MediaTreeComponent != null)
         {
             await MediaTreeComponent.RefreshData();
         }
+
+        // Then refresh the data - creating a new list reference forces the tree to re-evaluate HasChildren
+        await DataRefresh();
 
         StateHasChanged();
     }

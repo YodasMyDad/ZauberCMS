@@ -87,7 +87,14 @@
     {
         _hasChildrenCache?.Clear();
         TreeState.ClearChildCache(null);
-        await DataRefresh();
+        
+        // If this tree is standalone (no parent controlling data via OnChange delegate),
+        // refresh data internally. Otherwise, let the parent handle data refresh.
+        if (!OnChange.HasDelegate)
+        {
+            await DataRefresh();
+        }
+        
         StateHasChanged();
     }
     

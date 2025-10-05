@@ -1,5 +1,6 @@
 ﻿@using System.Collections.Concurrent
 @using Microsoft.Extensions.Options
+@using Microsoft.JSInterop
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Settings
@@ -236,6 +237,18 @@
                 }
             }
             
+            // Clear the children cache for the parent folder so tree refreshes
+            if (ParentFolder != null)
+            {
+                TreeState.ClearChildCache(ParentFolder.Id);
+                
+                // If parent folder is expanded, ensure it's still expanded after refresh
+                if (TreeState.IsNodeExpanded(ParentFolder.Id))
+                {
+                    TreeState.NodeExpanded(ParentFolder.Id);
+                }
+            }
+            
             FilesToUpload.Clear();
             if (ValueChanged.HasDelegate)
             {
@@ -255,15 +268,27 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (FilePasteFunctionReference != null)
+        try
         {
-            await FilePasteFunctionReference.InvokeVoidAsync("dispose");
-            await FilePasteFunctionReference.DisposeAsync();
-        }
+            if (FilePasteFunctionReference != null)
+            {
+                await FilePasteFunctionReference.InvokeVoidAsync("dispose");
+                await FilePasteFunctionReference.DisposeAsync();
+            }
 
-        if (FilePasteModule != null)
+            if (FilePasteModule != null)
+            {
+                await FilePasteModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
         {
-            await FilePasteModule.DisposeAsync();
+            // Circuit has disconnected, JS interop is no longer available
+            // This is expected during page navigation or circuit disconnect
+        }
+        catch (Exception)
+        {
+            // Silently handle other disposal errors to prevent unhandled exceptions
         }
     }
 

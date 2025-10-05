@@ -1,4 +1,5 @@
-﻿using ImageResize.Core.Extensions;
+﻿using System.Text.RegularExpressions;
+using ImageResize.Core.Extensions;
 using ImageResize.Core.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
@@ -119,8 +120,11 @@ public class DiskStorageProvider(
                     di.Create();
                 }
                 
+                // Sanitize the filename for URL safety while preserving the extension
+                var sanitizedFileName = SanitizeFileName(file.Name);
+                
                 var globalSettingsRequest = await dataService.GetGlobalSettings();
-                var filePath = Path.Combine(dirToSave, file.Name);
+                var filePath = Path.Combine(dirToSave, sanitizedFileName);
                 await using (var stream = file.OpenReadStream(globalSettingsRequest.MaxUploadFileSizeInBytes))
                 {
                     if (file.IsImage())
@@ -138,7 +142,7 @@ public class DiskStorageProvider(
                     }
                 }
 
-                media.Url = Path.Combine(relativePath, file.Name).Replace("\\", "/");
+                media.Url = Path.Combine(relativePath, sanitizedFileName).Replace("\\", "/");
                 media.FileSize = file.Size;
                 media.MediaType = file.Name.ToFileType();
                 result.Entity = media;
@@ -153,6 +157,40 @@ public class DiskStorageProvider(
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Sanitizes a filename to be URL-safe by replacing spaces and special characters.
+    /// Preserves the file extension.
+    /// </summary>
+    /// <param name="fileName">The original filename</param>
+    /// <returns>A sanitized filename safe for URLs</returns>
+    private static string SanitizeFileName(string fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return fileName;
+        }
+
+        // Get the extension and name separately
+        var extension = Path.GetExtension(fileName);
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+
+        // Replace spaces with hyphens
+        nameWithoutExtension = nameWithoutExtension.Replace(" ", "-");
+
+        // Remove or replace characters that are not alphanumeric, hyphens, or underscores
+        // Keep dots for versioned filenames like "file.v2.txt"
+        nameWithoutExtension = Regex.Replace(nameWithoutExtension, @"[^a-zA-Z0-9\-_\.]", "-");
+
+        // Replace multiple consecutive hyphens with a single hyphen
+        nameWithoutExtension = Regex.Replace(nameWithoutExtension, @"-+", "-");
+
+        // Remove leading and trailing hyphens
+        nameWithoutExtension = nameWithoutExtension.Trim('-');
+
+        // Reconstruct the filename with the extension
+        return $"{nameWithoutExtension}{extension}";
     }
 
     /*public Task<Media.Models.Media> ToMedia(FileSaveResult fileSaveResult, Guid? id = null, Guid? parentId = null)
