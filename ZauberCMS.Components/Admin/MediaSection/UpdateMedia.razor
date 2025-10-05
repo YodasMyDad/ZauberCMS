@@ -1,8 +1,11 @@
 ﻿@using ZauberCMS.Components.Admin.MediaSection.Dialogs
+@using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Media.Models
 @attribute [Route(Urls.AdminCreateMediaFolder)]
 @attribute [Route($"{Urls.AdminCreateMediaFolder}/{{ParentId:guid}}")]
 @attribute [Route($"{Urls.AdminUpdateMedia}/{{MediaId:guid}}")]
 @layout SectionLayout
+@implements IDisposable
 
 <PageTitle>Update Media</PageTitle>
 
@@ -20,11 +23,24 @@
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public Guid? MediaId { get; set; }
     
+    [Inject] public AppState AppState { get; set; } = null!;
+    
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     protected override void OnInitialized()
     {
         Layout?.SetSection(Constants.Sections.MediaSection);
+        AppState.OnMediaDeleted += HandleMediaDeleted;
+    }
+
+    private async Task HandleMediaDeleted(Media? media, string username)
+    {
+        // If viewing a specific media item and it gets deleted, navigate to media index
+        if (MediaId != null && (media == null || media.Id == MediaId))
+        {
+            NavigationManager.NavigateTo(Urls.AdminMediaBaseUrl);
+        }
+        await Task.CompletedTask;
     }
 
     private static string GetCompositeKey(Guid? mediaId, Guid? parentId)
@@ -32,5 +48,8 @@
         return $"{mediaId?.ToString() ?? "null"}_{parentId?.ToString() ?? "null"}";
     }
 
-
+    public void Dispose()
+    {
+        AppState.OnMediaDeleted -= HandleMediaDeleted;
+    }
 }

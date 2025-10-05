@@ -6,10 +6,17 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;
+using ZauberCMS.Core.Membership.Interfaces;
+using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
-public class DeleteMediaContextMenu(IMediaService mediaService, NotificationService notificationService) : ITreeContextMenu
+public class DeleteMediaContextMenu(
+    IMediaService mediaService, 
+    IMembershipService membershipService,
+    DialogService dialogService,
+    NotificationService notificationService,
+    AppState appState) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
@@ -25,16 +32,28 @@ public class DeleteMediaContextMenu(IMediaService mediaService, NotificationServ
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var media = (Media)args.Value!;
-        var deleteResult = await mediaService.DeleteMediaAsync(new DeleteMediaParameters { MediaId = media.Id });
-        if (deleteResult.Success)
+        var dbMedia = await mediaService.GetMediaAsync(new GetMediaParameters { Id = media.Id, IncludeChildren = true, Cached = false });
+        var currentUser = await membershipService.GetCurrentUser();
+        
+        // Show confirmation dialog
+        var hasChildren = dbMedia?.Children.Count > 0;
+        var message = hasChildren
+            ? "Are you sure you want to delete this media and all its children?"
+            : "Are you sure you want to delete this media?";
+        var delete = await dialogService.Confirm(message, "Delete Media", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        
+        if (delete == true && dbMedia != null)
         {
-            // Only redirect if on item being deleted? How do we check that?
-            //NavigationManager.NavigateTo("/admin/media", forceLoad: true);
-            notificationService.ShowSuccessNotification("Media deleted");
-        }
-        else
-        {
-            notificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
+            var deleteResult = await mediaService.DeleteMediaAsync(new DeleteMediaParameters { MediaId = dbMedia.Id });
+            if (deleteResult.Success)
+            {
+                notificationService.ShowSuccessNotification("Media deleted");
+                await appState.NotifyMediaDeleted(dbMedia, currentUser?.Name ?? "Unknown");
+            }
+            else
+            {
+                notificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
+            }
         }
     }
     

@@ -8,7 +8,20 @@ public class GlobalSettings
     // Media    
     public long MaxUploadFileSizeInBytes { get; set; } = 5242880;
     public int MaxImageSizeInPixels { get; set; } = 2500;
-    public List<string> AllowedFileTypes { get; set; } = [".jpg", ".jpeg", ".png", ".gif", ".svg"];
+    public List<string> AllowedFileTypes { get; set; } = 
+    [
+        // Images
+        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico",
+        
+        // Documents (safer formats)
+        ".pdf", ".txt",
+        
+        // Video
+        ".mp4", ".webm",
+        
+        // Audio
+        ".mp3", ".wav", ".ogg"
+    ];
     
     // Identity
     public List<string> AllowedAdminIpAddress { get; set; } = [];
