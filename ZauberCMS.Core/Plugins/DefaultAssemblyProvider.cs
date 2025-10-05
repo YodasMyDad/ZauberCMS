@@ -120,9 +120,7 @@ public class DefaultAssemblyProvider
 
             catch (Exception e)
             {
-                logger.LogWarning("Error loading assembly '{Name}'", compilationLibrary.Name);
-                // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
-                logger.LogWarning(message: e?.Message);
+                logger.LogDebug("Error loading assembly '{Name}': {Message}", compilationLibrary.Name, e?.Message);
             }
         }
     }
@@ -162,8 +160,7 @@ public class DefaultAssemblyProvider
 
                 catch (Exception e)
                 {
-                    this.logger.LogWarning("Error loading assembly '{ExtensionPath}'", extensionPath);
-                    this.logger.LogWarning("{ErrorMessage}", e.Message);
+                    this.logger.LogDebug("Error loading assembly '{ExtensionPath}': {ErrorMessage}", extensionPath, e.Message);
                 }
             }
 
