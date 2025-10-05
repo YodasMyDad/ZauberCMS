@@ -348,18 +348,20 @@ public static class ZauberSetup
         app.UseSerilogRequestLogging();
         app.UseHttpsRedirection();
 
-        app.UseRouting();
-        
-        app.UseRateLimiter();
-
         app.UseAuthentication();
 
         // Our middleware must run before ImageResize to check restricted media
         app.UseMiddleware<RestrictedMediaMiddleware>();
 
+        // ImageResize must run before UseStaticFiles to intercept image requests from media folders
         app.UseImageResize();
 
+        // Serve static files before routing to prevent catch-all route from intercepting non-image media files
         app.UseStaticFiles();
+
+        app.UseRouting();
+        
+        app.UseRateLimiter();
 
         app.UseAuthorization();
 
