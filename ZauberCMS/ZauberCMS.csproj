@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS</PackageId>
-        <Version>4.0.0-rc.4.6</Version>
+        <Version>4.0.0-rc.4.7</Version>
         <Authors>Lee Messenger</Authors>
         <Description>The main ZauberCMS nuget package</Description>
         <PackageTags>Web</PackageTags>
@@ -33,7 +33,7 @@
         <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.9" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
         <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
-        <PackageReference Include="Radzen.Blazor" Version="7.4.3" />
+        <PackageReference Include="Radzen.Blazor" Version="8.0.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
             <PrivateAssets>all</PrivateAssets>
@@ -58,8 +58,8 @@
         <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Components" Version="4.0.0-rc.4.6"/>
-        <PackageReference Include="ZauberCMS.Routing" Version="4.0.0-rc.4.6"/>
+        <PackageReference Include="ZauberCMS.Components" Version="4.0.0-rc.4.7"/>
+        <PackageReference Include="ZauberCMS.Routing" Version="4.0.0-rc.4.7"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -95,6 +95,7 @@
     </Target>
 
 </Project>
+
 
 
 
