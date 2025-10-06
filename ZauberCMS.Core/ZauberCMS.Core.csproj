@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Core</PackageId>
-        <Version>4.0.0-rc.4.5</Version>
+        <Version>4.0.0-rc.4.6</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS core package</Description>
         <PackageTags>Web</PackageTags>
@@ -48,7 +48,7 @@
         <PackageReference Include="Radzen.Blazor" Version="7.4.3" />
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
         <PackageReference Include="ImageResize" Version="2.0.0" />
-        <PackageReference Include="ZauberCMS.RTE" Version="1.0.0-beta9" />
+        <PackageReference Include="ZauberCMS.RTE" Version="1.0.0-rc.1.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -70,6 +70,7 @@
     </Target>
     
 </Project>
+
 
 
 
