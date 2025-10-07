@@ -8,10 +8,26 @@
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
+<!-- Insert zone at the top -->
+@if (ContentItems.Any())
+{
+    <div class="block-insert-zone group relative h-3 -mb-1 cursor-pointer" @onclick="@(() => InsertContentAt(0))">
+        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex items-center justify-center w-8 h-8 rounded-full shadow-lg" style="background-color: var(--rz-primary); color: var(--rz-on-primary);">
+                <RadzenIcon Icon="add" Style="font-size: 1.2rem"/>
+            </div>
+        </div>
+        <div class="absolute inset-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="w-full h-0.5" style="background-color: var(--rz-primary);"></div>
+        </div>
+    </div>
+}
+
 <SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" IgnoreDomChanges="@(true)" Context="item">
     <SortableItemTemplate>
         @if (ContentTypes.ContainsKey(item!.ContentTypeId))
         {
+            var itemIndex = ContentItems.IndexOf(item);
             <div>
                 <div class="w-full flex justify-between items-start border @(item.Published ? "border-gray-200" : "border-orange-300 bg-orange-50") border-solid my-1 notextselection cursor-grab">
                     <div class="p-3 flex items-center justify-center relative">
@@ -34,6 +50,21 @@
                         <RadzenIcon Icon="delete" Style="font-size: 2rem" class="text-slate-600"/>
                     </div>
                 </div>
+                
+                <!-- Insert zone between blocks (not after the last one) -->
+                @if (itemIndex < ContentItems.Count - 1)
+                {
+                    <div class="block-insert-zone group relative h-3 -my-1 cursor-pointer" @onclick="@(() => InsertContentAt(itemIndex + 1))">
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="flex items-center justify-center w-8 h-8 rounded-full shadow-lg" style="background-color: var(--rz-primary); color: var(--rz-on-primary);">
+                                <RadzenIcon Icon="add" Style="font-size: 1.2rem"/>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="w-full h-0.5" style="background-color: var(--rz-primary);"></div>
+                        </div>
+                    </div>
+                }
             </div>   
         }
     </SortableItemTemplate>
@@ -157,7 +188,12 @@
         }
     }
 
-    private async Task UpdateContent(Content? contentUpdate = null)
+    private async Task InsertContentAt(int insertIndex)
+    {
+        await UpdateContent(contentUpdate: null, insertAtIndex: insertIndex);
+    }
+
+    private async Task UpdateContent(Content? contentUpdate = null, int? insertAtIndex = null)
     {
         var contentParams = new Dictionary<string, object>
         {
@@ -228,7 +264,15 @@
                 }
                 else
                 {
-                    ContentItems.Add(content);
+                    // Insert at specific index if provided, otherwise add to end
+                    if (insertAtIndex.HasValue && insertAtIndex.Value >= 0 && insertAtIndex.Value <= ContentItems.Count)
+                    {
+                        ContentItems.Insert(insertAtIndex.Value, content);
+                    }
+                    else
+                    {
+                        ContentItems.Add(content);
+                    }
 
                     // Track the addition for deferred processing
                     AddedItems.Add(content);
