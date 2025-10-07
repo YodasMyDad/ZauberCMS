@@ -3,6 +3,7 @@
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Components.Editors.Components
 @using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Content.Mapping
 @using ZauberCMS.Core.Content.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
@@ -264,55 +265,44 @@
         
         if (result is { Confirmed: true, Data: Content savedContent })
         {
-            Console.WriteLine($"[BlockList] Content saved, refreshing. ContentId={savedContent.Id}");
+            // Block list items are saved in-memory only (deferred save when parent is saved)
+            // Create a new Content instance to force Blazor change detection (same pattern as old implementation)
+            var contentToStore = new Content();
+            savedContent.MapTo(contentToStore);
+            contentToStore.PropertyData = savedContent.PropertyData;
             
-            // Reload the content from the database to get the latest version
-            var refreshedContent = await ContentService.GetContentAsync(new GetContentParameters 
-            { 
-                Id = savedContent.Id, 
-                IncludeUnpublished = true
-            });
-            
-            if (refreshedContent != null)
+            // Ensure ContentType is loaded
+            if (!State.ContentTypes.ContainsKey(contentToStore.ContentTypeId))
             {
-                Console.WriteLine($"[BlockList] Content refreshed from DB. Name={refreshedContent.Name}");
+                var contentType = await ContentService.GetContentTypeAsync(
+                    new GetContentTypeParameters { Id = contentToStore.ContentTypeId }
+                );
                 
-                // Ensure ContentType is loaded
-                if (!State.ContentTypes.ContainsKey(refreshedContent.ContentTypeId))
+                if (contentType != null)
                 {
-                    var contentType = await ContentService.GetContentTypeAsync(
-                        new GetContentTypeParameters { Id = refreshedContent.ContentTypeId }
-                    );
-                    
-                    if (contentType != null)
-                    {
-                        State = State.SetContentType(contentType);
-                    }
+                    State = State.SetContentType(contentType);
                 }
-                
-                // Set ContentTypeAlias for rendering
-                if (State.ContentTypes.TryGetValue(refreshedContent.ContentTypeId, out var ct))
-                {
-                    refreshedContent.ContentTypeAlias = ct.Alias;
-                }
-                
-                if (contentToEdit != null)
-                {
-                    Console.WriteLine($"[BlockList] Updating existing item in state");
-                    // Update existing - use refreshed content from DB
-                    State = State.UpdateItem(refreshedContent);
-                }
-                else
-                {
-                    Console.WriteLine($"[BlockList] Adding new item to state");
-                    // Add new
-                    State = State.AddItem(refreshedContent, insertAtIndex);
-                }
-                
-                Console.WriteLine($"[BlockList] State updated, calling NotifyChanges and StateHasChanged");
-                await NotifyChanges();
-                StateHasChanged(); // Force UI refresh to show updated content
             }
+            
+            // Set ContentTypeAlias for rendering
+            if (State.ContentTypes.TryGetValue(contentToStore.ContentTypeId, out var ct))
+            {
+                contentToStore.ContentTypeAlias = ct.Alias;
+            }
+            
+            if (contentToEdit != null)
+            {
+                // Update existing item with new instance
+                State = State.UpdateItem(contentToStore);
+            }
+            else
+            {
+                // Add new item
+                State = State.AddItem(contentToStore, insertAtIndex);
+            }
+            
+            await NotifyChanges();
+            StateHasChanged();
         }
     }
     

@@ -27,6 +27,8 @@ public static class ContentMappingExtensions
         target.Path = source.Path;
         target.SortOrder = source.SortOrder;
         target.IsRootContent = source.IsRootContent;
+        target.IsNestedContent = source.IsNestedContent;
+        target.RelatedContentId = source.RelatedContentId;
         target.Published = source.Published;
         target.Deleted = source.Deleted;
         target.HideFromNavigation = source.HideFromNavigation;

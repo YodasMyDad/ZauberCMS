@@ -11,18 +11,18 @@ public record BlockListState
     public List<Content> Items { get; init; } = [];
     public Dictionary<Guid, ContentType> ContentTypes { get; init; } = [];
     
-    // Change tracking - using HashSets for automatic deduplication
-    public HashSet<Guid> AddedIds { get; init; } = [];
-    public HashSet<Guid> UpdatedIds { get; init; } = [];
-    public HashSet<Guid> DeletedIds { get; init; } = [];
+    // Change tracking - store actual Content objects to preserve in-memory modifications
+    public List<Content> AddedItems { get; init; } = [];
+    public List<Content> UpdatedItems { get; init; } = [];
+    public List<Content> DeletedItems { get; init; } = [];
     
     public BlockListChanges GetChanges()
     {
         return new BlockListChanges
         {
-            AddedItems = Items.Where(x => AddedIds.Contains(x.Id)).ToList(),
-            UpdatedItems = Items.Where(x => UpdatedIds.Contains(x.Id)).ToList(),
-            DeletedItems = Items.Where(x => DeletedIds.Contains(x.Id)).ToList()
+            AddedItems = AddedItems,
+            UpdatedItems = UpdatedItems,
+            DeletedItems = DeletedItems
         };
     }
     
@@ -42,12 +42,16 @@ public record BlockListState
             newItems.Add(content);
         }
         
-        var newAddedIds = new HashSet<Guid>(AddedIds) { content.Id };
+        var newAddedItems = new List<Content>(AddedItems);
+        if (!newAddedItems.Any(x => x.Id == content.Id))
+        {
+            newAddedItems.Add(content);
+        }
         
         return this with 
         { 
             Items = newItems,
-            AddedIds = newAddedIds
+            AddedItems = newAddedItems
         };
     }
     
@@ -63,17 +67,34 @@ public record BlockListState
         {
             newItems[index] = content;
             
-            var newUpdatedIds = new HashSet<Guid>(UpdatedIds);
-            // Only mark as updated if it wasn't just added
-            if (!AddedIds.Contains(content.Id))
+            var newAddedItems = new List<Content>(AddedItems);
+            var newUpdatedItems = new List<Content>(UpdatedItems);
+            
+            // If this was just added, update the AddedItems list with the new version
+            var addedIndex = newAddedItems.FindIndex(x => x.Id == content.Id);
+            if (addedIndex >= 0)
             {
-                newUpdatedIds.Add(content.Id);
+                newAddedItems[addedIndex] = content;
+            }
+            else
+            {
+                // Not in added list, so track as update
+                var updatedIndex = newUpdatedItems.FindIndex(x => x.Id == content.Id);
+                if (updatedIndex >= 0)
+                {
+                    newUpdatedItems[updatedIndex] = content;
+                }
+                else
+                {
+                    newUpdatedItems.Add(content);
+                }
             }
             
             return this with 
             { 
                 Items = newItems,
-                UpdatedIds = newUpdatedIds
+                AddedItems = newAddedItems,
+                UpdatedItems = newUpdatedItems
             };
         }
         
@@ -85,30 +106,38 @@ public record BlockListState
     /// </summary>
     public BlockListState DeleteItem(Guid contentId)
     {
+        var itemToDelete = Items.FirstOrDefault(x => x.Id == contentId);
+        if (itemToDelete == null) return this;
+        
         var newItems = Items.Where(x => x.Id != contentId).ToList();
-        var newDeletedIds = new HashSet<Guid>(DeletedIds);
-        var newAddedIds = new HashSet<Guid>(AddedIds);
-        var newUpdatedIds = new HashSet<Guid>(UpdatedIds);
+        var newAddedItems = new List<Content>(AddedItems);
+        var newUpdatedItems = new List<Content>(UpdatedItems);
+        var newDeletedItems = new List<Content>(DeletedItems);
         
         // If item was just added, remove it from added list (no need to delete from DB)
-        if (AddedIds.Contains(contentId))
+        var wasAdded = newAddedItems.Any(x => x.Id == contentId);
+        if (wasAdded)
         {
-            newAddedIds.Remove(contentId);
+            newAddedItems.RemoveAll(x => x.Id == contentId);
         }
         else
         {
-            newDeletedIds.Add(contentId);
+            // Store the actual content object for deletion processing
+            if (!newDeletedItems.Any(x => x.Id == contentId))
+            {
+                newDeletedItems.Add(itemToDelete);
+            }
         }
         
         // Remove from updated list if present
-        newUpdatedIds.Remove(contentId);
+        newUpdatedItems.RemoveAll(x => x.Id == contentId);
         
         return this with 
         { 
             Items = newItems,
-            AddedIds = newAddedIds,
-            UpdatedIds = newUpdatedIds,
-            DeletedIds = newDeletedIds
+            AddedItems = newAddedItems,
+            UpdatedItems = newUpdatedItems,
+            DeletedItems = newDeletedItems
         };
     }
     
@@ -127,17 +156,33 @@ public record BlockListState
         newItems.RemoveAt(oldIndex);
         newItems.Insert(newIndex, item);
         
+        var newAddedItems = new List<Content>(AddedItems);
+        var newUpdatedItems = new List<Content>(UpdatedItems);
+        
         // Mark all items as updated when reordering (order matters for rendering)
-        var newUpdatedIds = new HashSet<Guid>(UpdatedIds);
-        foreach (var content in newItems.Where(x => !AddedIds.Contains(x.Id)))
+        // But don't mark newly added items - they're already tracked
+        foreach (var content in newItems)
         {
-            newUpdatedIds.Add(content.Id);
+            var isAdded = newAddedItems.Any(x => x.Id == content.Id);
+            if (!isAdded)
+            {
+                var updatedIndex = newUpdatedItems.FindIndex(x => x.Id == content.Id);
+                if (updatedIndex >= 0)
+                {
+                    newUpdatedItems[updatedIndex] = content;
+                }
+                else
+                {
+                    newUpdatedItems.Add(content);
+                }
+            }
         }
         
         return this with 
         { 
             Items = newItems,
-            UpdatedIds = newUpdatedIds
+            AddedItems = newAddedItems,
+            UpdatedItems = newUpdatedItems
         };
     }
     
@@ -146,35 +191,56 @@ public record BlockListState
     /// </summary>
     public BlockListState MergeNestedChanges(BlockListChanges nestedChanges)
     {
-        var newAddedIds = new HashSet<Guid>(AddedIds);
-        var newUpdatedIds = new HashSet<Guid>(UpdatedIds);
-        var newDeletedIds = new HashSet<Guid>(DeletedIds);
+        var newAddedItems = new List<Content>(AddedItems);
+        var newUpdatedItems = new List<Content>(UpdatedItems);
+        var newDeletedItems = new List<Content>(DeletedItems);
         
+        // Merge added items
         foreach (var item in nestedChanges.AddedItems)
         {
-            newAddedIds.Add(item.Id);
-        }
-        
-        foreach (var item in nestedChanges.UpdatedItems)
-        {
-            if (!newAddedIds.Contains(item.Id))
+            if (!newAddedItems.Any(x => x.Id == item.Id))
             {
-                newUpdatedIds.Add(item.Id);
+                newAddedItems.Add(item);
             }
         }
         
+        // Merge updated items
+        foreach (var item in nestedChanges.UpdatedItems)
+        {
+            // Only add to updated if not in added list
+            var isAdded = newAddedItems.Any(x => x.Id == item.Id);
+            if (!isAdded)
+            {
+                var updatedIndex = newUpdatedItems.FindIndex(x => x.Id == item.Id);
+                if (updatedIndex >= 0)
+                {
+                    newUpdatedItems[updatedIndex] = item;
+                }
+                else
+                {
+                    newUpdatedItems.Add(item);
+                }
+            }
+        }
+        
+        // Merge deleted items
         foreach (var item in nestedChanges.DeletedItems)
         {
-            newDeletedIds.Add(item.Id);
-            newAddedIds.Remove(item.Id);
-            newUpdatedIds.Remove(item.Id);
+            // Add to deleted items if not already present
+            if (!newDeletedItems.Any(x => x.Id == item.Id))
+            {
+                newDeletedItems.Add(item);
+            }
+            // Remove from added/updated lists
+            newAddedItems.RemoveAll(x => x.Id == item.Id);
+            newUpdatedItems.RemoveAll(x => x.Id == item.Id);
         }
         
         return this with
         {
-            AddedIds = newAddedIds,
-            UpdatedIds = newUpdatedIds,
-            DeletedIds = newDeletedIds
+            AddedItems = newAddedItems,
+            UpdatedItems = newUpdatedItems,
+            DeletedItems = newDeletedItems
         };
     }
     
