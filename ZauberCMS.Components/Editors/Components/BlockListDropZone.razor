@@ -11,7 +11,6 @@
             <RadzenIcon Icon="add" Style="font-size: 1.2rem"/>
         </div>
     </div>
-    <div class="drop-zone-line"></div>
 </div>
 
 <style>
@@ -20,7 +19,7 @@
         height: 12px;
         margin: -4px 0;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .block-drop-zone.insert-mode {
@@ -38,12 +37,21 @@
         align-items: center;
         justify-content: center;
         opacity: 0;
-        transition: opacity 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: scale(0.8);
     }
     
-    .block-drop-zone.active .drop-zone-content,
-    .block-drop-zone:hover .drop-zone-content {
+    /* Only show drop zone content during drag operations */
+    .block-drop-zone.drop-mode.active .drop-zone-content,
+    .block-drop-zone.drop-mode:hover .drop-zone-content {
         opacity: 1;
+        transform: scale(1);
+    }
+    
+    /* Insert mode shows content on hover without animation */
+    .block-drop-zone.insert-mode:hover .drop-zone-content {
+        opacity: 1;
+        transform: scale(1);
     }
     
     .drop-zone-icon {
@@ -57,32 +65,19 @@
         color: var(--rz-on-primary);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         z-index: 10;
+        transition: all 0.2s ease;
     }
     
-    .drop-zone-line {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        opacity: 0;
-        transition: opacity 0.2s ease;
+    /* Enhanced glow during drag operations */
+    .block-drop-zone.drop-mode.active .drop-zone-icon,
+    .block-drop-zone.drop-mode:hover .drop-zone-icon {
+        background-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), 0 6px 24px rgba(37, 99, 235, 0.6);
     }
     
-    .drop-zone-line::before {
-        content: '';
-        width: 100%;
-        height: 2px;
-        background-color: var(--rz-primary);
-    }
-    
-    .block-drop-zone.active .drop-zone-line,
-    .block-drop-zone:hover .drop-zone-line {
-        opacity: 1;
-    }
-    
-    /* Highlight on drag over */
-    .block-drop-zone.active.drop-mode {
-        height: 24px;
+    /* Expand drop zone when hovering in insert mode */
+    .block-drop-zone.insert-mode:hover {
+        height: 32px;
         margin: -8px 0;
     }
 </style>

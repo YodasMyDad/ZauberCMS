@@ -11,10 +11,10 @@
      @ondragover:preventDefault
      @ondrop="HandleDrop">
     
-    <div class="w-full flex justify-between items-start border @(Content.Published ? "border-gray-200" : "border-orange-300 bg-orange-50") border-solid my-1 transition-opacity @(IsDragging ? "opacity-50" : "")">
-        <!-- Drag Handle Icon -->
-        <div class="p-3 flex items-center justify-center relative cursor-grab active:cursor-grabbing">
-            <RadzenIcon Icon="@(ContentType.Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600"/>
+    <div class="w-full flex justify-between items-start border @(Content.Published ? "border-gray-200" : "border-orange-300 bg-orange-50") border-solid my-1 transition-all duration-200 @(IsDragging ? "opacity-40 scale-95" : "") @(IsDropTarget ? "border-blue-400 border-2 bg-blue-50" : "")">
+        <!-- Drag Handle Icon with visual feedback -->
+        <div class="p-3 flex items-center justify-center relative cursor-grab active:cursor-grabbing transition-transform hover:scale-110">
+            <RadzenIcon Icon="@(IsDragging ? "drag_indicator" : ContentType.Icon ?? "layers")" Style="font-size: 2rem" class="@(IsDragging ? "text-blue-500 transition-colors" : "text-slate-600 transition-colors")"/>
             @if (!Content.Published)
             {
                 <RadzenIcon Icon="unpublished" Style="font-size: 1rem; position: absolute; top: 0; right: 0;" class="text-orange-600"/>
