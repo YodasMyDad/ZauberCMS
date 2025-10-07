@@ -56,6 +56,9 @@
     private async Task HandleMediaChanged(Media? media, string username)
     {
         _hasChildrenCache?.Clear();
+        
+        // Also clear TreeState cache to ensure full refresh
+        TreeState.ClearChildCache(null);
 
         // If on change hasn't got a delegate,
         // it's likely this is being used as a standalone tree
@@ -63,6 +66,11 @@
         if (!OnChange.HasDelegate)
         {
             await DataRefresh();
+            StateHasChanged();
+        }
+        else
+        {
+            // Even if parent handles data refresh, trigger StateHasChanged to ensure UI updates
             StateHasChanged();
         }
     }

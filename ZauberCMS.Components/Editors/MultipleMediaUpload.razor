@@ -218,6 +218,20 @@
         }
         else
         {
+            // Clear caches BEFORE saving to ensure fresh data after save
+            if (ParentFolder != null)
+            {
+                TreeState.ClearChildCache(ParentFolder.Id);
+            }
+            else
+            {
+                // If saving to root, clear all caches
+                TreeState.ClearChildCache(null);
+            }
+            
+            // Clear local component cache
+            HasChildrenCache?.Clear();
+            
             var savedMediaItems = new List<Media>();
             foreach (var browserFile in FilesToUpload)
             {
@@ -237,19 +251,14 @@
                 }
             }
             
-            // Clear the children cache for the parent folder so tree refreshes
-            if (ParentFolder != null)
+            FilesToUpload.Clear();
+            
+            // Ensure parent folder stays expanded if it was expanded
+            if (ParentFolder != null && TreeState.IsNodeExpanded(ParentFolder.Id))
             {
-                TreeState.ClearChildCache(ParentFolder.Id);
-                
-                // If parent folder is expanded, ensure it's still expanded after refresh
-                if (TreeState.IsNodeExpanded(ParentFolder.Id))
-                {
-                    TreeState.NodeExpanded(ParentFolder.Id);
-                }
+                TreeState.NodeExpanded(ParentFolder.Id);
             }
             
-            FilesToUpload.Clear();
             if (ValueChanged.HasDelegate)
             {
                 await ValueChanged.InvokeAsync(savedMediaItems);
