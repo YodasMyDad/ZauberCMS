@@ -118,8 +118,6 @@ public static class DbContextExtensions
     {
         try
         {
-            cacheService.ClearCachedItemsWithPrefix(typeof(T).Name);
-            
             var canSave = true;
             var entityState = entity != null ? context.Entry(entity).State : EntityState.Unchanged;
             
@@ -140,6 +138,10 @@ public static class DbContextExtensions
             if (canSave)
             {
                 var isSaved = await context.SaveChangesAsync(cancellationToken);
+                
+                // Clear cache after successful save
+                cacheService.ClearCachedItemsWithPrefix(typeof(T).Name);
+                
                 crudResult.Success = true;
                 if (entity != null)
                 {
@@ -161,13 +163,17 @@ public static class DbContextExtensions
 
                     foreach (var kvp in afterSaves.OrderBy(x => x.Value.SortOrder))
                     {
-                        shouldReSave = kvp.Value.AfterSave(entity, context.Entry(entity).State);
+                        // Use OR operation so if ANY plugin returns true, we re-save
+                        // Pass the original entityState since SaveChangesAsync() marks entities as Unchanged
+                        shouldReSave |= kvp.Value.AfterSave(entity, entityState);
                     }
 
                     // If AfterSave logic updated something, persist it to the DB again
                     if (shouldReSave)
                     {
                         await context.SaveChangesAsync(cancellationToken);
+                        // Clear cache again after the re-save
+                        cacheService.ClearCachedItemsWithPrefix(typeof(T).Name);
                     }
                 }
 
