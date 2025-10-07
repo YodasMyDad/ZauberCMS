@@ -1,0 +1,129 @@
+<div class="block-drop-zone @(IsHovered ? "active" : "") @(IsInsertMode ? "insert-mode" : "drop-mode")"
+     @ondragover="HandleDragOver"
+     @ondragover:preventDefault
+     @ondragenter="HandleDragEnter"
+     @ondragleave="HandleDragLeave"
+     @ondrop="HandleDrop"
+     @onclick="HandleClick">
+    
+    <div class="drop-zone-content">
+        <div class="drop-zone-icon">
+            <RadzenIcon Icon="add" Style="font-size: 1.2rem"/>
+        </div>
+    </div>
+    <div class="drop-zone-line"></div>
+</div>
+
+<style>
+    .block-drop-zone {
+        position: relative;
+        height: 12px;
+        margin: -4px 0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .block-drop-zone.insert-mode {
+        cursor: pointer;
+    }
+    
+    .block-drop-zone.drop-mode {
+        cursor: move;
+    }
+    
+    .drop-zone-content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .block-drop-zone.active .drop-zone-content,
+    .block-drop-zone:hover .drop-zone-content {
+        opacity: 1;
+    }
+    
+    .drop-zone-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: var(--rz-primary);
+        color: var(--rz-on-primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        z-index: 10;
+    }
+    
+    .drop-zone-line {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .drop-zone-line::before {
+        content: '';
+        width: 100%;
+        height: 2px;
+        background-color: var(--rz-primary);
+    }
+    
+    .block-drop-zone.active .drop-zone-line,
+    .block-drop-zone:hover .drop-zone-line {
+        opacity: 1;
+    }
+    
+    /* Highlight on drag over */
+    .block-drop-zone.active.drop-mode {
+        height: 24px;
+        margin: -8px 0;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired] public int Index { get; set; }
+    [Parameter] public EventCallback<int> OnInsert { get; set; }
+    [Parameter] public EventCallback<int> OnDrop { get; set; }
+    [Parameter] public bool IsDragging { get; set; }
+    
+    private bool IsHovered { get; set; }
+    private bool IsInsertMode => !IsDragging;
+    
+    private void HandleDragOver(DragEventArgs e)
+    {
+        // This is called continuously while dragging over - no logging to avoid spam
+        // The @ondragover:preventDefault handles the actual prevention
+    }
+    
+    private void HandleDragEnter(DragEventArgs e)
+    {
+        IsHovered = true;
+    }
+    
+    private void HandleDragLeave(DragEventArgs e)
+    {
+        IsHovered = false;
+    }
+    
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        IsHovered = false;
+        await OnDrop.InvokeAsync(Index);
+    }
+    
+    private async Task HandleClick()
+    {
+        if (!IsDragging)
+        {
+            await OnInsert.InvokeAsync(Index);
+        }
+    }
+}
+

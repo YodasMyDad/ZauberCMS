@@ -1,86 +1,85 @@
-﻿@using System.Text.Json
-@using ZauberCMS.Components.ContentComponents
+@using System.Text.Json
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
+@using ZauberCMS.Components.Editors.Components
 @using ZauberCMS.Core.Content.Parameters
-@using ZauberCMS.Core.Content.Mapping
 @using ZauberCMS.Core.Content.Models
-@using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<!-- Insert zone at the top -->
-@if (ContentItems.Any())
+<!-- Load frontend stylesheets once for all previews -->
+@if (SettingsModel.Styleheets.Any())
 {
-    <div class="block-insert-zone group relative h-3 -mb-1 cursor-pointer" @onclick="@(() => InsertContentAt(0))">
-        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <div class="flex items-center justify-center w-8 h-8 rounded-full shadow-lg" style="background-color: var(--rz-primary); color: var(--rz-on-primary);">
-                <RadzenIcon Icon="add" Style="font-size: 1.2rem"/>
-            </div>
-        </div>
-        <div class="absolute inset-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <div class="w-full h-0.5" style="background-color: var(--rz-primary);"></div>
-        </div>
-    </div>
+    foreach (var stylesheet in SettingsModel.Styleheets)
+    {
+        <link rel="stylesheet" href="@stylesheet" />
+    }
 }
 
-<SortableList Id="@Alias" Items="@ContentItems" OnUpdate="@SortList" IgnoreDomChanges="@(true)" Context="item">
-    <SortableItemTemplate>
-        @if (ContentTypes.ContainsKey(item!.ContentTypeId))
+<div class="block-list-editor">
+    @if (State.Items.Any())
+    {
+        <!-- Top drop zone -->
+        <BlockListDropZone Index="0" 
+                          OnInsert="HandleInsert" 
+                          OnDrop="HandleDropAtIndex"
+                          IsDragging="@IsDragging" />
+        
+        @for (var i = 0; i < State.Items.Count; i++)
         {
-            var itemIndex = ContentItems.IndexOf(item);
-            <div>
-                <div class="w-full flex justify-between items-start border @(item.Published ? "border-gray-200" : "border-orange-300 bg-orange-50") border-solid my-1 notextselection cursor-grab">
-                    <div class="p-3 flex items-center justify-center relative">
-                        <RadzenIcon Icon="@(ContentTypes[item!.ContentTypeId].Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600"/>
-                        @if (!item.Published)
-                        {
-                            <RadzenIcon Icon="unpublished" Style="font-size: 1rem; position: absolute; top: 0; right: 0;" class="text-orange-600"/>
-                        }
-                    </div>
-                    <div class="p-3 flex-1 col-span-8 border border-y-0 @(item.Published ? "border-gray-200" : "border-orange-200") border-solid">
-                        <RenderBlock Content="@(item)" Stylesheets="@SettingsModel.Styleheets"
-                                     TView="IContentBlockPreview"
-                                     FallbackComponentType="@(typeof(ContentBlockPreviewFallback))"
-                                     Parameters="@(new Dictionary<string, object> { { nameof(IContentBlockPreview.ContentType), ContentTypes[item.ContentTypeId] } })"/>
-                    </div>
-                    <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => UpdateContent(item))">
-                        <RadzenIcon Icon="edit" Style="font-size: 2rem" class="text-slate-600"/>
-                    </div>
-                    <div class="p-3 flex items-center justify-center cursor-pointer" @onclick="@(() => DeleteContent(item))">
-                        <RadzenIcon Icon="delete" Style="font-size: 2rem" class="text-slate-600"/>
-                    </div>
-                </div>
+            var item = State.Items[i];
+            var itemIndex = i; // Capture for closures
+            
+            @if (State.ContentTypes.TryGetValue(item.ContentTypeId, out var contentType))
+            {
+                <BlockListItem @key="item.Id"
+                              Content="@item"
+                              ContentType="@contentType"
+                              Index="@itemIndex"
+                              Stylesheets="@SettingsModel.Styleheets"
+                              OnEdit="HandleEdit"
+                              OnDelete="HandleDelete"
+                              OnDropOnItem="HandleDropOnItem"
+                              OnDragStart="HandleDragStart"
+                              OnDragEnd="HandleDragEnd" />
                 
-                <!-- Insert zone between blocks (not after the last one) -->
-                @if (itemIndex < ContentItems.Count - 1)
+                <!-- Drop zone between items -->
+                @if (itemIndex < State.Items.Count - 1)
                 {
-                    <div class="block-insert-zone group relative h-3 -my-1 cursor-pointer" @onclick="@(() => InsertContentAt(itemIndex + 1))">
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div class="flex items-center justify-center w-8 h-8 rounded-full shadow-lg" style="background-color: var(--rz-primary); color: var(--rz-on-primary);">
-                                <RadzenIcon Icon="add" Style="font-size: 1.2rem"/>
-                            </div>
-                        </div>
-                        <div class="absolute inset-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div class="w-full h-0.5" style="background-color: var(--rz-primary);"></div>
-                        </div>
-                    </div>
+                    <BlockListDropZone Index="@(itemIndex + 1)" 
+                                      OnInsert="HandleInsert" 
+                                      OnDrop="HandleDropAtIndex"
+                                      IsDragging="@IsDragging" />
                 }
-            </div>   
+            }
         }
-    </SortableItemTemplate>
-</SortableList>
-
-<RadzenStack Orientation="Orientation.Vertical" Gap="0.2rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-    <RadzenButton Icon="add" Size="ButtonSize.Medium" Click="@(() => UpdateContent())" class="rz-border-radius-10" />
-    <div class="text-sm">Add New Block</div>
-</RadzenStack>
+        
+        <!-- Bottom drop zone (always at end) -->
+        <BlockListDropZone Index="@State.Items.Count" 
+                          OnInsert="HandleInsert" 
+                          OnDrop="HandleDropAtIndex"
+                          IsDragging="@IsDragging" />
+    }
+    
+    <!-- Add New Block Button -->
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.2rem" class="rz-pt-3" 
+                 JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+        <RadzenButton Icon="add" Size="ButtonSize.Medium" 
+                     Click="@(() => HandleInsert(State.Items.Count))" 
+                     class="rz-border-radius-10" />
+        <div class="text-sm">Add New Block</div>
+    </RadzenStack>
+</div>
 
 @code {
+    // IContentProperty implementation
     public string Name { get; set; } = "Block List Editor";
     public string Alias { get; set; } = "ZauberCMS.BlockListEditor";
-    public string Description { get; set; } = "Creates a list of content blocks";
+    public string Description { get; set; } = "Creates a list of content blocks with drag-and-drop ordering";
     public string Icon { get; set; } = "format_align_justify";
     public Type? SettingsComponent { get; set; } = typeof(BlockListEditorSettings);
+    public List<string> Scripts { get; set; } = [];
+    public List<string> Styles { get; set; } = [];
+    public bool FullWidth { get; set; }
     
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; } = string.Empty;
@@ -89,278 +88,250 @@
     [Parameter] public Action<BlockListChanges>? ChangesPending { get; set; }
     
     [CascadingParameter] public IModalService? ModalService { get; set; }
-    
     [Inject] public DialogService DialogService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     
-    public List<string> Scripts { get; set; } = [];
-    public List<string> Styles { get; set; } = [];
-    public bool FullWidth { get; set; }
-    
-    private List<Content> ContentItems { get; set; } = [];
-    private Dictionary<Guid, ContentType> ContentTypes { get; set; } = [];
+    private BlockListState State { get; set; } = new();
     private BlockListEditorSettingsModel SettingsModel { get; set; } = new();
-
-    // Change tracking for deferred saves
-    private List<Content> AddedItems { get; set; } = [];
-    private List<Content> UpdatedItems { get; set; } = [];
-    private List<Content> DeletedItems { get; set; } = [];
-
-    // Nested changes tracking - accumulates changes from nested block list editors
-    private List<Content> NestedAddedItems { get; set; } = [];
-    private List<Content> NestedUpdatedItems { get; set; } = [];
-    private List<Content> NestedDeletedItems { get; set; } = [];
-
+    private bool IsDragging { get; set; }
+    private int? DragSourceIndex { get; set; }
+    
     protected override async Task OnInitializedAsync()
     {
-        await PopulateContentTypes();
+        SettingsModel = Settings.FromJson<BlockListEditorSettingsModel>();
+        
+        // Load content types
+        var contentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters 
+        { 
+            AmountPerPage = 300, 
+            OnlyElementTypes = true
+        });
+        
+        var contentTypesDict = contentTypes.Items.ToDictionary(x => x.Id, x => x);
+        State = State with { ContentTypes = contentTypesDict };
+        
+        // Load existing content items
         if (!Value.IsNullOrWhiteSpace())
         {
-            // Get content
-            List<Guid> contentIds;
-            try
-            {
-                contentIds = JsonSerializer.Deserialize<List<Guid>>(Value!) ?? [];
-            }
-            catch (JsonException)
-            {
-                contentIds = [];
-            }
-            var content = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = contentIds, AmountPerPage = 100, NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only, IncludeUnpublished = true });
-            // Build an index map so we can preserve the original order of IDs
-            var idOrder = contentIds
-                .Select((id, index) => new { id, index })
-                .ToDictionary(x => x.id, x => x.index);
-
-            ContentItems = content.Items
-                .OrderBy(item => idOrder.TryGetValue(item.Id, out var idx) ? idx : int.MaxValue)
-                .ToList();
-
-            // Ensure all ContentTypes are loaded for preview
-            foreach (var item in ContentItems)
-            {
-                if (!ContentTypes.ContainsKey(item.ContentTypeId))
-                {
-                    var contentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = item.ContentTypeId });
-                    if (contentType != null)
-                    {
-                        ContentTypes[item.ContentTypeId] = contentType;
-                    }
-                }
-                // Ensure ContentTypeAlias is set for preview rendering
-                if (ContentTypes.ContainsKey(item.ContentTypeId))
-                {
-                    item.ContentTypeAlias = ContentTypes[item.ContentTypeId].Alias;
-                }
-            }
+            await LoadContentItems();
         }
-
-        SettingsModel = Settings.FromJson<BlockListEditorSettingsModel>();
-    }
-
-    private async Task PopulateContentTypes()
-    {
-        var contentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters { AmountPerPage = 300, OnlyElementTypes = true});
-        ContentTypes = contentTypes.Items.ToDictionary(x => x.Id, x => x);
     }
     
-    private async Task DeleteContent(Content content)
+    private async Task LoadContentItems()
     {
-        var delete = await DialogService.Confirm("Are you sure you want to delete this?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
-        if (delete == true)
+        List<Guid> contentIds;
+        try
         {
-            var index = ContentItems.FindIndex(c => c.Id == content.Id);
-            if (index != -1)
+            contentIds = JsonSerializer.Deserialize<List<Guid>>(Value!) ?? [];
+        }
+        catch (JsonException)
+        {
+            contentIds = [];
+        }
+        
+        if (!contentIds.Any()) return;
+        
+        var contentResult = await ContentService.QueryContentAsync(new QueryContentParameters 
+        { 
+            Ids = contentIds, 
+            AmountPerPage = 100, 
+            NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only, 
+            IncludeUnpublished = true 
+        });
+        
+        // Preserve original order
+        var idOrder = contentIds
+            .Select((id, index) => new { id, index })
+            .ToDictionary(x => x.id, x => x.index);
+        
+        var orderedItems = contentResult.Items
+            .OrderBy(item => idOrder.TryGetValue(item.Id, out var idx) ? idx : int.MaxValue)
+            .ToList();
+        
+        // Set ContentTypeAlias for rendering
+        foreach (var item in orderedItems)
+        {
+            if (State.ContentTypes.TryGetValue(item.ContentTypeId, out var contentType))
             {
-                ContentItems.RemoveAt(index);
+                item.ContentTypeAlias = contentType.Alias;
             }
-
-            // Track the deletion for deferred processing instead of immediate delete
-            DeletedItems.Add(content);
-
-            // Update the Value to persist the deletion
-            var remainingIds = ContentItems.Select(c => c.Id).ToList();
-            Value = JsonSerializer.Serialize(remainingIds);
-            await ValueChanged.InvokeAsync(Value);
-
-            // Notify parent of pending changes
-            await NotifyParentOfChanges();
+        }
+        
+        State = State with { Items = orderedItems };
+    }
+    
+    private async Task HandleInsert(int insertIndex)
+    {
+        await OpenContentEditor(null, insertIndex);
+    }
+    
+    private async Task HandleEdit(int index)
+    {
+        if (index >= 0 && index < State.Items.Count)
+        {
+            await OpenContentEditor(State.Items[index], null);
         }
     }
-
-    private async Task InsertContentAt(int insertIndex)
+    
+    private async Task HandleDelete(int index)
     {
-        await UpdateContent(contentUpdate: null, insertAtIndex: insertIndex);
+        if (index < 0 || index >= State.Items.Count) return;
+        
+        var content = State.Items[index];
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to delete this block?", 
+            "Delete Block", 
+            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
+        );
+        
+        if (confirmed == true)
+        {
+            State = State.DeleteItem(content.Id);
+            await NotifyChanges();
+        }
     }
-
-    private async Task UpdateContent(Content? contentUpdate = null, int? insertAtIndex = null)
+    
+    private void HandleDragStart(int sourceIndex)
+    {
+        IsDragging = true;
+        DragSourceIndex = sourceIndex;
+        StateHasChanged();
+    }
+    
+    private void HandleDragEnd()
+    {
+        IsDragging = false;
+        DragSourceIndex = null;
+        StateHasChanged();
+    }
+    
+    private async Task HandleDropOnItem(int targetIndex)
+    {
+        // User dropped on an item - reorder to that position
+        if (DragSourceIndex.HasValue && DragSourceIndex.Value != targetIndex)
+        {
+            State = State.ReorderItems(DragSourceIndex.Value, targetIndex);
+            await NotifyChanges();
+            StateHasChanged();
+        }
+    }
+    
+    private async Task HandleDropAtIndex(int targetIndex)
+    {
+        // User dropped in a drop zone between items
+        if (DragSourceIndex.HasValue)
+        {
+            // Adjust target index if dragging down (because drop zone index is +1 of the item before it)
+            var adjustedTarget = DragSourceIndex.Value < targetIndex ? targetIndex - 1 : targetIndex;
+            
+            if (DragSourceIndex.Value != adjustedTarget)
+            {
+                State = State.ReorderItems(DragSourceIndex.Value, adjustedTarget);
+                await NotifyChanges();
+                StateHasChanged();
+            }
+        }
+    }
+    
+    private async Task OpenContentEditor(Content? contentToEdit, int? insertAtIndex)
     {
         var contentParams = new Dictionary<string, object>
         {
             { nameof(ContentEditor.IsBlockList), true },
             { nameof(ContentEditor.NestedParentId), Content!.Id },
-            { nameof(ContentEditor.OnBlockListChanges), new Action<BlockListChanges>(HandleNestedBlockListChanges) }
+            { nameof(ContentEditor.OnBlockListChanges), new Action<BlockListChanges>(HandleNestedChanges) }
         };
-
-        // Add allowed ElementType IDs if specified in settings
+        
+        // Filter allowed element types if configured
         if (SettingsModel.AllowedElementTypeIds.Any())
         {
-            contentParams.Add(nameof(ContentEditor.AllowedElementTypeIds), SettingsModel.AllowedElementTypeIds);
+            contentParams.Add(nameof(ContentEditor.AllowedElementTypeIds), SettingsModel.AllowedElementTypeIds.ToList());
         }
-
-        if (contentUpdate != null)
+        
+        if (contentToEdit != null)
         {
-            // Pass the actual Content object to preserve in-memory changes
-            contentParams.Add(nameof(ContentEditor.Content), contentUpdate);
+            contentParams.Add(nameof(ContentEditor.Content), contentToEdit);
         }
         else
         {
-            contentParams.Add(nameof(ContentEditor.DefaultName), $"Block {(ContentItems.Count+1).ToWords()}");
+            contentParams.Add(nameof(ContentEditor.DefaultName), $"Block {(State.Items.Count + 1).ToWords()}");
         }
-
-        if (ModalService != null)
+        
+        if (ModalService == null) return;
+        
+        var dialog = ModalService.OpenSidePanel<ContentEditor>("Edit Content Block", contentParams);
+        var result = await dialog.Result;
+        
+        if (result is { Confirmed: true, Data: Content savedContent })
         {
-            var dialog = ModalService.OpenSidePanel<ContentEditor>("Add Content", contentParams);
-            var result = await dialog.Result;
-            if (result is { Confirmed: true, Data: Content content })
+            Console.WriteLine($"[BlockList] Content saved, refreshing. ContentId={savedContent.Id}");
+            
+            // Reload the content from the database to get the latest version
+            var refreshedContent = await ContentService.GetContentAsync(new GetContentParameters 
+            { 
+                Id = savedContent.Id, 
+                IncludeUnpublished = true
+            });
+            
+            if (refreshedContent != null)
             {
-                // This could be an issue and close dialogs on property editors!
-                //DialogService.CloseSide();
-
-                if (contentUpdate != null)
+                Console.WriteLine($"[BlockList] Content refreshed from DB. Name={refreshedContent.Name}");
+                
+                // Ensure ContentType is loaded
+                if (!State.ContentTypes.ContainsKey(refreshedContent.ContentTypeId))
                 {
-                    var index = ContentItems.FindIndex(c => c.Id == contentUpdate.Id);
-                    if (index != -1)
+                    var contentType = await ContentService.GetContentTypeAsync(
+                        new GetContentTypeParameters { Id = refreshedContent.ContentTypeId }
+                    );
+                    
+                    if (contentType != null)
                     {
-                        // Needs to be looked into, only way to get the UI to update is to create a new instance
-                        var changedContent = new Content();
-                        content.MapTo(changedContent);
-                        changedContent.PropertyData = content.PropertyData;
-                        ContentItems[index] = changedContent;
-
-                        // Track the update for deferred processing
-                        UpdatedItems.Add(changedContent);
-
-                        // Ensure ContentType is loaded for preview
-                        if (!ContentTypes.ContainsKey(content.ContentTypeId))
-                        {
-                            var contentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = content.ContentTypeId });
-                            if (contentType != null)
-                            {
-                                ContentTypes[content.ContentTypeId] = contentType;
-                            }
-                        }
-                        // Ensure ContentTypeAlias is set for preview rendering
-                        if (ContentTypes.ContainsKey(content.ContentTypeId))
-                        {
-                            changedContent.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
-                        }
+                        State = State.SetContentType(contentType);
                     }
-                    else
-                    {
-                        // Should never get here
-                        throw new Exception("Content with given id not found.");
-                    }
+                }
+                
+                // Set ContentTypeAlias for rendering
+                if (State.ContentTypes.TryGetValue(refreshedContent.ContentTypeId, out var ct))
+                {
+                    refreshedContent.ContentTypeAlias = ct.Alias;
+                }
+                
+                if (contentToEdit != null)
+                {
+                    Console.WriteLine($"[BlockList] Updating existing item in state");
+                    // Update existing - use refreshed content from DB
+                    State = State.UpdateItem(refreshedContent);
                 }
                 else
                 {
-                    // Insert at specific index if provided, otherwise add to end
-                    if (insertAtIndex.HasValue && insertAtIndex.Value >= 0 && insertAtIndex.Value <= ContentItems.Count)
-                    {
-                        ContentItems.Insert(insertAtIndex.Value, content);
-                    }
-                    else
-                    {
-                        ContentItems.Add(content);
-                    }
-
-                    // Track the addition for deferred processing
-                    AddedItems.Add(content);
-
-                    // Ensure ContentType is loaded for preview
-                    if (!ContentTypes.ContainsKey(content.ContentTypeId))
-                    {
-                        var contentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = content.ContentTypeId });
-                        if (contentType != null)
-                        {
-                            ContentTypes[content.ContentTypeId] = contentType;
-                        }
-                    }
-                    // Ensure ContentTypeAlias is set for preview rendering
-                    if (ContentTypes.ContainsKey(content.ContentTypeId))
-                    {
-                        content.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
-                    }
+                    Console.WriteLine($"[BlockList] Adding new item to state");
+                    // Add new
+                    State = State.AddItem(refreshedContent, insertAtIndex);
                 }
-
-                await NotifyParentOfChanges();
+                
+                Console.WriteLine($"[BlockList] State updated, calling NotifyChanges and StateHasChanged");
+                await NotifyChanges();
+                StateHasChanged(); // Force UI refresh to show updated content
             }
         }
     }
-
-    private void HandleNestedBlockListChanges(BlockListChanges nestedChanges)
+    
+    private void HandleNestedChanges(BlockListChanges nestedChanges)
     {
-        // Accumulate nested changes - these will be included in our parent changes
-        NestedAddedItems.AddRange(nestedChanges.AddedItems);
-        NestedUpdatedItems.AddRange(nestedChanges.UpdatedItems);
-        NestedDeletedItems.AddRange(nestedChanges.DeletedItems);
-    }
-
-    private async Task NotifyParentOfChanges(bool updateValue = true)
-    {
-        if (updateValue)
-        {
-            // Update the Value property to reflect current ContentItems (needed for additions/updates)
-            var currentIds = ContentItems.Select(c => c.Id).ToList();
-            Value = JsonSerializer.Serialize(currentIds);
-            await ValueChanged.InvokeAsync(Value);
-        }
-
-        var changes = new BlockListChanges
-        {
-            // Include both direct changes and nested changes
-            AddedItems = AddedItems.Concat(NestedAddedItems).ToList(),
-            UpdatedItems = UpdatedItems.Concat(NestedUpdatedItems).ToList(),
-            DeletedItems = DeletedItems.Concat(NestedDeletedItems).ToList()
-        };
-
-        ChangesPending?.Invoke(changes);
-
-        // Clear nested changes after sending them to parent
-        ClearNestedChanges();
-    }
-
-    private void ClearNestedChanges()
-    {
-        NestedAddedItems.Clear();
-        NestedUpdatedItems.Clear();
-        NestedDeletedItems.Clear();
+        // Merge nested changes into our state
+        State = State.MergeNestedChanges(nestedChanges);
     }
     
-    private async Task SortList((int oldIndex, int newIndex) indices)
+    private async Task NotifyChanges()
     {
-        // This is a bit of a hack to deal with shadow doms. I need to make a copy of the content items
-        // as I don't want to trigger a statehaschanged of the contents will disappear.
-        var clonedList = new List<Content>();
-        clonedList.AddRange(ContentItems);
-        
-        TupleExtensions.SortList(indices, clonedList);
-
-        foreach (var content in clonedList)
-        {
-            // Remove content type and content values as don't want to serialise this
-            content.ContentType = null;
-            content.ContentTypeAlias = ContentTypes[content.ContentTypeId].Alias;
-        }
-
-        var clonedIds = clonedList.Select(x => x.Id);
-        Value = JsonSerializer.Serialize(clonedIds);
+        // Update Value with current item IDs
+        var serializedIds = State.GetSerializedIds();
+        Value = JsonSerializer.Serialize(serializedIds);
         await ValueChanged.InvokeAsync(Value);
-
-        // Notify parent that order has changed (this affects the UpdatedItems)
-        // Don't update Value again since we just set it above
-        await NotifyParentOfChanges(updateValue: false);
+        
+        // Notify parent of all pending changes
+        var changes = State.GetChanges();
+        ChangesPending?.Invoke(changes);
     }
-
-
 }
+

@@ -1,0 +1,111 @@
+@using ZauberCMS.Components.ContentComponents
+@using ZauberCMS.Core.Content.Models
+
+<div class="block-list-item @(IsDragging ? "dragging" : "") @(IsDropTarget ? "drop-target" : "")"
+     draggable="true"
+     @ondragstart="HandleDragStart"
+     @ondragend="HandleDragEnd"
+     @ondragenter="HandleDragEnter"
+     @ondragleave="HandleDragLeave"
+     @ondragover="HandleDragOver"
+     @ondragover:preventDefault
+     @ondrop="HandleDrop">
+    
+    <div class="w-full flex justify-between items-start border @(Content.Published ? "border-gray-200" : "border-orange-300 bg-orange-50") border-solid my-1 transition-opacity @(IsDragging ? "opacity-50" : "")">
+        <!-- Drag Handle Icon -->
+        <div class="p-3 flex items-center justify-center relative cursor-grab active:cursor-grabbing">
+            <RadzenIcon Icon="@(ContentType.Icon ?? "layers")" Style="font-size: 2rem" class="text-slate-600"/>
+            @if (!Content.Published)
+            {
+                <RadzenIcon Icon="unpublished" Style="font-size: 1rem; position: absolute; top: 0; right: 0;" class="text-orange-600"/>
+            }
+        </div>
+        
+        <!-- Preview Content -->
+        <div class="p-3 flex-1 col-span-8 border border-y-0 @(Content.Published ? "border-gray-200" : "border-orange-200") border-solid">
+            <RenderBlock Content="@Content" 
+                         Stylesheets="@Stylesheets"
+                         TView="IContentBlockPreview"
+                         FallbackComponentType="@(typeof(ContentBlockPreviewFallback))"
+                         Parameters="@(new Dictionary<string, object> { { nameof(IContentBlockPreview.ContentType), ContentType } })"/>
+        </div>
+        
+        <!-- Edit Button -->
+        <div class="p-3 flex items-center justify-center cursor-pointer hover:bg-gray-100" 
+             draggable="false"
+             @onclick="HandleEdit"
+             @onclick:stopPropagation>
+            <RadzenIcon Icon="edit" Style="font-size: 2rem" class="text-slate-600"/>
+        </div>
+        
+        <!-- Delete Button -->
+        <div class="p-3 flex items-center justify-center cursor-pointer hover:bg-gray-100" 
+             draggable="false"
+             @onclick="HandleDelete"
+             @onclick:stopPropagation>
+            <RadzenIcon Icon="delete" Style="font-size: 2rem" class="text-slate-600"/>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Content Content { get; set; } = null!;
+    [Parameter, EditorRequired] public ContentType ContentType { get; set; } = null!;
+    [Parameter, EditorRequired] public int Index { get; set; }
+    [Parameter] public List<string> Stylesheets { get; set; } = [];
+    
+    [Parameter] public EventCallback<int> OnEdit { get; set; }
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+    [Parameter] public EventCallback<int> OnDropOnItem { get; set; }
+    [Parameter] public EventCallback<int> OnDragStart { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
+    
+    private bool IsDragging { get; set; }
+    private bool IsDropTarget { get; set; }
+    
+    private async Task HandleDragStart(DragEventArgs e)
+    {
+        IsDragging = true;
+        await OnDragStart.InvokeAsync(Index);
+    }
+    
+    private async Task HandleDragEnd(DragEventArgs e)
+    {
+        IsDragging = false;
+        await OnDragEnd.InvokeAsync();
+    }
+    
+    private void HandleDragOver(DragEventArgs e)
+    {
+        // This is called continuously while dragging over - no logging to avoid spam
+        // The @ondragover:preventDefault handles the actual prevention
+    }
+    
+    private void HandleDragEnter(DragEventArgs e)
+    {
+        IsDropTarget = true;
+    }
+    
+    private void HandleDragLeave(DragEventArgs e)
+    {
+        IsDropTarget = false;
+    }
+    
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        IsDropTarget = false;
+        // Just pass the target index - parent will use its stored source index
+        await OnDropOnItem.InvokeAsync(Index);
+    }
+    
+    private async Task HandleEdit()
+    {
+        await OnEdit.InvokeAsync(Index);
+    }
+    
+    private async Task HandleDelete()
+    {
+        await OnDelete.InvokeAsync(Index);
+    }
+}
+
