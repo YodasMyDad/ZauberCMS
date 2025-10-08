@@ -3,6 +3,7 @@
 @using ZauberCMS.RTE.Components
 @using ZauberCMS.RTE.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+@inject MediaValidationService MediaValidationService
 
 <ZauberRichTextEditor @bind-Value="@Value"
                       Settings="@EditorSettings"
@@ -28,6 +29,7 @@
     private ZauberCMSEditorSettingsModel SettingsModel { get; set; } = new();
     private EditorSettings EditorSettings { get; set; } = new();
     private bool _initialized;
+    private bool _mediaValidated;
 
     protected override void OnParametersSet()
     {
@@ -39,12 +41,64 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        
+        if (firstRender && !_mediaValidated && !string.IsNullOrWhiteSpace(Value))
+        {
+            _mediaValidated = true;
+            await ValidateMediaReferencesAsync();
+        }
+    }
+
+    private async Task ValidateMediaReferencesAsync()
+    {
+        try
+        {
+            var updatedHtml = await MediaValidationService.ValidateAndUpdateMediaReferencesAsync(Value ?? "");
+            
+            if (!string.Equals(updatedHtml, Value, StringComparison.Ordinal))
+            {
+                Value = updatedHtml;
+                await ValueChanged.InvokeAsync(Value);
+                StateHasChanged();
+            }
+        }
+        catch (Exception)
+        {
+            // Silently fail validation - don't break the editor
+            // Errors are already shown via NotificationService in the validation service
+        }
+    }
+
     private EditorSettings BuildEditorSettings()
     {
-        // Use Full or Simple layout based on settings
-        var settings = SettingsModel.ToolbarLayout == "Minimal" 
-            ? EditorSettings.Minimal() 
-            : EditorSettings.CmsDefault();
+        // Use Minimal or customized CMS Default layout
+        EditorSettings settings;
+        
+        if (SettingsModel.ToolbarLayout == "Minimal")
+        {
+            settings = EditorSettings.Minimal();
+        }
+        else
+        {
+            // Use CMS Default but customize to add insertMedia button
+            settings = new EditorSettings
+            {
+                ToolbarLayout = ToolbarLayout.FromItems(
+                    new ToolbarBlock("bold", "italic", "underline", "strike", "code", "subscript", "superscript"),
+                    new ToolbarSeparator(),
+                    new ToolbarBlock("headings", "blockquote"),
+                    new ToolbarSeparator(),
+                    new ToolbarBlock("ul", "ol", "link", "unlink", "image", "insertMedia"),
+                    new ToolbarSeparator(),
+                    new ToolbarBlock("alignLeft", "alignCenter", "alignRight", "justified"),
+                    new ToolbarSeparator(),
+                    new ToolbarBlock("clean-html", "undo", "redo", "viewSource", "themeToggle")
+                )
+            };
+        }
 
         // Apply height if specified
         if (!string.IsNullOrWhiteSpace(SettingsModel.Height))

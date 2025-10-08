@@ -111,6 +111,7 @@ public static class ZauberSetup
         builder.Services.AddScoped<IEmailService, EmailService>();
         
         builder.Services.AddScoped<ZauberRouteValueTransformer>();
+        builder.Services.AddScoped<MediaValidationService>();
 
         builder.Services.AddHostedService<DailyJob>();
         
