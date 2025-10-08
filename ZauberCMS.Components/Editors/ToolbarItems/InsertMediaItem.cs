@@ -25,25 +25,23 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
 
     public override async Task ExecuteAsync(IEditorApi api)
     {
-        // Save the current selection so we can restore it after the modal
         await api.SaveSelectionRangeAsync();
 
         _selectedMedia = null;
 
         var parameters = new Dictionary<string, object>
         {
-            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnMediaSelected) },
             { nameof(MediaTree.DisableContextMenu), true },
-            { nameof(MediaTree.DisableSectionOnlyContextMenu), true }
+            { nameof(MediaTree.MediaTypes), new List<MediaType> { MediaType.Image } }
         };
 
         _currentModal = modalService.OpenSidePanel<MediaTree>("Insert Media", parameters);
         var result = await _currentModal.Result;
 
-        if (result.Confirmed && _selectedMedia != null)
+        if (result.Confirmed && result.Data is Media media)
         {
             await api.RestoreSelectionRangeAsync();
-            await InsertMedia(api, _selectedMedia);
+            await InsertMedia(api, media);
             await api.ClearSavedSelectionRangeAsync();
         }
     }

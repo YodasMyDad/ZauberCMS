@@ -66,13 +66,8 @@
         if (!OnChange.HasDelegate)
         {
             await DataRefresh();
-            StateHasChanged();
         }
-        else
-        {
-            // Even if parent handles data refresh, trigger StateHasChanged to ensure UI updates
-            StateHasChanged();
-        }
+        StateHasChanged();
     }
 
     private async Task DataRefresh()
