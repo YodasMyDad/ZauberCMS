@@ -32,10 +32,14 @@
 
     protected override void OnParametersSet()
     {
-        if (!Parameters.ContainsKey("Content"))
+        // Recreate Parameters dictionary to ensure DynamicComponent detects changes
+        // Critical for nested block lists where Content reference may change
+        var newParameters = new Dictionary<string, object>(Parameters)
         {
-            Parameters.Add("Content", Content!);   
-        }
+            ["Content"] = Content!
+        };
+        Parameters = newParameters;
+        
         BlockViews = ExtensionManager.GetInstances<TView>(true);
     }
     

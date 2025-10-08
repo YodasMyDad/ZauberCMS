@@ -66,12 +66,12 @@
     {
         if (Content != null)
         {
-            // Try to load FAQ items from database
-            FaqItems = await Content.GetBlocks("FAQs", ContentService);
-
-            // Get expected count from PropertyData
+            // Get expected count from PropertyData (reads current in-memory state)
             var faqIds = Content.GetValue<List<Guid>>("FAQs");
             ExpectedCount = faqIds?.Count ?? 0;
+            
+            // Try to load FAQ items from database (for published items)
+            FaqItems = await Content.GetBlocks("FAQs", ContentService);
         }
         else
         {

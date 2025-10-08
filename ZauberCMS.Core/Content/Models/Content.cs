@@ -157,12 +157,20 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     /// </summary>
     public List<ContentPropertyValue> PropertyData { get; set; } = [];
 
-
     private Dictionary<string, string>? _contentValues;
 
     public Dictionary<string, string> ContentValues()
     {
         return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x.Value);
+    }
+    
+    /// <summary>
+    /// Invalidates the cached ContentValues dictionary when PropertyData is modified.
+    /// Must be called after any in-memory modification to PropertyData values.
+    /// </summary>
+    public void InvalidateContentValuesCache()
+    {
+        _contentValues = null;
     }
 
     /// <summary>

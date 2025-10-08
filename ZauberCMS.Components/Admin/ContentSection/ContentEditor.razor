@@ -408,6 +408,10 @@ else
         {
             property.Value = value;
             property.DateUpdated = DateTime.UtcNow;
+            
+            // Invalidate the cached ContentValues so GetValue() returns updated data
+            // Critical for nested block lists where PropertyData is modified in-memory
+            Content?.InvalidateContentValuesCache();
         }
 
         return Task.CompletedTask;
