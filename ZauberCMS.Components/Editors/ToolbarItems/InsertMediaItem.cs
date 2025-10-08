@@ -1,3 +1,8 @@
+using Blazored.Modal.Services;
+using Microsoft.AspNetCore.Components;
+using ZauberCMS.Components.Trees;
+using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Media.Models;
 using ZauberCMS.RTE.Models;
 
 namespace ZauberCMS.Components.Editors.ToolbarItems;
@@ -5,8 +10,11 @@ namespace ZauberCMS.Components.Editors.ToolbarItems;
 /// <summary>
 /// Toolbar item for inserting media (images, documents, etc.) from the media library
 /// </summary>
-public class InsertMediaItem : ToolbarItemBase
+public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
 {
+    private Media? _selectedMedia;
+    private Blazored.Modal.IModalReference? _currentModal;
+
     public override string Id => "insertMedia";
     public override string Label => "Insert Media";
     public override string IconCss => "fa-photo-film";
@@ -17,9 +25,77 @@ public class InsertMediaItem : ToolbarItemBase
 
     public override async Task ExecuteAsync(IEditorApi api)
     {
-        await api.OpenPanelAsync(typeof(Panels.InsertMediaPanel));
+        // Save the current selection so we can restore it after the modal
+        await api.SaveSelectionRangeAsync();
+
+        _selectedMedia = null;
+
+        var parameters = new Dictionary<string, object>
+        {
+            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnMediaSelected) },
+            { nameof(MediaTree.DisableContextMenu), true },
+            { nameof(MediaTree.DisableSectionOnlyContextMenu), true }
+        };
+
+        _currentModal = modalService.OpenSidePanel<MediaTree>("Insert Media", parameters);
+        var result = await _currentModal.Result;
+
+        if (result.Confirmed && _selectedMedia != null)
+        {
+            await api.RestoreSelectionRangeAsync();
+            await InsertMedia(api, _selectedMedia);
+            await api.ClearSavedSelectionRangeAsync();
+        }
+    }
+
+    private void OnMediaSelected(object value)
+    {
+        if (value is Media media && media.MediaType != MediaType.Folder)
+        {
+            _selectedMedia = media;
+            // Auto-close the modal when a valid media item is selected
+            _currentModal?.Close(ModalResult.Ok(media));
+        }
+    }
+
+    private async Task InsertMedia(IEditorApi api, Media media)
+    {
+        var html = media.MediaType == MediaType.Image
+            ? BuildImageHtml(media)
+            : BuildLinkHtml(media);
+
+        await api.InsertHtmlAsync(html);
+    }
+
+    private string BuildImageHtml(Media media)
+    {
+        var attributes = new List<string>
+        {
+            $"src=\"{media.Url ?? ""}\"",
+            $"data-mediaid=\"{media.Id}\""
+        };
+
+        if (media.Width > 0)
+        {
+            attributes.Add($"width=\"{media.Width}\"");
+        }
+
+        if (media.Height > 0)
+        {
+            attributes.Add($"height=\"{media.Height}\"");
+        }
+
+        var altText = media.AltTag ?? media.Name ?? "";
+        attributes.Add($"alt=\"{System.Web.HttpUtility.HtmlEncode(altText)}\"");
+
+        return $"<img {string.Join(" ", attributes)} />";
+    }
+
+    private string BuildLinkHtml(Media media)
+    {
+        var linkText = System.Web.HttpUtility.HtmlEncode(media.Name ?? "Download");
+        return $"<a href=\"{media.Url ?? ""}\" data-mediaid=\"{media.Id}\">{linkText}</a>";
     }
 
     public override bool IsActive(EditorState state) => false;
 }
-

@@ -244,9 +244,7 @@ public static class ZauberSetup
 
         /*services.AddAuthorizationBuilder()
                     .AddPolicy("AdminOnly", policy => policy.RequireRole(Constants.Roles.AdminRoleName));*/
-
-        // Add Zauber RTE services
-        builder.Services.AddZauberRte();
+        
         
         // Build the service provider and get the extension manager
         var serviceProvider = builder.Services.BuildServiceProvider();
@@ -258,6 +256,9 @@ public static class ZauberSetup
         Assembly[] discoverAssemblies = (assemblies as Assembly[] ?? assemblies.ToArray())!;
         AssemblyManager.SetAssemblies(discoverAssemblies);
 
+        // Add Zauber RTE services
+        builder.Services.AddZauberRte(discoverAssemblies);
+        
         // Detailed errors have been enabled
         if (zauberSettings.ShowDetailedErrors)
         {
