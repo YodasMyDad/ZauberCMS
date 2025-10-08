@@ -1,7 +1,5 @@
 ﻿@using ZauberCMS.Web.ContentBlocks
-@using Microsoft.Extensions.Logging
 @implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
-@inject ILogger<FAQ> Logger
 @if (Content != null)
 {
     @if (FaqItems.Any())
@@ -51,17 +49,8 @@
             var faqIds = Content.GetValue<List<Guid>>("FAQs");
             ExpectedCount = faqIds?.Count ?? 0;
             
-            // Check if we have pending changes
-            var hasPendingChanges = Content.PendingBlockListChanges.TryGetValue("FAQs", out var pendingCache);
-            var pendingCount = pendingCache?.Count ?? 0;
-            
-            Logger.LogInformation("FAQ Preview BEFORE GetBlocks - ContentId: {ContentId}, ExpectedCount: {ExpectedCount}, HasPendingCache: {HasPendingCache}, PendingCacheCount: {PendingCount}", 
-                Content.Id, ExpectedCount, hasPendingChanges, pendingCount);
-            
             // Load FAQ items with pending changes included for live preview
             FaqItems = await Content.GetBlocks("FAQs", ContentService, includePendingChanges: true);
-            
-            Logger.LogInformation("FAQ Preview AFTER GetBlocks - FaqItems Count: {FaqItemsCount}", FaqItems.Count());
         }
         else
         {

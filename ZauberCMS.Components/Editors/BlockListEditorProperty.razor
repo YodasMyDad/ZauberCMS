@@ -1,5 +1,4 @@
 @using System.Text.Json
-@using Microsoft.Extensions.Logging
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Components.Editors.Components
@@ -103,7 +102,6 @@
     [CascadingParameter] public IModalService? ModalService { get; set; }
     [Inject] public DialogService DialogService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
-    [Inject] public ILogger<BlockListEditorProperty> Logger { get; set; } = null!;
     
     private BlockListState State { get; set; } = new();
     private BlockListEditorSettingsModel SettingsModel { get; set; } = new();
@@ -348,46 +346,17 @@
         await ValueChanged.InvokeAsync(Value);
         
         // Store current items in Content.PendingBlockListChanges for preview access
+        // This enables nested content previews to show live edits before database save
         if (Content != null && !string.IsNullOrWhiteSpace(PropertyAlias))
         {
-            // Convert items list to dictionary for efficient lookup
+            // Convert items list to dictionary for efficient lookup by GetBlocks()
             var itemsDict = State.Items.ToDictionary(x => x.Id, x => x);
             Content.PendingBlockListChanges[PropertyAlias] = itemsDict;
-            
-            Logger.LogInformation("BlockListEditor.NotifyChanges - PropertyAlias: {PropertyAlias}, ItemCount: {ItemCount}, ContentId: {ContentId}", 
-                PropertyAlias, itemsDict.Count, Content.Id);
-            
-            // Also merge all changes from nested block lists into parent cache
-            MergePendingChangesToParent();
-        }
-        else
-        {
-            Logger.LogWarning("BlockListEditor.NotifyChanges - NOT storing pending changes. Content null: {ContentNull}, PropertyAlias: '{PropertyAlias}'", 
-                Content == null, PropertyAlias ?? "(null)");
         }
         
-        // Notify parent of all pending changes
+        // Notify parent of all pending changes for database persistence
         var changes = State.GetChanges();
         ChangesPending?.Invoke(changes);
-    }
-    
-    private void MergePendingChangesToParent()
-    {
-        if (Content == null) return;
-        
-        // Merge all nested pending changes from child content items into the parent cache
-        var allChanges = State.GetChanges();
-        
-        // Process all changed items (added, updated)
-        var allItems = allChanges.AddedItems.Concat(allChanges.UpdatedItems);
-        foreach (var item in allItems)
-        {
-            // For each changed item, merge its pending block list changes into parent
-            foreach (var kvp in item.PendingBlockListChanges)
-            {
-                Content.PendingBlockListChanges[kvp.Key] = kvp.Value;
-            }
-        }
     }
 }
 
