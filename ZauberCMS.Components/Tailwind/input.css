@@ -86,3 +86,42 @@
    width: 30rem !important; 
 }
 
+.block-list-editor {
+    transition: all 0.3s ease;
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+.block-list-editor.dragging-active {
+    background-color: rgba(37, 99, 235, 0.02);
+    border-radius: 8px;
+    padding: 8px;
+    margin: -8px;
+    box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.block-list-editor * {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.block-list-editor img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.block-list-editor picture {
+    max-width: 100%;
+    display: block;
+}
+
+.block-list-editor video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.block-list-editor iframe {
+    max-width: 100%;
+}
