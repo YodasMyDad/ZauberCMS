@@ -15,10 +15,10 @@
     top: 0;
     height: 100%;
     min-width: 80%;
-    margin: 0 0 0 4rem;
+    margin: 0 0 0 4rem !important;
     border-radius: 0;
     overflow: auto;
-    padding-bottom: 25px;
+    padding-bottom: 10px !important;
 }
 
 .side-panel .bm-content {

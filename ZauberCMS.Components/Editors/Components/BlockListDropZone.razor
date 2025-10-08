@@ -1,13 +1,16 @@
 <div class="block-drop-zone @(IsHovered ? "active" : "") @(IsInsertMode ? "insert-mode" : "drop-mode")"
+     @onmousemove="HandleMouseMove"
+     @onmouseenter="HandleMouseEnter"
+     @onmouseleave="HandleMouseLeave"
      @ondragover="HandleDragOver"
      @ondragover:preventDefault
      @ondragenter="HandleDragEnter"
      @ondragleave="HandleDragLeave"
      @ondrop="HandleDrop"
      @onclick="HandleClick">
-    
+   
     <div class="drop-zone-content">
-        <div class="drop-zone-icon">
+        <div class="drop-zone-icon" style="left: @(IconLeftPosition)px">
             <RadzenIcon Icon="add" Style="font-size: 1.2rem"/>
         </div>
     </div>
@@ -35,26 +38,24 @@
         inset: 0;
         display: flex;
         align-items: center;
-        justify-content: center;
         opacity: 0;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        transform: scale(0.8);
+        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
     }
     
     /* Only show drop zone content during drag operations */
     .block-drop-zone.drop-mode.active .drop-zone-content,
     .block-drop-zone.drop-mode:hover .drop-zone-content {
         opacity: 1;
-        transform: scale(1);
     }
     
     /* Insert mode shows content on hover without animation */
     .block-drop-zone.insert-mode:hover .drop-zone-content {
         opacity: 1;
-        transform: scale(1);
     }
     
     .drop-zone-icon {
+        position: absolute;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -65,7 +66,9 @@
         color: var(--rz-on-primary);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         z-index: 10;
-        transition: all 0.2s ease;
+        transform: translateX(-50%);
+        transition: left 0.05s ease-out, box-shadow 0.2s ease, background-color 0.2s ease;
+        pointer-events: none;
     }
     
     /* Enhanced glow during drag operations */
@@ -89,7 +92,37 @@
     [Parameter] public bool IsDragging { get; set; }
     
     private bool IsHovered { get; set; }
+    private bool IsMouseInside { get; set; }
+    private double IconLeftPosition { get; set; } = 50; // Start at a reasonable position
     private bool IsInsertMode => !IsDragging;
+    
+    private void HandleMouseMove(MouseEventArgs e)
+    {
+        if (!IsInsertMode || !IsMouseInside) return;
+        
+        // Use offsetX which gives position relative to the element - no JS interop needed!
+        var iconRadius = 16; // Half of 32px icon width
+        
+        // e.OffsetX is relative to the element we're hovering over
+        IconLeftPosition = Math.Max(iconRadius, e.OffsetX);
+    }
+    
+    private void HandleMouseEnter(MouseEventArgs e)
+    {
+        IsMouseInside = true;
+        
+        if (IsInsertMode)
+        {
+            // Get initial position
+            HandleMouseMove(e);
+        }
+    }
+    
+    private void HandleMouseLeave(MouseEventArgs e)
+    {
+        IsMouseInside = false;
+        // Don't reset position - keep it where it was so it doesn't jump when opacity fades out
+    }
     
     private void HandleDragOver(DragEventArgs e)
     {
