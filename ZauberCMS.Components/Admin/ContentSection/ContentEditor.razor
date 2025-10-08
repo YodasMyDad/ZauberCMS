@@ -567,6 +567,9 @@ else
         // Store the pending changes to be processed during save
         PendingBlockListChanges = changes;
         OnBlockListChanges?.Invoke(changes);
+
+        // Trigger re-rendering so previews update with latest changes
+        StateHasChanged();
     }
 
     private async Task ProcessBlockListChanges()

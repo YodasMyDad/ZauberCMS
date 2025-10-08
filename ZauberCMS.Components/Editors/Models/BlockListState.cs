@@ -186,6 +186,7 @@ public record BlockListState
         };
     }
     
+    
     /// <summary>
     /// Merge nested changes from child block list editors
     /// </summary>
@@ -194,7 +195,7 @@ public record BlockListState
         var newAddedItems = new List<Content>(AddedItems);
         var newUpdatedItems = new List<Content>(UpdatedItems);
         var newDeletedItems = new List<Content>(DeletedItems);
-        
+
         // Merge added items
         foreach (var item in nestedChanges.AddedItems)
         {
@@ -203,7 +204,7 @@ public record BlockListState
                 newAddedItems.Add(item);
             }
         }
-        
+
         // Merge updated items
         foreach (var item in nestedChanges.UpdatedItems)
         {
@@ -222,7 +223,7 @@ public record BlockListState
                 }
             }
         }
-        
+
         // Merge deleted items
         foreach (var item in nestedChanges.DeletedItems)
         {
@@ -235,7 +236,7 @@ public record BlockListState
             newAddedItems.RemoveAll(x => x.Id == item.Id);
             newUpdatedItems.RemoveAll(x => x.Id == item.Id);
         }
-        
+
         return this with
         {
             AddedItems = newAddedItems,
@@ -243,7 +244,7 @@ public record BlockListState
             DeletedItems = newDeletedItems
         };
     }
-    
+
     /// <summary>
     /// Add or update ContentType for preview rendering
     /// </summary>

@@ -314,10 +314,19 @@
         }
     }
     
-    private void HandleNestedChanges(BlockListChanges nestedChanges)
+    private async void HandleNestedChanges(BlockListChanges nestedChanges)
     {
-        // Merge nested changes into our state
+        // Merge nested changes into our state for proper change tracking and saving
         State = State.MergeNestedChanges(nestedChanges);
+
+        // Update the property value and notify parent to trigger preview re-rendering
+        await NotifyChanges();
+
+        // Also notify parent immediately with the nested changes
+        ChangesPending?.Invoke(nestedChanges);
+
+        // Trigger local re-rendering as well
+        StateHasChanged();
     }
     
     private async Task NotifyChanges()
