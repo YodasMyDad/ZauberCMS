@@ -187,4 +187,13 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     
     [JsonIgnore]
     public List<ContentRole> ContentRoles { get; set; } = [];
+    
+    /// <summary>
+    /// In-memory cache of pending block list changes for preview rendering.
+    /// Key: property alias, Value: dictionary of content items by ID
+    /// Used to show edited nested content before it's saved to the database.
+    /// </summary>
+    [NotMapped]
+    [JsonIgnore]
+    public Dictionary<string, Dictionary<Guid, Content>> PendingBlockListChanges { get; set; } = new();
 }

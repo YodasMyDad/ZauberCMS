@@ -117,6 +117,7 @@ public static class ContentExtensions
         string alias,
         IContentService contentService)
     {
+        // Original efficient path - direct database query with zero overhead
         var ids = content.GetValue<List<Guid>>(alias);
         if (ids != null && ids.Count != 0)
         {
@@ -128,6 +129,46 @@ public static class ContentExtensions
         }
 
         return [];
+    }
+    
+    /// <summary>
+    /// Retrieves a collection of content blocks based on the specified alias and associated content IDs.
+    /// Optionally includes in-memory pending changes for preview rendering.
+    /// </summary>
+    /// <param name="content">The content instance implementing <see cref="IHasPropertyValues"/>.</param>
+    /// <param name="alias">The alias of the property containing the block IDs.</param>
+    /// <param name="contentService">The service for querying content blocks.</param>
+    /// <param name="includePendingChanges">If true, checks in-memory pending changes before querying database (used for live previews in admin).</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a collection of content blocks.</returns>
+    public static async Task<IEnumerable<Content.Models.Content>> GetBlocks(this IHasPropertyValues content,
+        string alias,
+        IContentService contentService,
+        bool includePendingChanges)
+    {
+        // If not checking pending changes, use the original efficient method
+        if (!includePendingChanges)
+        {
+            return await content.GetBlocks(alias, contentService);
+        }
+        
+        // Admin preview path - check for pending changes first
+        var ids = content.GetValue<List<Guid>>(alias);
+        if (ids == null || ids.Count == 0)
+        {
+            return [];
+        }
+        
+        // Check if we have pending changes for this property (admin editing only)
+        if (content is Content.Models.Content contentModel && 
+            contentModel.PendingBlockListChanges.TryGetValue(alias, out var pendingChanges) &&
+            pendingChanges.Count > 0)
+        {
+            // Return items from pending changes in the correct order
+            return ids.Where(pendingChanges.ContainsKey).Select(id => pendingChanges[id]);
+        }
+        
+        // No pending changes, fall back to database query
+        return await content.GetBlocks(alias, contentService);
     }
     
     /// <summary>

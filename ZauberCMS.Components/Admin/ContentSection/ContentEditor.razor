@@ -81,6 +81,7 @@ else
                                                                 Settings="@property.Settings"
                                                                 Content="@Content"
                                                                 Value="@contentValue.Value"
+                                                                PropertyAlias="@contentValue.Alias"
                                                                 ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"
                                                                 ChangesPending="@HandleBlockListChanges"/>
                                                         </CentreColumn>

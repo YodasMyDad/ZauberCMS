@@ -11,6 +11,7 @@
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Action<BlockListChanges>? ChangesPending { get; set; }
+    [Parameter] public string? PropertyAlias { get; set; }
 
     private Dictionary<string, object> GetParameters()
     {
@@ -26,6 +27,17 @@
         if (ChangesPending != null && ComponentType?.Name == "BlockListEditorProperty")
         {
             parameters["ChangesPending"] = ChangesPending;
+        }
+        
+        // Add PropertyAlias if provided and the component supports it
+        // Check if the component type has a PropertyAlias property before adding it
+        if (!string.IsNullOrWhiteSpace(PropertyAlias) && ComponentType != null)
+        {
+            var hasPropertyAliasParameter = ComponentType.GetProperty("PropertyAlias") != null;
+            if (hasPropertyAliasParameter)
+            {
+                parameters["PropertyAlias"] = PropertyAlias;
+            }
         }
 
         return parameters;

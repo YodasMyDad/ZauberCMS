@@ -1,5 +1,7 @@
 ﻿@using ZauberCMS.Web.ContentBlocks
+@using Microsoft.Extensions.Logging
 @implements ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
+@inject ILogger<FAQ> Logger
 @if (Content != null)
 {
     @if (FaqItems.Any())
@@ -11,44 +13,23 @@
                 <RTEBlock Content="@faq" PropertyName="Answer" />
             </div>
         }
-
-        @if (FaqItems.Count() < ExpectedCount)
-        {
-            <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-sm text-orange-700">
-                <div class="flex items-center space-x-1">
-                    <span>ℹ️</span>
-                    <span>Showing @FaqItems.Count() of @ExpectedCount FAQ items</span>
-                </div>
-                <div class="text-xs text-orange-600 mt-1">
-                    Save and publish to see the new FAQ content
-                </div>
-            </div>
-        }
-    }
-    else if (ExpectedCount > 0)
-    {
-        <div class="border border-orange-200 rounded p-4 bg-orange-50">
-            <div class="flex items-center space-x-2">
-                <span class="text-lg font-medium">FAQ Block</span>
-                <span class="text-sm text-orange-600">(@ExpectedCount items)</span>
-            </div>
-            <div class="mt-2 text-sm text-orange-700">
-                Contains @ExpectedCount FAQ item@(ExpectedCount == 1 ? "" : "s")
-            </div>
-            <div class="mt-1 text-xs text-orange-600 italic">
-                Save and publish to see the FAQ content
-            </div>
-        </div>
     }
     else
     {
         <div class="border border-gray-200 rounded p-4 bg-gray-50">
             <div class="flex items-center space-x-2">
                 <span class="text-lg font-medium">FAQ Block</span>
-                <span class="text-sm text-gray-600">(0 items)</span>
+                <span class="text-sm text-gray-600">(@ExpectedCount item@(ExpectedCount == 1 ? "" : "s"))</span>
             </div>
             <div class="mt-2 text-sm text-gray-500 italic">
-                No FAQ items added yet
+                @if (ExpectedCount > 0)
+                {
+                    <text>Add FAQ items to see them here</text>
+                }
+                else
+                {
+                    <text>No FAQ items added yet</text>
+                }
             </div>
         </div>
     }
@@ -70,8 +51,17 @@
             var faqIds = Content.GetValue<List<Guid>>("FAQs");
             ExpectedCount = faqIds?.Count ?? 0;
             
-            // Try to load FAQ items from database (for published items)
-            FaqItems = await Content.GetBlocks("FAQs", ContentService);
+            // Check if we have pending changes
+            var hasPendingChanges = Content.PendingBlockListChanges.TryGetValue("FAQs", out var pendingCache);
+            var pendingCount = pendingCache?.Count ?? 0;
+            
+            Logger.LogInformation("FAQ Preview BEFORE GetBlocks - ContentId: {ContentId}, ExpectedCount: {ExpectedCount}, HasPendingCache: {HasPendingCache}, PendingCacheCount: {PendingCount}", 
+                Content.Id, ExpectedCount, hasPendingChanges, pendingCount);
+            
+            // Load FAQ items with pending changes included for live preview
+            FaqItems = await Content.GetBlocks("FAQs", ContentService, includePendingChanges: true);
+            
+            Logger.LogInformation("FAQ Preview AFTER GetBlocks - FaqItems Count: {FaqItemsCount}", FaqItems.Count());
         }
         else
         {
