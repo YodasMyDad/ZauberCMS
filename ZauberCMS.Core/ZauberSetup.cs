@@ -41,6 +41,7 @@ using ZauberCMS.Core.Jobs;
 using ZauberCMS.Core.Languages.Parameters;
 using ZauberCMS.Core.Media.Middleware;
 using ZauberCMS.Core.Membership;
+using ZauberCMS.Core.Middleware;
 using ZauberCMS.Core.Membership.Claims;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Membership.Stores;
@@ -362,6 +363,9 @@ public static class ZauberSetup
         app.UseStaticFiles();
 
         app.UseRouting();
+        
+        // Culture middleware must run after routing so we have access to route values
+        app.UseMiddleware<CultureMiddleware>();
         
         app.UseRateLimiter();
 

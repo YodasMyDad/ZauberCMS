@@ -1,5 +1,4 @@
 ﻿@using System.Collections.Concurrent
-@using System.Globalization
 @using System.Text.RegularExpressions
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
@@ -7,6 +6,7 @@
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Middleware
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Seo.Parameters
 @using ZauberCMS.Core.Settings
@@ -46,7 +46,14 @@
         var instances = ExtensionManager.GetInstances<IContentView>(true);
         AllContentViews = new ConcurrentDictionary<string, IContentView>(instances);
         
-        var entryModel = await ContentService.GetContentFromRequestAsync(new GetContentFromRequestParameters { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
+        // Try to get EntryModel from middleware first (avoids duplicate query)
+        var entryModel = CultureMiddleware.GetEntryModel(HttpContext);
+        if (entryModel == null)
+        {
+            // Fallback: query if middleware didn't process this route (e.g., admin pages)
+            entryModel = await ContentService.GetContentFromRequestAsync(new GetContentFromRequestParameters { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
+        }
+        
         Content = entryModel.Content;
         LanguageKeys = entryModel.LanguageKeys;
         LanguageIso = entryModel.LanguageIsoCode ?? Settings.Value.AdminDefaultLanguage;
@@ -59,12 +66,7 @@
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
                 Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };
                 
-                // Set language
-                var cultureInfo = new CultureInfo(LanguageIso);
-                CultureInfo.CurrentCulture = cultureInfo;
-                CultureInfo.CurrentUICulture = cultureInfo;
-                CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-                CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+                // Note: Culture is now set by CultureMiddleware before this component renders
                 
                 // Role-based content restriction
                 if (Content.ContentRoles.Count != 0)
