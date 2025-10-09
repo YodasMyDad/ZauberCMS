@@ -1,3 +1,4 @@
+using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
 using ZauberCMS.Components.Trees;
@@ -12,8 +13,9 @@ namespace ZauberCMS.Components.Editors.ToolbarItems;
 /// </summary>
 public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
 {
-    private Media? _selectedMedia;
-    private Blazored.Modal.IModalReference? _currentModal;
+    private Media? SelectedMedia { get; set; }
+    private Guid? SelectedMediaId { get; set; }
+    private IModalReference? Modal { get; set; }
 
     public override string Id => "insertMedia";
     public override string Label => "Insert Media";
@@ -27,32 +29,33 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
     {
         await api.SaveSelectionRangeAsync();
 
-        _selectedMedia = null;
-
         var parameters = new Dictionary<string, object>
         {
+            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnMediaSelected) },
             { nameof(MediaTree.DisableContextMenu), true },
             { nameof(MediaTree.MediaTypes), new List<MediaType> { MediaType.Image } }
         };
-
-        _currentModal = modalService.OpenSidePanel<MediaTree>("Insert Media", parameters);
-        var result = await _currentModal.Result;
-
-        if (result.Confirmed && result.Data is Media media)
+        
+        
+        Modal = modalService.OpenSidePanel<MediaTree>("Insert Media", parameters);
+        var result = await Modal.Result;
+        
+        if (result.Confirmed && SelectedMedia != null)
         {
+            
             await api.RestoreSelectionRangeAsync();
-            await InsertMedia(api, media);
+            await InsertMedia(api, SelectedMedia);
             await api.ClearSavedSelectionRangeAsync();
         }
     }
 
     private void OnMediaSelected(object value)
     {
-        if (value is Media media && media.MediaType != MediaType.Folder)
+        if (value is Media { MediaType: MediaType.Image } media)
         {
-            _selectedMedia = media;
-            // Auto-close the modal when a valid media item is selected
-            _currentModal?.Close(ModalResult.Ok(media));
+            SelectedMediaId = media.Id;
+            SelectedMedia = media;
+            Modal?.Close(ModalResult.Ok(media));
         }
     }
 
@@ -65,7 +68,7 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
         await api.InsertHtmlAsync(html);
     }
 
-    private string BuildImageHtml(Media media)
+    private static string BuildImageHtml(Media media)
     {
         var attributes = new List<string>
         {
@@ -89,7 +92,7 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
         return $"<img {string.Join(" ", attributes)} />";
     }
 
-    private string BuildLinkHtml(Media media)
+    private static string BuildLinkHtml(Media media)
     {
         var linkText = System.Web.HttpUtility.HtmlEncode(media.Name ?? "Download");
         return $"<a href=\"{media.Url ?? ""}\" data-mediaid=\"{media.Id}\">{linkText}</a>";

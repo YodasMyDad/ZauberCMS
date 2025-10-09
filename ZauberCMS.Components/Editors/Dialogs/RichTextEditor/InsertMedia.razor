@@ -52,7 +52,7 @@
 
     private void OnMediaIdSelected(object value)
     {
-        if (value is Media media && media.MediaType == MediaType.Image)
+        if (value is Media { MediaType: MediaType.Image } media)
         {
             SelectedMediaId = media.Id;
             SelectedMedia = media;

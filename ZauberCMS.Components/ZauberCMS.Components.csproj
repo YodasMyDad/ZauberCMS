@@ -74,6 +74,14 @@
       <Content Remove="..\..\..\Users\LeeMessenger\.nuget\packages\zaubercms.rte\1.0.0-beta9\contentFiles\any\net9.0\package-lock.json" />
       <Content Remove="..\..\..\Users\LeeMessenger\.nuget\packages\zaubercms.rte\1.0.0-beta9\contentFiles\any\net9.0\package.json" />
     </ItemGroup>
+
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Editors\Settings\RichTextEditor\InsertMedia.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Editors\Dialogs\RichTextEditor\InsertMedia.razor" />
+    </ItemGroup>
     
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
         <PropertyGroup>
