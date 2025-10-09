@@ -11,11 +11,13 @@ public class CreateContentVersionParameters
     public List<string> Tags { get; set; } = [];
     public bool IsAutoSave { get; set; }
     public Guid? ParentVersionId { get; set; }
+    public Guid? CreatedByUserId { get; set; }
 }
 
 public class PublishContentVersionParameters
 {
     public required Guid VersionId { get; set; }
+    public Guid? PublishedByUserId { get; set; }
 }
 
 public class QueryContentVersionsParameters

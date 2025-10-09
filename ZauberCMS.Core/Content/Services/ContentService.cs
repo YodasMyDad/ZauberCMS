@@ -117,15 +117,22 @@ public class ContentService(
                             Content = parameters.Content,
                             Status = ContentVersionStatus.Draft,
                             IsAutoSave = false,
-                            Comments = "Draft saved - unpublished changes"
+                            Comments = "Draft saved - unpublished changes",
+                            CreatedByUserId = user?.Id
                         };
 
                         await versioningService.CreateVersionAsync(versionParameters, cancellationToken);
                     }
+                    else
+                    {
+                        logger.LogWarning("ContentVersioningService is null - versioning will not work for unpublished content");
+                    }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // Log version creation error but don't fail the content save
+                    logger.LogError(ex, "Failed to create draft version for unpublished content {ContentId}: {ErrorMessage}", 
+                        parameters.Content.Id, ex.Message);
                 }
             }
 
@@ -227,15 +234,22 @@ public class ContentService(
                         IsAutoSave = false,
                         Comments = shouldCreatePublishedVersion
                             ? (isUpdate ? "Content updated and published" : "Content created and published")
-                            : (isUpdate ? "Content updated" : "Content created")
+                            : (isUpdate ? "Content updated" : "Content created"),
+                        CreatedByUserId = user?.Id
                     };
 
                     await versioningService.CreateVersionAsync(versionParameters, cancellationToken);
                 }
+                else
+                {
+                    logger.LogWarning("ContentVersioningService is null - versioning will not work");
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // Log version creation error but don't fail the content save
+                logger.LogError(ex, "Failed to create content version for content {ContentId}: {ErrorMessage}", 
+                    content.Id, ex.Message);
             }
         }
 
@@ -1855,9 +1869,23 @@ public class ContentService(
     private async Task ProcessBlockListEditorChangesAsync(Models.Content content, IZauberDbContext dbContext, User user,
         CancellationToken cancellationToken)
     {
-        // Find BlockListEditor properties in this content
+        // Load ContentType to identify which properties are BlockListEditor type
+        var contentType = await dbContext.ContentTypes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ct => ct.Id == content.ContentTypeId, cancellationToken);
+            
+        if (contentType == null)
+            return;
+
+        // Find ContentType properties that are BlockListEditor components
+        var blockListPropertyIds = contentType.ContentProperties
+            .Where(p => p.ComponentAlias == "ZauberCMS.BlockListEditor")
+            .Select(p => p.Id)
+            .ToHashSet();
+
+        // Get the actual PropertyData items that match those property types
         var blockListProperties = content.PropertyData
-            .Where(p => p.Alias == "ZauberCMS.BlockListEditor")
+            .Where(p => blockListPropertyIds.Contains(p.ContentTypePropertyId))
             .ToList();
 
         // Collect all content IDs from all BlockListEditor properties

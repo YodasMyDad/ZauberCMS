@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Interfaces;
@@ -7,7 +5,6 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -17,8 +14,6 @@ namespace ZauberCMS.Core.Content.Services;
 public class ContentVersioningService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider,
-    UserManager<User> userManager,
     ExtensionManager extensionManager)
     : IContentVersioningService
 {
@@ -31,8 +26,6 @@ public class ContentVersioningService(
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentVersion>();
 
         if (parameters.Content == null)
@@ -78,7 +71,7 @@ public class ContentVersioningService(
             VersionName = parameters.VersionName,
             Status = parameters.Status,
             Comments = parameters.Comments,
-            CreatedById = user?.Id,
+            CreatedById = parameters.CreatedByUserId,
             IsCurrentPublished = parameters.Status == ContentVersionStatus.Published,
             IsLatestDraft = parameters.Status == ContentVersionStatus.Draft,
             IsAutoSave = parameters.IsAutoSave,
@@ -131,8 +124,6 @@ public class ContentVersioningService(
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentVersion>();
 
         var version = await dbContext.ContentVersions
@@ -161,7 +152,7 @@ public class ContentVersioningService(
         version.Status = ContentVersionStatus.Published;
         version.IsCurrentPublished = true;
         version.DatePublished = DateTime.UtcNow;
-        version.CreatedById = user?.Id; // Update the publisher
+        version.CreatedById = parameters.PublishedByUserId; // Update the publisher
 
         // Publish to content
         PublishVersionToContentAsync(dbContext, version, content, cancellationToken);
