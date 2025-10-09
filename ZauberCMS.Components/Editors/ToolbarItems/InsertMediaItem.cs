@@ -76,7 +76,7 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
             $"data-mediaid=\"{media.Id}\""
         };
 
-        if (media.Width > 0)
+        /*if (media.Width > 0)
         {
             attributes.Add($"width=\"{media.Width}\"");
         }
@@ -84,7 +84,7 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
         if (media.Height > 0)
         {
             attributes.Add($"height=\"{media.Height}\"");
-        }
+        }*/
 
         var altText = media.AltTag ?? media.Name ?? "";
         attributes.Add($"alt=\"{System.Web.HttpUtility.HtmlEncode(altText)}\"");

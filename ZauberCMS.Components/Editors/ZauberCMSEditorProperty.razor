@@ -2,6 +2,11 @@
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.RTE.Components
 @using ZauberCMS.RTE.Models
+@using HtmlAgilityPack
+@using ZauberCMS.Core.Media.Interfaces
+@using ZauberCMS.Core.Media.Parameters
+@using ZauberCMS.Core.Extensions
+@using Radzen
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <ZauberRichTextEditor @bind-Value="@Value"
@@ -16,6 +21,8 @@
     
     [CascadingParameter] public IModalService? ModalService { get; set; }
     
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    
     public string Name { get; set; } = "Text Editor (ZauberCMS RTE)";
     public string Alias { get; set; } = "ZauberCMS.ZauberRTE";
     public string Icon { get; set; } = "edit_note";
@@ -29,13 +36,14 @@
     private EditorSettings EditorSettings { get; set; } = new();
     private bool _initialized;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (!_initialized)
         {
             SettingsModel = Settings.FromJson<ZauberCMSEditorSettingsModel>();
             EditorSettings = BuildEditorSettings();
             _initialized = true;
+            await ValidateMediaReferences();
         }
     }
 
@@ -88,5 +96,76 @@
     private async Task OnChange(EditorChangeArgs args)
     {
         await ValueChanged.InvokeAsync(args.Html);
+    }
+
+    private async Task ValidateMediaReferences()
+    {
+        if (string.IsNullOrWhiteSpace(Value)) return;
+        
+        var doc = new HtmlDocument();
+        doc.LoadHtml(Value);
+        
+        // Find all img and a tags with data-mediaid
+        var mediaNodes = doc.DocumentNode.SelectNodes("//*[@data-mediaid]");
+        if (mediaNodes == null || !mediaNodes.Any()) return;
+        
+        var updatedUrls = new List<string>();
+        var deletedItems = new List<string>();
+        var htmlChanged = false;
+        
+        foreach (var node in mediaNodes)
+        {
+            var mediaIdStr = node.GetAttributeValue("data-mediaid", string.Empty);
+            if (!Guid.TryParse(mediaIdStr, out var mediaId)) continue;
+            
+            // Query media service
+            var media = await MediaService.GetMediaAsync(new GetMediaParameters 
+            { 
+                Id = mediaId, 
+                AsNoTracking = true 
+            });
+            
+            if (media == null)
+            {
+                // Media deleted - remove the element
+                node.Remove();
+                deletedItems.Add(mediaIdStr);
+                htmlChanged = true;
+            }
+            else
+            {
+                // Determine which attribute to check based on node type
+                var urlAttribute = node.Name == "img" ? "src" : "href";
+                var currentUrl = node.GetAttributeValue(urlAttribute, string.Empty);
+                
+                // Check if URL changed and update if needed
+                if (!string.IsNullOrEmpty(media.Url) && currentUrl != media.Url)
+                {
+                    node.SetAttributeValue(urlAttribute, media.Url);
+                    updatedUrls.Add(media.Name ?? "Unnamed");
+                    htmlChanged = true;
+                }
+            }
+        }
+        
+        // Update editor value if changes were made
+        if (htmlChanged)
+        {
+            Value = doc.DocumentNode.OuterHtml;
+            await ValueChanged.InvokeAsync(Value);
+            
+            // Show notifications
+            if (updatedUrls.Any())
+            {
+                var detail = $"{updatedUrls.Count} media URL(s) updated. Please save the page to persist changes.";
+                NotificationService.ShowNotification("Media URLs Updated", NotificationSeverity.Info, detail);
+            }
+            
+            if (deletedItems.Any())
+            {
+                var detail = $"{deletedItems.Count} deleted media item(s) removed. Please save the page to persist changes.";
+                NotificationService.ShowWarningNotification("Deleted Media Removed", detail);
+            }
+        }
     }
 }
