@@ -9,6 +9,7 @@ public class TinyMcePropertySettingsModel
     }
     
     public bool ShowMenuBar { get; set; } = true;
+    public string? SelectedApiKey { get; set; }
     public List<string> SelectedMenuBar { get; set; }
     public List<string> SelectedToolBar { get; set; }
     

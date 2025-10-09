@@ -3,6 +3,16 @@
 
 <EditorRow>
     <LeftColumn>
+        <PropertyInfo Name="TinyMCE API Key" Description="Select the API key to use for TinyMCE"/>
+    </LeftColumn>
+    <CentreColumn>
+        <ApiKeysPickerProperty Value="@Settings.SelectedApiKey" 
+                               ValueChanged="@(value => Settings.SelectedApiKey = value)" />
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
         <PropertyInfo Name="Show Menu Bar" Description="Show the top drop down menus"/>
     </LeftColumn>
     <CentreColumn>
