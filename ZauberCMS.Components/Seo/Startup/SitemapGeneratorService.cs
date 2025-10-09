@@ -13,6 +13,7 @@ using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Components.Seo.Startup;
 
@@ -68,7 +69,7 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                     rootPage = await contentService.GetContent(rootPage.InternalRedirectId);
                 }
 
-                if (rootPage != null) AddPageToSitemap(rootPage, sitemapEntries, seoSitemap, ns, true);
+                if (rootPage != null) await AddPageToSitemap(rootPage, sitemapEntries, seoSitemap, ns, contentService, true);
 
                 var contentItems = await contentService.QueryContentAsync(new QueryContentParameters
                 {
@@ -81,7 +82,7 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                     // Only allow if this item is under the root id
                     if (content.Path.Contains(seoSitemap.RootContentId))
                     {
-                        AddPageToSitemap(content, sitemapEntries, seoSitemap, ns);
+                        await AddPageToSitemap(content, sitemapEntries, seoSitemap, ns, contentService);
                     }
                 }
     
@@ -113,13 +114,43 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
         }
     }
     
-    private static void AddPageToSitemap(Content content, List<XElement> sitemapEntries, SeoSitemap seoSitemap, XNamespace ns, bool isRootItem = false)
+    private static async Task<PropertyType?> FindSeoPropertyAsync(Content content, IContentService contentService)
+    {
+        if (content.ContentType == null) return null;
+        
+        // Check main ContentType first
+        var seoProperty = content.ContentType.ContentProperties
+            .FirstOrDefault(x => x.Component == "ZauberCMS.Components.Editors.SeoProperty");
+        
+        if (seoProperty != null) return seoProperty;
+        
+        // Check compositions if not found
+        if (content.ContentType.CompositionIds.Count > 0)
+        {
+            foreach (var compositionId in content.ContentType.CompositionIds)
+            {
+                var compositionType = await contentService.GetContentTypeAsync(
+                    new GetContentTypeParameters { Id = compositionId });
+                
+                if (compositionType != null)
+                {
+                    seoProperty = compositionType.ContentProperties
+                        .FirstOrDefault(x => x.Component == "ZauberCMS.Components.Editors.SeoProperty");
+                    
+                    if (seoProperty != null) return seoProperty;
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    private static async Task AddPageToSitemap(Content content, List<XElement> sitemapEntries, SeoSitemap seoSitemap, XNamespace ns, IContentService contentService, bool isRootItem = false)
     {
         // Finally, need to see if this is using the SEO property and whether they
         // have ticked noindex or remove from sitemap
         var allowInSitemap = true;
-        var seoProperty =
-            content.ContentType?.ContentProperties.FirstOrDefault(x => x.Component == "ZauberCMS.Components.Editors.SeoProperty");
+        var seoProperty = await FindSeoPropertyAsync(content, contentService);
         
         Meta? metaData = null;
         if (seoProperty != null)
