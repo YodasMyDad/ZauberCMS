@@ -113,7 +113,7 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
         }
     }
     
-    private void AddPageToSitemap(Content content, List<XElement> sitemapEntries, SeoSitemap seoSitemap, XNamespace ns, bool isRootItem = false)
+    private static void AddPageToSitemap(Content content, List<XElement> sitemapEntries, SeoSitemap seoSitemap, XNamespace ns, bool isRootItem = false)
     {
         // Finally, need to see if this is using the SEO property and whether they
         // have ticked noindex or remove from sitemap
