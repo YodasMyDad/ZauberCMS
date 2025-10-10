@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-		<PackageVersion>4.0.0-rc.5.4</PackageVersion>
+		<PackageVersion>4.0.0-rc.5.5</PackageVersion>
 		<PackageType>Template</PackageType>
         <PackageId>ZauberCMS.Template</PackageId>
         <Title>ZauberCMS.Template</Title>
@@ -32,6 +32,7 @@
     </ItemGroup>
 
 </Project>
+
 
 
 
