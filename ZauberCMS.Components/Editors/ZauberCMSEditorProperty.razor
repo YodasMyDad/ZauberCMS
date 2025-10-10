@@ -5,6 +5,8 @@
 @using HtmlAgilityPack
 @using ZauberCMS.Core.Media.Interfaces
 @using ZauberCMS.Core.Media.Parameters
+@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Extensions
 @using Radzen
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
@@ -43,7 +45,7 @@
             SettingsModel = Settings.FromJson<ZauberCMSEditorSettingsModel>();
             EditorSettings = BuildEditorSettings();
             _initialized = true;
-            await ValidateMediaReferences();
+            await ValidateEmbeddedReferences();
         }
     }
 
@@ -66,7 +68,7 @@
                     new ToolbarSeparator(),
                     new ToolbarBlock("headings", "blockquote"),
                     new ToolbarSeparator(),
-                    new ToolbarBlock("ul", "ol", "link", "unlink", "image", "insertMedia"),
+                    new ToolbarBlock("ul", "ol", "insertContentLink", "unlink", "image", "insertMedia"),
                     new ToolbarSeparator(),
                     new ToolbarBlock("alignLeft", "alignCenter", "alignRight", "justified"),
                     new ToolbarSeparator(),
@@ -98,52 +100,94 @@
         await ValueChanged.InvokeAsync(args.Html);
     }
 
-    private async Task ValidateMediaReferences()
+    private async Task ValidateEmbeddedReferences()
     {
         if (string.IsNullOrWhiteSpace(Value)) return;
         
         var doc = new HtmlDocument();
         doc.LoadHtml(Value);
         
-        // Find all img and a tags with data-mediaid
-        var mediaNodes = doc.DocumentNode.SelectNodes("//*[@data-mediaid]");
-        if (mediaNodes == null || !mediaNodes.Any()) return;
-        
         var updatedUrls = new List<string>();
         var deletedItems = new List<string>();
         var htmlChanged = false;
         
-        foreach (var node in mediaNodes)
+        // Validate media references (images and media links)
+        var mediaNodes = doc.DocumentNode.SelectNodes("//*[@data-mediaid]");
+        if (mediaNodes != null && mediaNodes.Any())
         {
-            var mediaIdStr = node.GetAttributeValue("data-mediaid", string.Empty);
-            if (!Guid.TryParse(mediaIdStr, out var mediaId)) continue;
-            
-            // Query media service
-            var media = await MediaService.GetMediaAsync(new GetMediaParameters 
-            { 
-                Id = mediaId, 
-                AsNoTracking = true 
-            });
-            
-            if (media == null)
+            foreach (var node in mediaNodes)
             {
-                // Media deleted - remove the element
-                node.Remove();
-                deletedItems.Add(mediaIdStr);
-                htmlChanged = true;
-            }
-            else
-            {
-                // Determine which attribute to check based on node type
-                var urlAttribute = node.Name == "img" ? "src" : "href";
-                var currentUrl = node.GetAttributeValue(urlAttribute, string.Empty);
+                var mediaIdStr = node.GetAttributeValue("data-mediaid", string.Empty);
+                if (!Guid.TryParse(mediaIdStr, out var mediaId)) continue;
                 
-                // Check if URL changed and update if needed
-                if (!string.IsNullOrEmpty(media.Url) && currentUrl != media.Url)
+                // Query media service
+                var media = await MediaService.GetMediaAsync(new GetMediaParameters 
+                { 
+                    Id = mediaId, 
+                    AsNoTracking = true 
+                });
+                
+                if (media == null)
                 {
-                    node.SetAttributeValue(urlAttribute, media.Url);
-                    updatedUrls.Add(media.Name ?? "Unnamed");
+                    // Media deleted - remove the element
+                    node.Remove();
+                    deletedItems.Add(mediaIdStr);
                     htmlChanged = true;
+                }
+                else
+                {
+                    // Determine which attribute to check based on node type
+                    var urlAttribute = node.Name == "img" ? "src" : "href";
+                    var currentUrl = node.GetAttributeValue(urlAttribute, string.Empty);
+                    
+                    // Check if URL changed and update if needed
+                    if (!string.IsNullOrEmpty(media.Url) && currentUrl != media.Url)
+                    {
+                        node.SetAttributeValue(urlAttribute, media.Url);
+                        updatedUrls.Add(media.Name ?? "Unnamed");
+                        htmlChanged = true;
+                    }
+                }
+            }
+        }
+        
+        // Validate content link references
+        var contentLinkNodes = doc.DocumentNode.SelectNodes("//a[@data-contentid]");
+        if (contentLinkNodes != null && contentLinkNodes.Any())
+        {
+            foreach (var node in contentLinkNodes)
+            {
+                var contentIdStr = node.GetAttributeValue("data-contentid", string.Empty);
+                if (!Guid.TryParse(contentIdStr, out var contentId)) continue;
+                
+                // Query content service
+                var content = await ContentService.GetContentAsync(new GetContentParameters
+                {
+                    Id = contentId,
+                    AsNoTracking = true
+                });
+                
+                if (content == null)
+                {
+                    // Content deleted - remove link but preserve inner text
+                    var innerText = node.InnerText;
+                    var textNode = doc.CreateTextNode(innerText);
+                    node.ParentNode.ReplaceChild(textNode, node);
+                    deletedItems.Add(contentIdStr);
+                    htmlChanged = true;
+                }
+                else
+                {
+                    // Check if URL changed and update if needed
+                    var currentHref = node.GetAttributeValue("href", string.Empty);
+                    var contentUrl = content.Url();
+                    
+                    if (!string.IsNullOrEmpty(contentUrl) && currentHref != contentUrl)
+                    {
+                        node.SetAttributeValue("href", contentUrl);
+                        updatedUrls.Add(content.Name ?? "Unnamed");
+                        htmlChanged = true;
+                    }
                 }
             }
         }
@@ -157,14 +201,14 @@
             // Show notifications
             if (updatedUrls.Any())
             {
-                var detail = $"{updatedUrls.Count} media URL(s) updated. Please save the page to persist changes.";
-                NotificationService.ShowNotification("Media URLs Updated", NotificationSeverity.Info, detail);
+                var detail = $"{updatedUrls.Count} link URL(s) updated. Please save the page to persist changes.";
+                NotificationService.ShowNotification("URLs Updated", NotificationSeverity.Info, detail);
             }
             
             if (deletedItems.Any())
             {
-                var detail = $"{deletedItems.Count} deleted media item(s) removed. Please save the page to persist changes.";
-                NotificationService.ShowWarningNotification("Deleted Media Removed", detail);
+                var detail = $"{deletedItems.Count} deleted item(s) removed or unlinked. Please save the page to persist changes.";
+                NotificationService.ShowWarningNotification("Deleted Items Removed", detail);
             }
         }
     }

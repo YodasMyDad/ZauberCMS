@@ -1,0 +1,256 @@
+@using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Extensions
+@using ZauberCMS.RTE.Models
+@using ZauberCMS.Components.Editors.Dialogs.Models
+@using Microsoft.JSInterop
+@inject NotificationService NotificationService
+@inject IJSRuntime JsRuntime
+
+<div style="min-height: 500px;">
+    <RadzenSelectBar @bind-Value="@_selectedTab" Change="@((string args) => OnTabChange(args))" Style="margin-bottom: 1rem;">
+        <Items>
+            <RadzenSelectBarItem Text="Content" Value="@("content")" />
+            <RadzenSelectBarItem Text="Manual" Value="@("manual")" />
+        </Items>
+    </RadzenSelectBar>
+
+    @if (_selectedTab == "content")
+    {
+        <div class="content-tab">
+            <ContentTree ValueChanged="OnContentSelectedHandler"
+                         DisableContextMenu="true"
+                         DisableSectionOnlyContextMenu="true" />
+            
+            @if (_selectedContent != null)
+            {
+                <div style="margin-top: 1rem; padding: 0.5rem; background: var(--rz-info-lighter); border-radius: 4px;">
+                    <strong>Selected:</strong> @_selectedContent.Name
+                </div>
+            }
+        </div>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                     AlignItems="AlignItems.Center" class="rz-mt-3" Gap="0.5rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Click="@Cancel" />
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="link" Text="Insert Link"
+                          Click="@InsertContentLink" Disabled="@(_selectedContent == null)" />
+        </RadzenStack>
+    }
+    else
+    {
+        <div class="manual-tab">
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="URL" Description="The link destination" />
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenTextBox @bind-Value="@_url" Style="width: 100%;"
+                                   Placeholder="https://example.com" aria-label="URL" />
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Link Text" Description="Text to display for the link" />
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenTextBox @bind-Value="@_linkText" Style="width: 100%;"
+                                   Placeholder="Link text" aria-label="Link Text" />
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Title" Description="Optional tooltip text" />
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenTextBox @bind-Value="@_title" Style="width: 100%;"
+                                   Placeholder="Optional" aria-label="Title" />
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Target" Description="Where to open the link" />
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenDropDown @bind-Value="@_target" Data="@_targetOptions" Style="width: 100%;"
+                                    TextProperty="Text" ValueProperty="Value" aria-label="Target" />
+                </CentreColumn>
+            </EditorRow>
+
+            <EditorRow>
+                <LeftColumn>
+                    <PropertyInfo Name="Rel" Description="Link relationship" />
+                </LeftColumn>
+                <CentreColumn>
+                    <RadzenDropDown @bind-Value="@_rel" Data="@_relOptions" Style="width: 100%;"
+                                    TextProperty="Text" ValueProperty="Value" aria-label="Rel" />
+                </CentreColumn>
+            </EditorRow>
+        </div>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                     AlignItems="AlignItems.Center" class="rz-mt-3" Gap="0.5rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Click="@Cancel" />
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save Link"
+                          Click="@SaveManualLink" Disabled="@(string.IsNullOrWhiteSpace(_url))" />
+        </RadzenStack>
+    }
+</div>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance Modal { get; set; } = null!;
+    
+    [Parameter] public SelectionInfo? CurrentSelection { get; set; }
+    [Parameter] public LinkInfo? ExistingLink { get; set; }
+
+    private string _selectedTab = "content";
+    private Content? _selectedContent;
+    private string _url = string.Empty;
+    private string _linkText = string.Empty;
+    private string _title = string.Empty;
+    private string _target = string.Empty;
+    private string _rel = string.Empty;
+
+    private bool _hasContentData;
+    private bool _hasManualData;
+
+    private List<OptionItem> _targetOptions =
+    [
+        new() { Text = "Current window", Value = "" },
+        new() { Text = "New window", Value = "_blank" }
+    ];
+
+    private List<OptionItem> _relOptions =
+    [
+        new() { Text = "None", Value = "" },
+        new() { Text = "No follow", Value = "nofollow" },
+        new() { Text = "No opener (recommended for new windows)", Value = "noopener noreferrer" }
+    ];
+
+    protected override Task OnInitializedAsync()
+    {
+        // If editing an existing link, populate manual tab fields
+        if (ExistingLink != null)
+        {
+            _url = ExistingLink.Href ?? string.Empty;
+            _linkText = ExistingLink.Text ?? string.Empty;
+            _target = ExistingLink.Target ?? string.Empty;
+            _rel = ExistingLink.Rel ?? string.Empty;
+            _title = ExistingLink.Title ?? string.Empty;
+            _selectedTab = "manual";
+            _hasManualData = true;
+        }
+        else if (CurrentSelection != null && !string.IsNullOrWhiteSpace(CurrentSelection.SelectedText))
+        {
+            // Pre-fill link text with selected text
+            _linkText = CurrentSelection.SelectedText;
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    private void OnContentSelectedHandler(object value)
+    {
+        if (value is Content content)
+        {
+            _selectedContent = content;
+            _hasContentData = true;
+        }
+    }
+
+    private async Task OnTabChange(string value)
+    {
+        var newTab = value ?? "content";
+        
+        // Check if switching away from tab with data
+        if (_selectedTab == "content" && _hasContentData && newTab != "content")
+        {
+            var confirmed = await JsRuntime.InvokeAsync<bool>("confirm",
+                "You have selected content. Switch to manual entry anyway?");
+            if (!confirmed)
+            {
+                _selectedTab = "content"; // Revert
+                StateHasChanged();
+                return;
+            }
+            _selectedContent = null;
+            _hasContentData = false;
+        }
+        else if (_selectedTab == "manual" && _hasManualData && newTab != "manual")
+        {
+            var hasData = !string.IsNullOrWhiteSpace(_url) || !string.IsNullOrWhiteSpace(_linkText);
+            if (hasData)
+            {
+                var confirmed = await JsRuntime.InvokeAsync<bool>("confirm",
+                    "You have unsaved manual link data. Switch to content selection anyway?");
+                if (!confirmed)
+                {
+                    _selectedTab = "manual"; // Revert
+                    StateHasChanged();
+                    return;
+                }
+                _url = string.Empty;
+                _linkText = CurrentSelection?.SelectedText ?? string.Empty;
+                _title = string.Empty;
+                _target = string.Empty;
+                _rel = string.Empty;
+                _hasManualData = false;
+            }
+        }
+
+        _selectedTab = newTab;
+    }
+
+    private async Task InsertContentLink()
+    {
+        if (_selectedContent == null) return;
+
+        var linkText = CurrentSelection?.SelectedText ?? _selectedContent.Name ?? "Link";
+        var contentUrl = _selectedContent.Url(); // Use extension method
+
+        var result = new ContentLinkResult
+        {
+            Content = _selectedContent,
+            LinkText = linkText,
+            Url = contentUrl
+        };
+
+        await Modal.CloseAsync(ModalResult.Ok(result));
+    }
+
+    private async Task SaveManualLink()
+    {
+        if (string.IsNullOrWhiteSpace(_url)) return;
+
+        // If link text is empty, use URL
+        if (string.IsNullOrWhiteSpace(_linkText))
+        {
+            _linkText = _url;
+        }
+
+        var result = new ManualLinkResult
+        {
+            Url = _url,
+            Text = _linkText,
+            Title = _title,
+            Target = _target,
+            Rel = _rel
+        };
+
+        await Modal.CloseAsync(ModalResult.Ok(result));
+    }
+
+    private async Task Cancel()
+    {
+        await Modal.CloseAsync(ModalResult.Cancel());
+    }
+
+    private class OptionItem
+    {
+        public string Text { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+}
+
