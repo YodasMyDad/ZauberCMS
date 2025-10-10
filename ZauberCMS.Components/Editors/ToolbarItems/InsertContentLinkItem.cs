@@ -61,7 +61,7 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
                 else if (result.Data is ManualLinkResult manualLinkResult)
                 {
                     await InsertManualLink(api, manualLinkResult.Url, manualLinkResult.Text, 
-                        manualLinkResult.Title, manualLinkResult.Target, manualLinkResult.Rel);
+                        manualLinkResult.Title, manualLinkResult.Target, manualLinkResult.Rel, manualLinkResult.ContentId);
                 }
 
                 await api.ClearSavedSelectionRangeAsync();
@@ -81,7 +81,7 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
         await api.InsertHtmlAsync(html);
     }
 
-    private async Task InsertManualLink(IEditorApi api, string url, string text, string? title, string? target, string? rel)
+    private async Task InsertManualLink(IEditorApi api, string url, string text, string? title, string? target, string? rel, Guid? contentId = null)
     {
         var attrs = new Dictionary<string, string>
         {
@@ -97,15 +97,16 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
         {
             attrs["rel"] = rel;
         }
-        else if (target == "_blank")
-        {
-            // Auto-add security rel for new windows if not specified
-            attrs["rel"] = "noopener noreferrer";
-        }
 
         if (!string.IsNullOrWhiteSpace(title))
         {
             attrs["title"] = title;
+        }
+        
+        // Add data-contentid if link originated from content selection
+        if (contentId.HasValue)
+        {
+            attrs["data-contentid"] = contentId.Value.ToString();
         }
 
         // Build the link HTML

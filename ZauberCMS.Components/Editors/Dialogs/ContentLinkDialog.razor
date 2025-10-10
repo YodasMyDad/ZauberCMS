@@ -107,6 +107,7 @@
 
     private string _selectedTab = "content";
     private Content? _selectedContent;
+    private Guid? _selectedContentId; // Track content ID for manual links
     private string _url = string.Empty;
     private string _linkText = string.Empty;
     private string _title = string.Empty;
@@ -156,7 +157,18 @@
         if (value is Content content)
         {
             _selectedContent = content;
+            _selectedContentId = content.Id;
             _hasContentData = true;
+            
+            // Auto-populate manual fields with content data
+            var contentUrl = content.Url() ?? string.Empty;
+            if (!string.IsNullOrEmpty(contentUrl) && !contentUrl.StartsWith("/") && !contentUrl.Contains("://"))
+            {
+                contentUrl = "/" + contentUrl;
+            }
+            
+            _url = contentUrl;
+            _linkText = CurrentSelection?.SelectedText ?? content.Name ?? "Link";
         }
     }
 
@@ -167,15 +179,7 @@
         // Check if switching away from tab with data
         if (_selectedTab == "content" && _hasContentData && newTab != "content")
         {
-            var confirmed = await JsRuntime.InvokeAsync<bool>("confirm",
-                "You have selected content. Switch to manual entry anyway?");
-            if (!confirmed)
-            {
-                _selectedTab = "content"; // Revert
-                StateHasChanged();
-                return;
-            }
-            _selectedContent = null;
+            // Don't show confirmation - just switch to manual tab (content data is already populated)
             _hasContentData = false;
         }
         else if (_selectedTab == "manual" && _hasManualData && newTab != "manual")
@@ -191,12 +195,15 @@
                     StateHasChanged();
                     return;
                 }
+                // Clear manual data but keep content ID if it exists
                 _url = string.Empty;
                 _linkText = CurrentSelection?.SelectedText ?? string.Empty;
                 _title = string.Empty;
                 _target = string.Empty;
                 _rel = string.Empty;
                 _hasManualData = false;
+                _selectedContent = null;
+                _selectedContentId = null;
             }
         }
 
@@ -208,7 +215,13 @@
         if (_selectedContent == null) return;
 
         var linkText = CurrentSelection?.SelectedText ?? _selectedContent.Name ?? "Link";
-        var contentUrl = _selectedContent.Url(); // Use extension method
+        var contentUrl = _selectedContent.Url() ?? string.Empty; // Use extension method
+        
+        // Ensure URL starts with / for internal links
+        if (!string.IsNullOrEmpty(contentUrl) && !contentUrl.StartsWith("/") && !contentUrl.Contains("://"))
+        {
+            contentUrl = "/" + contentUrl;
+        }
 
         var result = new ContentLinkResult
         {
@@ -236,7 +249,8 @@
             Text = _linkText,
             Title = _title,
             Target = _target,
-            Rel = _rel
+            Rel = _rel,
+            ContentId = _selectedContentId // Include content ID if link originated from content selection
         };
 
         await Modal.CloseAsync(ModalResult.Ok(result));

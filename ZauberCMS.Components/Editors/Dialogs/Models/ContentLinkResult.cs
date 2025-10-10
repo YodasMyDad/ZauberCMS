@@ -17,6 +17,7 @@ public class ManualLinkResult
     public string? Title { get; set; }
     public string? Target { get; set; }
     public string? Rel { get; set; }
+    public Guid? ContentId { get; set; } // If link originated from content selection
     public bool IsContentLink => false;
 }
 
