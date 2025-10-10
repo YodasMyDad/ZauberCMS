@@ -70,6 +70,51 @@ function Invoke-ReleaseBuild {
     Write-Host "Build completed successfully!"
 }
 
+# Function to pack the template
+function Invoke-TemplatePack {
+    param([string]$Version)
+    
+    Write-Host "Packing ZauberCMS.Template..."
+    
+    Push-Location "ZauberCMS.Template"
+    
+    try {
+        dotnet pack -c Release
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Template pack failed with exit code $LASTEXITCODE"
+            exit 1
+        }
+        
+        Write-Host "Template packed successfully!"
+        
+        # Move only the package matching the current version to NugetSource folder
+        $packageFileName = "ZauberCMS.Template.$Version.nupkg"
+        $packagePath = Join-Path "bin\Release" $packageFileName
+        
+        if (!(Test-Path $packagePath)) {
+            Write-Error "Expected package file not found: $packagePath"
+            exit 1
+        }
+        
+        $nugetSourcePath = "..\NugetSource"
+        
+        if (!(Test-Path $nugetSourcePath)) {
+            Write-Host "Creating NugetSource folder..."
+            New-Item -Path $nugetSourcePath -ItemType Directory | Out-Null
+        }
+        
+        $destination = Join-Path $nugetSourcePath $packageFileName
+        Write-Host "Moving $packageFileName to NugetSource folder..."
+        Move-Item -Path $packagePath -Destination $destination -Force
+        
+        Write-Host "Template package moved to NugetSource folder."
+    }
+    finally {
+        Pop-Location
+    }
+}
+
 # Main script logic
 try {
     # Get current version from ZauberCMS.Core.csproj
@@ -117,6 +162,9 @@ try {
 
     # Run the release build
     Invoke-ReleaseBuild
+
+    # Pack and move the template
+    Invoke-TemplatePack -Version $NewVersion
 
     Write-Host "Release completed successfully! NuGet packages generated in NugetSource folder."
 }

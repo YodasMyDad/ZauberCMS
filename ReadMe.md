@@ -1,5 +1,7 @@
 ﻿# ZauberCMS - The Blazor CMS
 
+### Note: This is v4 RC and still in .NET 9 for you to test, when released this will be updated to .NET 10.
+
 ZauberCMS is a fully featured CMS built in .NET 10. The CMS is inspired by Umbraco but built entirely in Blazor.
 
 **Front End (Your website):** Fast static server-side rendering (static SSR) with the ability to add Blazor components for interactivity (As recommended by MS) using @rendermode, or use your favourite JS framework (Vue, AlpineJS etc...)
@@ -10,13 +12,13 @@ The goal is simple: a CMS that’s simple, super easy to extend, highly modular,
  
 ✅ Built With Blazor  
 ✅ Visual Page Builder & Editor (Optional)  
-✅ Manage Media  
-✅ Custom Languages  
-✅ Multi Sites  
-✅ SEO Features Built In  
-✅ Private Members Sections (Role Based)   
-✅ Highly Customizable  
-✅ Full Documentation
+✅ Manage Content, Media & Users  
+✅ Custom Languages & Cultures  
+✅ SEO Features Built In (Sitemaps, Redirects + More)  
+✅ Protect Content & Media (Role Based)  
+✅ Highly & Easily Customizable Using C#  
+✅ Full Documentation  
+✅ And loads more...
 
 Website: [www.zaubercms.com](https://www.zaubercms.com/)
 
@@ -24,11 +26,11 @@ You can also find us on [Twitter / X](https://twitter.com/zaubercms) and [Facebo
 
 ## Getting Started
 
-Fastest way to get started building your own website is using the .NET Template, firstly install the ZauberCMS template (--force just makes sure you install the latest one)
+Fastest way to get started building your own website is using the .NET Template, firstly install the ZauberCMS template (You must use rc release to get v4)
 
 ```ps
 # Ensure we have the latest ZauberCMS templates
-dotnet new install ZauberCMS.Template --force
+dotnet new install ZauberCMS.Template::4.0.0-rc.5.4 --force
 
 # Create your CMS
 dotnet new zaubercms -n "YourSiteName"
@@ -42,7 +44,7 @@ https://aptitude.gitbook.io/zaubercms/getting-started/quick-start
 
 ## Getting Started Video
 
-This video shows building a very simple site from scratch, hopefully you'll see how easy it is!
+This video shows building a very simple site from scratch, hopefully you'll see how easy it is! This is an older version of the CMS and some of the services have changed, but the concepts are the same.
 
 [![Starter Site Build YouTube Video](https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FVr2cbdfxDGZK1u2Fd59w%2Fuploads%2FPInFco2RCtXOrEN3hFVY%2Fgetting-started.png?alt=media&token=58bcda5e-0cf8-4789-b797-fb0f85a174b4)](https://www.youtube.com/watch?v=BvULaHbiIEU)
 
@@ -50,11 +52,13 @@ This video shows building a very simple site from scratch, hopefully you'll see 
 
 This repo comes with a starter site example so you can see some of the most common concepts, if you clone this repo, build and run the **ZauberCMS.Web** project you will see the starter kit (Go to /admin, register an account to see everything).
 
-If you want to use this starter site as a starting point for your own website. Remove the project from the source, and remove the project reference in the csproj and uncomment the nuget package reference.
+**Use the example site:** If you want to use this starter site as a starting point for your own website. Remove the project from the source, and remove the project reference in the csproj and uncomment the nuget package reference.
 
-See here
-
-https://github.com/YodasMyDad/ZauberCMS/blob/main-mvc/ZauberCMS.Web/ZauberCMS.Web.csproj#L12
+    <ItemGroup>
+      <!--Remove this line 👇🏼 and uncomment the below line-->
+      <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
+      <!--<PackageReference Include="ZauberCMS" Version="4.0.0-rc.5.4" />-->
+    </ItemGroup>
 
 _Again, DO NOT  use the entire source code to build your own site. You are supposed to use the Nuget package (or Template) like above._ 
 
