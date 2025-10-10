@@ -1,5 +1,4 @@
 ﻿@using System.Collections.Concurrent
-@using System.Text.RegularExpressions
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
@@ -8,7 +7,6 @@
 @using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Middleware
 @using ZauberCMS.Core.Plugins
-@using ZauberCMS.Core.Seo.Parameters
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Services
 
@@ -114,13 +112,6 @@
             var hasContent = await ContentService.AnyContentAsync();
             if (hasContent)
             {
-                // Check for redirects
-                var redirectResult = await CheckForRedirects();
-                if (redirectResult)
-                {
-                    return; // Redirect was performed, no need to continue
-                }
-                
                 if (AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
                 {
                     ComponentView = notFound;
@@ -133,68 +124,5 @@
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
             }
         }
-    }
-
-    private async Task<bool> CheckForRedirects()
-    {
-        try
-        {
-            var allRedirects = await SeoService.QueryRedirectsAsync(new QueryRedirectsParameters());
-            var currentUrl = GetFullUrlPath();
-            
-            foreach (var seoRedirect in allRedirects.Where(seoRedirect => !string.IsNullOrEmpty(seoRedirect.FromUrl)))
-            {
-                if (!string.IsNullOrWhiteSpace(seoRedirect.FromUrl) && !string.IsNullOrWhiteSpace(seoRedirect.ToUrl))
-                {
-                    if (seoRedirect.FromUrl.Equals(currentUrl, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Redirect matches directly
-                        PerformRedirect(seoRedirect.ToUrl!, seoRedirect.IsPermanent);
-                        return true;
-                    }
-
-                    // Attempt to match as a Regular Expression
-                    try
-                    {
-                        if (Regex.IsMatch(currentUrl, seoRedirect.FromUrl, RegexOptions.IgnoreCase))
-                        {
-                            // Redirect matches via regex
-                            PerformRedirect(seoRedirect.ToUrl!, seoRedirect.IsPermanent);
-                            return true;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex, "Invalid regex pattern in redirect FromUrl {FromUrl}", seoRedirect.FromUrl);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error checking redirects");
-        }
-        
-        return false;
-    }
-
-    private void PerformRedirect(string toUrl, bool isPermanent)
-    {
-        if (HttpContext is { Response.HasStarted: false })
-        {
-            HttpContext.Response.StatusCode = isPermanent ? 301 : 302;
-            HttpContext.Response.Headers.Location = toUrl;
-            HttpContext.Response.CompleteAsync();
-        }
-        else
-        {
-            NavigationManager.NavigateTo(toUrl, replace: isPermanent);
-        }
-    }
-
-    private string GetFullUrlPath()
-    {
-        var uri = new Uri(NavigationManager.Uri);
-        return uri.PathAndQuery;
     }
 }

@@ -364,6 +364,9 @@ public static class ZauberSetup
 
         app.UseRouting();
         
+        // Redirect middleware must run after routing to process SEO redirects with proper HTTP status codes
+        app.UseMiddleware<RedirectMiddleware>();
+        
         // Culture middleware must run after routing so we have access to route values
         app.UseMiddleware<CultureMiddleware>();
         
