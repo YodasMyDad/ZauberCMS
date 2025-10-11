@@ -30,7 +30,7 @@ Fastest way to get started building your own website is using the .NET Template,
 
 ```ps
 # Ensure we have the latest ZauberCMS templates
-dotnet new install ZauberCMS.Template::4.0.0-rc.5.5 --force
+dotnet new install ZauberCMS.Template::4.0.0-rc.5.6 --force
 
 # Create your CMS
 dotnet new zaubercms -n "YourSiteName"
@@ -57,7 +57,7 @@ This repo comes with a starter site example so you can see some of the most comm
     <ItemGroup>
       <!--Remove this line 👇🏼 and uncomment the below line-->
       <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
-      <!--<PackageReference Include="ZauberCMS" Version="4.0.0-rc.5.5" />-->
+      <!--<PackageReference Include="ZauberCMS" Version="4.0.0-rc.5.6" />-->
     </ItemGroup>
 
 _Again, DO NOT  use the entire source code to build your own site. You are supposed to use the Nuget package (or Template) like above._ 
