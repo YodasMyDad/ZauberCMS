@@ -54,10 +54,25 @@
         }
     }
     
-    private Task HandleContentChanged(Content? media, string username)
+    private async Task HandleContentChanged(Content? media, string username)
     {
         TreeState.ClearChildCache(null);
-        return Task.CompletedTask;
+        
+        // If OnChange hasn't got a delegate, refresh data standalone
+        if (!OnChange.HasDelegate)
+        {
+            var items = await ContentService.QueryContentAsync(new QueryContentParameters
+            {
+                AmountPerPage = 100,
+                WhereClause = x => x.IsRootContent,
+                IncludeChildren = true,
+                IncludeContentRoles = true,
+                OrderBy = GetContentsOrderBy.SortOrder
+            });
+            Data = items.Items.ToList();
+        }
+        
+        StateHasChanged();
     }
 
     private async Task OnExpandHandler(TreeExpandEventArgs args)
