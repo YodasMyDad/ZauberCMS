@@ -26,20 +26,20 @@
 }
 else
 {
-    @if (ContentType != null && Content != null)
+    @if (ContentType != null && WorkingCopy != null)
     {
-        <EditForm @ref="@ContentForm" Model="@Content">
+        <EditForm @ref="@ContentForm" Model="@WorkingCopy">
 
             <RadzenRow class="rz-pb-2">
-                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@Content!.Name"
-                               ValueChanged="@((string name) => { Content.Name = name; })" aria-label="Name"/>
+                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@WorkingCopy!.Name"
+                               ValueChanged="@((string name) => { WorkingCopy.Name = name; })" aria-label="Name"/>
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
                              AlignItems="AlignItems.Center" Gap="0.2rem">
                     <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;"
                                 IconStyle="IconStyle.Light"/>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last
-                        Updated: @Content.DateUpdated.Humanize()</RadzenText>
-                    @if (Content.UnpublishedContent != null)
+                        Updated: @WorkingCopy.DateUpdated.Humanize()</RadzenText>
+                    @if (WorkingCopy.UnpublishedContent != null)
                     {
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0; color: #e85d5d">
                             (Contains Unpublished Changes)
@@ -79,7 +79,7 @@ else
                                                             <DynamicContentProperty
                                                                 ComponentType="@contentPropertyComponent"
                                                                 Settings="@property.Settings"
-                                                                Content="@Content"
+                                                                Content="@WorkingCopy"
                                                                 Value="@contentValue.Value"
                                                                 PropertyAlias="@contentValue.Alias"
                                                                 ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"
@@ -104,7 +104,7 @@ else
                                     <PropertyInfo Name="Id"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    @Content.Id
+                                    @WorkingCopy.Id
                                 </CentreColumn>
                             </EditorRow>
 
@@ -114,7 +114,7 @@ else
                                                   Description="The views available to render this content in the front end"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    <RadzenDropDown @bind-Value="@Content.ViewComponent"
+                                    <RadzenDropDown @bind-Value="@WorkingCopy.ViewComponent"
                                                     Data="@ContentViews"
                                                     TextProperty="Name"
                                                     ValueProperty="FullName"
@@ -129,7 +129,7 @@ else
                                 </LeftColumn>
                                 <CentreColumn>
                                     @* ReSharper disable CSharpWarnings::CS0618 *@
-                                    <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@Content.Url"/>
+                                    <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@WorkingCopy.Url"/>
                                     @* ReSharper restore CSharpWarnings::CS0618 *@
                                 </CentreColumn>
                             </EditorRow>
@@ -140,7 +140,7 @@ else
                                                   Description="Optional: Hides this page from any navigation if the developer has integrated it"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    <RadzenSwitch Name="HideFromNavigation" @bind-Value="@Content.HideFromNavigation"/>
+                                    <RadzenSwitch Name="HideFromNavigation" @bind-Value="@WorkingCopy.HideFromNavigation"/>
                                 </CentreColumn>
                             </EditorRow>
 
@@ -151,9 +151,9 @@ else
                                 </LeftColumn>
                                 <CentreColumn>
                                     <ContentPickerProperty
-                                        Value="@Content.InternalRedirectIdAsString"
+                                        Value="@WorkingCopy.InternalRedirectIdAsString"
                                         Settings="@(JsonSerializer.Serialize(new ContentPickerSettings { MaxAllowed = 1 }))"
-                                        ValueChanged="@(e => Content.InternalRedirectIdAsString = e.ToString())"/>
+                                        ValueChanged="@(e => WorkingCopy.InternalRedirectIdAsString = e.ToString())"/>
                                 </CentreColumn>
                             </EditorRow>
 
@@ -162,7 +162,7 @@ else
                                     <PropertyInfo Name="Date Created"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    <RadzenDatePicker @bind-Value="@Content.DateCreated" Name="ContentDateCreated"
+                                    <RadzenDatePicker @bind-Value="@WorkingCopy.DateCreated" Name="ContentDateCreated"
                                                       DateFormat="@(CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern)"/>
                                 </CentreColumn>
                             </EditorRow>
@@ -172,7 +172,7 @@ else
                                     <PropertyInfo Name="Last Updated"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    @Content.DateUpdated.Humanize()
+                                    @WorkingCopy.DateUpdated.Humanize()
                                 </CentreColumn>
                             </EditorRow>
 
@@ -194,12 +194,12 @@ else
                         </RadzenTabsItem>
 
                         <RadzenTabsItem Text="Versions">
-                            <ContentVersions ContentId="@Content.Id" />
+                            <ContentVersions ContentId="@WorkingCopy.Id" />
                         </RadzenTabsItem>
                     }
                 </Tabs>
             </RadzenTabs>
-            @if (!Content.Deleted)
+            @if (!WorkingCopy.Deleted)
             {
                 <div class="flex justify-between items-center">
                     @if (!ElementTypesOnly)
@@ -217,32 +217,39 @@ else
                         </div>
                     }
 
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
-                                 AlignItems="AlignItems.Center">
-                        @if (Content!.UnpublishedContentId != null)
-                        {
-                            <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter"
-                                          Text="Clear Changes"/>
-                        }
-                        @if (Content!.Published)
-                        {
-                            <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
-                        }
-                        @if (IsBlockList == true)
-                        {
-                            <RadzenButton Click=@(() => Save(null, false)) Icon="save" ButtonStyle="ButtonStyle.Success"
-                                          Text="Save"/>
-                        }
-                        else
-                        {
+                    @if (IsBlockList == true)
+                    {
+                            <div class="flex items-center justify-center gap-2">
+                                <div class="text-sm">Published</div>
+                                <RadzenSwitch @bind-Value="@WorkingCopy!.Published" />
+                            </div>
+                            <div class="flex items-center justify-center gap-2">
+                                <RadzenButton Click="@Cancel" Text="Cancel" />
+                                <RadzenButton Click=@(() => Save(null, false)) Icon="save" ButtonStyle="ButtonStyle.Success"
+                                              Text="Save"/>
+                            </div>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
+                                     AlignItems="AlignItems.Center">
+                            @if (WorkingCopy!.UnpublishedContentId != null)
+                            {
+                                <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter"
+                                              Text="Clear Changes"/>
+                            }
+                            @if (WorkingCopy!.Published)
+                            {
+                                <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
+                            }
                             <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save"
                                                ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
                                 <ChildContent>
                                     <RadzenSplitButtonItem Text="Save Only" Value="1"/>
                                 </ChildContent>
                             </RadzenSplitButton>
-                        }
-                    </RadzenStack>
+                        </RadzenStack>
+                    }
                 </div>
             }
         </EditForm>
@@ -298,6 +305,7 @@ else
     private User? LastUpdatedBy { get; set; }
     private bool Loading { get; set; } = true;
     private BlockListChanges? PendingBlockListChanges { get; set; }
+    private Content? WorkingCopy { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -341,18 +349,44 @@ else
                     Content.Name = DefaultName;
                 }
             }
+            
+            WorkingCopy = Content;
         }
         else
         {
-            // We have a content item passed in
-            ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = Content.ContentTypeId });
+            // We have a content item passed in - create a working copy to avoid modifying the original
+            WorkingCopy = new Content();
+            Content.MapTo(WorkingCopy);
+            
+            // Deep-copy Path list (MapTo only copies reference)
+            WorkingCopy.Path = new List<Guid>(Content.Path);
+            
+            // Deep-copy PropertyData list
+            WorkingCopy.PropertyData = new List<ContentPropertyValue>(Content.PropertyData.Select(pd => new ContentPropertyValue
+            {
+                Id = pd.Id,
+                ContentTypePropertyId = pd.ContentTypePropertyId,
+                Alias = pd.Alias,
+                Value = pd.Value,
+                ContentId = pd.ContentId,
+                DateCreated = pd.DateCreated,
+                DateUpdated = pd.DateUpdated
+            }));
+            
+            // Deep-copy pending block list changes
+            foreach (var kvp in Content.PendingBlockListChanges)
+            {
+                WorkingCopy.PendingBlockListChanges[kvp.Key] = new Dictionary<Guid, Content>(kvp.Value);
+            }
+            
+            ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = WorkingCopy.ContentTypeId });
             if (ContentType == null)
             {
                 NotificationService.ShowErrorNotification("Unable to find a content type for the content?");
             }
             else
             {
-                await SyncProperties(Content, ContentType);
+                await SyncProperties(WorkingCopy, ContentType);
             }
         }
 
@@ -391,7 +425,8 @@ else
                     Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
                 }
 
-                await SyncProperties(Content, ContentType);
+                WorkingCopy = Content;
+                await SyncProperties(WorkingCopy, ContentType);
                 InitializeContentViews();
             }
         }
@@ -404,7 +439,7 @@ else
 
     private Task UpdateProperty(Guid ctpId, string value)
     {
-        var property = Content?.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
+        var property = WorkingCopy?.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == ctpId);
         if (property != null)
         {
             property.Value = value;
@@ -412,7 +447,7 @@ else
             
             // Invalidate the cached ContentValues so GetValue() returns updated data
             // Critical for nested block lists where PropertyData is modified in-memory
-            Content?.InvalidateContentValuesCache();
+            WorkingCopy?.InvalidateContentValuesCache();
         }
 
         return Task.CompletedTask;
@@ -496,27 +531,27 @@ else
                 {
                     ContentTypePropertyId = ctp.Id,
                     Alias = ctp.Alias!,
-                    ContentId = Content!.Id
+                    ContentId = content.Id
                 });
             }
         }
 
-        AllContentValues = Content!.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
+        AllContentValues = content.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
         //AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
 
-        if (Content.ViewComponent.IsNullOrWhiteSpace() && contentType.AvailableContentViews.Any())
+        if (content.ViewComponent.IsNullOrWhiteSpace() && contentType.AvailableContentViews.Any())
         {
-            Content.ViewComponent = contentType.AvailableContentViews.FirstOrDefault()!;
+            content.ViewComponent = contentType.AvailableContentViews.FirstOrDefault()!;
         }
         
         // Breadcrumb
-        if (Content.Path.Count > 1)
+        if (content.Path.Count > 1)
         {
-            var breadcrumb = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = Content.Path });
+            var breadcrumb = await ContentService.QueryContentAsync(new QueryContentParameters { Ids = content.Path });
             if (breadcrumb.Items.Any())
             {
                 Breadcrumb = breadcrumb.Items
-                    .OrderBy(item => Content.Path.IndexOf(item.Id))
+                    .OrderBy(item => content.Path.IndexOf(item.Id))
                     .ToList();
             }   
         }
@@ -535,26 +570,31 @@ else
             // Need to set the ContentType is this is new content
             if (ContentId == null)
             {
-                Content!.ContentTypeId = ContentType.Id;
+                WorkingCopy!.ContentTypeId = ContentType.Id;
             }
 
-            await SyncProperties(Content!, ContentType);
+            await SyncProperties(WorkingCopy!, ContentType);
             InitializeContentViews();
         }
     }
 
     private async Task ClearUnpublishedChanges()
     {
-        var removeUnpublishedContent = await ContentService.ClearUnpublishedContentAsync(new ClearUnpublishedContentParameters { ContentId = Content!.Id });
+        var removeUnpublishedContent = await ContentService.ClearUnpublishedContentAsync(new ClearUnpublishedContentParameters { ContentId = WorkingCopy!.Id });
         if (removeUnpublishedContent.Success)
         {
             await RefreshContent();
-            await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
+            await AppState.NotifyContentSaved(WorkingCopy, AuthState.User.GetUserName()!);
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = removeUnpublishedContent.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{WorkingCopy!.Name} Error", Detail = removeUnpublishedContent.Messages.MessagesAsString(), Duration = 4000 });
         }
+    }
+
+    private async Task Cancel()
+    {
+        await ContentEditorModal.CloseAsync(ModalResult.Cancel());
     }
 
     private async Task HandleContentChanged(ZauberCMS.Core.Content.Models.Content? content, string username)
@@ -641,16 +681,13 @@ else
 
     private async Task Save(RadzenSplitButtonItem? item, bool unpublish)
     {
-        if (await ValidateService.CanSave(Content!))
+        if (await ValidateService.CanSave(WorkingCopy!))
         {
             if (IsBlockList == true)
             {
-                // Handle unpublish for block list items
-                if (unpublish)
-                {
-                    Content!.Published = false;
-                }
-                await ContentEditorModal.CloseAsync(ModalResult.Ok(Content));
+                // For block list items, Published state is controlled by the toggle switch
+                // No need to manipulate it here - just save and return
+                await ContentEditorModal.CloseAsync(ModalResult.Ok(WorkingCopy));
             }
             else
             {
@@ -658,22 +695,22 @@ else
 
                 if (unpublish)
                 {
-                    Content!.Published = false;
+                    WorkingCopy!.Published = false;
                 }
                 else
                 {
                     if (item == null)
                     {
-                        Content!.Published = true;
+                        WorkingCopy!.Published = true;
                     }
-                    else if (ContentId != null && Content!.Published)
+                    else if (ContentId != null && WorkingCopy!.Published)
                     {
                         // Content exists and is already published, so need to save the unpublished changes only
                         saveContentCommand.SaveUnpublishedOnly = true;
                     }
                 }
 
-                saveContentCommand.Content = Content;
+                saveContentCommand.Content = WorkingCopy;
                 var result = await ContentService.SaveContentAsync(saveContentCommand);
 
                 // Process any pending block list changes after main content is saved (so block list items get correct parent ID)
@@ -682,7 +719,7 @@ else
                     await ProcessBlockListChanges();
                 }
 
-                NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Content!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Content!.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+                NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{WorkingCopy!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{WorkingCopy!.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
 
                 if (ParentId != null)
                 {
@@ -694,16 +731,16 @@ else
                     }
                 }
 
-                await AppState.NotifyContentSaved(Content, AuthState.User.GetUserName()!);
+                await AppState.NotifyContentSaved(WorkingCopy, AuthState.User.GetUserName()!);
 
                 // If opened as a dialog, close it instead of navigating
                 if (ContentEditorModal != null)
                 {
-                    await ContentEditorModal.CloseAsync(ModalResult.Ok(Content));
+                    await ContentEditorModal.CloseAsync(ModalResult.Ok(WorkingCopy));
                 }
                 else
                 {
-                    NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{Content.Id}");
+                    NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{WorkingCopy.Id}");
                 }
             }
         }

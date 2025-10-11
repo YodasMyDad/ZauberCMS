@@ -88,7 +88,6 @@
 
 .block-list-editor {
     transition: all 0.3s ease;
-    overflow-x: hidden;
     max-width: 100%;
 }
 
