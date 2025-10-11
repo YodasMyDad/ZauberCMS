@@ -321,63 +321,45 @@ else
             // If no content is passed in
             if (ContentId != null)
             {
-                await RefreshContent();
-            }
-            else if (ParentId != null)
-            {
-                Content = new Content
-                {
-                    ParentId = ParentId,
-                    IsRootContent = false
-                };
+                await RefreshContent(); // RefreshContent handles WorkingCopy creation and syncing
             }
             else
             {
-                Content = new Content
+                // Create new content
+                if (ParentId != null)
                 {
-                    IsRootContent = IsBlockList != true
-                };
-            }
-
-            if (IsBlockList == true)
-            {
-                Content!.RelatedContentId = NestedParentId;
-                Content!.IsNestedContent = true;
-                Content!.Published = true;
-                if(Content?.Name.IsNullOrWhiteSpace() == true && !DefaultName.IsNullOrWhiteSpace())
-                {
-                    Content.Name = DefaultName;
+                    Content = new Content
+                    {
+                        ParentId = ParentId,
+                        IsRootContent = false
+                    };
                 }
+                else
+                {
+                    Content = new Content
+                    {
+                        IsRootContent = IsBlockList != true
+                    };
+                }
+
+                if (IsBlockList == true)
+                {
+                    Content!.RelatedContentId = NestedParentId;
+                    Content!.IsNestedContent = true;
+                    Content!.Published = true;
+                    if(Content?.Name.IsNullOrWhiteSpace() == true && !DefaultName.IsNullOrWhiteSpace())
+                    {
+                        Content.Name = DefaultName;
+                    }
+                }
+                
+                WorkingCopy = CreateWorkingCopy(Content!);
             }
-            
-            WorkingCopy = Content;
         }
         else
         {
             // We have a content item passed in - create a working copy to avoid modifying the original
-            WorkingCopy = new Content();
-            Content.MapTo(WorkingCopy);
-            
-            // Deep-copy Path list (MapTo only copies reference)
-            WorkingCopy.Path = new List<Guid>(Content.Path);
-            
-            // Deep-copy PropertyData list
-            WorkingCopy.PropertyData = new List<ContentPropertyValue>(Content.PropertyData.Select(pd => new ContentPropertyValue
-            {
-                Id = pd.Id,
-                ContentTypePropertyId = pd.ContentTypePropertyId,
-                Alias = pd.Alias,
-                Value = pd.Value,
-                ContentId = pd.ContentId,
-                DateCreated = pd.DateCreated,
-                DateUpdated = pd.DateUpdated
-            }));
-            
-            // Deep-copy pending block list changes
-            foreach (var kvp in Content.PendingBlockListChanges)
-            {
-                WorkingCopy.PendingBlockListChanges[kvp.Key] = new Dictionary<Guid, Content>(kvp.Value);
-            }
+            WorkingCopy = CreateWorkingCopy(Content);
             
             ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = WorkingCopy.ContentTypeId });
             if (ContentType == null)
@@ -412,20 +394,23 @@ else
         {
             Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true });
             ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = Content!.ContentTypeId });
+            
+            if (Content.UnpublishedContent != null)
+            {
+                // Replace the Content with the Json one
+                Content.UnpublishedContent.JsonContent.MapTo(Content);
+                Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
+            }
+
+            // Always create WorkingCopy from Content, even if ContentType fails to load
+            WorkingCopy = CreateWorkingCopy(Content);
+            
             if (ContentType == null)
             {
-                NotificationService.ShowErrorNotification("Unable to find conent type for this content");
+                NotificationService.ShowErrorNotification("Unable to find content type for this content");
             }
             else
             {
-                if (Content.UnpublishedContent != null)
-                {
-                    // Replace the Content with the Json one
-                    Content.UnpublishedContent.JsonContent.MapTo(Content);
-                    Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
-                }
-
-                WorkingCopy = Content;
                 await SyncProperties(WorkingCopy, ContentType);
                 InitializeContentViews();
             }
@@ -536,6 +521,9 @@ else
             }
         }
 
+        // Invalidate cached ContentValues after modifying PropertyData
+        content.InvalidateContentValuesCache();
+
         AllContentValues = content.PropertyData.ToDictionary(x => x.ContentTypePropertyId, x => x);
         //AvailableContentViews = contentType.AvailableContentViews.ToDictionary(x => x.GetLastPart(), x => x);
 
@@ -617,9 +605,11 @@ else
         StateHasChanged();
     }
 
-    private async Task ProcessBlockListChanges()
+    private async Task<HandlerResult<bool>> ProcessBlockListChanges()
     {
-        if (PendingBlockListChanges == null) return;
+        var result = new HandlerResult<bool> { Success = true, Entity = true };
+        
+        if (PendingBlockListChanges == null) return result;
 
         // Deduplicate change lists by ContentId to avoid saving the same item multiple times
         var addedItems = PendingBlockListChanges.AddedItems
@@ -646,10 +636,12 @@ else
         foreach (var addedItem in addedItems)
         {
             var saveParams = new SaveContentParameters { Content = addedItem };
-            var result = await ContentService.SaveContentAsync(saveParams);
-            if (!result.Success)
+            var saveResult = await ContentService.SaveContentAsync(saveParams);
+            if (!saveResult.Success)
             {
-                NotificationService.ShowNotifications(result.Messages);
+                result.Success = false;
+                result.Messages.AddRange(saveResult.Messages);
+                NotificationService.ShowNotifications(saveResult.Messages);
             }
         }
 
@@ -657,10 +649,12 @@ else
         foreach (var updatedItem in updatedItems)
         {
             var saveParams = new SaveContentParameters { Content = updatedItem };
-            var result = await ContentService.SaveContentAsync(saveParams);
-            if (!result.Success)
+            var saveResult = await ContentService.SaveContentAsync(saveParams);
+            if (!saveResult.Success)
             {
-                NotificationService.ShowNotifications(result.Messages);
+                result.Success = false;
+                result.Messages.AddRange(saveResult.Messages);
+                NotificationService.ShowNotifications(saveResult.Messages);
             }
         }
 
@@ -668,15 +662,19 @@ else
         foreach (var deletedItem in deletedItems)
         {
             var deleteParams = new DeleteContentParameters { ContentId = deletedItem.Id, MoveToRecycleBin = false };
-            var result = await ContentService.DeleteContentAsync(deleteParams);
-            if (!result.Success)
+            var deleteResult = await ContentService.DeleteContentAsync(deleteParams);
+            if (!deleteResult.Success)
             {
-                NotificationService.ShowNotifications(result.Messages);
+                result.Success = false;
+                result.Messages.AddRange(deleteResult.Messages);
+                NotificationService.ShowNotifications(deleteResult.Messages);
             }
         }
 
         // Clear the pending changes after processing
         PendingBlockListChanges = null;
+        
+        return result;
     }
 
     private async Task Save(RadzenSplitButtonItem? item, bool unpublish)
@@ -714,36 +712,99 @@ else
                 var result = await ContentService.SaveContentAsync(saveContentCommand);
 
                 // Process any pending block list changes after main content is saved (so block list items get correct parent ID)
+                HandlerResult<bool>? blockListResult = null;
                 if (PendingBlockListChanges != null)
                 {
-                    await ProcessBlockListChanges();
+                    blockListResult = await ProcessBlockListChanges();
                 }
 
-                NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{WorkingCopy!.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{WorkingCopy!.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
-
-                if (ParentId != null)
+                // Determine overall success
+                var overallSuccess = result.Success && (blockListResult == null || blockListResult.Success);
+                
+                // Show appropriate notification based on all results
+                if (overallSuccess)
                 {
-                    // If we are creating or saving a child item, make sure the parent is open
-                    if (!TreeState.IsNodeExpanded(ParentId.Value))
-                    {
-                        TreeState.ClearChildCache(ParentId.Value);
-                        TreeState.NodeExpanded(ParentId.Value);
-                    }
-                }
-
-                await AppState.NotifyContentSaved(WorkingCopy, AuthState.User.GetUserName()!);
-
-                // If opened as a dialog, close it instead of navigating
-                if (ContentEditorModal != null)
-                {
-                    await ContentEditorModal.CloseAsync(ModalResult.Ok(WorkingCopy));
+                    NotificationService.Notify(new NotificationMessage 
+                    { 
+                        Severity = NotificationSeverity.Success, 
+                        Summary = $"{WorkingCopy!.Name} Saved", 
+                        Detail = "", 
+                        Duration = 4000 
+                    });
                 }
                 else
                 {
-                    NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{WorkingCopy.Id}");
+                    var errorDetail = result.Success ? "Some nested content failed to save" : result.Messages.MessagesAsString();
+                    if (blockListResult != null && !blockListResult.Success)
+                    {
+                        errorDetail += (errorDetail.Length > 0 ? ". " : "") + blockListResult.Messages.MessagesAsString();
+                    }
+                    
+                    NotificationService.Notify(new NotificationMessage 
+                    { 
+                        Severity = NotificationSeverity.Error, 
+                        Summary = $"{WorkingCopy!.Name} Error", 
+                        Detail = errorDetail, 
+                        Duration = 6000 
+                    });
+                }
+
+                // Only proceed with post-save actions if save was successful
+                if (overallSuccess)
+                {
+                    if (ParentId != null)
+                    {
+                        // If we are creating or saving a child item, make sure the parent is open
+                        if (!TreeState.IsNodeExpanded(ParentId.Value))
+                        {
+                        TreeState.ClearChildCache(ParentId.Value);
+                            TreeState.NodeExpanded(ParentId.Value);
+                        }
+                    }
+
+                    await AppState.NotifyContentSaved(WorkingCopy, AuthState.User.GetUserName()!);
+
+                    // If opened as a dialog, close it instead of navigating
+                    if (ContentEditorModal != null)
+                    {
+                        await ContentEditorModal.CloseAsync(ModalResult.Ok(WorkingCopy));
+                    }
+                    else
+                    {
+                        NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{WorkingCopy.Id}");
+                    }
                 }
             }
         }
+    }
+
+    private Content CreateWorkingCopy(Content source)
+    {
+        var workingCopy = new Content();
+        source.MapTo(workingCopy);
+        
+        // Deep-copy Path list (MapTo only copies reference)
+        workingCopy.Path = new List<Guid>(source.Path);
+        
+        // Deep-copy PropertyData list
+        workingCopy.PropertyData = new List<ContentPropertyValue>(source.PropertyData.Select(pd => new ContentPropertyValue
+        {
+            Id = pd.Id,
+            ContentTypePropertyId = pd.ContentTypePropertyId,
+            Alias = pd.Alias,
+            Value = pd.Value,
+            ContentId = pd.ContentId,
+            DateCreated = pd.DateCreated,
+            DateUpdated = pd.DateUpdated
+        }));
+        
+        // Deep-copy pending block list changes
+        foreach (var kvp in source.PendingBlockListChanges)
+        {
+            workingCopy.PendingBlockListChanges[kvp.Key] = new Dictionary<Guid, Content>(kvp.Value);
+        }
+        
+        return workingCopy;
     }
 
     public void Dispose()
