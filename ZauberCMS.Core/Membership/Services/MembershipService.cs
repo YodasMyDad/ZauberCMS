@@ -1,8 +1,11 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,12 +14,14 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Email.Parameters;
+using ZauberCMS.Core.Email.Services;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Membership.Parameters;
 using ZauberCMS.Core.Membership.Mapping;
 using ZauberCMS.Core.Plugins;
+using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -26,9 +31,11 @@ namespace ZauberCMS.Core.Membership.Services;
 public class MembershipService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
+    IHttpContextAccessor httpContextAccessor,
     AuthenticationStateProvider authenticationStateProvider,
     ExtensionManager extensionManager,
     IDataService dataService,
+    ProviderService providerService,
     IEmailService emailService,
     IOptions<ZauberSettings> settings,
     ILogger<MembershipService> logger)
@@ -871,29 +878,45 @@ public class MembershipService(
 
         try
         {
-            var user = await userManager.FindByEmailAsync(parameters.Email!);
-            if (user == null || !await userManager.IsEmailConfirmedAsync(user))
+            if (parameters.Email != null)
             {
-                // Don't reveal that the user does not exist or is not confirmed
-                forgotPasswordResult.Success = true;
-                forgotPasswordResult.NavigateToUrl = parameters.ReturnUrl;
-                return forgotPasswordResult;
+                var user = await userManager.FindByEmailAsync(parameters.Email);
+                if (user != null)
+                {
+                    if (userManager.Options.SignIn.RequireConfirmedAccount && await userManager.IsEmailConfirmedAsync(user) == false)
+                    {
+                        forgotPasswordResult.Success = false;
+                        forgotPasswordResult.AddMessage("Please check your email to confirm your account", ResultMessageType.Success);
+
+                        // Resend confirmation email
+                        await emailService.SendEmailConfirmationAsync(new SendEmailConfirmationParameters { ReturnUrl = "~/", User = user }, cancellationToken);
+                        return forgotPasswordResult;
+                    }
+
+                    // For more information on how to enable account confirmation and password reset please
+                    // visit https://go.microsoft.com/fwlink/?LinkID=532713
+                    var code = await userManager.GeneratePasswordResetTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                    var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ResetPassword, new { code = code, email = parameters.Email });
+
+                    var paragraphs = new List<string> { $"Please reset your password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>." };
+                    await providerService.EmailProvider!.SendEmailWithTemplateAsync(parameters.Email, "Reset Password", paragraphs);
+                }
             }
-
-            var code = await userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = $"{parameters.ReturnUrl}?userId={user.Id}&code={Uri.EscapeDataString(code)}";
-
-            // Note: Email sending would need to be implemented without mediator
-            logger.LogInformation("Password reset email would be sent to {Email} with callback URL: {CallbackUrl}", parameters.Email, callbackUrl);
-
-            forgotPasswordResult.Success = true;
-            forgotPasswordResult.NavigateToUrl = parameters.ReturnUrl;
+            else
+            {
+                forgotPasswordResult.AddMessage("Email is missing", ResultMessageType.Error);
+                forgotPasswordResult.Success = false;
+            }
         }
         catch (Exception e)
         {
             forgotPasswordResult.AddMessage(e.Message, ResultMessageType.Error);
             forgotPasswordResult.Success = false;
         }
+        
+        forgotPasswordResult.Success = true;
+        forgotPasswordResult.AddMessage("An email has been sent to you to", ResultMessageType.Success);
 
         return forgotPasswordResult;
     }
@@ -901,7 +924,7 @@ public class MembershipService(
     /// <summary>
     /// Completes the password reset using the provided token.
     /// </summary>
-    /// <param name="parameters">User id, reset token and new password.</param>
+    /// <param name="parameters">Email, reset token and new password.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ResetPasswordAsync(ResetPasswordParameters parameters, CancellationToken cancellationToken = default)
@@ -912,22 +935,32 @@ public class MembershipService(
 
         try
         {
-            var user = await userManager.FindByIdAsync(parameters.UserId);
-            if (user == null)
+            if (!parameters.Email.IsNullOrWhiteSpace())
             {
-                resetPasswordResult.AddMessage("User not found", ResultMessageType.Error);
-                return resetPasswordResult;
-            }
+                var user = await userManager.FindByEmailAsync(parameters.Email);
+                if (user == null)
+                {
+                    resetPasswordResult.AddMessage("User not found", ResultMessageType.Error);
+                    return resetPasswordResult;
+                }
 
-            var result = await userManager.ResetPasswordAsync(user, parameters.Code!, parameters.Password!);
-            if (result.Succeeded)
-            {
-                resetPasswordResult.Success = true;
-                resetPasswordResult.NavigateToUrl = parameters.ReturnUrl;
+                var result = await userManager.ResetPasswordAsync(user, parameters.Code!, parameters.Password!);
+                if (result.Succeeded)
+                {
+                    resetPasswordResult.Success = true;
+                    resetPasswordResult.NavigateToUrl = parameters.ReturnUrl;
+                    resetPasswordResult.AddMessage($"Your password has been reset, <a class=\"underline\" href=\"{Urls.Account.Login}\">please login</a>", ResultMessageType.Success);
+                }
+                else
+                {
+                    resetPasswordResult.Success = false;
+                    resetPasswordResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
+                }   
             }
             else
             {
-                resetPasswordResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
+                resetPasswordResult.AddMessage("Email is empty", ResultMessageType.Error);
+                resetPasswordResult.Success = false;
             }
         }
         catch (Exception e)

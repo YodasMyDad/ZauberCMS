@@ -21,7 +21,5 @@ public class ResetPasswordParameters
 
     [Required]
     public string? Code { get; set; }
-    
-    public string UserId { get; set; } = string.Empty;
     public string? ReturnUrl { get; set; }
 }
