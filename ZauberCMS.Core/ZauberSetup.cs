@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,7 +56,7 @@ namespace ZauberCMS.Core;
 
 public static class ZauberSetup
 {
-    public static void AddZauberCms(this WebApplicationBuilder builder)
+    public static void AddZauberCms(this WebApplicationBuilder builder, params Assembly[] additionalAssemblies)
     {
         builder.Host.UseSerilog((context, configuration) =>
             configuration.ReadFrom.Configuration(context.Configuration));
@@ -247,18 +246,43 @@ public static class ZauberSetup
                     .AddPolicy("AdminOnly", policy => policy.RequireRole(Constants.Roles.AdminRoleName));*/
         
         
-        // Build the service provider and get the extension manager
-        var serviceProvider = builder.Services.BuildServiceProvider();
-        var extensionManager = serviceProvider.GetRequiredService<ExtensionManager>();
+        // Build explicit assembly list - only scan assemblies we explicitly register
+        var assembliesToScan = new List<Assembly>
+        {
+            // Core Zauber assemblies
+            typeof(ZauberSetup).Assembly, // ZauberCMS.Core (using typeof since it's this assembly)
+            Assembly.Load(new AssemblyName("ZauberCMS.Components")), // Required
+        };
 
-        // Plugins
-        var assemblyProvider = new DefaultAssemblyProvider(serviceProvider, zauberSettings);
-        var assemblies = assemblyProvider.GetAssemblies();
-        Assembly[] discoverAssemblies = (assemblies as Assembly[] ?? assemblies.ToArray())!;
+        // Add entry assembly (the host application)
+        var entryAssembly = Assembly.GetEntryAssembly();
+        if (entryAssembly != null && !assembliesToScan.Contains(entryAssembly))
+        {
+            assembliesToScan.Add(entryAssembly);
+        }
+
+        // Add any additional assemblies passed by the user
+        if (additionalAssemblies.Length > 0)
+        {
+            assembliesToScan.AddRange(additionalAssemblies.Where(a => !assembliesToScan.Contains(a)));
+        }
+
+        // Add Routing last (critical for proper component discovery order - required for Blazor routing)
+        var zauberRouting = Assembly.Load(new AssemblyName("ZauberCMS.Routing"));
+        if (!assembliesToScan.Contains(zauberRouting))
+        {
+            assembliesToScan.Add(zauberRouting);
+        }
+
+        var discoverAssemblies = assembliesToScan.ToArray();
         AssemblyManager.SetAssemblies(discoverAssemblies);
 
         // Add Zauber RTE services
         builder.Services.AddZauberRte(discoverAssemblies);
+        
+        // Build the service provider and get the extension manager
+        var serviceProvider = builder.Services.BuildServiceProvider();
+        var extensionManager = serviceProvider.GetRequiredService<ExtensionManager>();
         
         // Detailed errors have been enabled
         if (zauberSettings.ShowDetailedErrors)
@@ -292,7 +316,7 @@ public static class ZauberSetup
 
 
         // Add external authentication providers
-        foreach (var provider in extensionManager?.GetInstances<IExternalAuthenticationProvider>()!)
+        foreach (var provider in extensionManager.GetInstances<IExternalAuthenticationProvider>())
         {
             provider.Value.Add(builder.Services, authBuilder, builder.Configuration);
         }

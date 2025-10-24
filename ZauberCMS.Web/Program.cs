@@ -5,8 +5,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddZauberCms();
 
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
