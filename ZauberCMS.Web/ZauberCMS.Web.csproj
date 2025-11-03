@@ -12,12 +12,6 @@
       <!--<PackageReference Include="ZauberCMS" Version="4.0.0-rc.5.7" />-->
     </ItemGroup>
     
-    
-    <ItemGroup>
-      <Folder Include="Logs\" />
-      <Folder Include="wwwroot\media\" />
-    </ItemGroup>
-    
     <ItemGroup>
       <None Remove="app.db" />
     </ItemGroup>

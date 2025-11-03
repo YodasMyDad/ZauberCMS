@@ -1,11 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Http
-@using ZauberCMS.Core.Content.Interfaces
+@using System.Globalization
 @using ZauberCMS.Core.Plugins
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@CurrentLanguage">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="/"/>
     <HeadOutlet @rendermode="RenderModeForPage" />
     <ImportMap />
@@ -90,4 +88,6 @@
             return IsAdmin ? InteractiveServer : null;
         }
     }
+
+    private static string CurrentLanguage => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 }
