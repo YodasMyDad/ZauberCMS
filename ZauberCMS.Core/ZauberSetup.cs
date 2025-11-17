@@ -403,9 +403,14 @@ public static class ZauberSetup
 
         app.MapStaticAssets();
         
+        var rootComponentAssembly = typeof(T).Assembly;
+        var additionalAssemblies = ExtensionManager.GetFilteredAssemblies(null)
+            .Where(a => a != rootComponentAssembly)
+            .ToArray()!;
+
         app.MapRazorComponents<T>()
             .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'none'")
-            .AddAdditionalAssemblies(ExtensionManager.GetFilteredAssemblies(null).ToArray()!);
+            .AddAdditionalAssemblies(additionalAssemblies!);
 
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();

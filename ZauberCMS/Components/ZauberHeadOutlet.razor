@@ -1,0 +1,31 @@
+﻿@using Microsoft.AspNetCore.Http
+
+<HeadOutlet @rendermode="RenderModeForPage" />
+
+@code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    private bool IsAdmin
+    {
+        get
+        {
+            // Get the relative path from the NavigationManager's URI
+            var absoluteUri = new Uri(NavigationManager.Uri);
+            var requestPathSpan = absoluteUri.LocalPath.AsSpan();
+            return requestPathSpan.StartsWith(Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private IComponentRenderMode? RenderModeForPage
+    {
+        get
+        {
+            if (HttpContext == null)
+            {
+                return InteractiveServer;
+            }
+
+            return IsAdmin ? InteractiveServer : null;
+        }
+    }
+}

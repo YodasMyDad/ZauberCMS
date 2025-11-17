@@ -1,5 +1,5 @@
-using ZauberCMS.Components;
 using ZauberCMS.Core;
+using ZauberCMS.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 

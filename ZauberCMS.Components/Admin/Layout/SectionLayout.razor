@@ -2,17 +2,28 @@
 @using Microsoft.AspNetCore.Http
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Plugins
 @using Microsoft.Extensions.Options
 @inherits LayoutComponentBase
 
 
-<RadzenComponents @rendermode="InteractiveServer" />   
+<RadzenComponents @rendermode="InteractiveServer"/>
 
 <HeadContent>
+    <RadzenTheme Theme="material" @rendermode="InteractiveServer"/>
+    <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css"]">
+    <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
+    <link rel="stylesheet" href="@Assets["_content/Blazored.Modal/Blazored.Modal.bundle.scp.css"]">
+    @foreach (var style in PageStyles)
+    {
+        <link rel="stylesheet" href="@style">
+    }
+    <link rel="stylesheet" href="_content/ZauberCMS.RTE/css/fontawesome.min.css"/>
+    <link rel="stylesheet" href="_content/ZauberCMS.RTE/css/zauber-editor.css"/>
     <SectionOutlet SectionId="@Sections.PageHeadContent"/>
 </HeadContent>
 
-<RadzenComponents />
+<RadzenComponents/>
 <CascadingBlazoredModal>
     <RadzenLayout>
         <CascadingValue Value="@this">
@@ -21,12 +32,12 @@
                              Style="height: 100%;">
                     <RadzenSidebarToggle Click="@(() => ToggleSideBar())"/>
                     @*<RadzenIcon Icon="automation"/>*@
-                    <ZauberCMS.Components.Shared.ZauberLogo Styles="height: 24px; colour: #fff; fill: #fff;" />
+                    <ZauberCMS.Components.Shared.ZauberLogo Styles="height: 24px; colour: #fff; fill: #fff;"/>
                     <SectionLinks CurrentSection="@(SectionAlias)"/>
                 </RadzenStack>
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
                              Style="height: 100%;">
-                    <RadzenAppearanceToggle />
+                    <RadzenAppearanceToggle/>
                     <UserProfile/>
                 </RadzenStack>
             </RadzenHeader>
@@ -43,6 +54,15 @@
     </RadzenLayout>
 </CascadingBlazoredModal>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.4/Sortable.min.js"></script>
+<script src="_content/ZauberCMS.Components/js/shadow-dom.js"></script>
+@foreach (var script in PageScripts)
+{
+    <script src="@script"></script>
+}
+<script src="_content/ZauberCMS.RTE/js/lib/purify.min.js"></script>
+<script src="_content/ZauberCMS.RTE/js/zauber-rte.js"></script>
+<script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -54,8 +74,12 @@
     [Inject] public IOptions<ZauberSettings> ZauberSettings { get; set; } = null!;
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
-    
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+
     [CascadingParameter] public HttpContext? HttpContext { get; set; }
+
+    private List<string> PageScripts { get; set; } = [];
+    private List<string> PageStyles { get; set; } = [];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -75,6 +99,7 @@
         }
     }
 
+
     protected override void OnInitialized()
     {
         var cultureInfo = new CultureInfo(Settings.Value.AdminDefaultLanguage);
@@ -82,8 +107,15 @@
         CultureInfo.CurrentUICulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+        var contentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
+        if (contentProperties.Any())
+        {
+            PageScripts = contentProperties.SelectMany(x => x.Value.Scripts)?.Distinct().ToList() ?? [];
+            PageStyles = contentProperties.SelectMany(x => x.Value.Styles)?.Distinct().ToList() ?? [];
+        }
     }
-    
+
     private string? SectionAlias { get; set; }
 
     public void SetSection(string value)

@@ -69,12 +69,17 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
-    [SupplyParameterFromForm] private LoginUserParameters LoginUserCommand { get; set; } = new();
+    [SupplyParameterFromForm] private LoginUserParameters LoginUserCommand { get; set; } = null!;
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
     private Type LayoutType { get; set; } = null!;
     private AuthenticationState? AuthState { get; set; }
+
+    protected override void OnInitialized()
+    {
+        LoginUserCommand ??= new();
+    }
 
     protected override async Task OnParametersSetAsync()
     {

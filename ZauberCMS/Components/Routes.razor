@@ -2,8 +2,8 @@
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Components.Account.Shared
 
-<Router
-    AppAssembly="@typeof(App).Assembly"
+<Router 
+    AppAssembly="@typeof(Routes).Assembly"
     AdditionalAssemblies="@ExtensionManager.GetFilteredAssemblies(null)">
     <Found Context="routeData">
         <CascadingValue Value="routeData">

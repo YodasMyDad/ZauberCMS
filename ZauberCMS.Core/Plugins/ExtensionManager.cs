@@ -176,8 +176,7 @@ public class ExtensionManager(IServiceProvider serviceProvider)
 
     public static Assembly?[] GetFilteredAssemblies(Func<Assembly?, bool>? predicate)
     {
-        // Filter assemblies (excluding "ZauberCMS").
-        var assemblies = GetAssemblies(predicate).Where(a => a?.GetName().Name != "ZauberCMS").ToArray();
+        var assemblies = GetAssemblies(predicate);
 
         // Find the assembly named "ZauberCMS.Routing".
         var routingAssembly = assemblies.FirstOrDefault(a => a?.GetName().Name == "ZauberCMS.Routing");
