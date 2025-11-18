@@ -35,3 +35,4 @@ riderModule.iml
 /ZauberCMS.sln.DotSettings.user
 /ZauberCMS.Web/wwwroot/sitemap.xml
 /ZauberCMS.Web/wwwroot/_mediacache/*
+/.vscode/*
