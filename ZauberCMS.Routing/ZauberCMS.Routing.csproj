@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Routing</PackageId>
-        <Version>4.0.0-rc.5.9</Version>
+        <Version>4.0.0</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS routing package</Description>
         <PackageTags>Web</PackageTags>
@@ -33,7 +33,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
         <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.0" />
-        <PackageReference Include="ZauberCMS.Components" Version="4.0.0-rc.5.9" />
+        <PackageReference Include="ZauberCMS.Components" Version="4.0.0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
@@ -55,6 +55,7 @@
     </Target>
     
 </Project>
+
 
 
 

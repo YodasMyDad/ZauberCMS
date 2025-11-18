@@ -150,6 +150,9 @@ public static class ZauberSetup
 
                     // Email
                     options.SignIn.RequireConfirmedAccount = zauberSettings.Identity.SignInRequireConfirmedAccount;
+                    
+                    // Schema version
+                    options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
                 }
             });
             
