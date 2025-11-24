@@ -28,7 +28,7 @@ Fastest way to get started building your own website is using the .NET Template,
 
 ```ps
 # Ensure we have the latest ZauberCMS templates
-dotnet new install ZauberCMS.Template::4.0.0-rc.5.7 --force
+dotnet new install ZauberCMS.Template@4.0.0 --force
 
 # Create your CMS
 dotnet new zaubercms -n "YourSiteName"
