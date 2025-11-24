@@ -9,11 +9,12 @@
     
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
-      <!--<PackageReference Include="ZauberCMS" Version="4.0.2" />-->
+      <!--<PackageReference Include="ZauberCMS" Version="4.0.7" />-->
     </ItemGroup>
-    
-    <ItemGroup>
-      <None Remove="app.db" />
-    </ItemGroup>
+
+    <!-- Add this Target to ensure wwwroot exists before build -->
+    <Target Name="EnsureWwwRootFolderExists" BeforeTargets="Build">
+        <MakeDir Directories="wwwroot" Condition="!Exists('wwwroot')" />
+    </Target>
     
 </Project>

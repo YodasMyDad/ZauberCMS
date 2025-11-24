@@ -5,6 +5,7 @@ using ImageResize.Core.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -60,6 +61,9 @@ public static class ZauberSetup
     {
         builder.Host.UseSerilog((context, configuration) =>
             configuration.ReadFrom.Configuration(context.Configuration));
+
+        // Enable static web assets from NuGet RCL packages for Kestrel
+        builder.WebHost.UseStaticWebAssets();
 
         // Bind configuration to ZauberSettings instance
         var zauberSettings = new ZauberSettings();

@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+    
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
@@ -7,25 +8,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ZauberCMS" Version="4.0.2"/>
+        <PackageReference Include="Microsoft.AspNetCore.App.Internal.Assets" Version="10.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>build</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="ZauberCMS" Version="4.0.7"/>
     </ItemGroup>
-
-    <ItemGroup>
-        <!-- Opt-in to app-local ICU to ensure consistent globalization APIs across different platforms -->
-        <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
-        <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="wwwroot\" />
-    </ItemGroup>
-    
-    <!-- Add this Target to ensure wwwroot exists before build -->
-    <Target Name="EnsureWwwRootFolderExists" BeforeTargets="Build">
-        <MakeDir Directories="wwwroot" Condition="!Exists('wwwroot')" />
-    </Target>
     
 </Project>
+
+
+
 
 
 

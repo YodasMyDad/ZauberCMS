@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Components</PackageId>
-        <Version>4.0.2</Version>
+        <Version>4.0.7</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS components package</Description>
         <PackageTags>Web</PackageTags>
@@ -49,7 +49,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Core" Version="4.0.2" />
+        <PackageReference Include="ZauberCMS.Core" Version="4.0.7" />
     </ItemGroup>
 
     <ItemGroup>
@@ -89,6 +89,9 @@
     </Target>
     
 </Project>
+
+
+
 
 
 
