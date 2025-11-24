@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS</PackageId>
-        <Version>4.0.0</Version>
+        <Version>4.0.2</Version>
         <Authors>Lee Messenger</Authors>
         <Description>The main ZauberCMS nuget package</Description>
         <PackageTags>Web</PackageTags>
@@ -16,6 +16,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
         <PreserveCompilationContext>true</PreserveCompilationContext>
+        <StaticWebAssetBasePath>_content/$(PackageId)</StaticWebAssetBasePath>
     </PropertyGroup>
     
     <ItemGroup>
@@ -45,7 +46,7 @@
 
 
     <ItemGroup>
-        <Folder Include="wwwroot\**"/>
+        <Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>
@@ -57,8 +58,8 @@
         <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Components" Version="4.0.0"/>
-        <PackageReference Include="ZauberCMS.Routing" Version="4.0.0"/>
+        <PackageReference Include="ZauberCMS.Components" Version="4.0.2"/>
+        <PackageReference Include="ZauberCMS.Routing" Version="4.0.2"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -94,6 +95,8 @@
     </Target>
 
 </Project>
+
+
 
 
 
