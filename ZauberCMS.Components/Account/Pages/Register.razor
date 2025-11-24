@@ -20,7 +20,7 @@
                 <h3>Create a new account.</h3>
                 <ValidationSummary class="text-danger" role="alert"/>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="RegisterUserCommand.Username" class="form-control" aria-required="true" placeholder="Username"/>
+                    <InputText @bind-Value="RegisterUserCommand!.Username" class="form-control" aria-required="true" placeholder="Username"/>
                     <label for="username">Username</label>
                     <ValidationMessage For="() => RegisterUserCommand.Username" class="text-danger"/>
                 </div>
@@ -43,7 +43,7 @@
 </LayoutView>
 
 @code {
-    [SupplyParameterFromForm] public RegisterUserParameters RegisterUserCommand { get; set; } = new();
+    [SupplyParameterFromForm] public RegisterUserParameters? RegisterUserCommand { get; set; }
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     [Inject] public IdentityRedirectManager RedirectManager { get; set; } = null!;
@@ -57,6 +57,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        RegisterUserCommand ??= new();
         var allLayouts = ExtensionManager.GetImplementations<IAccountLayout>(true);
         if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
         {
@@ -73,7 +74,7 @@
     {
         if (editContext.Validate())
         {
-            RegisterUserCommand.AutoLogin = true;
+            RegisterUserCommand!.AutoLogin = true;
             var result = await MembershipService.RegisterUserAsync(RegisterUserCommand);
 
             if (result.Success)

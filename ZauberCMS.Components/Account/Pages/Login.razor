@@ -25,7 +25,7 @@
 
                     <ValidationSummary class="text-danger" role="alert"/>
                     <div class="form-floating mb-3">
-                        <InputText @bind-Value="LoginUserCommand.Email" type="email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
+                        <InputText @bind-Value="LoginUserCommand!.Email" type="email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
                         <label for="email" class="form-label">Email</label>
                         <ValidationMessage For="() => LoginUserCommand.Email" class="text-danger"/>
                     </div>
@@ -69,7 +69,7 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
-    [SupplyParameterFromForm] private LoginUserParameters LoginUserCommand { get; set; } = new();
+    [SupplyParameterFromForm] private LoginUserParameters? LoginUserCommand { get; set; }
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
@@ -78,6 +78,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        LoginUserCommand ??= new();
         var allLayouts = ExtensionManager.GetImplementations<IAccountLayout>(true);
         if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
         {
@@ -95,7 +96,7 @@
     {
         if (editContext.Validate())
         {
-            var result = await MembershipService.LoginUserAsync(LoginUserCommand);
+            var result = await MembershipService.LoginUserAsync(LoginUserCommand!);
 
             if (result.Messages.ErrorMessages().Any() == false && result.Success)
             {
