@@ -1,10 +1,8 @@
 ﻿# ZauberCMS - The Blazor CMS
 
-### Note: This is v4 RC and still in .NET 9 for you to test, when released this will be updated to .NET 10.
-
 ZauberCMS is a fully featured CMS built in .NET 10. The CMS is inspired by Umbraco but built entirely in Blazor.
 
-**Front End (Your website):** Fast static server-side rendering (static SSR) with the ability to add Blazor components for interactivity (As recommended by MS) using @rendermode, or use your favourite JS framework (Vue, AlpineJS etc...)
+**Front End (Your website):** Fast static server-side rendering (static SSR) with the ability to add Blazor components for interactivity (As recommended by MS) using @rendermode
 
 **Admin (Manage Website):** Built entirely with InteractiveServer and using Radzen components for the main UI.
 
@@ -57,7 +55,7 @@ This repo comes with a starter site example so you can see some of the most comm
     <ItemGroup>
       <!--Remove this line 👇🏼 and uncomment the below line-->
       <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
-      <!--<PackageReference Include="ZauberCMS" Version="4.0.0-rc.5.7" />-->
+      <!--<PackageReference Include="ZauberCMS" Version="4.0.0" />-->
     </ItemGroup>
 
 _Again, DO NOT  use the entire source code to build your own site. You are supposed to use the Nuget package (or Template) like above._ 
