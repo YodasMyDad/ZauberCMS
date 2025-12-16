@@ -463,10 +463,9 @@ public class MembershipService(
             }
             else
             {
-                role.Name = parameters.Role.Name;
-                role.NormalizedName = parameters.Role.NormalizedName;
+                parameters.Role.MapTo(role);
                 role.DateUpdated = DateTime.UtcNow;
-                
+
                 var result = await roleManager.UpdateAsync(role);
                 if (!result.Succeeded)
                 {

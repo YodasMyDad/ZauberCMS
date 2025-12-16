@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Components</PackageId>
-        <Version>4.0.7</Version>
+        <Version>4.1.0</Version>
         <Authors>Lee Messenger</Authors>
         <Description>ZauberCMS components package</Description>
         <PackageTags>Web</PackageTags>
@@ -28,20 +28,20 @@
         <PackageReference Include="Blazored.Modal" Version="7.3.1" />
         <PackageReference Include="BlazorMonaco" Version="3.4.0" />
         <PackageReference Include="Humanizer" Version="3.0.1" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.0" />
-        <PackageReference Include="Radzen.Blazor" Version="8.3.2" />
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.1" />
+        <PackageReference Include="Radzen.Blazor" Version="8.4.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="ImageResize" Version="3.0.0" />
         <PackageReference Include="TinyMCE.Blazor" Version="2.2.1" />
-        <PackageReference Include="ZauberCMS.RTE" Version="2.0.0" />
+        <PackageReference Include="ZauberCMS.RTE" Version="2.1.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -49,7 +49,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Core" Version="4.0.7" />
+        <PackageReference Include="ZauberCMS.Core" Version="4.1.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -89,6 +89,7 @@
     </Target>
     
 </Project>
+
 
 
 

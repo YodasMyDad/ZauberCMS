@@ -10,6 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{926273E0-C
 	ProjectSection(SolutionItems) = preProject
 		ReadMe.md = ReadMe.md
 		misc.txt = misc.txt
+		Docs\AdminUI.md = Docs\AdminUI.md
+		Docs\developer.md = Docs\developer.md
+		Docs\Editors.md = Docs\Editors.md
+		Docs\efcore.md = Docs\efcore.md
+		Docs\Services.md = Docs\Services.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZauberCMS", "ZauberCMS\ZauberCMS.csproj", "{96E94BB7-57E0-4756-BD69-157B433CF6DC}"

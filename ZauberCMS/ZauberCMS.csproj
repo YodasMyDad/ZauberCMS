@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS</PackageId>
-        <Version>4.0.7</Version>
+        <Version>4.1.0</Version>
         <Authors>Lee Messenger</Authors>
         <Description>The main ZauberCMS nuget package</Description>
         <PackageTags>Web</PackageTags>
@@ -27,19 +27,19 @@
         <PackageReference Include="Blazored.Modal" Version="7.3.1"/>
         <PackageReference Include="Humanizer" Version="3.0.1" />
         <PackageReference Include="MailKit" Version="4.14.1" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
-        <PackageReference Include="Radzen.Blazor" Version="8.3.2" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
+        <PackageReference Include="Radzen.Blazor" Version="8.4.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.0" />
-        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
         <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
     </ItemGroup>
 
@@ -57,8 +57,8 @@
         <ProjectReference Include="..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="ZauberCMS.Components" Version="4.0.7"/>
-        <PackageReference Include="ZauberCMS.Routing" Version="4.0.7"/>
+        <PackageReference Include="ZauberCMS.Components" Version="4.1.0"/>
+        <PackageReference Include="ZauberCMS.Routing" Version="4.1.0"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -94,6 +94,7 @@
     </Target>
 
 </Project>
+
 
 
 

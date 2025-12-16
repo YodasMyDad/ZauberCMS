@@ -12,10 +12,11 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>build</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="ZauberCMS" Version="4.0.7"/>
+        <PackageReference Include="ZauberCMS" Version="4.1.0"/>
     </ItemGroup>
     
 </Project>
+
 
 
 

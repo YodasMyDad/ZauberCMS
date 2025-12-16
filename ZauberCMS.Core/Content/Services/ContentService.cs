@@ -644,13 +644,32 @@ public class ContentService(
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
 
+        // Check for regular content using this ContentType
         var contentUsingContentType =
             await QueryContentAsync(new QueryContentParameters { ContentTypeId = parameters.ContentTypeId },
                 cancellationToken);
         if (contentUsingContentType.Items.Any())
         {
             handlerResult.Success = false;
-            handlerResult.AddMessage("Unable to delete, because this ContentType is being used",
+            handlerResult.AddMessage("Unable to delete, because this ContentType is being used by content items",
+                ResultMessageType.Warning);
+            return handlerResult;
+        }
+
+        // Check for nested content using this ContentType (Element Types)
+        var nestedContentUsingContentType =
+            await QueryContentAsync(new QueryContentParameters
+            {
+                ContentTypeId = parameters.ContentTypeId,
+                NestedFilter = QueryContentParameters.NestedContentFilter.Only,
+                IncludeUnpublished = true
+            }, cancellationToken);
+        if (nestedContentUsingContentType.Items.Any())
+        {
+            handlerResult.Success = false;
+            var count = nestedContentUsingContentType.TotalItems;
+            handlerResult.AddMessage(
+                $"Unable to delete, because this Element Type is used by {count} nested content item{(count == 1 ? "" : "s")}",
                 ResultMessageType.Warning);
             return handlerResult;
         }
