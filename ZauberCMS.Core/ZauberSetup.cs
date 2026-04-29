@@ -57,7 +57,13 @@ namespace ZauberCMS.Core;
 
 public static class ZauberSetup
 {
+    // Keeping this method to be compile time compatible with the previous version, if that isn't needed this can be removed and the configureSettings can be defaulted to null
     public static void AddZauberCms(this WebApplicationBuilder builder, params Assembly[] additionalAssemblies)
+    {
+        AddZauberCms(builder, null, additionalAssemblies);
+    }
+
+    public static void AddZauberCms(this WebApplicationBuilder builder, Action<ZauberSettings>? configureSettings, params Assembly[] additionalAssemblies)
     {
         builder.Host.UseSerilog((context, configuration) =>
             configuration.ReadFrom.Configuration(context.Configuration));
@@ -69,6 +75,14 @@ public static class ZauberSetup
         var zauberSettings = new ZauberSettings();
         builder.Configuration.GetSection(Constants.SettingsConfigName).Bind(zauberSettings);
         builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
+
+        if (configureSettings is not null)
+        {
+            // Apply any additional configuration from the user
+            configureSettings.Invoke(zauberSettings);
+            // Apply any additional configuration from the user to the options system as well, so it's available in IOptions<ZauberSettings>
+            builder.Services.Configure(configureSettings);
+        }
 
         // Configure ImageResize with settings from ZauberSettings
         builder.Services.AddImageResize(o =>

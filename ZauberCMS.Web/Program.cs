@@ -3,7 +3,11 @@ using ZauberCMS.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddZauberCms();
+builder.AddZauberCms(settings =>
+{
+    settings.DatabaseProvider = "postgresql";
+    settings.ConnectionString = "Host=localhost;Port=51020;Username=postgres;Password=dCW7{-YUH9u8_8uv~W{M}x;Database=cms";
+});
 
 var app = builder.Build();
 

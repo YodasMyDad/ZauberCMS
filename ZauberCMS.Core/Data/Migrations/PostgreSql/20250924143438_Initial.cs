@@ -741,7 +741,7 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                 table: "ZauberContentVersions",
                 column: "ContentId",
                 unique: true,
-                filter: "[IsLatestDraft] = 1");
+                filter: "\"IsLatestDraft\" = true");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ZauberContentVersions_CreatedById",
