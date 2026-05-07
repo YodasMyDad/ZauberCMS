@@ -25,7 +25,7 @@ public class SmtpEmailProvider(
             using var smtp = new SmtpClient();
 
             var emailMessage = new MimeMessage();
-            emailMessage.From.Add(MailboxAddress.Parse(_gabSettings.Email.SenderEmail));
+            emailMessage.From.Add(MailboxAddress.Parse(_gabSettings.Email.SenderEmail ?? throw new InvalidOperationException("Email.SenderEmail is not configured")));
             emailMessage.To.Add(MailboxAddress.Parse(toEmail));
             emailMessage.Subject = subject;
             emailMessage.Body = new TextPart(TextFormat.Html)
@@ -33,8 +33,13 @@ public class SmtpEmailProvider(
                 Text = HtmlBody(paragraphs, Template, string.Empty)
             };
 
-            await smtp.ConnectAsync(_gabSettings.Email.Smtp.Host, _gabSettings.Email.Smtp.Port, SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_gabSettings.Email.Smtp.Username, _gabSettings.Email.Smtp.Password);
+            await smtp.ConnectAsync(
+                _gabSettings.Email.Smtp.Host ?? throw new InvalidOperationException("Email.Smtp.Host is not configured"),
+                _gabSettings.Email.Smtp.Port,
+                SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(
+                _gabSettings.Email.Smtp.Username ?? throw new InvalidOperationException("Email.Smtp.Username is not configured"),
+                _gabSettings.Email.Smtp.Password ?? throw new InvalidOperationException("Email.Smtp.Password is not configured"));
             await smtp.SendAsync(emailMessage);
             await smtp.DisconnectAsync(true);
         }
@@ -45,7 +50,7 @@ public class SmtpEmailProvider(
             using var smtp = new SmtpClient();
 
             var emailMessage = new MimeMessage();
-            emailMessage.From.Add(MailboxAddress.Parse(_gabSettings.Email.SenderEmail));
+            emailMessage.From.Add(MailboxAddress.Parse(_gabSettings.Email.SenderEmail ?? throw new InvalidOperationException("Email.SenderEmail is not configured")));
             emailMessage.To.Add(MailboxAddress.Parse(toEmail));
             emailMessage.Subject = subject;
             emailMessage.Body = new TextPart(TextFormat.Html)
@@ -53,8 +58,13 @@ public class SmtpEmailProvider(
                 Text = message
             };
 
-            await smtp.ConnectAsync(_gabSettings.Email.Smtp.Host, _gabSettings.Email.Smtp.Port, SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_gabSettings.Email.Smtp.Username, _gabSettings.Email.Smtp.Password);
+            await smtp.ConnectAsync(
+                _gabSettings.Email.Smtp.Host ?? throw new InvalidOperationException("Email.Smtp.Host is not configured"),
+                _gabSettings.Email.Smtp.Port,
+                SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(
+                _gabSettings.Email.Smtp.Username ?? throw new InvalidOperationException("Email.Smtp.Username is not configured"),
+                _gabSettings.Email.Smtp.Password ?? throw new InvalidOperationException("Email.Smtp.Password is not configured"));
             await smtp.SendAsync(emailMessage);
             await smtp.DisconnectAsync(true);
         }

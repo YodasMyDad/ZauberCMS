@@ -4,7 +4,7 @@
 
 ## Project snapshot
 
-**ZauberCMS** is a fully-featured .NET 10 Blazor CMS, loosely modelled on Umbraco. Current version: **`4.1.0`** (see [ZauberCMS.Core/ZauberCMS.Core.csproj:9](ZauberCMS.Core/ZauberCMS.Core.csproj#L9)).
+**ZauberCMS** is a fully-featured .NET 10 Blazor CMS, loosely modelled on Umbraco. (see [ZauberCMS.Core/ZauberCMS.Core.csproj:9](ZauberCMS.Core/ZauberCMS.Core.csproj#L9)).
 
 - **Front-end** = static SSR with optional `@rendermode` opt-ins.
 - **Admin** (`/admin`) = `InteractiveServer` Blazor + Radzen 8.4.0.

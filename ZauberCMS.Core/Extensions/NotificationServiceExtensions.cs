@@ -22,7 +22,7 @@ public static class NotificationServiceExtensions
     
     public static void ShowNotification(this NotificationService notificationService, string summary, NotificationSeverity severity, string? detail = null, double? duration = 4000)
     {
-        notificationService.Notify(new NotificationMessage { Severity = severity, Summary = summary, Detail = detail, Duration = duration });
+        notificationService.Notify(new NotificationMessage { Severity = severity, Summary = summary, Detail = detail ?? string.Empty, Duration = duration });
     }
     
     public static void ShowNotifications(this NotificationService notificationService, string summary, NotificationSeverity severity, List<string> details, double? duration = 4000)
