@@ -1,4 +1,5 @@
 @using System.Text.Json
+@using Microsoft.Extensions.Logging
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Components.Editors.Components
@@ -88,6 +89,7 @@
     [CascadingParameter] public IModalService? ModalService { get; set; }
     [Inject] public DialogService DialogService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ILogger<BlockListEditorProperty> Logger { get; set; } = null!;
     
     private BlockListState State { get; set; } = new();
     private BlockListEditorSettingsModel SettingsModel { get; set; } = new();
@@ -309,19 +311,21 @@
         }
     }
     
+    // async void is required because OnBlockListChanges on ContentEditor is typed Action<BlockListChanges>.
+    // Without try/catch an exception here would propagate to the SynchronizationContext and tear down the Blazor circuit.
     private async void HandleNestedChanges(BlockListChanges nestedChanges)
     {
-        // Merge nested changes into our state for proper change tracking and saving
-        State = State.MergeNestedChanges(nestedChanges);
-
-        // Update the property value and notify parent to trigger preview re-rendering
-        await NotifyChanges();
-
-        // Also notify parent immediately with the nested changes
-        ChangesPending?.Invoke(nestedChanges);
-
-        // Trigger local re-rendering as well
-        StateHasChanged();
+        try
+        {
+            State = State.MergeNestedChanges(nestedChanges);
+            await NotifyChanges();
+            ChangesPending?.Invoke(nestedChanges);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to handle nested block list changes");
+        }
     }
     
     private async Task NotifyChanges()

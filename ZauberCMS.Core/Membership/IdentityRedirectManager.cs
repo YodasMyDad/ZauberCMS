@@ -21,8 +21,12 @@ public sealed class IdentityRedirectManager(NavigationManager navigationManager)
     {
         uri ??= "";
 
-        // Prevent open redirects.
-        if (!Uri.IsWellFormedUriString(uri, UriKind.Relative))
+        // Defence-in-depth: protocol-relative URLs ("//host", "/\host") slip past IsWellFormedUriString as "well-formed relative" but the browser treats them as off-host redirects.
+        if (IsProtocolRelative(uri))
+        {
+            uri = "/";
+        }
+        else if (!Uri.IsWellFormedUriString(uri, UriKind.Relative))
         {
             uri = navigationManager.ToBaseRelativePath(uri);
         }
@@ -33,6 +37,9 @@ public sealed class IdentityRedirectManager(NavigationManager navigationManager)
         throw new InvalidOperationException(
             $"{nameof(IdentityRedirectManager)} can only be used during static rendering.");
     }
+
+    private static bool IsProtocolRelative(string url)
+        => url.Length >= 2 && url[0] == '/' && (url[1] == '/' || url[1] == '\\');
 
     [DoesNotReturn]
     public void RedirectTo(string uri, Dictionary<string, object?> queryParameters)
