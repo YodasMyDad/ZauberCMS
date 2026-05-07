@@ -151,6 +151,15 @@ public class ContentService(
             parameters.Content.Url = GenerateUniqueUrl(dbContext, baseSlug);
 #pragma warning restore CS0618 // Type or member is obsolete
         }
+        else
+        {
+            // Front-end finder lowercases the request slug before lookup (DefaultContentFinder)
+            // so a stored URL with mixed case would never match. Normalise on save to keep the
+            // write side and the read side in sync.
+#pragma warning disable CS0618 // Type or member is obsolete
+            parameters.Content.Url = parameters.Content.Url?.ToLowerInvariant();
+#pragma warning restore CS0618 // Type or member is obsolete
+        }
 
         if (parameters.Content.ContentTypeAlias.IsNullOrWhiteSpace())
         {
@@ -361,8 +370,16 @@ public class ContentService(
         {
             content.Deleted = true;
             await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Recycle Binned", cancellationToken);
-            return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
+            var recycleResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
                 cancellationToken);
+            if (recycleResult.Success)
+            {
+                // Notify subscribers (admin tree, listings) that this content has effectively
+                // been removed from the live set so they refresh — without this, recycle bin
+                // moves only refresh on a manual reload.
+                await appState.NotifyContentDeleted(content, authState.User.Identity?.Name!);
+            }
+            return recycleResult;
         }
 
         var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
@@ -1988,14 +2005,14 @@ public class ContentService(
 
         var content = request.IsRootContent
             ? matchedDomain != null
-                ? await contentQueryable.Select(c => new
+                ? await contentQueryable.Where(c => !c.Deleted).Select(c => new
                         { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(x => x.Id == matchedDomain.ContentId, cancellationToken)
-                : await contentQueryable.Where(c => c.IsRootContent && c.Published)
+                : await contentQueryable.Where(c => c.IsRootContent && c.Published && !c.Deleted)
                     .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(cancellationToken)
 #pragma warning disable CS0618 // Type or member is obsolete
-            : await contentQueryable.Where(c => c.Url == request.Slug && c.Published)
+            : await contentQueryable.Where(c => c.Url == request.Slug && c.Published && !c.Deleted)
 #pragma warning restore CS0618 // Type or member is obsolete
                 .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                 .FirstOrDefaultAsync(cancellationToken);
@@ -2003,7 +2020,7 @@ public class ContentService(
         if (content?.InternalRedirectId != null && content.InternalRedirectId != Guid.Empty)
         {
             var internalRedirectIdValue = content.InternalRedirectId.Value;
-            content = await contentQueryable.Where(c => c.Id == internalRedirectIdValue)
+            content = await contentQueryable.Where(c => c.Id == internalRedirectIdValue && !c.Deleted)
                 .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                 .FirstOrDefaultAsync(cancellationToken);
         }

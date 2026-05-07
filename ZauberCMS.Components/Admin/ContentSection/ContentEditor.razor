@@ -393,8 +393,15 @@ else
         if (ContentId != null)
         {
             Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true });
-            ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = Content!.ContentTypeId });
-            
+            if (Content == null)
+            {
+                // Lookup failed (deleted/missing id); avoid NRE on the ContentTypeId deref below
+                // and surface a friendly notification instead of crashing the editor.
+                NotificationService.ShowErrorNotification("Unable to load this content item");
+                return;
+            }
+            ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = Content.ContentTypeId });
+
             if (Content.UnpublishedContent != null)
             {
                 // Replace the Content with the Json one
@@ -404,7 +411,7 @@ else
 
             // Always create WorkingCopy from Content, even if ContentType fails to load
             WorkingCopy = CreateWorkingCopy(Content);
-            
+
             if (ContentType == null)
             {
                 NotificationService.ShowErrorNotification("Unable to find content type for this content");

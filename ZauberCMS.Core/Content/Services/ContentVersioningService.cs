@@ -118,8 +118,10 @@ public class ContentVersioningService(
 
         var result = await dbContext.SaveChangesAndLog(version, handlerResult, cacheService, extensionManager, cancellationToken);
 
-        // Invalidate content cache
-        cacheService.ClearCachedItemsWithPrefix($"Content_{content.Id}");
+        // Invalidate content cache. Cache keys are formatted "{TypeName}-{hash}" (see
+        // CacheExtensions.ToCacheKey), so the prefix must use a hyphen and the entity name —
+        // "Content_{id}" with an underscore would never match anything.
+        cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
 
         return result;
     }
@@ -174,8 +176,8 @@ public class ContentVersioningService(
         handlerResult.Entity = version;
         handlerResult.Success = true;
 
-        // Clear content cache
-        cacheService.ClearCachedItemsWithPrefix($"Content_{content.Id}");
+        // Clear content cache. See CreateVersionAsync for prefix-format reasoning.
+        cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
 
         return handlerResult;
     }

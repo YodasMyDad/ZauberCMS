@@ -91,10 +91,19 @@ public class LanguageService(
                     isUpdate = true;
                     language = lang;
                 }
+                else
+                {
+                    // Caller asked to update a specific language id but it doesn't exist —
+                    // don't silently fall through and create a new one with that id, that's
+                    // not what the caller asked for.
+                    handlerResult.AddMessage("Language not found", ResultMessageType.Error);
+                    return handlerResult;
+                }
             }
 
-            // Does this already exist
-            var existing = dbContext.Languages.FirstOrDefault(x => x.LanguageIsoCode == parameters.CultureInfo.Name);
+            // Does this already exist (excluding the language we're currently updating)
+            var existing = dbContext.Languages.FirstOrDefault(x =>
+                x.LanguageIsoCode == parameters.CultureInfo.Name && x.Id != language.Id);
             if (existing != null)
             {
                 handlerResult.AddMessage("Language already exists", ResultMessageType.Error);

@@ -450,6 +450,7 @@ public class MembershipService(
         if (parameters.Role != null)
         {
             var role = await roleManager.FindByIdAsync(parameters.Role.Id.ToString());
+            var isUpdate = false;
 
             if (role == null)
             {
@@ -463,6 +464,7 @@ public class MembershipService(
             }
             else
             {
+                isUpdate = true;
                 parameters.Role.MapTo(role);
                 role.DateUpdated = DateTime.UtcNow;
 
@@ -474,8 +476,10 @@ public class MembershipService(
                 }
             }
 
-            // Note: Audit logging would need to be implemented without mediator
-            logger.LogInformation("Audit logging for role {RoleName} {Action}", role.Name, role.Id == Guid.Empty ? "Create" : "Update");
+            // Note: Audit logging would need to be implemented without mediator.
+            // Cannot use role.Id == Guid.Empty as the create/update marker because RoleManager.CreateAsync
+            // assigns the Id before this log line runs — every save would log "Update".
+            logger.LogInformation("Audit logging for role {RoleName} {Action}", role.Name, isUpdate ? "Update" : "Create");
 
             handlerResult.Entity = role;
             handlerResult.Success = true;
@@ -1034,7 +1038,9 @@ public class MembershipService(
 
         query = parameters.OrderBy switch
         {
-            GetUsersOrderBy.DateUpdated => query.OrderBy(p => p.DateCreated),
+            GetUsersOrderBy.DateUpdated => query.OrderBy(p => p.DateUpdated),
+            GetUsersOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
+            GetUsersOrderBy.DateCreated => query.OrderBy(p => p.DateCreated),
             GetUsersOrderBy.DateCreatedDescending => query.OrderByDescending(p => p.DateCreated),
             _ => query.OrderByDescending(p => p.DateCreated)
         };
