@@ -310,7 +310,7 @@ dotnet nuget push NugetSource\ZauberCMS.Core.4.1.0.nupkg -k <API_KEY> -s https:/
   dotnet new uninstall ./   # to remove
   ```
 - **Sample DB tracked in git**: [ZauberCMS.Web/app.db](ZauberCMS.Web/app.db) is committed. `git status` will show it modified after almost every dev run — **don't commit unless intentional**.
-- Branches: default branch is `master`; current working branch (per session start) was `main-static`.
+- Branches: default branch is `main-static` (PRs target this; `Closes #N` in commits to it auto-closes issues). `master` still exists on the remote as a legacy branch from an older version — don't push there. Local `origin/HEAD` may still point at `origin/master` cosmetically; run `git remote set-head origin -a` to refresh if it's misleading.
 
 ---
 
