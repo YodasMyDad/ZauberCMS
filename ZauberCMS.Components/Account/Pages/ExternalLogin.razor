@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.RateLimiting
 @using Microsoft.Extensions.Options
 @using Serilog
 @using ZauberCMS.Core.Plugins
@@ -9,6 +10,7 @@
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Membership
 @attribute [ExcludeFromInteractiveRouting]
+@attribute [EnableRateLimiting("login")]
 
 <PageTitle>Register</PageTitle>
 

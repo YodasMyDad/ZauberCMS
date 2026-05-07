@@ -31,7 +31,7 @@
 
     protected override async Task OnClick()
     {
-        await Editor.SaveSelectionAsync();
+        await Editor!.SaveSelectionAsync();
 
         var parameters = new Dictionary<string, object>
         {
@@ -45,7 +45,7 @@
         
         if (result.Confirmed && SelectedMedia != null)
         {
-            await Editor.RestoreSelectionAsync();
+            await Editor!.RestoreSelectionAsync();
             await InsertImage(SelectedMedia);
         }
     }
@@ -69,6 +69,6 @@
         html.AppendFormat(" data-media-id=\"{0}\"", media.Id);
         html.Append(">");
 
-        await Editor.ExecuteCommandAsync("insertHTML", html.ToString());
+        await Editor!.ExecuteCommandAsync("insertHTML", html.ToString());
     }
 }

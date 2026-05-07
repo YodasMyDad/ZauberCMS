@@ -27,13 +27,22 @@ public class FinalDeleteContentContextMenu(IContentService contentService, Dialo
     public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
-        var branch = (TreeBranch)args.Value;
+        if (args.Value is not TreeBranch branch)
+        {
+            return;
+        }
+
         var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true });
+        if (dbContent is null)
+        {
+            return;
+        }
+
         contextMenuService.Close();
         var delete = await dialogService.Confirm("Permanently delete this?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
         if (delete == true)
         {
-            var result = await contentService.DeleteContentAsync(new DeleteContentParameters {ContentId = dbContent!.Id});
+            var result = await contentService.DeleteContentAsync(new DeleteContentParameters { ContentId = dbContent.Id });
             notificationService.Notify(new NotificationMessage { 
                 Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
                 Summary = result.Success ? "Success" : "Error", 

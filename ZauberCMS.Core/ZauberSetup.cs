@@ -93,8 +93,11 @@ public static class ZauberSetup
 
         builder.Services.AddScoped(sp =>
         {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
             var navigationManager = sp.GetRequiredService<NavigationManager>();
-            return new HttpClient { BaseAddress = new Uri(navigationManager.BaseUri) };
+            var client = factory.CreateClient();
+            client.BaseAddress = new Uri(navigationManager.BaseUri);
+            return client;
         });
 
         builder.Services.AddCascadingAuthenticationState();
@@ -283,11 +286,7 @@ public static class ZauberSetup
 
         // Add Zauber RTE services
         builder.Services.AddZauberRte(discoverAssemblies);
-        
-        // Build the service provider and get the extension manager
-        var serviceProvider = builder.Services.BuildServiceProvider();
-        var extensionManager = serviceProvider.GetRequiredService<ExtensionManager>();
-        
+
         // Detailed errors have been enabled
         if (zauberSettings.ShowDetailedErrors)
         {
@@ -311,18 +310,18 @@ public static class ZauberSetup
         
 
 
-        // Start up items
-        var startUpItems = extensionManager.GetInstances<IStartupPlugin>();
-        foreach (var startUpItem in startUpItems)
+        // Start up items - bootstrap interfaces are discovered without DI so we don't have
+        // to BuildServiceProvider() before the host container is built (avoids ASP0000 and
+        // a parallel singleton container).
+        foreach (var startUpItem in ExtensionManager.GetBootstrapInstances<IStartupPlugin>())
         {
-            startUpItem.Value.Register(builder.Services, builder.Configuration);
+            startUpItem.Register(builder.Services, builder.Configuration);
         }
 
-
         // Add external authentication providers
-        foreach (var provider in extensionManager.GetInstances<IExternalAuthenticationProvider>())
+        foreach (var provider in ExtensionManager.GetBootstrapInstances<IExternalAuthenticationProvider>())
         {
-            provider.Value.Add(builder.Services, authBuilder, builder.Configuration);
+            provider.Add(builder.Services, authBuilder, builder.Configuration);
         }
 
         // Add localization services

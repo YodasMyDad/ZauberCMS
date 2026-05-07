@@ -142,7 +142,7 @@
                 OrderBy = GetMediaOrderBy.Name,
                 AmountPerPage = 250
             });
-            args.Children.Data = items.Items;
+            args.Children!.Data = items.Items;
             args.Children.TextProperty = "Name";
             args.Children.Template = TreeExtensions.CreateMediaTreeTemplate<RadzenTreeItem>();
             args.Children.HasChildren = HasChildren;

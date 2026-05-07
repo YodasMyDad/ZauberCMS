@@ -151,9 +151,13 @@
 
     private async Task MenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager, ContextMenuService contextMenuService, IModalService modalService)
     {
-        var value = (int)e.Value;
+        if (e.Value is not int value)
+        {
+            return;
+        }
+
         if (ContextMenus.TryGetValue(value, out var contextMenu))
-        { 
+        {
             await contextMenu.ContextMenuAction(args, e, navigationManager, contextMenuService, modalService);
             StateHasChanged();
         }

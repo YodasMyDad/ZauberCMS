@@ -80,6 +80,11 @@
 
     private async Task OnMapClick(GoogleMapClickEventArgs args)
     {
+        if (args.Position is null)
+        {
+            return;
+        }
+
         Location.Lat = args.Position.Lat;
         Location.Lng = args.Position.Lng;
         await ValueChanged.InvokeAsync(JsonSerializer.Serialize(Location));

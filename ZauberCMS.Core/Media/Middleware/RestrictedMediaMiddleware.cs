@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Interfaces;
+using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;
 using ZauberCMS.Core.Settings;
 
@@ -18,43 +20,57 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
             using var scope = serviceProvider.CreateScope();
             var mediaService = scope.ServiceProvider.GetRequiredService<IMediaService>();
 
-            // Extract media ID or filename from the path
+            // Extract media path from the request
             var mediaPath = context.Request.Path.Value;
 
-            // Check if this media item is restricted
-            var isRestricted = await IsMediaRestrictedAsync(mediaService, mediaPath);
+            // Look up access metadata (id + allowed role names) for this media item
+            var entry = await GetRestrictedMediaEntryAsync(mediaService, mediaPath);
 
-            if (isRestricted)
+            if (entry is not null)
             {
-                if (context.User.Identity?.IsAuthenticated == false)
+                if (context.User.Identity?.IsAuthenticated != true)
                 {
-                    context.Response.StatusCode = 401;
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     context.Response.ContentType = "text/plain";
                     await context.Response.WriteAsync("Unauthorized access to media");
                     return;
                 }
-                else
+
+                // Empty role list means "any authenticated user"; otherwise enforce role membership.
+                // Admins are always allowed (matches EntryPage role-check pattern for content).
+                if (entry.AllowedRoleNames.Count > 0 &&
+                    !context.User.IsInRole(Constants.Roles.AdminRoleName) &&
+                    !entry.AllowedRoleNames.Any(r => !string.IsNullOrEmpty(r) && context.User.IsInRole(r)))
                 {
-                    // User is authenticated, let ImageResize handle the request normally
-                    // Add a marker to indicate authentication passed
-                    context.Items["ZauberMediaAuthenticated"] = true;
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    context.Response.ContentType = "text/plain";
+                    await context.Response.WriteAsync("Forbidden");
+                    return;
                 }
+
+                // Authentication (and role check, if any) passed - let downstream middleware handle the request
+                context.Items["ZauberMediaAuthenticated"] = true;
             }
         }
 
         await next(context);
     }
 
-    private static async Task<bool> IsMediaRestrictedAsync(IMediaService mediaService, string? mediaPath)
+    private static async Task<RestrictedMediaEntry?> GetRestrictedMediaEntryAsync(IMediaService mediaService, string? mediaPath)
     {
-        if (!mediaPath.IsNullOrWhiteSpace())
+        if (mediaPath.IsNullOrWhiteSpace())
         {
-            var mediaDict = await mediaService.GetRestrictedMediaUrlsAsync(new GetRestrictedMediaUrlsParameters());
-
-            // Check both with and without leading slash
-            return mediaDict.ContainsKey(mediaPath) || mediaDict.ContainsKey(mediaPath.TrimStart('/'));
+            return null;
         }
-        return false;
-    }
 
+        var mediaDict = await mediaService.GetRestrictedMediaAccessAsync(new GetRestrictedMediaUrlsParameters());
+
+        if (mediaDict.TryGetValue(mediaPath, out var entry))
+        {
+            return entry;
+        }
+
+        var trimmed = mediaPath.TrimStart('/');
+        return mediaDict.TryGetValue(trimmed, out var entryTrimmed) ? entryTrimmed : null;
+    }
 }

@@ -248,6 +248,44 @@ public class MediaService(
         return await query.Select(x => new { x.Url, x.Id }).ToDictionaryAsync(x => x.Url ?? string.Empty, x => x.Id, cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Returns a dictionary of restricted media URLs to access descriptors (id + allowed role names).
+    /// An entry whose <see cref="Models.RestrictedMediaEntry.AllowedRoleNames"/> is empty grants
+    /// access to any authenticated user; otherwise the user must be in at least one named role.
+    /// </summary>
+    public async Task<Dictionary<string, Models.RestrictedMediaEntry>> GetRestrictedMediaAccessAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default)
+    {
+        using var scope = serviceScopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var query = BuildQuery(dbContext);
+        // Identifier-based key keeps the "Media-" prefix so SaveChangesAndLog's
+        // ClearCachedItemsWithPrefix(typeof(Media).Name) invalidates this entry on save.
+        var cacheKey = "RestrictedMediaAccess".GenerateCacheKey<Models.Media>();
+
+        async Task<Dictionary<string, Models.RestrictedMediaEntry>> Execute()
+        {
+            var rows = await query
+                .Select(x => new
+                {
+                    x.Url,
+                    x.Id,
+                    RoleNames = x.MediaRoles.Select(mr => mr.Role.Name ?? string.Empty).ToList()
+                })
+                .ToListAsync(cancellationToken);
+
+            return rows.ToDictionary(
+                x => x.Url ?? string.Empty,
+                x => new Models.RestrictedMediaEntry(x.Id, x.RoleNames));
+        }
+
+        if (parameters.Cached)
+        {
+            return await cacheService.GetSetCachedItemAsync(cacheKey, Execute) ?? new Dictionary<string, Models.RestrictedMediaEntry>();
+        }
+
+        return await Execute();
+    }
+
     private static IQueryable<Models.Media> BuildQuery(GetMediaParameters parameters, IZauberDbContext dbContext)
     {
         var query = dbContext.Medias.AsQueryable();

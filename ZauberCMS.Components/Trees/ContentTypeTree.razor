@@ -77,11 +77,11 @@
                     IncludeFolders = true,
                     OrderBy = GetContentTypesOrderBy.Name
                 }).GetAwaiter().GetResult();
-                args.Children.Data = items.Items;
+                args.Children!.Data = items.Items;
                 args.Children.TextProperty = "Name";
                 args.Children.Template = TreeExtensions.CreateContentTypeTreeTemplate<RadzenTreeItem>();
                 args.Children.HasChildren = HasChildren;
-                
+
                 TreeState.NodeExpanded(content.Id);
             }
         }

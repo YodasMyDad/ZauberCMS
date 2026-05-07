@@ -93,11 +93,11 @@
                     IncludeContentRoles = true,
                     OrderBy = GetContentsOrderBy.SortOrder
                 }).GetAwaiter().GetResult();
-                args.Children.Data = items.Items;
+                args.Children!.Data = items.Items;
                 args.Children.TextProperty = "Name";
                 args.Children.Template = TreeExtensions.CreateContentTreeTemplate<RadzenTreeItem>();
                 args.Children.HasChildren = HasChildren;
-                
+
                 TreeState.NodeExpanded(content.Id);
             }
         }

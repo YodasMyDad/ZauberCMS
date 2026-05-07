@@ -36,14 +36,14 @@
             switch (args.Value)
             {
                 case TreeStub treeStub:
-                    args.Children.Data = treeStub.Branches;
+                    args.Children!.Data = treeStub.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;
                     TreeState.NodeExpanded(treeStub.Id);
                     break;
                 case TreeBranch branch:
-                    args.Children.Data = branch.Branches;
+                    args.Children!.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;

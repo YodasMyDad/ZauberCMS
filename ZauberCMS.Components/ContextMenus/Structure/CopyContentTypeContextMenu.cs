@@ -30,7 +30,11 @@ public class CopyContentTypeContextMenu() : ITreeContextMenu
     public Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
-        var branch = (ContentType)args.Value;
+        if (args.Value is not ContentType branch)
+        {
+            return Task.CompletedTask;
+        }
+
         contextMenuService.Close();
         navigationManager.NavigateTo($"{Urls.AdminStructureCopyContentType}/{branch.Id}");
         return Task.CompletedTask;

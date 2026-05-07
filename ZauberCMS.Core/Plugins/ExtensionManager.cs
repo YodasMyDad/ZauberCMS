@@ -174,6 +174,39 @@ public class ExtensionManager(IServiceProvider serviceProvider)
             : AssemblyManager.Assemblies.Where(predicate);
     }
 
+    /// <summary>
+    /// Discovers and instantiates implementations of <typeparamref name="T"/> from registered
+    /// assemblies without going through DI. Intended for bootstrap-time interfaces (such as
+    /// <c>IStartupPlugin</c> and <c>IExternalAuthenticationProvider</c>) that must run before
+    /// the service provider is built. Implementers must have a parameterless constructor.
+    /// </summary>
+    public static IEnumerable<T> GetBootstrapInstances<T>()
+    {
+        foreach (var assembly in AssemblyManager.Assemblies)
+        {
+            if (assembly is null) continue;
+
+            Type[] types;
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                types = ex.Types.Where(t => t is not null).Cast<Type>().ToArray();
+            }
+
+            foreach (var type in types)
+            {
+                if (type.IsAbstract || type.IsInterface) continue;
+                if (!typeof(T).IsAssignableFrom(type)) continue;
+                if (type.GetConstructor(Type.EmptyTypes) is null) continue;
+
+                yield return (T)Activator.CreateInstance(type)!;
+            }
+        }
+    }
+
     public static Assembly?[] GetFilteredAssemblies(Func<Assembly?, bool>? predicate)
     {
         // Filter assemblies (excluding "ZauberCMS").

@@ -1,5 +1,6 @@
 ﻿@page "/Account/Register"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.RateLimiting
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Parameters
@@ -7,6 +8,7 @@
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
 @attribute [ExcludeFromInteractiveRouting]
+@attribute [EnableRateLimiting("login")]
 
 <LayoutView Layout="LayoutType">
     <PageTitle>Register</PageTitle>

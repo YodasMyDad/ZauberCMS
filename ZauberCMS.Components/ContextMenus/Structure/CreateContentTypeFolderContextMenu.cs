@@ -29,7 +29,11 @@ public class CreateContentTypeFolderContextMenu : ITreeContextMenu
     public Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
-        var contentType = (ContentType)args.Value;
+        if (args.Value is not ContentType contentType)
+        {
+            return Task.CompletedTask;
+        }
+
         contextMenuService.Close();
         navigationManager.NavigateTo($"{Urls.AdminStructureCreateFolderWithParent}/{contentType.Id}");
         return Task.CompletedTask;

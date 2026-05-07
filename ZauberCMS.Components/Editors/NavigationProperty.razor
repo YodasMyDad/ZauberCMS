@@ -134,10 +134,10 @@
     {
         if (args.Value is NavigationItem item)
         {
-            args.Children.Data = item.Children;
+            args.Children!.Data = item.Children;
             args.Children.TextProperty = "Name";
             args.Children.Template = CreateTreeTemplate<RadzenTreeItem>();
-            
+
             TreeState.NodeExpanded(item.Id);
         }
     }
@@ -199,11 +199,14 @@
     private void ItemContextMenu(TreeItemContextMenuEventArgs args)
     {
         ContextMenuService.Open(args,
-            MenuItems(args), 
+            MenuItems(args),
             async e =>
             {
-                var navigationItem = (NavigationItem)args.Value;
-                //var text = args.Text;
+                if (args.Value is not NavigationItem navigationItem)
+                {
+                    return;
+                }
+
                 switch(e.Value)
                 {
                     case 1:
@@ -216,7 +219,7 @@
                         break;
                     case 3:
                         ContextMenuService.Close();
-                        await SortChildren(navigationItem.Children);   
+                        await SortChildren(navigationItem.Children);
                         break;
                 }
             }

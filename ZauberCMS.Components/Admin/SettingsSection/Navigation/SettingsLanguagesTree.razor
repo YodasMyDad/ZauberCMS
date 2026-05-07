@@ -82,7 +82,7 @@
             case TreeStub treeStub:
                 if (treeStub.Branches.Any())
                 {
-                    args.Children.Data = treeStub.Branches;
+                    args.Children!.Data = treeStub.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;
@@ -93,7 +93,7 @@
             case TreeBranch branch:
                 if (branch.Branches.Any())
                 {
-                    args.Children.Data = branch.Branches;
+                    args.Children!.Data = branch.Branches;
                     args.Children.TextProperty = "Name";
                     args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
                     args.Children.HasChildren = HasChildren;

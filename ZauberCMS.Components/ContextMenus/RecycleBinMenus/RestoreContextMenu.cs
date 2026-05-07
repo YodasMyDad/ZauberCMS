@@ -29,12 +29,21 @@ public class RestoreContextMenu(IContentService contentService, IMembershipServi
     public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
-        var branch = (TreeBranch)args.Value;
-        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true});
+        if (args.Value is not TreeBranch branch)
+        {
+            return;
+        }
+
+        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true });
+        if (dbContent is null)
+        {
+            return;
+        }
+
         var currentUser = await membershipService.GetCurrentUser();
         contextMenuService.Close();
-        dbContent!.Deleted = false;
-        var saveResult = await contentService.SaveContentAsync(new SaveContentParameters { Content = dbContent, ExcludePropertyData = true});
+        dbContent.Deleted = false;
+        var saveResult = await contentService.SaveContentAsync(new SaveContentParameters { Content = dbContent, ExcludePropertyData = true });
         if (saveResult.Success)
         {
             await appState.NotifyContentChanged(dbContent, currentUser?.Name ?? "Unknown");

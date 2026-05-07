@@ -419,7 +419,7 @@ public class ContentService(
         Models.Content CreateCopy(Models.Content original, User? currentUser, Guid? parentId = null)
         {
             var copy = original.MapToNew();
-            copy.Id = Guid.NewGuid();
+            copy.Id = Guid.NewGuid().NewSequentialGuid();
             copy.Name = original.Name + " (Copy)";
 #pragma warning disable CS0618 // Type or member is obsolete
             copy.Url = original.Url + "-copy";
@@ -433,7 +433,7 @@ public class ContentService(
             copy.Deleted = false;
             copy.PropertyData = original.PropertyData.Select(p => new ContentPropertyValue
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().NewSequentialGuid(),
                 DateUpdated = p.DateUpdated,
                 DateCreated = p.DateCreated,
                 ContentTypePropertyId = p.ContentTypePropertyId,
@@ -1328,7 +1328,7 @@ public class ContentService(
         var tabMap = new Dictionary<string, Guid>();
         foreach (var tab in export.Tabs)
         {
-            var newId = Guid.NewGuid();
+            var newId = Guid.NewGuid().NewSequentialGuid();
             tabMap[tab.Alias] = newId;
             tab.Id = newId;
         }
@@ -1339,7 +1339,7 @@ public class ContentService(
         var propMap = new Dictionary<string, Guid>();
         foreach (var prop in export.ContentProperties)
         {
-            var newId = Guid.NewGuid();
+            var newId = Guid.NewGuid().NewSequentialGuid();
             prop.Id = newId;
             propMap[prop.Alias ?? prop.Name ?? string.Empty] = newId;
             if (!string.IsNullOrEmpty(prop.TabAlias) && tabMap.TryGetValue(prop.TabAlias, out var newTabId))
