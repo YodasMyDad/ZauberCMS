@@ -9,7 +9,7 @@
 - **Front-end** = static SSR with optional `@rendermode` opt-ins.
 - **Admin** (`/admin`) = `InteractiveServer` Blazor + Radzen 8.4.0.
 - Distributed as **4 NuGet packages** (`ZauberCMS.Core`, `ZauberCMS.Components`, `ZauberCMS.Routing`, `ZauberCMS`) + a **`dotnet new` template** (`ZauberCMS.Template`).
-- **No CI/CD.** Releases are scripted locally via [release.ps1](release.ps1) and pushed manually to nuget.org. There is no `.github/workflows/`.
+- **CI/CD**: every push to `main-static` runs [.github/workflows/ci.yml](.github/workflows/ci.yml) — auto-bumps the patch version, builds + packs all 5 NuGet packages, pushes to nuget.org, and creates a `vX.Y.Z` tag. [release.ps1](release.ps1) is kept for offline/local releases but is no longer the primary path.
 - See [ReadMe.md](ReadMe.md) for the public pitch and screenshots; see [www.zaubercms.com](https://www.zaubercms.com/) and the GitBook docs ([aptitude.gitbook.io/zaubercms](https://aptitude.gitbook.io/zaubercms)) for end-user material.
 
 ---
@@ -265,36 +265,31 @@ The note in [misc.txt:49](misc.txt#L49) about renaming the nupkg to `.zip` to in
 
 ---
 
-## Release flow ([release.ps1](release.ps1))
+## Release flow
 
-```ps
-.\release.ps1 -NewVersion 4.2.0
-```
+### Automated (primary): [.github/workflows/ci.yml](.github/workflows/ci.yml)
 
-What it does:
+Every push to `main-static` triggers the workflow. PRs into `main-static` only run a build-validation job — no publish.
 
-1. Reads current version from `ZauberCMS.Core.csproj`.
-2. Prompts for the new version (or uses `-NewVersion`). Format `x.y.z` or `x.y.z-suffix`.
-3. Updates `<Version>` in the four core csproj files **and** `<PackageVersion>` in the template csproj **and** `<Version>` in `ZauberCMSTemplate.Site.csproj` — **6 csproj files in total**.
-4. Rewrites internal `PackageReference` versions with regex ([release.ps1:41-55](release.ps1#L41-L55)):
-   - `ZauberCMS.Components` → bumps `ZauberCMS.Core` ref
-   - `ZauberCMS.Routing` → bumps `ZauberCMS.Components` ref
-   - `ZauberCMS` → bumps `ZauberCMS.Components` and `ZauberCMS.Routing` refs
-   - `ZauberCMSTemplate.Site` → bumps `ZauberCMS` ref
-   This is **critical** — it means `dotnet new zaubercms` always scaffolds a project that depends on the **released NuGet**, not on a project reference.
-5. Runs `dotnet build ZauberCMS.sln -c Release` → produces 4 nupkgs (via `GeneratePackageOnBuild`) + the `CopyNuGetPackage` MSBuild target lands them in [NugetSource/](NugetSource/).
-6. Runs `dotnet pack -c Release` inside `ZauberCMS.Template/` → produces `ZauberCMS.Template.<ver>.nupkg` in `bin/Release/`, then `Move-Item`s it to [NugetSource/](NugetSource/) (the template csproj has no `CopyNuGetPackage` target, so the script does it manually).
+**Required setup**: a GitHub repo secret named `NUGET_API_KEY` (Settings → Secrets and variables → Actions → New repository secret) holding the nuget.org push key.
 
-After release.ps1 finishes, [NugetSource/](NugetSource/) contains all 5 packages (e.g. `ZauberCMS.4.1.0.nupkg`, `ZauberCMS.Components.4.1.0.nupkg`, `ZauberCMS.Core.4.1.0.nupkg`, `ZauberCMS.Routing.4.1.0.nupkg`, `ZauberCMS.Template.4.1.0.nupkg`).
+**What the publish job does** (auto-skipped on PRs):
 
-### Pushing to nuget.org
+1. **Resolves the next version**:
+   - If `HEAD` already has a `vX.Y.Z` tag, reuses it (re-run safe).
+   - Otherwise: `base = max(<Version> in ZauberCMS.Core.csproj, latest vX.Y.Z tag)`, then bumps the patch.
+   - For an explicit major/minor release: pre-create a tag at HEAD before pushing, e.g. `git tag v5.0.0 && git push origin v5.0.0 && git push origin main-static` — the workflow will reuse `v5.0.0` instead of bumping.
+2. **Stamps the version** into the same six csproj files release.ps1 updates (sed-based, ephemeral on the runner — never committed).
+3. **Builds** `ZauberCMS.sln -c Release` — produces the four core nupkgs via `GeneratePackageOnBuild`, lands them in `NugetSource/` via the `CopyNuGetPackage` target.
+4. **Packs** `ZauberCMS.Template/ZauberCMS.Template.csproj -c Release --output NugetSource` — adds the template nupkg.
+5. **Pushes** every `*.<version>.nupkg` from `NugetSource/` to nuget.org with `--skip-duplicate`.
+6. **Creates and pushes the `vX.Y.Z` tag** so the next push bumps cleanly.
 
-**Manual.** No `nuget push` is automated. No `.github/workflows/`, no `NUGET_API_KEY` reference anywhere in the repo. Push from the [NugetSource/](NugetSource/) folder, e.g.:
+The csproj `<Version>` in `main-static` isn't touched by the workflow — it acts as a floor (e.g. bump it from `4.1.0` → `5.0.0` to enforce a major-version bound on auto-increments).
 
-```ps
-dotnet nuget push NugetSource\ZauberCMS.Core.4.1.0.nupkg -k <API_KEY> -s https://api.nuget.org/v3/index.json
-# repeat for the other four
-```
+### Local fallback: [release.ps1](release.ps1)
+
+Still works for offline/local releases. Mirrors the CI logic: prompts for a version, updates the same six csproj files, runs the build, packs the template, and lands all five nupkgs in [NugetSource/](NugetSource/) for manual `dotnet nuget push`. Use only when CI isn't available — the inter-package `PackageReference` chain ([release.ps1:41-55](release.ps1#L41-L55)) is identical to what the workflow does.
 
 ---
 

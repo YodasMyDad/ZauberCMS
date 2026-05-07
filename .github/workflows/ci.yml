@@ -1,0 +1,180 @@
+name: CI
+
+on:
+  push:
+    branches: [main-static]
+  pull_request:
+    branches: [main-static]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore ZauberCMS.sln
+
+      - name: Build solution
+        run: dotnet build ZauberCMS.sln -c Release --no-restore
+
+  publish-nuget:
+    name: Publish NuGet
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main-static'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: nuget-release-main-static
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Determine release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+
+          # If HEAD already has a stable vX.Y.Z tag, reuse it (idempotent re-runs).
+          existing_tag="$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          if [[ -n "${existing_tag}" ]]; then
+            echo "tag_already_exists=true" >> "$GITHUB_OUTPUT"
+            echo "tag=${existing_tag}" >> "$GITHUB_OUTPUT"
+            echo "version=${existing_tag#v}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Latest stable (non-prerelease) tag.
+          latest="$(git tag -l 'v[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          latest_version="${latest#v}"
+
+          # Read the version from ZauberCMS.Core.csproj as a floor.
+          # Use it (or the latest tag — whichever is higher) as the base, then bump patch.
+          # For an explicit major/minor release: pre-create a tag at HEAD before pushing,
+          # e.g. `git tag v5.0.0 && git push origin v5.0.0` — the workflow detects the
+          # existing tag at HEAD above and reuses it instead of bumping.
+          csproj_version="$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' ZauberCMS.Core/ZauberCMS.Core.csproj | head -n 1)"
+
+          if [[ -z "${latest_version}" ]]; then
+            base_version="${csproj_version}"
+          else
+            base_version="$(printf '%s\n%s\n' "${csproj_version}" "${latest_version}" | sort -V | tail -n 1)"
+          fi
+
+          IFS='.' read -r major minor patch <<< "${base_version}"
+          new_version="${major}.${minor}.$((patch + 1))"
+
+          tag="v${new_version}"
+          echo "tag_already_exists=false" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: ${new_version} (csproj=${csproj_version}, latest_tag=${latest_version:-none})"
+
+      - name: Stamp version into csproj files
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Update <Version> in the four core csprojs.
+          for proj in \
+            ZauberCMS.Core/ZauberCMS.Core.csproj \
+            ZauberCMS.Components/ZauberCMS.Components.csproj \
+            ZauberCMS.Routing/ZauberCMS.Routing.csproj \
+            ZauberCMS/ZauberCMS.csproj; do
+            sed -i "s|<Version>[^<]*</Version>|<Version>${VERSION}</Version>|" "${proj}"
+          done
+
+          # Update <PackageVersion> in the template csproj.
+          sed -i "s|<PackageVersion>[^<]*</PackageVersion>|<PackageVersion>${VERSION}</PackageVersion>|" \
+            ZauberCMS.Template/ZauberCMS.Template.csproj
+
+          # Update inter-package PackageReference versions so consumers pull the right deps.
+          sed -i "s|\(<PackageReference Include=\"ZauberCMS.Core\" Version=\"\)[^\"]*|\1${VERSION}|" \
+            ZauberCMS.Components/ZauberCMS.Components.csproj
+          sed -i "s|\(<PackageReference Include=\"ZauberCMS.Components\" Version=\"\)[^\"]*|\1${VERSION}|" \
+            ZauberCMS.Routing/ZauberCMS.Routing.csproj
+          sed -i "s|\(<PackageReference Include=\"ZauberCMS.Components\" Version=\"\)[^\"]*|\1${VERSION}|" \
+            ZauberCMS/ZauberCMS.csproj
+          sed -i "s|\(<PackageReference Include=\"ZauberCMS.Routing\" Version=\"\)[^\"]*|\1${VERSION}|" \
+            ZauberCMS/ZauberCMS.csproj
+          sed -i "s|\(<PackageReference Include=\"ZauberCMS\" Version=\"\)[^\"]*|\1${VERSION}|" \
+            ZauberCMS.Template/template/ZauberCMSTemplate.Site/ZauberCMSTemplate.Site.csproj
+
+          echo "::group::Stamped version snippets"
+          grep -n '<Version>' ZauberCMS.Core/ZauberCMS.Core.csproj || true
+          grep -n '<Version>' ZauberCMS.Components/ZauberCMS.Components.csproj || true
+          grep -n '<Version>' ZauberCMS.Routing/ZauberCMS.Routing.csproj || true
+          grep -n '<Version>' ZauberCMS/ZauberCMS.csproj || true
+          grep -n '<PackageVersion>' ZauberCMS.Template/ZauberCMS.Template.csproj || true
+          grep -nE '<PackageReference Include="ZauberCMS(\.Core|\.Components|\.Routing)?"' \
+            ZauberCMS.Components/ZauberCMS.Components.csproj \
+            ZauberCMS.Routing/ZauberCMS.Routing.csproj \
+            ZauberCMS/ZauberCMS.csproj \
+            ZauberCMS.Template/template/ZauberCMSTemplate.Site/ZauberCMSTemplate.Site.csproj || true
+          echo "::endgroup::"
+
+      - name: Build solution (packs the four core packages)
+        run: dotnet build ZauberCMS.sln -c Release
+
+      - name: Pack template
+        run: |
+          dotnet pack ZauberCMS.Template/ZauberCMS.Template.csproj -c Release \
+            --output NugetSource
+
+      - name: List packages produced
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Looking for *.${VERSION}.nupkg in NugetSource/"
+          ls -la NugetSource/ || true
+
+      - name: Push packages to NuGet.org
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          mapfile -t packages < <(find NugetSource -type f -name "*.${VERSION}.nupkg")
+          if [[ "${#packages[@]}" -eq 0 ]]; then
+            echo "No NuGet packages found for version ${VERSION}."
+            exit 1
+          fi
+          for package in "${packages[@]}"; do
+            echo "Pushing ${package}"
+            dotnet nuget push "${package}" \
+              --api-key "${NUGET_API_KEY}" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --skip-duplicate
+          done
+
+      - name: Create and push release tag
+        if: steps.version.outputs.tag_already_exists != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
