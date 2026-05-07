@@ -1,5 +1,6 @@
 @using System.Text.Json
 @using Microsoft.Extensions.Logging
+@using ZauberCMS.Components.Editors.Interfaces
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Components.Editors.Components
@@ -7,11 +8,12 @@
 @using ZauberCMS.Core.Content.Mapping
 @using ZauberCMS.Core.Content.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+@implements ISupportsBlockListChanges
 
 <!-- Load frontend stylesheets once for all previews -->
-@if (SettingsModel.Styleheets.Any())
+@if (SettingsModel.Stylesheets.Any())
 {
-    foreach (var stylesheet in SettingsModel.Styleheets)
+    foreach (var stylesheet in SettingsModel.Stylesheets)
     {
         <link rel="stylesheet" href="@stylesheet" />
     }
@@ -37,7 +39,7 @@
                               Content="@item"
                               ContentType="@contentType"
                               Index="@itemIndex"
-                              Stylesheets="@SettingsModel.Styleheets"
+                              Stylesheets="@SettingsModel.Stylesheets"
                               OnEdit="HandleEdit"
                               OnDelete="HandleDelete"
                               OnDropOnItem="HandleDropOnItem"
@@ -122,32 +124,56 @@
         List<Guid> contentIds;
         try
         {
-            contentIds = JsonSerializer.Deserialize<List<Guid>>(Value!) ?? [];
+            // Defensive .Distinct() — duplicate Guids in the JSON would later throw at the
+            // ToDictionary(x => x.Id) below.
+            contentIds = (JsonSerializer.Deserialize<List<Guid>>(Value!) ?? [])
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList();
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            Logger.LogWarning(ex,
+                "Failed to deserialize BlockListEditor value for property {Alias} on content {ContentId}",
+                PropertyAlias, Content?.Id);
             contentIds = [];
         }
-        
+
         if (!contentIds.Any()) return;
-        
-        var contentResult = await ContentService.QueryContentAsync(new QueryContentParameters 
-        { 
-            Ids = contentIds, 
-            AmountPerPage = 100, 
-            NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only, 
-            IncludeUnpublished = true 
-        });
-        
-        // Preserve original order
-        var idOrder = contentIds
-            .Select((id, index) => new { id, index })
-            .ToDictionary(x => x.id, x => x.index);
-        
-        var orderedItems = contentResult.Items
-            .OrderBy(item => idOrder.TryGetValue(item.Id, out var idx) ? idx : int.MaxValue)
+
+        // In-memory items live in Content.PendingBlockListChanges[PropertyAlias] when the
+        // parent has been edited within this session but not yet persisted. Prefer these
+        // over DB versions so unsaved adds/edits survive a modal close+reopen.
+        var pendingItems = Content != null
+            && !string.IsNullOrWhiteSpace(PropertyAlias)
+            && Content.PendingBlockListChanges.TryGetValue(PropertyAlias!, out var p)
+                ? p
+                : new Dictionary<Guid, Content>();
+
+        var dbIdsNeeded = contentIds.Where(id => !pendingItems.ContainsKey(id)).ToList();
+
+        var dbItems = new Dictionary<Guid, Content>();
+        if (dbIdsNeeded.Count > 0)
+        {
+            // AmountPerPage = ids.Count so a single block list can never silently truncate.
+            var contentResult = await ContentService.QueryContentAsync(new QueryContentParameters
+            {
+                Ids = dbIdsNeeded,
+                AmountPerPage = Math.Max(dbIdsNeeded.Count, 1),
+                NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only,
+                IncludeUnpublished = true
+            });
+            dbItems = contentResult.Items.ToDictionary(x => x.Id, x => x);
+        }
+
+        // Preserve original order; pending in-memory items win over DB versions.
+        var orderedItems = contentIds
+            .Select(id => pendingItems.TryGetValue(id, out var pi) ? pi
+                        : dbItems.TryGetValue(id, out var di) ? di : null)
+            .Where(c => c != null)
+            .Cast<Content>()
             .ToList();
-        
+
         // Set ContentTypeAlias for rendering
         foreach (var item in orderedItems)
         {
@@ -156,7 +182,15 @@
                 item.ContentTypeAlias = contentType.Alias;
             }
         }
-        
+
+        var missingIds = contentIds.Except(orderedItems.Select(x => x.Id)).ToList();
+        if (missingIds.Count > 0)
+        {
+            Logger.LogWarning(
+                "BlockListEditor on content {ContentId} (property {Alias}) references {MissingCount} content id(s) that no longer exist: {MissingIds}",
+                Content?.Id, PropertyAlias, missingIds.Count, string.Join(", ", missingIds));
+        }
+
         State = State with { Items = orderedItems };
     }
     
@@ -207,38 +241,48 @@
     
     private async Task HandleDropOnItem(int targetIndex)
     {
-        // User dropped on an item - reorder to that position
-        if (DragSourceIndex.HasValue && DragSourceIndex.Value != targetIndex)
+        // Snapshot the source index in case another event mutates DragSourceIndex while we await.
+        var sourceIndex = DragSourceIndex;
+        DragSourceIndex = null;
+        if (sourceIndex.HasValue && sourceIndex.Value != targetIndex)
         {
-            State = State.ReorderItems(DragSourceIndex.Value, targetIndex);
+            State = State.ReorderItems(sourceIndex.Value, targetIndex);
             await NotifyChanges();
             StateHasChanged();
         }
     }
-    
+
     private async Task HandleDropAtIndex(int targetIndex)
     {
-        // User dropped in a drop zone between items
-        if (DragSourceIndex.HasValue)
+        // Snapshot to avoid races with concurrent drag/drop events
+        var sourceIndex = DragSourceIndex;
+        DragSourceIndex = null;
+        if (sourceIndex.HasValue)
         {
             // Adjust target index if dragging down (because drop zone index is +1 of the item before it)
-            var adjustedTarget = DragSourceIndex.Value < targetIndex ? targetIndex - 1 : targetIndex;
-            
-            if (DragSourceIndex.Value != adjustedTarget)
+            var adjustedTarget = sourceIndex.Value < targetIndex ? targetIndex - 1 : targetIndex;
+
+            if (sourceIndex.Value != adjustedTarget)
             {
-                State = State.ReorderItems(DragSourceIndex.Value, adjustedTarget);
+                State = State.ReorderItems(sourceIndex.Value, adjustedTarget);
                 await NotifyChanges();
                 StateHasChanged();
             }
         }
     }
-    
+
     private async Task OpenContentEditor(Content? contentToEdit, int? insertAtIndex)
     {
+        if (Content == null)
+        {
+            Logger.LogWarning("BlockListEditorProperty.OpenContentEditor invoked with null Content; cannot open nested editor");
+            return;
+        }
+
         var contentParams = new Dictionary<string, object>
         {
             { nameof(ContentEditor.IsBlockList), true },
-            { nameof(ContentEditor.NestedParentId), Content!.Id },
+            { nameof(ContentEditor.NestedParentId), Content.Id },
             { nameof(ContentEditor.OnBlockListChanges), new Action<BlockListChanges>(HandleNestedChanges) }
         };
         
@@ -325,6 +369,13 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to handle nested block list changes");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Block list change failed",
+                Detail = "Nested edit could not be applied — your changes may not have been saved. See logs for details.",
+                Duration = 6000
+            });
         }
     }
     

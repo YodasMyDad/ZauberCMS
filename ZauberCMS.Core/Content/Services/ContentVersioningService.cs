@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
@@ -14,10 +15,16 @@ namespace ZauberCMS.Core.Content.Services;
 public class ContentVersioningService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
-    ExtensionManager extensionManager)
+    ExtensionManager extensionManager,
+    ILogger<ContentVersioningService> logger)
     : IContentVersioningService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
+
+    // Mirror of ContentService.MaxBlockListNestingDepth — guards snapshot recursion against cycles
+    // and crafted-JSON DoS. Keep in sync.
+    private const int MaxBlockListNestingDepth = 20;
+    private const int MaxSnapshotsPerVersion = 5000;
 
     /// <summary>
     /// Creates a new version of content
@@ -106,7 +113,7 @@ public class ContentVersioningService(
         // Update content if this is being published
         if (parameters.Status == ContentVersionStatus.Published)
         {
-            PublishVersionToContentAsync(dbContext, version, content, cancellationToken);
+            PublishVersionToContent(dbContext, version, content);
         }
 
         var result = await dbContext.SaveChangesAndLog(version, handlerResult, cacheService, extensionManager, cancellationToken);
@@ -155,7 +162,7 @@ public class ContentVersioningService(
         version.CreatedById = parameters.PublishedByUserId; // Update the publisher
 
         // Publish to content
-        PublishVersionToContentAsync(dbContext, version, content, cancellationToken);
+        PublishVersionToContent(dbContext, version, content);
 
         // Restore block list content from snapshots
         await RestoreBlockListContentAsync(dbContext, version, cancellationToken);
@@ -347,7 +354,9 @@ public class ContentVersioningService(
         }
     }
 
-    private void PublishVersionToContentAsync(IZauberDbContext dbContext, ContentVersion version, Models.Content content, CancellationToken cancellationToken)
+    // Synchronous helper despite the original misleading "Async" suffix — does no I/O of its own,
+    // mutates entities tracked by the supplied dbContext so the caller's SaveChangesAsync persists them.
+    private static void PublishVersionToContent(IZauberDbContext dbContext, ContentVersion version, Models.Content content)
     {
         // Update content from snapshot
         content.Name = version.Snapshot.Name;
@@ -361,6 +370,8 @@ public class ContentVersioningService(
         content.ParentId = version.Snapshot.ParentId;
         content.Path = version.Snapshot.Path;
         content.SortOrder = version.Snapshot.SortOrder;
+        content.RelatedContentId = version.Snapshot.RelatedContentId;
+        content.InternalRedirectId = version.Snapshot.InternalRedirectId;
 
         // Update property values
         foreach (var propertySnapshot in version.PropertySnapshots)
@@ -408,6 +419,7 @@ public class ContentVersioningService(
             LanguageId = content.LanguageId,
             ParentId = content.ParentId,
             RelatedContentId = content.RelatedContentId,
+            InternalRedirectId = content.InternalRedirectId,
             IsNestedContent = content.IsNestedContent,
             Path = [..content.Path],
             SortOrder = content.SortOrder
@@ -618,18 +630,34 @@ public class ContentVersioningService(
         }
     }
 
-    private static async Task<List<BlockListContentSnapshot>> CreateBlockListSnapshotsAsync(IZauberDbContext dbContext, Models.Content content)
+    private async Task<List<BlockListContentSnapshot>> CreateBlockListSnapshotsAsync(IZauberDbContext dbContext, Models.Content content)
     {
         var snapshots = new List<BlockListContentSnapshot>();
         var processedContentIds = new HashSet<Guid>(); // Prevent infinite recursion
 
-        await CreateBlockListSnapshotsRecursiveAsync(dbContext, content, snapshots, processedContentIds);
+        await CreateBlockListSnapshotsRecursiveAsync(dbContext, content, snapshots, processedContentIds, depth: 0);
 
         return snapshots;
     }
 
-    private static async Task CreateBlockListSnapshotsRecursiveAsync(IZauberDbContext dbContext, Models.Content content, List<BlockListContentSnapshot> snapshots, HashSet<Guid> processedContentIds)
+    private async Task CreateBlockListSnapshotsRecursiveAsync(IZauberDbContext dbContext, Models.Content content, List<BlockListContentSnapshot> snapshots, HashSet<Guid> processedContentIds, int depth)
     {
+        // Depth + count guards against accidental cycles and crafted-JSON DoS
+        if (depth > MaxBlockListNestingDepth)
+        {
+            logger.LogWarning(
+                "Block list snapshot recursion exceeded depth {MaxDepth} on content {ContentId}; truncating",
+                MaxBlockListNestingDepth, content.Id);
+            return;
+        }
+        if (snapshots.Count >= MaxSnapshotsPerVersion)
+        {
+            logger.LogWarning(
+                "Block list snapshot count exceeded {MaxCount} for content {ContentId}; truncating",
+                MaxSnapshotsPerVersion, content.Id);
+            return;
+        }
+
         // Find all block list properties in the content
         var blockListProperties = content.PropertyData.Where(p =>
             !string.IsNullOrEmpty(p.Value) &&
@@ -659,6 +687,14 @@ public class ContentVersioningService(
                             continue;
                         }
 
+                        if (snapshots.Count >= MaxSnapshotsPerVersion)
+                        {
+                            logger.LogWarning(
+                                "Block list snapshot count cap ({MaxCount}) reached while processing content {ContentId}; truncating",
+                                MaxSnapshotsPerVersion, content.Id);
+                            return;
+                        }
+
                         processedContentIds.Add(blockContent.Id);
 
                         snapshots.Add(new BlockListContentSnapshot
@@ -676,7 +712,7 @@ public class ContentVersioningService(
                         });
 
                         // Recursively process nested block list content
-                        await CreateBlockListSnapshotsRecursiveAsync(dbContext, blockContent, snapshots, processedContentIds);
+                        await CreateBlockListSnapshotsRecursiveAsync(dbContext, blockContent, snapshots, processedContentIds, depth + 1);
                     }
                 }
             }
@@ -690,13 +726,46 @@ public class ContentVersioningService(
 
     private async Task RestoreBlockListContentAsync(IZauberDbContext dbContext, ContentVersion version, CancellationToken cancellationToken)
     {
+        // Cache valid ContentTypeProperty IDs per ContentType so schema-drift filtering doesn't N+1.
+        var contentTypePropertyIdCache = new Dictionary<Guid, HashSet<Guid>>();
+
+        async Task<HashSet<Guid>> GetValidPropertyIdsAsync(Guid contentTypeId)
+        {
+            if (contentTypePropertyIdCache.TryGetValue(contentTypeId, out var cached)) return cached;
+
+            var contentType = await dbContext.ContentTypes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(ct => ct.Id == contentTypeId, cancellationToken);
+
+            var ids = contentType?.ContentProperties.Select(p => p.Id).ToHashSet() ?? new HashSet<Guid>();
+            contentTypePropertyIdCache[contentTypeId] = ids;
+            return ids;
+        }
+
         foreach (var blockListSnapshot in version.BlockListSnapshots)
         {
             // Always restore the content from the snapshot - this ensures the block list content
-            // matches exactly what was saved in the version
+            // matches exactly what was saved in the version. Loaded without filtering soft-deletes
+            // so a previously-deleted block can be brought back.
             var existingContent = await dbContext.Contents
                 .Include(c => c.PropertyData)
                 .FirstOrDefaultAsync(c => c.Id == blockListSnapshot.ContentId, cancellationToken);
+
+            // Skip property snapshots that no longer correspond to a property on the current
+            // ContentType (schema drifted since the snapshot was taken). Failing the restore for
+            // schema drift would block normal use; warn-and-skip is the safer default.
+            var validPropertyIds = await GetValidPropertyIdsAsync(blockListSnapshot.ContentSnapshot.ContentTypeId);
+            var validPropertySnapshots = blockListSnapshot.PropertySnapshots
+                .Where(p => validPropertyIds.Count == 0 || validPropertyIds.Contains(p.ContentTypePropertyId))
+                .ToList();
+
+            var droppedCount = blockListSnapshot.PropertySnapshots.Count - validPropertySnapshots.Count;
+            if (droppedCount > 0)
+            {
+                logger.LogWarning(
+                    "Restore: dropping {DroppedCount} property snapshot(s) on nested content {ContentId} — corresponding ContentTypeProperty no longer exists on type {ContentTypeId}",
+                    droppedCount, blockListSnapshot.ContentId, blockListSnapshot.ContentSnapshot.ContentTypeId);
+            }
 
             if (existingContent == null)
             {
@@ -716,15 +785,17 @@ public class ContentVersioningService(
                     LanguageId = blockListSnapshot.ContentSnapshot.LanguageId,
                     ParentId = blockListSnapshot.ContentSnapshot.ParentId,
                     RelatedContentId = blockListSnapshot.ContentSnapshot.RelatedContentId,
+                    InternalRedirectId = blockListSnapshot.ContentSnapshot.InternalRedirectId,
                     IsNestedContent = blockListSnapshot.ContentSnapshot.IsNestedContent,
                     Path = blockListSnapshot.ContentSnapshot.Path,
                     SortOrder = blockListSnapshot.ContentSnapshot.SortOrder,
                     DateCreated = DateTime.UtcNow,
-                    LastUpdatedById = version.CreatedById
+                    LastUpdatedById = version.CreatedById,
+                    Deleted = false
                 };
 
-                // Add property data from snapshot
-                foreach (var propSnapshot in blockListSnapshot.PropertySnapshots)
+                // Add property data from snapshot (filtered for schema drift)
+                foreach (var propSnapshot in validPropertySnapshots)
                 {
                     existingContent.PropertyData.Add(new ContentPropertyValue
                     {
@@ -741,7 +812,8 @@ public class ContentVersioningService(
             }
             else
             {
-                // Update existing content from snapshot
+                // Update existing content from snapshot — also un-soft-deletes if it was previously
+                // soft-deleted, so restored blocks become visible to QueryContentAsync again.
                 existingContent.Name = blockListSnapshot.ContentSnapshot.Name;
 #pragma warning disable CS0618 // Type or member is obsolete
                 existingContent.Url = blockListSnapshot.ContentSnapshot.Url; // Restore URL from snapshot
@@ -754,16 +826,20 @@ public class ContentVersioningService(
                 existingContent.LanguageId = blockListSnapshot.ContentSnapshot.LanguageId;
                 existingContent.ParentId = blockListSnapshot.ContentSnapshot.ParentId;
                 existingContent.RelatedContentId = blockListSnapshot.ContentSnapshot.RelatedContentId;
+                existingContent.InternalRedirectId = blockListSnapshot.ContentSnapshot.InternalRedirectId;
                 existingContent.IsNestedContent = blockListSnapshot.ContentSnapshot.IsNestedContent;
                 existingContent.Path = blockListSnapshot.ContentSnapshot.Path;
                 existingContent.SortOrder = blockListSnapshot.ContentSnapshot.SortOrder;
                 existingContent.LastUpdatedById = version.CreatedById;
+                existingContent.Deleted = false;
 
-                // Update properties: remove old ones and add snapshot versions
-                // First, remove properties that don't exist in the snapshot
-                var snapshotPropertyIds = blockListSnapshot.PropertySnapshots.Select(p => p.ContentTypePropertyId).ToHashSet();
+                // Update properties: remove old ones and add snapshot versions.
+                // Remove only those whose ContentTypePropertyId is in the (filtered) snapshot — leave
+                // any other properties alone in case the user re-added them post-snapshot.
+                var snapshotPropertyIds = validPropertySnapshots.Select(p => p.ContentTypePropertyId).ToHashSet();
                 var propertiesToRemove = existingContent.PropertyData
-                    .Where(p => !snapshotPropertyIds.Contains(p.ContentTypePropertyId))
+                    .Where(p => !snapshotPropertyIds.Contains(p.ContentTypePropertyId) &&
+                                validPropertyIds.Contains(p.ContentTypePropertyId))
                     .ToList();
 
                 foreach (var property in propertiesToRemove)
@@ -772,7 +848,7 @@ public class ContentVersioningService(
                 }
 
                 // Then update or add properties from snapshot
-                foreach (var propSnapshot in blockListSnapshot.PropertySnapshots)
+                foreach (var propSnapshot in validPropertySnapshots)
                 {
                     var existingProperty = existingContent.PropertyData
                         .FirstOrDefault(p => p.ContentTypePropertyId == propSnapshot.ContentTypePropertyId);

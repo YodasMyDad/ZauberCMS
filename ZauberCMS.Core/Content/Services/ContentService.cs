@@ -34,6 +34,11 @@ public class ContentService(
     ILogger<ContentService> logger)
     : IContentService
 {
+    // Cap on how deep a BlockListEditor tree can be walked during save/delete/snapshot recursion.
+    // Defends against accidental cycles and crafted-JSON DoS. Normal use never approaches this.
+    private const int MaxBlockListNestingDepth = 20;
+
+    private const string BlockListEditorComponentAlias = "ZauberCMS.BlockListEditor";
     /// <summary>
     /// Retrieves a single content item based on the provided parameters. Can optionally use cache.
     /// </summary>
@@ -175,9 +180,23 @@ public class ContentService(
         }
         else
         {
+            // Capture the user's submitted DateUpdated BEFORE MapTo overwrites the tracked value.
+            // This becomes the concurrency-token original — i.e. "the version the user was looking at
+            // when they hit save". If the DB row's DateUpdated differs, the UPDATE's WHERE clause
+            // won't match and EF throws DbUpdateConcurrencyException. Without this, the load above
+            // would just snapshot the latest DB value as the "original", silently accepting stale saves.
+            var submittedDateUpdated = parameters.Content.DateUpdated;
+
             parameters.Content.MapTo(content);
             content.LastUpdatedById = user!.Id;
             content.DateUpdated = DateTime.UtcNow;
+
+            if (submittedDateUpdated != default)
+            {
+                // String-based Property() because IZauberDbContext exposes the non-generic Entry(object)
+                // overload only — the strongly-typed expression overload requires EntityEntry<T>.
+                dbContext.Entry(content).Property(nameof(Models.Content.DateUpdated)).OriginalValue = submittedDateUpdated;
+            }
 
             if (!parameters.ExcludePropertyData)
             {
@@ -197,20 +216,58 @@ public class ContentService(
 
         content.Path = content.BuildPath(dbContext, isUpdate, settings);
 
-        // Log audit without Mediator
+        // Server-side validation of BlockListEditor AllowedElementTypeIds.
+        // UI restrictions can be bypassed via a crafted save (or an old payload after settings change),
+        // so we re-check here and warn — non-fatal so legacy data isn't blocked from saving.
+        await ValidateBlockListAllowedTypesAsync(content, dbContext, handlerResult, cancellationToken);
 
-        var nameText = content.Name ?? nameof(Models.Content);
-        var actionText = isUpdate ? "Updated" : "Created";
-        await SaveAuditAsync(dbContext, $"{user.Name} {actionText} {nameText}", cancellationToken);
-
-        var saveResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
-            cancellationToken);
-
-        // Recursively process BlockListEditor changes for nested content
-        if (saveResult.Success && !parameters.SaveUnpublishedOnly)
+        // Wrap save + audit in a single transaction so a failed save (e.g. concurrency conflict)
+        // doesn't leave behind an orphan "user updated X" audit row claiming an update that never
+        // happened. SaveAuditAsync internally calls SaveChangesAsync, so it MUST run inside this
+        // explicit transaction to share its commit/rollback semantics.
+        HandlerResult<Models.Content> saveResult;
+        await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
         {
-            await ProcessBlockListEditorChangesAsync(content, dbContext, user!, cancellationToken);
+            try
+            {
+                var nameText = content.Name ?? nameof(Models.Content);
+                var actionText = isUpdate ? "Updated" : "Created";
+                await SaveAuditAsync(dbContext, $"{user.Name} {actionText} {nameText}", cancellationToken);
+
+                saveResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
+                    cancellationToken);
+
+                if (saveResult.Success)
+                {
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                else
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                }
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                handlerResult.AddMessage(
+                    "Content was modified by another user — please reload and re-apply your changes",
+                    ResultMessageType.Error);
+                return handlerResult;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
+
+        // NOTE: Previously SaveContentAsync recursively re-saved every nested block referenced by
+        // this content's BlockListEditor JSON. That behaviour caused a new ContentVersion per nested
+        // block on every parent save (50 blocks → 51 versions) and persisted stale DB data over
+        // any concurrent in-memory edits. ContentEditor.ProcessBlockListChanges is the legitimate
+        // entry point for nested saves — it iterates the bubbled Added/Updated/Deleted lists
+        // explicitly and calls SaveContentAsync per nested item. The parent's ContentVersion still
+        // captures the full nested tree via BlockListSnapshots, so version history isn't lost.
 
         // Create version after successful save
         if (saveResult is { Success: true, Entity: not null })
@@ -304,16 +361,57 @@ public class ContentService(
         {
             content.Deleted = true;
             await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Recycle Binned", cancellationToken);
+            return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
+                cancellationToken);
         }
-        else
+
+        var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
+        if (await children.AnyAsync(cancellationToken))
         {
-            var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
-            if (await children.AnyAsync(cancellationToken))
+            handlerResult.AddMessage(
+                "Unable to delete content with child content, delete or move those items first",
+                ResultMessageType.Error);
+            return handlerResult;
+        }
+
+        // Hard-delete needs to cascade through any BlockListEditor properties this content holds.
+        // Without this, nested block rows (IsNestedContent=true) become orphans because the parent's
+        // property-data goes away but the nested rows it referenced stay in ZauberContents.
+        var nestedToDelete = new List<Guid>();
+        var processed = new HashSet<Guid> { content.Id };
+        await CollectNestedBlockListContentIdsAsync(dbContext, content.Id, processed, nestedToDelete,
+            depth: 0, cancellationToken);
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            // Remove cascaded nested rows first (their property data, then the row itself, then any UnpublishedContent)
+            if (nestedToDelete.Count > 0)
             {
-                handlerResult.AddMessage(
-                    "Unable to delete content with child content, delete or move those items first",
-                    ResultMessageType.Error);
-                return handlerResult;
+                var nestedPropertyValues = dbContext.ContentPropertyValues
+                    .Where(pv => nestedToDelete.Contains(pv.ContentId));
+                dbContext.ContentPropertyValues.RemoveRange(nestedPropertyValues);
+
+                var nestedRows = await dbContext.Contents
+                    .Where(c => nestedToDelete.Contains(c.Id))
+                    .ToListAsync(cancellationToken);
+
+                var nestedUnpublishedIds = nestedRows
+                    .Where(c => c.UnpublishedContentId != null)
+                    .Select(c => c.UnpublishedContentId!.Value)
+                    .ToList();
+                if (nestedUnpublishedIds.Count > 0)
+                {
+                    var nestedUnpublished = dbContext.UnpublishedContent
+                        .Where(u => nestedUnpublishedIds.Contains(u.Id));
+                    dbContext.UnpublishedContent.RemoveRange(nestedUnpublished);
+                }
+
+                dbContext.Contents.RemoveRange(nestedRows);
+
+                logger.LogInformation(
+                    "Hard-delete of content {ContentId} cascaded to {NestedCount} nested block content row(s)",
+                    content.Id, nestedRows.Count);
             }
 
             var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
@@ -328,11 +426,200 @@ public class ContentService(
             content.PropertyData.Clear();
             await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Deleted", cancellationToken);
             dbContext.Contents.Remove(content);
-            await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
+
+            var result = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
+                cancellationToken);
+
+            if (result.Success)
+            {
+                await transaction.CommitAsync(cancellationToken);
+                await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
+            }
+            else
+            {
+                await transaction.RollbackAsync(cancellationToken);
+            }
+
+            return result;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Walks the BlockListEditor JSON references on a content row (and recursively on each referenced
+    /// nested row) collecting all reachable nested content IDs into <paramref name="collected"/>.
+    /// Cycle-protected via <paramref name="processed"/> and depth-capped at MaxBlockListNestingDepth.
+    /// </summary>
+    private async Task CollectNestedBlockListContentIdsAsync(IZauberDbContext dbContext,
+        Guid contentId, HashSet<Guid> processed, List<Guid> collected, int depth,
+        CancellationToken cancellationToken)
+    {
+        if (depth > MaxBlockListNestingDepth)
+        {
+            logger.LogWarning(
+                "Block list nesting depth exceeded {MaxDepth} during delete cascade from content {ContentId}; stopping recursion",
+                MaxBlockListNestingDepth, contentId);
+            return;
         }
 
-        return await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
-            cancellationToken);
+        // Pull all BlockListEditor property values for this content in one shot
+        var propertyValues = await dbContext.ContentPropertyValues
+            .AsNoTracking()
+            .Where(pv => pv.ContentId == contentId &&
+                         pv.Value != null &&
+                         pv.Value.Length > 0)
+            .Select(pv => pv.Value)
+            .ToListAsync(cancellationToken);
+
+        var directIds = new List<Guid>();
+        foreach (var raw in propertyValues)
+        {
+            var trimmed = raw?.TrimStart();
+            if (string.IsNullOrEmpty(trimmed) || trimmed[0] != '[') continue;
+
+            try
+            {
+                var ids = JsonSerializer.Deserialize<List<Guid>>(raw!);
+                if (ids == null) continue;
+                foreach (var id in ids)
+                {
+                    if (id != Guid.Empty) directIds.Add(id);
+                }
+            }
+            catch (JsonException)
+            {
+                // Non-blocklist JSON (e.g. another picker) — skip.
+            }
+        }
+
+        if (directIds.Count == 0) return;
+
+        // Confirm each is actually nested content (so we don't accidentally cascade-delete root content
+        // referenced via some other property type).
+        var nestedIds = await dbContext.Contents
+            .AsNoTracking()
+            .Where(c => directIds.Contains(c.Id) && c.IsNestedContent)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+
+        foreach (var id in nestedIds)
+        {
+            if (!processed.Add(id)) continue; // already handled (cycle or shared sub-block)
+            collected.Add(id);
+            await CollectNestedBlockListContentIdsAsync(dbContext, id, processed, collected,
+                depth + 1, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// For each BlockListEditor property on <paramref name="copiedContent"/>, clones the referenced
+    /// nested content rows (with new GUIDs) and rewrites the property's JSON to reference the clones.
+    /// Recurses into the clones' own block list properties so the entire nested tree is duplicated
+    /// rather than shared. Uses <paramref name="originalToCloneMap"/> so a block referenced from
+    /// multiple places (sibling properties, multiple descendants, cycles) resolves to one shared
+    /// clone — preventing both lost references and infinite recursion.
+    /// </summary>
+    private async Task CloneBlockListContentTreeAsync(Models.Content copiedContent,
+        IZauberDbContext dbContext, User? currentUser, Dictionary<Guid, Guid> originalToCloneMap,
+        int depth, CancellationToken cancellationToken)
+    {
+        if (depth > MaxBlockListNestingDepth)
+        {
+            logger.LogWarning(
+                "Block list nesting depth exceeded {MaxDepth} during copy from content {ContentId}; stopping recursion",
+                MaxBlockListNestingDepth, copiedContent.Id);
+            return;
+        }
+
+        // Identify which properties on the copied content's ContentType are BlockListEditor
+        var contentType = await dbContext.ContentTypes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ct => ct.Id == copiedContent.ContentTypeId, cancellationToken);
+        if (contentType == null) return;
+
+        var blockListPropertyIds = contentType.ContentProperties
+            .Where(p => p.ComponentAlias == BlockListEditorComponentAlias)
+            .Select(p => p.Id)
+            .ToHashSet();
+        if (blockListPropertyIds.Count == 0) return;
+
+        var blockListProperties = copiedContent.PropertyData
+            .Where(p => blockListPropertyIds.Contains(p.ContentTypePropertyId) &&
+                        !string.IsNullOrWhiteSpace(p.Value))
+            .ToList();
+        if (blockListProperties.Count == 0) return;
+
+        foreach (var pv in blockListProperties)
+        {
+            List<Guid>? originalIds;
+            try
+            {
+                originalIds = JsonSerializer.Deserialize<List<Guid>>(pv.Value);
+            }
+            catch (JsonException)
+            {
+                continue;
+            }
+            if (originalIds == null || originalIds.Count == 0) continue;
+
+            // Skip empty/duplicate Guids in the source JSON
+            originalIds = originalIds.Where(id => id != Guid.Empty).Distinct().ToList();
+            if (originalIds.Count == 0) continue;
+
+            var newIds = new List<Guid>(originalIds.Count);
+            foreach (var origId in originalIds)
+            {
+                // If this original has already been cloned (from a sibling property, another
+                // descendant, or a cycle in the recursion above), reuse the existing clone's id
+                // rather than dropping the reference.
+                if (originalToCloneMap.TryGetValue(origId, out var existingCloneId))
+                {
+                    newIds.Add(existingCloneId);
+                    continue;
+                }
+
+                var original = await dbContext.Contents
+                    .AsNoTracking()
+                    .Include(c => c.PropertyData)
+                    .FirstOrDefaultAsync(c => c.Id == origId, cancellationToken);
+
+                if (original == null) continue;
+
+                var clone = original.MapToNew();
+                clone.Id = Guid.NewGuid().NewSequentialGuid();
+                clone.DateCreated = DateTime.UtcNow;
+                clone.DateUpdated = DateTime.UtcNow;
+                clone.LastUpdatedById = currentUser?.Id;
+                clone.Deleted = false;
+                // IsNestedContent stays true (it's a block); ParentId/Path inherit from original
+                clone.PropertyData = original.PropertyData.Select(p => new ContentPropertyValue
+                {
+                    Id = Guid.NewGuid().NewSequentialGuid(),
+                    DateCreated = p.DateCreated,
+                    DateUpdated = p.DateUpdated,
+                    ContentTypePropertyId = p.ContentTypePropertyId,
+                    Value = p.Value,
+                    ContentId = clone.Id,
+                    Alias = p.Alias
+                }).ToList();
+
+                // Record the mapping BEFORE recursing so any cycle / shared reference inside the
+                // recursion finds this clone's id and stops there.
+                originalToCloneMap[origId] = clone.Id;
+                dbContext.Contents.Add(clone);
+                newIds.Add(clone.Id);
+
+                // Recurse so this clone's own block-list references are also re-pointed at fresh copies
+                await CloneBlockListContentTreeAsync(clone, dbContext, currentUser, originalToCloneMap,
+                    depth + 1, cancellationToken);
+            }
+
+            pv.Value = JsonSerializer.Serialize(newIds);
+        }
     }
 
     /// <summary>
@@ -403,6 +690,27 @@ public class ContentService(
                     idMap[descendant.Id] = copiedDescendant.Id;
                     dbContext.Add(copiedDescendant);
                 }
+            }
+        }
+
+        // Deep-copy nested block content referenced by BlockListEditor properties.
+        // Without this the copy shares nested rows with the original — editing one mutates the other.
+        // Use a single Original→Clone mapping shared across the whole copy operation so a block
+        // referenced by multiple properties or multiple descendants resolves to the same new clone.
+        var nestedIdMap = new Dictionary<Guid, Guid>();
+        // Snapshot the descendant IDs before we start adding new clones to the change tracker,
+        // so the foreach below isn't iterating a value that grows during recursion.
+        var descendantNewIds = idMap.Values.Where(id => id != copiedContent.Id).ToList();
+        await CloneBlockListContentTreeAsync(copiedContent, dbContext, user, nestedIdMap,
+            depth: 0, cancellationToken);
+        foreach (var descendantNewId in descendantNewIds)
+        {
+            // Pull the tracked copy from the change tracker — they were Add()ed above.
+            var tracked = dbContext.Contents.Local.FirstOrDefault(c => c.Id == descendantNewId);
+            if (tracked != null)
+            {
+                await CloneBlockListContentTreeAsync(tracked, dbContext, user, nestedIdMap,
+                    depth: 0, cancellationToken);
             }
         }
 
@@ -1948,74 +2256,121 @@ public class ContentService(
         };
     }
 
-    private async Task ProcessBlockListEditorChangesAsync(Models.Content content, IZauberDbContext dbContext, User user,
+    /// <summary>
+    /// Validates that every nested content referenced by a BlockListEditor property of this content
+    /// has a ContentTypeId in the property's configured AllowedElementTypeIds list. Logs a warning
+    /// (and adds a non-fatal warning to the result) for each violation; does not block the save.
+    /// </summary>
+    private async Task ValidateBlockListAllowedTypesAsync(Models.Content content,
+        IZauberDbContext dbContext, HandlerResult<Models.Content> handlerResult,
         CancellationToken cancellationToken)
     {
-        // Load ContentType to identify which properties are BlockListEditor type
         var contentType = await dbContext.ContentTypes
             .AsNoTracking()
             .FirstOrDefaultAsync(ct => ct.Id == content.ContentTypeId, cancellationToken);
-            
-        if (contentType == null)
-            return;
 
-        // Find ContentType properties that are BlockListEditor components
-        var blockListPropertyIds = contentType.ContentProperties
-            .Where(p => p.ComponentAlias == "ZauberCMS.BlockListEditor")
-            .Select(p => p.Id)
-            .ToHashSet();
+        if (contentType == null) return;
 
-        // Get the actual PropertyData items that match those property types
-        var blockListProperties = content.PropertyData
-            .Where(p => blockListPropertyIds.Contains(p.ContentTypePropertyId))
+        var blockListProps = contentType.ContentProperties
+            .Where(p => p.ComponentAlias == BlockListEditorComponentAlias)
             .ToList();
 
-        // Collect all content IDs from all BlockListEditor properties
-        var allContentIds = new List<Guid>();
-        
-        foreach (var property in blockListProperties)
+        if (blockListProps.Count == 0) return;
+
+        // Build per-property allowed-type maps from settings JSON. Settings model lives in
+        // ZauberCMS.Components which Core can't reference, so we parse the JSON here directly.
+        var propertyAllowedTypes = new Dictionary<Guid, HashSet<Guid>>();
+        var allReferencedIds = new HashSet<Guid>();
+
+        foreach (var bp in blockListProps)
         {
-            if (string.IsNullOrWhiteSpace(property.Value))
-                continue;
+            if (!string.IsNullOrWhiteSpace(bp.Settings))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(bp.Settings);
+                    if (doc.RootElement.TryGetProperty("AllowedElementTypeIds", out var allowedProp) &&
+                        allowedProp.ValueKind == JsonValueKind.Array)
+                    {
+                        var allowed = new HashSet<Guid>();
+                        foreach (var element in allowedProp.EnumerateArray())
+                        {
+                            if (element.ValueKind == JsonValueKind.String &&
+                                Guid.TryParse(element.GetString(), out var allowedId))
+                            {
+                                allowed.Add(allowedId);
+                            }
+                        }
+                        if (allowed.Count > 0)
+                        {
+                            propertyAllowedTypes[bp.Id] = allowed;
+                        }
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    logger.LogWarning(ex,
+                        "Failed to parse BlockListEditor settings for property {PropertyAlias} on content type {ContentTypeAlias}",
+                        bp.Alias, contentType.Alias);
+                }
+            }
+
+            if (!propertyAllowedTypes.ContainsKey(bp.Id)) continue;
+
+            var pv = content.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == bp.Id);
+            if (pv == null || string.IsNullOrWhiteSpace(pv.Value)) continue;
 
             try
             {
-                // Parse the JSON array of content IDs
-                var contentIds = JsonSerializer.Deserialize<List<Guid>>(property.Value);
-                if (contentIds != null && contentIds.Any())
+                var ids = JsonSerializer.Deserialize<List<Guid>>(pv.Value);
+                if (ids != null)
                 {
-                    allContentIds.AddRange(contentIds);
+                    foreach (var id in ids)
+                    {
+                        if (id != Guid.Empty) allReferencedIds.Add(id);
+                    }
                 }
             }
             catch (JsonException)
             {
-                // Skip invalid JSON - not a breaking error for the main save
-                continue;
+                // Logged in the save path; skip here.
             }
         }
-        
-        if (!allContentIds.Any())
-            return;
-            
-        // Batch load all nested content in a single query to prevent N+1
-        var nestedContents = await dbContext.Contents
-            .Include(c => c.PropertyData)
-            .Where(c => allContentIds.Contains(c.Id))
-            .ToListAsync(cancellationToken);
-        
-        // Process each nested content recursively
-        foreach (var nestedContent in nestedContents)
-        {
-            // Recursively save this content, which will process its own BlockListEditor properties
-            var nestedSaveParams = new SaveContentParameters
-            {
-                Content = nestedContent,
-                ExcludePropertyData = false,
-                UpdateContentRoles = false,
-                SaveUnpublishedOnly = false
-            };
 
-            await SaveContentAsync(nestedSaveParams, cancellationToken);
+        if (propertyAllowedTypes.Count == 0 || allReferencedIds.Count == 0) return;
+
+        // Batch load nested content type IDs in one query
+        var nestedTypeMap = await dbContext.Contents
+            .AsNoTracking()
+            .Where(c => allReferencedIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.ContentTypeId })
+            .ToDictionaryAsync(x => x.Id, x => x.ContentTypeId, cancellationToken);
+
+        foreach (var bp in blockListProps)
+        {
+            if (!propertyAllowedTypes.TryGetValue(bp.Id, out var allowed)) continue;
+
+            var pv = content.PropertyData.FirstOrDefault(p => p.ContentTypePropertyId == bp.Id);
+            if (pv == null || string.IsNullOrWhiteSpace(pv.Value)) continue;
+
+            List<Guid>? ids;
+            try { ids = JsonSerializer.Deserialize<List<Guid>>(pv.Value); }
+            catch (JsonException) { continue; }
+            if (ids == null) continue;
+
+            foreach (var id in ids)
+            {
+                if (id == Guid.Empty) continue;
+                if (!nestedTypeMap.TryGetValue(id, out var nestedTypeId)) continue;
+                if (allowed.Contains(nestedTypeId)) continue;
+
+                logger.LogWarning(
+                    "Block list property '{PropertyAlias}' on content {ContentId} references content {NestedId} of disallowed type {ContentTypeId}",
+                    bp.Alias, content.Id, id, nestedTypeId);
+                handlerResult.AddMessage(
+                    $"Block list '{bp.Alias}' contains a disallowed element type",
+                    ResultMessageType.Warning);
+            }
         }
     }
 }

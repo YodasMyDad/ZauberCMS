@@ -142,7 +142,12 @@ public record BlockListState
     }
     
     /// <summary>
-    /// Reorder items by moving from oldIndex to newIndex
+    /// Reorder items by moving from oldIndex to newIndex.
+    /// Order is persisted via the parent property's JSON-of-Guids list (re-emitted on every save),
+    /// so reordering doesn't need to re-save individual nested rows. We only mark items as
+    /// "updated" if they would otherwise need DB writes — which for a pure reorder is nothing.
+    /// (Previously: every item was marked updated on every reorder, causing a no-op SaveContentAsync
+    /// per block and a corresponding ContentVersion per block.)
     /// </summary>
     public BlockListState ReorderItems(int oldIndex, int newIndex)
     {
@@ -150,48 +155,27 @@ public record BlockListState
         {
             return this;
         }
-        
+        if (oldIndex == newIndex)
+        {
+            return this;
+        }
+
         var newItems = new List<Content>(Items);
         var item = newItems[oldIndex];
         newItems.RemoveAt(oldIndex);
         newItems.Insert(newIndex, item);
-        
-        var newAddedItems = new List<Content>(AddedItems);
-        var newUpdatedItems = new List<Content>(UpdatedItems);
-        
-        // Mark all items as updated when reordering (order matters for rendering)
-        // But don't mark newly added items - they're already tracked
-        foreach (var content in newItems)
-        {
-            var isAdded = newAddedItems.Any(x => x.Id == content.Id);
-            if (!isAdded)
-            {
-                var updatedIndex = newUpdatedItems.FindIndex(x => x.Id == content.Id);
-                if (updatedIndex >= 0)
-                {
-                    newUpdatedItems[updatedIndex] = content;
-                }
-                else
-                {
-                    newUpdatedItems.Add(content);
-                }
-            }
-        }
-        
-        return this with 
-        { 
-            Items = newItems,
-            AddedItems = newAddedItems,
-            UpdatedItems = newUpdatedItems
-        };
+
+        return this with { Items = newItems };
     }
-    
-    
+
+
     /// <summary>
     /// Merge nested changes from child block list editors
     /// </summary>
-    public BlockListState MergeNestedChanges(BlockListChanges nestedChanges)
+    public BlockListState MergeNestedChanges(BlockListChanges? nestedChanges)
     {
+        if (nestedChanges == null) return this;
+
         var newAddedItems = new List<Content>(AddedItems);
         var newUpdatedItems = new List<Content>(UpdatedItems);
         var newDeletedItems = new List<Content>(DeletedItems);

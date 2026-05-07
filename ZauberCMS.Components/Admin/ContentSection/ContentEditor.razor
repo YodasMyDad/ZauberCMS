@@ -582,6 +582,9 @@ else
 
     private async Task Cancel()
     {
+        // Drop any in-memory block-list edits so they don't leak into a subsequent edit session.
+        PendingBlockListChanges = null;
+        WorkingCopy?.PendingBlockListChanges.Clear();
         await ContentEditorModal.CloseAsync(ModalResult.Cancel());
     }
 
@@ -608,29 +611,15 @@ else
     private async Task<HandlerResult<bool>> ProcessBlockListChanges()
     {
         var result = new HandlerResult<bool> { Success = true, Entity = true };
-        
+
         if (PendingBlockListChanges == null) return result;
 
-        // Deduplicate change lists by ContentId to avoid saving the same item multiple times
-        var addedItems = PendingBlockListChanges.AddedItems
-            .GroupBy(x => x.Id)
-            .Select(g => g.Last())
-            .ToList();
-
-        var updatedItems = PendingBlockListChanges.UpdatedItems
-            .GroupBy(x => x.Id)
-            .Select(g => g.Last())
-            .ToList();
-
-        var deletedItems = PendingBlockListChanges.DeletedItems
-            .GroupBy(x => x.Id)
-            .Select(g => g.Last())
-            .ToList();
-
-        // Remove any items from added/updated that are in the deleted list
-        var deletedIds = deletedItems.Select(x => x.Id).ToHashSet();
-        addedItems = addedItems.Where(x => !deletedIds.Contains(x.Id)).ToList();
-        updatedItems = updatedItems.Where(x => !deletedIds.Contains(x.Id)).ToList();
+        // Centralised dedup logic — same rules apply server-side via BlockListChanges.Deduplicated()
+        // for callers that bypass the editor (custom services, jobs).
+        var deduped = PendingBlockListChanges.Deduplicated();
+        var addedItems = deduped.AddedItems;
+        var updatedItems = deduped.UpdatedItems;
+        var deletedItems = deduped.DeletedItems;
 
         // Process added items
         foreach (var addedItem in addedItems)

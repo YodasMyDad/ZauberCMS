@@ -16,7 +16,12 @@ public class ContentDbMapping : IEntityTypeConfiguration<Models.Content>
         builder.Property(x => x.Url).HasMaxLength(1000);
         builder.Property(x => x.ContentTypeAlias).HasMaxLength(1000);
         builder.Property(x => x.DateCreated).IsRequired();
-        builder.Property(x => x.DateUpdated).IsRequired();
+        // Optimistic concurrency: EF generates UPDATE ... WHERE Id=@id AND DateUpdated=@original.
+        // If another user saved between this load and SaveChanges, the WHERE matches zero rows
+        // and EF throws DbUpdateConcurrencyException — surfaced to the user in SaveContentAsync.
+        // Caveat: provider clock precision varies (SQLite microseconds, SqlServer 100ns ticks),
+        // so two saves within the same tick can both succeed. Acceptable trade-off for not adding a RowVersion column.
+        builder.Property(x => x.DateUpdated).IsRequired().IsConcurrencyToken();
         builder.Property(x => x.ViewComponent).HasMaxLength(1000);
         builder.Property(e => e.Path).ToJsonConversion(3000);
         

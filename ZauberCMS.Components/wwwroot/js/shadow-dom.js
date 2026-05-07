@@ -9,6 +9,12 @@ window.initializeShadowDOMWithMultipleStylesheets = (element, stylesheetPaths) =
         return;
     }
 
+    // Re-attachment guard: if Blazor reuses the element on a subsequent firstRender (rare but
+    // possible during component re-mount / patch), attachShadow would throw. Bail silently.
+    if (element.shadowRoot) {
+        return;
+    }
+
     const shadowRoot = element.attachShadow({ mode: 'open' });
 
     stylesheetPaths.forEach((stylesheetPath) => {
@@ -20,6 +26,9 @@ window.initializeShadowDOMWithMultipleStylesheets = (element, stylesheetPaths) =
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = stylesheetPath;
+            link.addEventListener('error', () => {
+                console.error('[Zauber] Failed to load block preview stylesheet:', stylesheetPath);
+            });
 
             // Cache the stylesheet
             cachedStylesheets.set(stylesheetPath, link);

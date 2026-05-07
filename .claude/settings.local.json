@@ -3,7 +3,8 @@
     "allow": [
       "WebSearch",
       "WebFetch(*)",
-      "Bash(*)"
+      "Bash(*)",
+      "PowerShell(*)"
     ],
     "deny": [],
     "ask": []

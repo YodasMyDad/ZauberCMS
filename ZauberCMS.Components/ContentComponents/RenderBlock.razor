@@ -1,11 +1,12 @@
-﻿@using ZauberCMS.Core.Plugins
+﻿@using Microsoft.Extensions.Logging
+@using ZauberCMS.Core.Plugins
 @typeparam TView where TView : IContentBlock
 
 @if (Content != null && BlockViews != null)
 {
     var contentTypeAlias = Content.ContentTypeAlias;
     var blockViewPair = BlockViews.FirstOrDefault(pair => pair.Value.ContentTypeAlias == contentTypeAlias);
-    
+
     if (blockViewPair.Value != null)
     {
         <div @ref="_componentDiv">
@@ -18,15 +19,16 @@
     }
 }
 
-@code 
+@code
 {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+    [Inject] public ILogger<RenderBlock<TView>> Logger { get; set; } = null!;
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Type? FallbackComponentType { get; set; }
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
     [Parameter] public List<string> Stylesheets { get; set; } = [];
-    
+
     private Dictionary<string, TView>? BlockViews { get; set; }
     private ElementReference _componentDiv;
 
@@ -39,15 +41,23 @@
             ["Content"] = Content!
         };
         Parameters = newParameters;
-        
+
         BlockViews = ExtensionManager.GetInstances<TView>(true);
     }
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && Stylesheets.Count > 0)
         {
-            await JsRuntime.InvokeVoidAsync("initializeShadowDOMWithMultipleStylesheets", _componentDiv, Stylesheets);
+            try
+            {
+                await JsRuntime.InvokeVoidAsync("initializeShadowDOMWithMultipleStylesheets", _componentDiv, Stylesheets);
+            }
+            catch (Exception ex)
+            {
+                // Don't tear down the render — block preview just won't be shadow-isolated.
+                Logger.LogWarning(ex, "Failed to initialise shadow DOM for block preview");
+            }
         }
     }
 }

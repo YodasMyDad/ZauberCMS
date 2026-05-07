@@ -118,17 +118,28 @@ public static class ContentExtensions
         IContentService contentService)
     {
         // Original efficient path - direct database query with zero overhead
-        var ids = content.GetValue<List<Guid>>(alias);
-        if (ids != null && ids.Count != 0)
-        {
-            var blockList =
-                await contentService.QueryContentAsync(new QueryContentParameters { Ids = ids, AmountPerPage = 150, NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only});
-            // Ensure the returned items are in the same order as the input ids
-            var dict = blockList.Items.ToDictionary(x => x.Id, x => x);
-            return ids.Where(dict.ContainsKey).Select(id => dict[id]);
-        }
+        var rawIds = content.GetValue<List<Guid>>(alias);
+        if (rawIds == null || rawIds.Count == 0) return [];
 
-        return [];
+        // Filter empty Guids and dedupe; ToDictionary below would otherwise throw on duplicates,
+        // and an empty Guid would never match a real content row anyway.
+        var ids = rawIds
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToList();
+
+        if (ids.Count == 0) return [];
+
+        var blockList =
+            await contentService.QueryContentAsync(new QueryContentParameters
+            {
+                Ids = ids,
+                AmountPerPage = ids.Count, // Don't truncate large block lists
+                NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only
+            });
+        // Ensure the returned items are in the same order as the input ids
+        var dict = blockList.Items.ToDictionary(x => x.Id, x => x);
+        return ids.Where(dict.ContainsKey).Select(id => dict[id]);
     }
     
     /// <summary>
@@ -150,23 +161,26 @@ public static class ContentExtensions
         {
             return await content.GetBlocks(alias, contentService);
         }
-        
+
         // Admin preview path - check for pending changes first
-        var ids = content.GetValue<List<Guid>>(alias);
-        if (ids == null || ids.Count == 0)
+        var rawIds = content.GetValue<List<Guid>>(alias);
+        if (rawIds == null || rawIds.Count == 0)
         {
             return [];
         }
-        
+
+        var ids = rawIds.Where(id => id != Guid.Empty).Distinct().ToList();
+        if (ids.Count == 0) return [];
+
         // Check if we have pending changes for this property (admin editing only)
-        if (content is Content.Models.Content contentModel && 
+        if (content is Content.Models.Content contentModel &&
             contentModel.PendingBlockListChanges.TryGetValue(alias, out var pendingChanges) &&
             pendingChanges.Count > 0)
         {
             // Return items from pending changes in the correct order
             return ids.Where(pendingChanges.ContainsKey).Select(id => pendingChanges[id]);
         }
-        
+
         // No pending changes, fall back to database query
         return await content.GetBlocks(alias, contentService);
     }

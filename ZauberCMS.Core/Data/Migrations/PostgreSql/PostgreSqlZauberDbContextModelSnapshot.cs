@@ -17,7 +17,7 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -75,6 +75,7 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("DateUpdated")
+                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("Deleted")
