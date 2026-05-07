@@ -318,6 +318,7 @@ Still works for offline/local releases. Mirrors the CI logic: prompts for a vers
 | [Docs/Editors.md](Docs/Editors.md) | Adding/modifying property editors (`IContentProperty`, settings, models, dialogs). |
 | [Docs/efcore.md](Docs/efcore.md) | Any DB schema change. Contains the "do not add tables unless absolutely necessary" rule. |
 | [Docs/Services.md](Docs/Services.md) | Adding services, parameter classes, query/cache patterns. |
+| [Docs/BlockListEditor.md](Docs/BlockListEditor.md) | Touching the BlockListEditor — nesting, previews/shadow DOM, persistence, versioning. Read before changing anything in `ZauberCMS.Components/Editors/BlockList*` or `ProcessBlockListEditorChangesAsync`. |
 
 These are Cursor-style rule files (`alwaysApply: true` frontmatter) but they are authoritative dev docs regardless of editor.
 

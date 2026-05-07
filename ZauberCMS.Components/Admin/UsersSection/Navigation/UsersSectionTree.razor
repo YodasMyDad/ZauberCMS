@@ -32,11 +32,12 @@
         AppState.OnUserChanged -= HandleUsersChanged;
     }
 
-    private async Task HandleUsersChanged(User? user, string username)
-    {
-        await DataRefresh();
-        StateHasChanged();
-    }
+    private Task HandleUsersChanged(User? user, string username)
+        => InvokeAsync(async () =>
+        {
+            await DataRefresh();
+            StateHasChanged();
+        });
 
     private async Task DataRefresh()
     {

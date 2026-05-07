@@ -35,11 +35,12 @@
         TreeState.OnTreeValueChanged -= TreeStateOnOnTreeValueChanged;
     }
 
-    private async Task HandleContentTreeChanged(Content? content, string user)
-    {
-        await DataRefresh();
-        StateHasChanged();
-    }
+    private Task HandleContentTreeChanged(Content? content, string user)
+        => InvokeAsync(async () =>
+        {
+            await DataRefresh();
+            StateHasChanged();
+        });
 
     /// <summary>
     /// Remove the selected state

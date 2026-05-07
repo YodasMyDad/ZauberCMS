@@ -89,12 +89,13 @@
     }
 
 
-    private async Task HandleContentChanged(Content? media, string username)
-    {
-        TreeState.ClearChildCache(null);
-        await DataRefresh();
-        StateHasChanged();
-    }
+    private Task HandleContentChanged(Content? media, string username)
+        => InvokeAsync(async () =>
+        {
+            TreeState.ClearChildCache(null);
+            await DataRefresh();
+            StateHasChanged();
+        });
 
     private void OnExpandHandler(TreeExpandEventArgs args)
     {

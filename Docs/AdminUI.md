@@ -298,22 +298,30 @@ The `AppState` service provides a centralized event-driven system for notifying 
         AppState.OnContentDeleted += HandleContentDeleted;
     }
     
-    private async Task HandleContentChanged(Content.Models.Content? content, string username)
-    {
-        // Refresh data, update UI, etc.
-        await RefreshData();
-        StateHasChanged();
-    }
-    
-    private async Task HandleContentDeleted(Content.Models.Content? content, string username)
-    {
-        // Handle deletion - remove from lists, navigate away, etc.
-        if (content?.Id == CurrentContentId)
+    // Weak event handlers run on the publisher's thread (whatever thread the
+    // service that called AppState.NotifyXxx happened to be on). Anything that
+    // touches render state — including StateHasChanged — must be marshalled
+    // onto the component's Dispatcher via InvokeAsync, otherwise Blazor throws
+    // "The current thread is not associated with the Dispatcher."
+    private Task HandleContentChanged(Content.Models.Content? content, string username)
+        => InvokeAsync(async () =>
         {
-            NavigationManager.NavigateTo("/admin/content");
-        }
-        StateHasChanged();
-    }
+            // Refresh data, update UI, etc.
+            await RefreshData();
+            StateHasChanged();
+        });
+
+    private Task HandleContentDeleted(Content.Models.Content? content, string username)
+        => InvokeAsync(() =>
+        {
+            // Handle deletion - remove from lists, navigate away, etc.
+            if (content?.Id == CurrentContentId)
+            {
+                NavigationManager.NavigateTo("/admin/content");
+            }
+            StateHasChanged();
+            return Task.CompletedTask;
+        });
     
     private async Task SaveContent()
     {

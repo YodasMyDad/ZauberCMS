@@ -53,22 +53,23 @@
         }
     }
 
-    private async Task HandleMediaChanged(Media? media, string username)
-    {
-        _hasChildrenCache?.Clear();
-        
-        // Also clear TreeState cache to ensure full refresh
-        TreeState.ClearChildCache(null);
-
-        // If on change hasn't got a delegate,
-        // it's likely this is being used as a standalone tree
-        // so need to handle data refresh (This needs thinking about a bit more)
-        if (!OnChange.HasDelegate)
+    private Task HandleMediaChanged(Media? media, string username)
+        => InvokeAsync(async () =>
         {
-            await DataRefresh();
-        }
-        StateHasChanged();
-    }
+            _hasChildrenCache?.Clear();
+
+            // Also clear TreeState cache to ensure full refresh
+            TreeState.ClearChildCache(null);
+
+            // If on change hasn't got a delegate,
+            // it's likely this is being used as a standalone tree
+            // so need to handle data refresh (This needs thinking about a bit more)
+            if (!OnChange.HasDelegate)
+            {
+                await DataRefresh();
+            }
+            StateHasChanged();
+        });
 
     private async Task DataRefresh()
     {
