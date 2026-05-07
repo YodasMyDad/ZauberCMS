@@ -656,7 +656,11 @@ public class ContentService(
             return handlerResult;
         }
 
-        // Check for nested content using this ContentType (Element Types)
+        // Check for nested content using this ContentType (Element Types).
+        // A nested content row may still exist after its referencing property has been removed
+        // from a ContentType (or its composition removed) — the property's JSON value lingers,
+        // along with the nested Content row. Treat those as orphans and clean them up so the
+        // Element Type can actually be deleted instead of being blocked forever.
         var nestedContentUsingContentType =
             await QueryContentAsync(new QueryContentParameters
             {
@@ -666,12 +670,71 @@ public class ContentService(
             }, cancellationToken);
         if (nestedContentUsingContentType.Items.Any())
         {
-            handlerResult.Success = false;
-            var count = nestedContentUsingContentType.TotalItems;
-            handlerResult.AddMessage(
-                $"Unable to delete, because this Element Type is used by {count} nested content item{(count == 1 ? "" : "s")}",
-                ResultMessageType.Warning);
-            return handlerResult;
+            // Build the set of property type IDs that are still attached to some ContentType.
+            // ContentProperties is stored as JSON inside ZauberContentTypes, so we materialise
+            // the lists in memory and flatten.
+            var validPropertyTypeIds = (await dbContext.ContentTypes.AsNoTracking()
+                    .Select(ct => ct.ContentProperties)
+                    .ToListAsync(cancellationToken))
+                .SelectMany(props => props)
+                .Select(p => p.Id)
+                .ToHashSet();
+
+            var liveItems = new List<Models.Content>();
+            var orphanedItems = new List<Models.Content>();
+
+            foreach (var nestedItem in nestedContentUsingContentType.Items)
+            {
+                var idString = nestedItem.Id.ToString();
+                var hasLiveReference = await dbContext.ContentPropertyValues
+                    .AnyAsync(pv =>
+                            validPropertyTypeIds.Contains(pv.ContentTypePropertyId) &&
+                            pv.Value != null && pv.Value.Contains(idString),
+                        cancellationToken);
+
+                if (hasLiveReference)
+                {
+                    liveItems.Add(nestedItem);
+                }
+                else
+                {
+                    orphanedItems.Add(nestedItem);
+                }
+            }
+
+            if (liveItems.Count != 0)
+            {
+                handlerResult.Success = false;
+                var count = liveItems.Count;
+                handlerResult.AddMessage(
+                    $"Unable to delete, because this Element Type is used by {count} nested content item{(count == 1 ? "" : "s")}",
+                    ResultMessageType.Warning);
+                return handlerResult;
+            }
+
+            // Only orphans remain — purge the dangling rows so the cascade-delete can proceed
+            // (Content → ContentType is Cascade, but PropertyData → Content is NoAction, so we
+            // have to remove property data and unpublished snapshots ourselves). Re-fetch from
+            // the local dbContext because QueryContentAsync above runs in its own scope, so the
+            // returned entities are detached relative to this dbContext.
+            foreach (var orphanItem in orphanedItems)
+            {
+                var orphan = dbContext.Contents.FirstOrDefault(x => x.Id == orphanItem.Id);
+                if (orphan == null) continue;
+
+                var orphanPropertyValues = dbContext.ContentPropertyValues
+                    .Where(pv => pv.ContentId == orphan.Id);
+                dbContext.ContentPropertyValues.RemoveRange(orphanPropertyValues);
+
+                if (orphan.UnpublishedContentId != null)
+                {
+                    var uContent = dbContext.UnpublishedContent
+                        .FirstOrDefault(x => x.Id == orphan.UnpublishedContentId);
+                    if (uContent != null) dbContext.UnpublishedContent.Remove(uContent);
+                }
+
+                dbContext.Contents.Remove(orphan);
+            }
         }
 
         var children =
