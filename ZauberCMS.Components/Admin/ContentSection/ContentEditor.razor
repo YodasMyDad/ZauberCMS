@@ -307,12 +307,17 @@ else
     private BlockListChanges? PendingBlockListChanges { get; set; }
     private Content? WorkingCopy { get; set; }
 
+    protected override void OnInitialized()
+    {
+        // Subscribe once. OnParametersSetAsync runs on every parameter change, so subscribing
+        // there would attach a new handler each time and invoke HandleContentChanged N times
+        // per event.
+        AppState.OnContentChanged += HandleContentChanged;
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         Loading = true;
-
-        // Subscribe to content change events to refresh when content is modified externally
-        AppState.OnContentChanged += HandleContentChanged;
 
         AllContentTypeProperties = ExtensionManager.GetImplementations<IContentProperty>(true);
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
