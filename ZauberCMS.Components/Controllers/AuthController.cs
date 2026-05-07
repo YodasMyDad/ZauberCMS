@@ -16,13 +16,23 @@ public class AuthController(
     {
         var user = await userManager.GetUserAsync(User);
         if (user != null) await signInManager.RefreshSignInAsync(user);
-        return Redirect(redirectUrl ?? "/");
+        return LocalRedirectOrHome(redirectUrl);
     }
-    
+
     [HttpGet("logout")]
     public async Task<IActionResult> Logout(string? redirectUrl = null)
     {
         await signInManager.SignOutAsync();
-        return Redirect(redirectUrl ?? "/"); // Redirect to the home page after logout
+        return LocalRedirectOrHome(redirectUrl); // Redirect to the home page after logout
+    }
+
+    // Defence against open-redirect: only honour same-site redirect targets, fall back to "/" otherwise.
+    private IActionResult LocalRedirectOrHome(string? redirectUrl)
+    {
+        if (!string.IsNullOrEmpty(redirectUrl) && Url.IsLocalUrl(redirectUrl))
+        {
+            return Redirect(redirectUrl);
+        }
+        return Redirect("/");
     }
 }
