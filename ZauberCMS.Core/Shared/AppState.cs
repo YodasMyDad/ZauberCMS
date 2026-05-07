@@ -1,4 +1,5 @@
-﻿using ZauberCMS.Core.Content.Models;
+﻿using Microsoft.Extensions.Logging;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Shared;
@@ -9,21 +10,44 @@ namespace ZauberCMS.Core.Shared;
 /// </summary>
 public class AppState
 {
-    // Weak event managers prevent memory leaks when Singleton AppState outlives Scoped components
-    private readonly WeakEventManager<ContentType?> _contentTypeChanged = new();
-    private readonly WeakEventManager<Content.Models.Content?> _contentChanged = new();
-    private readonly WeakEventManager<User?> _userChanged = new();
-    private readonly WeakEventManager<Media.Models.Media?> _mediaChanged = new();
+    private readonly WeakEventManager<ContentType?> _contentTypeChanged;
+    private readonly WeakEventManager<Content.Models.Content?> _contentChanged;
+    private readonly WeakEventManager<User?> _userChanged;
+    private readonly WeakEventManager<Media.Models.Media?> _mediaChanged;
 
-    private readonly WeakEventManager<ContentType?> _contentTypeSaved = new();
-    private readonly WeakEventManager<Content.Models.Content?> _contentSaved = new();
-    private readonly WeakEventManager<User?> _userSaved = new();
-    private readonly WeakEventManager<Media.Models.Media?> _mediaSaved = new();
+    private readonly WeakEventManager<ContentType?> _contentTypeSaved;
+    private readonly WeakEventManager<Content.Models.Content?> _contentSaved;
+    private readonly WeakEventManager<User?> _userSaved;
+    private readonly WeakEventManager<Media.Models.Media?> _mediaSaved;
 
-    private readonly WeakEventManager<ContentType?> _contentTypeDeleted = new();
-    private readonly WeakEventManager<Content.Models.Content?> _contentDeleted = new();
-    private readonly WeakEventManager<User?> _userDeleted = new();
-    private readonly WeakEventManager<Media.Models.Media?> _mediaDeleted = new();
+    private readonly WeakEventManager<ContentType?> _contentTypeDeleted;
+    private readonly WeakEventManager<Content.Models.Content?> _contentDeleted;
+    private readonly WeakEventManager<User?> _userDeleted;
+    private readonly WeakEventManager<Media.Models.Media?> _mediaDeleted;
+
+    public AppState() : this(null)
+    {
+    }
+
+    public AppState(ILoggerFactory? loggerFactory)
+    {
+        var logger = loggerFactory?.CreateLogger("ZauberCMS.Core.Shared.WeakEventManager");
+
+        _contentTypeChanged = new WeakEventManager<ContentType?>(logger);
+        _contentChanged = new WeakEventManager<Content.Models.Content?>(logger);
+        _userChanged = new WeakEventManager<User?>(logger);
+        _mediaChanged = new WeakEventManager<Media.Models.Media?>(logger);
+
+        _contentTypeSaved = new WeakEventManager<ContentType?>(logger);
+        _contentSaved = new WeakEventManager<Content.Models.Content?>(logger);
+        _userSaved = new WeakEventManager<User?>(logger);
+        _mediaSaved = new WeakEventManager<Media.Models.Media?>(logger);
+
+        _contentTypeDeleted = new WeakEventManager<ContentType?>(logger);
+        _contentDeleted = new WeakEventManager<Content.Models.Content?>(logger);
+        _userDeleted = new WeakEventManager<User?>(logger);
+        _mediaDeleted = new WeakEventManager<Media.Models.Media?>(logger);
+    }
     
     // Provide event-like interface for backward compatibility
     public event Func<ContentType?, string, Task>? OnContentTypeChanged

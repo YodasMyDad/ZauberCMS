@@ -72,14 +72,20 @@ public class DiskStorageProvider(
     {
         return Task.Run(() =>
         {
-            if (!url.IsNullOrWhiteSpace())
+            if (url.IsNullOrWhiteSpace())
             {
-                var fullFilePath = Path.Combine(env.WebRootPath, url.Replace("/", "\\"));
-                if (File.Exists(fullFilePath))
-                {
-                    File.Delete(fullFilePath);
-                    return true;
-                }
+                return false;
+            }
+
+            if (!TryResolveUnderWebRoot(url, out var fullFilePath))
+            {
+                return false;
+            }
+
+            if (File.Exists(fullFilePath))
+            {
+                File.Delete(fullFilePath);
+                return true;
             }
 
             return false;
@@ -109,11 +115,24 @@ public class DiskStorageProvider(
                     media.Name = file.Name;
                 }
 
+                if (!folderName.IsNullOrWhiteSpace() && !IsSafeFolderSegment(folderName))
+                {
+                    result.AddMessage("Invalid folder name", ResultMessageType.Error);
+                    result.Success = false;
+                    return result;
+                }
+
                 var relativePath = folderName.IsNullOrWhiteSpace()
                     ? Path.Combine(_settings.UploadFolderName ?? "media", media.Id.ToString())
                     : Path.Combine(_settings.UploadFolderName ?? "media", folderName);
 
-                var dirToSave = Path.Combine(env.WebRootPath, relativePath);
+                if (!TryResolveUnderWebRoot(relativePath, out var dirToSave))
+                {
+                    result.AddMessage("Invalid upload path", ResultMessageType.Error);
+                    result.Success = false;
+                    return result;
+                }
+
                 var di = new DirectoryInfo(dirToSave);
                 if (!di.Exists)
                 {
@@ -157,6 +176,39 @@ public class DiskStorageProvider(
         }
 
         return result;
+    }
+
+    private bool TryResolveUnderWebRoot(string relativeOrUrlPath, out string fullPath)
+    {
+        var rootFull = Path.GetFullPath(env.WebRootPath);
+        var rootWithSep = rootFull.EndsWith(Path.DirectorySeparatorChar)
+            ? rootFull
+            : rootFull + Path.DirectorySeparatorChar;
+
+        var normalised = relativeOrUrlPath.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
+
+        try
+        {
+            var combined = Path.Combine(rootFull, normalised);
+            fullPath = Path.GetFullPath(combined);
+        }
+        catch
+        {
+            fullPath = string.Empty;
+            return false;
+        }
+
+        return fullPath.StartsWith(rootWithSep, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSafeFolderSegment(string segment)
+    {
+        if (string.IsNullOrWhiteSpace(segment)) return false;
+        if (segment.Contains("..")) return false;
+        if (Path.IsPathRooted(segment)) return false;
+        if (segment.IndexOfAny(['/', '\\', ':', '*', '?', '"', '<', '>', '|']) >= 0) return false;
+        if (segment.Any(char.IsControl)) return false;
+        return true;
     }
 
     /// <summary>
