@@ -20,6 +20,8 @@ public class WeakEventManager<TEventArgs>
     private readonly List<Subscription> _handlers = [];
     private readonly Lock _lock = new();
     private readonly ILogger? _logger;
+    private int _raiseCount;
+    private const int CleanupEveryNRaises = 64;
 
     public WeakEventManager()
     {
@@ -98,7 +100,12 @@ public class WeakEventManager<TEventArgs>
 
         lock (_lock)
         {
-            CleanupDeadReferences();
+            // Throttle dead-reference pruning. AddHandler still cleans on every add (bounds
+            // list growth); on the raise path, an O(N) sweep on every single event is wasteful.
+            if (Interlocked.Increment(ref _raiseCount) % CleanupEveryNRaises == 0)
+            {
+                CleanupDeadReferences();
+            }
             handlers = new List<Func<TEventArgs, string, Task>>(_handlers.Count);
             foreach (var sub in _handlers)
             {

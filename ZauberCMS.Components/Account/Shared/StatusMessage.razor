@@ -1,6 +1,8 @@
 ﻿@using ZauberCMS.Core.Shared.Models
+@using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Membership
 @using Microsoft.AspNetCore.Http
+@inject IHtmlSanitizerService SanitizerService
 @if (!string.IsNullOrEmpty(DisplayMessage))
 {
     var statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
@@ -14,25 +16,25 @@
     foreach (var successMessage in ResultMessages.SuccessMessages())
     {
         <div class="alert alert-success" role="alert">
-            @((MarkupString)successMessage.Message)
+            @SanitizerService.SanitizeToMarkup(successMessage.Message)
         </div>
     }
     foreach (var errorMessage in ResultMessages.ErrorMessages())
     {
         <div class="alert alert-danger" role="alert">
-            @((MarkupString)errorMessage.Message)
+            @SanitizerService.SanitizeToMarkup(errorMessage.Message)
         </div>
     }
     foreach (var errorMessage in ResultMessages.WarningMessages())
     {
         <div class="alert alert-warning" role="alert">
-            @((MarkupString)errorMessage.Message)
+            @SanitizerService.SanitizeToMarkup(errorMessage.Message)
         </div>
     }
     foreach (var errorMessage in ResultMessages.InfoMessages())
     {
         <div class="alert alert-info" role="alert">
-            @((MarkupString)errorMessage.Message)
+            @SanitizerService.SanitizeToMarkup(errorMessage.Message)
         </div>
     }
 }

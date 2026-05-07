@@ -206,7 +206,6 @@ public static class ZauberSetup
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddAntiforgery();
-        builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         builder.Services.AddBlazoredModal();
         
         // Add rate limiting for authentication endpoints
@@ -337,42 +336,45 @@ public static class ZauberSetup
             var languageService = scope.ServiceProvider.GetRequiredService<ILanguageService>();
             var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
 
-            try
+            // Migrations — must succeed; let exceptions propagate so the host fails fast
+            // and the orchestrator can surface the failure instead of running half-migrated.
+            if (dbContext.Database.GetPendingMigrations().Any())
             {
-                if (dbContext.Database.GetPendingMigrations().Any())
-                {
-                    dbContext.Database.Migrate();
-                }
+                dbContext.Database.Migrate();
+            }
 
-                // Get any seed data
-                var seedData = extensionManager.GetInstances<ISeedData>();
-                foreach (var data in seedData)
+            // Seed data — third-party plugins; tolerate per-plugin failures so a single
+            // misbehaving seeder cannot bring the host down.
+            var seedData = extensionManager.GetInstances<ISeedData>();
+            foreach (var data in seedData)
+            {
+                try
                 {
                     data.Value.Initialise(dbContext);
                 }
-
-                // Is this ok to use the awaiter and result here?
-                var langs = languageService.QueryLanguageAsync(new QueryLanguageParameters { AmountPerPage = 200 }).GetAwaiter().GetResult();
-
-                // en-US must be the default culture as that's what the backoffice resource is
-                var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
-
-                foreach (var langsItem in langs.Items)
+                catch (Exception ex)
                 {
-                    if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
+                    Log.Error(ex, "Seed data plugin {Plugin} failed during startup", data.Value.GetType().FullName);
                 }
+            }
 
-                var supportedCulturesArray = supportedCultures.Distinct().ToArray();
-                var localizationOptions = new RequestLocalizationOptions()
-                    .SetDefaultCulture(settings.Value.AdminDefaultLanguage)
-                    .AddSupportedCultures(supportedCulturesArray)
-                    .AddSupportedUICultures(supportedCulturesArray);
-                app.UseRequestLocalization(localizationOptions);
-            }
-            catch (Exception ex)
+            // Localization — must succeed.
+            var langs = languageService.QueryLanguageAsync(new QueryLanguageParameters { AmountPerPage = 200 }).GetAwaiter().GetResult();
+
+            // en-US must be the default culture as that's what the backoffice resource is
+            var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
+
+            foreach (var langsItem in langs.Items)
             {
-                Log.Error(ex, "Error during startup trying to do Db migrations");
+                if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
             }
+
+            var supportedCulturesArray = supportedCultures.Distinct().ToArray();
+            var localizationOptions = new RequestLocalizationOptions()
+                .SetDefaultCulture(settings.Value.AdminDefaultLanguage)
+                .AddSupportedCultures(supportedCulturesArray)
+                .AddSupportedUICultures(supportedCulturesArray);
+            app.UseRequestLocalization(localizationOptions);
         }
 
         app.UseSerilogRequestLogging();

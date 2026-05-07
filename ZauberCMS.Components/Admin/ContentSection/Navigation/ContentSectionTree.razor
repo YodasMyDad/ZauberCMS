@@ -2,6 +2,7 @@
 @using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
+@implements IDisposable
 
 <ContentTree @ref="ContentTree"
             Data="@ContentItems"

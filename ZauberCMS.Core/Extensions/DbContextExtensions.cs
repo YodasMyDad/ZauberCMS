@@ -56,31 +56,52 @@ public static class DbContextExtensions
         where T : class, IBaseItem
     {
         var path = new List<Guid>();
-        var urls = new List<string>();
-        IBaseItem? currentEntity = entity;
+        List<Guid>? ancestorIds = null;
 
-        while (currentEntity != null)
+        if (entity.ParentId.HasValue)
         {
-            path.Insert(0, currentEntity.Id);
-            if (currentEntity.Url != null) urls.Insert(0, currentEntity.Url);
+            // Single round-trip: fetch parent's already-stored Path and append the current id.
+            // Each ancestor's Path is kept correct by this method on every save, so we can
+            // reuse it instead of walking the chain one entity at a time.
+            var parent = dbContext.Set<T>()
+                .AsNoTracking()
+                .Where(e => e.Id == entity.ParentId.Value)
+                .Select(e => new { e.Path })
+                .FirstOrDefault();
 
-            var parentItem = currentEntity.ParentId.HasValue
-                ? dbContext.Set<T>().FirstOrDefault(e => e.Id == currentEntity.ParentId.Value)
-                : null;
-
-            currentEntity = parentItem;
-        }
-
-        if (entity is Content.Models.Content)
-        {
-            if (!isUpdate && settings.Value.EnablePathUrls)
+            if (parent != null && parent.Path.Count > 0)
             {
-                // New item and path URLs are enabled—generate the URL from the path.
-                if (urls.Count > 0) urls.RemoveAt(0); // Remove the root (if applicable)
-                entity.Url = string.Join("/", urls);
-            }    
+                path.AddRange(parent.Path);
+                ancestorIds = parent.Path;
+            }
         }
-        
+
+        path.Add(entity.Id);
+
+        if (entity is Content.Models.Content && !isUpdate && settings.Value.EnablePathUrls)
+        {
+            // Build the URL from ancestor URLs + current Url, dropping the root segment to
+            // mirror the original behaviour. One extra query, regardless of depth.
+            var orderedUrls = new List<string>();
+
+            if (ancestorIds is { Count: > 0 })
+            {
+                var ancestorUrls = dbContext.Set<T>()
+                    .AsNoTracking()
+                    .Where(e => ancestorIds.Contains(e.Id) && e.Url != null)
+                    .Select(e => new { e.Id, e.Url })
+                    .ToList();
+
+                orderedUrls.AddRange(ancestorIds
+                    .Select(id => ancestorUrls.FirstOrDefault(a => a.Id == id)?.Url)
+                    .Where(u => u != null)!);
+            }
+
+            if (entity.Url != null) orderedUrls.Add(entity.Url);
+            if (orderedUrls.Count > 0) orderedUrls.RemoveAt(0); // Remove the root (if applicable)
+            entity.Url = string.Join("/", orderedUrls);
+        }
+
         return path;
     }
 

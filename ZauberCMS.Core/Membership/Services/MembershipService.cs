@@ -871,52 +871,48 @@ public class MembershipService(
     /// <returns>Authentication result.</returns>
     public async Task<AuthenticationResult> ForgotPasswordAsync(ForgotPasswordParameters parameters, CancellationToken cancellationToken = default)
     {
+        var forgotPasswordResult = new AuthenticationResult();
+
+        if (parameters.Email == null)
+        {
+            forgotPasswordResult.AddMessage("Email is missing", ResultMessageType.Error);
+            forgotPasswordResult.Success = false;
+            return forgotPasswordResult;
+        }
+
         using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var forgotPasswordResult = new AuthenticationResult();
 
         try
         {
-            if (parameters.Email != null)
+            var user = await userManager.FindByEmailAsync(parameters.Email);
+            if (user != null)
             {
-                var user = await userManager.FindByEmailAsync(parameters.Email);
-                if (user != null)
+                if (userManager.Options.SignIn.RequireConfirmedAccount && !await userManager.IsEmailConfirmedAsync(user))
                 {
-                    if (userManager.Options.SignIn.RequireConfirmedAccount && await userManager.IsEmailConfirmedAsync(user) == false)
-                    {
-                        forgotPasswordResult.Success = false;
-                        forgotPasswordResult.AddMessage("Please check your email to confirm your account", ResultMessageType.Success);
-
-                        // Resend confirmation email
-                        await emailService.SendEmailConfirmationAsync(new SendEmailConfirmationParameters { ReturnUrl = "~/", User = user }, cancellationToken);
-                        return forgotPasswordResult;
-                    }
-
-                    // For more information on how to enable account confirmation and password reset please
-                    // visit https://go.microsoft.com/fwlink/?LinkID=532713
+                    // Send confirmation email out-of-band; do not vary the response so account
+                    // existence / confirmation status cannot be inferred from the wording.
+                    await emailService.SendEmailConfirmationAsync(new SendEmailConfirmationParameters { ReturnUrl = "~/", User = user }, cancellationToken);
+                }
+                else
+                {
                     var code = await userManager.GeneratePasswordResetTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ResetPassword, new { code = code, email = parameters.Email });
+                    var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ResetPassword, new { code, email = parameters.Email });
 
                     var paragraphs = new List<string> { $"Please reset your password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>." };
                     await providerService.EmailProvider!.SendEmailWithTemplateAsync(parameters.Email, "Reset Password", paragraphs);
                 }
             }
-            else
-            {
-                forgotPasswordResult.AddMessage("Email is missing", ResultMessageType.Error);
-                forgotPasswordResult.Success = false;
-            }
         }
         catch (Exception e)
         {
-            forgotPasswordResult.AddMessage(e.Message, ResultMessageType.Error);
-            forgotPasswordResult.Success = false;
+            // Log but do not surface — varying the response on error is itself an enumeration channel.
+            logger.LogError(e, "ForgotPasswordAsync failed for {Email}", parameters.Email);
         }
-        
-        forgotPasswordResult.Success = true;
-        forgotPasswordResult.AddMessage("An email has been sent to you to", ResultMessageType.Success);
 
+        forgotPasswordResult.Success = true;
+        forgotPasswordResult.AddMessage("If the email matches an account, a password reset link has been sent.", ResultMessageType.Success);
         return forgotPasswordResult;
     }
 

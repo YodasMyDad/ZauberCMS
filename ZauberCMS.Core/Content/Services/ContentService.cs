@@ -1808,7 +1808,7 @@ public class ContentService(
     private static void UpdateContentRoles(IZauberDbContext dbContext, Models.Content content,
         SaveContentParameters request)
     {
-        var existingRoles = dbContext.ContentRoles.Where(r => r.ContentId == content.Id).ToList();
+        var existingRoles = dbContext.ContentRoles.AsNoTracking().Where(r => r.ContentId == content.Id).ToList();
         var rolesToRemove = existingRoles.Where(er => request.Roles.All(rr => rr.Id != er.RoleId)).ToList();
         if (rolesToRemove.Count != 0)
         {
