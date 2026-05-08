@@ -19,6 +19,7 @@ public class QueryUsersParameters
     public GetUsersOrderBy OrderBy { get; set; } = GetUsersOrderBy.DateUpdatedDescending;
     public Expression<Func<User, bool>>? WhereClause { get; set; }
     public Func<IQueryable<User>>? Query { get; set; }
+    public bool IncludeDeleted { get; set; }
 }
 
 public enum GetUsersOrderBy

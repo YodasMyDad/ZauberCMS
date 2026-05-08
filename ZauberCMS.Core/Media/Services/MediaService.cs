@@ -187,17 +187,29 @@ public class MediaService(
         var media = dbContext.Medias.FirstOrDefault(x => x.Id == parameters.MediaId);
         if (media != null)
         {
-            //Check if it has children
-            var children = dbContext.Medias.AsNoTracking().Where(x => x.ParentId == media.Id);
+            // Check if it has non-deleted children — soft-deleted children don't block recycling.
+            var children = dbContext.Medias.AsNoTracking().Where(x => x.ParentId == media.Id && !x.Deleted);
             if (await children.AnyAsync(cancellationToken))
             {
                 handlerResult.AddMessage("Unable to delete media with child content, delete or move those items first", ResultMessageType.Error);
                 return handlerResult;
             }
 
-            
-            var filePathToDelete = media.Url;
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
+
+            if (parameters.MoveToRecycleBin)
+            {
+                media.Deleted = true;
+                await user.AddAudit(media, media.Name, AuditExtensions.AuditAction.Delete, auditService, cancellationToken);
+                var recycleResult = await dbContext.SaveChangesAndLog(media, handlerResult, cacheService, extensionManager, cancellationToken);
+                if (recycleResult.Success)
+                {
+                    await appState.NotifyMediaDeleted(media, authState.User.Identity?.Name!);
+                }
+                return recycleResult;
+            }
+
+            var filePathToDelete = media.Url;
             await user.AddAudit(media, media.Name, AuditExtensions.AuditAction.Delete, auditService, cancellationToken);
             dbContext.Medias.Remove(media);
             await appState.NotifyMediaDeleted(null, authState.User.Identity?.Name!);
@@ -295,6 +307,11 @@ public class MediaService(
             query = query.AsNoTracking();
         }
 
+        if (!parameters.IncludeDeleted)
+        {
+            query = query.Where(x => !x.Deleted);
+        }
+
         if (parameters.IncludeParent)
         {
             query = query.Include(x => x.Parent);
@@ -333,6 +350,11 @@ public class MediaService(
         }
         else
         {
+            if (!parameters.IncludeDeleted)
+            {
+                query = query.Where(x => !x.Deleted);
+            }
+
             if (parameters.IncludeChildren)
             {
                 query = query.Include(x => x.Children).AsSplitQuery();
@@ -376,6 +398,6 @@ public class MediaService(
 
     private static IQueryable<Models.Media> BuildQuery(IZauberDbContext dbContext)
     {
-        return dbContext.Medias.AsNoTracking().Where(x => x.RequiresAuthentication);
+        return dbContext.Medias.AsNoTracking().Where(x => x.RequiresAuthentication && !x.Deleted);
     }
 }

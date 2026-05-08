@@ -15,6 +15,8 @@ public class User : IdentityUser<Guid>, ITreeItem, IHasPropertyValues
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
     public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
 
+    public bool Deleted { get; set; }
+
     /// <summary>
     /// The content properties
     /// </summary>n

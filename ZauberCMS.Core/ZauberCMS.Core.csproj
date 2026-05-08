@@ -57,10 +57,6 @@
       <Folder Include="Data\Migrations\SqlServer\" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Compile Remove="Data\Migrations\SqlServer\ZauberDbContextModelSnapshot.cs" />
-    </ItemGroup>
-
     <Target Name="CopyNuGetPackage" AfterTargets="Pack">
         <PropertyGroup>
             <PackageOutputDir>$(OutputPath)..\</PackageOutputDir>

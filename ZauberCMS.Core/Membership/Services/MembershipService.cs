@@ -366,15 +366,16 @@ public class MembershipService(
         var user = await userManager.FindByIdAsync(parameters.Id.ToString());
         if (user != null)
         {
-            // Note: Audit logging would need to be implemented without mediator
             logger.LogInformation("Audit logging for user {UserName} Delete", user.Name);
-            
-            var result = await userManager.DeleteAsync(user);
-            if (!result.Succeeded)
-            {
-                handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
-                return handlerResult;
-            }
+
+            user.Deleted = true;
+            user.DateUpdated = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            // Invalidate any active sessions for the soft-deleted user.
+            await userManager.UpdateSecurityStampAsync(user);
+
+            cacheService.ClearCachedItemsWithPrefix(nameof(User));
 
             handlerResult.Entity = user;
             handlerResult.Success = true;
@@ -606,7 +607,7 @@ public class MembershipService(
         {
             await signInManager.SignOutAsync();
             var user = await userManager.FindByEmailAsync(parameters.Email);
-            if (user != null)
+            if (user != null && !user.Deleted)
             {
                 var signInResult = await signInManager.PasswordSignInAsync(user, parameters.Password, parameters.RememberMe, false);
                 loginResult.Success = signInResult.Succeeded;
@@ -649,18 +650,19 @@ public class MembershipService(
                     }
                     else
                     {
-                        loginResult.AddMessage("Password is incorrect", ResultMessageType.Error);
+                        loginResult.AddMessage("Invalid login credentials", ResultMessageType.Error);
                     }
                 }
             }
             else
             {
-                loginResult.AddMessage("You are do not have an account, please register", ResultMessageType.Error);
+                loginResult.AddMessage("Invalid login credentials", ResultMessageType.Error);
             }
         }
         catch (Exception e)
         {
-           loginResult.AddMessage(e.Message, ResultMessageType.Error);
+           logger.LogError(e, "Error during login for {Email}", parameters.Email);
+           loginResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
            loginResult.Success = false;
            return loginResult;
         }
@@ -745,7 +747,8 @@ public class MembershipService(
         }
         catch (Exception e)
         {
-            registrationResult.AddMessage(e.Message, ResultMessageType.Error);
+            logger.LogError(e, "Error during registration for {Email}", parameters.Email);
+            registrationResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
             registrationResult.Success = false;
         }
 
@@ -819,7 +822,8 @@ public class MembershipService(
         }
         catch (Exception e)
         {
-            loginResult.AddMessage(e.Message, ResultMessageType.Error);
+            logger.LogError(e, "Error during external login");
+            loginResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
             loginResult.Success = false;
         }
 
@@ -860,7 +864,8 @@ public class MembershipService(
         }
         catch (Exception e)
         {
-            confirmationResult.AddMessage(e.Message, ResultMessageType.Error);
+            logger.LogError(e, "Error confirming email for user {UserId}", parameters.UserId);
+            confirmationResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
             confirmationResult.Success = false;
         }
 
@@ -890,7 +895,7 @@ public class MembershipService(
         try
         {
             var user = await userManager.FindByEmailAsync(parameters.Email);
-            if (user != null)
+            if (user != null && !user.Deleted)
             {
                 if (userManager.Options.SignIn.RequireConfirmedAccount && !await userManager.IsEmailConfirmedAsync(user))
                 {
@@ -937,7 +942,7 @@ public class MembershipService(
             if (!parameters.Email.IsNullOrWhiteSpace())
             {
                 var user = await userManager.FindByEmailAsync(parameters.Email);
-                if (user == null)
+                if (user == null || user.Deleted)
                 {
                     resetPasswordResult.AddMessage("User not found", ResultMessageType.Error);
                     return resetPasswordResult;
@@ -964,7 +969,8 @@ public class MembershipService(
         }
         catch (Exception e)
         {
-            resetPasswordResult.AddMessage(e.Message, ResultMessageType.Error);
+            logger.LogError(e, "Error resetting password for {Email}", parameters.Email);
+            resetPasswordResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
             resetPasswordResult.Success = false;
         }
 
@@ -993,7 +999,7 @@ public class MembershipService(
             .Include(x => x.PropertyData)
             .AsNoTracking()
             .AsSplitQuery()
-            .Where(x => x.Id == parameters.Id);
+            .Where(x => x.Id == parameters.Id && !x.Deleted);
 
         return query;
     }
@@ -1011,6 +1017,11 @@ public class MembershipService(
             if (parameters.AsNoTracking)
             {
                 query = query.AsNoTracking();
+            }
+
+            if (!parameters.IncludeDeleted)
+            {
+                query = query.Where(x => !x.Deleted);
             }
 
             if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))

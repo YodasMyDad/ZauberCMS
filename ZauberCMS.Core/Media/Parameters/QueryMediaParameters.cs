@@ -19,6 +19,7 @@ public class QueryMediaParameters
     public GetMediaOrderBy OrderBy { get; set; } = GetMediaOrderBy.DateUpdatedDescending;
     public Expression<Func<Media.Models.Media, bool>>? WhereClause { get; set; }
     public Func<IQueryable<Media.Models.Media>>? Query { get; set; }
+    public bool IncludeDeleted { get; set; }
 }
 
 public enum GetMediaOrderBy

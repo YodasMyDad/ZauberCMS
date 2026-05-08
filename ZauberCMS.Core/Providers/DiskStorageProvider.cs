@@ -52,6 +52,15 @@ public class DiskStorageProvider(
                     });
                     result.Success = false;
                 }
+                else if (!await MagicBytesMatchExtension(file, fileExtension, globalSettingsRequest.MaxUploadFileSizeInBytes))
+                {
+                    result.Messages.Add(new ResultMessage
+                    {
+                        Message = "File contents do not match the file extension",
+                        MessageType = ResultMessageType.Error
+                    });
+                    result.Success = false;
+                }
             }
             else
             {
@@ -66,6 +75,60 @@ public class DiskStorageProvider(
 
         return result;
     }
+
+    // Defence in depth on top of the extension allow-list. Extensions are trivially spoofed
+    // ("evil.html" renamed to "evil.png"), so we sniff the first bytes of the upload and
+    // confirm they match the declared extension. We only reject when we have a positive
+    // mismatch — extensions without well-known signatures (.txt, .svg if re-enabled) pass
+    // through unchanged so the allow-list remains the authoritative gate for those.
+    private static async Task<bool> MagicBytesMatchExtension(IBrowserFile file, string extension, long maxBytes)
+    {
+        var expected = MagicBytesFor(extension);
+        if (expected.Count == 0)
+        {
+            return true;
+        }
+
+        var maxSignatureLength = expected.Max(s => s.Length);
+        var buffer = new byte[maxSignatureLength];
+        int read;
+        try
+        {
+            await using var stream = file.OpenReadStream(maxBytes);
+            read = await stream.ReadAtLeastAsync(buffer, maxSignatureLength, throwOnEndOfStream: false);
+        }
+        catch
+        {
+            return false;
+        }
+
+        if (read < expected.Min(s => s.Length))
+        {
+            return false;
+        }
+
+        return expected.Any(sig => sig.Length <= read && buffer.AsSpan(0, sig.Length).SequenceEqual(sig));
+    }
+
+    private static IReadOnlyList<byte[]> MagicBytesFor(string extension) => extension switch
+    {
+        ".jpg" or ".jpeg" => [[0xFF, 0xD8, 0xFF]],
+        ".png" => [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]],
+        ".gif" => [[0x47, 0x49, 0x46, 0x38, 0x37, 0x61], [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]],
+        ".webp" => [[0x52, 0x49, 0x46, 0x46]], // "RIFF" — full check would also verify "WEBP" at offset 8
+        ".ico" => [[0x00, 0x00, 0x01, 0x00]],
+        ".pdf" => [[0x25, 0x50, 0x44, 0x46]], // "%PDF"
+        ".mp4" => [
+            [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70],
+            [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
+            [0x00, 0x00, 0x00, 0x1C, 0x66, 0x74, 0x79, 0x70]
+        ],
+        ".webm" => [[0x1A, 0x45, 0xDF, 0xA3]],
+        ".mp3" => [[0x49, 0x44, 0x33], [0xFF, 0xFB], [0xFF, 0xF3], [0xFF, 0xF2]],
+        ".wav" => [[0x52, 0x49, 0x46, 0x46]], // "RIFF"
+        ".ogg" => [[0x4F, 0x67, 0x67, 0x53]],
+        _ => []
+    };
 
     /// <inheritdoc />
     public Task<bool> DeleteFile(string? url)

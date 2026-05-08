@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -286,8 +287,12 @@ public static class ZauberSetup
         // Add Zauber RTE services
         builder.Services.AddZauberRte(discoverAssemblies);
 
-        // Detailed errors have been enabled
-        if (zauberSettings.ShowDetailedErrors)
+        // Detailed errors are clamped to non-Production environments regardless of the
+        // setting — leaking exception messages / stack traces / SQL parameter values to
+        // an end-user browser is exactly the misconfiguration that turns a low-severity
+        // bug into an information-disclosure CVE. Operators who genuinely need them in
+        // Production must set ASPNETCORE_ENVIRONMENT=Development.
+        if (zauberSettings.ShowDetailedErrors && !builder.Environment.IsProduction())
         {
             builder.Services
                 .AddRazorComponents(c => c.DetailedErrors = true)

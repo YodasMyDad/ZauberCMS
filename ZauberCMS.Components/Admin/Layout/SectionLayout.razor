@@ -1,5 +1,6 @@
 ﻿@using System.Globalization
 @using Microsoft.AspNetCore.Http
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared
 @using Microsoft.Extensions.Options
@@ -69,7 +70,7 @@
                 if (!globalSettingsRequest.AllowedAdminIpAddress.Contains(usersIp))
                 {
                     // Log them out and redirect
-                    NavigationManager.NavigateTo("/api/auth/logout", true);
+                    NavigationManager.NavigateTo(Urls.ApiLogout, true);
                 }
             }
         }

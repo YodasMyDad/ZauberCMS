@@ -39,6 +39,131 @@ public class ContentService(
     private const int MaxBlockListNestingDepth = 20;
 
     private const string BlockListEditorComponentAlias = "ZauberCMS.BlockListEditor";
+
+    // Identifiers admin-grid Dynamic LINQ Filter/Order strings may reference: the data
+    // columns we allow them to filter / order by, plus a small allow-list of safe
+    // string/comparison methods Radzen generates against those columns. Every identifier
+    // in the expression is checked against this set — "PasswordHash", reflection methods
+    // ("GetType"/"GetField"), or anything else outside the set short-circuits the parse
+    // and throws before reaching System.Linq.Dynamic.Core.
+    private static readonly HashSet<string> AllowedQueryProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        nameof(Models.Content.Id),
+        nameof(Models.Content.Name),
+#pragma warning disable CS0618 // Type or member is obsolete
+        nameof(Models.Content.Url),
+#pragma warning restore CS0618 // Type or member is obsolete
+        nameof(Models.Content.Published),
+        nameof(Models.Content.SortOrder),
+        nameof(Models.Content.DateCreated),
+        nameof(Models.Content.DateUpdated),
+        nameof(Models.Content.ContentTypeId),
+        nameof(Models.Content.ParentId),
+        nameof(Models.Content.LanguageId),
+        nameof(Models.Content.LastUpdatedById),
+        nameof(Models.Content.Deleted)
+    };
+
+    private static readonly HashSet<string> AllowedQueryMethods = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Contains", "StartsWith", "EndsWith", "Equals", "ToString", "ToLower", "ToUpper",
+        "Trim", "IsNullOrEmpty", "IsNullOrWhiteSpace", "Length", "HasValue", "Value"
+    };
+
+    private static readonly HashSet<string> AllowedQueryReservedWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "and", "or", "not", "true", "false", "null",
+        "asc", "desc", "ascending", "descending",
+        "is", "as"
+    };
+
+    private static bool IsSafeDynamicExpression(string expression, IReadOnlySet<string> allowedProperties)
+    {
+        // Hard-block tokens we never want the parser to see: indexers / blocks / escapes /
+        // statement terminators / lambda arrows. These are the surfaces through which
+        // Dynamic LINQ historically exposes type-pivots and method-call escalation.
+        if (expression.IndexOfAny(['[', ']', '{', '}', '\\', ';']) >= 0)
+        {
+            return false;
+        }
+        if (expression.Contains("=>"))
+        {
+            return false;
+        }
+
+        // Tokenise. Identifiers must be in one of the three allow-lists (property,
+        // method, reserved). Operators, whitespace, parens, dots, string and numeric
+        // literals are left alone — the property/method check is what gates safety.
+        var span = expression.AsSpan();
+        var i = 0;
+        while (i < span.Length)
+        {
+            var c = span[i];
+            if (char.IsWhiteSpace(c) || "(),.=<>!&|+-*/%?:".Contains(c))
+            {
+                i++;
+                continue;
+            }
+
+            if (c == '"' || c == '\'')
+            {
+                var quote = c;
+                i++;
+                while (i < span.Length && span[i] != quote)
+                {
+                    if (span[i] == '\\' && i + 1 < span.Length)
+                    {
+                        i++;
+                    }
+                    i++;
+                }
+                if (i >= span.Length) return false;
+                i++;
+                continue;
+            }
+
+            if (char.IsDigit(c))
+            {
+                while (i < span.Length && (char.IsLetterOrDigit(span[i]) || span[i] == '.'))
+                {
+                    i++;
+                }
+                continue;
+            }
+
+            if (c == '@')
+            {
+                // Parameter reference like @0 / @paramName — bound parameters, not user input
+                i++;
+                while (i < span.Length && (char.IsLetterOrDigit(span[i]) || span[i] == '_'))
+                {
+                    i++;
+                }
+                continue;
+            }
+
+            if (char.IsLetter(c) || c == '_')
+            {
+                var start = i;
+                while (i < span.Length && (char.IsLetterOrDigit(span[i]) || span[i] == '_'))
+                {
+                    i++;
+                }
+                var token = span.Slice(start, i - start).ToString();
+                if (!allowedProperties.Contains(token) &&
+                    !AllowedQueryMethods.Contains(token) &&
+                    !AllowedQueryReservedWords.Contains(token))
+                {
+                    return false;
+                }
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
     /// <summary>
     /// Retrieves a single content item based on the provided parameters. Can optionally use cache.
     /// </summary>
@@ -1351,6 +1476,7 @@ public class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Contents.AsNoTracking()
+            .Where(x => !x.Deleted)
             .Include(x => x.Language)
 #pragma warning disable CS0618 // Type or member is obsolete
             .Select(c => new { c.Id, c.Url, c.Language })
@@ -1473,11 +1599,24 @@ public class ContentService(
 
         if (!string.IsNullOrEmpty(parameters.Filter))
         {
+            // Dynamic LINQ Filter strings are admin-only but still parsed against an
+            // allow-list of property names so a malicious admin (or a compromised
+            // session) can't pivot the data-grid Filter into raw expression injection
+            // — e.g. probing private columns, using method-call expressions, or
+            // expression-bombing the parser.
+            if (!IsSafeDynamicExpression(parameters.Filter, AllowedQueryProperties))
+            {
+                throw new ArgumentException("Filter contains disallowed property names.", nameof(parameters));
+            }
             query = query.Where(parameters.Filter);
         }
 
         if (!string.IsNullOrEmpty(parameters.Order))
         {
+            if (!IsSafeDynamicExpression(parameters.Order, AllowedQueryProperties))
+            {
+                throw new ArgumentException("Order contains disallowed property names.", nameof(parameters));
+            }
             query = query.OrderBy(parameters.Order);
         }
         else
@@ -1832,6 +1971,11 @@ public class ContentService(
             query = query.Where(x => x.Published);
         }
 
+        if (!request.IncludeDeleted)
+        {
+            query = query.Where(x => !x.Deleted);
+        }
+
         if (request.IncludeUnpublishedContent)
         {
             query = query.Include(x => x.UnpublishedContent);
@@ -1844,9 +1988,11 @@ public class ContentService(
 
         if (request.IncludeChildren)
         {
+            // Both Published and Deleted filters apply to included children — soft-deleted
+            // children must not bleed into the navigation tree under any caller.
             query = request.IncludeUnpublished
-                ? query.Include(x => x.Children)
-                : query.Include(x => x.Children.Where(c => c.Published));
+                ? query.Include(x => x.Children.Where(c => !c.Deleted))
+                : query.Include(x => x.Children.Where(c => c.Published && !c.Deleted));
             query = query.AsSplitQuery();
         }
 
@@ -2112,7 +2258,7 @@ public class ContentService(
     {
         var url = baseSlug;
 #pragma warning disable CS0618 // Type or member is obsolete
-        if (!dbContext.Contents.Any(c => c.Url == url))
+        if (!dbContext.Contents.Any(c => c.Url == url && !c.Deleted))
 #pragma warning restore CS0618 // Type or member is obsolete
         {
             return url;
@@ -2120,7 +2266,7 @@ public class ContentService(
 
         var counter = 1;
 #pragma warning disable CS0618 // Type or member is obsolete
-        while (dbContext.Contents.Any(c => c.Url == url))
+        while (dbContext.Contents.Any(c => c.Url == url && !c.Deleted))
 #pragma warning restore CS0618 // Type or member is obsolete
         {
             url = $"{baseSlug}-{counter}";

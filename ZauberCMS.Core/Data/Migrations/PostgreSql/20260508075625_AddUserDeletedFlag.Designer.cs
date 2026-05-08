@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ZauberCMS.Core.Data;
@@ -11,9 +12,11 @@ using ZauberCMS.Core.Data;
 namespace ZauberCMS.Core.Data.Migrations.PostgreSql
 {
     [DbContext(typeof(PostgreSqlZauberDbContext))]
-    partial class PostgreSqlZauberDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260508075625_AddUserDeletedFlag")]
+    partial class AddUserDeletedFlag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

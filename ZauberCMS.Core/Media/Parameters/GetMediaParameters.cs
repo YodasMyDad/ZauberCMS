@@ -11,4 +11,5 @@ public class GetMediaParameters
     public bool Cached { get; set; }
     public bool AsNoTracking { get; set; } = true;
     public MediaType? MediaType { get; set; }
+    public bool IncludeDeleted { get; set; }
 }

@@ -70,58 +70,57 @@ public static partial class StringExtensions
             return (T)(object)value;
         }
 
-        // Writing clause for bool
-        if (typeof(T) == typeof(bool))
-        {
-            if (bool.TryParse(value, out var resultBool))
-            {
-                return (T)(object)resultBool;
-            }
-
-            var fallbackBool = JsonSerializer.Deserialize<bool>(value);
-            return (T)(object)fallbackBool;
-        }
-
-        if (typeof(T) == typeof(int))
-        {
-            if (int.TryParse(value, out var resultInt))
-            {
-                return (T)(object)resultInt;
-            }
-            
-            var fallbackInt = JsonSerializer.Deserialize<int>(value);
-            return (T)(object)fallbackInt;
-        }
-
-        if (typeof(T) == typeof(decimal))
-        {
-            if (decimal.TryParse(value, out var resultDecimal))
-            {
-                return (T)(object)resultDecimal;
-            }
-
-            var fallbackDecimal = JsonSerializer.Deserialize<decimal>(value);
-            return (T)(object)fallbackDecimal;
-        }
-        
-        if (typeof(T) == typeof(Guid))
-        {
-            if (Guid.TryParse(value, out var resultGuid))
-            {
-                return (T)(object)resultGuid;
-            }
-
-            var fallbackGuid = JsonSerializer.Deserialize<Guid>(value);
-            return (T)(object)fallbackGuid;
-        }
-
         try
         {
+            // Writing clause for bool
+            if (typeof(T) == typeof(bool))
+            {
+                if (bool.TryParse(value, out var resultBool))
+                {
+                    return (T)(object)resultBool;
+                }
+
+                var fallbackBool = JsonSerializer.Deserialize<bool>(value);
+                return (T)(object)fallbackBool;
+            }
+
+            if (typeof(T) == typeof(int))
+            {
+                if (int.TryParse(value, out var resultInt))
+                {
+                    return (T)(object)resultInt;
+                }
+
+                var fallbackInt = JsonSerializer.Deserialize<int>(value);
+                return (T)(object)fallbackInt;
+            }
+
+            if (typeof(T) == typeof(decimal))
+            {
+                if (decimal.TryParse(value, out var resultDecimal))
+                {
+                    return (T)(object)resultDecimal;
+                }
+
+                var fallbackDecimal = JsonSerializer.Deserialize<decimal>(value);
+                return (T)(object)fallbackDecimal;
+            }
+
+            if (typeof(T) == typeof(Guid))
+            {
+                if (Guid.TryParse(value, out var resultGuid))
+                {
+                    return (T)(object)resultGuid;
+                }
+
+                var fallbackGuid = JsonSerializer.Deserialize<Guid>(value);
+                return (T)(object)fallbackGuid;
+            }
+
             return JsonSerializer.Deserialize<T>(value);
         }
         catch (JsonException)
         {
-            // Otherwise, return the default value of type T
             return default;
         }
     }

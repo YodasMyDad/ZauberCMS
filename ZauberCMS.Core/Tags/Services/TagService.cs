@@ -220,6 +220,8 @@ public class TagService(
 
         // Save changes and update the handler result
         await dbContext.SaveChangesAsync(cancellationToken);
+        cacheService.ClearCachedItemsWithPrefix(nameof(TagItem));
+        cacheService.ClearCachedItemsWithPrefix(nameof(Tag));
         handlerResult.Success = true;
 
         return handlerResult;

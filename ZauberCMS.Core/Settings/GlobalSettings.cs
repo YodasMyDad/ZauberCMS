@@ -8,17 +8,21 @@ public class GlobalSettings
     // Media    
     public long MaxUploadFileSizeInBytes { get; set; } = 5242880;
     public int MaxImageSizeInPixels { get; set; } = 2500;
-    public List<string> AllowedFileTypes { get; set; } = 
+    // Note: .svg is intentionally excluded from defaults. SVG files can carry inline
+    // <script> and event handlers; serving them same-origin as /admin makes them a
+    // stored-XSS vector against admins. Operators who need SVG support can opt in
+    // explicitly via GlobalSettings.AllowedFileTypes.
+    public List<string> AllowedFileTypes { get; set; } =
     [
         // Images
-        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico",
-        
+        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".ico",
+
         // Documents (safer formats)
         ".pdf", ".txt",
-        
+
         // Video
         ".mp4", ".webm",
-        
+
         // Audio
         ".mp3", ".wav", ".ogg"
     ];

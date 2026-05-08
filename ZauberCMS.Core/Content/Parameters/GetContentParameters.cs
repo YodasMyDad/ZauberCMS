@@ -13,4 +13,5 @@ public class GetContentParameters
     public bool IncludeUnpublished { get; set; }
     public bool AsNoTracking { get; set; } = true;
     public string ContentTypeAlias { get; set; } = string.Empty;
+    public bool IncludeDeleted { get; set; }
 }

@@ -743,6 +743,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");

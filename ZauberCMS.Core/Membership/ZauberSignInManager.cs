@@ -29,7 +29,16 @@ public class ZauberSignInManager(
     : SignInManager<User>(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
 {
     private readonly UserManager<User> _userManager = userManager;
-    
+
+    public override Task<bool> CanSignInAsync(User user)
+    {
+        if (user.Deleted)
+        {
+            return Task.FromResult(false);
+        }
+        return base.CanSignInAsync(user);
+    }
+
     public override async Task<SignInResult> ExternalLoginSignInAsync(string loginProvider, string providerKey,
         bool isPersistent, bool bypassTwoFactor)
     {
@@ -49,12 +58,32 @@ public class ZauberSignInManager(
             }
 
             var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                logger.LogWarning("External login {LoginProvider} did not supply an email claim; refusing to create account", loginProvider);
+                return SignInResult.Failed;
+            }
+
+            // Require the IdP to assert that the email is verified (Google/Microsoft/Facebook
+            // all surface this as the standard "email_verified" claim, OIDC compliant or
+            // OAuth-mapped). Without this check, an attacker controlling an IdP account with
+            // an unverified `email` claim could impersonate a different user — and if the
+            // email matches GlobalSettings.AdminEmailAddresses, gain Admin on first sign-in.
+            var emailVerified = info.Principal.FindFirstValue("email_verified");
+            if (!string.Equals(emailVerified, "true", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(emailVerified, bool.TrueString, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning("External login {LoginProvider} reported unverified email for {Email}; refusing to create account", loginProvider, email);
+                return SignInResult.Failed;
+            }
+
             var username = info.Principal.FindFirstValue(ClaimTypes.Name) ?? GenerateUsernameFromEmail(email);
 
             user = new User
             {
                 UserName = username,
-                Email = email
+                Email = email,
+                EmailConfirmed = true
             };
 
             var createUserResult = await _userManager.CreateAsync(user);
@@ -127,7 +156,9 @@ public class ZauberSignInManager(
 
             var username = adjectives[adjectiveIndex] + nouns[nounIndex] + number.ToString("D2");
 
-            // Optionally check for uniqueness and adjust if necessary
+            // Optionally check for uniqueness and adjust if necessary. Includes deleted
+            // users — the underlying UserName unique index does not filter on Deleted, so
+            // skipping deleted matches here would let CreateAsync hit a constraint violation.
             var attempt = 1;
             while (_userManager.Users.Any(u => u.UserName == username))
             {
