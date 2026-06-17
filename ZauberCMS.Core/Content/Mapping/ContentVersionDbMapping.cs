@@ -46,17 +46,5 @@ public class ContentVersionDbMapping : IEntityTypeConfiguration<ContentVersion>
             .WithMany()
             .HasForeignKey(d => d.ParentVersionId)
             .OnDelete(DeleteBehavior.NoAction);
-
-        // Ensure only one current published version per content
-        builder.HasIndex(x => x.ContentId)
-            .HasFilter("[IsCurrentPublished] = 1")
-            .HasDatabaseName("IX_ContentVersion_UniqueCurrentPublished")
-            .IsUnique();
-
-        // Ensure only one latest draft per content
-        builder.HasIndex(x => x.ContentId)
-            .HasFilter("[IsLatestDraft] = 1")
-            .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
-            .IsUnique();
     }
 }

@@ -364,7 +364,7 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                     b.HasIndex("ContentId")
                         .IsUnique()
                         .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
-                        .HasFilter("[IsLatestDraft] = 1");
+                        .HasFilter("\"IsLatestDraft\" = true");
 
                     b.HasIndex("CreatedById");
 

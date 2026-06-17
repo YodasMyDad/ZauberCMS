@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using ZauberCMS.Core.Content.Models;
@@ -12,12 +11,9 @@ using ZauberCMS.Core.Tags.Models;
 
 namespace ZauberCMS.Core.Data
 {
-    public abstract class ZauberDbContextBase(DbContextOptions options, IConfiguration configuration)
+    public abstract class ZauberDbContextBase(DbContextOptions options)
         : IdentityDbContext<User, Role, Guid, UserClaim, UserRole, UserLogin, RoleClaim, UserToken>(options)
     {
-        // ReSharper disable once UnusedMember.Local
-        private readonly IConfiguration _configuration = configuration;
-        
         // All DbSets
         public DbSet<ContentType> ContentTypes => Set<ContentType>();
         public DbSet<Content.Models.Content> Contents => Set<Content.Models.Content>();
