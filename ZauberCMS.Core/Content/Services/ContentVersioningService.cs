@@ -58,18 +58,6 @@ public class ContentVersioningService(
             .Where(v => v.ContentId == content.Id)
             .MaxAsync(v => (int?)v.VersionNumber, cancellationToken) ?? 0;
 
-        // Clear existing flags if this is a new published version
-        if (parameters.Status == ContentVersionStatus.Published)
-        {
-            await ClearCurrentPublishedFlagAsync(dbContext, content.Id, cancellationToken);
-        }
-
-        // Clear existing latest draft flag if this is a new draft
-        if (parameters.Status == ContentVersionStatus.Draft)
-        {
-            await ClearLatestDraftFlagAsync(dbContext, content.Id, cancellationToken);
-        }
-
         // A draft version records the draft: its name and values are in the stored draft, while the live row
         // still has the published ones (ZA-074). Where the page sits in the tree comes from the live row.
         var snapshotSource = content;
@@ -126,7 +114,27 @@ public class ContentVersioningService(
         // The version records the content as it is; it is not written back to it (that only touched DateUpdated,
         // the concurrency token, so the next save of the copy the editor holds was refused)
 
-        var result = await dbContext.SaveChangesAndLog(version, handlerResult, cacheService, extensionManager, cancellationToken);
+        // A page has one current published version and one latest draft (unique indexes). The old flag is switched
+        // off in the database first, in the same transaction: in one save the order of the two writes is not fixed.
+        HandlerResult<ContentVersion> result;
+        await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
+        {
+            if (version.IsCurrentPublished)
+            {
+                await ClearCurrentPublishedFlagAsync(dbContext, content.Id, null, cancellationToken);
+            }
+
+            if (version.IsLatestDraft)
+            {
+                await ClearLatestDraftFlagAsync(dbContext, content.Id, cancellationToken);
+            }
+
+            result = await dbContext.SaveChangesAndLog(version, handlerResult, cacheService, extensionManager, cancellationToken);
+            if (result.Success)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+        }
 
         // Invalidate content cache. Cache keys are formatted "{TypeName}-{hash}" (see
         // CacheExtensions.ToCacheKey), so the prefix must use a hyphen and the entity name —
@@ -168,8 +176,7 @@ public class ContentVersioningService(
 
         if (content.Published)
         {
-            // The restored values are what is live now
-            await ClearCurrentPublishedFlagAsync(dbContext, content.Id, cancellationToken);
+            // The restored values are what is live now (the old flag is cleared in the save's transaction below)
             version.Status = ContentVersionStatus.Published;
             version.IsCurrentPublished = true;
             version.DatePublished = DateTime.UtcNow;
@@ -213,6 +220,11 @@ public class ContentVersioningService(
         {
             try
             {
+                if (version.IsCurrentPublished)
+                {
+                    await ClearCurrentPublishedFlagAsync(dbContext, content.Id, version.Id, cancellationToken);
+                }
+
                 contentResult = await dbContext.SaveChangesAndLog(content, contentResult, cacheService,
                     extensionManager, cancellationToken);
                 if (contentResult.Success)
@@ -396,27 +408,18 @@ public class ContentVersioningService(
 
     #region Private Methods
 
-    private async Task ClearCurrentPublishedFlagAsync(IZauberDbContext dbContext, Guid contentId, CancellationToken cancellationToken)
-    {
-        var currentPublished = await dbContext.ContentVersions
-            .FirstOrDefaultAsync(v => v.ContentId == contentId && v.IsCurrentPublished, cancellationToken);
+    // Run straight against the database (inside the caller's transaction), before the new flag is saved
+    private static Task ClearCurrentPublishedFlagAsync(IZauberDbContext dbContext, Guid contentId, Guid? keepVersionId,
+        CancellationToken cancellationToken) =>
+        dbContext.ContentVersions
+            .Where(v => v.ContentId == contentId && v.IsCurrentPublished && v.Id != keepVersionId)
+            .ExecuteUpdateAsync(s => s.SetProperty(v => v.IsCurrentPublished, false), cancellationToken);
 
-        if (currentPublished != null)
-        {
-            currentPublished.IsCurrentPublished = false;
-        }
-    }
-
-    private async Task ClearLatestDraftFlagAsync(IZauberDbContext dbContext, Guid contentId, CancellationToken cancellationToken)
-    {
-        var latestDraft = await dbContext.ContentVersions
-            .FirstOrDefaultAsync(v => v.ContentId == contentId && v.IsLatestDraft, cancellationToken);
-
-        if (latestDraft != null)
-        {
-            latestDraft.IsLatestDraft = false;
-        }
-    }
+    private static Task ClearLatestDraftFlagAsync(IZauberDbContext dbContext, Guid contentId,
+        CancellationToken cancellationToken) =>
+        dbContext.ContentVersions
+            .Where(v => v.ContentId == contentId && v.IsLatestDraft)
+            .ExecuteUpdateAsync(s => s.SetProperty(v => v.IsLatestDraft, false), cancellationToken);
 
     // Mutates entities tracked by the supplied dbContext so the caller's save persists them.
     // Only what an editor edits comes back: name, navigation settings and property values. Tree position

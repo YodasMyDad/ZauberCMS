@@ -18,6 +18,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!-- Tests wait on internal readiness signals (the Redis cache invalidation subscription) -->
+        <InternalsVisibleTo Include="ZauberCMS.Core.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
     
         <PackageReference Include="FluentValidation" Version="12.2.0" />
         <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />

@@ -11,9 +11,12 @@ namespace ZauberCMS.Core.Tests.Membership;
 /// <summary>Deleting a user is a soft delete that must really be stored (ZA-045, ZA-088).</summary>
 public class DeleteUserTests : IAsyncLifetime
 {
+    /// <summary>Overridden by the PostgreSQL copy of this class at the end of the file.</summary>
+    protected virtual string DatabaseProvider => TestSite.SqliteProvider;
+
     private TestSite _site = null!;
 
-    public async ValueTask InitializeAsync() => _site = await TestSite.CreateAsync();
+    public async ValueTask InitializeAsync() => _site = await TestSite.CreateAsync(databaseProvider: DatabaseProvider);
 
     public async ValueTask DisposeAsync() => await _site.DisposeAsync();
 
@@ -75,4 +78,10 @@ public class DeleteUserTests : IAsyncLifetime
     private Task<string?> StampAsync(Guid userId) =>
         _site.QueryDatabaseAsync(db =>
             db.Users.AsNoTracking().Where(x => x.Id == userId).Select(x => x.SecurityStamp).SingleAsync());
+}
+
+/// <summary>The same tests on a real PostgreSQL (Roadmap D15); skipped without Docker.</summary>
+public class DeleteUserTestsOnPostgreSql : DeleteUserTests
+{
+    protected override string DatabaseProvider => TestSite.PostgreSqlProvider;
 }

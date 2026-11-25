@@ -18,12 +18,15 @@ namespace ZauberCMS.Core.Tests.Content;
 /// </summary>
 public class ContentIntegrityTests : IAsyncLifetime
 {
+    /// <summary>Overridden by the PostgreSQL copy of this class at the end of the file.</summary>
+    protected virtual string DatabaseProvider => TestSite.SqliteProvider;
+
     private TestSite _site = null!;
     private ContentType _pageType = null!;
 
     public async ValueTask InitializeAsync()
     {
-        _site = await TestSite.CreateAsync();
+        _site = await TestSite.CreateAsync(databaseProvider: DatabaseProvider);
         _pageType = await _site.CreateContentTypeAsync("page");
     }
 
@@ -597,4 +600,10 @@ public class ContentIntegrityTests : IAsyncLifetime
             await db.SaveChangesAsync(Ct);
             return language.Id;
         });
+}
+
+/// <summary>The same tests on a real PostgreSQL (Roadmap D15); skipped without Docker.</summary>
+public class ContentIntegrityTestsOnPostgreSql : ContentIntegrityTests
+{
+    protected override string DatabaseProvider => TestSite.PostgreSqlProvider;
 }

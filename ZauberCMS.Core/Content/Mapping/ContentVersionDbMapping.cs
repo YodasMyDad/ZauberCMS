@@ -7,6 +7,9 @@ namespace ZauberCMS.Core.Content.Mapping;
 
 public class ContentVersionDbMapping : IEntityTypeConfiguration<ContentVersion>
 {
+    public const string UniqueCurrentPublishedIndex = "IX_ContentVersion_UniqueCurrentPublished";
+    public const string UniqueLatestDraftIndex = "IX_ContentVersion_UniqueLatestDraft";
+
     public void Configure(EntityTypeBuilder<ContentVersion> builder)
     {
         builder.ToTable("ZauberContentVersions");
@@ -28,8 +31,8 @@ public class ContentVersionDbMapping : IEntityTypeConfiguration<ContentVersion>
         builder.Property(e => e.BlockListSnapshots).ToJsonConversion(null); // Unlimited for block list data
         builder.Property(e => e.Tags).ToJsonConversion(2000);
 
-        // Indexes for performance
-        builder.HasIndex(x => x.ContentId).HasDatabaseName("IX_ContentVersion_ContentId");
+        // Indexes for performance. Every ContentId index is named: unnamed HasIndex calls on the same column
+        // collapse into one index (ZA-050). The composite indexes below already cover lookups by ContentId alone.
         builder.HasIndex(x => new { x.ContentId, x.VersionNumber }).HasDatabaseName("IX_ContentVersion_ContentId_Version");
         builder.HasIndex(x => new { x.ContentId, x.Status }).HasDatabaseName("IX_ContentVersion_ContentId_Status");
         builder.HasIndex(x => new { x.ContentId, x.IsCurrentPublished }).HasDatabaseName("IX_ContentVersion_CurrentPublished");
@@ -47,16 +50,14 @@ public class ContentVersionDbMapping : IEntityTypeConfiguration<ContentVersion>
             .HasForeignKey(d => d.ParentVersionId)
             .OnDelete(DeleteBehavior.NoAction);
 
-        // Ensure only one current published version per content
-        builder.HasIndex(x => x.ContentId)
+        // Ensure only one current published version and one latest draft per content. The filter is raw SQL in
+        // SQL Server/SQLite syntax; ZauberDbContextBase replaces it for PostgreSQL.
+        builder.HasIndex(x => x.ContentId, UniqueCurrentPublishedIndex)
             .HasFilter("[IsCurrentPublished] = 1")
-            .HasDatabaseName("IX_ContentVersion_UniqueCurrentPublished")
             .IsUnique();
 
-        // Ensure only one latest draft per content
-        builder.HasIndex(x => x.ContentId)
+        builder.HasIndex(x => x.ContentId, UniqueLatestDraftIndex)
             .HasFilter("[IsLatestDraft] = 1")
-            .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
             .IsUnique();
     }
 }

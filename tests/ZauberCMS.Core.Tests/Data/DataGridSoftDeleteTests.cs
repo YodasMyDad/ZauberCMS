@@ -17,9 +17,12 @@ namespace ZauberCMS.Core.Tests.Data;
 /// </summary>
 public class DataGridSoftDeleteTests : IAsyncLifetime
 {
+    /// <summary>Overridden by the PostgreSQL copy of this class at the end of the file.</summary>
+    protected virtual string DatabaseProvider => TestSite.SqliteProvider;
+
     private TestSite _site = null!;
 
-    public async ValueTask InitializeAsync() => _site = await TestSite.CreateAsync();
+    public async ValueTask InitializeAsync() => _site = await TestSite.CreateAsync(databaseProvider: DatabaseProvider);
 
     public async ValueTask DisposeAsync() => await _site.DisposeAsync();
 
@@ -83,4 +86,10 @@ public class DataGridSoftDeleteTests : IAsyncLifetime
         return await scope.ServiceProvider.GetRequiredService<IDataService>()
             .GetDataGridAsync(parameters, TestContext.Current.CancellationToken);
     }
+}
+
+/// <summary>The same tests on a real PostgreSQL (Roadmap D15); skipped without Docker.</summary>
+public class DataGridSoftDeleteTestsOnPostgreSql : DataGridSoftDeleteTests
+{
+    protected override string DatabaseProvider => TestSite.PostgreSqlProvider;
 }

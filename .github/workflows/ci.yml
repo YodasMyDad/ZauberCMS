@@ -1,8 +1,10 @@
 name: CI
 
+# Build and test on every push (any branch) and on pull requests to main-static. Publishing to nuget.org only
+# happens for a push to main-static (see the publish-nuget job's condition).
 on:
   push:
-    branches: [main-static]
+    branches: ['**']
   pull_request:
     branches: [main-static]
 
@@ -25,6 +27,8 @@ jobs:
       - name: Build solution
         run: dotnet build ZauberCMS.sln -c Release --no-restore
 
+      # The PostgreSQL and Redis tests start Docker containers (Testcontainers; Docker is on the runner). CI is
+      # set by GitHub, so a container that can't start fails the run instead of skipping those tests.
       - name: Run tests
         run: dotnet test --solution ZauberCMS.sln -c Release --no-build
 

@@ -13,6 +13,9 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
    page), so `/About-Us/` finds `about-us` on every database. Only pages that are published, not in the recycle
    bin and not blocks are served — also as a domain root or an internal-redirect target — and the `Children` it
    loads follow the same rule. Blocks have no URL.
+   `CultureMiddleware` looks content up only when the matched endpoint is the content catch-all (a route that is just
+   `{**slug}`, see `CultureMiddleware.IsContentEndpoint`). A site's own pages and endpoints, `/_blazor` and 404s are
+   not looked up as the root page and run in the default request culture.
 3. Role-restricted content (`ContentRoles`) redirects to `Zauber:Identity:DefaultLoginRedirectUrl` unless the user has
    a role (admins always pass).
 4. The view is looked up by `Content.ViewComponent` == **view type `FullName`** (namespace + class) among
@@ -81,6 +84,7 @@ Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the reques
 ## Interactivity
 
 Opt in per component: `@rendermode InteractiveServer` on the child (e.g. `ZauberCMS.Web/Custom/ContactForm.razor`).
+The component runs in the language of the page it is on (`ContentCultureCircuitHandler`), like the page itself.
 SSR forms use `EditForm` + `FormName` + `[SupplyParameterFromForm]`. Never Radzen on the front-end.
 
 ## Discovery of site code

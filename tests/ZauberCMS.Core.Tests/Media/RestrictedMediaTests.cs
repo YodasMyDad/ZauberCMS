@@ -15,9 +15,12 @@ namespace ZauberCMS.Core.Tests.Media;
 /// </summary>
 public class RestrictedMediaTests : IAsyncLifetime
 {
+    /// <summary>Overridden by the PostgreSQL copy of this class at the end of the file.</summary>
+    protected virtual string DatabaseProvider => TestSite.SqliteProvider;
+
     private TestSite _site = null!;
 
-    public async ValueTask InitializeAsync() => _site = await TestSite.CreateAsync();
+    public async ValueTask InitializeAsync() => _site = await TestSite.CreateAsync(databaseProvider: DatabaseProvider);
 
     public async ValueTask DisposeAsync() => await _site.DisposeAsync();
 
@@ -101,4 +104,10 @@ public class RestrictedMediaTests : IAsyncLifetime
         await middleware.InvokeAsync(context);
         return (context.Response.StatusCode, passedOn);
     }
+}
+
+/// <summary>The same tests on a real PostgreSQL (Roadmap D15); skipped without Docker.</summary>
+public class RestrictedMediaTestsOnPostgreSql : RestrictedMediaTests
+{
+    protected override string DatabaseProvider => TestSite.PostgreSqlProvider;
 }

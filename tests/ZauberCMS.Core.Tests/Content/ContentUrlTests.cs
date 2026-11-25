@@ -53,4 +53,21 @@ public class ContentUrlTests
     [Fact]
     public void Content_without_a_url_never_rewrites_the_link() =>
         Assert.Null(ContentUrl.UpdatedHref("/blog", null));
+
+    [Fact]
+    public void ZA017_A_slug_is_the_same_whatever_culture_the_request_runs_in()
+    {
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            // Front-end requests run in their content's language; in Turkish "I".ToLower() is a dotless "ı"
+            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("tr-TR");
+
+            Assert.Equal("indigo", new ZauberCMS.Core.Extensions.SlugHelper().GenerateSlug("Indigo"));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = culture;
+        }
+    }
 }

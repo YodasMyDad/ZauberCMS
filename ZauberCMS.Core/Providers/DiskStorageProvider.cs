@@ -41,7 +41,7 @@ public class DiskStorageProvider(
         else
         {
             // Check allowed filetypes
-            var fileExtension = Path.GetExtension(file.Name).ToLower();
+            var fileExtension = Path.GetExtension(file.Name).ToLowerInvariant();
             if (globalSettingsRequest.AllowedFileTypes.Contains(fileExtension))
             {
                 if (file.Size > globalSettingsRequest.MaxUploadFileSizeInBytes)

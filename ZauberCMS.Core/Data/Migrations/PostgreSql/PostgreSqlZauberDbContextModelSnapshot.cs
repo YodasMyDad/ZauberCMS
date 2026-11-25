@@ -17,7 +17,7 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -361,11 +361,6 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContentId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
-                        .HasFilter("[IsLatestDraft] = 1");
-
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("DateCreated")
@@ -384,6 +379,14 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
 
                     b.HasIndex("ContentId", "VersionNumber")
                         .HasDatabaseName("IX_ContentVersion_ContentId_Version");
+
+                    b.HasIndex(new[] { "ContentId" }, "IX_ContentVersion_UniqueCurrentPublished")
+                        .IsUnique()
+                        .HasFilter("\"IsCurrentPublished\"");
+
+                    b.HasIndex(new[] { "ContentId" }, "IX_ContentVersion_UniqueLatestDraft")
+                        .IsUnique()
+                        .HasFilter("\"IsLatestDraft\"");
 
                     b.ToTable("ZauberContentVersions", (string)null);
                 });

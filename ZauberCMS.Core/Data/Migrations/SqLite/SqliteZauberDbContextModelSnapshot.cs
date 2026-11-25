@@ -15,7 +15,7 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.7");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.15");
 
             modelBuilder.Entity("ZauberCMS.Core.Audit.Models.Audit", b =>
                 {
@@ -356,11 +356,6 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContentId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_ContentVersion_UniqueLatestDraft")
-                        .HasFilter("[IsLatestDraft] = 1");
-
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("DateCreated")
@@ -379,6 +374,14 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
 
                     b.HasIndex("ContentId", "VersionNumber")
                         .HasDatabaseName("IX_ContentVersion_ContentId_Version");
+
+                    b.HasIndex(new[] { "ContentId" }, "IX_ContentVersion_UniqueCurrentPublished")
+                        .IsUnique()
+                        .HasFilter("[IsCurrentPublished] = 1");
+
+                    b.HasIndex(new[] { "ContentId" }, "IX_ContentVersion_UniqueLatestDraft")
+                        .IsUnique()
+                        .HasFilter("[IsLatestDraft] = 1");
 
                     b.ToTable("ZauberContentVersions", (string)null);
                 });

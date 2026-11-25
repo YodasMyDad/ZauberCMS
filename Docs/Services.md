@@ -47,12 +47,35 @@ from `IZauberDbContext` (see Standards → known deviations): don't expect one `
 
 ```text
 BuildQuery(parameters, dbContext)          // AsNoTracking, !Deleted / IncludeDeleted, filters, includes
-  → var key = query.GenerateCacheKey<T>()  // "TypeName-" + SHA256(ToQueryString()); append page for paged queries
+  → var key = query.GenerateCacheKey<T>()  // "TypeName-" + SHA256(SQL + Include calls); append page for paged queries
   → parameters.Cached ? cacheService.GetSetCachedItemAsync(key, factory) : factory()
 ```
 
 Reference: `ContentService.BuildQuery` / `QueryContentAsync`. Default cache TTL 240 min (`Extensions/CacheExtensions.cs`).
 Cached results must be no-tracking and must not depend on user/culture unless that is part of the key.
+
+## Cache (Roadmap D13)
+
+- `ICacheService` → `DefaultCacheService` (scoped) over `ServerCache` (singleton): values stay in this server's
+  `IMemoryCache` as the objects that were loaded — never serialised — so navigations and role lists stay as loaded.
+- Query keys hash the SQL **and** the query's `Include`/`ThenInclude`/`AsSplitQuery` calls (`ToQueryString` shows
+  only the first statement of a split query). Build keys with `GenerateCacheKey`, not by hand.
+- Prefix clears use an index of the keys this server cached (removed again on eviction). A value loaded while any
+  clear ran is returned but not kept, so a save during a slow read can't leave the old value cached.
+- Several servers: set `Zauber:RedisConnectionString`. Redis carries **only invalidations**
+  (`ICacheInvalidationBus` → `RedisCacheInvalidationBus`): each clear increments
+  `zauber:<ApplicationName>:cache:counter` and publishes on `zauber:<ApplicationName>:cache` in one script. A server
+  that sees a gap in the counter, is behind it on two checks 30 s apart, sees it go backwards (Redis lost it), or
+  (re)connects to Redis drops everything it cached; clears that could not be sent go out as one "clear all" once
+  Redis is reachable. Nothing cached is
+  stored in Redis. Sites that share one Redis should have different application names (otherwise they clear each
+  other's caches: harmless, just wasted work).
+- Another backplane: register your own `ICacheInvalidationBus` singleton after `AddZauberCms` (the last registration
+  wins). Apply the clears it receives with `ServerCache.Remove` / `RemoveWithPrefix` / `RemoveAll`, which don't
+  publish — going through `ICacheService` would send them round again.
+- Writes inside a transaction: `SaveChangesAndLog` clears before the commit, so clear the prefix again after
+  `CommitAsync` (a read in between may have cached the old rows) — see `ContentService` save, recycle and purge.
+- `IDistributedCache` is still Redis when configured, for site code; ZauberCMS itself does not use it.
 
 ## Write path
 

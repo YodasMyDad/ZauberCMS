@@ -15,12 +15,15 @@ namespace ZauberCMS.Core.Tests.Content;
 /// </summary>
 public class ContentSoftDeleteTests : IAsyncLifetime
 {
+    /// <summary>Overridden by the PostgreSQL copy of this class at the end of the file.</summary>
+    protected virtual string DatabaseProvider => TestSite.SqliteProvider;
+
     private TestSite _site = null!;
     private ContentType _pageType = null!;
 
     public async ValueTask InitializeAsync()
     {
-        _site = await TestSite.CreateAsync();
+        _site = await TestSite.CreateAsync(databaseProvider: DatabaseProvider);
         _pageType = await _site.CreateContentTypeAsync("page");
     }
 
@@ -160,4 +163,10 @@ public class ContentSoftDeleteTests : IAsyncLifetime
         var page = await scope.ServiceProvider.GetRequiredService<IContentService>().QueryContentAsync(parameters);
         return page.Items.ToList();
     }
+}
+
+/// <summary>The same tests on a real PostgreSQL (Roadmap D15); skipped without Docker.</summary>
+public class ContentSoftDeleteTestsOnPostgreSql : ContentSoftDeleteTests
+{
+    protected override string DatabaseProvider => TestSite.PostgreSqlProvider;
 }

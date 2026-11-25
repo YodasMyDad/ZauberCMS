@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,7 +25,7 @@ public class CultureMiddleware(
         try
         {
             // Only process if this looks like a CMS route (not admin, not static files, etc.)
-            var path = context.Request.Path.Value?.ToLower() ?? string.Empty;
+            var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
 
             // The admin has its own language, whatever the browser asks for and whatever the content is in
             if (AdminAccess.IsAdminPath(context.Request.Path))
@@ -34,11 +35,13 @@ public class CultureMiddleware(
                     new RequestCultureFeature(new RequestCulture(adminCulture, adminCulture), null));
             }
             
-            // Skip admin routes, API routes, static files
-            if (path.StartsWith("/admin") || 
-                path.StartsWith("/api") || 
+            // Only requests for the content catch-all page are content. Anything else (/_blazor, a site's own
+            // endpoints, files) used to be looked up as the root page and got its language (ZA-143).
+            if (path.StartsWith("/admin") ||
+                path.StartsWith("/api") ||
                 path.StartsWith("/account") ||
-                path.Contains("."))
+                path.Contains('.') ||
+                !IsContentEndpoint(context.GetEndpoint()))
             {
                 await next(context);
                 return;
@@ -89,6 +92,15 @@ public class CultureMiddleware(
         await next(context);
     }
     
+    /// <summary>
+    /// True for the front-end catch-all page (<c>@page "/{**slug}"</c> in ZauberCMS.Routing, or a site's own
+    /// replacement with the same route): a route that is nothing but a catch-all <c>slug</c> parameter.
+    /// </summary>
+    public static bool IsContentEndpoint(Endpoint? endpoint) =>
+        endpoint is RouteEndpoint { RoutePattern: var pattern } &&
+        pattern.PathSegments.Count == 1 &&
+        pattern.Parameters is [{ Name: "slug", IsCatchAll: true }];
+
     /// <summary>
     /// Helper method to retrieve the cached EntryModel from HttpContext.
     /// 

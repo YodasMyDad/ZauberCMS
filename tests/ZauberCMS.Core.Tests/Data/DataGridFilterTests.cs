@@ -13,11 +13,14 @@ namespace ZauberCMS.Core.Tests.Data;
 /// </summary>
 public class DataGridFilterTests : IAsyncLifetime
 {
+    /// <summary>Overridden by the PostgreSQL copy of this class at the end of the file.</summary>
+    protected virtual string DatabaseProvider => TestSite.SqliteProvider;
+
     private TestSite _site = null!;
 
     public async ValueTask InitializeAsync()
     {
-        _site = await TestSite.CreateAsync();
+        _site = await TestSite.CreateAsync(databaseProvider: DatabaseProvider);
         await _site.CreateUserAsync("stayer");
         await _site.CreateUserAsync("leaver");
     }
@@ -98,4 +101,10 @@ public class DataGridFilterTests : IAsyncLifetime
         return await scope.ServiceProvider.GetRequiredService<IDataService>()
             .GetDataGridAsync(parameters, TestContext.Current.CancellationToken);
     }
+}
+
+/// <summary>The same tests on a real PostgreSQL (Roadmap D15); skipped without Docker.</summary>
+public class DataGridFilterTestsOnPostgreSql : DataGridFilterTests
+{
+    protected override string DatabaseProvider => TestSite.PostgreSqlProvider;
 }

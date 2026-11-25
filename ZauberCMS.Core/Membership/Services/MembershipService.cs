@@ -581,7 +581,8 @@ public class MembershipService(
 
             if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
             {
-                var searchTermLower = parameters.SearchTerm.ToLower();
+                // Lowered without the server's culture (ZA-017); LOWER() in SQL on the column
+                var searchTermLower = parameters.SearchTerm.ToLowerInvariant();
                 query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(searchTermLower));
             }
 
@@ -1075,7 +1076,8 @@ public class MembershipService(
 
             if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
             {
-                var searchTermLower = parameters.SearchTerm.ToLower();
+                // Lowered without the server's culture (ZA-017); LOWER() in SQL on the column
+                var searchTermLower = parameters.SearchTerm.ToLowerInvariant();
                 query = query.Where(x => x.UserName != null && x.UserName.ToLower().Contains(searchTermLower));
             }
 

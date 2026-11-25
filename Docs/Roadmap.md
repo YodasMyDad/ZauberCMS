@@ -11,10 +11,10 @@
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
-  **Phase 5 done** (content integrity).
-  **102 open findings** (0 Critical, 14 High, 48 Medium, 40 Low). **Next: Phase 6.**
-- Findings come from reading code + a real build/package scan. Nothing was run in a browser or against
-  PostgreSQL/Redis — items marked "needs repro" must be reproduced before or while fixing.
+  **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis).
+  **95 open findings** (0 Critical, 10 High, 45 Medium, 40 Low). **Next: Phase 7.**
+- Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
+  or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
 
 ## Owner decisions (2026-11-25)
@@ -38,7 +38,7 @@
 | D15 | **Tests run against real PostgreSQL and Redis containers locally and in CI** on every push; skipped with a clear message when Docker isn't available. SQL Server stays on SQLite-level coverage for now. (2026-11-25) | Phase 6 |
 | D16 | **ZA-143 goes at the end of Phase 6**, after the PostgreSQL/Redis work, both halves together. (2026-11-25) | ZA-143 |
 | D17 | **No hotfix for ZA-044.** The fix ships with the v5 release when the owner is ready; 4.1.3 stays as published until then. (2026-11-25) | ZA-044 |
-| D18 | **A v5 major is acceptable, together with .NET 11** (Phases 11 + 12 in one release). The rework ships as 4.x minors with `[Obsolete]` shims; v5 removes them. (2026-11-25) | Phase 11, 12 |
+| D18 | **The whole rework ships as one v5 major, together with .NET 11; there are no 4.x releases before it** (owner, 2026-11-25, replacing "4.x minors with shims"). A breaking change is allowed when it buys something, and each one is listed in that phase's release notes so the v5 upgrade notes can be built from them. Keep the `[Obsolete]` path where it costs little. | Phase 11, 12 |
 | D19 | **Installer works like Umbraco's (large scope):** database (SQLite / SQL Server / PostgreSQL, connection test) → admin account → site name and default language → optional starter content → summary. It writes `Zauber:DatabaseProvider` / `ConnectionString` into `appsettings.json` and restarts. No unattended install. (2026-11-25) | ZA-004, Phase 7 |
 | D20 | **The installer is open to the first visitor while the site is not installed** (as in Umbraco and WordPress), no setup code. Install the site before making it public; say so in the docs. (2026-11-25) | ZA-004 |
 | D21 | **"Installed" is a flag stored in the database**, set by the installer. On upgrade, a site with any user is marked installed automatically. The installer never reopens, even with no admin left; recovery is a documented config key that promotes one existing user on the next start. (2026-11-25) | ZA-004 |
@@ -55,7 +55,9 @@
 3. After fixing, update `.audit/report.md` (move the finding to "Fixed", keep the ID) and any doc the change makes
    stale. Re-run `/audit changed` at the end of each phase.
 4. Schema changes: three migrations via `migrations.ps1` — and from Phase 6 on, verify on PostgreSQL too.
-5. Public API: obsolete, don't break, until the v5 phase (Phase 11) where breaks are batched deliberately.
+5. Public API (D18): everything ships as v5. Prefer additive changes and `[Obsolete]` where cheap; a break is allowed
+   when it buys something, and goes in the phase's release notes ("Breaking:"). The big deliberate batch stays in
+   Phase 11.
 6. Add a regression test with each fix. Where a skipped test is already waiting for the finding
    (`Skip = "ZA-NNN (open)…"`), remove the skip in the same change.
 
@@ -203,16 +205,46 @@
 - Left as it was: with `EnablePathUrls`, a moved page keeps its URL (URLs are built only on create). ZA-143 says
   "Phase 5" in the report but was never in this phase's list; it is still open.
 
-### Phase 6 — PostgreSQL & Redis made real (D1, D13–D16)
-- Test infrastructure first (D15): PostgreSQL and Redis containers for the test suite locally and as CI services;
-  skipped with a clear message without Docker. Run the app on each.
-- PostgreSQL: ZA-050 (per D14: repro, correct `Initial`, new index migration ×3), ZA-007 (unquoted raw SQL),
-  ZA-017 (`ToLower` search), ZA-122 (design-time factory file case).
-- Redis (D13): redesign `DefaultCacheService` as memory cache for entity graphs + Redis pub/sub and version counter
-  for multi-node prefix invalidation. Fixes ZA-051 (restricted pages and password hashes through Redis), ZA-014 +
-  ZA-055 (key registry unbounded, lost on restart, race), ZA-072 (cache key ignores includes).
-- Then ZA-143 (D16): resolve content only for the content catch-all route, and give a front-end circuit the
-  language of its page, together.
+### Phase 6 — PostgreSQL & Redis made real — DONE 2026-11-25
+- Fixed: ZA-050 (PostgreSQL install failed; unique version indexes missing everywhere), ZA-007 (raw SQL on
+  PostgreSQL), ZA-017 (search under a Turkish server culture), ZA-122 (design-time factory file name), ZA-051,
+  ZA-014, ZA-055, ZA-072 (cache redesign, D13) and ZA-143 (non-page requests looked up as the home page; front-end
+  circuits in the root's language). Details: "Fixed" section of the audit report.
+  `/audit changed` (two independent reviewers) found 14 more problems in the change: 12 fixed (cache index races,
+  Redis resync and counter reset, failed publishes, PostgreSQL test connections, the upgrade keeping the wrong
+  version, the remaining culture-dependent `ToLower` calls, path base, filtered-include keys, clears after commit),
+  two logged as ZA-146 and ZA-147 (Low).
+- Test infrastructure (D15): Testcontainers PostgreSQL + Redis, shared by the run; the content, data-grid, media,
+  user-delete and provider-query test classes also run on PostgreSQL; Redis tests use two sites as two servers.
+  CI builds and tests on every push; on CI the container tests fail instead of skipping. Build 0 warnings; 428
+  tests (425 pass, 3 skipped as before).
+- ZA-050 reproduced first: an empty PostgreSQL database failed `Initial` with `42601: syntax error at or near "["`.
+  Per D14 the PostgreSQL `Initial` migration was corrected (index filter only), and migration
+  `ContentVersionIndexes` (all three providers) adds the unique "current published version" index after keeping only
+  the newest flagged version per page.
+- App run on PostgreSQL + Redis (containers): migrations applied, registration, admin, a settings save published an
+  invalidation through Redis; no errors in the log.
+- Schema: one migration, `ContentVersionIndexes`. Public API:
+  - Added: `ServerCache` (its `Remove*` methods apply a clear without publishing, for a custom bus),
+    `ICacheInvalidationBus` (replaceable backplane), `CultureMiddleware.IsContentEndpoint`,
+    `ContentVersionDbMapping.UniqueCurrentPublishedIndex` / `UniqueLatestDraftIndex`.
+  - Breaking (D18): `DefaultCacheService`'s constructor is now `(ServerCache, ICacheInvalidationBus)`. Only code that
+    creates or subclasses it is affected; resolving `ICacheService` is unchanged.
+- Behaviour changes for the release notes:
+  - PostgreSQL installs work. Upgrading removes duplicate "current published" flags on old versions (the newest
+    stays) and adds a unique index for it.
+  - With `RedisConnectionString`, cached data stays in each server's memory and Redis only carries the clears; nothing
+    cached (users, password hashes, pages) is written to Redis any more. Sites sharing one Redis server should use
+    different application names.
+  - Content search and the admin user search ignore case whatever the server's culture; slugs and file extensions
+    are lowered the same way in every culture (a Turkish page named "Indigo" gets `indigo`, not `ındigo`).
+  - Requests that are not pages (`/_blazor`, a site's own endpoints, 404s) are no longer looked up as the home page.
+    Interactive components on a front-end page run in that page's language (they ran in the home page's).
+  - Version flags are switched inside the save's transaction (a save that fails leaves the old flags).
+  - Content saves, recycle, purge and content-type delete clear the content cache again after they commit.
+- Not verified: SQL Server (D15: SQLite-level coverage); the Redis behaviour when Redis drops mid-run and comes back
+  (reconnect path, read but not exercised); creating content through the admin UI on PostgreSQL (service tests only);
+  a real multi-server deployment (two sites in one test process stand in for it).
 
 ### Phase 7 — Installer (D2, D19–D23)
 - Replace `RoleExtensions` first-user promotion with an Umbraco-style installer (D19): database step with

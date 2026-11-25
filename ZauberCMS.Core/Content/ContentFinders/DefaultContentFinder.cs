@@ -16,7 +16,7 @@ public class DefaultContentFinder(IContentService contentService)
         var url = httpContext.Request.GetDisplayUrl();
         var entryModel = await contentService.GetContentFromRequestAsync(new GetContentFromRequestParameters
         {
-            Slug = slug?.ToLower(), 
+            Slug = slug?.ToLowerInvariant(), 
             IsRootContent = slug.IsNullOrWhiteSpace(), 
             Url = url
         });

@@ -28,7 +28,7 @@ public class RedirectMiddleware(
     {
         try
         {
-            var path = context.Request.Path.Value?.ToLower() ?? string.Empty;
+            var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
             
             // Skip admin routes, API routes, account routes, and static files
             if (path.StartsWith("/admin") || 

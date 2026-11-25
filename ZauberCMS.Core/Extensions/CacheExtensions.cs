@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -31,16 +32,82 @@ public static class CacheExtensions
     }
 
     /// <summary>
-    /// Generates a cache key from an IQueryable by hashing the query string
+    /// Generates a cache key from an IQueryable by hashing the query string and the related data it loads
     /// </summary>
     /// <typeparam name="T">The entity type for the cache key prefix</typeparam>
     /// <param name="query">The query to hash</param>
     /// <returns>Cache key in format: TypeName-Hash</returns>
-    public static string GenerateCacheKey<T>(this IQueryable<T> query)
+    public static string GenerateCacheKey<T>(this IQueryable<T> query) => typeof(T).ToCacheKey(HashQuery(query));
+
+    /// <summary>The query's SQL plus the related data it loads, hashed (used by every query cache key).</summary>
+    internal static string HashQuery<T>(IQueryable<T> query)
     {
-        var queryString = query.ToQueryString();
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-        return typeof(T).ToCacheKey(Convert.ToBase64String(hash));
+        // ToQueryString shows only the first statement of a split query, so the includes (Children, roles, …)
+        // are added from the expression; without them a query with and without children shared a key (ZA-072)
+        var key = new StringBuilder(query.ToQueryString());
+        new IncludeCollector(key).Visit(query.Expression);
+        return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(key.ToString())));
+    }
+
+    private sealed class IncludeCollector(StringBuilder key) : ExpressionVisitor
+    {
+        protected override Expression VisitMethodCall(MethodCallExpression node)
+        {
+            if (node.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions))
+            {
+                key.Append('\n').Append(node.Method.Name);
+                foreach (var argument in node.Arguments.Skip(1))
+                {
+                    key.Append('|').Append(argument);
+                    // A filtered include prints a captured variable as value(Closure).name: add its value
+                    new CapturedValueCollector(key).Visit(argument);
+                }
+            }
+
+            return base.VisitMethodCall(node);
+        }
+    }
+
+    private sealed class CapturedValueCollector(StringBuilder key) : ExpressionVisitor
+    {
+        protected override Expression VisitMember(MemberExpression node)
+        {
+            // The whole chain from the closure (value(Closure).parameters.Ids), not just its first step
+            if (!TryEvaluate(node, out var value))
+            {
+                return base.VisitMember(node);
+            }
+
+            key.Append('=').Append(value is System.Collections.IEnumerable items and not string
+                ? string.Join(",", items.Cast<object?>())
+                : value);
+            return node;
+        }
+
+        private static bool TryEvaluate(Expression? expression, out object? value)
+        {
+            switch (expression)
+            {
+                case ConstantExpression constant:
+                    value = constant.Value;
+                    return true;
+                case MemberExpression member when TryEvaluate(member.Expression, out var owner) ||
+                                                  member.Expression == null:
+                    owner = member.Expression == null ? null : owner;
+                    value = member.Member switch
+                    {
+                        // A null owner of an instance member: EF would fail on it too; leave the key as it is
+                        System.Reflection.FieldInfo field when owner != null || field.IsStatic => field.GetValue(owner),
+                        System.Reflection.PropertyInfo property when owner != null || property.GetMethod?.IsStatic == true
+                            => property.GetValue(owner),
+                        _ => null
+                    };
+                    return true;
+                default:
+                    value = null;
+                    return false;
+            }
+        }
     }
 
     /// <summary>

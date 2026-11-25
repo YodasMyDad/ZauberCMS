@@ -374,6 +374,8 @@ public class ContentService(
                 if (saveResult.Success)
                 {
                     await transaction.CommitAsync(cancellationToken);
+                    // Again after the commit: SaveChangesAndLog cleared before it, and a read in between cached the old rows
+                    cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
                 }
                 else
                 {
@@ -459,7 +461,7 @@ public class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = $"{query.GenerateCacheKey(typeof(Models.Content))}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
+        var cacheKey = $"{query.GenerateCacheKey()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
         if (parameters.Cached)
         {
             return (await cacheService.GetSetCachedItemAsync(cacheKey,
@@ -521,6 +523,8 @@ public class ContentService(
                 }
 
                 await recycleTransaction.CommitAsync(cancellationToken);
+                // Again after the commit: SaveChangesAndLog cleared before it, and a read in between cached the old rows
+                cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
                 // Notify subscribers (admin tree, listings) that this content has effectively
                 // been removed from the live set so they refresh — without this, recycle bin
                 // moves only refresh on a manual reload.
@@ -627,6 +631,8 @@ public class ContentService(
             if (result.Success)
             {
                 await transaction.CommitAsync(cancellationToken);
+                // Again after the commit: SaveChangesAndLog cleared before it, and a read in between cached the old rows
+                cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
                 await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
             }
             else
@@ -1106,7 +1112,10 @@ public class ContentService(
 
             if (!parameters.SearchTerm.IsNullOrWhiteSpace())
             {
-                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(parameters.SearchTerm.ToLower()));
+                // LOWER() in SQL on the column, the term lowered here without the server's culture: a culture
+                // such as Turkish lowers "I" to "ı" and the search then finds nothing (ZA-017)
+                var searchTerm = parameters.SearchTerm.ToLowerInvariant();
+                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(searchTerm));
             }
 
             if (parameters.OnlyElementTypes)
@@ -1314,6 +1323,8 @@ public class ContentService(
                 if (deleteResult.Success)
                 {
                     await transaction.CommitAsync(cancellationToken);
+                    // Again after the commit: SaveChangesAndLog cleared before it, and a read in between cached the old rows
+                    cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
                 }
                 else
                 {
@@ -2170,7 +2181,10 @@ public class ContentService(
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
-                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(request.SearchTerm.ToLower()));
+                // LOWER() in SQL on the column, the term lowered here without the server's culture: a culture
+                // such as Turkish lowers "I" to "ı" and the search then finds nothing (ZA-017)
+                var searchTerm = request.SearchTerm.ToLowerInvariant();
+                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(searchTerm));
             }
 
             if (!string.IsNullOrWhiteSpace(request.ContentTypeAlias))
@@ -2333,17 +2347,17 @@ public class ContentService(
     private static Domain? MatchDomainWithContent(string url, List<Domain> domains)
     {
         var uri = new Uri(url);
-        var requestHost = uri.Host.ToLower();
-        var requestPath = uri.AbsolutePath.TrimStart('/').ToLower();
+        var requestHost = uri.Host.ToLowerInvariant();
+        var requestPath = uri.AbsolutePath.TrimStart('/').ToLowerInvariant();
         return domains.FirstOrDefault(domain =>
         {
-            var domainUrl = domain.Url?.ToLower();
+            var domainUrl = domain.Url?.ToLowerInvariant();
             if (domainUrl != null && domainUrl.Contains('/'))
             {
                 var parts = domainUrl.Split('/', 2);
                 var domainHost = parts[0];
                 var domainPath = parts.Length > 1 ? parts[1] : string.Empty;
-                return requestHost == domainHost && requestPath.StartsWith(domainPath);
+                return requestHost == domainHost && requestPath.StartsWith(domainPath, StringComparison.Ordinal);
             }
 
             return requestHost == domainUrl;

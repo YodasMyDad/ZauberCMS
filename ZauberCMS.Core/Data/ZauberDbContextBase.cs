@@ -45,6 +45,19 @@ namespace ZauberCMS.Core.Data
 
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
+            // Index filters are raw SQL. The mappings use SQL Server/SQLite syntax ([Column] = 1), which PostgreSQL
+            // rejects, so PostgreSQL gets its own (ZA-050).
+            if (Database.IsNpgsql())
+            {
+                modelBuilder.Entity<ContentVersion>(b =>
+                {
+                    b.HasIndex(x => x.ContentId, Content.Mapping.ContentVersionDbMapping.UniqueCurrentPublishedIndex)
+                        .HasFilter("\"IsCurrentPublished\"");
+                    b.HasIndex(x => x.ContentId, Content.Mapping.ContentVersionDbMapping.UniqueLatestDraftIndex)
+                        .HasFilter("\"IsLatestDraft\"");
+                });
+            }
+
             modelBuilder.Entity<User>().ToTable("ZauberUsers");
             modelBuilder.Entity<Role>().ToTable("ZauberRoles");
             modelBuilder.Entity<UserClaim>().ToTable("ZauberUserClaims");

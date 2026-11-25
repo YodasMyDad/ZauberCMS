@@ -168,7 +168,7 @@ public static class ZauberSetup
             
             identityBuilder.AddRoles<Role>();
             
-            switch (databaseProvider.ToLower())
+            switch (databaseProvider.ToLowerInvariant())
             {
                 case "sqlite":
                     builder.Services.AddDbContext<SqliteZauberDbContext>();
@@ -236,10 +236,22 @@ public static class ZauberSetup
         builder.Services.AddScoped<ExtensionManager>();
         builder.Services.AddScoped<ProviderService>();
         builder.Services.AddScoped(typeof(ValidateService<>));
+        // Cache (Roadmap D13): values stay in each server's memory; with Redis configured, only clears travel
+        builder.Services.AddSingleton<ServerCache>();
+        if (zauberSettings.RedisConnectionString.IsNullOrWhiteSpace())
+        {
+            builder.Services.AddSingleton<ICacheInvalidationBus, NoCacheInvalidationBus>();
+        }
+        else
+        {
+            builder.Services.AddSingleton<ICacheInvalidationBus, RedisCacheInvalidationBus>();
+            builder.Services.AddHostedService<CacheInvalidationStartup>();
+        }
         builder.Services.AddScoped<ICacheService, DefaultCacheService>();
         builder.Services.AddScoped<IHtmlSanitizerService, DefaultHtmlSanitizerService>();
         builder.Services.AddSingleton<IRichTextEmbedService, DefaultRichTextEmbedService>();
         builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Languages.AdminCultureCircuitHandler>();
+        builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Languages.ContentCultureCircuitHandler>();
         builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
         builder.Services.AddSingleton<RefreshSignInTicketService>();
         // How long a cookie is trusted before its security stamp is compared with the database again. The

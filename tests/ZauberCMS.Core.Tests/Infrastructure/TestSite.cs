@@ -20,19 +20,24 @@ namespace ZauberCMS.Core.Tests.Infrastructure;
 
 /// <summary>
 /// A ZauberCMS site for service tests: the real DI graph from <see cref="ZauberSetup.AddZauberCms"/>, a private
-/// in-memory SQLite database created by the real migrations, the seeders run, and one signed-in user.
+/// database created by the real migrations (in-memory SQLite by default, or a fresh database in the shared
+/// PostgreSQL container — see <see cref="TestContainers"/>), the seeders run, and one signed-in user.
 /// The web server is never started, so no middleware, endpoints or hosted services run.
 /// Create one per test (or per class) and dispose it.
 /// </summary>
 public sealed class TestSite : IAsyncDisposable
 {
     public const string SqliteProvider = "Sqlite";
+    public const string PostgreSqlProvider = "PostgreSql";
 
-    private readonly SqliteConnection _keepAlive;
+    private readonly SqliteConnection? _keepAlive;
+    private readonly string? _postgreSqlConnectionString;
     private readonly string _contentRoot;
 
-    private TestSite(WebApplication app, SqliteConnection keepAlive, string contentRoot)
+    private TestSite(WebApplication app, SqliteConnection? keepAlive, string? postgreSqlConnectionString,
+        string contentRoot)
     {
+        _postgreSqlConnectionString = postgreSqlConnectionString;
         App = app;
         _keepAlive = keepAlive;
         _contentRoot = contentRoot;
@@ -46,16 +51,29 @@ public sealed class TestSite : IAsyncDisposable
     public User CurrentUser { get; private set; } = null!;
 
     /// <param name="extraSettings">Configuration keys added to (or replacing) the test defaults.</param>
-    public static async Task<TestSite> CreateAsync(IDictionary<string, string?>? extraSettings = null)
+    /// <param name="databaseProvider"><see cref="SqliteProvider"/> (default) or <see cref="PostgreSqlProvider"/>;
+    /// PostgreSQL skips the test when Docker is not available.</param>
+    public static async Task<TestSite> CreateAsync(IDictionary<string, string?>? extraSettings = null,
+        string databaseProvider = SqliteProvider)
     {
-        // A named shared-cache in-memory database lives for as long as one connection to it stays open.
-        var connectionString = $"DataSource=zauber-test-{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
-        var keepAlive = new SqliteConnection(connectionString);
-        await keepAlive.OpenAsync();
+        string connectionString;
+        SqliteConnection? keepAlive = null;
+        if (databaseProvider == PostgreSqlProvider)
+        {
+            connectionString = await TestContainers.CreatePostgreSqlDatabaseAsync();
+        }
+        else
+        {
+            // A named shared-cache in-memory database lives for as long as one connection to it stays open.
+            connectionString = $"DataSource=zauber-test-{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+            keepAlive = new SqliteConnection(connectionString);
+            await keepAlive.OpenAsync();
+        }
 
         var contentRoot = CreateContentRoot();
-        var app = BuildApp(SqliteProvider, connectionString, contentRoot, validateContainer: false, extraSettings);
-        var site = new TestSite(app, keepAlive, contentRoot);
+        var app = BuildApp(databaseProvider, connectionString, contentRoot, validateContainer: false, extraSettings);
+        var site = new TestSite(app, keepAlive,
+            databaseProvider == PostgreSqlProvider ? connectionString : null, contentRoot);
 
         // Same order as ZauberSetup.AddZauberCms<T>(WebApplication): migrate, then run every ISeedData.
         using (var scope = site.CreateScope())
@@ -205,7 +223,15 @@ public sealed class TestSite : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await App.DisposeAsync();
-        await _keepAlive.DisposeAsync();
+        if (_keepAlive != null)
+        {
+            await _keepAlive.DisposeAsync();
+        }
+
+        if (_postgreSqlConnectionString != null)
+        {
+            await TestContainers.DropPostgreSqlDatabaseAsync(_postgreSqlConnectionString);
+        }
         try
         {
             Directory.Delete(_contentRoot, recursive: true);

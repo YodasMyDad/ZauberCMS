@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 6 (2026-11-25): Build PASS · Warnings: 0 · Tests: 428 (425 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118), PostgreSQL and Redis tests in Docker; `/audit changed` run on the phase
 After Roadmap Phase 5 (2026-11-25): Build PASS · Warnings: 0 · Tests: 315 (312 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118); `/audit changed` run on the phase
 After the Phase 4 follow-ups (2026-11-25, RTE 4.0.0): Build PASS · Warnings: 0 · Tests: 259 (256 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 4 (2026-11-25): Build PASS · Warnings: 0 · Tests: 231 (228 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
@@ -18,11 +19,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 14 | 15 | 0 |
-| Medium | 48 | 24 | 0 |
-| Low | 40 | 3 | 0 |
+| High | 10 | 19 | 0 |
+| Medium | 45 | 27 | 0 |
+| Low | 40 | 5 | 0 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), committed on `rework-2026`. Next free ID: ZA-146.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-148.
 
 ## Open findings
 
@@ -38,12 +39,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Fix: media recycle-bin section or hard-delete with confirmation. · Blocked by: UX decision.
 - Reconciled 2026-11-25: the hard-delete branch is unreachable from the UI, so media files are never removed from disk.
 - Owner decision 2026-11-25: build a media recycle bin (restore + permanent delete; deleting from the bin removes row and file) (Roadmap Phase 8).
-
-### ZA-007 [High/Medium] Raw SQL with unquoted identifiers likely fails on PostgreSQL
-
-- Where: `ZauberCMS.Core/Extensions/DbContextExtensions.cs:25-53` (`WherePathLike`, `WhereHasCompositionsUsing`); used by restrict-access (`RestrictAccessContextMenu.cs:96`) and the composition check; copy no longer uses it (Phase 5) · Category: B/C
-- Fix: quote identifiers per provider or replace with LINQ. · Blocked by: needs PostgreSQL verification.
-- Owner decision 2026-11-25: PostgreSQL is a supported provider — must be fixed and verified on a real PostgreSQL instance (Roadmap Phase 6).
 
 ### ZA-034 [High/High] Block list: Cancel in a nested modal does not discard its changes (data loss)
 
@@ -79,31 +74,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: F9. Every open content editor in every circuit refreshes (unsaved edits lost), on the publisher's thread.
 - Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
 
-### ZA-050 [High/High] PostgreSQL initial migration contains SQL Server filter syntax; two intended indexes exist on no provider
-
-- Where: `ZauberCMS.Core/Content/Mapping/ContentVersionDbMapping.cs:31,50-60`, `ZauberCMS.Core/Data/Migrations/PostgreSql/20250924143438_Initial.cs:744` · Category: B · Since: 2026-11-25
-- Issue / Trigger: `HasFilter("[IsLatestDraft] = 1")` is emitted unchanged into the PostgreSQL migration, where it is invalid — a fresh `DatabaseProvider=PostgreSql` install should fail at `Database.Migrate()`. Three `HasIndex(x => x.ContentId)` calls also collapse into one, so `IX_ContentVersion_ContentId` and the unique current-published index were never created. Read, not run against PostgreSQL.
-- Fix: named indexes with per-provider filters, new migrations ×3, repair the PostgreSQL initial migration. · Blocked by: schema; the unique index may fail on existing duplicates.
-- Owner decision 2026-11-25: PostgreSQL is a supported provider — must be fixed and verified on a real PostgreSQL instance (Roadmap Phase 6).
-
-### ZA-051 [High/Medium] Redis mode serialises entity graphs: role-restricted pages can be served to anonymous users
-
-- Where: `ZauberCMS.Core/Shared/Services/DefaultCacheService.cs:39-54,168-176`, `ZauberCMS.Core/Content/Models/Content.cs:179-189`, `ZauberCMS.Components/Pages/EntryPage.razor:70` · Category: B/D · Since: 2026-11-25
-- Issue / Trigger: With `RedisConnectionString` set, a cache hit returns content whose `[JsonIgnore]` navigations (`ContentRoles`, `Children`, `MediaRoles`) are empty, so the EntryPage role check passes. Cached user rows also put password hashes in Redis, and `Dictionary<object,string>` results don't deserialise. Not run.
-- Fix: cache DTOs, or keep entity graphs in memory and use Redis only for invalidation. · Blocked by: cached return types are public API.
-- Owner decision 2026-11-25: Redis caching is supported — must be fixed and verified against Redis (Roadmap Phase 6).
-
 ### ZA-054 [High/High] Admin trees block the circuit with sync-over-async (latent deadlock)
 
 - Where: `ZauberCMS.Components/Trees/ContentTree.razor:89-96,127`, `ZauberCMS.Components/Trees/MediaTree.razor:117-123,167`, `ZauberCMS.Components/Trees/ContentTypeTree.razor:73-79,117`, `ZauberCMS.Components/Admin/StructureSection/Navigation/CompositionsTree.razor:78,101`, `ZauberCMS.Components/DataSources/ContentTypesDataSource.cs:17-22` · Category: A · Since: 2026-11-25
 - Issue / Trigger: Expand handlers call `.GetAwaiter().GetResult()` on the renderer context and `HasChildren` does a blocking DB call per node per render. It works only because the paged query methods are synchronous today; making `PaginatedList` async (the stated target) would deadlock every tree.
 - Fix: `await` in handlers, batch child flags into `TreeState`, add async `IDataListSource.GetItemsAsync`. · Blocked by: public interface (add + obsolete); must land with the paging refactor.
-
-### ZA-055 [High/Medium] Cache key registry race leaves pages stale until restart
-
-- Where: `ZauberCMS.Core/Shared/Services/DefaultCacheService.cs:58-75,110-127,144-161` · Category: A · Since: 2026-11-25
-- Issue / Trigger: On two concurrent cache misses the replaced entry's eviction callback removes the key from the registry after the second caller added it; the entry stays cached but prefix invalidation no longer sees it, and sliding expiry keeps a hot key alive.
-- Fix: ignore `EvictionReason.Replaced`; better, per-prefix change tokens plus a per-key lock (also stops stampedes). · Blocked by: nothing (internal).
 
 ### ZA-056 [High/High] Role queries always load every user in the role
 
@@ -147,21 +122,10 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Media/Services/MediaService.cs:215-216` · Category: C
 - Reconciled 2026-11-25: also double notify on soft delete (service + `DeleteMediaContextMenu.cs:51`) and `NotifyMediaSaved` fires even when the save failed (`MediaService.cs:119,137`).
 
-### ZA-014 [Medium/High] Cache key registry unbounded/per-process under Redis
-
-- Where: `ZauberCMS.Core/Shared/Services/DefaultCacheService.cs:15,52` · Category: A/B
-- Issue: grows forever; prefix invalidation not multi-node safe. · Blocked by: Redis SCAN/tagging design.
-- Reconciled 2026-11-25: also unsafe on a single node — after a restart the registry is empty while Redis entries persist, so prefix clears miss them.
-- Owner decision 2026-11-25: Redis caching is supported — fix as part of the cache redesign (Roadmap Phase 6).
-
 ### ZA-015 [Medium/High] `AddFluentValidation` never unsubscribes
 
 - Where: `ZauberCMS.Core/Shared/Validation/EditContextFluentValidationExtensions.cs:22,25` · Category: A
 - Reconciled 2026-11-25: same file also has unsynchronised static lists and `async` handlers with no try/catch (a throwing validator ends the circuit) — lines 12-13, 107-125.
-
-### ZA-017 [Medium/High] `ToLower()` search comparisons (Turkish-I, provider-dependent)
-
-- Where: `ContentService.cs:1023,2080,2240-2244`; `MembershipService.cs:564-565,1029-1030` · Category: B/C
 
 ### ZA-018 [Medium/Medium] `SaveTagItemAsync` bypasses `SaveChangesAndLog` hooks
 
@@ -247,12 +211,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Languages/Services/LanguageService.cs:360-376` · Category: B · Since: 2026-11-25
 - Issue / Trigger: Dictionaries are re-queried per language with a linear lookup per key.
 - Fix: two `ToListAsync` calls and a lookup. · Blocked by: nothing.
-
-### ZA-072 [Medium/Medium] Cache key ignores collection includes
-
-- Where: `ZauberCMS.Core/Extensions/CacheExtensions.cs:39-44`, `ZauberCMS.Core/Content/Services/ContentService.cs:1989-2002,2028-2056` · Category: B · Since: 2026-11-25
-- Issue / Trigger: With split queries `ToQueryString` returns only the first statement, so `IncludeChildren` true/false share a key and whichever is cached first wins.
-- Fix: append include flags to the key. · Blocked by: nothing.
 
 ### ZA-073 [Medium/Medium] Bulk admin operations run item by item
 
@@ -520,11 +478,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/ZauberSetup.cs:95-102,198,201,236` · Category: F · Since: 2026-11-25
 - Issue / Fix: Unused scoped `HttpClient` and `IUserEmailStore`; `SignInManager` registered twice; unused `Actions` on `ContentNavGroup`.
 
-### ZA-122 [Low/High] Design-time factory loads `appSettings.json` (wrong case)
-
-- Where: `ZauberCMS.Core/Data/ZauberDesignTimeDbContextFactory.cs:13-14,34` · Category: F · Since: 2026-11-25
-- Issue / Fix: `migrations.ps1` fails on Linux/macOS.
-
 ### ZA-123 [Low/High] Template and sample rough edges
 
 - Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/Properties/launchSettings.json:19` · Category: F · Since: 2026-11-25
@@ -571,11 +524,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: Access is decided by the page that calls a service. Any code that can resolve a service (a front-end component, a plugin, an interactive component on a public page) can save or delete anything; the services never check who is signed in.
 - Fix (owner decision D10, 2026-11-25): an opt-in permission hook as its own phase (Roadmap Phase 10a). Services ask a replaceable permission service before a write; the default allows everything, a site can switch on a strict mode; front-end and plugin code that saves on purpose declares it. · Blocked by: design with the owner (Phase 10a); strict-by-default is a v5 question.
 
-### ZA-143 [Low/High] Requests that are not pages are treated as the home page by `CultureMiddleware`
-- Where: `ZauberCMS.Core/Middleware/CultureMiddleware.cs` (the skip list and `IsRootContent = slug == null`) · Category: C · Since: 2026-11-25 (found while tracing ZA-141)
-- Issue / Trigger: Any path that is not `/admin`, `/api`, `/account` or a file name, and has no `slug` route value, is looked up as the root content: `/_blazor`, `/_blazor/negotiate`, minimal-API endpoints a site adds, 404s. Each costs a (cached) content lookup, and the request gets the root content's language. A front-end interactive component therefore always runs in the root's language, also on a page in another language.
-- Fix: only resolve content when the matched endpoint is the content catch-all (its route pattern has the `slug` parameter). Give a front-end circuit the language of the page that started it (for example from the page URL the circuit reports), then drop the accidental root fallback. · Blocked by: nothing; a site with one non-default language relies on the fallback today, so do both halves together (Phase 5).
-
 ### ZA-144 [Low/High] A pending draft keeps the old URL after Restore gave the page a new one
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs` (restore URL suffix in `SaveContentAsync`),
   `ContentMappingExtensions.MapDraftTo` (copies `Url`) · Category: C · Since: 2026-11-25 (Phase 5 audit)
@@ -591,8 +539,59 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   and then loads them again with property data.
 - Fix: project IDs only for the loop check / reuse the tracked load; walk IDs only in copy. · Blocked by: nothing.
 
+### ZA-146 [Low/Medium] Two publishes of one page at the same moment: the second version row is not written
+- Where: `ZauberCMS.Core/Content/Services/ContentVersioningService.cs` (`CreateVersionAsync`: `maxVersion` read
+  before the transaction; flag clear by `ExecuteUpdateAsync`) · Category: A/C · Since: 2026-11-25 (Phase 6 audit)
+- Issue / Trigger: two saves of the same page commit at once (two editors, or a double click). Under READ COMMITTED
+  the second clear doesn't see the first insert, so the second insert breaks the unique "current published" index;
+  `ContentService` logs it and the content save still succeeds, but that version is missing. Version numbers can
+  also repeat. (Before Phase 6 both rows were stored, both flagged.) The flag switch also runs as a direct update,
+  so `IBeforeEntitySave`/`IAfterEntitySave<ContentVersion>` hooks don't see the old version's flag go off.
+- Fix: lock the content row first (`UPDATE … SET DateUpdated = DateUpdated WHERE Id = @id`) and read `maxVersion`
+  inside the transaction, or retry once on a unique violation. · Blocked by: nothing.
+
+### ZA-147 [Low/Low] A front-end circuit may run one navigation in the previous page's language
+- Where: `ZauberCMS.Core/Languages/ContentCultureCircuitHandler.cs` · Category: C · Since: 2026-11-25 (Phase 6 audit)
+- Issue / Trigger: the handler reads `NavigationManager.Uri` before the activity runs; for the activity that handles a
+  location change the address may still be the old page's, so components created in that activity (enhanced
+  navigation adding interactive roots, or a site with global interactivity) start in the old page's culture.
+  Reasoned, not reproduced.
+- Fix: reproduce with enhanced navigation between pages in two languages; if real, re-check the culture on
+  `LocationChanged`. · Blocked by: needs a browser repro.
+
 ## Fixed this run / Resolved since last run
 
+- **Roadmap Phase 6 — PostgreSQL & Redis made real — fixed 2026-11-25.** Build 0 warnings; 428 tests (425 pass, 3
+  skipped for other open findings), including the content, data-grid, media, user-delete and provider-query tests on
+  a real PostgreSQL and the Redis tests against a real Redis (Testcontainers). `/audit changed` (two independent
+  reviewers) found 14 more problems in the change: 12 fixed (listed under the findings below), two logged as
+  ZA-146 and ZA-147. App run on PostgreSQL + Redis containers: migrations, registration, admin, a settings save
+  published through Redis; no errors logged.
+  - **ZA-050 [High] PostgreSQL install failed; unique version indexes missing.** Reproduced first: `Initial` failed
+    with `42601: syntax error at or near "["`. Index filters are now per provider (`ZauberDbContextBase`), the three
+    `ContentId` indexes are named, the PostgreSQL `Initial` was corrected (D14) and migration
+    `ContentVersionIndexes` adds the unique "current published" index after keeping one flagged version per page
+    (the one published last, then the highest number — review fix). Version flags are switched in the database
+    inside the save's transaction (a one-save switch hit the new index intermittently). Tests: migrate on
+    PostgreSQL, the index refuses a second flag, the upgrade keeps the right version, flags move on new versions.
+  - **ZA-007 [High] Raw SQL failed on PostgreSQL.** `WherePathLike`/`WhereHasCompositionsUsing` take table and
+    column names from the model, quoted by the provider. Tests fail on PostgreSQL against the old code.
+  - **ZA-017 [Medium] Search under a Turkish server culture.** Search terms are lowered with `ToLowerInvariant`; the
+    review found the same problem in slug generation, the culture/redirect middleware, the content finder, the disk
+    storage extension check and an SEO check, all changed too. Tests: search ×3 services, slug.
+  - **ZA-122 [Low] Design-time factory file name** → `appsettings.json`.
+  - **ZA-051 [High], ZA-014 [Medium], ZA-055 [High], ZA-072 [Medium] cache redesign (D13).** Values stay in each
+    server's memory (`ServerCache`); Redis carries only invalidations (`RedisCacheInvalidationBus`: counter + pub/sub,
+    full clear on a gap, when behind on two checks in a row, on a counter reset, on reconnect; unsent clears become a
+    full clear). The key index is per server, guarded per key, and an eviction removes only its own entry; a value
+    loaded while a clear ran is not kept; query keys include `Include` calls and the values captured in filtered
+    includes. Content saves, recycle, purge and content-type delete clear again after commit. Tests: restricted page
+    keeps its roles from the cache, nothing of a user in Redis, clear reaches the other server, missed message,
+    behind on two checks, counter reset, the replaced-entry race and the overlapping clear (both fail on the old
+    service), include and filtered-include keys.
+  - **ZA-143 [Low] Non-page requests looked up as the home page.** `CultureMiddleware` resolves content only for the
+    catch-all endpoint (`IsContentEndpoint`); `ContentCultureCircuitHandler` gives a front-end circuit its page's
+    language (also under a path base). Tests: endpoint rule, middleware, circuit handler.
 - **Roadmap Phase 5 — content integrity — fixed 2026-11-25.** Build 0 warnings; 315 tests (312 pass, 3 skipped for
   other open findings). `/audit changed` (two independent reviewers) found six more problems in the change; all
   fixed below except ZA-144 and ZA-145 (Low, open). Tests: `ContentIntegrityTests` (25 cases, all seen failing against the previous
@@ -840,7 +839,9 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   `ContentTypeEditor`, compositions, and the Sort/Move dialogs; double-submit and re-entrancy in admin dialogs;
   focus and keyboard behaviour in side panels; Radzen 10 obsolete API usage (hidden by `NoWarn`).
 - Runtime checks done in a browser so far (scratch SQLite database): the Phase 1 package/editor smoke test and the
-  Phase 3 admin actions and the Phase 4 checks listed under "Fixed". Still nothing on PostgreSQL, SQL Server, Redis or behind a proxy.
+  Phase 3 admin actions and the Phase 4 checks listed under "Fixed". Phase 6: the app on PostgreSQL + Redis
+  containers (see Phase 6 under "Fixed"); the test suite runs on PostgreSQL and Redis. Still nothing on SQL Server
+  or behind a proxy.
 - Tests added in Roadmap Phase 4: restricted media middleware; lockout; refresh ticket; external sign-up claims;
   grid filter/sort guard; SEO outbound client; site URL links; admin access middleware and IP allow-list;
   forwarded-headers options; redirect targets; sanitiser; upload content check; SVG sanitiser.

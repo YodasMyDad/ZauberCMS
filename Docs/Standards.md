@@ -124,7 +124,13 @@ Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it o
   write a test that asserts the buggy behaviour.
 - Test the behaviour through the public service or type, not private details. One behaviour per test, named as a
   sentence. No shared mutable state between tests; no sleeps; no network.
-- Not built yet: bUnit component tests, tests on SQL Server/PostgreSQL/Redis (Phase 6), and a template smoke test
+- PostgreSQL and Redis run in Docker containers (Testcontainers, `Infrastructure/TestContainers.cs`), one of each
+  for the whole run. `TestSite.CreateAsync(databaseProvider: TestSite.PostgreSqlProvider)` gives a fresh PostgreSQL
+  database; a test class whose behaviour depends on the provider gets an `…OnPostgreSql` subclass at the end of its
+  file that overrides `DatabaseProvider`. Redis: pass `Zauber:RedisConnectionString` from
+  `TestContainers.RedisConnectionStringAsync()`. Without Docker these tests are skipped with a message; on CI (the
+  `CI` variable is set) they fail instead.
+- Not built yet: bUnit component tests, tests on SQL Server, and a template smoke test
   (`dotnet new zaubercms` → build). UI behaviour without a test still needs its manual verification written down.
 
 ## 10. Repo hygiene (target)

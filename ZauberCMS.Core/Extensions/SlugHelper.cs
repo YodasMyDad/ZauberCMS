@@ -19,7 +19,7 @@ public class SlugHelper(SlugHelper.Config? config)
         {
             if (Configuration is { UseCamelCase: false, ForceLowerCase: true })
             {
-                str = str.ToLower();
+                str = str.ToLowerInvariant();
             }
 
             str = CleanWhiteSpace(str, Configuration.CollapseWhiteSpace);

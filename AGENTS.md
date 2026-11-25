@@ -72,7 +72,8 @@ don't reorder without a reason written in the commit.
    one provider. Pending-model-change warnings are suppressed, so drift is **silent**. Don't add tables/columns unless
    unavoidable. → [Docs/Data.md](Docs/Data.md)
 2. **Public types are a public API.** Every public interface, parameter class, model and component ships in NuGet to
-   consumer sites. No breaking change without `[Obsolete]` first and a major version. **Type full names are persisted
+   consumer sites. No breaking change without `[Obsolete]` first and a major version. (During the rework everything ships as one
+   v5 major, so a break is allowed when it buys something and is listed in the release notes — Roadmap D18.) **Type full names are persisted
    data**: views (`Content.ViewComponent`), property editors (`PropertyType.Component`) and fallback views in settings
    are stored as `Type.FullName` — renaming a class *or its namespace* breaks existing sites.
 3. **Extensions are discovered, not registered.** `ExtensionManager` reflects over public, non-abstract types (make
@@ -114,8 +115,9 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
 
 - Config section `"Zauber"` → `ZauberSettings` (`ZauberCMS.Core/Settings/ZauberSettings.cs`). Admin-editable runtime
   settings → `GlobalSettings`, stored as `GlobalData` alias `"GlobalSettings"`, read via `dataService.GetGlobalSettings()`.
-- Cache: `ICacheService` (Redis when `RedisConnectionString` set, else `IMemoryCache`). Keys `TypeName-<sha256 of SQL>`;
-  invalidation by prefix (`StartsWith`). Key registry is per-process — prefix clears are not multi-node safe with Redis.
+- Cache: `ICacheService` keeps values in each server's memory (`ServerCache`); keys `TypeName-<hash of SQL + includes>`;
+  invalidation by prefix (`StartsWith`). With `RedisConnectionString` set, Redis carries only the clears to the other
+  servers (`ICacheInvalidationBus`); nothing cached goes to Redis. → [Docs/Services.md](Docs/Services.md) "Cache"
 - Events: singleton `AppState` with `WeakEventManager` (`OnXChanged/Saved/Deleted` for Content, ContentType, User,
   Media). Handlers fire on the publisher's thread in every circuit → marshal with `InvokeAsync`.
 - Identity tables are `Zauber*`-prefixed; migrations history table `ZauberMigrations`. Keys are sequential GUIDs.

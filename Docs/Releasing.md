@@ -16,7 +16,8 @@
 
 ## CI — `.github/workflows/ci.yml` (primary path)
 
-- PRs to `main-static`: build and run the tests.
+- Every push (any branch) and PRs to `main-static`: build and run the tests, including the PostgreSQL and Redis tests
+  (Docker containers on the runner; they fail rather than skip on CI).
 - Push to `main-static` (**publishes**):
   1. Version: reuse a `vX.Y.Z` tag already on HEAD; else `max(csproj <Version>, latest tag)` + patch bump.
   2. sed-stamp the version into the six csprojs (four libs, template, template site).

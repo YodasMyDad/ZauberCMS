@@ -24,7 +24,7 @@ public class MobileFriendlyCheck : ISeoCheck
         }
         else
         {
-            var contentAttr = viewportMeta.GetAttributeValue("content", "").ToLower();
+            var contentAttr = viewportMeta.GetAttributeValue("content", "").ToLowerInvariant();
             
             // Recommended values for mobile-friendly pages
             const string recommended = "width=device-width, initial-scale=1";

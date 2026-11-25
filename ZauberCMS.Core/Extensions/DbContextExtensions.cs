@@ -1,6 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Serilog;
 using ZauberCMS.Core.Content.Interfaces;
@@ -24,31 +25,29 @@ public static class DbContextExtensions
     /// <returns>An IQueryable of entities matching the condition.</returns>
     public static IQueryable<T> WherePathLike<T>(this DbSet<T> source, Guid itemId)
         where T : class, IBaseItem
-    {
-        var tableName = typeof(T) == typeof(Content.Models.Content) ? "ZauberContent" : "ZauberMedia";
-        var searchPattern = $"%\"{itemId}\"%";
+        => source.WhereJsonColumnContains(nameof(IBaseItem.Path), itemId);
 
-        // Use parameterized query to prevent SQL injection
-#pragma warning disable EF1002
-        return source.FromSqlRaw($$"""
-                                      SELECT * 
-                                      FROM {{tableName}}
-                                      WHERE Path LIKE {0}
-                                  """, searchPattern);
-#pragma warning restore EF1002
-    }
-    
+    /// <summary>Content types whose <see cref="ContentType.CompositionIds"/> contain <paramref name="itemId"/>.</summary>
     public static IQueryable<ContentType> WhereHasCompositionsUsing(this DbSet<ContentType> source, Guid itemId)
+        => source.WhereJsonColumnContains(nameof(ContentType.CompositionIds), itemId);
+
+    // The column holds a JSON array of GUIDs, which LINQ can't look into, so this is raw SQL. Table and column names
+    // come from the model and are quoted by the provider: unquoted, PostgreSQL folds them to lower case and the
+    // query fails (ZA-007). The value is a parameter.
+    private static IQueryable<T> WhereJsonColumnContains<T>(this DbSet<T> source, string propertyName, Guid itemId)
+        where T : class
     {
-        var searchPattern = $"%\"{itemId}\"%";
-        
-        // Use parameterized query to prevent SQL injection
-#pragma warning disable EF1002
-        return source.FromSqlRaw($$"""
-                                      SELECT * 
-                                      FROM ZauberContentTypes
-                                      WHERE CompositionIds LIKE {0}
-                                  """, searchPattern);
+        var entityType = source.EntityType;
+        var tableName = entityType.GetTableName()!;
+        var schema = entityType.GetSchema();
+        var columnName = entityType.FindProperty(propertyName)!
+            .GetColumnName(StoreObjectIdentifier.Table(tableName, schema))!;
+        var sql = source.GetService<ISqlGenerationHelper>();
+
+#pragma warning disable EF1002 // identifiers come from the model, not from input
+        return source.FromSqlRaw(
+            $"SELECT * FROM {sql.DelimitIdentifier(tableName, schema)} WHERE {sql.DelimitIdentifier(columnName)} LIKE {{0}}",
+            $"%\"{itemId}\"%");
 #pragma warning restore EF1002
     }
     
@@ -107,17 +106,9 @@ public static class DbContextExtensions
     }
 
     
-    public static string GenerateCacheKey<T>(this IQueryable<T> query, Type cacheType)
-    {
-        // Get the query string
-        var queryString = query.ToQueryString();
-
-        // Generate a SHA256 hash of the query string
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(queryString));
-
-        // Return the cache key by combining the type and the hashed query string
-        return cacheType.ToCacheKey(Convert.ToBase64String(hash));
-    }
+    /// <summary>Cache key for a query with <paramref name="cacheType"/> as its prefix (SQL and includes, hashed).</summary>
+    public static string GenerateCacheKey<T>(this IQueryable<T> query, Type cacheType) =>
+        cacheType.ToCacheKey(CacheExtensions.HashQuery(query));
 
     
     public static IQueryable<T>? ToTyped<T>(this IZauberDbContext context) where T : class

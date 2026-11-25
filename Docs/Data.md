@@ -52,9 +52,18 @@ the three contexts.
 ## Provider gotchas
 
 - PostgreSQL `timestamp with time zone` requires `DateTimeKind.Utc`.
-- PostgreSQL folds unquoted identifiers to lower case; EF creates quoted names. Raw SQL with unquoted `ZauberContent`
-  (`Extensions/DbContextExtensions.cs` `WherePathLike` — still used by Restrict access — and `WhereHasCompositionsUsing`) is suspected broken on PostgreSQL —
-  tracked in [.audit/report.md](../.audit/report.md).
+- PostgreSQL folds unquoted identifiers to lower case; EF creates quoted names. Raw SQL takes table and column names
+  from the model and quotes them with `ISqlGenerationHelper` (see `DbContextExtensions.WhereJsonColumnContains`,
+  behind `WherePathLike` and `WhereHasCompositionsUsing`); values are parameters.
+- Index filters (`HasFilter`) are raw SQL too: the mappings use SQL Server/SQLite syntax (`[IsLatestDraft] = 1`) and
+  `ZauberDbContextBase.OnModelCreating` replaces them for PostgreSQL (`"IsLatestDraft"`). Give every index on the same
+  column its own name (`HasIndex(x => x.Col, "IX_…")`): unnamed `HasIndex` calls on one column collapse into one index.
+- The PostgreSQL `Initial` migration was corrected once (it had SQL Server filter syntax, so a new PostgreSQL install
+  failed — ZA-050, owner decision D14). That is the only hand edit to an existing migration; don't repeat it.
+- Search: `x.Name.ToLower().Contains(term)` with the term lowered by `ToLowerInvariant()` (a server culture such as
+  Turkish lowers `I` to `ı`).
 - Column types differ per provider (`nvarchar(max)` vs `TEXT` vs `text`) — let EF generate them; don't hard-code
   `HasColumnType` unless all three are handled.
 - Case-sensitivity of `=`/`LIKE` differs (SQL Server CI collation, PostgreSQL case-sensitive, SQLite ASCII-only NOCASE).
+- Verify schema and query changes on PostgreSQL: the test suite runs the content, data-grid, media and user tests and
+  `ProviderQueryTests` on a real PostgreSQL (Docker; [Standards.md](Standards.md) §9).

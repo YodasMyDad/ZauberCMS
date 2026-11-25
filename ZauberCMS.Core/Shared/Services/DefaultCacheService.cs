@@ -1,177 +1,63 @@
-using System.Collections.Concurrent;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using ZauberCMS.Core.Settings;
 using CacheExtensions = ZauberCMS.Core.Extensions.CacheExtensions;
 
 namespace ZauberCMS.Core.Shared.Services;
 
-public class DefaultCacheService : ICacheService
+/// <summary>
+/// The default <see cref="ICacheService"/>: values live in this server's memory (<see cref="ServerCache"/>), and
+/// every clear is passed to the other servers through <see cref="ICacheInvalidationBus"/> (Redis when
+/// <c>Zauber:RedisConnectionString</c> is set). Nothing cached is ever written to Redis, so entity graphs keep their
+/// navigations and no user data leaves the server (Roadmap D13).
+/// </summary>
+public class DefaultCacheService(ServerCache serverCache, ICacheInvalidationBus invalidationBus) : ICacheService
 {
-    private readonly IMemoryCache _memoryCache;
-    private readonly IDistributedCache _distributedCache;
-    private readonly bool _useRedis;
-    private static readonly ConcurrentDictionary<string, byte> Keys = new();
+    public Task<T?> GetSetCachedItemAsync<T>(string cacheKey, Func<Task<T>> getCacheItemAsync,
+        int cacheTimeInMinutes = CacheExtensions.MemoryCacheInMinutes) =>
+        GetSetCachedItemAsync(cacheKey, getCacheItemAsync, cacheTimeInMinutes, 0);
 
-    public DefaultCacheService(IMemoryCache memoryCache, IDistributedCache distributedCache, IOptions<ZauberSettings> settings)
+    public async Task<T?> GetSetCachedItemAsync<T>(string cacheKey, Func<Task<T>> getCacheItemAsync,
+        int cacheTimeInMinutes, int cacheTimeInSeconds)
     {
-        _memoryCache = memoryCache;
-        _distributedCache = distributedCache;
-
-        // Check if Redis is configured
-        var redisConnectionString = settings.Value.RedisConnectionString;
-        _useRedis = !string.IsNullOrEmpty(redisConnectionString);
-    }
-
-    public async Task<T?> GetSetCachedItemAsync<T>(string cacheKey, Func<Task<T>> getCacheItemAsync, int cacheTimeInMinutes = CacheExtensions.MemoryCacheInMinutes)
-    {
-        return await GetSetCachedItemAsync(cacheKey, getCacheItemAsync, cacheTimeInMinutes, 0);
-    }
-
-    public async Task<T?> GetSetCachedItemAsync<T>(string cacheKey, Func<Task<T>> getCacheItemAsync, int cacheTimeInMinutes, int cacheTimeInSeconds)
-    {
-        var totalExpiration = CalculateTotalExpiration(cacheTimeInMinutes, cacheTimeInSeconds);
-
-        if (_useRedis)
+        if (serverCache.TryGet(cacheKey, out T? cached))
         {
-            // Use Redis cache
-            var cachedData = await _distributedCache.GetAsync(cacheKey);
-            if (cachedData != null)
-            {
-                return Deserialize<T>(cachedData);
-            }
-
-            var value = await getCacheItemAsync();
-            var data = Serialize(value);
-
-            var options = new DistributedCacheEntryOptions()
-                .SetSlidingExpiration(totalExpiration);
-
-            await _distributedCache.SetAsync(cacheKey, data, options);
-            Keys.TryAdd(cacheKey, default);
-
-            return value;
+            return cached;
         }
 
-        // Use Memory cache
-        if (!_memoryCache.TryGetValue(cacheKey, out T? cacheEntry))
-        {
-            cacheEntry = await getCacheItemAsync();
-
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(totalExpiration)
-                .RegisterPostEvictionCallback((key, value, reason, state) =>
-                {
-                    // Clean up the key tracking dictionary when item is evicted
-                    if (key is string keyStr)
-                    {
-                        Keys.TryRemove(keyStr, out _);
-                    }
-                });
-
-            _memoryCache.Set(cacheKey, cacheEntry, cacheEntryOptions);
-            Keys.TryAdd(cacheKey, default);
-        }
-        return cacheEntry;
+        var generation = serverCache.Generation;
+        var value = await getCacheItemAsync();
+        serverCache.Set(cacheKey, value, Expiration(cacheTimeInMinutes, cacheTimeInSeconds), generation);
+        return value;
     }
 
-    public T? GetSetCachedItem<T>(string cacheKey, Func<T> getCacheItem, int cacheTimeInMinutes = CacheExtensions.MemoryCacheInMinutes)
-    {
-        return GetSetCachedItem(cacheKey, getCacheItem, cacheTimeInMinutes, 0);
-    }
+    public T? GetSetCachedItem<T>(string cacheKey, Func<T> getCacheItem,
+        int cacheTimeInMinutes = CacheExtensions.MemoryCacheInMinutes) =>
+        GetSetCachedItem(cacheKey, getCacheItem, cacheTimeInMinutes, 0);
 
-    public T? GetSetCachedItem<T>(string cacheKey, Func<T> getCacheItem, int cacheTimeInMinutes, int cacheTimeInSeconds)
+    public T? GetSetCachedItem<T>(string cacheKey, Func<T> getCacheItem, int cacheTimeInMinutes,
+        int cacheTimeInSeconds)
     {
-        var totalExpiration = CalculateTotalExpiration(cacheTimeInMinutes, cacheTimeInSeconds);
-
-        if (_useRedis)
+        if (serverCache.TryGet(cacheKey, out T? cached))
         {
-            // Use Redis cache
-            var cachedData = _distributedCache.Get(cacheKey);
-            if (cachedData != null)
-            {
-                return Deserialize<T>(cachedData);
-            }
-
-            var value = getCacheItem();
-            var data = Serialize(value);
-
-            var options = new DistributedCacheEntryOptions()
-                .SetSlidingExpiration(totalExpiration);
-
-            _distributedCache.Set(cacheKey, data, options);
-            Keys.TryAdd(cacheKey, default);
-
-            return value;
+            return cached;
         }
 
-        // Use Memory cache
-        if (!_memoryCache.TryGetValue(cacheKey, out T? cacheEntry))
-        {
-            cacheEntry = getCacheItem();
-
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(totalExpiration)
-                .RegisterPostEvictionCallback((key, value, reason, state) =>
-                {
-                    // Clean up the key tracking dictionary when item is evicted
-                    if (key is string keyStr)
-                    {
-                        Keys.TryRemove(keyStr, out _);
-                    }
-                });
-
-            _memoryCache.Set(cacheKey, cacheEntry, cacheEntryOptions);
-            Keys.TryAdd(cacheKey, default);
-        }
-        return cacheEntry;
+        var generation = serverCache.Generation;
+        var value = getCacheItem();
+        serverCache.Set(cacheKey, value, Expiration(cacheTimeInMinutes, cacheTimeInSeconds), generation);
+        return value;
     }
 
     public void ClearCachedItem(string cacheKey)
     {
-        if (_useRedis)
-        {
-            _distributedCache.Remove(cacheKey);
-        }
-        else
-        {
-            _memoryCache.Remove(cacheKey);
-        }
-        Keys.TryRemove(cacheKey, out _);
+        serverCache.Remove(cacheKey);
+        invalidationBus.PublishKeyCleared(cacheKey);
     }
 
     public void ClearCachedItemsWithPrefix(string cacheKeyPrefix)
     {
-        foreach (var key in Keys.Keys)
-        {
-            if (key.StartsWith(cacheKeyPrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                if (_useRedis)
-                {
-                    _distributedCache.Remove(key);
-                }
-                else
-                {
-                    _memoryCache.Remove(key);
-                }
-                Keys.TryRemove(key, out _);
-            }
-        }
+        serverCache.RemoveWithPrefix(cacheKeyPrefix);
+        invalidationBus.PublishPrefixCleared(cacheKeyPrefix);
     }
 
-    private static TimeSpan CalculateTotalExpiration(int cacheTimeInMinutes, int cacheTimeInSeconds)
-    {
-        return TimeSpan.FromMinutes(cacheTimeInMinutes).Add(TimeSpan.FromSeconds(cacheTimeInSeconds));
-    }
-
-    private static byte[] Serialize<T>(T value)
-    {
-        return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(value);
-    }
-
-    private static T? Deserialize<T>(byte[] data)
-    {
-        return System.Text.Json.JsonSerializer.Deserialize<T>(data);
-    }
+    private static TimeSpan Expiration(int cacheTimeInMinutes, int cacheTimeInSeconds) =>
+        TimeSpan.FromMinutes(cacheTimeInMinutes).Add(TimeSpan.FromSeconds(cacheTimeInSeconds));
 }
