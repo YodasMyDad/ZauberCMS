@@ -40,7 +40,7 @@
         </PackageReference>
         <PackageReference Include="ImageResize" Version="3.5.0" />
         <PackageReference Include="TinyMCE.Blazor" Version="2.2.2" />
-        <PackageReference Include="ZauberCMS.RTE" Version="3.0.0" />
+        <PackageReference Include="ZauberCMS.RTE" Version="4.0.0" />
     </ItemGroup>
 
     <ItemGroup>

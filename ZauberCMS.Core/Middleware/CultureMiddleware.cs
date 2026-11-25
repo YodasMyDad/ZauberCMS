@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
+using ZauberCMS.Core.Languages;
+using ZauberCMS.Core.Membership.Middleware;
 using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Middleware;
@@ -23,6 +25,14 @@ public class CultureMiddleware(
         {
             // Only process if this looks like a CMS route (not admin, not static files, etc.)
             var path = context.Request.Path.Value?.ToLower() ?? string.Empty;
+
+            // The admin has its own language, whatever the browser asks for and whatever the content is in
+            if (AdminAccess.IsAdminPath(context.Request.Path))
+            {
+                var adminCulture = AdminCulture.Apply(settings.Value);
+                context.Features.Set<IRequestCultureFeature>(
+                    new RequestCultureFeature(new RequestCulture(adminCulture, adminCulture), null));
+            }
             
             // Skip admin routes, API routes, static files
             if (path.StartsWith("/admin") || 

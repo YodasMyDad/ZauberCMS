@@ -16,6 +16,13 @@ public class RedirectMiddleware(
 {
     private const string CacheKey = "RedirectMiddleware.CompiledRedirects";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Drops the compiled redirect list, so the next request reads the saved redirects again. Called when a
+    /// redirect is saved or deleted; without it a new redirect did nothing for up to five minutes.
+    /// (Per process: other nodes pick the change up when their copy expires.)
+    /// </summary>
+    public static void ClearCache(IMemoryCache memoryCache) => memoryCache.Remove(CacheKey);
     
     public async Task InvokeAsync(HttpContext context, ISeoService seoService)
     {

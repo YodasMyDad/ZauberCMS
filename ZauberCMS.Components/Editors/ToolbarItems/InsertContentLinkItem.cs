@@ -15,7 +15,7 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
 {
     public override string Id => "insertContentLink";
     public override string Label => "Insert Link";
-    public override string Tooltip => "Insert Link (Ctrl+K)";
+    public override string Tooltip => "Insert Link";
     public override string IconSvg =>
         "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5\"/><path d=\"M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5\"/></svg>";
     public override string Shortcut => "Control+k";
@@ -26,9 +26,7 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
     public override async Task ExecuteAsync(IEditorApi api, CancellationToken cancellationToken)
     {
         var selection = await api.GetSelectionAsync(cancellationToken);
-        // Only ask for the link when the cursor is in one: RTE 3.0.0 throws from GetLinkAtCursorAsync
-        // when there is no link (empty interop stream), which fails the whole command.
-        var existingLink = api.State.InLink ? await api.GetLinkAtCursorAsync(cancellationToken) : null;
+        var existingLink = await api.GetLinkAtCursorAsync(cancellationToken);
 
         // Only open if there's selected text or cursor is on a link
         if ((selection != null && !string.IsNullOrWhiteSpace(selection.Text)) || existingLink != null)
@@ -37,7 +35,6 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
             {
                 // Select the whole existing link while the editor still has focus, so the saved selection
                 // covers it and the new <a> replaces the old one instead of nesting inside it.
-                // (Selecting after the dialog closes does not work on RTE 3.0.0.)
                 await api.SelectLinkAtCursorAsync(cancellationToken);
             }
 

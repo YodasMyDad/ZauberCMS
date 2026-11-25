@@ -25,6 +25,7 @@
     [CascadingParameter] public IModalService? ModalService { get; set; }
     
     [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ZauberCMS.Core.Shared.Services.IRichTextEmbedService EmbedService { get; set; } = null!;
     
     public string Name { get; set; } = "Text Editor (ZauberCMS RTE)";
     public string Alias { get; set; } = "ZauberCMS.ZauberRTE";
@@ -39,7 +40,7 @@
     private EditorSettings EditorSettings { get; set; } = new();
     private bool _initialized;
 
-    // RTE 3.x "Auto" follows the OS colour scheme; the admin UI is light, so start light (the toolbar toggle still works).
+    // RTE "Auto" follows the OS colour scheme; the admin UI is light, so start light (the toolbar toggle still works).
     private ZauberCMS.RTE.Models.Theme _theme = ZauberCMS.RTE.Models.Theme.Light;
 
     protected override async Task OnParametersSetAsync()
@@ -63,7 +64,7 @@
                 new ToolbarSeparator(),
                 new ToolbarGroup("headings", "blockquote"),
                 new ToolbarSeparator(),
-                new ToolbarGroup("ul", "ol", "insertContentLink", "unlink", "image", "insertMedia"),
+                new ToolbarGroup("ul", "ol", "insertContentLink", "unlink", "image", "insertMedia", ToolbarItemIds.Embed),
                 new ToolbarSeparator(),
                 new ToolbarGroup("alignLeft", "alignCenter", "alignRight", "justified"),
                 new ToolbarSeparator(),
@@ -74,6 +75,8 @@
         return new EditorSettings
         {
             ToolbarLayout = layout,
+            // The same list renders the embeds on the site (IRichTextEmbedService.Expand)
+            EmbedProviders = [.. EmbedService.Providers],
             Dimensions = string.IsNullOrWhiteSpace(SettingsModel.Height)
                 ? new EditorDimensions()
                 : new EditorDimensions { MinHeight = SettingsModel.Height },

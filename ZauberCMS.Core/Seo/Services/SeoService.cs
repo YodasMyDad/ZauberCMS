@@ -67,7 +67,9 @@ public class SeoService(
             
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
             await user.AddAudit(redirect, redirect.FromUrl, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, auditService, cancellationToken);
-            return await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken);
+            var saved = await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken);
+            ClearCompiledRedirects();
+            return saved;
         }
 
         handlerResult.AddMessage("Redirect is null", ResultMessageType.Error);
@@ -126,7 +128,20 @@ public class SeoService(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken))!;
+        HandlerResult<SeoRedirect?> deleted = (await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken))!;
+        ClearCompiledRedirects();
+        return deleted;
+    }
+
+    /// <summary>The redirect middleware keeps its own compiled copy of the redirects; a change must drop it.</summary>
+    private void ClearCompiledRedirects()
+    {
+        using var scope = serviceScopeFactory.CreateScope();
+        var memoryCache = scope.ServiceProvider.GetService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
+        if (memoryCache != null)
+        {
+            Middleware.RedirectMiddleware.ClearCache(memoryCache);
+        }
     }
 
     private static IQueryable<SeoRedirect> BuildQuery(QueryRedirectsParameters parameters, IZauberDbContext dbContext)

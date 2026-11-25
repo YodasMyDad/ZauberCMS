@@ -63,7 +63,7 @@ Editors appear in the "Add Property" panel (`Admin/StructureSection/Dialogs/List
 content types **and** roles. An editor in a separate class library appears only if that assembly is scanned
 (`builder.AddZauberCms(assembly)`).
 
-## Rich-text editor (ZauberCMS.RTE 3.x)
+## Rich-text editor (ZauberCMS.RTE)
 
 `ZauberCMSEditorProperty.razor` hosts `ZauberRichTextEditor`. Things that bite:
 
@@ -73,11 +73,20 @@ content types **and** roles. An editor in a separate class library appears only 
   `BuildEditorSettings`. Items are created per editor instance (ctor DI works; instance fields are safe).
 - Icons: use `IconSvg` (inline SVG, `stroke="currentColor"`, 24×24 viewBox). No icon font is shipped.
 - Settings types are immutable records — build `EditorSettings` once (not per render) with object initialisers.
-- The host page needs only `_content/ZauberCMS.RTE/css/zauber-editor.css`; the script is an ES module the component
-  imports itself. Don't add script tags for it.
+- The editor loads its own stylesheet and script; the host page needs no `<link>` or script tag for it. Admin
+  CSS cannot restyle the editor through bare element selectors — use the `--rte-*` tokens or class selectors
+  such as `.zauber-rte .rte-content p`.
 - **Content is sanitised in the browser with `HtmlPolicy` on load.** Tags outside the policy are stripped and lost on
-  the next save; `iframe`, `script`, `style`, `object`, `embed`, form controls and `svg` are always stripped
-  (ZA-134). `data-contentid` / `data-mediaid` survive. The server still sanitises separately.
+  the next save; `script`, `style`, `object`, `embed`, form controls and `svg` are always stripped.
+  `data-contentid` / `data-mediaid` survive. The server still sanitises separately.
+- **Video embeds are placeholders, not iframes.** The `embed` toolbar item stores
+  `<figure data-embed="youtube" data-embed-id="…" data-embed-url="…">`. An existing `<iframe>` from an allowed
+  provider is converted to a placeholder when the editor loads the value; an iframe from anywhere else is
+  removed with a warning toast. The provider list comes from `IRichTextEmbedService.Providers` (Core; default
+  YouTube and Vimeo), and the same service turns placeholders into players when the site renders the value
+  (see FrontEnd.md). A site adds a provider by registering its own `IRichTextEmbedService` — usually a subclass
+  of `DefaultRichTextEmbedService` overriding `Providers` — after `AddZauberCms`.
 - Theme is bound and starts light (the admin is light); `Auto` would follow the OS.
-- Known 3.0.0 workarounds live in `InsertContentLinkItem` (ZA-136) — remove them when 3.1 is taken.
+- `InsertContentLinkItem` selects the whole existing link *before* it opens the dialog, so the saved selection
+  covers it and the edited link replaces the old one.
 

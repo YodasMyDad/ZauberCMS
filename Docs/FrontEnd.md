@@ -65,7 +65,13 @@ Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the reques
   (`ZauberCMS.Web/ContentBlocks/FAQBlock.razor`). Render with `<RenderBlock Content="@block" TView="IContentBlockView"/>`.
 - Admin preview is a **separate** component implementing `IContentBlockPreview` (`ZauberCMS.Web/ContentBlockPreviews/`).
 - `IContentBlockView.RenderMode` is ignored by `RenderBlock` (only the unwired MVC view-component path reads it).
-- Rich text from content is HTML: render through `IHtmlSanitizerService` rather than a raw `MarkupString`.
+- Rich text from content is HTML: render through `IHtmlSanitizerService` rather than a raw `MarkupString`
+  (`@Sanitizer.SanitizeToMarkup(Content.GetValue<string>("Text"))`). The default sanitiser also turns the
+  editor's video placeholders into players: `<figure class="zauber-embed" data-embed="youtube"><iframe …>`,
+  560 × 315 by attribute. Make them responsive in the site's CSS, for example
+  `.zauber-embed iframe { width: 100%; height: auto; aspect-ratio: 16 / 9; }`. A site with its own
+  `IHtmlSanitizerService` must call `IRichTextEmbedService.Expand` on the sanitised HTML itself, or videos do
+  not show.
 - Details: [BlockListEditor.md](BlockListEditor.md).
 
 ## Interactivity

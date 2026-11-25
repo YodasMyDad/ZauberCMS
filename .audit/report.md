@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After the Phase 4 follow-ups (2026-11-25, RTE 4.0.0): Build PASS · Warnings: 0 · Tests: 259 (256 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 4 (2026-11-25): Build PASS · Warnings: 0 · Tests: 231 (228 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
@@ -17,10 +18,10 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 18 | 11 | 0 |
-| Medium | 58 | 13 | 0 |
-| Low | 38 | 1 | 0 |
+| Medium | 57 | 15 | 0 |
+| Low | 38 | 3 | 0 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), committed on `rework-2026`. Next free ID: ZA-141.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), committed on `rework-2026`. Next free ID: ZA-144.
 
 ## Open findings
 
@@ -634,30 +635,49 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
 - Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
-### ZA-134 [Medium/High] Rich-text editor 3.x always strips `iframe` (and other non-policy tags) from stored content
-
-- Where: `ZauberCMS.Components/Editors/ZauberCMSEditorProperty.razor` (uses the default `HtmlPolicy`); server policy `ZauberCMS.Core/Shared/Services/DefaultHtmlSanitizerService.cs:18` allows `iframe` "for video embeds" · Category: C · Since: 2026-11-25 (RTE 2.1.0 → 3.0.0)
-- Issue / Trigger: RTE 3.x sanitises the initial value in the browser. Tags outside `HtmlPolicy.AllowedTags` are removed on load and lost on the next save; `iframe`, `video`-style embeds via `object`/`embed`, `form` controls, `svg`, `style` and `script` are removed **whatever the policy says**. A site that pasted a YouTube iframe into a ZauberCMS RTE property in 4.x loses it the first time an editor opens and saves that content after upgrading. The sample database has no such content (checked); real sites may.
-- Fix (owner decision): **Owner decision 2026-11-25:** embeds come with **ZauberCMS.RTE 4**, which ships with the .NET 11 move (Roadmap Phase 12): an Embed toolbar item storing a `figure` + `data-embed-*` placeholder, allow-listed providers, and conversion of existing allow-listed iframes on load instead of stripping. The CMS then needs a render step that expands the placeholder to an iframe on the public site. Until then, extend `HtmlPolicy.AllowedTags` for any other tags the CMS wants to keep (`video`, `audio`, `source`, `mark`, …), and put the behaviour in the upgrade notes for the release. · Blocked by: owner decision; ties to the Phase 4 sanitiser-policy question (ZA-021).
-
 ### ZA-135 [Medium/High] Opening a rich-text value rewrites content links to relative URLs
 
 - Where: `ZauberCMS.Components/Editors/ZauberCMSEditorProperty.razor` (`ValidateEmbeddedReferences`, the `content.Url()` comparison); compare `Editors/Dialogs/ContentLinkDialog.razor:164-168`, which adds the leading `/` · Category: C · Since: 2026-11-25 (observed in the browser during the Phase 1 smoke test; the code predates the upgrade)
 - Issue / Trigger: The link dialog stores `href="/blog"`. On the next open, the validator compares that with `content.Url()` (`blog`, no leading slash), decides the URL changed, rewrites it to `href="blog"` and raises `ValueChanged`. After the next save the link is relative to the current page, so on any page that is not at the root it points to the wrong URL.
+- Also (moved from ZA-136): editing an existing content link on the Manual tab drops `data-contentid`, because the editor's `LinkInfo` does not carry it; the link then no longer follows the content's URL.
 - Fix: normalise both sides the same way (one shared helper for "site-relative URL of content"), and only rewrite when the normalised values differ. Add a test. · Blocked by: nothing (Phase 5).
-
-### ZA-136 [Low/High] Workarounds for ZauberCMS.RTE 3.0.0 to remove when 3.1 ships
-
-- Where: `ZauberCMS.Components/Editors/ToolbarItems/InsertContentLinkItem.cs`, `Editors/Dialogs/ContentLinkDialog.razor:141` · Category: F · Since: 2026-11-25
-- Issue / Trigger: Found in the browser on 3.0.0. (1) `GetLinkAtCursorAsync` throws when the cursor is not in a link (empty interop stream) — the item now checks `api.State.InLink` first. (2) `SelectLinkAtCursorAsync` after `RestoreSelectionAsync` (dialog closed) does not select the link, so the edited link nested inside the old one — the item now selects the link *before* opening the dialog. (3) `LinkInfo.Rel` is missing in 3.0.0, so editing an existing link does not pre-fill Rel. (4) Editing an existing content link on the Manual tab drops `data-contentid` (not new in 3.x).
-- Fix: when RTE 3.1 is published, bump both csprojs, restore `_rel = ExistingLink.Rel`, re-test (1) and (2) and drop the workarounds if fixed; carry `data-contentid` through the Manual tab. · Blocked by: RTE 3.1 release.
 
 ### ZA-140 [Medium/High] Services do no authorisation of their own
 - Where: every mutating method of `ZauberCMS.Core/*/Services/*Service.cs` (for example `ContentService.SaveContentAsync`, `MembershipService.SaveUserAsync`, `SeoService.SaveRedirectAsync`) · Category: D · Since: 2026-11-25 (split out of ZA-132 when its route half was fixed)
 - Issue / Trigger: Access is decided by the page that calls a service. Any code that can resolve a service (a front-end component, a plugin, an interactive component on a public page) can save or delete anything; the services never check who is signed in.
-- Fix: a permission model for service calls (who may do what, and how front-end and plugin code that saves on purpose declares it). · Blocked by: design decision — a role check inside the services would break sites and plugins that save content from the front end, so it needs an opt-in/opt-out design and the owner's call.
+- Fix (owner decision D10, 2026-11-25): an opt-in permission hook as its own phase (Roadmap Phase 10a). Services ask a replaceable permission service before a write; the default allows everything, a site can switch on a strict mode; front-end and plugin code that saves on purpose declares it. · Blocked by: design with the owner (Phase 10a); strict-by-default is a v5 question.
+
+### ZA-143 [Low/High] Requests that are not pages are treated as the home page by `CultureMiddleware`
+- Where: `ZauberCMS.Core/Middleware/CultureMiddleware.cs` (the skip list and `IsRootContent = slug == null`) · Category: C · Since: 2026-11-25 (found while tracing ZA-141)
+- Issue / Trigger: Any path that is not `/admin`, `/api`, `/account` or a file name, and has no `slug` route value, is looked up as the root content: `/_blazor`, `/_blazor/negotiate`, minimal-API endpoints a site adds, 404s. Each costs a (cached) content lookup, and the request gets the root content's language. A front-end interactive component therefore always runs in the root's language, also on a page in another language.
+- Fix: only resolve content when the matched endpoint is the content catch-all (its route pattern has the `slug` parameter). Give a front-end circuit the language of the page that started it (for example from the page URL the circuit reports), then drop the accidental root fallback. · Blocked by: nothing; a site with one non-default language relies on the fallback today, so do both halves together (Phase 5).
 
 ## Fixed this run / Resolved since last run
+
+- **Phase 4 follow-ups (owner request) — fixed 2026-11-25.** Build 0 warnings; 259 tests (256 pass, 3 skipped).
+  - **ZA-134 [Medium] Rich text lost iframes.** ZauberCMS.RTE 4.0.0: an allowed provider's iframe becomes an
+    embed placeholder on load, and the new `embed` toolbar item inserts one. `IRichTextEmbedService`
+    (`DefaultRichTextEmbedService`: YouTube, Vimeo; replaceable) gives the editor its provider list and expands
+    placeholders at render time; `DefaultHtmlSanitizerService` calls it after sanitising. Iframes from other
+    hosts are still removed by the editor (warning toast). Tests: `RichTextEmbedTests`. Browser: existing
+    iframe → card → saved as placeholder → player on the public page; new embed through the button.
+  - **ZA-136 [Low] RTE 3.0.0 workarounds.** Removed on 4.0.0: `GetLinkAtCursorAsync` no longer throws without
+    a link, `LinkInfo.Rel` is back (pre-filled in the dialog). Selecting the link before the dialog opens
+    stays, as the normal way to do it. Browser: create, re-edit, no nested link. The `data-contentid` point
+    moved to ZA-135.
+  - **ZA-141 [Medium] Admin ran in the language of the root content.** With a language set on the root content,
+    relative dates (Humanizer) and date/number formats in the admin were in that language: `CultureMiddleware`
+    resolved the `/_blazor` connection request as the home page and the circuit kept that culture.
+    `SectionLayout` set the culture only for its first render (and set the process-wide default culture from
+    a request). Now `AdminCultureCircuitHandler` applies `Zauber:AdminDefaultLanguage` to every activity of a
+    circuit whose address is under `/admin`, and the middleware does the same for `/admin` requests. Tests:
+    `RedirectAndCultureTests`. Browser: dashboard dates in English with a Spanish root (Spanish before).
+  - **ZA-142 [Low] A new redirect did nothing for up to five minutes.** `RedirectMiddleware` keeps a compiled
+    list in `IMemoryCache` for five minutes and nothing cleared it; a deleted redirect also kept working.
+    `SeoService` now drops the list on save and delete (per process). Seen in the browser as a 404 on a
+    just-created redirect; test in `RedirectAndCultureTests`.
+  - Redirect editor (no ID; owner decision D11): a full http/https target is kept as typed
+    (`RedirectTarget.Normalize`), an invalid one shows a message. Tests in `RichTextEmbedTests`.
 
 - **Roadmap Phase 4 — access control & identity — fixed 2026-11-25.** Build 0 warnings; 231 tests (228 pass, 3
   skipped for other open findings). Owner decisions D6–D9 in the roadmap. "Browser" below means the dev site on a

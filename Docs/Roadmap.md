@@ -7,10 +7,11 @@
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-140`).
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-143`).
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
-  (access control & identity). **114 open findings** (0 Critical, 18 High, 58 Medium, 38 Low). **Next: Phase 5.**
+  (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
+  **113 open findings** (0 Critical, 18 High, 57 Medium, 38 Low). **Next: Phase 5.**
 - Findings come from reading code + a real build/package scan. Nothing was run in a browser or against
   PostgreSQL/Redis — items marked "needs repro" must be reproduced before or while fixing.
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -28,6 +29,9 @@
 | D7 | **Sanitiser: `<iframe>` only from a configurable host allow-list** (default YouTube, Vimeo); `data:` URLs only for images. | ZA-021, ZA-134 |
 | D8 | External sign-up (ZA-002): fix with unit tests now; the owner tests against a real provider later. Until then it is "not verified live". | ZA-002 |
 | D9 | Fix the duplicated `<RadzenComponents>` (ZA-138) in Phase 4. | ZA-138 |
+| D10 | **Service authorisation is an opt-in permission hook, done as its own later phase** (Phase 10a): services ask a replaceable permission service before a write; the default allows everything, a site can switch on a strict mode. A strict default is a question for the major version. | ZA-140 |
+| D11 | **Redirects may point at another site** (a full http/https address). | ZA-116 area |
+| D12 | **ZauberCMS.RTE 4 is taken now on .NET 10** (it targets net10.0 and net11.0), not at the .NET 11 move. | ZA-134, ZA-136 |
 
 ## Working rules for the rework
 
@@ -56,9 +60,7 @@
   3.0.0, Microsoft.* 10.0.15, …). Build has 0 warnings; the vulnerability scan is clean. What was and was not
   tested is listed under ZA-130 in the audit report's "Fixed" section — read it before relying on an untested path.
 - Held back on purpose: **Serilog.AspNetCore** stays on 10.0.0 (11.0.0 depends on Microsoft.Extensions 11.x) → Phase 12.
-- **ZauberCMS.RTE**: migrated to the 3.x API on 3.0.0. A 3.x update is due shortly — the owner will say when to
-  take it; then remove the 3.0.0 workarounds (ZA-136). 3.x strips iframes from stored content (ZA-134); **embeds
-  arrive with RTE 4 at the .NET 11 move (Phase 12)** — owner decision.
+- **ZauberCMS.RTE**: migrated to the 3.x API on 3.0.0 in this phase; now on 4.0.0 (see "After Phase 4").
 - **Blazored.Modal** (deprecated, repo archived) is now **vendored**: its source lives in `ZauberCMS.Core/Modal/`
   (same namespaces), the NuGet package is gone, and it is ours to maintain (ZA-133). Radzen was ruled out because its
   side dialogs cannot nest. Release notes must tell sites to drop any direct `Blazored.Modal` package reference.
@@ -122,10 +124,43 @@
 - Not verified: external sign-up against a real provider (owner will test, D8); anything behind a real proxy;
   an SVG upload through the admin UI (tested at the storage provider); tooltips and dialogs outside the Content
   section after the `<RadzenComponents>` change.
-- Seen, not changed: the redirect editor puts a `/` in front of whatever is typed, so an external target cannot
-  be entered in the UI. The admin UI showed Spanish labels on the scratch database after a language was set on
-  the root content (first seen in Phase 3). Both are for the owner to judge.
+- Seen in this phase and handled afterwards ("After Phase 4"): the redirect editor's `/` prefix and the
+  Spanish text in the admin.
 - Also added in this phase, at the owner's request: the "pluggable and updatable" core principle in `AGENTS.md`.
+
+### After Phase 4 — owner follow-ups — DONE 2026-11-25
+- **ZauberCMS.RTE 4.0.0** (D12). Both csprojs bumped; the stylesheet link is gone from `App.razor` (the editor
+  loads it). The CMS toolbar has the `embed` item. New `IRichTextEmbedService` / `DefaultRichTextEmbedService`
+  (Core, replaceable): one provider list for the editor and for rendering; the default sanitiser expands
+  placeholders after sanitising, so a site that renders rich text through `IHtmlSanitizerService` shows videos
+  with no change. **ZA-134 fixed. ZA-136 fixed** (the 3.0.0 link workarounds are gone, `Rel` is pre-filled
+  again); its last point, `data-contentid` lost when a content link is edited on the Manual tab, moved to ZA-135.
+  Not taken: the other new toolbar buttons (indent, colours, find/replace, fullscreen, …) — owner's choice.
+  The "3.1 upgrade brief" the 4.0 brief refers to was never given to this session; the package README was used.
+- **Redirect editor** (D11): a full http/https target is kept as typed, anything else becomes a local path
+  (`RedirectTarget.Normalize`), an invalid target shows a message. Found on the way and fixed (**ZA-142**): the
+  redirect middleware kept its compiled list for five minutes, so a new redirect did nothing and a deleted one
+  kept working until then; save and delete now drop the list (per process).
+- **Spanish text in the admin** (**ZA-141**, fixed): relative dates and number/date formats in the admin followed
+  the language of the root content, because `CultureMiddleware` treats the `/_blazor` connection request as a
+  request for the home page and the circuit keeps that culture. The admin now always runs in
+  `Zauber:AdminDefaultLanguage` (`AdminCulture`, `AdminCultureCircuitHandler`, and the middleware for `/admin`
+  requests). The two layouts no longer set the process-wide default culture. Left open as **ZA-143**: front-end
+  interactive components still get the root content's language, whatever page they are on.
+- **ZA-140**: decided (D10), scheduled as Phase 10a.
+- Build 0 warnings; 259 tests (256 pass, 3 skipped as before).
+- Seen in the browser on the scratch database: existing YouTube iframe → embed card, foreign iframe → warning
+  toast, new Vimeo embed through the button, block and page save, stored HTML holds placeholders only, public
+  page shows both players; link create / re-edit (Rel pre-filled, no nested link); external, local and refused
+  redirect targets, a new redirect working at once; admin dates in English with a Spanish root.
+- Not verified: two editors on one page and an editor in a *nested* block side panel (one editor in a block
+  side panel was checked); dark theme; a site with its own `IHtmlSanitizerService`.
+- Release notes: content with YouTube/Vimeo iframes is rewritten to placeholders the next time an editor opens
+  and saves it, and iframes from other hosts are then lost (they are still rendered until that save if the host
+  is in `Zauber:HtmlSanitizer:AllowedIframeHosts`); a custom `IHtmlSanitizerService` must call
+  `IRichTextEmbedService.Expand`; rendered embeds are `figure.zauber-embed`; the admin ignores the browser's
+  and the content's language; public API additions `IRichTextEmbedService`, `DefaultRichTextEmbedService`,
+  `AdminCulture`, `AdminCultureCircuitHandler`, `RedirectTarget.Normalize`, `RedirectMiddleware.ClearCache`.
 
 ### Phase 5 — Content integrity
 ZA-046 (duplicate URL breaks front-end), ZA-047 (drafts discarded), ZA-048 (recycle parent/children),
@@ -163,6 +198,13 @@ ZA-057, ZA-061…ZA-064, ZA-056, ZA-068, ZA-069, ZA-071, ZA-073 (queries/caching
 `PaginatedList` async refactor (must land together); ZA-083, ZA-084, ZA-086, ZA-080; then the
 `IServiceScopeFactory` → `IDbContextFactory` / single-context refactor (ZA-011).
 
+### Phase 10a — Service authorisation (D10)
+ZA-140. Design first, with the owner: a replaceable permission service the Core services ask before a write
+(who, which entity, which action), default "allow" so existing sites and front-end code that saves on purpose
+keep working, a strict mode a site can switch on, and the way front-end or plugin code declares an intended
+write. This is also the base for non-admin back-office roles (editors). Whether strict becomes the default is
+a v5 question (Phase 11).
+
 ### Phase 11 — Engineering baseline, API clean-up, v5
 `Directory.Build.props`, analyzers, `.editorconfig`, `.gitattributes`, CI hardening (ZA-089, ZA-109), packaging
 (ZA-087, ZA-094, ZA-118, ZA-119), error handling (ZA-097, ZA-098), then the deliberate breaking batch for v5:
@@ -170,8 +212,7 @@ internalise non-contract types (ZA-092), move Radzen-typed contracts out of Core
 path (ZA-090), `ICurrentUserAccessor` (ZA-093), naming conventions (ZA-124). Remaining Mediums/Lows by area.
 
 ### Phase 12 — .NET 11 (D4)
-Retarget to `net11.0`, move Microsoft/EF/Npgsql packages to 11.x, Serilog.AspNetCore 11, **ZauberCMS.RTE 4** (adds
-embeds — then add the CMS render step that expands embed placeholders on the public site, closing ZA-134), full retest on SQLite, SQL Server, PostgreSQL and
+Retarget to `net11.0`, move Microsoft/EF/Npgsql packages to 11.x, Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 
 Owner instructions for this phase (2026-11-25):

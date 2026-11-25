@@ -62,11 +62,9 @@
 
     protected override void OnInitialized()
     {
-        var cultureInfo = new CultureInfo(Settings.Value.AdminDefaultLanguage);
-        CultureInfo.CurrentCulture = cultureInfo;
-        CultureInfo.CurrentUICulture = cultureInfo;
-        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+        // CultureMiddleware (requests) and AdminCultureCircuitHandler (circuits) keep the admin in its language;
+        // this covers the first render. It must not set the process-wide default culture.
+        ZauberCMS.Core.Languages.AdminCulture.Apply(Settings.Value);
     }
     
     private string? SectionAlias { get; set; }

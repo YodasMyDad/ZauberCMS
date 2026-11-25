@@ -125,6 +125,10 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
   `/admin` that has no `[Authorize]`/`[AllowAnonymous]` of its own as admin-only, and the middleware enforces
   `GlobalSettings.AllowedAdminIpAddress`. A plugin page for another role declares its own `[Authorize(Roles = …)]`.
 - Behind a reverse proxy set `Zauber:ForwardedHeaders`; set `Zauber:SiteUrl` on any site that sends email.
+- The admin always runs in `Zauber:AdminDefaultLanguage` (`CultureMiddleware` for requests,
+  `AdminCultureCircuitHandler` for circuits); front-end pages run in the language of their content.
+- Rich text stores video embeds as placeholders; `IRichTextEmbedService` (replaceable) owns the provider list
+  and expands them at render time, through the default `IHtmlSanitizerService`.
 
 ## High-risk areas — read the doc before editing
 

@@ -85,10 +85,12 @@
             return;
         }
         
-        // Sanity check
-        if (!Redirect.ToUrl!.StartsWith("/"))
+        // A full http(s) address is an external target and is kept as typed; anything else becomes a local path.
+        Redirect.ToUrl = ZauberCMS.Core.Seo.RedirectTarget.Normalize(Redirect.ToUrl);
+        if (!ZauberCMS.Core.Seo.RedirectTarget.IsValid(Redirect.ToUrl))
         {
-            Redirect.ToUrl = $"/{Redirect.ToUrl}";
+            NotificationService.ShowErrorNotification("To url must be a path on this site (/new-page) or a full http or https address");
+            return;
         }
 
         // Set to null if any selected

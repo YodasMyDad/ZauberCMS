@@ -13,7 +13,9 @@ namespace ZauberCMS.Core.Shared.Services;
 /// <item>scripts, event handlers and unknown schemes are removed (library defaults);</item>
 /// <item><c>&lt;iframe&gt;</c> is kept only when its <c>src</c> is an https address on an allowed host
 /// (<c>Zauber:HtmlSanitizer:AllowedIframeHosts</c>, by default YouTube and Vimeo);</item>
-/// <item><c>data:</c> addresses are kept only as the source of an <c>&lt;img&gt;</c> holding a bitmap.</item>
+/// <item><c>data:</c> addresses are kept only as the source of an <c>&lt;img&gt;</c> holding a bitmap;</item>
+/// <item>video embed placeholders written by the rich text editor are turned into players by
+/// <see cref="IRichTextEmbedService"/> after sanitising, so the result is ready to render.</item>
 /// </list>
 /// </summary>
 public partial class DefaultHtmlSanitizerService : IHtmlSanitizerService
@@ -24,13 +26,15 @@ public partial class DefaultHtmlSanitizerService : IHtmlSanitizerService
 
     private readonly HtmlSanitizer _sanitizer;
     private readonly HashSet<string> _iframeHosts;
+    private readonly IRichTextEmbedService _embeds;
 
     public DefaultHtmlSanitizerService() : this(null)
     {
     }
 
-    public DefaultHtmlSanitizerService(IOptions<ZauberSettings>? settings)
+    public DefaultHtmlSanitizerService(IOptions<ZauberSettings>? settings, IRichTextEmbedService? embeds = null)
     {
+        _embeds = embeds ?? new DefaultRichTextEmbedService();
         _iframeHosts = new HashSet<string>(
             (settings?.Value.HtmlSanitizer.AllowedIframeHosts ?? DefaultIframeHosts)
             .Where(host => !string.IsNullOrWhiteSpace(host))
@@ -76,7 +80,8 @@ public partial class DefaultHtmlSanitizerService : IHtmlSanitizerService
             return string.Empty;
         }
 
-        return _sanitizer.Sanitize(html);
+        // Placeholders are expanded after sanitising: only they become iframes, and only for known providers.
+        return _embeds.Expand(_sanitizer.Sanitize(html));
     }
 
     /// <summary>

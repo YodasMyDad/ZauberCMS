@@ -238,6 +238,8 @@ public static class ZauberSetup
         builder.Services.AddScoped(typeof(ValidateService<>));
         builder.Services.AddScoped<ICacheService, DefaultCacheService>();
         builder.Services.AddScoped<IHtmlSanitizerService, DefaultHtmlSanitizerService>();
+        builder.Services.AddSingleton<IRichTextEmbedService, DefaultRichTextEmbedService>();
+        builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Languages.AdminCultureCircuitHandler>();
         builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
         builder.Services.AddSingleton<RefreshSignInTicketService>();
         // How long a cookie is trusted before its security stamp is compared with the database again. The
