@@ -62,3 +62,22 @@ that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/Edit
 Editors appear in the "Add Property" panel (`Admin/StructureSection/Dialogs/ListContentTypeProperties.razor`) for
 content types **and** roles. An editor in a separate class library appears only if that assembly is scanned
 (`builder.AddZauberCms(assembly)`).
+
+## Rich-text editor (ZauberCMS.RTE 3.x)
+
+`ZauberCMSEditorProperty.razor` hosts `ZauberRichTextEditor`. Things that bite:
+
+- **Toolbar items are registered, not auto-discovered by the editor.** `ZauberSetup` calls
+  `AddZauberRte(o => o.AddToolbarItemsFromAssembly(...))` for every discovery assembly, so a public `IToolbarItem`
+  / `ToolbarItemBase` in a scanned assembly still appears — but only if its id is also in the layout built in
+  `BuildEditorSettings`. Items are created per editor instance (ctor DI works; instance fields are safe).
+- Icons: use `IconSvg` (inline SVG, `stroke="currentColor"`, 24×24 viewBox). No icon font is shipped.
+- Settings types are immutable records — build `EditorSettings` once (not per render) with object initialisers.
+- The host page needs only `_content/ZauberCMS.RTE/css/zauber-editor.css`; the script is an ES module the component
+  imports itself. Don't add script tags for it.
+- **Content is sanitised in the browser with `HtmlPolicy` on load.** Tags outside the policy are stripped and lost on
+  the next save; `iframe`, `script`, `style`, `object`, `embed`, form controls and `svg` are always stripped
+  (ZA-134). `data-contentid` / `data-mediaid` survive. The server still sanitises separately.
+- Theme is bound and starts light (the admin is light); `Auto` would follow the OS.
+- Known 3.0.0 workarounds live in `InsertContentLinkItem` (ZA-136) — remove them when 3.1 is taken.
+

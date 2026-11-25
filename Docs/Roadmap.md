@@ -7,9 +7,9 @@
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run. **131 open findings** (1 Critical, 29 High,
-  64 Medium, 37 Low), IDs `ZA-001`…`ZA-131`.
-- **No code has been changed yet.** Nothing in the audit report is fixed.
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-136`).
+- **Phase 0 done** (ZA-044) and **Phase 1 done** (ZA-102, ZA-130: all packages on their latest .NET 10 versions).
+  **133 open findings** (0 Critical, 28 High, 67 Medium, 38 Low). **Next: Phase 2.**
 - Findings come from reading code + a real build/package scan. Nothing was run in a browser or against
   PostgreSQL/Redis — items marked "needs repro" must be reproduced before or while fixing.
 - No test project exists.
@@ -26,7 +26,9 @@
 
 ## Working rules for the rework
 
-1. One phase (or one finding group) per change; keep diffs reviewable. Commit to `rework-2026` only when asked.
+1. One phase (or one finding group) per change; keep diffs reviewable. **Commit to `rework-2026` at the end of each
+   phase** (owner instruction 2026-11-25), once it builds and is verified; push only when asked. Never commit
+   `ZauberCMS.Web/app.db`.
 2. Every fix: follow [Standards.md](Standards.md), grep all callers of anything whose signature/default changes,
    `dotnet build ZauberCMS.sln -c Release` clean, and state how it was verified (run the app for UI behaviour).
 3. After fixing, update `.audit/report.md` (move the finding to "Fixed", keep the ID) and any doc the change makes
@@ -37,23 +39,26 @@
 
 ## Phases (in order)
 
-### Phase 0 — Critical hotfix
-- **ZA-044**: add `[Authorize(Roles = Admin)]` to the three `/admin/seo/*` pages (or `Seo/_Imports.razor`).
-  ⚠ This hole is in the **published 4.1.3 packages**. Ask the owner whether to ship it as a hotfix on
-  `main-static` now rather than waiting for the rework.
+### Phase 0 — Critical hotfix — DONE 2026-11-25
+- **ZA-044** fixed: `[Authorize(Roles = Admin)]` added to the three `/admin/seo/*` pages. Verified by running the
+  app (anonymous requests redirect to login); details in the audit report.
+  ⚠ The hole is still in the **published 4.1.3 packages**: the fix is only on `rework-2026`. Shipping it as a
+  hotfix on `main-static` is the owner's call (open question below).
 
-### Phase 1 — Dependencies to latest on .NET 10 (D4)
-- Patch/minor first: Microsoft.* 10.0.7 → latest 10.0.x, Npgsql EF → latest 10.0.x, HtmlSanitizer (vulnerable),
-  HtmlAgilityPack, FluentValidation, DynamicLinq, BlazorMonaco, TinyMCE.Blazor. Re-run
-  `dotnet list package --vulnerable --include-transitive` until clean (ZA-102); pin transitive packages if needed.
-- Then majors that still target .NET 10, each as its own change: **Radzen.Blazor** (10.3.2 → latest; read its
-  breaking-change notes — Core's public interfaces expose Radzen types, ZA-091), MailKit 5, HtmlSanitizer 11,
-  ZauberCMS.RTE 3, Serilog.AspNetCore. Do **not** take 11.0.x Microsoft/EF packages yet.
-- **Blazored.Modal**: `dotnet list package --outdated` reports "Not found at the sources". Investigate (unlisted?
-  abandoned?) and propose: keep pinned, fork, or replace with Radzen dialogs/side panels. Owner decides.
-- Good moment to add `Directory.Packages.props` (central versions) + `global.json` — optional, own commit.
-- Exit: build clean with 0 vulnerability warnings; app runs; manual smoke test of admin (content, media, users,
-  structure, settings, SEO) and front-end on SQLite.
+### Phase 1 — Dependencies to latest on .NET 10 (D4) — DONE 2026-11-25
+- Everything is on its latest version that runs on .NET 10 (Radzen 13, MailKit 5, HtmlSanitizer 11, ZauberCMS.RTE
+  3.0.0, Microsoft.* 10.0.15, …). Build has 0 warnings; the vulnerability scan is clean. What was and was not
+  tested is listed under ZA-130 in the audit report's "Fixed" section — read it before relying on an untested path.
+- Held back on purpose: **Serilog.AspNetCore** stays on 10.0.0 (11.0.0 depends on Microsoft.Extensions 11.x) → Phase 12.
+- **ZauberCMS.RTE**: migrated to the 3.x API. When **3.1** is published, bump it and remove the 3.0.0 workarounds
+  (ZA-136). 3.x strips iframes and other non-policy tags from stored content (ZA-134) — owner decision needed
+  before a release.
+- **Blazored.Modal** is deprecated/unlisted and its repo archived (ZA-133). **Decision: keep it** — the admin needs
+  nested right-hand slide-in panels and Radzen side dialogs cannot nest (checked in Radzen 13.3 source). Stay pinned;
+  vendor its source into Components if .NET 11 or a bug forces it.
+- Not done (optional, own commit): `Directory.Packages.props` + `global.json` — now part of Phase 11.
+- Still to smoke-test by hand when convenient: media insert in the editor (sample DB has no media), two editors on
+  one page, the user editor, large content, sending an email.
 
 ### Phase 2 — Test foundation
 - Create `tests/ZauberCMS.Core.Tests` (xUnit, EF Core SQLite) and wire into CI build job (PR validation).
@@ -66,13 +71,14 @@ error), ZA-103 (email confirmation), ZA-058 (layout re-render wipes edits), ZA-0
 ### Phase 4 — Access control & identity
 ZA-053 (restricted media public when recycled / case bypass), ZA-052 (`refreshsignin`), ZA-002 (external sign-up —
 needs a live provider test), ZA-059 (lockout), ZA-019 + ZA-020 (SSRF / dynamic LINQ), ZA-003 (host-header links),
-ZA-060 (proxy headers, IP allow-list in middleware), ZA-021/ZA-022/ZA-005 (sanitiser, uploads, SVG — some need
+ZA-060 (proxy headers, IP allow-list in middleware), ZA-132 (fail-closed `/admin/**` authorisation, service role
+checks, redirect-target validation), ZA-021/ZA-022/ZA-005 (sanitiser, uploads, SVG — some need
 owner decisions; ask).
 
 ### Phase 5 — Content integrity
 ZA-046 (duplicate URL breaks front-end), ZA-047 (drafts discarded), ZA-048 (recycle parent/children),
 ZA-049 (copy shares draft), ZA-065, ZA-066, ZA-067 (publish/slug/nested-URL leaks), ZA-070, ZA-074, ZA-075, ZA-079,
-ZA-016.
+ZA-016, ZA-135 (rich-text content links rewritten to relative URLs).
 
 ### Phase 6 — PostgreSQL & Redis made real (D1)
 - Stand up PostgreSQL and Redis locally (containers) and run the app on each; add them to CI if feasible.
@@ -117,8 +123,8 @@ Redis, then release planning with the owner.
 
 ## Open questions for the owner
 
-- Hotfix ZA-044 on `main-static` now? (Phase 0)
-- Blazored.Modal: keep, fork or replace? (Phase 1, after investigation)
+- Release the ZA-044 fix as a hotfix from `main-static` now? (fixed on `rework-2026` only; 4.1.3 is still exposed)
+- Rich-text editor 3.x strips iframes/embeds from existing content on the next save (ZA-134): how should embeds work?
 - Installer scope (Phase 7).
 - SVG uploads, sanitiser policy for `iframe`/`data:`, CAPTCHA/registration switch (Phase 4).
 - Is a v5 major acceptable as the vehicle for the breaking changes in Phase 11?

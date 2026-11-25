@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
 > browser or against PostgreSQL/Redis**, so items marked as needing a repro are reasoned, not observed. Critical and
@@ -12,20 +13,14 @@ Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no 
 
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
-| Critical | 1 | 0 | 0 |
-| High | 29 | 0 | 0 |
-| Medium | 64 | 0 | 0 |
-| Low | 37 | 0 | 0 |
+| Critical | 0 | 1 | 0 |
+| High | 28 | 1 | 0 |
+| Medium | 67 | 1 | 0 |
+| Low | 38 | 0 | 0 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Nothing in this report has been fixed yet.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102 and ZA-130 (Phase 1), committed on `rework-2026`. Next free ID: ZA-137.
 
 ## Open findings
-
-### ZA-044 [Critical/High] SEO admin pages have no authorisation
-
-- Where: `ZauberCMS.Components/Seo/SeoRedirects.razor:1`, `ZauberCMS.Components/Seo/SeoSitemaps.razor:7`, `ZauberCMS.Components/Seo/PageChecker.razor:1` (routes `ZauberCMS.Core/Urls.cs:43-45`) · Category: D · Since: 2026-11-25
-- Issue / Trigger: The three `/admin/seo/*` pages live outside `Components/Admin/`, so they don't inherit the only `[Authorize]` in the solution (`Admin/_Imports.razor:3`); there is no fallback policy and `SectionLayout` does no auth check. An anonymous visitor can open `/admin/seo/redirects`, save a redirect from `/` to an external host (served as a 301 to everyone by `RedirectMiddleware.cs:146-149`), edit sitemaps, and reach ZA-019 and ZA-020. Verified by reading; not run.
-- Fix: add `@attribute [Authorize(Roles = Constants.Roles.AdminRoleName)]` to the three pages (or a `Seo/_Imports.razor`); then a fallback policy for `/admin/**`, role checks in mutating services, and local-only validation of redirect targets. · Blocked by: nothing — fix first.
 
 ### ZA-001 [High/High] Recycle-bin Restore and Final Delete silently do nothing (regression)
 
@@ -74,11 +69,13 @@ Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no 
 
 - Where: `ZauberCMS.Components/Seo/SeoChecker.razor:53-56`, `Seo/Checks/ResponseStatusCheck.cs:23`, `BrokenLinksCheck.cs:61` · Category: D · Blocked by: allow-list policy.
 - Reconciled 2026-11-25: raised to High — reachable **without login** via ZA-044; also blocks the circuit (sync HTTP, no timeout).
+- Update 2026-11-25: ZA-044 fixed, so this is admin-only again. Still open; re-rate severity at the next audit.
 
 ### ZA-020 [High/High] Dynamic LINQ from browser strings without allow-list
 
 - Where: `ZauberCMS.Core/Data/Services/DataService.cs:137,143`, `Languages/Services/LanguageService.cs:402,408` · Category: D
 - Reconciled 2026-11-25: raised to High — the `DataService` path is reachable anonymously through the SEO redirects grid (ZA-044).
+- Update 2026-11-25: ZA-044 fixed, so this is admin-only again. Still open; re-rate severity at the next audit.
 
 ### ZA-034 [High/High] Block list: Cancel in a nested modal does not discard its changes (data loss)
 
@@ -199,13 +196,6 @@ Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no 
 - Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:19,90-95`; `ZauberCMS.Components/Admin/StructureSection/ContentTypeEditor.razor:360-408`, `ZauberCMS.Components/Admin/UsersSection/UserEditor.razor:149-160`, `ZauberCMS.Components/Admin/UsersSection/RoleEditor.razor:147-156` · Category: E · Since: 2026-11-25
 - Issue / Trigger: `<CascadingValue Value="@this">` is not `IsFixed`, so every layout re-render re-runs `OnParametersSetAsync` on all consumers; these three editors re-fetch their model there with no guard. Edit a content type, toggle the sidebar → edits gone. Read, not reproduced.
 - Fix: `IsFixed="true"`; load in `OnInitializedAsync` or guard on a changed id. · Blocked by: nothing.
-
-### ZA-102 [High/High] Four vulnerable NuGet packages (all 70 build warnings)
-
-- Where: `ZauberCMS.Core/ZauberCMS.Core.csproj` (HtmlSanitizer direct); transitive in every project · Category: D/F · Since: 2026-11-25
-- Issue / Trigger: HtmlSanitizer 9.0.892 (High, GHSA-464h-4j8h-q5mf — the HTML sanitiser itself), AngleSharp 0.17.1 (Moderate), SQLitePCLRaw.lib.e_sqlite3 2.1.11 (High), System.Security.Cryptography.Pkcs 10.0.0 (High + Moderate). These flow to every consumer site.
-- Fix: HtmlSanitizer → 9.0.967 (patch) or 11.x; Microsoft packages 10.0.7 → 10.0.15 (may lift the Pkcs and SQLite natives — check after bumping); pin transitive versions where needed; add `--vulnerable` to CI. · Blocked by: nothing for patch bumps.
-- Owner decision 2026-11-25: update to the latest versions that run on .NET 10 first (Roadmap Phase 1).
 
 ### ZA-008 [Medium/Medium] Block-list parent version snapshot taken before blocks are saved
 
@@ -566,13 +556,6 @@ Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no 
 - Issue / Trigger: The token is Base64Url-encoded when sent but passed raw to `ConfirmEmailAsync`; `IsEmailUpdate` is ignored. `SignInRequireConfirmedAccount = true` is therefore unusable (keeps ZA-023 open).
 - Fix: decode before confirming; handle the change-email branch. · Blocked by: nothing.
 
-### ZA-130 [Medium/High] Dependencies behind: servicing patches, Radzen three majors, Blazored.Modal not found upstream
-
-- Where: all csprojs · Category: F · Since: 2026-11-25
-- Issue / Trigger: Microsoft packages 10.0.7 → 10.0.15; Npgsql EF 10.0.1 → 10.0.4; Radzen.Blazor 10.3.2 → 13.3.0; MailKit 5.0.0, ZauberCMS.RTE 3.0.0 and HtmlSanitizer 11.x majors available; .NET 11 packages are out. `dotnet list package --outdated` reports Blazored.Modal 7.3.1 as "Not found at the sources" — check whether it has been unlisted or abandoned.
-- Fix: patch bumps now; plan Radzen and the modal dependency as their own changes. · Blocked by: product decision on majors.
-- Owner decision 2026-11-25: bring everything, Radzen included, to the latest versions that run on .NET 10, test, and only then move to .NET 11 (Roadmap Phases 1 and 12). Blazored.Modal status still to be investigated.
-
 ### ZA-025 [Low/High] Duplicate tree alias constant
 
 - Where: `ZauberCMS.Core/Constants.cs:89` (`StructureElementTypeTree == "StructureContentTypeTree"`) · Category: C
@@ -752,8 +735,65 @@ Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no 
 - Where: repo root · Category: F · Since: 2026-11-25
 - Issue / Fix: No test project, `Directory.Build.props`, central package management, `.editorconfig`, `global.json` or `.gitattributes`; CI runs no tests or vulnerability scan. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
+### ZA-132 [Medium/High] Admin authorisation has no defence in depth
+
+- Where: `ZauberCMS.Components/Admin/_Imports.razor:3` (the only folder-wide `[Authorize]`), `ZauberCMS/Components/Routes.razor:10`, `ZauberCMS.Core/ZauberSetup.cs` (no fallback policy), `ZauberCMS.Core/Seo/` redirect save path · Category: D · Since: 2026-11-25 (split out of ZA-044)
+- Issue / Trigger: ZA-044 was possible because admin protection is one attribute per folder. Any future `/admin/*` page added outside `Components/Admin/` (in this repo or a consumer plugin) is public unless its author remembers the attribute; mutating services do no role check of their own; redirect targets may be external hosts.
+- Fix: authorisation policy/convention covering every `/admin/**` route (fail closed), role checks in mutating services, validate redirect targets (local paths unless explicitly allowed). · Blocked by: design choice — affects consumer plugin pages (Roadmap Phase 4).
+
+### ZA-133 [Medium/High] Blazored.Modal is deprecated and its repository archived
+
+- Where: `Blazored.Modal` 7.3.1 in `ZauberCMS.Core`, `ZauberCMS.Components`, `ZauberCMS` csprojs; used for every admin side panel and dialog · Category: F · Since: 2026-11-25 (split out of ZA-130)
+- Issue / Trigger: Investigated in Phase 1. On nuget.org 7.3.1 is the last version, is **unlisted** and marked **deprecated (Legacy)**; the GitHub repo (`Blazored/Modal`) is **archived** (last push 2024-06). It targets `net8.0` only. It still restores and works on .NET 10 with Radzen 13 (smoke-tested), but will get no fixes, and `IModalService`/`IModalReference` appear in public CMS APIs (context menus, toolbar items, dialogs).
+- Owner requirement 2026-11-25: the admin relies on **nested** panels that slide in from the right (modal in modal in modal for nested block-list editing; closing the top one reveals the one beneath). Any replacement must do that and look as good.
+- Investigated 2026-11-25 (Radzen.Blazor 13.3.0 source, `DialogService.cs`): Radzen **side dialogs cannot nest** — there is a single side-dialog slot and `OpenSide*` first calls `CloseSideSilently()`, closing the one already open. Radzen's centred dialogs do stack, but they are not side panels. So Radzen is **not** a drop-in replacement.
+- Fix: keep Blazored.Modal (decision: not replaced by Radzen). To remove the dead-dependency risk, vendor its MIT source into `ZauberCMS.Components` (it is small) so it can be retargeted and fixed; do it when the .NET 11 retest (Phase 12) or a bug forces it, or with v5. Until then stay pinned on 7.3.1. · Blocked by: nothing now.
+
+### ZA-134 [Medium/High] Rich-text editor 3.x always strips `iframe` (and other non-policy tags) from stored content
+
+- Where: `ZauberCMS.Components/Editors/ZauberCMSEditorProperty.razor` (uses the default `HtmlPolicy`); server policy `ZauberCMS.Core/Shared/Services/DefaultHtmlSanitizerService.cs:18` allows `iframe` "for video embeds" · Category: C · Since: 2026-11-25 (RTE 2.1.0 → 3.0.0)
+- Issue / Trigger: RTE 3.x sanitises the initial value in the browser. Tags outside `HtmlPolicy.AllowedTags` are removed on load and lost on the next save; `iframe`, `video`-style embeds via `object`/`embed`, `form` controls, `svg`, `style` and `script` are removed **whatever the policy says**. A site that pasted a YouTube iframe into a ZauberCMS RTE property in 4.x loses it the first time an editor opens and saves that content after upgrading. The sample database has no such content (checked); real sites may.
+- Fix (owner decision): decide how embeds are supported (a dedicated embed block/toolbar item that stores a URL, or an RTE change), extend `HtmlPolicy.AllowedTags` for any other tags the CMS wants to keep (`video`, `audio`, `source`, `mark`, …), and put the behaviour in the upgrade notes for the release. · Blocked by: owner decision; ties to the Phase 4 sanitiser-policy question (ZA-021).
+
+### ZA-135 [Medium/High] Opening a rich-text value rewrites content links to relative URLs
+
+- Where: `ZauberCMS.Components/Editors/ZauberCMSEditorProperty.razor` (`ValidateEmbeddedReferences`, the `content.Url()` comparison); compare `Editors/Dialogs/ContentLinkDialog.razor:164-168`, which adds the leading `/` · Category: C · Since: 2026-11-25 (observed in the browser during the Phase 1 smoke test; the code predates the upgrade)
+- Issue / Trigger: The link dialog stores `href="/blog"`. On the next open, the validator compares that with `content.Url()` (`blog`, no leading slash), decides the URL changed, rewrites it to `href="blog"` and raises `ValueChanged`. After the next save the link is relative to the current page, so on any page that is not at the root it points to the wrong URL.
+- Fix: normalise both sides the same way (one shared helper for "site-relative URL of content"), and only rewrite when the normalised values differ. Add a test. · Blocked by: nothing (Phase 5).
+
+### ZA-136 [Low/High] Workarounds for ZauberCMS.RTE 3.0.0 to remove when 3.1 ships
+
+- Where: `ZauberCMS.Components/Editors/ToolbarItems/InsertContentLinkItem.cs`, `Editors/Dialogs/ContentLinkDialog.razor:141` · Category: F · Since: 2026-11-25
+- Issue / Trigger: Found in the browser on 3.0.0. (1) `GetLinkAtCursorAsync` throws when the cursor is not in a link (empty interop stream) — the item now checks `api.State.InLink` first. (2) `SelectLinkAtCursorAsync` after `RestoreSelectionAsync` (dialog closed) does not select the link, so the edited link nested inside the old one — the item now selects the link *before* opening the dialog. (3) `LinkInfo.Rel` is missing in 3.0.0, so editing an existing link does not pre-fill Rel. (4) Editing an existing content link on the Manual tab drops `data-contentid` (not new in 3.x).
+- Fix: when RTE 3.1 is published, bump both csprojs, restore `_rel = ExistingLink.Rel`, re-test (1) and (2) and drop the workarounds if fixed; carry `data-contentid` through the Manual tab. · Blocked by: RTE 3.1 release.
+
 ## Fixed this run / Resolved since last run
 
+- **ZA-102 [High] Four vulnerable NuGet packages — fixed 2026-11-25 (Roadmap Phase 1).** `dotnet list package
+  --vulnerable --include-transitive` now reports none for every project; the 70 NU1902/NU1903 build warnings are gone.
+- **ZA-130 [Medium] Dependencies behind — fixed 2026-11-25 (Roadmap Phase 1)**, except the two items below.
+  Microsoft.* 10.0.7 → 10.0.15, Npgsql EF 10.0.4, **Radzen.Blazor 10.3.2 → 13.3.0**, MailKit 5.0.0, HtmlSanitizer
+  11.0.26, **ZauberCMS.RTE 3.0.0**, HtmlAgilityPack 1.13.1, FluentValidation 12.2.0, DynamicLinq 10.7.4, BlazorMonaco
+  3.5.0, TinyMCE.Blazor 2.2.2. No 11.x Microsoft/EF package is resolved. Code changes: `SmtpEmailProvider`
+  (`SendRequest`), one nullable fix for HtmlAgilityPack, and the RTE 3 migration (`App.razor` script/CSS removals,
+  `ZauberSetup` registration, both toolbar items, `ContentLinkDialog`, `ZauberCMSEditorProperty`, settings text).
+  Verified: Release build 0 warnings / 0 errors; app run on SQLite against a scratch copy of the sample database
+  with a real browser — register/sign in, content tree, block-list side panel with the editor, insert a content
+  link, edit an existing link, save & publish and see the link on the public page, every admin section (media,
+  structure, settings pages, users, SEO pages) rendered with no error UI and no server errors, public pages 200.
+  **Not verified:** inserting a media item (the sample database has no media — the picker opened empty), two
+  editors on one page, the user editor, large content, sending email through MailKit 5, the server-side sanitiser
+  output on HtmlSanitizer 11, SQL Server / PostgreSQL / Redis, the template scaffold.
+  Left open on purpose: Serilog.AspNetCore stays on 10.0.0 (11.0.0 pulls Microsoft.Extensions 11.x — Phase 12);
+  Blazored.Modal → ZA-133. New findings from this work: ZA-133…ZA-136.
+- **ZA-044 [Critical] SEO admin pages have no authorisation — fixed 2026-11-25 (Roadmap Phase 0).** Added
+  `[Authorize(Roles = Constants.Roles.AdminRoleName)]` to `Seo/SeoRedirects.razor`, `Seo/SeoSitemaps.razor` and
+  `Seo/PageChecker.razor` (per page, not a `Seo/_Imports.razor`, so the public `RenderSeoTags` component is
+  untouched). They were the only routable components outside `Components/Admin/`. Verified: Release build 0 errors,
+  70 warnings (unchanged); app run on SQLite, anonymous GET of all three URLs → 302 to `/Account/Login`. Not
+  verified: the "before" state at runtime, a signed-in admin still reaching the pages, a signed-in non-admin being
+  refused. The fix is on `rework-2026` only — **published 4.1.3 packages still have the hole** until a release.
+  Follow-up hardening split out as ZA-132.
 - Nothing fixed (report mode) and nothing resolved: no code changed between the seed report (`3eb5cb7`) and this run.
 - All 43 seeded findings re-verified as still open. Severity raised on ZA-002 (confidence), ZA-019 and ZA-020 (now
   reachable without login). Citations corrected on ZA-013, ZA-034, ZA-035, ZA-036, ZA-041.

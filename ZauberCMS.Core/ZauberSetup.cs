@@ -285,7 +285,15 @@ public static class ZauberSetup
         AssemblyManager.SetAssemblies(discoverAssemblies);
 
         // Add Zauber RTE services
-        builder.Services.AddZauberRte(discoverAssemblies);
+        // RTE 3.x no longer scans assemblies by itself: register every IToolbarItem found in the
+        // discovery assemblies so the CMS items and plugin items keep appearing.
+        builder.Services.AddZauberRte(options =>
+        {
+            foreach (var assembly in discoverAssemblies)
+            {
+                options.AddToolbarItemsFromAssembly(assembly);
+            }
+        });
 
         // Detailed errors are clamped to non-Production environments regardless of the
         // setting — leaking exception messages / stack traces / SQL parameter values to

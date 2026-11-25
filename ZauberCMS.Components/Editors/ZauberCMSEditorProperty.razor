@@ -11,9 +11,10 @@
 @using Radzen
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<ZauberRichTextEditor @bind-Value="@Value"
+<ZauberRichTextEditor Value="@Value"
+                      ValueChanged="@OnValueChanged"
                       Settings="@EditorSettings"
-                      OnChange="@OnChange" />
+                      @bind-Theme="@_theme" />
 
 @code {
     [Parameter] public string? Value { get; set; } = string.Empty;
@@ -38,6 +39,9 @@
     private EditorSettings EditorSettings { get; set; } = new();
     private bool _initialized;
 
+    // RTE 3.x "Auto" follows the OS colour scheme; the admin UI is light, so start light (the toolbar toggle still works).
+    private ZauberCMS.RTE.Models.Theme _theme = ZauberCMS.RTE.Models.Theme.Light;
+
     protected override async Task OnParametersSetAsync()
     {
         if (!_initialized)
@@ -51,54 +55,37 @@
 
     private EditorSettings BuildEditorSettings()
     {
-        // Use Minimal or customized CMS Default layout
-        EditorSettings settings;
-        
-        if (SettingsModel.ToolbarLayout == "Minimal")
-        {
-            settings = EditorSettings.Minimal();
-        }
-        else
-        {
-            // Use CMS Default but customize to add insertMedia button
-            settings = new EditorSettings
-            {
-                ToolbarLayout = ToolbarLayout.FromItems(
-                    new ToolbarBlock("bold", "italic", "underline", "strike", "code", "subscript", "superscript"),
-                    new ToolbarSeparator(),
-                    new ToolbarBlock("headings", "blockquote"),
-                    new ToolbarSeparator(),
-                    new ToolbarBlock("ul", "ol", "insertContentLink", "unlink", "image", "insertMedia"),
-                    new ToolbarSeparator(),
-                    new ToolbarBlock("alignLeft", "alignCenter", "alignRight", "justified"),
-                    new ToolbarSeparator(),
-                    new ToolbarBlock("clean-html", "undo", "redo", "viewSource", "themeToggle")
-                )
-            };
-        }
+        // Minimal, or the CMS layout (full set plus the content-link and media-picker items)
+        var layout = SettingsModel.ToolbarLayout == "Minimal"
+            ? ToolbarLayout.Simple
+            : new ToolbarLayout(
+                new ToolbarGroup("bold", "italic", "underline", "strike", "code", "subscript", "superscript"),
+                new ToolbarSeparator(),
+                new ToolbarGroup("headings", "blockquote"),
+                new ToolbarSeparator(),
+                new ToolbarGroup("ul", "ol", "insertContentLink", "unlink", "image", "insertMedia"),
+                new ToolbarSeparator(),
+                new ToolbarGroup("alignLeft", "alignCenter", "alignRight", "justified"),
+                new ToolbarSeparator(),
+                new ToolbarGroup("clean-html", "undo", "redo", "viewSource", "themeToggle"));
 
-        // Apply height if specified
-        if (!string.IsNullOrWhiteSpace(SettingsModel.Height))
+        // Settings are immutable records in RTE 3.x. The configured height is an initial height, so it maps
+        // to MinHeight (3.x "Height" is a fixed height; 2.x applied it as a minimum).
+        return new EditorSettings
         {
-            settings.Dimensions = new EditorDimensions
+            ToolbarLayout = layout,
+            Dimensions = string.IsNullOrWhiteSpace(SettingsModel.Height)
+                ? new EditorDimensions()
+                : new EditorDimensions { MinHeight = SettingsModel.Height },
+            ImageConstraints = new ImageConstraints
             {
-                Height = SettingsModel.Height
-            };
-        }
-
-        // Apply image constraints
-        settings.ImageConstraints = new ImageConstraints
-        {
-            AllowBase64ImageUpload = SettingsModel.AllowBase64ImageUpload
+                AllowBase64ImageUpload = SettingsModel.AllowBase64ImageUpload
+            }
         };
-
-        return settings;
     }
 
-    private async Task OnChange(EditorChangeArgs args)
-    {
-        await ValueChanged.InvokeAsync(args.Html);
-    }
+    // Forward the editor value to the parent; the parent owns the value (this component does not mutate its own parameter)
+    private Task OnValueChanged(string? html) => ValueChanged.InvokeAsync(html ?? string.Empty);
 
     private async Task ValidateEmbeddedReferences()
     {
@@ -172,7 +159,7 @@
                     // Content deleted - remove link but preserve inner text
                     var innerText = node.InnerText;
                     var textNode = doc.CreateTextNode(innerText);
-                    node.ParentNode.ReplaceChild(textNode, node);
+                    node.ParentNode?.ReplaceChild(textNode, node);
                     deletedItems.Add(contentIdStr);
                     htmlChanged = true;
                 }

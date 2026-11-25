@@ -16,23 +16,32 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
     public override string Id => "insertContentLink";
     public override string Label => "Insert Link";
     public override string Tooltip => "Insert Link (Ctrl+K)";
-    public override string IconCss => "fa-link";
+    public override string IconSvg =>
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5\"/><path d=\"M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5\"/></svg>";
     public override string Shortcut => "Control+k";
-    public override ToolbarPlacement Placement => ToolbarPlacement.Insert;
-    public override ToolbarItemType ItemType => ToolbarItemType.Button;
     public override bool IsToggle => true;
-    public override string[] TrackedTags => ["a"];
+    public override IReadOnlyList<string> TrackedTags => ["a"];
     public override string PrimaryTag => "a";
 
-    public override async Task ExecuteAsync(IEditorApi api)
+    public override async Task ExecuteAsync(IEditorApi api, CancellationToken cancellationToken)
     {
-        var selection = await api.GetSelectionAsync();
-        var existingLink = await api.GetLinkAtCursorAsync();
+        var selection = await api.GetSelectionAsync(cancellationToken);
+        // Only ask for the link when the cursor is in one: RTE 3.0.0 throws from GetLinkAtCursorAsync
+        // when there is no link (empty interop stream), which fails the whole command.
+        var existingLink = api.State.InLink ? await api.GetLinkAtCursorAsync(cancellationToken) : null;
 
         // Only open if there's selected text or cursor is on a link
-        if ((selection != null && !string.IsNullOrWhiteSpace(selection.SelectedText)) || existingLink != null)
+        if ((selection != null && !string.IsNullOrWhiteSpace(selection.Text)) || existingLink != null)
         {
-            await api.SaveSelectionRangeAsync();
+            if (existingLink != null)
+            {
+                // Select the whole existing link while the editor still has focus, so the saved selection
+                // covers it and the new <a> replaces the old one instead of nesting inside it.
+                // (Selecting after the dialog closes does not work on RTE 3.0.0.)
+                await api.SelectLinkAtCursorAsync(cancellationToken);
+            }
+
+            await api.SaveSelectionAsync(cancellationToken);
 
             var parameters = new Dictionary<string, object>();
             
@@ -51,7 +60,7 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
 
             if (result.Confirmed && result.Data != null)
             {
-                await api.RestoreSelectionRangeAsync();
+                await api.RestoreSelectionAsync(cancellationToken);
 
                 // Handle the result based on type
                 if (result.Data is ContentLinkResult contentLinkResult)
@@ -64,7 +73,12 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
                         manualLinkResult.Title, manualLinkResult.Target, manualLinkResult.Rel, manualLinkResult.ContentId);
                 }
 
-                await api.ClearSavedSelectionRangeAsync();
+                await api.ClearSavedSelectionAsync(cancellationToken);
+            }
+            else
+            {
+                // RTE 3.x: closing a panel no longer clears the saved selection for us
+                await api.ClearSavedSelectionAsync(cancellationToken);
             }
         }
     }
@@ -115,7 +129,5 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
 
         await api.InsertHtmlAsync(html);
     }
-
-    public override bool IsActive(EditorState state) => state.ActiveMarks.Contains("a");
 }
 

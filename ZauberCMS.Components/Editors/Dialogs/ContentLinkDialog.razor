@@ -138,15 +138,15 @@
             _url = ExistingLink.Href ?? string.Empty;
             _linkText = ExistingLink.Text ?? string.Empty;
             _target = ExistingLink.Target ?? string.Empty;
-            _rel = ExistingLink.Rel ?? string.Empty;
+            _rel = string.Empty; // RTE 3.x no longer reports rel on the existing link
             _title = ExistingLink.Title ?? string.Empty;
             _selectedTab = "manual";
             _hasManualData = true;
         }
-        else if (CurrentSelection != null && !string.IsNullOrWhiteSpace(CurrentSelection.SelectedText))
+        else if (CurrentSelection != null && !string.IsNullOrWhiteSpace(CurrentSelection.Text))
         {
             // Pre-fill link text with selected text
-            _linkText = CurrentSelection.SelectedText;
+            _linkText = CurrentSelection.Text;
         }
         
         return Task.CompletedTask;
@@ -168,7 +168,7 @@
             }
             
             _url = contentUrl;
-            _linkText = CurrentSelection?.SelectedText ?? content.Name ?? "Link";
+            _linkText = CurrentSelection?.Text ?? content.Name ?? "Link";
         }
     }
 
@@ -197,7 +197,7 @@
                 }
                 // Clear manual data but keep content ID if it exists
                 _url = string.Empty;
-                _linkText = CurrentSelection?.SelectedText ?? string.Empty;
+                _linkText = CurrentSelection?.Text ?? string.Empty;
                 _title = string.Empty;
                 _target = string.Empty;
                 _rel = string.Empty;
@@ -214,7 +214,7 @@
     {
         if (_selectedContent == null) return;
 
-        var linkText = CurrentSelection?.SelectedText ?? _selectedContent.Name ?? "Link";
+        var linkText = CurrentSelection?.Text ?? _selectedContent.Name ?? "Link";
         var contentUrl = _selectedContent.Url() ?? string.Empty; // Use extension method
         
         // Ensure URL starts with / for internal links

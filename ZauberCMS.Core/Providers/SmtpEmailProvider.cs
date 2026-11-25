@@ -40,7 +40,7 @@ public class SmtpEmailProvider(
             await smtp.AuthenticateAsync(
                 _gabSettings.Email.Smtp.Username ?? throw new InvalidOperationException("Email.Smtp.Username is not configured"),
                 _gabSettings.Email.Smtp.Password ?? throw new InvalidOperationException("Email.Smtp.Password is not configured"));
-            await smtp.SendAsync(emailMessage);
+            await smtp.SendAsync(new MailKit.SendRequest(emailMessage));
             await smtp.DisconnectAsync(true);
         }
 
@@ -65,7 +65,7 @@ public class SmtpEmailProvider(
             await smtp.AuthenticateAsync(
                 _gabSettings.Email.Smtp.Username ?? throw new InvalidOperationException("Email.Smtp.Username is not configured"),
                 _gabSettings.Email.Smtp.Password ?? throw new InvalidOperationException("Email.Smtp.Password is not configured"));
-            await smtp.SendAsync(emailMessage);
+            await smtp.SendAsync(new MailKit.SendRequest(emailMessage));
             await smtp.DisconnectAsync(true);
         }
 

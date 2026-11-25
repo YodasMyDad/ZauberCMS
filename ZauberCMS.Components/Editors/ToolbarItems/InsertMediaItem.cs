@@ -19,15 +19,13 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
 
     public override string Id => "insertMedia";
     public override string Label => "Insert Media";
-    public override string IconCss => "fa-photo-film";
-    public override string Shortcut => "";
-    public override ToolbarPlacement Placement => ToolbarPlacement.Media;
-    public override ToolbarItemType ItemType => ToolbarItemType.Button;
+    public override string IconSvg =>
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"14\" height=\"14\" rx=\"2\"/><circle cx=\"8\" cy=\"8\" r=\"1.5\"/><path d=\"m17 13-3.5-3.5L5 17\"/><path d=\"M21 8v11a2 2 0 0 1-2 2H8\"/></svg>";
     public override bool IsToggle => false;
 
-    public override async Task ExecuteAsync(IEditorApi api)
+    public override async Task ExecuteAsync(IEditorApi api, CancellationToken cancellationToken)
     {
-        await api.SaveSelectionRangeAsync();
+        await api.SaveSelectionAsync(cancellationToken);
 
         var parameters = new Dictionary<string, object>
         {
@@ -43,9 +41,14 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
         if (result.Confirmed && SelectedMedia != null)
         {
             
-            await api.RestoreSelectionRangeAsync();
+            await api.RestoreSelectionAsync(cancellationToken);
             await InsertMedia(api, SelectedMedia);
-            await api.ClearSavedSelectionRangeAsync();
+            await api.ClearSavedSelectionAsync(cancellationToken);
+        }
+        else
+        {
+            // RTE 3.x: closing a panel no longer clears the saved selection for us
+            await api.ClearSavedSelectionAsync(cancellationToken);
         }
     }
 
@@ -97,6 +100,4 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
         var linkText = System.Web.HttpUtility.HtmlEncode(media.Name ?? "Download");
         return $"<a href=\"{media.Url ?? ""}\" data-mediaid=\"{media.Id}\">{linkText}</a>";
     }
-
-    public override bool IsActive(EditorState state) => false;
 }
