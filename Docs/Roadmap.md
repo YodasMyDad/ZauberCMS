@@ -33,6 +33,12 @@
 | D10 | **Service authorisation is an opt-in permission hook, done as its own later phase** (Phase 10a): services ask a replaceable permission service before a write; the default allows everything, a site can switch on a strict mode. A strict default is a question for the major version. | ZA-140 |
 | D11 | **Redirects may point at another site** (a full http/https address). | ZA-116 area |
 | D12 | **ZauberCMS.RTE 4 is taken now on .NET 10** (it targets net10.0 and net11.0), not at the .NET 11 move. | ZA-134, ZA-136 |
+| D13 | **Cache: entity graphs stay in each server's memory cache; Redis only carries invalidation** (pub/sub "clear prefix" plus a version counter, so every server drops stale entries). Nothing secret or half-loaded is stored in Redis; no public API change. Shared DTO caching is not planned. (2026-11-25) | ZA-051, ZA-014, ZA-055, ZA-072 |
+| D14 | **PostgreSQL Initial migration:** reproduce on a real PostgreSQL first; if it fails, correct the PostgreSQL `Initial` migration (one-off exception to rule 1, explained in the commit and `Docs/Data.md`), then add the missing ContentVersion indexes for all three providers through `migrations.ps1`, clearing duplicate "current published" flags before the unique index. (2026-11-25) | ZA-050 |
+| D15 | **Tests run against real PostgreSQL and Redis containers locally and in CI** on every push; skipped with a clear message when Docker isn't available. SQL Server stays on SQLite-level coverage for now. (2026-11-25) | Phase 6 |
+| D16 | **ZA-143 goes at the end of Phase 6**, after the PostgreSQL/Redis work, both halves together. (2026-11-25) | ZA-143 |
+| D17 | **ZA-044 hotfix: prepare and verify a branch from `main-static` with only the three `[Authorize]` attributes; the owner merges and pushes** (that publishes 4.1.4). Not done yet. (2026-11-25) | ZA-044 |
+| D18 | **A v5 major is acceptable, together with .NET 11** (Phases 11 + 12 in one release). The rework ships as 4.x minors with `[Obsolete]` shims; v5 removes them. (2026-11-25) | Phase 11, 12 |
 
 ## Working rules for the rework
 
@@ -53,8 +59,8 @@
 ### Phase 0 — Critical hotfix — DONE 2026-11-25
 - **ZA-044** fixed: `[Authorize(Roles = Admin)]` added to the three `/admin/seo/*` pages. Verified by running the
   app (anonymous requests redirect to login); details in the audit report.
-  ⚠ The hole is still in the **published 4.1.3 packages**: the fix is only on `rework-2026`. Shipping it as a
-  hotfix on `main-static` is the owner's call (open question below).
+  ⚠ The hole is still in the **published 4.1.3 packages**: the fix is only on `rework-2026`. Owner decision D17:
+  a hotfix branch from `main-static` is prepared and verified; the owner merges and pushes it (4.1.4).
 
 ### Phase 1 — Dependencies to latest on .NET 10 (D4) — DONE 2026-11-25
 - Everything is on its latest version that runs on .NET 10 (Radzen 13, MailKit 5, HtmlSanitizer 11, ZauberCMS.RTE
@@ -192,14 +198,16 @@
 - Left as it was: with `EnablePathUrls`, a moved page keeps its URL (URLs are built only on create). ZA-143 says
   "Phase 5" in the report but was never in this phase's list; it is still open.
 
-### Phase 6 — PostgreSQL & Redis made real (D1)
-- Stand up PostgreSQL and Redis locally (containers) and run the app on each; add them to CI if feasible.
-- PostgreSQL: ZA-050 (invalid index filter in initial migration + missing indexes), ZA-007 (unquoted raw SQL),
+### Phase 6 — PostgreSQL & Redis made real (D1, D13–D16)
+- Test infrastructure first (D15): PostgreSQL and Redis containers for the test suite locally and as CI services;
+  skipped with a clear message without Docker. Run the app on each.
+- PostgreSQL: ZA-050 (per D14: repro, correct `Initial`, new index migration ×3), ZA-007 (unquoted raw SQL),
   ZA-017 (`ToLower` search), ZA-122 (design-time factory file case).
-- Redis: ZA-051 (entity graphs through JSON → restricted pages exposed, hashes in cache), ZA-014 + ZA-055 (key
-  registry: unbounded, lost on restart, race), ZA-072 (cache key ignores includes). Likely one redesign of
-  `DefaultCacheService` (DTO caching or memory-for-graphs + Redis-for-invalidation; tag/prefix invalidation that is
-  multi-node safe).
+- Redis (D13): redesign `DefaultCacheService` as memory cache for entity graphs + Redis pub/sub and version counter
+  for multi-node prefix invalidation. Fixes ZA-051 (restricted pages and password hashes through Redis), ZA-014 +
+  ZA-055 (key registry unbounded, lost on restart, race), ZA-072 (cache key ignores includes).
+- Then ZA-143 (D16): resolve content only for the content catch-all route, and give a front-end circuit the
+  language of its page, together.
 
 ### Phase 7 — Installer (D2)
 - Replace `RoleExtensions` first-user promotion with a setup flow. Requirements: runs only while the site is
@@ -253,10 +261,5 @@ Owner instructions for this phase (2026-11-25):
 
 ## Open questions for the owner
 
-- Release the ZA-044 fix as a hotfix from `main-static` now? (fixed on `rework-2026` only; 4.1.3 is still exposed)
-- Phase 6: Redis cache design (ZA-051, ZA-014, ZA-055, ZA-072); how to repair the PostgreSQL initial migration
-  (ZA-050); PostgreSQL and Redis in CI or local only.
-- Where ZA-143 (non-page requests resolved as the home page; front-end circuits in the root's language) goes.
 - Installer scope (Phase 7), including the registration switch / CAPTCHA (ZA-024).
-- Is a v5 major acceptable as the vehicle for the breaking changes in Phase 11?
-- Answered: SVG uploads (D6) and the sanitiser policy for `iframe`/`data:` (D7).
+- Answered: SVG uploads (D6), sanitiser policy (D7), Phase 6 design (D13–D16), ZA-044 hotfix (D17), v5 (D18).
