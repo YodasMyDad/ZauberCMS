@@ -21,7 +21,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Critical | 0 | 1 | 0 |
 | High | 10 | 19 | 0 |
 | Medium | 45 | 27 | 0 |
-| Low | 40 | 5 | 0 |
+| Low | 39 | 5 | 1 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-148.
 
@@ -550,22 +550,21 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Fix: lock the content row first (`UPDATE … SET DateUpdated = DateUpdated WHERE Id = @id`) and read `maxVersion`
   inside the transaction, or retry once on a unique violation. · Blocked by: nothing.
 
-### ZA-147 [Low/Low] A front-end circuit may run one navigation in the previous page's language
-- Where: `ZauberCMS.Core/Languages/ContentCultureCircuitHandler.cs` · Category: C · Since: 2026-11-25 (Phase 6 audit)
-- Issue / Trigger: the handler reads `NavigationManager.Uri` before the activity runs; for the activity that handles a
-  location change the address may still be the old page's, so components created in that activity (enhanced
-  navigation adding interactive roots, or a site with global interactivity) start in the old page's culture.
-  Reasoned, not reproduced.
-- Fix: reproduce with enhanced navigation between pages in two languages; if real, re-check the culture on
-  `LocationChanged`. · Blocked by: needs a browser repro.
-
 ## Fixed this run / Resolved since last run
 
+- **ZA-147 [Low] resolved — not a bug (checked in the browser, 2026-11-25).** Sample site on a scratch copy of the
+  dev database, a temporary interactive probe on the German and Spanish pages, enhanced navigation between them and
+  the English contact page. Order seen in the log: the circuit hears of the new address first, then the browser
+  fetches the page, then the page's new components start — in a later activity, so the handler already sees the
+  new address: a new component started in `de-DE` / `es-ES` as it should, also for a page this server had not
+  served before. What looked like the bug: a component on both pages is kept by Blazor and not re-rendered, so it
+  still shows what it rendered on the previous page; its next activity runs in the new page's language. Documented
+  in `Docs/FrontEnd.md`; regression test for an address change between activities.
 - **Roadmap Phase 6 — PostgreSQL & Redis made real — fixed 2026-11-25.** Build 0 warnings; 428 tests (425 pass, 3
   skipped for other open findings), including the content, data-grid, media, user-delete and provider-query tests on
   a real PostgreSQL and the Redis tests against a real Redis (Testcontainers). `/audit changed` (two independent
   reviewers) found 14 more problems in the change: 12 fixed (listed under the findings below), two logged as
-  ZA-146 and ZA-147. App run on PostgreSQL + Redis containers: migrations, registration, admin, a settings save
+  ZA-146 and ZA-147 (ZA-147 later resolved as not a bug). App run on PostgreSQL + Redis containers: migrations, registration, admin, a settings save
   published through Redis; no errors logged.
   - **ZA-050 [High] PostgreSQL install failed; unique version indexes missing.** Reproduced first: `Initial` failed
     with `42601: syntax error at or near "["`. Index filters are now per provider (`ZauberDbContextBase`), the three

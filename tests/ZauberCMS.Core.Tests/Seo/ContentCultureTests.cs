@@ -146,6 +146,40 @@ public class ContentCultureTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ZA147_A_circuit_that_moves_to_another_page_runs_the_next_activity_in_that_pages_language()
+    {
+        var previous = (CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+        try
+        {
+            // Enhanced navigation: the address changes in one activity; the new page's components start in a
+            // later one (seen in the browser with the sample site: German -> Spanish page)
+            CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("es-ES");
+            using var scope = _site.CreateScope();
+            var navigation = new TestNavigation("https://site.test/about");
+            var handler = new ContentCultureCircuitHandler(navigation,
+                scope.ServiceProvider.GetRequiredService<IContentService>(),
+                scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>(),
+                NullLogger<ContentCultureCircuitHandler>.Instance);
+            var seen = new List<string>();
+            var activity = handler.CreateInboundActivityHandler(_ =>
+            {
+                seen.Add(CultureInfo.CurrentUICulture.Name);
+                return Task.CompletedTask;
+            });
+
+            await activity(null!);
+            navigation.MoveTo("https://site.test/");
+            await activity(null!);
+
+            Assert.Equal(["fr-FR", "de-DE"], seen);
+        }
+        finally
+        {
+            (CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture) = previous;
+        }
+    }
+
+    [Fact]
     public void The_site_registers_the_content_culture_handler()
     {
         using var scope = _site.CreateScope();
@@ -195,5 +229,7 @@ public class ContentCultureTests : IAsyncLifetime
     {
         public TestNavigation(string address, string baseAddress = "https://site.test/") =>
             Initialize(baseAddress, address);
+
+        public void MoveTo(string address) => Uri = address;
     }
 }

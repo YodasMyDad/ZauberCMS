@@ -12,7 +12,7 @@
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis).
-  **95 open findings** (0 Critical, 10 High, 45 Medium, 40 Low). **Next: Phase 7.**
+  **94 open findings** (0 Critical, 10 High, 45 Medium, 39 Low). **Next: Phase 7.**
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -213,7 +213,8 @@
   `/audit changed` (two independent reviewers) found 14 more problems in the change: 12 fixed (cache index races,
   Redis resync and counter reset, failed publishes, PostgreSQL test connections, the upgrade keeping the wrong
   version, the remaining culture-dependent `ToLower` calls, path base, filtered-include keys, clears after commit),
-  two logged as ZA-146 and ZA-147 (Low).
+  two logged as ZA-146 and ZA-147 (Low). ZA-147 was then checked in the browser with the sample site and is not a
+  bug (see the audit report).
 - Test infrastructure (D15): Testcontainers PostgreSQL + Redis, shared by the run; the content, data-grid, media,
   user-delete and provider-query test classes also run on PostgreSQL; Redis tests use two sites as two servers.
   CI builds and tests on every push; on CI the container tests fail instead of skipping. Build 0 warnings; 428

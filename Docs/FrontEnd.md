@@ -85,6 +85,9 @@ Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the reques
 
 Opt in per component: `@rendermode InteractiveServer` on the child (e.g. `ZauberCMS.Web/Custom/ContactForm.razor`).
 The component runs in the language of the page it is on (`ContentCultureCircuitHandler`), like the page itself.
+With enhanced navigation, a component that is on both pages is kept, not started again, and Blazor does not
+re-render it: it still shows what it rendered on the previous page until it next updates (then in the new page's
+language). A per-page `@key` (for example `@key="Content?.Id"`) should make it start fresh on each page (Blazor matches kept components by type and key; not tried here).
 SSR forms use `EditForm` + `FormName` + `[SupplyParameterFromForm]`. Never Radzen on the front-end.
 
 ## Discovery of site code
