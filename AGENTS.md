@@ -14,7 +14,7 @@ from this source ([ReadMe.md](ReadMe.md)).
 | Surface | Render mode | UI |
 | --- | --- | --- |
 | Front-end site (`IContentView`) | static SSR; per-component `@rendermode` opt-in | consumer's choice — **never Radzen** |
-| Admin `/admin` | `InteractiveServer` | Radzen.Blazor + Blazored.Modal (+ Tailwind for admin CSS) |
+| Admin `/admin` | `InteractiveServer` | Radzen.Blazor + Blazored.Modal (vendored source in `ZauberCMS.Core/Modal/`, not a package; nested side panels) (+ Tailwind for admin CSS) |
 | Account pages (`/Account/*`, in Components) | static SSR | layout via `IAccountLayout` |
 
 `ZauberCMS/Components/App.razor` picks the render mode: `/admin` (or no `HttpContext`) → InteractiveServer, else SSR.

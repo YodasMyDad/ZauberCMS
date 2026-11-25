@@ -1,0 +1,41 @@
+﻿@if (UseCustomLayout)
+{
+    <CascadingValue Value="this" IsFixed="true">
+        @Content
+    </CascadingValue>
+}
+else
+{
+    <div class="bm-container @Position @OverlayCustomClass @OverlayAnimationClass"
+        @ref="_modalReference"
+        @onmousedown="ListenToBackgroundClick"
+        @onmouseup="HandleBackgroundClick"
+        @onclick="StopListeningToBackgroundClick">
+
+        <FocusTrap @ref="FocusTrap" IsActive="ActivateFocusTrap">
+            <div class="@ModalClass" role="dialog" aria-modal="true" @onmouseup:stopPropagation="true" @onmousedown:stopPropagation="true">
+                @if (!HideHeader)
+                {
+                    <div class="bm-header">
+                        @if (!string.IsNullOrWhiteSpace(Title))
+                        {
+                            <h3 class="bm-title">@Title</h3>
+                        }
+                        @if (!HideCloseButton)
+                        {
+                            <button type="button" class="bm-close" aria-label="close" @onclick="() => CancelAsync()" @attributes="@_closeBtnAttributes">
+                                <span>&times;</span>
+                            </button>
+                        }
+                    </div>
+                }
+                <div class="bm-content">
+                    <CascadingValue Value="this" IsFixed="true">
+                        @Content
+                    </CascadingValue>
+                </div>
+            </div>
+        </FocusTrap>
+        
+    </div>
+}

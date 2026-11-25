@@ -8,8 +8,8 @@
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
 - Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-136`).
-- **Phase 0 done** (ZA-044) and **Phase 1 done** (ZA-102, ZA-130: all packages on their latest .NET 10 versions).
-  **133 open findings** (0 Critical, 28 High, 67 Medium, 38 Low). **Next: Phase 2.**
+- **Phase 0 done** (ZA-044) and **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10 versions).
+  **132 open findings** (0 Critical, 28 High, 66 Medium, 38 Low). **Next: Phase 2.**
 - Findings come from reading code + a real build/package scan. Nothing was run in a browser or against
   PostgreSQL/Redis — items marked "needs repro" must be reproduced before or while fixing.
 - No test project exists.
@@ -50,12 +50,12 @@
   3.0.0, Microsoft.* 10.0.15, …). Build has 0 warnings; the vulnerability scan is clean. What was and was not
   tested is listed under ZA-130 in the audit report's "Fixed" section — read it before relying on an untested path.
 - Held back on purpose: **Serilog.AspNetCore** stays on 10.0.0 (11.0.0 depends on Microsoft.Extensions 11.x) → Phase 12.
-- **ZauberCMS.RTE**: migrated to the 3.x API. When **3.1** is published, bump it and remove the 3.0.0 workarounds
-  (ZA-136). 3.x strips iframes and other non-policy tags from stored content (ZA-134) — owner decision needed
-  before a release.
-- **Blazored.Modal** is deprecated/unlisted and its repo archived (ZA-133). **Decision: keep it** — the admin needs
-  nested right-hand slide-in panels and Radzen side dialogs cannot nest (checked in Radzen 13.3 source). Stay pinned;
-  vendor its source into Components if .NET 11 or a bug forces it.
+- **ZauberCMS.RTE**: migrated to the 3.x API on 3.0.0. A 3.x update is due shortly — the owner will say when to
+  take it; then remove the 3.0.0 workarounds (ZA-136). 3.x strips iframes from stored content (ZA-134); **embeds
+  arrive with RTE 4 at the .NET 11 move (Phase 12)** — owner decision.
+- **Blazored.Modal** (deprecated, repo archived) is now **vendored**: its source lives in `ZauberCMS.Core/Modal/`
+  (same namespaces), the NuGet package is gone, and it is ours to maintain (ZA-133). Radzen was ruled out because its
+  side dialogs cannot nest. Release notes must tell sites to drop any direct `Blazored.Modal` package reference.
 - Not done (optional, own commit): `Directory.Packages.props` + `global.json` — now part of Phase 11.
 - Still to smoke-test by hand when convenient: media insert in the editor (sample DB has no media), two editors on
   one page, the user editor, large content, sending an email.
@@ -118,13 +118,13 @@ internalise non-contract types (ZA-092), move Radzen-typed contracts out of Core
 path (ZA-090), `ICurrentUserAccessor` (ZA-093), naming conventions (ZA-124). Remaining Mediums/Lows by area.
 
 ### Phase 12 — .NET 11 (D4)
-Retarget to `net11.0`, move Microsoft/EF/Npgsql packages to 11.x, full retest on SQLite, SQL Server, PostgreSQL and
+Retarget to `net11.0`, move Microsoft/EF/Npgsql packages to 11.x, Serilog.AspNetCore 11, **ZauberCMS.RTE 4** (adds
+embeds — then add the CMS render step that expands embed placeholders on the public site, closing ZA-134), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 
 ## Open questions for the owner
 
 - Release the ZA-044 fix as a hotfix from `main-static` now? (fixed on `rework-2026` only; 4.1.3 is still exposed)
-- Rich-text editor 3.x strips iframes/embeds from existing content on the next save (ZA-134): how should embeds work?
 - Installer scope (Phase 7).
 - SVG uploads, sanitiser policy for `iframe`/`data:`, CAPTCHA/registration switch (Phase 4).
 - Is a v5 major acceptable as the vehicle for the breaking changes in Phase 11?

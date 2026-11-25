@@ -15,10 +15,10 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 28 | 1 | 0 |
-| Medium | 67 | 1 | 0 |
+| Medium | 66 | 2 | 0 |
 | Low | 38 | 0 | 0 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102 and ZA-130 (Phase 1), committed on `rework-2026`. Next free ID: ZA-137.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), committed on `rework-2026`. Next free ID: ZA-137.
 
 ## Open findings
 
@@ -741,19 +741,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: ZA-044 was possible because admin protection is one attribute per folder. Any future `/admin/*` page added outside `Components/Admin/` (in this repo or a consumer plugin) is public unless its author remembers the attribute; mutating services do no role check of their own; redirect targets may be external hosts.
 - Fix: authorisation policy/convention covering every `/admin/**` route (fail closed), role checks in mutating services, validate redirect targets (local paths unless explicitly allowed). · Blocked by: design choice — affects consumer plugin pages (Roadmap Phase 4).
 
-### ZA-133 [Medium/High] Blazored.Modal is deprecated and its repository archived
-
-- Where: `Blazored.Modal` 7.3.1 in `ZauberCMS.Core`, `ZauberCMS.Components`, `ZauberCMS` csprojs; used for every admin side panel and dialog · Category: F · Since: 2026-11-25 (split out of ZA-130)
-- Issue / Trigger: Investigated in Phase 1. On nuget.org 7.3.1 is the last version, is **unlisted** and marked **deprecated (Legacy)**; the GitHub repo (`Blazored/Modal`) is **archived** (last push 2024-06). It targets `net8.0` only. It still restores and works on .NET 10 with Radzen 13 (smoke-tested), but will get no fixes, and `IModalService`/`IModalReference` appear in public CMS APIs (context menus, toolbar items, dialogs).
-- Owner requirement 2026-11-25: the admin relies on **nested** panels that slide in from the right (modal in modal in modal for nested block-list editing; closing the top one reveals the one beneath). Any replacement must do that and look as good.
-- Investigated 2026-11-25 (Radzen.Blazor 13.3.0 source, `DialogService.cs`): Radzen **side dialogs cannot nest** — there is a single side-dialog slot and `OpenSide*` first calls `CloseSideSilently()`, closing the one already open. Radzen's centred dialogs do stack, but they are not side panels. So Radzen is **not** a drop-in replacement.
-- Fix: keep Blazored.Modal (decision: not replaced by Radzen). To remove the dead-dependency risk, vendor its MIT source into `ZauberCMS.Components` (it is small) so it can be retargeted and fixed; do it when the .NET 11 retest (Phase 12) or a bug forces it, or with v5. Until then stay pinned on 7.3.1. · Blocked by: nothing now.
-
 ### ZA-134 [Medium/High] Rich-text editor 3.x always strips `iframe` (and other non-policy tags) from stored content
 
 - Where: `ZauberCMS.Components/Editors/ZauberCMSEditorProperty.razor` (uses the default `HtmlPolicy`); server policy `ZauberCMS.Core/Shared/Services/DefaultHtmlSanitizerService.cs:18` allows `iframe` "for video embeds" · Category: C · Since: 2026-11-25 (RTE 2.1.0 → 3.0.0)
 - Issue / Trigger: RTE 3.x sanitises the initial value in the browser. Tags outside `HtmlPolicy.AllowedTags` are removed on load and lost on the next save; `iframe`, `video`-style embeds via `object`/`embed`, `form` controls, `svg`, `style` and `script` are removed **whatever the policy says**. A site that pasted a YouTube iframe into a ZauberCMS RTE property in 4.x loses it the first time an editor opens and saves that content after upgrading. The sample database has no such content (checked); real sites may.
-- Fix (owner decision): decide how embeds are supported (a dedicated embed block/toolbar item that stores a URL, or an RTE change), extend `HtmlPolicy.AllowedTags` for any other tags the CMS wants to keep (`video`, `audio`, `source`, `mark`, …), and put the behaviour in the upgrade notes for the release. · Blocked by: owner decision; ties to the Phase 4 sanitiser-policy question (ZA-021).
+- Fix (owner decision): **Owner decision 2026-11-25:** embeds come with **ZauberCMS.RTE 4**, which ships with the .NET 11 move (Roadmap Phase 12): an Embed toolbar item storing a `figure` + `data-embed-*` placeholder, allow-listed providers, and conversion of existing allow-listed iframes on load instead of stripping. The CMS then needs a render step that expands the placeholder to an iframe on the public site. Until then, extend `HtmlPolicy.AllowedTags` for any other tags the CMS wants to keep (`video`, `audio`, `source`, `mark`, …), and put the behaviour in the upgrade notes for the release. · Blocked by: owner decision; ties to the Phase 4 sanitiser-policy question (ZA-021).
 
 ### ZA-135 [Medium/High] Opening a rich-text value rewrites content links to relative URLs
 
@@ -769,6 +761,16 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed this run / Resolved since last run
 
+- **ZA-133 [Medium] Blazored.Modal is deprecated and archived — fixed 2026-11-25 (owner decision: vendor it).**
+  Radzen side dialogs cannot nest (one slot; `OpenSide*` closes the open one — Radzen 13.3 `DialogService.cs`), and
+  the admin needs nested right-hand panels, so the modal is kept. Its v7.3.1 source (MIT) now lives in
+  `ZauberCMS.Core/Modal/` with unchanged namespaces; the NuGet reference is removed from all three csprojs and
+  `ZauberCMS.Core` became a Razor SDK project to compile it. Assets moved to `_content/ZauberCMS.Core/`.
+  Verified: build 0 warnings; in the browser a block-list panel, a nested panel on top of it (with the rich-text
+  editor), closing the top one reveals the one beneath, closing again returns to the page; no server errors.
+  Not verified: template scaffold / a consumer site built from the new packages. **Upgrade note for the release:**
+  sites or plugins that reference the `Blazored.Modal` package themselves must remove it (type clash), and
+  compiled plugins must be rebuilt (the types moved assembly).
 - **ZA-102 [High] Four vulnerable NuGet packages — fixed 2026-11-25 (Roadmap Phase 1).** `dotnet list package
   --vulnerable --include-transitive` now reports none for every project; the 70 NU1902/NU1903 build warnings are gone.
 - **ZA-130 [Medium] Dependencies behind — fixed 2026-11-25 (Roadmap Phase 1)**, except the two items below.

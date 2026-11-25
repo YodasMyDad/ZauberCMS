@@ -48,6 +48,7 @@ if (result is { Confirmed: true, Data: MyType value }) { … }
 
 - Dialog: `[CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;` close with
   `BlazoredModal.CloseAsync(ModalResult.Ok(value))` / `BlazoredModal.CloseAsync(ModalResult.Cancel())`. Put dialogs in a `Dialogs/` folder.
+  The modal is the vendored Blazored.Modal source in `ZauberCMS.Core/Modal/` (not a NuGet package): panels nest, and fixes go there.
 - Yes/no: Radzen `DialogService.Confirm(...)`.
 - Notifications: `NotificationService.ShowSuccessNotification/ShowErrorNotification/ShowWarningNotification/
   ShowNotifications(handlerResult.Messages)` (`ZauberCMS.Core/Extensions/NotificationServiceExtensions.cs`).

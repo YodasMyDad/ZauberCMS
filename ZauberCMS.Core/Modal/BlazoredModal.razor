@@ -1,0 +1,168 @@
+﻿@using System.Collections.ObjectModel
+@using Microsoft.AspNetCore.Components.Routing
+
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+@implements IAsyncDisposable
+
+<CascadingValue Value="this">
+    <CascadingValue Value="_globalModalOptions">
+        @foreach (var modal in _modals)
+        {
+            @modal.ModalInstance
+        }
+    </CascadingValue>
+</CascadingValue>
+
+@code {
+    [CascadingParameter] private IModalService CascadedModalService { get; set; } = default!;
+
+    [Parameter] public bool? HideHeader { get; set; }
+    [Parameter] public bool? HideCloseButton { get; set; }
+    [Parameter] public bool? DisableBackgroundCancel { get; set; }
+    [Parameter] public string? OverlayCustomClass { get; set; }
+    [Parameter] public ModalPosition? Position { get; set; }
+    [Parameter] public string? PositionCustomClass { get; set; }
+    [Parameter] public ModalSize? Size { get; set; }
+    [Parameter] public string? SizeCustomClass { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public ModalAnimationType? AnimationType { get; set; }
+    [Parameter] public bool? UseCustomLayout { get; set; }
+    [Parameter] public bool? ActivateFocusTrap { get; set; }
+
+    private readonly Collection<ModalReference> _modals = new();
+    private readonly ModalOptions _globalModalOptions = new();
+    private IJSObjectReference? _styleFunctions;
+    private bool _haveActiveModals;
+
+    internal event Action? OnModalClosed;
+
+    protected override void OnInitialized()
+    {
+        if (CascadedModalService == null)
+        {
+            throw new InvalidOperationException($"{GetType()} requires a cascading parameter of type {nameof(IModalService)}.");
+        }
+
+        ((ModalService) CascadedModalService).OnModalInstanceAdded += Update;
+        ((ModalService) CascadedModalService).OnModalCloseRequested += CloseInstance;
+        NavigationManager.LocationChanged += CancelModals;
+
+        _globalModalOptions.Class = Class;
+        _globalModalOptions.DisableBackgroundCancel = DisableBackgroundCancel;
+        _globalModalOptions.HideCloseButton = HideCloseButton;
+        _globalModalOptions.HideHeader = HideHeader;
+        _globalModalOptions.Position = Position;
+        _globalModalOptions.PositionCustomClass = PositionCustomClass;
+        _globalModalOptions.Size = Size;
+        _globalModalOptions.SizeCustomClass = SizeCustomClass;
+        _globalModalOptions.AnimationType = AnimationType;
+        _globalModalOptions.OverlayCustomClass = OverlayCustomClass;
+
+        _globalModalOptions.UseCustomLayout = UseCustomLayout;
+        _globalModalOptions.ActivateFocusTrap = ActivateFocusTrap;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _styleFunctions = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/ZauberCMS.Core/Modal/BlazoredModal.razor.js");
+        }
+    }
+
+    internal async Task CloseInstance(ModalReference? modal, ModalResult result)
+    {
+        if (modal?.ModalInstanceRef != null)
+        {
+            // Gracefully close the modal
+            await modal.ModalInstanceRef.CloseAsync(result);
+            if (!_modals.Any())
+            {
+                await ClearBodyStyles();
+            }
+            OnModalClosed?.Invoke();
+        }
+        else
+        {
+            await DismissInstance(modal, result);
+        }
+    }
+
+    internal Task DismissInstance(Guid id, ModalResult result)
+    {
+        var reference = GetModalReference(id);
+        return DismissInstance(reference, result);
+    }
+
+    internal async Task DismissInstance(ModalReference? modal, ModalResult result)
+    {
+        if (modal != null)
+        {
+            modal.Dismiss(result);
+            _modals.Remove(modal);
+            if (!_modals.Any())
+            {
+                await ClearBodyStyles();
+            }
+            await InvokeAsync(StateHasChanged);
+            OnModalClosed?.Invoke();
+        }
+    }
+
+    private async void CancelModals(object? sender, LocationChangedEventArgs e)
+    {
+        foreach (var modalReference in _modals.ToList())
+        {
+            modalReference.Dismiss(ModalResult.Cancel());
+        }
+
+        _modals.Clear();
+        await ClearBodyStyles();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Update(ModalReference modalReference)
+    {
+        _modals.Add(modalReference);
+
+        if (!_haveActiveModals)
+        {
+            _haveActiveModals = true;
+            if (_styleFunctions is not null)
+            {
+                await _styleFunctions.InvokeVoidAsync("setBodyStyle");
+            }
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private ModalReference? GetModalReference(Guid id)
+        => _modals.SingleOrDefault(x => x.Id == id);
+
+    private async Task ClearBodyStyles()
+    {
+        _haveActiveModals = false;
+        if (_styleFunctions is not null)
+        {
+            await _styleFunctions.InvokeVoidAsync("removeBodyStyle");
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (_styleFunctions is not null)
+        {
+            try
+            {
+                await _styleFunctions.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // If the browser is gone, we don't need it to clean up any browser-side state
+            }
+        }
+    } 
+
+}

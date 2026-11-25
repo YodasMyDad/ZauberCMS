@@ -1,0 +1,34 @@
+﻿@inject IModalService ModalService
+
+<CascadingValue Value="@ModalService" IsFixed="true">
+    <BlazoredModal HideHeader="@HideHeader"
+                   HideCloseButton="@HideCloseButton"
+                   DisableBackgroundCancel="@DisableBackgroundCancel"
+                   Position="@Position"
+                   PositionCustomClass="@PositionCustomClass"
+                   Class="@Class"
+                   AnimationType="@AnimationType"
+                   UseCustomLayout="@UseCustomLayout"
+                   OverlayCustomClass="@OverlayCustomClass"
+                   Size="@Size"
+                   SizeCustomClass="@SizeCustomClass"
+                   ActivateFocusTrap="@ActivateFocusTrap"/>
+    @ChildContent
+</CascadingValue>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool? HideHeader { get; set; }
+    [Parameter] public bool? HideCloseButton { get; set; }
+    [Parameter] public bool? DisableBackgroundCancel { get; set; }
+    [Parameter] public ModalPosition? Position { get; set; }
+    [Parameter] public ModalSize? Size { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public ModalAnimationType? AnimationType { get; set; }
+    [Parameter] public bool? UseCustomLayout { get; set; }
+    [Parameter] public string? OverlayCustomClass { get; set; }
+    [Parameter] public bool? ContentScrollable { get; set; }
+    [Parameter] public bool? ActivateFocusTrap { get; set; }
+    [Parameter] public string? PositionCustomClass { get; set; }
+    [Parameter] public string? SizeCustomClass { get; set; }
+}
