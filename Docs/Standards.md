@@ -90,6 +90,8 @@ patterns into new code.
   SVG is off by default; when allowed it is stored through `SvgSanitizer`. A new `IStorageProvider` must do both.
 - Grid filter/sort strings go through `GridQueryGuard`, never straight into `Where(string)` / `OrderBy(string)`.
 - Redirects: local URLs only (`returnUrl` validated); SEO redirect targets pass `RedirectTarget.IsValid`.
+- Content URLs: compare and store through `ContentUrl.Normalize`; build links with `ContentUrl.SiteRelative`
+  (never a script address or another host). Don't hand-roll `"/" + url` or `ToLower()` on URLs.
   Absolute links in emails come from `ToAbsoluteUrl` (uses `Zauber:SiteUrl`), never from the `Host` header directly.
 - Secrets never in committed `appsettings*.json`; use user-secrets / environment / vault.
 - Outbound HTTP to user-supplied URLs uses the `SeoHttp` client (refuses private addresses, has timeouts), or a

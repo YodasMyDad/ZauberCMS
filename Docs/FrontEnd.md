@@ -9,6 +9,10 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
    shadows real routes (`ZauberSetup.cs` assembly list + `ExtensionManager.GetFilteredAssemblies`).
 2. `ZauberCMS.Components/Pages/EntryPage.razor` reuses the content resolved by `CultureMiddleware`
    (`CultureMiddleware.GetEntryModel(HttpContext)`), falling back to `ContentService.GetContentFromRequestAsync`.
+   The lookup normalises the slug with `ContentUrl.Normalize` (lower case, no slashes around it; empty = the root
+   page), so `/About-Us/` finds `about-us` on every database. Only pages that are published, not in the recycle
+   bin and not blocks are served — also as a domain root or an internal-redirect target — and the `Children` it
+   loads follow the same rule. Blocks have no URL.
 3. Role-restricted content (`ContentRoles`) redirects to `Zauber:Identity:DefaultLoginRedirectUrl` unless the user has
    a role (admins always pass).
 4. The view is looked up by `Content.ViewComponent` == **view type `FullName`** (namespace + class) among
@@ -55,7 +59,7 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
 | `GetMediaItems` / `GetMedia` | Media picker values |
 | `GetContentItems` / `GetContent` | Content picker values |
 | `GetUsers` / `GetUser` | User picker values |
-| `NavigationItems`, `Url()` | Menus and links |
+| `NavigationItems`, `Url()` | Menus and links (`Url()` is the stored form, `blog`; `ContentUrl.SiteRelative(content)` gives the link, `/blog`) |
 
 Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the request path.
 

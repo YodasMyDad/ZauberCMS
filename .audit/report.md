@@ -41,7 +41,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-007 [High/Medium] Raw SQL with unquoted identifiers likely fails on PostgreSQL
 
-- Where: `ZauberCMS.Core/Extensions/DbContextExtensions.cs:25-53` (`WherePathLike`, `WhereHasCompositionsUsing`); used by copy (`ContentService.cs:819`) and restrict-access · Category: B/C
+- Where: `ZauberCMS.Core/Extensions/DbContextExtensions.cs:25-53` (`WherePathLike`, `WhereHasCompositionsUsing`); used by restrict-access (`RestrictAccessContextMenu.cs:96`) and the composition check; copy no longer uses it (Phase 5) · Category: B/C
 - Fix: quote identifiers per provider or replace with LINQ. · Blocked by: needs PostgreSQL verification.
 - Owner decision 2026-11-25: PostgreSQL is a supported provider — must be fixed and verified on a real PostgreSQL instance (Roadmap Phase 6).
 

@@ -83,7 +83,8 @@ don't reorder without a reason written in the commit.
    before DI exists and **need a parameterless ctor**.
 4. **Soft delete is partial.** Only `Content`, `Media`, `User` have `Deleted`. There are **no global query filters** —
    every query on those three must filter `!x.Deleted` (or pass `IncludeDeleted` for recycle-bin paths). Everything
-   else is hard-deleted; recycle-bin purge is a hard delete.
+   else is hard-deleted; recycle-bin purge is a hard delete. Content recycle, restore and purge act on the whole
+   subtree (→ [Docs/Services.md](Docs/Services.md) "Deletes").
 5. **Writes go through `SaveChangesAndLog`** (runs `IBeforeEntitySave<T>`/`IAfterEntitySave<T>` hooks and clears the
    `typeof(T).Name` cache prefix). Clear related prefixes yourself. → [Docs/Services.md](Docs/Services.md)
 6. **No MediatR / CQRS libraries.** Services are `IXService` + parameter class + `HandlerResult<T>`.

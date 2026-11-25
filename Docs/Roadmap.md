@@ -254,6 +254,9 @@ Owner instructions for this phase (2026-11-25):
 ## Open questions for the owner
 
 - Release the ZA-044 fix as a hotfix from `main-static` now? (fixed on `rework-2026` only; 4.1.3 is still exposed)
-- Installer scope (Phase 7).
-- SVG uploads, sanitiser policy for `iframe`/`data:`, CAPTCHA/registration switch (Phase 4).
+- Phase 6: Redis cache design (ZA-051, ZA-014, ZA-055, ZA-072); how to repair the PostgreSQL initial migration
+  (ZA-050); PostgreSQL and Redis in CI or local only.
+- Where ZA-143 (non-page requests resolved as the home page; front-end circuits in the root's language) goes.
+- Installer scope (Phase 7), including the registration switch / CAPTCHA (ZA-024).
 - Is a v5 major acceptable as the vehicle for the breaking changes in Phase 11?
+- Answered: SVG uploads (D6) and the sanitiser policy for `iframe`/`data:` (D7).
