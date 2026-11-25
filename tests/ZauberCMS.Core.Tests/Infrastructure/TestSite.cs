@@ -29,15 +29,18 @@ public sealed class TestSite : IAsyncDisposable
 {
     public const string SqliteProvider = "Sqlite";
     public const string PostgreSqlProvider = "PostgreSql";
+    public const string SqlServerProvider = "SqlServer";
 
     private readonly SqliteConnection? _keepAlive;
     private readonly string? _postgreSqlConnectionString;
+    private readonly string? _sqlServerConnectionString;
     private readonly string _contentRoot;
 
     private TestSite(WebApplication app, SqliteConnection? keepAlive, string? postgreSqlConnectionString,
-        string contentRoot)
+        string? sqlServerConnectionString, string contentRoot)
     {
         _postgreSqlConnectionString = postgreSqlConnectionString;
+        _sqlServerConnectionString = sqlServerConnectionString;
         App = app;
         _keepAlive = keepAlive;
         _contentRoot = contentRoot;
@@ -51,8 +54,8 @@ public sealed class TestSite : IAsyncDisposable
     public User CurrentUser { get; private set; } = null!;
 
     /// <param name="extraSettings">Configuration keys added to (or replacing) the test defaults.</param>
-    /// <param name="databaseProvider"><see cref="SqliteProvider"/> (default) or <see cref="PostgreSqlProvider"/>;
-    /// PostgreSQL skips the test when Docker is not available.</param>
+    /// <param name="databaseProvider"><see cref="SqliteProvider"/> (default), <see cref="PostgreSqlProvider"/> (skips
+    /// without Docker) or <see cref="SqlServerProvider"/> (skips without <c>ZAUBER_TEST_SQLSERVER</c>).</param>
     public static async Task<TestSite> CreateAsync(IDictionary<string, string?>? extraSettings = null,
         string databaseProvider = SqliteProvider)
     {
@@ -61,6 +64,10 @@ public sealed class TestSite : IAsyncDisposable
         if (databaseProvider == PostgreSqlProvider)
         {
             connectionString = await TestContainers.CreatePostgreSqlDatabaseAsync();
+        }
+        else if (databaseProvider == SqlServerProvider)
+        {
+            connectionString = await TestContainers.CreateSqlServerDatabaseAsync();
         }
         else
         {
@@ -73,7 +80,8 @@ public sealed class TestSite : IAsyncDisposable
         var contentRoot = CreateContentRoot();
         var app = BuildApp(databaseProvider, connectionString, contentRoot, validateContainer: false, extraSettings);
         var site = new TestSite(app, keepAlive,
-            databaseProvider == PostgreSqlProvider ? connectionString : null, contentRoot);
+            databaseProvider == PostgreSqlProvider ? connectionString : null,
+            databaseProvider == SqlServerProvider ? connectionString : null, contentRoot);
 
         // Same order as ZauberSetup.AddZauberCms<T>(WebApplication): migrate, then run every ISeedData.
         using (var scope = site.CreateScope())
@@ -231,6 +239,11 @@ public sealed class TestSite : IAsyncDisposable
         if (_postgreSqlConnectionString != null)
         {
             await TestContainers.DropPostgreSqlDatabaseAsync(_postgreSqlConnectionString);
+        }
+
+        if (_sqlServerConnectionString != null)
+        {
+            await TestContainers.DropSqlServerDatabaseAsync(_sqlServerConnectionString);
         }
         try
         {

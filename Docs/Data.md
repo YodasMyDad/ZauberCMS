@@ -65,5 +65,6 @@ the three contexts.
 - Column types differ per provider (`nvarchar(max)` vs `TEXT` vs `text`) — let EF generate them; don't hard-code
   `HasColumnType` unless all three are handled.
 - Case-sensitivity of `=`/`LIKE` differs (SQL Server CI collation, PostgreSQL case-sensitive, SQLite ASCII-only NOCASE).
-- Verify schema and query changes on PostgreSQL: the test suite runs the content, data-grid, media and user tests and
-  `ProviderQueryTests` on a real PostgreSQL (Docker; [Standards.md](Standards.md) §9).
+- Verify schema and query changes on all three: the test suite runs the content, data-grid, media and user tests and
+  `ProviderQueryTests` on a real PostgreSQL (Docker) and, with `ZAUBER_TEST_SQLSERVER` set, on SQL Server
+  ([Standards.md](Standards.md) §9).

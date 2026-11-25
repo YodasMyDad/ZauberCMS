@@ -170,3 +170,9 @@ public class ContentSoftDeleteTestsOnPostgreSql : ContentSoftDeleteTests
 {
     protected override string DatabaseProvider => TestSite.PostgreSqlProvider;
 }
+
+/// <summary>The same tests on SQL Server; skipped without <c>ZAUBER_TEST_SQLSERVER</c>.</summary>
+public class ContentSoftDeleteTestsOnSqlServer : ContentSoftDeleteTests
+{
+    protected override string DatabaseProvider => TestSite.SqlServerProvider;
+}

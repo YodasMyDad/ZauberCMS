@@ -62,6 +62,57 @@ public static class TestContainers
         await command.ExecuteNonQueryAsync();
     }
 
+    /// <summary>
+    /// SQL Server is not run in a container: set <c>ZAUBER_TEST_SQLSERVER</c> to a connection string without a
+    /// database (for example <c>Server=myserver;Integrated Security=true;TrustServerCertificate=true</c>); the login
+    /// needs CREATE DATABASE. Without it the SQL Server tests are skipped, also on CI.
+    /// </summary>
+    public static async Task<string> CreateSqlServerDatabaseAsync()
+    {
+        var server = Environment.GetEnvironmentVariable("ZAUBER_TEST_SQLSERVER");
+        if (string.IsNullOrWhiteSpace(server))
+        {
+            Assert.Skip("SQL Server tests need ZAUBER_TEST_SQLSERVER (a connection string to a server where the " +
+                        "login may create databases).");
+        }
+
+        var databaseName = $"zauber_test_{Guid.NewGuid():N}";
+        await using (var connection = new Microsoft.Data.SqlClient.SqlConnection(server))
+        {
+            await connection.OpenAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = $"CREATE DATABASE [{databaseName}]";
+            await command.ExecuteNonQueryAsync();
+        }
+
+        return new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(server) { InitialCatalog = databaseName }
+            .ConnectionString;
+    }
+
+    /// <summary>Closes the pooled connections to a SQL Server test database and drops it.</summary>
+    public static async Task DropSqlServerDatabaseAsync(string connectionString)
+    {
+        var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+        var databaseName = builder.InitialCatalog;
+        await using (var pooled = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+        {
+            Microsoft.Data.SqlClient.SqlConnection.ClearPool(pooled);
+        }
+
+        builder.InitialCatalog = "master";
+        await using var connection = new Microsoft.Data.SqlClient.SqlConnection(builder.ConnectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"""
+                               IF DB_ID(N'{databaseName}') IS NOT NULL
+                               BEGIN
+                                   ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                                   DROP DATABASE [{databaseName}];
+                               END
+                               """;
+        await command.ExecuteNonQueryAsync();
+    }
+
     /// <summary>The connection string of the shared Redis container.</summary>
     public static async Task<string> RedisConnectionStringAsync()
     {

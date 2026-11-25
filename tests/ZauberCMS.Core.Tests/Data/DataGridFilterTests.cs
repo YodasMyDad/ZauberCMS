@@ -108,3 +108,9 @@ public class DataGridFilterTestsOnPostgreSql : DataGridFilterTests
 {
     protected override string DatabaseProvider => TestSite.PostgreSqlProvider;
 }
+
+/// <summary>The same tests on SQL Server; skipped without <c>ZAUBER_TEST_SQLSERVER</c>.</summary>
+public class DataGridFilterTestsOnSqlServer : DataGridFilterTests
+{
+    protected override string DatabaseProvider => TestSite.SqlServerProvider;
+}

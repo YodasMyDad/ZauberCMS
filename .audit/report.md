@@ -840,8 +840,9 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   focus and keyboard behaviour in side panels; Radzen 10 obsolete API usage (hidden by `NoWarn`).
 - Runtime checks done in a browser so far (scratch SQLite database): the Phase 1 package/editor smoke test and the
   Phase 3 admin actions and the Phase 4 checks listed under "Fixed". Phase 6: the app on PostgreSQL + Redis
-  containers (see Phase 6 under "Fixed"); the test suite runs on PostgreSQL and Redis. Still nothing on SQL Server
-  or behind a proxy.
+  containers (see Phase 6 under "Fixed"); the test suite runs on PostgreSQL and Redis, and on SQL Server when
+  `ZAUBER_TEST_SQLSERVER` is set (run locally: 78 cases pass; the app also run on SQL Server). Still nothing
+  behind a proxy.
 - Tests added in Roadmap Phase 4: restricted media middleware; lockout; refresh ticket; external sign-up claims;
   grid filter/sort guard; SEO outbound client; site URL links; admin access middleware and IP allow-list;
   forwarded-headers options; redirect targets; sanitiser; upload content check; SVG sanitiser.

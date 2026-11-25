@@ -35,7 +35,7 @@
 | D12 | **ZauberCMS.RTE 4 is taken now on .NET 10** (it targets net10.0 and net11.0), not at the .NET 11 move. | ZA-134, ZA-136 |
 | D13 | **Cache: entity graphs stay in each server's memory cache; Redis only carries invalidation** (pub/sub "clear prefix" plus a version counter, so every server drops stale entries). Nothing secret or half-loaded is stored in Redis; no public API change. Shared DTO caching is not planned. (2026-11-25) | ZA-051, ZA-014, ZA-055, ZA-072 |
 | D14 | **PostgreSQL Initial migration:** reproduce on a real PostgreSQL first; if it fails, correct the PostgreSQL `Initial` migration (one-off exception to rule 1, explained in the commit and `Docs/Data.md`), then add the missing ContentVersion indexes for all three providers through `migrations.ps1`, clearing duplicate "current published" flags before the unique index. (2026-11-25) | ZA-050 |
-| D15 | **Tests run against real PostgreSQL and Redis containers locally and in CI** on every push; skipped with a clear message when Docker isn't available. SQL Server stays on SQLite-level coverage for now. (2026-11-25) | Phase 6 |
+| D15 | **Tests run against real PostgreSQL and Redis containers locally and in CI** on every push; skipped with a clear message when Docker isn't available. SQL Server: the same test classes run against a SQL Server the developer points `ZAUBER_TEST_SQLSERVER` at (not on CI yet). (2026-11-25) | Phase 6 |
 | D16 | **ZA-143 goes at the end of Phase 6**, after the PostgreSQL/Redis work, both halves together. (2026-11-25) | ZA-143 |
 | D17 | **No hotfix for ZA-044.** The fix ships with the v5 release when the owner is ready; 4.1.3 stays as published until then. (2026-11-25) | ZA-044 |
 | D18 | **The whole rework ships as one v5 major, together with .NET 11; there are no 4.x releases before it** (owner, 2026-11-25, replacing "4.x minors with shims"). A breaking change is allowed when it buys something, and each one is listed in that phase's release notes so the v5 upgrade notes can be built from them. Keep the `[Obsolete]` path where it costs little. | Phase 11, 12 |
@@ -224,6 +224,10 @@
   the newest flagged version per page.
 - App run on PostgreSQL + Redis (containers): migrations applied, registration, admin, a settings save published an
   invalidation through Redis; no errors in the log.
+- SQL Server (owner's local server, after the phase commit): the same test classes run on SQL Server through
+  `ZAUBER_TEST_SQLSERVER` — 78 cases, all pass (migrations on an empty database, the upgrade with duplicate flags,
+  the unique index, raw SQL, search). App run on a new SQL Server database: migrations, the unique index,
+  registration, admin, a settings save; no errors in the log.
 - Schema: one migration, `ContentVersionIndexes`. Public API:
   - Added: `ServerCache` (its `Remove*` methods apply a clear without publishing, for a custom bus),
     `ICacheInvalidationBus` (replaceable backplane), `CultureMiddleware.IsContentEndpoint`,
@@ -242,7 +246,7 @@
     Interactive components on a front-end page run in that page's language (they ran in the home page's).
   - Version flags are switched inside the save's transaction (a save that fails leaves the old flags).
   - Content saves, recycle, purge and content-type delete clear the content cache again after they commit.
-- Not verified: SQL Server (D15: SQLite-level coverage); the Redis behaviour when Redis drops mid-run and comes back
+- Not verified: SQL Server on CI (local only); the Redis behaviour when Redis drops mid-run and comes back
   (reconnect path, read but not exercised); creating content through the admin UI on PostgreSQL (service tests only);
   a real multi-server deployment (two sites in one test process stand in for it).
 
