@@ -15,12 +15,12 @@ public class ResponseStatusCheck(IHttpClientFactory httpClientFactory) : ISeoChe
 
         try
         {
-            // Use IHttpClientFactory to create a new instance of HttpClient
-            var httpClient = httpClientFactory.CreateClient();
+            // The SEO client refuses private addresses and has a timeout (see SeoHttp).
+            var httpClient = httpClientFactory.CreateClient(SeoHttp.ClientName);
             // We grab a random user agent so we are not using the same one each time
             httpClient.DefaultRequestHeaders.Add("User-Agent", Constants.UserAgents.OrderBy(x => Guid.NewGuid()).FirstOrDefault());
             // Perform the HTTP GET request
-            var response = await httpClient.GetAsync(url);
+            using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
             var statusCode = (int)response.StatusCode;
 
             // Handle status codes
@@ -45,6 +45,11 @@ public class ResponseStatusCheck(IHttpClientFactory httpClientFactory) : ISeoChe
             // Handle network or HTTP request-specific errors
             seoItem.Status = AlertType.Error;
             seoItem.DefaultMessage = $"A network error occurred while checking the response: {ex.Message}";
+        }
+        catch (TaskCanceledException)
+        {
+            seoItem.Status = AlertType.Error;
+            seoItem.DefaultMessage = "The page did not answer in time.";
         }
         catch (Exception ex)
         {

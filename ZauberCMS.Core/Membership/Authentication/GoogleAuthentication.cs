@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,10 @@ public class GoogleAuthentication : IExternalAuthenticationProvider
             {
                 options.ClientId = googleId;
                 options.ClientSecret = configuration.GetValue<string>("Zauber:Identity:ExternalProviders:Google:ClientSecret") ?? "";
+                // Google's user-info response says whether it has verified the address. ZauberSignInManager
+                // only creates an account from an external login when this claim is true.
+                options.ClaimActions.MapJsonKey(ZauberSignInManager.EmailVerifiedClaimType, "email_verified",
+                    ClaimValueTypes.Boolean);
             });
         }
     }

@@ -46,7 +46,8 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             return result;
         }
 
-        var httpClient = httpClientFactory.CreateClient();
+        // The SEO client refuses private addresses and has a timeout (see SeoHttp).
+        var httpClient = httpClientFactory.CreateClient(SeoHttp.ClientName);
         
         // We grab a random user agent so we are not using the same one each time
         httpClient.DefaultRequestHeaders.Add("User-Agent", Constants.UserAgents.OrderBy(x => Guid.NewGuid()).FirstOrDefault());
@@ -57,8 +58,14 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
 
             try
             {
-                var absoluteUrl = link.StartsWith("http") ? link : new Uri(new Uri(url), link).ToString();
-                var response = await httpClient.GetAsync(absoluteUrl);
+                var target = new Uri(new Uri(url), link);
+                if (target.Scheme != Uri.UriSchemeHttp && target.Scheme != Uri.UriSchemeHttps)
+                {
+                    // mailto:, tel:, javascript: and the like are not pages to fetch.
+                    continue;
+                }
+
+                using var response = await httpClient.GetAsync(target, HttpCompletionOption.ResponseHeadersRead);
 
                 if (!response.IsSuccessStatusCode)
                 {

@@ -1,9 +1,12 @@
 ﻿@using RenderMode = Microsoft.AspNetCore.Mvc.Rendering.RenderMode
+@using ZauberCMS.Core.Extensions
+@using ZauberCMS.Core.Shared.Services
 @implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+@inject IHtmlSanitizerService Sanitizer
 @if (Content != null)
 {
     <div>
-        @((MarkupString)(Content.GetValue<string>(PropertyName) ?? string.Empty))
+        @Sanitizer.SanitizeToMarkup(Content.GetValue<string>(PropertyName))
     </div>
 }
 

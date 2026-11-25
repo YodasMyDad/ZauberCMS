@@ -396,21 +396,11 @@ public class LanguageService(
             .AsTracking()
             .AsQueryable();
         
-        if (!string.IsNullOrEmpty(parameters.Filter))
-        {
-            // Filter via the Where method
-            query = query.Where(parameters.Filter);
-        }
-
-        if (!string.IsNullOrEmpty(parameters.Order))
-        {
-            // Sort via the OrderBy method
-            query = query.OrderBy(parameters.Order);
-        }
-        else
-        {
-            query = query.OrderBy(x => x.Key);
-        }
+        // The strings are parsed into expressions; GridQueryGuard refuses anything but ordinary column use.
+        query = GridQueryGuard.Filter(query, parameters.Filter);
+        query = string.IsNullOrEmpty(parameters.Order)
+            ? query.OrderBy(x => x.Key)
+            : GridQueryGuard.OrderBy(query, parameters.Order);
 
         // Important!!! Make sure the Count property of RadzenDataGrid is set.
         result.Count = await query.CountAsync(cancellationToken);

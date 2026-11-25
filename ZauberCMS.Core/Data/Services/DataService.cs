@@ -107,6 +107,8 @@ public class DataService(
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <typeparam name="T">Entity type which implements ITreeItem.</typeparam>
     /// <returns>Data grid result including total count and items.</returns>
+    /// <exception cref="ArgumentException">The filter or sort string is not valid, or uses a secret column
+    /// (password hash, security stamp) or anything other than the entity's properties and simple value methods.</exception>
     public async Task<DataGridResult<T>> GetDataGridAsync<T>(DataGridParameters<T> parameters, CancellationToken cancellationToken = default) where T : class, ITreeItem
     {
         using var scope = serviceScopeFactory.CreateScope();
@@ -143,17 +145,9 @@ public class DataService(
             };
         }
 
-        if (!string.IsNullOrEmpty(parameters.Filter))
-        {
-            // Filter via the Where method
-            query = query.Where(parameters.Filter);
-        }
-
-        if (!string.IsNullOrEmpty(parameters.OrderBy))
-        {
-            // Sort via the OrderBy method
-            query = query.OrderBy(parameters.OrderBy);
-        }
+        // The strings are parsed into expressions; GridQueryGuard refuses anything but ordinary column use.
+        query = GridQueryGuard.Filter(query, parameters.Filter);
+        query = GridQueryGuard.OrderBy(query, parameters.OrderBy);
 
         // Important!!! Make sure the Count property of RadzenDataGrid is set.
         result.Count = await query.CountAsync(cancellationToken);

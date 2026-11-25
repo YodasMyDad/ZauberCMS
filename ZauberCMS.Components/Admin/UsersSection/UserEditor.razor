@@ -228,8 +228,9 @@
                 NotificationService.ShowSuccessNotification("Roles Updated");
                 if (roleUpdateResult.RefreshSignIn)
                 {
-                    var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.Uri);
-                    NavigationManager.NavigateTo($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}", true);
+                    // A path on this site: the refresh endpoint only returns to local addresses.
+                var currentUrl = System.Net.WebUtility.UrlEncode("/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
+                    NavigationManager.NavigateTo($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}&ticket={System.Net.WebUtility.UrlEncode(roleUpdateResult.RefreshSignInTicket)}", true);
                 }
             }
         }
@@ -330,8 +331,9 @@
             await AppState.NotifyUserSaved(User, AuthState.User.Identity?.Name!);
             if (result is { Success: true, RefreshSignIn: true })
             {
-                var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.Uri);
-                NavigationManager.NavigateTo($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}", true);
+                // A path on this site: the refresh endpoint only returns to local addresses.
+                var currentUrl = System.Net.WebUtility.UrlEncode("/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
+                NavigationManager.NavigateTo($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}&ticket={System.Net.WebUtility.UrlEncode(result.RefreshSignInTicket)}", true);
             }
         }
     }

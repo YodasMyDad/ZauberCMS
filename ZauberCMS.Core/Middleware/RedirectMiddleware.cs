@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using ZauberCMS.Core.Seo;
 using ZauberCMS.Core.Seo.Interfaces;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Seo.Parameters;
@@ -97,7 +98,8 @@ public class RedirectMiddleware(
             
             foreach (var redirect in allRedirects)
             {
-                if (string.IsNullOrWhiteSpace(redirect.FromUrl) || string.IsNullOrWhiteSpace(redirect.ToUrl))
+                // Rows saved before targets were validated are skipped rather than followed.
+                if (string.IsNullOrWhiteSpace(redirect.FromUrl) || !RedirectTarget.IsValid(redirect.ToUrl))
                     continue;
                 
                 var redirectInfo = new RedirectInfo(redirect.ToUrl, redirect.IsPermanent);

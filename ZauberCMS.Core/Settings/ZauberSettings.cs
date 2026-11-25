@@ -11,6 +11,14 @@ public class ZauberSettings
     public bool EnablePathUrls { get; set; }
     public bool ShowDetailedErrors { get; set; }
     public string? Default404Url { get; set; }
+
+    /// <summary>
+    /// The public address of the site, for example <c>https://www.example.com</c>. Links in emails (password
+    /// reset, email confirmation) are built from it. When it is empty they are built from the Host header of the
+    /// request, which the sender of the request controls, so set this (or restrict <c>AllowedHosts</c>) on any
+    /// site that sends email. The SEO checker may also fetch this host when it is on a private address.
+    /// </summary>
+    public string? SiteUrl { get; set; }
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new()
     {
@@ -20,6 +28,8 @@ public class ZauberSettings
 
     public Identity Identity { get; set; } = new();
     public ImageResizeSettings ImageResize { get; set; } = new();
+    public ForwardedHeadersSettings ForwardedHeaders { get; set; } = new();
+    public HtmlSanitizerSettings HtmlSanitizer { get; set; } = new();
     public string? NotFoundComponent { get; set; } = "ZauberCMS.Components.Pages.NotFound404";
     public string? StarterComponent { get; set; } = "ZauberCMS.Components.Pages.NewSite";
     public string? MissingView { get; set; } = "ZauberCMS.Components.Pages.MissingView";
@@ -37,6 +47,35 @@ public class Identity
     public string? AccountLayout { get; set; } = "ZauberCMS.Components.Pages.BlankLayout";
     
     public string DefaultLoginRedirectUrl { get; set; } = "/account/login";
+}
+
+/// <summary>
+/// For a site behind a reverse proxy or load balancer. Without it the application sees the proxy's address as
+/// the visitor's: the login rate limiter then counts all visitors as one, and the admin IP allow-list compares
+/// the proxy's address.
+/// </summary>
+public class ForwardedHeadersSettings
+{
+    /// <summary>Read the visitor's address and scheme from X-Forwarded-For / X-Forwarded-Proto.</summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// IP addresses of the proxies whose headers are trusted. A proxy on the same machine (loopback) is always
+    /// trusted. Headers from any other sender are ignored, so list every proxy that is on another machine.
+    /// </summary>
+    public string[]? KnownProxies { get; set; }
+
+    /// <summary>Networks of trusted proxies in CIDR form, for example <c>10.0.0.0/8</c>.</summary>
+    public string[]? KnownNetworks { get; set; }
+}
+
+public class HtmlSanitizerSettings
+{
+    /// <summary>
+    /// Hosts an <c>&lt;iframe&gt;</c> in rich text may load from (https only). When the key is missing the defaults
+    /// are YouTube and Vimeo (<c>DefaultHtmlSanitizerService.DefaultIframeHosts</c>).
+    /// </summary>
+    public string[]? AllowedIframeHosts { get; set; }
 }
 
 public class ImageResizeSettings

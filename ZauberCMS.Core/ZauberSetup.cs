@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
+using System.Net;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using ZauberCMS.Core.Membership.Middleware;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -33,6 +36,7 @@ using ZauberCMS.Core.Tags.Interfaces;
 using ZauberCMS.Core.Tags.Services;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Audit.Services;
+using ZauberCMS.Core.Seo;
 using ZauberCMS.Core.Seo.Interfaces;
 using ZauberCMS.Core.Seo.Services;
 using ZauberCMS.Core.Data.Services;
@@ -91,6 +95,7 @@ public static class ZauberSetup
         });
 
         builder.Services.AddHttpClient();
+        builder.Services.AddSeoHttpClient();
 
         builder.Services.AddScoped(sp =>
         {
@@ -234,6 +239,11 @@ public static class ZauberSetup
         builder.Services.AddScoped<ICacheService, DefaultCacheService>();
         builder.Services.AddScoped<IHtmlSanitizerService, DefaultHtmlSanitizerService>();
         builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
+        builder.Services.AddSingleton<RefreshSignInTicketService>();
+        // How long a cookie is trusted before its security stamp is compared with the database again. The
+        // framework default is 30 minutes; a removed user or a reset password should end a session sooner.
+        builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+            options.ValidationInterval = TimeSpan.FromMinutes(5));
         builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
         builder.Services.AddScoped<TreeState>();
         builder.Services.AddScoped<ContentFinderPipeline>();
@@ -340,8 +350,59 @@ public static class ZauberSetup
         builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
     }
 
+    /// <summary>Builds the forwarded-headers options from <c>Zauber:ForwardedHeaders</c>.</summary>
+    /// <exception cref="InvalidOperationException">An entry is not an IP address or a network in CIDR form.</exception>
+    public static ForwardedHeadersOptions BuildForwardedHeadersOptions(ForwardedHeadersSettings settings)
+    {
+        var options = new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        };
+
+        foreach (var proxy in settings.KnownProxies ?? [])
+        {
+            if (!IPAddress.TryParse(proxy, out var address))
+            {
+                throw new InvalidOperationException(
+                    $"Zauber:ForwardedHeaders:KnownProxies contains '{proxy}', which is not an IP address.");
+            }
+
+            options.KnownProxies.Add(address);
+        }
+
+        foreach (var network in settings.KnownNetworks ?? [])
+        {
+            if (!System.Net.IPNetwork.TryParse(network, out var parsed))
+            {
+                throw new InvalidOperationException(
+                    $"Zauber:ForwardedHeaders:KnownNetworks contains '{network}', which is not a network such as 10.0.0.0/8.");
+            }
+
+            options.KnownIPNetworks.Add(parsed);
+        }
+
+        return options;
+    }
+
     public static void AddZauberCms<T>(this WebApplication app)
     {
+        var zauberSettings = app.Services.GetRequiredService<IOptions<ZauberSettings>>().Value;
+
+        // First in the pipeline: everything after it (HTTPS redirect, rate limiter, admin IP allow-list, links)
+        // must see the visitor's address and scheme, not the proxy's. Off unless Zauber:ForwardedHeaders:Enabled.
+        if (zauberSettings.ForwardedHeaders.Enabled)
+        {
+            app.UseForwardedHeaders(BuildForwardedHeadersOptions(zauberSettings.ForwardedHeaders));
+        }
+
+        if (!app.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(zauberSettings.SiteUrl) &&
+            app.Configuration["AllowedHosts"] is null or "" or "*")
+        {
+            Log.Warning("Zauber:SiteUrl is not set and AllowedHosts accepts any host. Links in emails (password " +
+                        "reset, email confirmation) are built from the request's Host header, which the sender " +
+                        "controls. Set Zauber:SiteUrl to the public address of the site");
+        }
+
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -395,6 +456,10 @@ public static class ZauberSetup
 
         app.UseAuthentication();
 
+        // Adds nosniff (and a sandboxing CSP for SVG) to responses from the upload folder. It only registers a
+        // callback, so it sits in front of the three middleware that can serve those files.
+        app.UseMiddleware<MediaSecurityHeadersMiddleware>();
+
         // Our middleware must run before ImageResize to check restricted media
         app.UseMiddleware<RestrictedMediaMiddleware>();
 
@@ -412,6 +477,11 @@ public static class ZauberSetup
         // Culture middleware must run after routing so we have access to route values
         app.UseMiddleware<CultureMiddleware>();
         
+        // Admin IP allow-list and fail-closed authorisation for /admin/**. Needs the signed-in user
+        // (UseAuthentication, above) and the matched endpoint (UseRouting), and must refuse before authorisation
+        // lets a page without [Authorize] through.
+        app.UseMiddleware<AdminAccessMiddleware>();
+
         app.UseRateLimiter();
 
         app.UseAuthorization();

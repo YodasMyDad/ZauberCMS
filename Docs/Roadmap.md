@@ -7,10 +7,10 @@
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-138`).
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-140`).
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
-  versions), **Phase 2 done** (test projects + CI test step) and **Phase 3 done** (broken admin actions).
-  **126 open findings** (0 Critical, 25 High, 62 Medium, 39 Low). **Next: Phase 4.**
+  versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
+  (access control & identity). **114 open findings** (0 Critical, 18 High, 58 Medium, 38 Low). **Next: Phase 5.**
 - Findings come from reading code + a real build/package scan. Nothing was run in a browser or against
   PostgreSQL/Redis — items marked "needs repro" must be reproduced before or while fixing.
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -24,6 +24,10 @@
 | D3 | **Media gets a recycle bin like content:** delete → recycle bin (restorable); deleting *from* the bin is permanent (row **and** file removed). A direct permanent-delete option is also allowed. | ZA-006, ZA-053 |
 | D4 | **Dependencies: first bring everything (Radzen included) to the latest versions that run on .NET 10, then test the app.** Only once it all works well: move to .NET 11 and test again. | ZA-102, ZA-130 |
 | D5 | Block List editor is to be **simplified/redesigned**, not patched indefinitely. | ZA-034…ZA-043, [BlockListEditor.md](BlockListEditor.md) §6 |
+| D6 | **SVG uploads are sanitised on upload** (scripts, event handlers, external references removed) and served with a restrictive Content-Security-Policy. | ZA-005 |
+| D7 | **Sanitiser: `<iframe>` only from a configurable host allow-list** (default YouTube, Vimeo); `data:` URLs only for images. | ZA-021, ZA-134 |
+| D8 | External sign-up (ZA-002): fix with unit tests now; the owner tests against a real provider later. Until then it is "not verified live". | ZA-002 |
+| D9 | Fix the duplicated `<RadzenComponents>` (ZA-138) in Phase 4. | ZA-138 |
 
 ## Working rules for the rework
 
@@ -86,12 +90,42 @@
   is doubled). Small; fix it whenever the owner wants.
 - Not verified: a real confirmation email round trip; a forced context-menu failure in the browser.
 
-### Phase 4 — Access control & identity
-ZA-053 (restricted media public when recycled / case bypass), ZA-052 (`refreshsignin`), ZA-002 (external sign-up —
-needs a live provider test), ZA-059 (lockout), ZA-019 + ZA-020 (SSRF / dynamic LINQ), ZA-003 (host-header links),
-ZA-060 (proxy headers, IP allow-list in middleware), ZA-132 (fail-closed `/admin/**` authorisation, service role
-checks, redirect-target validation), ZA-021/ZA-022/ZA-005 (sanitiser, uploads, SVG — some need
-owner decisions; ask).
+### Phase 4 — Access control & identity — DONE 2026-11-25
+- Fixed: ZA-053, ZA-052, ZA-059, ZA-002, ZA-020, ZA-019, ZA-003, ZA-060, ZA-132 (route half), ZA-021, ZA-022,
+  ZA-005, ZA-138, and ZA-139 (new: content grids refused every filter). What each fix does and how it was
+  verified: "Fixed" section of the audit report.
+- New open finding: ZA-140 — services do no authorisation of their own (the other half of ZA-132). Not done on
+  purpose: a role check inside the services would break sites and plugins that save from the front end. It needs
+  a permission design and the owner's decision.
+- New settings (all three appsettings files, all with defaults that keep existing sites working):
+  `Zauber:SiteUrl`, `Zauber:ForwardedHeaders` (`Enabled`, `KnownProxies`, `KnownNetworks`),
+  `Zauber:HtmlSanitizer:AllowedIframeHosts`, `Zauber:Identity:ExternalProviders:Facebook|Microsoft:TrustEmail`.
+- Public API additions (no breaks): `HandlerResult.RefreshSignInTicket`, `RefreshSignInTicketService`,
+  `ZauberSignInManager.CreateExternalUserAsync` / `HasVerifiedEmail` / `EmailVerifiedClaimType`, `SeoHttp`,
+  `RedirectTarget`, `AdminAccess`, `AdminAccessMiddleware`, `MediaSecurityHeadersMiddleware`, `SvgSanitizer`,
+  `UploadContentCheck`, `ZauberSetup.BuildForwardedHeadersOptions`, settings classes
+  `ForwardedHeadersSettings` and `HtmlSanitizerSettings`.
+- Behaviour changes for the release notes (things a site owner or plugin author can notice):
+  - A page under `/admin` with no `[Authorize]` of its own is now admin-only. A plugin page for another role must
+    say so with its own `[Authorize(Roles = "…")]`.
+  - With an admin IP allow-list, other addresses get 403 on every `/admin` request (was a forced sign-out on
+    page load). Behind a proxy, enable `Zauber:ForwardedHeaders` or the proxy's address is what is compared.
+  - Six wrong passwords lock an account for five minutes.
+  - Facebook and Microsoft sign-up needs `TrustEmail: true`; Google works as shipped.
+  - Rich text: iframes only from the allowed hosts; `data:` addresses only for bitmaps in images.
+  - Uploads: text files that contain HTML or script are refused; files whose content does not fit the extension
+    are refused for more formats than before.
+  - SEO checker: private and loopback addresses are refused unless they are the site itself.
+  - Grid filter/sort strings that touch secret columns or anything but plain columns throw `ArgumentException`.
+  - Redirects: a target must be a local path or an http/https address; older rows that are not are skipped.
+  - The sign-in cookie is re-checked every 5 minutes instead of 30 (one small query per signed-in user).
+- Not verified: external sign-up against a real provider (owner will test, D8); anything behind a real proxy;
+  an SVG upload through the admin UI (tested at the storage provider); tooltips and dialogs outside the Content
+  section after the `<RadzenComponents>` change.
+- Seen, not changed: the redirect editor puts a `/` in front of whatever is typed, so an external target cannot
+  be entered in the UI. The admin UI showed Spanish labels on the scratch database after a language was set on
+  the root content (first seen in Phase 3). Both are for the owner to judge.
+- Also added in this phase, at the owner's request: the "pluggable and updatable" core principle in `AGENTS.md`.
 
 ### Phase 5 — Content integrity
 ZA-046 (duplicate URL breaks front-end), ZA-047 (drafts discarded), ZA-048 (recycle parent/children),

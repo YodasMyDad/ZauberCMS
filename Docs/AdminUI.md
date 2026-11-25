@@ -20,7 +20,12 @@ instances created by `ActivatorUtilities` — `[Inject]` is **not** populated th
 
 - Route under `/admin` — that is what gives InteractiveServer and loads Radzen/admin assets (`ZauberCMS/Components/App.razor`).
 - `Admin/Layout/SectionLayout.razor`: top nav (`SectionLinks`), sidebar trees (`SectionTrees`), the cascading modal,
-  and the `AllowedAdminIpAddress` check (non-whitelisted → forced logout via `Urls.ApiLogout`).
+  and the single `<RadzenComponents />` host (a second one doubles every dialog and notification).
+- Access: a page under `/admin` is admin-only unless it says otherwise. Pages in `ZauberCMS.Components/Admin/` get
+  `[Authorize(Roles = Admin)]` from `_Imports.razor`; a page anywhere else (your site, a plugin) with no
+  `[Authorize]` or `[AllowAnonymous]` is treated the same way by `AdminAccessMiddleware` and `Routes.razor`.
+  To open an admin page to another role, put `@attribute [Authorize(Roles = "Editor")]` on it.
+  The admin IP allow-list (`GlobalSettings.AllowedAdminIpAddress`) is enforced by the middleware: 403.
   The layout is cascaded with `IsFixed="true"`: use it to call `SetSection`, don't read changing state from it.
 - An editor page loads its model when its route values change, not on every `OnParametersSetAsync` — parameters
   are set again whenever a parent re-renders, and reloading there drops unsaved edits (see `ContentTypeEditor`).

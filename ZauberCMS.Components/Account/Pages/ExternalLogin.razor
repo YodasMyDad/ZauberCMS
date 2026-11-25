@@ -94,6 +94,7 @@
             RedirectManager.RedirectToWithStatus("Account/Login", "Unable to login please contact us.", HttpContext);
         }
 
-        _message = "There was an unexpected error";
+        _message = $"We could not sign you in with {_externalLoginInfo.ProviderDisplayName ?? _externalLoginInfo.LoginProvider}. " +
+                   "An account is only created when the provider confirms your email address.";
     }
 }

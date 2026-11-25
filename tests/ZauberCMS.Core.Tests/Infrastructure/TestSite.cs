@@ -45,7 +45,8 @@ public sealed class TestSite : IAsyncDisposable
     /// <summary>The user every service call runs as (services read it via AuthenticationStateProvider).</summary>
     public User CurrentUser { get; private set; } = null!;
 
-    public static async Task<TestSite> CreateAsync()
+    /// <param name="extraSettings">Configuration keys added to (or replacing) the test defaults.</param>
+    public static async Task<TestSite> CreateAsync(IDictionary<string, string?>? extraSettings = null)
     {
         // A named shared-cache in-memory database lives for as long as one connection to it stays open.
         var connectionString = $"DataSource=zauber-test-{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
@@ -53,7 +54,7 @@ public sealed class TestSite : IAsyncDisposable
         await keepAlive.OpenAsync();
 
         var contentRoot = CreateContentRoot();
-        var app = BuildApp(SqliteProvider, connectionString, contentRoot, validateContainer: false);
+        var app = BuildApp(SqliteProvider, connectionString, contentRoot, validateContainer: false, extraSettings);
         var site = new TestSite(app, keepAlive, contentRoot);
 
         // Same order as ZauberSetup.AddZauberCms<T>(WebApplication): migrate, then run every ISeedData.
@@ -78,7 +79,7 @@ public sealed class TestSite : IAsyncDisposable
     /// <paramref name="validateContainer"/> makes the container check every registration and scope rule on build.
     /// </summary>
     public static WebApplication BuildApp(string databaseProvider, string connectionString, string contentRoot,
-        bool validateContainer)
+        bool validateContainer, IDictionary<string, string?>? extraSettings = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
@@ -98,6 +99,11 @@ public sealed class TestSite : IAsyncDisposable
             ["Zauber:Plugins:StorageProvider"] = "ZauberCMS.Core.Providers.DiskStorageProvider",
             ["Zauber:Plugins:EmailProvider"] = "ZauberCMS.Core.Providers.SmtpEmailProvider"
         });
+
+        if (extraSettings != null)
+        {
+            builder.Configuration.AddInMemoryCollection(extraSettings);
+        }
 
         builder.AddZauberCms();
 

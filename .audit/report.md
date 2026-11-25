@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 4 (2026-11-25): Build PASS · Warnings: 0 · Tests: 231 (228 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
@@ -15,36 +16,19 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 25 | 4 | 0 |
-| Medium | 62 | 7 | 0 |
-| Low | 39 | 0 | 0 |
+| High | 18 | 11 | 0 |
+| Medium | 58 | 13 | 0 |
+| Low | 38 | 1 | 0 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), committed on `rework-2026`. Next free ID: ZA-139.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), committed on `rework-2026`. Next free ID: ZA-141.
 
 ## Open findings
-
-### ZA-002 [High/High] External (OAuth) sign-up likely always refused (regression)
-
-- Where: `ZauberCMS.Core/Membership/ZauberSignInManager.cs:72-86` · Category: D · Since: `ca91ca1`
-- Issue / Trigger: requires an `email_verified` claim, but no provider maps it (`ClaimActions.MapJsonKey`); stock Google/Facebook/Microsoft handlers don't emit it.
-- Fix: map the claim per provider (Google has `email_verified`; others need a policy). · Blocked by: identity design decision; verify with a real provider.
-- Reconciled 2026-11-25: no `email_verified` claim mapping exists anywhere (providers in `Membership/Authentication/*.cs` set only id + secret), so new external sign-up should fail for Google, Facebook and Microsoft; existing linked accounts still sign in. Needs one live test.
-
-### ZA-003 [High/High] Host-header injection in password-reset/confirm email links
-
-- Where: `ZauberCMS.Core/Extensions/HttpContextExtensions.cs:22`; callers `MembershipService.cs:910`, `Email/Services/EmailService.cs:48`; `AllowedHosts: "*"` in all three appsettings · Category: D
-- Fix: configured canonical site URL setting; restrict `AllowedHosts`. · Blocked by: new config key (all three appsettings).
 
 ### ZA-004 [High/High] First registered user becomes Admin (re-opens if all users soft-deleted)
 
 - Where: `ZauberCMS.Core/Extensions/RoleExtensions.cs:31` · Category: D
 - Fix: install-time setup flow / explicit bootstrap token. · Blocked by: product decision.
 - Owner decision 2026-11-25: replace with an explicit setup step — a polished installer (Roadmap Phase 7). No longer blocked.
-
-### ZA-005 [High/Medium] SVG uploads served same-origin unsanitised when opted in
-
-- Where: `ZauberCMS.Core/Settings/GlobalSettings.cs:11-15`, `Providers/DiskStorageProvider.cs:82` · Category: D
-- Fix: sanitise SVG or serve with `Content-Disposition`/CSP sandbox. · Blocked by: product decision.
 
 ### ZA-006 [High/Medium] Media recycle bin has no UI — soft-deleted media can't be restored or purged
 
@@ -58,18 +42,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Extensions/DbContextExtensions.cs:25-53` (`WherePathLike`, `WhereHasCompositionsUsing`); used by copy (`ContentService.cs:819`) and restrict-access · Category: B/C
 - Fix: quote identifiers per provider or replace with LINQ. · Blocked by: needs PostgreSQL verification.
 - Owner decision 2026-11-25: PostgreSQL is a supported provider — must be fixed and verified on a real PostgreSQL instance (Roadmap Phase 6).
-
-### ZA-019 [High/High] Admin SSRF via SEO checker
-
-- Where: `ZauberCMS.Components/Seo/SeoChecker.razor:53-56`, `Seo/Checks/ResponseStatusCheck.cs:23`, `BrokenLinksCheck.cs:61` · Category: D · Blocked by: allow-list policy.
-- Reconciled 2026-11-25: raised to High — reachable **without login** via ZA-044; also blocks the circuit (sync HTTP, no timeout).
-- Update 2026-11-25: ZA-044 fixed, so this is admin-only again. Still open; re-rate severity at the next audit.
-
-### ZA-020 [High/High] Dynamic LINQ from browser strings without allow-list
-
-- Where: `ZauberCMS.Core/Data/Services/DataService.cs:137,143`, `Languages/Services/LanguageService.cs:402,408` · Category: D
-- Reconciled 2026-11-25: raised to High — the `DataService` path is reachable anonymously through the SEO redirects grid (ZA-044).
-- Update 2026-11-25: ZA-044 fixed, so this is admin-only again. Still open; re-rate severity at the next audit.
 
 ### ZA-034 [High/High] Block list: Cancel in a nested modal does not discard its changes (data loss)
 
@@ -142,18 +114,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: With `RedisConnectionString` set, a cache hit returns content whose `[JsonIgnore]` navigations (`ContentRoles`, `Children`, `MediaRoles`) are empty, so the EntryPage role check passes. Cached user rows also put password hashes in Redis, and `Dictionary<object,string>` results don't deserialise. Not run.
 - Fix: cache DTOs, or keep entity graphs in memory and use Redis only for invalidation. · Blocked by: cached return types are public API.
 - Owner decision 2026-11-25: Redis caching is supported — must be fixed and verified against Redis (Roadmap Phase 6).
-
-### ZA-052 [High/Medium] Session survives user deletion and password reset via `refreshsignin`
-
-- Where: `ZauberCMS.Components/Controllers/AuthController.cs:17-23`, `ZauberCMS.Core/Membership/Services/MembershipService.cs:371-376` · Category: D · Since: 2026-11-25
-- Issue / Trigger: The GET endpoint re-issues the cookie from the DB user without validating the security stamp, `CanSignIn` or `Deleted`; refreshing more often than the 30-minute default validation interval avoids the stamp check entirely. A removed admin or a stolen cookie keeps a valid admin session.
-- Fix: `[Authorize]`, validate stamp and `CanSignIn` first, POST + antiforgery, shorter validation interval, reject `Deleted`. · Blocked by: `UserEditor.razor:219,316` navigate to it by GET.
-
-### ZA-053 [High/High] Restricted media becomes public when recycled, and the check is bypassed by URL case
-
-- Where: `ZauberCMS.Core/Media/Services/MediaService.cs:201-210,282-290,399-402`, `ZauberCMS.Core/Media/Middleware/RestrictedMediaMiddleware.cs:18,66-74` · Category: D · Since: 2026-11-25
-- Issue / Trigger: The restricted lookup excludes `Deleted` rows but the admin delete is always soft and leaves the file on disk, so a deleted members-only file is served anonymously. The lookup dictionary is also case-sensitive, so a differently-cased path misses the check on Windows/macOS file systems.
-- Fix: drop the `Deleted` filter (or 404 deleted media) and use an `OrdinalIgnoreCase` comparer on a normalised path. · Blocked by: nothing.
 
 ### ZA-054 [High/High] Admin trees block the circuit with sync-over-async (latent deadlock)
 
@@ -233,14 +193,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 - Where: `ZauberCMS.Core/Tags/Services/TagService.cs:222-224` · Category: C
 
-### ZA-021 [Medium/Medium] Sanitiser allows `iframe` and `data:`; RTE rendered as raw `MarkupString`
-
-- Where: `ZauberCMS.Core/Shared/Services/DefaultHtmlSanitizerService.cs:18,26`, `ZauberCMS.Web/ContentBlocks/RTEBlock.razor:6` · Category: D · Blocked by: product decision.
-
-### ZA-022 [Medium/Medium] Upload check extension-only for text types
-
-- Where: `ZauberCMS.Core/Providers/DiskStorageProvider.cs:55-63,85+` · Category: D
-
 ### ZA-023 [Medium/Medium] Promotion via `AdminEmailAddresses` without confirmed email
 
 - Where: `RoleExtensions.cs:32-33`; `SignInRequireConfirmedAccount: false` · Category: D · Blocked by: deliberate feature.
@@ -279,18 +231,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Components/ContentComponents/RenderBlock.razor:12-18,50`, `ZauberCMS.Components/wwwroot/js/shadow-dom.js:40-42` · Category: C/E · Since: 2026-11-25 deep-dive
 - Issue / Trigger: F13. New nodes may render outside the shadow root (invisible), clicks inside previews don't fire, no isolation without stylesheets. Fix direction: static HtmlRenderer previews.
 - Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-
-### ZA-059 [Medium/High] Lockout is never triggered by failed passwords
-
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:612,729`, `ZauberCMS.Core/ZauberSetup.cs:151-153` · Category: D · Since: 2026-11-25
-- Issue / Trigger: `PasswordSignInAsync(…, lockoutOnFailure: false)` — the configured 6-attempt lockout never counts. Only the per-IP limiter slows guessing.
-- Fix: pass `true`. · Blocked by: UX (users can be locked out for 5 minutes).
-
-### ZA-060 [Medium/Medium] Proxy and transport hardening left to the host; IP allow-list only checked while prerendering
-
-- Where: `ZauberCMS.Core/ZauberSetup.cs:220,385-411`, `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:64-70` · Category: D · Since: 2026-11-25
-- Issue / Trigger: No forwarded-headers, HSTS, `nosniff` on uploads or data-protection key persistence. Behind a proxy the login limiter is one shared bucket (ten requests lock out all logins) and the admin IP allow-list compares the proxy's address.
-- Fix: opt-in forwarded-headers/known-proxies settings; move the IP check to middleware; `X-Content-Type-Options` on the upload folder. · Blocked by: new config keys.
 
 ### ZA-061 [Medium/High] Front-end entry cache is 5 seconds, not 5 minutes; key includes host and query string
 
@@ -512,7 +452,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 - Where: `ZauberCMS/Components/App.razor:29,79-90` · Category: E · Since: 2026-11-25
 - Issue / Trigger: Double loads and flicker; before ZA-058 was fixed (Roadmap Phase 3) some pages loaded four times.
-- Fix: `InteractiveServerRenderMode(prerender: false)` for admin. · Blocked by: the IP allow-list must move to middleware first (ZA-060).
+- Fix: `InteractiveServerRenderMode(prerender: false)` for admin. · Blocked by: nothing now (the IP allow-list moved to middleware in Phase 4, ZA-060).
 
 ### ZA-025 [Low/High] Duplicate tree alias constant
 
@@ -694,12 +634,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
 - Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
-### ZA-132 [Medium/High] Admin authorisation has no defence in depth
-
-- Where: `ZauberCMS.Components/Admin/_Imports.razor:3` (the only folder-wide `[Authorize]`), `ZauberCMS/Components/Routes.razor:10`, `ZauberCMS.Core/ZauberSetup.cs` (no fallback policy), `ZauberCMS.Core/Seo/` redirect save path · Category: D · Since: 2026-11-25 (split out of ZA-044)
-- Issue / Trigger: ZA-044 was possible because admin protection is one attribute per folder. Any future `/admin/*` page added outside `Components/Admin/` (in this repo or a consumer plugin) is public unless its author remembers the attribute; mutating services do no role check of their own; redirect targets may be external hosts.
-- Fix: authorisation policy/convention covering every `/admin/**` route (fail closed), role checks in mutating services, validate redirect targets (local paths unless explicitly allowed). · Blocked by: design choice — affects consumer plugin pages (Roadmap Phase 4).
-
 ### ZA-134 [Medium/High] Rich-text editor 3.x always strips `iframe` (and other non-policy tags) from stored content
 
 - Where: `ZauberCMS.Components/Editors/ZauberCMSEditorProperty.razor` (uses the default `HtmlPolicy`); server policy `ZauberCMS.Core/Shared/Services/DefaultHtmlSanitizerService.cs:18` allows `iframe` "for video embeds" · Category: C · Since: 2026-11-25 (RTE 2.1.0 → 3.0.0)
@@ -718,13 +652,77 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: Found in the browser on 3.0.0. (1) `GetLinkAtCursorAsync` throws when the cursor is not in a link (empty interop stream) — the item now checks `api.State.InLink` first. (2) `SelectLinkAtCursorAsync` after `RestoreSelectionAsync` (dialog closed) does not select the link, so the edited link nested inside the old one — the item now selects the link *before* opening the dialog. (3) `LinkInfo.Rel` is missing in 3.0.0, so editing an existing link does not pre-fill Rel. (4) Editing an existing content link on the Manual tab drops `data-contentid` (not new in 3.x).
 - Fix: when RTE 3.1 is published, bump both csprojs, restore `_rel = ExistingLink.Rel`, re-test (1) and (2) and drop the workarounds if fixed; carry `data-contentid` through the Manual tab. · Blocked by: RTE 3.1 release.
 
-### ZA-138 [Low/High] `SectionLayout` renders `<RadzenComponents>` twice
-
-- Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:10,16` · Category: E · Since: 2026-11-25 (seen in the browser during Phase 3; both lines predate the rework)
-- Issue / Trigger: Two Radzen hosts are on the page, so every notification, confirm dialog and context menu is rendered twice (two `.rz-dialog`, two notification items, two context menus in the DOM; both notification copies are visible). Any admin action that shows a notification.
-- Fix: keep one `<RadzenComponents>`; check dialogs, notifications, context menus and tooltips still work in every section. · Blocked by: nothing.
+### ZA-140 [Medium/High] Services do no authorisation of their own
+- Where: every mutating method of `ZauberCMS.Core/*/Services/*Service.cs` (for example `ContentService.SaveContentAsync`, `MembershipService.SaveUserAsync`, `SeoService.SaveRedirectAsync`) · Category: D · Since: 2026-11-25 (split out of ZA-132 when its route half was fixed)
+- Issue / Trigger: Access is decided by the page that calls a service. Any code that can resolve a service (a front-end component, a plugin, an interactive component on a public page) can save or delete anything; the services never check who is signed in.
+- Fix: a permission model for service calls (who may do what, and how front-end and plugin code that saves on purpose declares it). · Blocked by: design decision — a role check inside the services would break sites and plugins that save content from the front end, so it needs an opt-in/opt-out design and the owner's call.
 
 ## Fixed this run / Resolved since last run
+
+- **Roadmap Phase 4 — access control & identity — fixed 2026-11-25.** Build 0 warnings; 231 tests (228 pass, 3
+  skipped for other open findings). Owner decisions D6–D9 in the roadmap. "Browser" below means the dev site on a
+  scratch copy of the dev database.
+  - **ZA-053 [High] Restricted media public when recycled / by URL case.** The lookup keeps recycled media and
+    compares normalised paths (lower case, forward slashes, no leading slash). Tests: `RestrictedMediaTests`
+    (3 of 6 seen failing before the fix).
+  - **ZA-052 [High] `refreshsignin` renewed any cookie.** The endpoint needs a signed-in user who may still sign in
+    (not deleted, not locked out) and either a cookie whose security stamp is still valid or the two-minute ticket
+    a save hands out when you change your own account (`RefreshSignInTicketService`,
+    `HandlerResult.RefreshSignInTicket`). Anything else signs out. Cookies are re-checked against the database
+    every 5 minutes (was 30). Tests: `SignInHardeningTests`. Browser: rename own user → still signed in, back on
+    the user page; anonymous call → 401. Not verified: a browser run with a cookie whose stamp was invalidated by
+    another session (covered by the ticket tests only).
+  - **ZA-059 [Medium] Lockout never triggered.** Both password sign-ins pass `lockoutOnFailure: true`. Tests:
+    six wrong passwords lock the account and the right one is then refused with a message.
+  - **ZA-002 [High] External sign-up always refused.** Google now maps `email_verified` from its user-info
+    response. Facebook and Microsoft do not state it, so they create accounts only when the new
+    `Zauber:Identity:ExternalProviders:<Provider>:TrustEmail` is true (default false). The account, login and
+    starting role are created before the single sign-in; a half-created account is removed. Tests:
+    `ExternalSignUpTests` (claims level). **Not verified live** against any provider (owner decision D8).
+  - **ZA-020 [High] Grid filter/sort strings.** Corrected finding: the strings are parsed by Radzen's own parser
+    (which already allow-lists methods), not by System.Linq.Dynamic.Core. What was open: any column could be
+    filtered or sorted on, including `PasswordHash` and `SecurityStamp`. `GridQueryGuard` now checks the parsed
+    expression (entity properties and simple value methods only, secret columns never) in `DataService`,
+    `LanguageService` and `ContentService`. Tests: `DataGridFilterTests` (10 refusals seen failing first).
+  - **ZA-139 [Medium, new] Content grids refused every filter.** Found in the browser: an older text check in
+    `ContentService.GetDataGridContentAsync` rejected any string containing `=>`, which is every filter the grid
+    builds. Replaced by `GridQueryGuard`. Test added; browser: filtering "abo" on the content dashboard lists
+    About.
+  - **ZA-019 [High] SEO checker SSRF.** The checks use a named HTTP client (`SeoHttp`) that resolves the host and
+    refuses non-public addresses at connection time (so redirects and DNS tricks are covered), with timeouts and a
+    redirect limit. Exceptions: the host of `Zauber:SiteUrl`, and this application's own ports on loopback.
+    `SeoChecker` no longer blocks the circuit and shows a message. Tests: `OutboundRequestTests`. Browser:
+    `127.0.0.1` and `169.254.169.254` refused, `file://` refused, the site's own page checked.
+  - **ZA-003 [High] Host-header email links.** New `Zauber:SiteUrl`; `ToAbsoluteUrl` uses it when set. When it is
+    empty the old behaviour stays and a warning is logged at startup outside Development if `AllowedHosts` is `*`.
+    Tests: `OutboundRequestTests`. Not changed: `AllowedHosts` stays `*` in the shipped appsettings (a default
+    cannot know the host).
+  - **ZA-060 [Medium] Proxy and transport hardening.** New `Zauber:ForwardedHeaders` (off by default; known
+    proxies/networks). The admin IP allow-list moved from `SectionLayout` to `AdminAccessMiddleware` (403 for
+    every `/admin` request from another address; compares addresses, not text). Upload-folder responses get
+    `X-Content-Type-Options: nosniff`. Corrected finding: HSTS is already in the host `Program.cs` (dev site and
+    template). Data-protection key persistence stays a hosting task (documented). Tests: `AdminAccessTests`;
+    headers checked with curl. Not verified: anything behind a real proxy.
+  - **ZA-132 [Medium] Admin authorisation fail-closed.** A page under `/admin` with no `[Authorize]` or
+    `[AllowAnonymous]` of its own is treated as admin-only, by `AdminAccessMiddleware` for requests and by
+    `Routes.razor` for navigation inside a circuit. Redirect targets are validated on save and when followed
+    (`RedirectTarget`: a local path or an http/https address). Tests: `AdminAccessTests`. Browser/curl: anonymous
+    `/admin`, `/ADMIN/seo/redirects` and `/admin/does-not-exist` all redirect to sign-in. The service half is
+    the new open finding ZA-140.
+  - **ZA-021 [Medium] Sanitiser.** `<iframe>` only from https hosts in `Zauber:HtmlSanitizer:AllowedIframeHosts`
+    (default YouTube, Vimeo); `data:` only as a bitmap in `<img>`. The dev site's `RTEBlock` now sanitises.
+    Tests: `UploadAndMarkupTests`.
+  - **ZA-022 [Medium] Upload content check.** `UploadContentCheck`: signatures with offsets (MP4 with any box
+    size, WebP/WAV told apart, office and archive formats) and a text check for text types (no binary, no HTML or
+    script in `.txt`/`.csv`/…). Tests: `UploadAndMarkupTests`, including through `DiskStorageProvider`.
+  - **ZA-005 [High] SVG.** Still off by default. When a site allows `.svg`, the upload is stored sanitised
+    (`SvgSanitizer`: drawing elements only; no script, handlers, links or outside references) and every SVG from
+    the upload folder is served with a sandboxing Content-Security-Policy. Tests: `UploadAndMarkupTests`
+    (including an upload through `DiskStorageProvider`); header checked with curl. Not verified: an SVG upload
+    through the admin UI. SVG files uploaded before this change are not rewritten (the header still applies).
+  - **ZA-138 [Low] Duplicate `<RadzenComponents>`.** One host left. Browser: one notification on save, one
+    context menu, one confirm dialog (Content); Media, Structure, Settings, Users and SEO pages load and their
+    grids sort without errors. Not checked one by one: tooltips, and dialogs in sections other than Content.
 
 - **Roadmap Phase 3 — broken admin actions — fixed 2026-11-25.** Build 0 warnings; 65 tests (62 pass, 3 skipped
   for other open findings). Each UI fix below was checked in the browser on a scratch copy of the dev database.
@@ -830,7 +828,10 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   `ContentTypeEditor`, compositions, and the Sort/Move dialogs; double-submit and re-entrancy in admin dialogs;
   focus and keyboard behaviour in side panels; Radzen 10 obsolete API usage (hidden by `NoWarn`).
 - Runtime checks done in a browser so far (scratch SQLite database): the Phase 1 package/editor smoke test and the
-  Phase 3 admin actions listed under "Fixed". Still nothing on PostgreSQL, SQL Server, Redis or behind a proxy.
+  Phase 3 admin actions and the Phase 4 checks listed under "Fixed". Still nothing on PostgreSQL, SQL Server, Redis or behind a proxy.
+- Tests added in Roadmap Phase 4: restricted media middleware; lockout; refresh ticket; external sign-up claims;
+  grid filter/sort guard; SEO outbound client; site URL links; admin access middleware and IP allow-list;
+  forwarded-headers options; redirect targets; sanitiser; upload content check; SVG sanitiser.
 - Tests added in Roadmap Phase 3: email confirmation and change of email; delete by the obsolete `UserId`;
   data-grid soft delete; outdated-copy save refused; language-only save.
 - Tests now exist for (Roadmap Phase 2, 2026-11-25): soft-delete Get/Query defaults, recycle, restore and permanent

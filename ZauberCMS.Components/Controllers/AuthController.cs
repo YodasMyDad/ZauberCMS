@@ -1,7 +1,10 @@
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ZauberCMS.Core;
+using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Components.Controllers;
@@ -11,15 +14,33 @@ namespace ZauberCMS.Components.Controllers;
 public class AuthController(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
-    IAntiforgery antiforgery)
+    IAntiforgery antiforgery,
+    RefreshSignInTicketService refreshSignInTickets)
     : ControllerBase
 {
+    /// <summary>
+    /// Re-issues the sign-in cookie after the user changed their own account (user name, email, roles).
+    /// The cookie is only renewed for a user who may still sign in, and only when the cookie's security stamp is
+    /// still valid or the request carries the ticket the save handed out. Anything else ends the session, so a
+    /// cookie that was invalidated (password reset, user deleted) cannot be turned into a fresh one (ZA-052).
+    /// </summary>
+    [Authorize]
     [HttpGet("refreshsignin")]
-    public async Task<IActionResult> RefreshSignIn(string? redirectUrl = null)
+    public async Task<IActionResult> RefreshSignIn(string? redirectUrl = null, string? ticket = null)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user != null) await signInManager.RefreshSignInAsync(user);
-        return LocalRedirectOrHome(redirectUrl);
+        if (user != null
+            && await signInManager.CanSignInAsync(user)
+            && !await userManager.IsLockedOutAsync(user)
+            && (await signInManager.ValidateSecurityStampAsync(User) != null
+                || refreshSignInTickets.IsValid(ticket, user)))
+        {
+            await signInManager.RefreshSignInAsync(user);
+            return LocalRedirectOrHome(redirectUrl);
+        }
+
+        await signInManager.SignOutAsync();
+        return Redirect(Urls.Account.Login);
     }
 
     // GET renders a tiny auto-submitting form. A bare <img src="...logout"> only fetches

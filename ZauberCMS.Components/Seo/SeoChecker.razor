@@ -1,5 +1,6 @@
 ﻿@using HtmlAgilityPack
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Seo
 @using ZauberCMS.Core.Seo.Models
 
 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
@@ -9,6 +10,13 @@
         <Template>Wait</Template>
     </RadzenProgressBarCircular>
 </RadzenStack>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="mt-2">
+        <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Error" Title="SEO checks" DefaultMessage="@ErrorMessage" />
+    </div>
+}
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1em" class="mt-2">
     @foreach (var check in SeoCheckResults)
@@ -27,9 +35,11 @@
     [Parameter] public bool RunNow { get; set; }
     
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public IHttpClientFactory HttpClientFactory { get; set; } = null!;
     
     private List<SeoCheckResult> SeoCheckResults { get; set; } = [];
     private bool ShowLoader { get; set; }
+    private string? ErrorMessage { get; set; }
 
     /*
     protected override async Task OnInitializedAsync()
@@ -44,23 +54,40 @@
 
     private async Task RunSeoChecks()
     {
-        ShowLoader = true;
-        
         SeoCheckResults = [];
-        
-        var seoChecks = ExtensionManager.GetInstances<ISeoCheck>(true);
-        
-        var web = new HtmlWeb();
-        if (FullUrl != null)
-        {
-            var doc = web.Load(FullUrl);
+        ErrorMessage = null;
 
-            foreach (var seoCheck in seoChecks.OrderBy(x => x.Value.SortOrder).ThenBy(x => x.Value.Name))
-            {
-                SeoCheckResults.Add(await seoCheck.Value.Check(FullUrl ?? string.Empty, doc, Content!));   
-            }
+        if (!SeoHttp.IsHttpUrl(FullUrl, out var pageUri))
+        {
+            ErrorMessage = "Enter the full address of the page, starting with http:// or https://";
+            return;
         }
 
-        ShowLoader = false;
+        ShowLoader = true;
+        try
+        {
+            // The SEO client refuses private addresses, follows a few redirects only and has a timeout (SeoHttp).
+            var httpClient = HttpClientFactory.CreateClient(SeoHttp.ClientName);
+            var doc = new HtmlDocument();
+            doc.LoadHtml(await httpClient.GetStringAsync(pageUri));
+
+            var seoChecks = ExtensionManager.GetInstances<ISeoCheck>(true);
+            foreach (var seoCheck in seoChecks.OrderBy(x => x.Value.SortOrder).ThenBy(x => x.Value.Name))
+            {
+                SeoCheckResults.Add(await seoCheck.Value.Check(pageUri!.ToString(), doc, Content!));
+            }
+        }
+        catch (HttpRequestException e)
+        {
+            ErrorMessage = $"The page could not be loaded: {e.Message}";
+        }
+        catch (TaskCanceledException)
+        {
+            ErrorMessage = "The page did not answer in time.";
+        }
+        finally
+        {
+            ShowLoader = false;
+        }
     }
 }

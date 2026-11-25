@@ -7,12 +7,12 @@
 @inherits LayoutComponentBase
 
 
-<RadzenComponents @rendermode="InteractiveServer" />   
 
 <HeadContent>
     <SectionOutlet SectionId="@Sections.PageHeadContent"/>
 </HeadContent>
 
+@* The one host for Radzen dialogs, notifications, context menus and tooltips. A second one doubles them (ZA-138). *@
 <RadzenComponents />
 <CascadingBlazoredModal>
     <RadzenLayout>
@@ -58,25 +58,7 @@
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
     
-    [CascadingParameter] public HttpContext? HttpContext { get; set; }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        var globalSettingsRequest = await DataService.GetGlobalSettings();
-        if (globalSettingsRequest.AllowedAdminIpAddress.Any() && HttpContext != null)
-        {
-            // Someone has set an ip address, so check this persons IP
-            var usersIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            if (!usersIp.IsNullOrWhiteSpace())
-            {
-                if (!globalSettingsRequest.AllowedAdminIpAddress.Contains(usersIp))
-                {
-                    // Log them out and redirect
-                    NavigationManager.NavigateTo(Urls.ApiLogout, true);
-                }
-            }
-        }
-    }
+    // The admin IP allow-list is enforced for every /admin request by AdminAccessMiddleware, not here.
 
     protected override void OnInitialized()
     {

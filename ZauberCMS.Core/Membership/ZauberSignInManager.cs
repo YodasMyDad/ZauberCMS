@@ -28,6 +28,14 @@ public class ZauberSignInManager(
     RoleManager<Role> roleManager)
     : SignInManager<User>(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
 {
+    /// <summary>
+    /// Claim an external provider must supply with the value "true" before an account is created from its email
+    /// address. Google maps it from its user-info response; Facebook and Microsoft only supply it when
+    /// <c>Zauber:Identity:ExternalProviders:&lt;Provider&gt;:TrustEmail</c> is true. A custom
+    /// <c>IExternalAuthenticationProvider</c> adds it with <c>options.ClaimActions</c>.
+    /// </summary>
+    public const string EmailVerifiedClaimType = "email_verified";
+
     private readonly UserManager<User> _userManager = userManager;
 
     public override Task<bool> CanSignInAsync(User user)
@@ -57,88 +65,91 @@ public class ZauberSignInManager(
                 return SignInResult.Failed;
             }
 
-            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrWhiteSpace(email))
+            user = await CreateExternalUserAsync(info);
+            if (user == null)
             {
-                logger.LogWarning("External login {LoginProvider} did not supply an email claim; refusing to create account", loginProvider);
                 return SignInResult.Failed;
             }
 
-            // Require the IdP to assert that the email is verified (Google/Microsoft/Facebook
-            // all surface this as the standard "email_verified" claim, OIDC compliant or
-            // OAuth-mapped). Without this check, an attacker controlling an IdP account with
-            // an unverified `email` claim could impersonate a different user — and if the
-            // email matches GlobalSettings.AdminEmailAddresses, gain Admin on first sign-in.
-            var emailVerified = info.Principal.FindFirstValue("email_verified");
-            if (!string.Equals(emailVerified, "true", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(emailVerified, bool.TrueString, StringComparison.OrdinalIgnoreCase))
-            {
-                logger.LogWarning("External login {LoginProvider} reported unverified email for {Email}; refusing to create account", loginProvider, email);
-                return SignInResult.Failed;
-            }
-
-            var username = info.Principal.FindFirstValue(ClaimTypes.Name) ?? GenerateUsernameFromEmail(email);
-
-            user = new User
-            {
-                UserName = username,
-                Email = email,
-                EmailConfirmed = true
-            };
-
-            var createUserResult = await _userManager.CreateAsync(user);
-
-            if (!createUserResult.Succeeded)
-            {
-                // Handle failure to create user here.
-                logger.LogError("Unable to create user for external login {LoginProvider}", loginProvider);
-                return SignInResult.Failed;
-            }
-
-            var addLoginResult =
-                await _userManager.AddLoginAsync(user, new UserLoginInfo(loginProvider, providerKey, loginProvider));
-
-            if (!addLoginResult.Succeeded)
-            {
-                // Handle failure to associate login with user here.
-                logger.LogError("Unable to add external login for user {UserUserName}", user.UserName);
-                return SignInResult.Failed;
-            }
-
+            // The account, its login and its starting role exist now, so one sign-in carries the right claims.
             signInResult =
                 await base.ExternalLoginSignInAsync(loginProvider, providerKey, isPersistent, bypassTwoFactor);
-            
-            // If the user successfully signed in, add them to a role.
-            if (signInResult.Succeeded)
-            {
-                var loginResult = await _userManager.AssignStartingRoleAsync(
-                    roleManager,
-                    logger,
-                    dbContext,
-                    options,
-                    dataService,
-                    user,
-                    new AuthenticationResult{Success = true});
-
-                if (!loginResult.Success)
-                {
-                    logger.LogError("Unable to assign roles for login for user {UserUserName}", user.UserName);
-                    foreach (var message in loginResult.Messages)
-                    {
-                        logger.LogError(message.Message);
-                    }
-                    return SignInResult.Failed;
-                }
-                
-                // Sign in the user again to update their claims.
-                await base.SignOutAsync();
-                signInResult = await base.ExternalLoginSignInAsync(loginProvider, providerKey, isPersistent, bypassTwoFactor);
-            }
         }
 
         return signInResult;
     }
-    
+
+    /// <summary>
+    /// Creates the local account for a first external sign-in: the user (email confirmed), the external login and
+    /// the starting role. Returns null, and creates nothing, when the provider gave no email address or did not
+    /// state that the address is verified (<see cref="EmailVerifiedClaimType"/>).
+    /// Without that rule an account at the provider with somebody else's unverified address would become that
+    /// person here, and an administrator if the address is in <c>GlobalSettings.AdminEmailAddresses</c>.
+    /// </summary>
+    public async Task<User?> CreateExternalUserAsync(ExternalLoginInfo info)
+    {
+        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            logger.LogWarning("External login {LoginProvider} did not supply an email claim; refusing to create account", info.LoginProvider);
+            return null;
+        }
+
+        if (!HasVerifiedEmail(info.Principal))
+        {
+            logger.LogWarning("External login {LoginProvider} did not state that the email address is verified; refusing to create account", info.LoginProvider);
+            return null;
+        }
+
+        var user = new User
+        {
+            UserName = info.Principal.FindFirstValue(ClaimTypes.Name) ?? GenerateUsernameFromEmail(email),
+            Email = email,
+            EmailConfirmed = true
+        };
+
+        var createUserResult = await _userManager.CreateAsync(user);
+        if (!createUserResult.Succeeded)
+        {
+            logger.LogError("Unable to create user for external login {LoginProvider}: {Errors}", info.LoginProvider,
+                string.Join("; ", createUserResult.Errors.Select(e => e.Code)));
+            return null;
+        }
+
+        var addLoginResult = await _userManager.AddLoginAsync(user,
+            new UserLoginInfo(info.LoginProvider, info.ProviderKey, info.ProviderDisplayName ?? info.LoginProvider));
+        if (!addLoginResult.Succeeded)
+        {
+            logger.LogError("Unable to add external login {LoginProvider} for user {UserUserName}", info.LoginProvider, user.UserName);
+            // Nobody could ever sign in to the account, and its email address would block the next attempt.
+            await _userManager.DeleteAsync(user);
+            return null;
+        }
+
+        var roleResult = await _userManager.AssignStartingRoleAsync(
+            roleManager,
+            logger,
+            dbContext,
+            options,
+            dataService,
+            user,
+            new AuthenticationResult { Success = true });
+        if (!roleResult.Success)
+        {
+            logger.LogError("Unable to assign the starting role to user {UserUserName}: {Messages}", user.UserName,
+                string.Join("; ", roleResult.Messages.Select(m => m.Message)));
+            await _userManager.DeleteAsync(user);
+            return null;
+        }
+
+        return user;
+    }
+
+    /// <summary>True when the provider supplied <see cref="EmailVerifiedClaimType"/> with the value "true".</summary>
+    public static bool HasVerifiedEmail(ClaimsPrincipal principal) =>
+        string.Equals(principal.FindFirstValue(EmailVerifiedClaimType), bool.TrueString,
+            StringComparison.OrdinalIgnoreCase);
+
     private string? GenerateUsernameFromEmail(string? email)
     {
         if (!email.IsNullOrWhiteSpace())

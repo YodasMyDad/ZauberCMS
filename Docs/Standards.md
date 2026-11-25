@@ -82,13 +82,20 @@ patterns into new code.
 ## 7. Security baseline
 
 - Admin pages/components: `[Authorize(Roles = Constants.Roles.AdminRoleName)]` (automatic only inside
-  `ZauberCMS.Components/Admin/`). Controllers/endpoints authorise explicitly; state-changing endpoints are POST +
+  `ZauberCMS.Components/Admin/`; elsewhere under `/admin` a page without its own attribute is admin-only by
+  fallback — still write the attribute, the fallback is a safety net). Controllers/endpoints authorise explicitly; state-changing endpoints are POST +
   antiforgery.
 - Output: never render user/content HTML via `MarkupString` without `IHtmlSanitizerService`.
-- Uploads: extension allow-list + content sniffing + `MaxUploadSize`; never trust client paths; SVG is not safe by default.
-- Redirects: local URLs only (`returnUrl` validated). Absolute links in emails must not be built from the `Host` header.
+- Uploads: extension allow-list + content check (`UploadContentCheck`) + `MaxUploadSize`; never trust client paths.
+  SVG is off by default; when allowed it is stored through `SvgSanitizer`. A new `IStorageProvider` must do both.
+- Grid filter/sort strings go through `GridQueryGuard`, never straight into `Where(string)` / `OrderBy(string)`.
+- Redirects: local URLs only (`returnUrl` validated); SEO redirect targets pass `RedirectTarget.IsValid`.
+  Absolute links in emails come from `ToAbsoluteUrl` (uses `Zauber:SiteUrl`), never from the `Host` header directly.
 - Secrets never in committed `appsettings*.json`; use user-secrets / environment / vault.
-- Outbound HTTP to user-supplied URLs needs an allow-list and timeouts (SSRF).
+- Outbound HTTP to user-supplied URLs uses the `SeoHttp` client (refuses private addresses, has timeouts), or a
+  client built the same way. Never `new HttpClient()` / `HtmlWeb.Load` on such a URL.
+- Hosting notes for site owners: behind a proxy enable `Zauber:ForwardedHeaders`; on more than one node persist the
+  data-protection keys to shared storage (cookies and refresh tickets are protected with them).
 
 ## 8. Performance
 

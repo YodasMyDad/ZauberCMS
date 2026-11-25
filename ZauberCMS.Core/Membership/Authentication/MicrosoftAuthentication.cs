@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,13 @@ public class MicrosoftAuthentication : IExternalAuthenticationProvider
             {
                 microsoftOptions.ClientId = microsoftId;
                 microsoftOptions.ClientSecret = configuration.GetValue<string>("Zauber:Identity:ExternalProviders:Microsoft:ClientSecret") ?? "";
+                // Microsoft does not say whether the address is verified (a tenant administrator can set any
+                // value), so new accounts are only created from it when the site owner opts in.
+                if (configuration.GetValue<bool>("Zauber:Identity:ExternalProviders:Microsoft:TrustEmail"))
+                {
+                    microsoftOptions.ClaimActions.MapCustomJson(ZauberSignInManager.EmailVerifiedClaimType,
+                        ClaimValueTypes.Boolean, _ => bool.TrueString);
+                }
             });
         }
     }

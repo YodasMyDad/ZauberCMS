@@ -65,12 +65,6 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
 
         var mediaDict = await mediaService.GetRestrictedMediaAccessAsync(new GetRestrictedMediaUrlsParameters());
 
-        if (mediaDict.TryGetValue(mediaPath, out var entry))
-        {
-            return entry;
-        }
-
-        var trimmed = mediaPath.TrimStart('/');
-        return mediaDict.TryGetValue(trimmed, out var entryTrimmed) ? entryTrimmed : null;
+        return mediaDict.TryGetValue(Services.MediaService.NormaliseMediaPath(mediaPath), out var entry) ? entry : null;
     }
 }

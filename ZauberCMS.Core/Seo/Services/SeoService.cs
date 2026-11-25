@@ -41,6 +41,14 @@ public class SeoService(
         var isUpdate = false;
         if (parameters.Redirect != null)
         {
+            if (!RedirectTarget.IsValid(parameters.Redirect.ToUrl))
+            {
+                handlerResult.AddMessage(
+                    "The address to redirect to must be a path on this site starting with / or a full http(s) address",
+                    ResultMessageType.Error);
+                return handlerResult;
+            }
+
             // Get the DB version
             var redirect = dbContext.Redirects
                 .FirstOrDefault(x => x.Id == parameters.Redirect.Id);

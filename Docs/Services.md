@@ -24,7 +24,7 @@ How Core services are built. Paths relative to `ZauberCMS.Core/`. Standards: [St
 
 - One parameter object + `CancellationToken cancellationToken = default`. No loose arguments on new methods.
 - Returns: Get → `T?`; Query → `PaginatedList<T>` (`Shared/Models/PaginatedList.cs`); Save/Delete →
-  `HandlerResult<T>` (`Entity`, `Success`, `Messages`, `RefreshSignIn`). Add messages with
+  `HandlerResult<T>` (`Entity`, `Success`, `Messages`, `RefreshSignIn` + `RefreshSignInTicket`). Add messages with
   `handlerResult.AddMessage(text, ResultMessageType.Error|Warning|Info|Success)`.
 - Parameter conventions: `Cached`, `AsNoTracking = true`, collections `= []`, nullable filters, `OrderBy` enum,
   `PageIndex` (1-based) / `AmountPerPage`. Soft delete is inconsistent today: Get parameters and the Media/User
@@ -75,6 +75,12 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).
   That includes the admin editor that opens an item from the bin (`EditContent`, `ContentEditor`).
+- Grid methods (`GetDataGridAsync<T>`, `GetDataGridContentAsync`, `GetDataGridLanguageDictionaryAsync`) take the
+  grid's filter and sort strings. `GridQueryGuard` parses and checks them: entity properties and simple value
+  methods only, never a secret column; anything else throws `ArgumentException`.
+- When `RefreshSignIn` is true the signed-in user changed their own account: navigate (full page load) to
+  `Urls.ApiRefreshSignIn?redirectUrl=<local path>&ticket=<RefreshSignInTicket>`. Without the ticket the endpoint
+  only renews a cookie whose security stamp is still valid.
 - `IDataService.GetDataGridAsync<T>` (dashboard grids) leaves out deleted Content/Media/User rows unless
   `DataGridParameters.IncludeDeleted` is set.
 - Content saves are checked against `DateUpdated`: a loaded copy can be saved **once**; a second save of the same

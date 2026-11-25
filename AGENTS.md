@@ -20,6 +20,29 @@ from this source ([ReadMe.md](ReadMe.md)).
 `ZauberCMS/Components/App.razor` picks the render mode: `/admin` (or no `HttpContext`) → InteractiveServer, else SSR.
 Adding interactive code to an SSR view silently does nothing.
 
+## Core principle: pluggable and updatable (owner, 2026-11-25)
+
+ZauberCMS is a CMS other people build on. A site owner must be able to **add to it, customise it and replace parts of
+it from their own project, and then update the ZauberCMS packages without redoing that work.** Weigh every change,
+in every phase of the rework, against this:
+
+- **Extend from outside.** New behaviour is reachable from a consumer project in plain C#/Razor: implement a
+  discovery interface (table below), register a service, or set a config key. If a feature can only be changed by
+  editing ZauberCMS source, it is not finished.
+- **Discovery by reflection is the mechanism, so treat it as a contract.** `ExtensionManager` finds extension types
+  by interface in the scanned assemblies. Don't hard-code lists of the built-in implementations, don't special-case
+  "our" types over a consumer's, and don't make a new extension point that needs manual registration when discovery
+  would do. Type full names are stored in the database (rule 2).
+- **Replaceable defaults.** Built-in behaviour (storage, email, sanitiser, layouts, views, checks) sits behind an
+  interface or a setting with a working default, so a site can swap it without forking.
+- **Updates must be safe.** Consumers update by bumping the package version. No breaking public API, persisted
+  format or config key without the `[Obsolete]` path (rule 2); new settings need a default that keeps existing
+  sites working; a behaviour change that a consumer could notice goes in the release notes.
+- **Security and structure changes include the plugin author's path.** When something is locked down (for example
+  `/admin/**` authorisation), say in the docs what a plugin page or extension has to do to keep working.
+- When a design choice trades internal neatness against ease of extending or updating, extending and updating win.
+  If a change would make either harder, stop and raise it with the owner.
+
 ## Solution map
 
 | Project | Role | Packed |
@@ -38,7 +61,8 @@ Languages, Tags, Seo, Audit, Data, Email, …). Copy the nearest existing featur
 Bootstrap (both `ZauberCMS.Web/Program.cs` and the template): `builder.AddZauberCms(params Assembly[] extra)` then
 `app.AddZauberCms<App>()` — both in `ZauberCMS.Core/ZauberSetup.cs`. At startup it **auto-runs EF migrations**, runs
 every `ISeedData`, and does one intentional sync-over-async culture query. Middleware order there is deliberate
-(restricted-media → image-resize → static files → routing → redirect → culture → rate limiter → authz → antiforgery);
+(forwarded headers when enabled → media security headers → restricted-media → image-resize → static files →
+routing → redirect → culture → admin access → rate limiter → authz → antiforgery);
 don't reorder without a reason written in the commit.
 
 ## Non-negotiable rules
@@ -94,10 +118,13 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
 - Events: singleton `AppState` with `WeakEventManager` (`OnXChanged/Saved/Deleted` for Content, ContentType, User,
   Media). Handlers fire on the publisher's thread in every circuit → marshal with `InvokeAsync`.
 - Identity tables are `Zauber*`-prefixed; migrations history table `ZauberMigrations`. Keys are sequential GUIDs.
-- Login-like pages use rate-limit policy `"login"` (per-IP 10 / 5 min). Identity lockout is configured (6 / 5 min) but
-  **not active**: sign-in passes `lockoutOnFailure: false` (ZA-059).
-- Admin is gated by `[Authorize(Roles = Admin)]` in `ZauberCMS.Components/Admin/_Imports.razor` (that folder only — admin
-  pages elsewhere must add it) and the `GlobalSettings.AllowedAdminIpAddress` check in `SectionLayout.razor`.
+- Login-like pages use rate-limit policy `"login"` (per-IP 10 / 5 min). Identity lockout is active: six wrong
+  passwords lock the account for five minutes.
+- Admin is gated by `[Authorize(Roles = Admin)]` in `ZauberCMS.Components/Admin/_Imports.razor` (that folder only).
+  `AdminAccessMiddleware` (requests) and `Routes.razor` (navigation inside a circuit) treat any other page under
+  `/admin` that has no `[Authorize]`/`[AllowAnonymous]` of its own as admin-only, and the middleware enforces
+  `GlobalSettings.AllowedAdminIpAddress`. A plugin page for another role declares its own `[Authorize(Roles = …)]`.
+- Behind a reverse proxy set `Zauber:ForwardedHeaders`; set `Zauber:SiteUrl` on any site that sends email.
 
 ## High-risk areas — read the doc before editing
 

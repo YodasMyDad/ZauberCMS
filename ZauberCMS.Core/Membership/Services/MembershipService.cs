@@ -196,6 +196,11 @@ public class MembershipService(
             handlerResult.Entity = user;
             handlerResult.Success = true;
             handlerResult.RefreshSignIn = refreshCurrentUser;
+            if (refreshCurrentUser)
+            {
+                handlerResult.RefreshSignInTicket =
+                    scope.ServiceProvider.GetRequiredService<RefreshSignInTicketService>().Create(user);
+            }
         }
         else
         {
@@ -339,6 +344,11 @@ public class MembershipService(
             handlerResult.Entity = user;
             handlerResult.Success = true;
             handlerResult.RefreshSignIn = refreshCurrentUser;
+            if (refreshCurrentUser)
+            {
+                handlerResult.RefreshSignInTicket =
+                    scope.ServiceProvider.GetRequiredService<RefreshSignInTicketService>().Create(user);
+            }
         }
         else
         {
@@ -619,7 +629,7 @@ public class MembershipService(
             var user = await userManager.FindByEmailAsync(parameters.Email);
             if (user != null && !user.Deleted)
             {
-                var signInResult = await signInManager.PasswordSignInAsync(user, parameters.Password, parameters.RememberMe, false);
+                var signInResult = await signInManager.PasswordSignInAsync(user, parameters.Password, parameters.RememberMe, lockoutOnFailure: true);
                 loginResult.Success = signInResult.Succeeded;
 
                 if (loginResult.Success)
@@ -651,7 +661,7 @@ public class MembershipService(
                     else if (signInResult.IsLockedOut)
                     {
                         logger.LogWarning("User {RequestEmail} account is locked out", parameters.Email);
-                        loginResult.AddMessage("Account is locked out.", ResultMessageType.Error);
+                        loginResult.AddMessage("Too many failed sign-in attempts. Please wait a few minutes and try again.", ResultMessageType.Error);
                     }
                     else if (signInResult.RequiresTwoFactor)
                     {
@@ -736,7 +746,7 @@ public class MembershipService(
                 {
                     if (parameters.AutoLogin)
                     {
-                        var signInResult = await signInManager.PasswordSignInAsync(user!, parameters.Password, parameters.RememberMe, false);
+                        var signInResult = await signInManager.PasswordSignInAsync(user!, parameters.Password, parameters.RememberMe, lockoutOnFailure: true);
                         registrationResult.Success = signInResult.Succeeded;
                     
                         if (parameters.ReturnUrl.IsNullOrWhiteSpace() && await userManager.IsInRoleAsync(user!, Constants.Roles.AdminRoleName))

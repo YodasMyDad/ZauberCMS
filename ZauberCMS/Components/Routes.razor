@@ -1,5 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using ZauberCMS.Core
+@using ZauberCMS.Core.Membership.Middleware
 @using ZauberCMS.Core.Plugins
+@inject NavigationManager NavigationManager
 @using ZauberCMS.Components.Account.Shared
 
 <Router
@@ -7,12 +10,34 @@
     AdditionalAssemblies="@ExtensionManager.GetFilteredAssemblies(null)">
     <Found Context="routeData">
         <CascadingValue Value="routeData">
-            <AuthorizeRouteView Resource="routeData" RouteData="routeData">
-                <NotAuthorized>
-                    <RedirectToLogin />
-                </NotAuthorized>
-            </AuthorizeRouteView>
+            @if (IsUnprotectedAdminPage(routeData))
+            {
+                @* A page under /admin that declares no [Authorize] of its own is for administrators only.
+                   AdminAccessMiddleware applies the same rule to requests; this covers navigation inside a
+                   circuit, which makes no request. *@
+                <AuthorizeView Roles="@Constants.Roles.AdminRoleName">
+                    <Authorized>
+                        <RouteView RouteData="routeData" />
+                    </Authorized>
+                    <NotAuthorized>
+                        <RedirectToLogin />
+                    </NotAuthorized>
+                </AuthorizeView>
+            }
+            else
+            {
+                <AuthorizeRouteView Resource="routeData" RouteData="routeData">
+                    <NotAuthorized>
+                        <RedirectToLogin />
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+            }
             @*<FocusOnNavigate RouteData="routeData" Selector="h1"/>*@
         </CascadingValue>
     </Found>
 </Router>
+
+@code {
+    private bool IsUnprotectedAdminPage(RouteData routeData) =>
+        AdminAccess.IsAdminPath(NavigationManager.Uri) && !AdminAccess.DeclaresAuthorization(routeData.PageType);
+}

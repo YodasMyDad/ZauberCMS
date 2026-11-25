@@ -285,9 +285,14 @@ public class MediaService(
                 })
                 .ToListAsync(cancellationToken);
 
-            return rows.ToDictionary(
-                x => x.Url ?? string.Empty,
-                x => new Models.RestrictedMediaEntry(x.Id, x.RoleNames));
+            // Keys are normalised (see NormaliseMediaPath) so the lookup does not depend on the case or leading
+            // slash of the request, and survives a distributed cache (which would drop a custom comparer).
+            // Two rows with the same file: the roles are combined, never dropped.
+            return rows
+                .GroupBy(x => NormaliseMediaPath(x.Url))
+                .ToDictionary(
+                    g => g.Key,
+                    g => new Models.RestrictedMediaEntry(g.First().Id, g.SelectMany(x => x.RoleNames).Distinct().ToList()));
         }
 
         if (parameters.Cached)
@@ -398,6 +403,14 @@ public class MediaService(
 
     private static IQueryable<Models.Media> BuildQuery(IZauberDbContext dbContext)
     {
-        return dbContext.Medias.AsNoTracking().Where(x => x.RequiresAuthentication && !x.Deleted);
+        // Recycled media is included on purpose: the file is still on disk, so it must stay protected (ZA-053).
+        return dbContext.Medias.AsNoTracking().Where(x => x.RequiresAuthentication);
     }
+
+    /// <summary>
+    /// The form restricted media paths are compared in: forward slashes, no leading slash, lower case.
+    /// File systems on Windows and macOS ignore case, so "/Media/A.PDF" and "/media/a.pdf" are the same file.
+    /// </summary>
+    internal static string NormaliseMediaPath(string? path) =>
+        (path ?? string.Empty).Replace('\\', '/').TrimStart('/').ToLowerInvariant();
 }
