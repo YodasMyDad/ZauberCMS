@@ -45,6 +45,12 @@ public class DeleteAllContentContextMenu(
             AmountPerPage = 1000
         });
 
+        // Deleting an item also deletes the recycled items below it, so only the top-most ones are deleted here
+        var deletedIds = deletedContent.Items.Select(x => x.Id).ToHashSet();
+        var topLevelItems = deletedContent.Items
+            .Where(x => x.ParentId == null || !deletedIds.Contains(x.ParentId.Value))
+            .ToList();
+
         if (!deletedContent.Items.Any())
         {
             notificationService.Notify(new NotificationMessage
@@ -70,7 +76,7 @@ public class DeleteAllContentContextMenu(
         var errorCount = 0;
 
         // Delete all items
-        foreach (var content in deletedContent.Items)
+        foreach (var content in topLevelItems)
         {
             var result = await contentService.DeleteContentAsync(new DeleteContentParameters 
             { 

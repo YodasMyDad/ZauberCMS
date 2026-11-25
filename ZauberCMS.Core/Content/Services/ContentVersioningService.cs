@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Mapping;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data;
@@ -69,7 +70,19 @@ public class ContentVersioningService(
             await ClearLatestDraftFlagAsync(dbContext, content.Id, cancellationToken);
         }
 
-        // Version creation logic
+        // A draft version records the draft: its name and values are in the stored draft, while the live row
+        // still has the published ones (ZA-074). Where the page sits in the tree comes from the live row.
+        var snapshotSource = content;
+        if (parameters.Status == ContentVersionStatus.Draft && content.UnpublishedContentId != null)
+        {
+            var draft = await dbContext.UnpublishedContent.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == content.UnpublishedContentId, cancellationToken);
+            if (draft != null)
+            {
+                snapshotSource = draft.JsonContent.MapDraftTo(content.MapToNew());
+                snapshotSource.PropertyData = draft.JsonContent.PropertyData;
+            }
+        }
 
         var version = new ContentVersion
         {
@@ -84,8 +97,8 @@ public class ContentVersioningService(
             IsAutoSave = parameters.IsAutoSave,
             ParentVersionId = parameters.ParentVersionId,
             Tags = parameters.Tags ?? [],
-            Snapshot = CreateContentSnapshot(content),
-            PropertySnapshots = content.PropertyData?.Select(p => new ContentPropertySnapshot
+            Snapshot = CreateContentSnapshot(snapshotSource),
+            PropertySnapshots = snapshotSource.PropertyData?.Select(p => new ContentPropertySnapshot
             {
                 ContentTypePropertyId = p.ContentTypePropertyId,
                 Alias = p.Alias,
@@ -93,8 +106,8 @@ public class ContentVersioningService(
                 DateCreated = p.DateCreated ?? DateTime.UtcNow,
                 DateUpdated = p.DateUpdated ?? DateTime.UtcNow
             }).ToList() ?? [],
-            BlockListSnapshots = await CreateBlockListSnapshotsAsync(dbContext, content),
-            ContentSize = CalculateContentSize(content)
+            BlockListSnapshots = await CreateBlockListSnapshotsAsync(dbContext, snapshotSource),
+            ContentSize = CalculateContentSize(snapshotSource)
         };
 
         // Version created successfully
@@ -110,11 +123,8 @@ public class ContentVersioningService(
 
         dbContext.ContentVersions.Add(version);
 
-        // Update content if this is being published
-        if (parameters.Status == ContentVersionStatus.Published)
-        {
-            PublishVersionToContent(dbContext, version, content);
-        }
+        // The version records the content as it is; it is not written back to it (that only touched DateUpdated,
+        // the concurrency token, so the next save of the copy the editor holds was refused)
 
         var result = await dbContext.SaveChangesAndLog(version, handlerResult, cacheService, extensionManager, cancellationToken);
 
@@ -127,7 +137,9 @@ public class ContentVersioningService(
     }
 
     /// <summary>
-    /// Publishes a specific version
+    /// Restores a version: the content gets the version's name, navigation settings, property values and blocks.
+    /// Where the content sits in the tree, its language and whether it is published stay as they are now (ZA-075).
+    /// A pending draft is discarded, because it was based on the values this replaces.
     /// </summary>
     public async Task<HandlerResult<ContentVersion>> PublishVersionAsync(PublishContentVersionParameters parameters, CancellationToken cancellationToken = default)
     {
@@ -154,27 +166,77 @@ public class ContentVersioningService(
             return handlerResult;
         }
 
-        // Clear existing published flag
-        await ClearCurrentPublishedFlagAsync(dbContext, content.Id, cancellationToken);
+        if (content.Published)
+        {
+            // The restored values are what is live now
+            await ClearCurrentPublishedFlagAsync(dbContext, content.Id, cancellationToken);
+            version.Status = ContentVersionStatus.Published;
+            version.IsCurrentPublished = true;
+            version.DatePublished = DateTime.UtcNow;
+            version.CreatedById = parameters.PublishedByUserId; // Update the publisher
+        }
 
-        // Update version
-        version.Status = ContentVersionStatus.Published;
-        version.IsCurrentPublished = true;
-        version.DatePublished = DateTime.UtcNow;
-        version.CreatedById = parameters.PublishedByUserId; // Update the publisher
+        RestoreVersionToContent(dbContext, version, content);
+        content.DateUpdated = DateTime.UtcNow;
+        if (parameters.PublishedByUserId != null)
+        {
+            content.LastUpdatedById = parameters.PublishedByUserId;
+        }
 
-        // Publish to content
-        PublishVersionToContent(dbContext, version, content);
+        if (content.UnpublishedContentId != null)
+        {
+            var draft = await dbContext.UnpublishedContent
+                .FirstOrDefaultAsync(u => u.Id == content.UnpublishedContentId, cancellationToken);
+            content.UnpublishedContentId = null;
+            if (draft != null)
+            {
+                dbContext.UnpublishedContent.Remove(draft);
+            }
+        }
 
         // Restore block list content from snapshots
         await RestoreBlockListContentAsync(dbContext, version, cancellationToken);
 
-        // Save all changes
-        await dbContext.SaveChangesAsync(cancellationToken);
+        var userName = parameters.PublishedByUserId == null
+            ? null
+            : await dbContext.Users.AsNoTracking().Where(u => u.Id == parameters.PublishedByUserId)
+                .Select(u => u.UserName).FirstOrDefaultAsync(cancellationToken);
+        dbContext.Audits.Add(new Audit.Models.Audit
+        {
+            Description = $"{userName ?? "Unknown"} Restored {content.Name} to version {version.VersionNumber}"
+        });
 
-        // Update the result to indicate success
-        handlerResult.Entity = version;
-        handlerResult.Success = true;
+        // Through SaveChangesAndLog so content save hooks run and the content cache is cleared, in one transaction
+        // with the audit row
+        var contentResult = new HandlerResult<Models.Content>();
+        await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
+        {
+            try
+            {
+                contentResult = await dbContext.SaveChangesAndLog(content, contentResult, cacheService,
+                    extensionManager, cancellationToken);
+                if (contentResult.Success)
+                {
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                else
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                }
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+
+        handlerResult.Success = contentResult.Success;
+        handlerResult.Messages.AddRange(contentResult.Messages);
+        if (contentResult.Success)
+        {
+            handlerResult.Entity = version;
+        }
 
         // Clear content cache. See CreateVersionAsync for prefix-format reasoning.
         cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
@@ -356,23 +418,13 @@ public class ContentVersioningService(
         }
     }
 
-    // Synchronous helper despite the original misleading "Async" suffix — does no I/O of its own,
-    // mutates entities tracked by the supplied dbContext so the caller's SaveChangesAsync persists them.
-    private static void PublishVersionToContent(IZauberDbContext dbContext, ContentVersion version, Models.Content content)
+    // Mutates entities tracked by the supplied dbContext so the caller's save persists them.
+    // Only what an editor edits comes back: name, navigation settings and property values. Tree position
+    // (parent, path, sort order), language, content type, URL and publish state stay as they are (ZA-075).
+    private static void RestoreVersionToContent(IZauberDbContext dbContext, ContentVersion version, Models.Content content)
     {
-        // Update content from snapshot
         content.Name = version.Snapshot.Name;
-        // Note: URL is handled by the system and shouldn't be directly set from version
-        content.ContentTypeId = version.Snapshot.ContentTypeId;
-        content.ContentTypeAlias = version.Snapshot.ContentTypeAlias;
-        content.DateUpdated = version.Snapshot.DateUpdated;
-        content.Published = version.Snapshot.Published;
         content.HideFromNavigation = version.Snapshot.HideFromNavigation;
-        content.LanguageId = version.Snapshot.LanguageId;
-        content.ParentId = version.Snapshot.ParentId;
-        content.Path = version.Snapshot.Path;
-        content.SortOrder = version.Snapshot.SortOrder;
-        content.RelatedContentId = version.Snapshot.RelatedContentId;
         content.InternalRedirectId = version.Snapshot.InternalRedirectId;
 
         // Update property values

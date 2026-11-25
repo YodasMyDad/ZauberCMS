@@ -50,6 +50,14 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
             if (existingLink != null)
             {
                 parameters.Add(nameof(ContentLinkDialog.ExistingLink), existingLink);
+
+                // LinkInfo has no data attributes, so find the content the link points at in the editor HTML;
+                // without it, saving the link from the Manual tab would drop data-contentid (ZA-135)
+                var existingContentId = FindContentId(await api.GetHtmlAsync(cancellationToken), existingLink.Href);
+                if (existingContentId != null)
+                {
+                    parameters.Add(nameof(ContentLinkDialog.ExistingContentId), existingContentId.Value);
+                }
             }
 
             var modal = modalService.OpenSidePanel<ContentLinkDialog>("Insert Link", parameters);
@@ -80,11 +88,43 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
         }
     }
 
+    /// <summary>
+    /// The <c>data-contentid</c> of a link in <paramref name="html"/> whose href is <paramref name="href"/>, if any.
+    /// Links with the same href point at the same content, so the first match is enough.
+    /// </summary>
+    public static Guid? FindContentId(string? html, string? href)
+    {
+        if (string.IsNullOrWhiteSpace(html) || string.IsNullOrWhiteSpace(href))
+        {
+            return null;
+        }
+
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(html);
+        var links = doc.DocumentNode.SelectNodes("//a[@data-contentid]");
+        if (links == null)
+        {
+            return null;
+        }
+
+        foreach (var link in links)
+        {
+            var linkHref = System.Net.WebUtility.HtmlDecode(link.GetAttributeValue("href", string.Empty));
+            if (string.Equals(linkHref.Trim(), href.Trim(), StringComparison.Ordinal) &&
+                Guid.TryParse(link.GetAttributeValue("data-contentid", string.Empty), out var contentId))
+            {
+                return contentId;
+            }
+        }
+
+        return null;
+    }
+
     private async Task InsertContentLink(IEditorApi api, Content content, string linkText, string url)
     {
         var attributes = new List<string>
         {
-            $"href=\"{url}\"",
+            $"href=\"{System.Web.HttpUtility.HtmlAttributeEncode(url)}\"",
             $"data-contentid=\"{content.Id}\""
         };
 

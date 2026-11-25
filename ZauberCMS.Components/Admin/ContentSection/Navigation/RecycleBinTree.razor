@@ -72,7 +72,9 @@
             StubType = typeof(TreeStub)
         };
         
-        foreach (var content in deletedContent.Items)
+        // Items that went to the bin with their parent are listed (and restored, deleted) through that parent
+        var deletedIds = deletedContent.Items.Select(x => x.Id).ToHashSet();
+        foreach (var content in deletedContent.Items.Where(x => x.ParentId == null || !deletedIds.Contains(x.ParentId.Value)))
         {
             usersTree.Branches.Add(new TreeBranch
             {

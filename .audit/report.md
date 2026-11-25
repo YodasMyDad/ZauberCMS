@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 5 (2026-11-25): Build PASS · Warnings: 0 · Tests: 315 (312 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118); `/audit changed` run on the phase
 After the Phase 4 follow-ups (2026-11-25, RTE 4.0.0): Build PASS · Warnings: 0 · Tests: 259 (256 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 4 (2026-11-25): Build PASS · Warnings: 0 · Tests: 231 (228 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
@@ -17,11 +18,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 18 | 11 | 0 |
-| Medium | 57 | 15 | 0 |
-| Low | 38 | 3 | 0 |
+| High | 14 | 15 | 0 |
+| Medium | 48 | 24 | 0 |
+| Low | 40 | 3 | 0 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), committed on `rework-2026`. Next free ID: ZA-144.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), committed on `rework-2026`. Next free ID: ZA-146.
 
 ## Open findings
 
@@ -77,30 +78,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs:578`, `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:607` · Category: C/E · Since: 2026-11-25 deep-dive
 - Issue / Trigger: F9. Every open content editor in every circuit refreshes (unsaved edits lost), on the publisher's thread.
 - Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-
-### ZA-046 [High/High] Duplicate content URL on language-assigned content breaks every front-end page
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:1492-1496` · Category: C · Since: 2026-11-25
-- Issue / Trigger: `dict.Add(c.Url, …)` throws on a duplicate URL and runs on every request (`:2147`); the middleware swallows it but the `EntryPage.razor:52` fallback rethrows. Duplicates arise from copying a node twice (`:875`, `Url + "-copy"`), manual URL edits (`:285`, no uniqueness check) and restore (`:2261`).
-- Fix: `TryAdd`, then enforce URL uniqueness on save, copy and restore. · Blocked by: nothing for `TryAdd`.
-
-### ZA-047 [High/High] Any non-draft save silently discards a pending "Save only" draft
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:211-212,346-349` · Category: C · Since: 2026-11-25
-- Issue / Trigger: `SaveContentAsync` removes the `UnpublishedContent` row whenever `SaveUnpublishedOnly` is false. Sort, Move, Restrict access, Culture & Domains and Restore all save the published row, so sorting a draft page's siblings deletes its draft.
-- Fix: only remove the draft on an explicit publish (opt-in flag). · Blocked by: new parameter-class property.
-
-### ZA-048 [High/High] Recycle-binning a parent leaves its children live and unreachable
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:494-517`, `ZauberCMS.Components/ContextMenus/ContentMenus/DeleteContentContextMenu.cs:36-42` · Category: C · Since: 2026-11-25
-- Issue / Trigger: Only the one row gets `Deleted = true` although the dialog says "and its children". Children still resolve by URL and appear in the sitemap, are in neither tree, and block the parent's final delete.
-- Fix: cascade soft delete and restore over `Path` descendants in one transaction. · Blocked by: behaviour change; ZA-007 on PostgreSQL.
-
-### ZA-049 [High/Medium] Copy shares the original's draft row; publishing either then throws
-
-- Where: `ZauberCMS.Core/Content/Mapping/ContentMappingExtensions.cs:26`, `ZauberCMS.Core/Content/Services/ContentService.cs:869-895` · Category: C · Since: 2026-11-25
-- Issue / Trigger: `MapToNew` copies `UnpublishedContentId` and `CreateCopy` doesn't reset it. Published page with a saved draft → Copy → publish either one: the shared row is deleted while the other still references it.
-- Fix: null `UnpublishedContentId` in `CreateCopy` and the block clone (`:734`). · Blocked by: nothing.
 
 ### ZA-050 [High/High] PostgreSQL initial migration contains SQL Server filter syntax; two intended indexes exist on no provider
 
@@ -182,10 +159,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Shared/Validation/EditContextFluentValidationExtensions.cs:22,25` · Category: A
 - Reconciled 2026-11-25: same file also has unsynchronised static lists and `async` handlers with no try/catch (a throwing validator ends the circuit) — lines 12-13, 107-125.
 
-### ZA-016 [Medium/Medium] Nullable `IsDeleted = null` bypasses soft-delete filter
-
-- Where: `Content/Parameters/QueryContentParameters.cs:19`, `ContentService.cs:2045` · Category: C · Blocked by: public parameter class.
-
 ### ZA-017 [Medium/High] `ToLower()` search comparisons (Turkish-I, provider-dependent)
 
 - Where: `ContentService.cs:1023,2080,2240-2244`; `MembershipService.cs:564-565,1029-1030` · Category: B/C
@@ -257,24 +230,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: `AnyContentAsync` is uncached with no `Deleted` filter; bot traffic to dotted paths skips the middleware and takes the fallback.
 - Fix: cache under the Content prefix. · Blocked by: nothing.
 
-### ZA-065 [Medium/High] Unpublished or deleted content served through side paths
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:2050-2056,2154-2156,2169,2187-2190` · Category: C · Since: 2026-11-25
-- Issue / Trigger: Domain-root and internal-redirect targets have no `Published` filter; `Include(Children)` is unfiltered in the entry lookup and in `QueryContentAsync`.
-- Fix: add `Published` / `!Deleted` filters (mirror `:1993-1995`). · Blocked by: views relying on unfiltered `Children`.
-
-### ZA-066 [Medium/High] Slug matching depends on the database provider
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:281-286,2161`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:38` · Category: C · Since: 2026-11-25
-- Issue / Trigger: URLs are lower-cased on save but the request slug is compared raw: `/About-Us` resolves on SQL Server and 404s on SQLite and PostgreSQL. Trailing slash not trimmed.
-- Fix: trim and lower-case the slug invariantly before lookup. · Blocked by: nothing.
-
-### ZA-067 [Medium/High] Nested blocks get public URLs and resolve as pages
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:272-278,2161`, `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:353-354` · Category: C · Since: 2026-11-25
-- Issue / Trigger: Slugs are generated for block rows and the slug lookup has no `!IsNestedContent`: `/hero` returns 200 with the missing-view page, and later real pages get a `-1` suffix.
-- Fix: skip URL generation for nested content; add the filter. · Blocked by: existing block URLs need cleanup.
-
 ### ZA-068 [Medium/High] Admin trees over-fetch and silently stop at 100 children
 
 - Where: `ZauberCMS.Components/Trees/ContentTree.razor:43-51,60-69,88-95`, `ZauberCMS.Components/Admin/ContentSection/Navigation/ContentSectionTree.razor:60-68`, `ZauberCMS.Components/Admin/MediaSection/Folder.razor:105` · Category: B · Since: 2026-11-25
@@ -286,12 +241,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs:254,432`, `ZauberCMS.Core/Content/Services/ContentVersioningService.cs:193-241` · Category: B · Since: 2026-11-25
 - Issue / Trigger: Every save — including each block — writes a full snapshot with no retention; the version list is tracked and loads full snapshot JSON.
 - Fix: retention setting + daily prune; no-tracking projection. · Blocked by: new config key ×3.
-
-### ZA-070 [Medium/High] Deleting a content type checks only published, non-deleted content and only the first 10 nested items
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:1098-1153,1217-1224` · Category: C · Since: 2026-11-25
-- Issue / Trigger: The in-use check uses query defaults while the FK cascades: drafts and binned items are hard-deleted silently or a raw FK error surfaces after the audit row is written.
-- Fix: `IncludeUnpublished = true, IsDeleted = null`, `AnyAsync`. · Blocked by: nothing.
 
 ### ZA-071 [Medium/High] Language dictionary load is N+1 and synchronous
 
@@ -311,18 +260,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: Restrict-access does a full save (version + cache flush) per descendant with no transaction; copy queries per block; the sitemap stops at 2000 items.
 - Fix: batch. · Blocked by: save-hook behaviour.
 
-### ZA-074 [Medium/High] Draft versions snapshot the live values, not the draft
-
-- Where: `ZauberCMS.Core/Content/Services/ContentVersioningService.cs:44-47,87-97`, `ZauberCMS.Core/Content/Services/ContentService.cs:245-254` · Category: C · Since: 2026-11-25
-- Issue / Trigger: `CreateVersionAsync` reloads the DB row and ignores the draft being saved.
-- Fix: build the snapshot from `parameters.Content` for drafts. · Blocked by: nothing.
-
-### ZA-075 [Medium/High] Version restore rewrites tree position and publish state, keeps the stale draft
-
-- Where: `ZauberCMS.Core/Content/Services/ContentVersioningService.cs:173,361-375` · Category: C · Since: 2026-11-25
-- Issue / Trigger: Restore sets parent, path, sort order, language and published from the snapshot: a moved page jumps back and a draft version unpublishes a live page. Bypasses `SaveChangesAndLog` and audit.
-- Fix: restore name and properties only; clear the draft; audit. · Blocked by: UX change.
-
 ### ZA-077 [Medium/High] Importing a content type over an existing alias orphans all its values
 
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs:1791-1815,1737,1951` · Category: C · Since: 2026-11-25
@@ -334,12 +271,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Extensions/ContentExtensions.cs:208-209,244-262,285-293` · Category: C · Since: 2026-11-25
 - Issue / Trigger: Media, content and user pickers return query order, not the editor's order (unlike `GetBlocks`).
 - Fix: reorder by stored IDs. · Blocked by: visible order change.
-
-### ZA-079 [Medium/Medium] Move updates only the moved row's path
-
-- Where: `ZauberCMS.Components/ContextMenus/ContentMenus/MoveContentContextMenu.cs:60-86`, `ZauberCMS.Core/Extensions/DbContextExtensions.cs:55-106` · Category: C · Since: 2026-11-25
-- Issue / Trigger: Descendant paths go stale, which feeds copy, restrict-access, the sitemap root check and language-by-path.
-- Fix: rewrite descendant paths in the same transaction. · Blocked by: ZA-007.
 
 ### ZA-080 [Medium/High] AppState handlers run on other users' circuits without marshalling or filtering
 
@@ -635,13 +566,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
 - Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
-### ZA-135 [Medium/High] Opening a rich-text value rewrites content links to relative URLs
-
-- Where: `ZauberCMS.Components/Editors/ZauberCMSEditorProperty.razor` (`ValidateEmbeddedReferences`, the `content.Url()` comparison); compare `Editors/Dialogs/ContentLinkDialog.razor:164-168`, which adds the leading `/` · Category: C · Since: 2026-11-25 (observed in the browser during the Phase 1 smoke test; the code predates the upgrade)
-- Issue / Trigger: The link dialog stores `href="/blog"`. On the next open, the validator compares that with `content.Url()` (`blog`, no leading slash), decides the URL changed, rewrites it to `href="blog"` and raises `ValueChanged`. After the next save the link is relative to the current page, so on any page that is not at the root it points to the wrong URL.
-- Also (moved from ZA-136): editing an existing content link on the Manual tab drops `data-contentid`, because the editor's `LinkInfo` does not carry it; the link then no longer follows the content's URL.
-- Fix: normalise both sides the same way (one shared helper for "site-relative URL of content"), and only rewrite when the normalised values differ. Add a test. · Blocked by: nothing (Phase 5).
-
 ### ZA-140 [Medium/High] Services do no authorisation of their own
 - Where: every mutating method of `ZauberCMS.Core/*/Services/*Service.cs` (for example `ContentService.SaveContentAsync`, `MembershipService.SaveUserAsync`, `SeoService.SaveRedirectAsync`) · Category: D · Since: 2026-11-25 (split out of ZA-132 when its route half was fixed)
 - Issue / Trigger: Access is decided by the page that calls a service. Any code that can resolve a service (a front-end component, a plugin, an interactive component on a public page) can save or delete anything; the services never check who is signed in.
@@ -652,7 +576,75 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: Any path that is not `/admin`, `/api`, `/account` or a file name, and has no `slug` route value, is looked up as the root content: `/_blazor`, `/_blazor/negotiate`, minimal-API endpoints a site adds, 404s. Each costs a (cached) content lookup, and the request gets the root content's language. A front-end interactive component therefore always runs in the root's language, also on a page in another language.
 - Fix: only resolve content when the matched endpoint is the content catch-all (its route pattern has the `slug` parameter). Give a front-end circuit the language of the page that started it (for example from the page URL the circuit reports), then drop the accidental root fallback. · Blocked by: nothing; a site with one non-default language relies on the fallback today, so do both halves together (Phase 5).
 
+### ZA-144 [Low/High] A pending draft keeps the old URL after Restore gave the page a new one
+- Where: `ZauberCMS.Core/Content/Services/ContentService.cs` (restore URL suffix in `SaveContentAsync`),
+  `ContentMappingExtensions.MapDraftTo` (copies `Url`) · Category: C · Since: 2026-11-25 (Phase 5 audit)
+- Issue / Trigger: Restore gives a page `offers-1` because `offers` was taken meanwhile, but its draft still holds
+  `offers`; the editor shows the draft's URL, so publishing is refused ("already used") until the URL is changed.
+- Fix: update the draft's URL when restore adds a suffix (or have the editor prefer the live URL when it changed
+  after the draft was saved). · Blocked by: nothing.
+
+### ZA-145 [Low/High] Move and copy load the subtree twice
+- Where: `ZauberCMS.Core/Content/Services/ContentService.cs` (`SaveContentAsync` loop check then path rewrite;
+  `CopyContentAsync` descendants then `Include(PropertyData)` reload) · Category: B · Since: 2026-11-25
+- Issue / Trigger: Moving a page with a large subtree walks it twice (untracked, then tracked); copy loads full rows
+  and then loads them again with property data.
+- Fix: project IDs only for the loop check / reuse the tracked load; walk IDs only in copy. · Blocked by: nothing.
+
 ## Fixed this run / Resolved since last run
+
+- **Roadmap Phase 5 — content integrity — fixed 2026-11-25.** Build 0 warnings; 315 tests (312 pass, 3 skipped for
+  other open findings). `/audit changed` (two independent reviewers) found six more problems in the change; all
+  fixed below except ZA-144 and ZA-145 (Low, open). Tests: `ContentIntegrityTests` (25 cases, all seen failing against the previous
+  `ContentService`/`ContentVersioningService`), `ContentUrlTests`, `ContentLinkTests` (Components). "Browser" = the
+  dev site on a scratch copy of the dev database.
+  - **ZA-046 [High] Duplicate URL broke every front-end page.** The language lookup uses `TryAdd`. URLs are kept
+    unique among live pages: a typed URL that another page has is refused, a generated, copied or restored one
+    gets a `-1`, `-2`… suffix (restore says so in a warning). Copy no longer appends a fixed `-copy`.
+  - **ZA-047 [High] Non-draft saves discarded the draft.** A save with `ExcludePropertyData` (sort, move, restrict
+    access, culture & domains, restore) keeps the draft; a save with property data still publishes over it. The
+    editor shows a draft with the new `ContentMappingExtensions.MapDraftTo`, so tree position, language and dates
+    come from the live row and a later publish does not put a moved page back. A save without property data keeps
+    the stored `UnpublishedContentId` even when the caller's copy predates the draft.
+  - **ZA-048 [High] Recycling a parent left its children live.** Recycle marks every page below; Restore brings
+    them back; permanent delete of a recycled page deletes the recycled pages below it (refused while one is live).
+    Recycle stamps the group with one `DateUpdated` and Restore brings back only that group (a page binned on its
+    own earlier stays binned); restoring a page under a parent still in the bin is refused.
+    The recycle-bin tree and Empty Bin list only the top-most recycled items. Browser: About + two children →
+    all 404, only About in the bin, Restore → all 200 again.
+  - **ZA-049 [High] Copy shared the draft row.** Copies and cloned blocks get no `UnpublishedContentId`. Copy with
+    descendants walks `ParentId` (no raw SQL), skips recycled pages and builds fresh paths.
+  - **ZA-065 [Medium] Unpublished/deleted content through side paths.** Domain root and internal-redirect targets
+    must be published, not recycled, not a block; included `Children` (front-end lookup, `QueryContentAsync`, the
+    content grid) never hold recycled items, and on the front end only published ones.
+  - **ZA-066 [Medium] Slug matching depended on the provider.** `GetContentFromRequestAsync` normalises the slug with
+    the new `ContentUrl.Normalize` (lower case invariant, slashes trimmed; empty = root); saves store URLs the same
+    way. Browser: `/DEUTSCH/` → 200.
+  - **ZA-067 [Medium] Blocks had public URLs.** Blocks get no URL (also cleared on their next save; path URLs skip
+    them); the lookup, the language map and the uniqueness check ignore nested rows, so old block URLs are inert.
+  - **ZA-070 [Medium] Content-type delete checks.** The in-use check counts drafts and recycled pages; all nested
+    rows are checked, not ten (stopping at the first live reference); orphan clean-up, audit row and delete
+    commit in one transaction.
+  - **ZA-074 [Medium] Draft versions held live values.** A draft version records the stored draft (name, navigation
+    settings, values, blocks). `CreateVersionAsync` no longer writes the version back onto the row (that only
+    changed `DateUpdated`, the concurrency token, so saving the item a publish returned was refused).
+  - **ZA-075 [Medium] Version restore rewrote tree position and publish state.** Restore brings back name,
+    navigation settings, values and blocks only; discards the pending draft; marks the version current only when
+    the page is published; saves through `SaveChangesAndLog` in a transaction with an audit row.
+  - **ZA-079 [Medium] Move updated only the moved row's path.** A save that changes the path rewrites every path
+    below it in the same transaction, and a move under the page's own descendant is refused. Not done: with
+    `EnablePathUrls`, moved pages keep their URL (URLs are only built on create), as before.
+  - **ZA-016 [Medium] `IsDeleted = null`.** Kept as the documented "both" value (public API); included children no
+    longer leak recycled items whatever it is set to. Tests pin all three values.
+  - **ZA-135 [Medium] Rich-text content links rewritten to relative URLs.** The validator compares through
+    `ContentUrl.UpdatedHref` (same form on both sides, keeps `?query`/`#fragment`, writes `/blog`) and no longer
+    removes links to unpublished or recycled pages (only to missing ones). `SiteRelative` keeps anything that is
+    not an http/https address on this site (`javascript:…`, `\host`), and the inserted href is attribute-encoded.
+    Editing a link on the Manual tab keeps `data-contentid`
+    (`InsertContentLinkItem.FindContentId` reads it from the editor HTML). Browser: `/blog` and `/blog#latest`
+    unchanged on open; title added on the Manual tab, `data-contentid` kept.
+  - Not verified in a browser: draft kept across a sort and then published (service tests only), version restore
+    from the Versions tab, content-type delete messages, copy from the menu.
 
 - **Phase 4 follow-ups (owner request) — fixed 2026-11-25.** Build 0 warnings; 259 tests (256 pass, 3 skipped).
   - **ZA-134 [Medium] Rich text lost iframes.** ZauberCMS.RTE 4.0.0: an allowed provider's iframe becomes an

@@ -29,7 +29,7 @@ How Core services are built. Paths relative to `ZauberCMS.Core/`. Standards: [St
 - Parameter conventions: `Cached`, `AsNoTracking = true`, collections `= []`, nullable filters, `OrderBy` enum,
   `PageIndex` (1-based) / `AmountPerPage`. Soft delete is inconsistent today: Get parameters and the Media/User
   Query parameters use `IncludeDeleted`; only `QueryContentParameters` uses `bool? IsDeleted = false` (`true` =
-  recycle bin, `null` = both).
+  recycle bin, `null` = both). Included `Children` never contain recycled items, whatever the filter.
   - `WhereClause` (expression) is always applied on top of standard filters.
   - `Query` (`Func<IQueryable<T>>`) **replaces** the whole query — including the soft-delete filter. Callers own it.
 
@@ -71,6 +71,23 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 
 - Content/Media: `MoveToRecycleBin = true` → `Deleted = true`; otherwise hard delete (recycle-bin purge, block
   removal). Content hard delete also removes nested block-list descendants in a transaction.
+- Content and its tree (Phase 5): recycling a page recycles every page below it, all stamped with one `DateUpdated`;
+  a save that sets `Deleted = false` (the bin's Restore) restores the pages with that stamp — a page binned on its
+  own earlier stays in the bin — and gives a page whose URL was taken meanwhile a `-1` suffix (warning message).
+  Restoring a page whose parent is still in the bin is refused.
+  Permanent delete takes the recycled pages below with it and is refused while any page below is live. Descendants
+  are found by walking `ParentId` (`GetDescendantsAsync`), not by the stored `Path`. A save that changes the parent
+  rewrites the `Path` of everything below and refuses a move under the page's own descendant.
+- Content URLs: one per page (not blocks; blocks have none). A typed URL another live page has is refused; a
+  generated, copied or restored one gets a suffix. Stored form and request slugs go through `ContentUrl.Normalize`
+  (lower case, no slashes around); links on the site use `ContentUrl.SiteRelative` (`/blog`).
+- Drafts (`UnpublishedContent`): `SaveUnpublishedOnly` stores one; a save with property data publishes over it and
+  removes it; a save with `ExcludePropertyData` (sort, move, restrict, culture, restore) keeps it and the stored
+  `UnpublishedContentId`, whatever the caller's copy says. The editor shows a
+  draft with `MapDraftTo`, so tree position, language and dates always come from the live row.
+- Versions: a draft version records the stored draft. Restoring a version (`PublishVersionAsync`) brings back name,
+  navigation settings, property values and blocks only — not tree position, language or publish state — discards the
+  pending draft, and writes an audit row through `SaveChangesAndLog`.
 - User: always soft delete + security-stamp reset.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).

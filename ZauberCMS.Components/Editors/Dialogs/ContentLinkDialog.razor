@@ -105,9 +105,13 @@
     [Parameter] public SelectionInfo? CurrentSelection { get; set; }
     [Parameter] public LinkInfo? ExistingLink { get; set; }
 
+    /// <summary>The content an existing link points at (its <c>data-contentid</c>), so editing the link keeps it.</summary>
+    [Parameter] public Guid? ExistingContentId { get; set; }
+
     private string _selectedTab = "content";
     private Content? _selectedContent;
     private Guid? _selectedContentId; // Track content ID for manual links
+    private string? _contentIdUrl; // The URL _selectedContentId belongs to; a different URL drops the content ID
     private string _url = string.Empty;
     private string _linkText = string.Empty;
     private string _title = string.Empty;
@@ -140,6 +144,8 @@
             _target = ExistingLink.Target ?? string.Empty;
             _rel = ExistingLink.Rel ?? string.Empty;
             _title = ExistingLink.Title ?? string.Empty;
+            _selectedContentId = ExistingContentId;
+            _contentIdUrl = _url;
             _selectedTab = "manual";
             _hasManualData = true;
         }
@@ -161,13 +167,10 @@
             _hasContentData = true;
             
             // Auto-populate manual fields with content data
-            var contentUrl = content.Url() ?? string.Empty;
-            if (!string.IsNullOrEmpty(contentUrl) && !contentUrl.StartsWith("/") && !contentUrl.Contains("://"))
-            {
-                contentUrl = "/" + contentUrl;
-            }
+            var contentUrl = ZauberCMS.Core.Content.ContentUrl.SiteRelative(content) ?? string.Empty;
             
             _url = contentUrl;
+            _contentIdUrl = contentUrl;
             _linkText = CurrentSelection?.Text ?? content.Name ?? "Link";
         }
     }
@@ -215,13 +218,8 @@
         if (_selectedContent == null) return;
 
         var linkText = CurrentSelection?.Text ?? _selectedContent.Name ?? "Link";
-        var contentUrl = _selectedContent.Url() ?? string.Empty; // Use extension method
-        
-        // Ensure URL starts with / for internal links
-        if (!string.IsNullOrEmpty(contentUrl) && !contentUrl.StartsWith("/") && !contentUrl.Contains("://"))
-        {
-            contentUrl = "/" + contentUrl;
-        }
+        // Internal links are site-relative (/blog); the rich-text validator compares in the same form (ZA-135)
+        var contentUrl = ZauberCMS.Core.Content.ContentUrl.SiteRelative(_selectedContent) ?? string.Empty;
 
         var result = new ContentLinkResult
         {
@@ -250,7 +248,11 @@
             Title = _title,
             Target = _target,
             Rel = _rel,
-            ContentId = _selectedContentId // Include content ID if link originated from content selection
+            // Keep the content ID only while the link still points at that content's URL
+            ContentId = _selectedContentId != null &&
+                        ZauberCMS.Core.Content.ContentUrl.Normalize(_url) == ZauberCMS.Core.Content.ContentUrl.Normalize(_contentIdUrl)
+                ? _selectedContentId
+                : null
         };
 
         await Modal.CloseAsync(ModalResult.Ok(result));

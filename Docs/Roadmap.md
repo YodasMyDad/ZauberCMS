@@ -11,7 +11,8 @@
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
-  **113 open findings** (0 Critical, 18 High, 57 Medium, 38 Low). **Next: Phase 5.**
+  **Phase 5 done** (content integrity).
+  **102 open findings** (0 Critical, 14 High, 48 Medium, 40 Low). **Next: Phase 6.**
 - Findings come from reading code + a real build/package scan. Nothing was run in a browser or against
   PostgreSQL/Redis — items marked "needs repro" must be reproduced before or while fixing.
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -162,10 +163,34 @@
   and the content's language; public API additions `IRichTextEmbedService`, `DefaultRichTextEmbedService`,
   `AdminCulture`, `AdminCultureCircuitHandler`, `RedirectTarget.Normalize`, `RedirectMiddleware.ClearCache`.
 
-### Phase 5 — Content integrity
-ZA-046 (duplicate URL breaks front-end), ZA-047 (drafts discarded), ZA-048 (recycle parent/children),
-ZA-049 (copy shares draft), ZA-065, ZA-066, ZA-067 (publish/slug/nested-URL leaks), ZA-070, ZA-074, ZA-075, ZA-079,
-ZA-016, ZA-135 (rich-text content links rewritten to relative URLs).
+### Phase 5 — Content integrity — DONE 2026-11-25
+- Fixed: ZA-046 (duplicate URL breaks front-end), ZA-047 (drafts discarded), ZA-048 (recycle parent/children),
+  ZA-049 (copy shares draft), ZA-065, ZA-066, ZA-067 (publish/slug/nested-URL leaks), ZA-070, ZA-074, ZA-075,
+  ZA-079, ZA-016, ZA-135 (rich-text content links). What each fix does and how it was verified: "Fixed" section of
+  the audit report. Build 0 warnings; 315 tests (312 pass, 3 skipped as before). `/audit changed` found six more
+  problems in the change: four fixed, two logged as new Low findings ZA-144, ZA-145.
+- No schema change. Public API additions (no breaks): `ContentUrl` (Core, `ZauberCMS.Core.Content`),
+  `ContentMappingExtensions.MapDraftTo`, `InsertContentLinkItem.FindContentId`, `ContentLinkDialog.ExistingContentId`;
+  XML docs on `SaveContentParameters` and `QueryContentParameters.IsDeleted`. `RestoreContextMenu` gained a
+  `NotificationService` constructor parameter (built by discovery; only code that news it up is affected).
+- Behaviour changes for the release notes:
+  - Recycling a page recycles everything below it; restoring it restores the pages that went with it (not ones
+    binned on their own earlier); a page can't be restored while its parent is in the bin; permanently deleting a
+    recycled page deletes the recycled pages below it. The recycle bin lists only the top-most recycled items.
+  - Rich text: links to recycled pages are kept (they were removed when the editor opened).
+  - Saving a page with a URL that another live page has is refused; generated, copied and restored URLs get a
+    `-1`, `-2`… suffix. Copies are `<url>-copy` (suffixed when taken) and no longer share the original's draft.
+  - Sort, move, restrict access, culture and restore (saves with `ExcludePropertyData`) keep a pending draft.
+  - Request slugs are matched case-insensitively and without leading/trailing slashes on every provider.
+  - Blocks get no URL and are never served as pages; an unpublished domain root or redirect target is not served;
+    `Children` on the front end and in queries never contain recycled (and on the front end, unpublished) items.
+  - Restoring a version changes name, navigation settings, values and blocks only, and discards the pending draft.
+  - A content type used by drafts or recycled pages can no longer be deleted (it silently deleted them before).
+  - Moving a page under its own descendant is refused; moving rewrites the stored paths below it.
+- Not verified: draft kept across a sort and then published in the browser (service tests only), version restore
+  from the Versions tab, content-type delete and copy from the admin menus; anything on PostgreSQL/SQL Server.
+- Left as it was: with `EnablePathUrls`, a moved page keeps its URL (URLs are built only on create). ZA-143 says
+  "Phase 5" in the report but was never in this phase's list; it is still open.
 
 ### Phase 6 — PostgreSQL & Redis made real (D1)
 - Stand up PostgreSQL and Redis locally (containers) and run the app on each; add them to CI if feasible.

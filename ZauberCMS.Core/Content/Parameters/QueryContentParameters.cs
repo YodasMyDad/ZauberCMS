@@ -16,6 +16,12 @@ public class QueryContentParameters : BaseQueryContentParameters
     public bool IncludeUnpublished { get; set; }
     public bool IncludeContentRoles { get; set; }
     public bool OnlyUnpublished { get; set; }
+    /// <summary>
+    /// Recycle-bin filter. <c>false</c> (the default): only items not in the recycle bin. <c>true</c>: only items in
+    /// the recycle bin. <c>null</c>: both — use it only on purpose (maintenance, admin tools), never for pages
+    /// shown to visitors. Included <see cref="BaseQueryContentParameters.IncludeChildren">children</see> never
+    /// contain recycled items, whatever this is set to.
+    /// </summary>
     public bool? IsDeleted { get; set; } = false;
     public bool RootContentOnly { get; set; }
     public Expression<Func<Content.Models.Content, bool>>? WhereClause { get; set; }

@@ -55,6 +55,28 @@ public static class ContentMappingExtensions
     }
 
     /// <summary>
+    /// Copies what an editor changes in a draft (name, URL, view, navigation settings) from a stored draft onto
+    /// the live item, to show the draft in the editor. Everything else — where the item sits in the tree, its
+    /// language, publish and recycle-bin state, dates — stays as the live item has it: those change through sort,
+    /// move, culture and restore after the draft was saved, and the draft must not put them back (ZA-047).
+    /// Property values are not copied; take them from the draft's <c>PropertyData</c>.
+    /// </summary>
+    /// <param name="draft">The stored draft (<c>UnpublishedContent.JsonContent</c>).</param>
+    /// <param name="target">The live item, loaded from the database.</param>
+    /// <returns>The updated <paramref name="target"/>.</returns>
+    public static Models.Content MapDraftTo(this Models.Content draft, Models.Content target)
+    {
+        target.Name = draft.Name;
+#pragma warning disable CS0618 // Type or member is obsolete
+        target.Url = draft.Url;
+#pragma warning restore CS0618 // Type or member is obsolete
+        target.ViewComponent = draft.ViewComponent;
+        target.HideFromNavigation = draft.HideFromNavigation;
+        target.InternalRedirectId = draft.InternalRedirectId;
+        return target;
+    }
+
+    /// <summary>
     /// Creates a new Content entity with properties mapped from source
     /// </summary>
     /// <param name="source">Source Content entity</param>

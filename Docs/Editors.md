@@ -79,6 +79,11 @@ content types **and** roles. An editor in a separate class library appears only 
 - **Content is sanitised in the browser with `HtmlPolicy` on load.** Tags outside the policy are stripped and lost on
   the next save; `script`, `style`, `object`, `embed`, form controls and `svg` are always stripped.
   `data-contentid` / `data-mediaid` survive. The server still sanitises separately.
+- **Content links follow their page.** When a value opens, a link with `data-contentid` whose href no longer
+  matches the page's URL is rewritten to `ContentUrl.SiteRelative` (`/blog`; a `?query` or `#fragment` is kept);
+  both sides are compared through `ContentUrl.Normalize`, so `/blog` and `blog` are the same. A link to an
+  unpublished or recycled page is kept; only a link to a page that no longer exists becomes plain text. Editing a content link on
+  the Manual tab keeps its `data-contentid` while the URL still points at that page.
 - **Video embeds are placeholders, not iframes.** The `embed` toolbar item stores
   `<figure data-embed="youtube" data-embed-id="…" data-embed-url="…">`. An existing `<iframe>` from an allowed
   provider is converted to a placeholder when the editor loads the value; an iframe from anywhere else is

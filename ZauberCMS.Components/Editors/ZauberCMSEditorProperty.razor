@@ -151,9 +151,13 @@
                 if (!Guid.TryParse(contentIdStr, out var contentId)) continue;
                 
                 // Query content service
+                // Unpublished and recycled pages count: a link to a page that is not live yet, or that can still be
+                // restored from the recycle bin, must not be removed. Only a page that no longer exists unlinks.
                 var content = await ContentService.GetContentAsync(new GetContentParameters
                 {
                     Id = contentId,
+                    IncludeUnpublished = true,
+                    IncludeDeleted = true,
                     AsNoTracking = true
                 });
                 
@@ -168,13 +172,14 @@
                 }
                 else
                 {
-                    // Check if URL changed and update if needed
+                    // Only rewrite when the link really points somewhere else now (ZA-135): both sides are
+                    // compared in the same form, and the new href is site-relative (/blog), never relative (blog).
                     var currentHref = node.GetAttributeValue("href", string.Empty);
-                    var contentUrl = content.Url();
+                    var updatedHref = ZauberCMS.Core.Content.ContentUrl.UpdatedHref(currentHref, content.Url());
                     
-                    if (!string.IsNullOrEmpty(contentUrl) && currentHref != contentUrl)
+                    if (updatedHref != null)
                     {
-                        node.SetAttributeValue("href", contentUrl);
+                        node.SetAttributeValue("href", updatedHref);
                         updatedUrls.Add(content.Name ?? "Unnamed");
                         htmlChanged = true;
                     }

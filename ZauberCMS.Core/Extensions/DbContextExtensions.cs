@@ -78,7 +78,8 @@ public static class DbContextExtensions
 
         path.Add(entity.Id);
 
-        if (entity is Content.Models.Content && !isUpdate && settings.Value.EnablePathUrls)
+        // Blocks (nested content) have no URL (ZA-067)
+        if (entity is Content.Models.Content { IsNestedContent: false } && !isUpdate && settings.Value.EnablePathUrls)
         {
             // Build the URL from ancestor URLs + current Url, dropping the root segment to
             // mirror the original behaviour. One extra query, regardless of depth.

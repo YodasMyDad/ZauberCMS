@@ -53,7 +53,7 @@ the three contexts.
 
 - PostgreSQL `timestamp with time zone` requires `DateTimeKind.Utc`.
 - PostgreSQL folds unquoted identifiers to lower case; EF creates quoted names. Raw SQL with unquoted `ZauberContent`
-  (`Extensions/DbContextExtensions.cs` `WherePathLike`, `WhereHasCompositionsUsing`) is suspected broken on PostgreSQL —
+  (`Extensions/DbContextExtensions.cs` `WherePathLike` — still used by Restrict access — and `WhereHasCompositionsUsing`) is suspected broken on PostgreSQL —
   tracked in [.audit/report.md](../.audit/report.md).
 - Column types differ per provider (`nvarchar(max)` vs `TEXT` vs `text`) — let EF generate them; don't hard-code
   `HasColumnType` unless all three are handled.

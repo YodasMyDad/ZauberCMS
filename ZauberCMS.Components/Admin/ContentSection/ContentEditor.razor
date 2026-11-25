@@ -409,8 +409,8 @@ else
 
             if (Content.UnpublishedContent != null)
             {
-                // Replace the Content with the Json one
-                Content.UnpublishedContent.JsonContent.MapTo(Content);
+                // Show the draft's values; tree position, language and dates stay the live ones (ZA-047)
+                Content.UnpublishedContent.JsonContent.MapDraftTo(Content);
                 Content.PropertyData = Content.UnpublishedContent.JsonContent.PropertyData;
             }
 

@@ -145,20 +145,29 @@ public class ContentService(
             return unpublishedResult;
         }
 
-        if (parameters.Content.Url().IsNullOrWhiteSpace())
+        var urlGenerated = false;
+        if (parameters.Content.IsNestedContent)
+        {
+            // Blocks are not pages: no URL, so they never resolve on the front end and never take a page's
+            // slug (ZA-067). Saving a block clears a URL an older version gave it.
+#pragma warning disable CS0618 // Type or member is obsolete
+            parameters.Content.Url = null;
+#pragma warning restore CS0618 // Type or member is obsolete
+        }
+        else if (parameters.Content.Url().IsNullOrWhiteSpace())
         {
             var baseSlug = new SlugHelper().GenerateSlug(parameters.Content.Name);
 #pragma warning disable CS0618 // Type or member is obsolete
-            parameters.Content.Url = GenerateUniqueUrl(dbContext, baseSlug);
+            parameters.Content.Url = GenerateUniqueUrl(dbContext, baseSlug, parameters.Content.Id);
 #pragma warning restore CS0618 // Type or member is obsolete
+            urlGenerated = true;
         }
         else
         {
-            // Front-end finder lowercases the request slug before lookup (DefaultContentFinder)
-            // so a stored URL with mixed case would never match. Normalise on save to keep the
-            // write side and the read side in sync.
+            // The front-end lookup normalises the request slug the same way (ContentUrl.Normalize), so a
+            // stored URL with mixed case or slashes around it would never match (ZA-066).
 #pragma warning disable CS0618 // Type or member is obsolete
-            parameters.Content.Url = parameters.Content.Url?.ToLowerInvariant();
+            parameters.Content.Url = ContentUrl.Normalize(parameters.Content.Url);
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
@@ -173,6 +182,13 @@ public class ContentService(
             .Include(x => x.PropertyData)
             .Include(x => x.ContentRoles).ThenInclude(x => x.Role)
             .FirstOrDefault(x => x.Id == parameters.Content.Id);
+
+        // The stored state before this save, to see what the save changes
+        var wasDeleted = content?.Deleted ?? false;
+        var storedDateUpdated = content?.DateUpdated;
+        var storedParentId = content?.ParentId;
+        var storedPath = content?.Path.ToList() ?? [];
+        var storedUrl = content?.Url();
 
         if (content == null)
         {
@@ -196,8 +212,17 @@ public class ContentService(
             // won't match and EF throws DbUpdateConcurrencyException. Without this, the load above
             // would just snapshot the latest DB value as the "original", silently accepting stale saves.
             var submittedDateUpdated = parameters.Content.DateUpdated;
+            var storedUnpublishedContentId = content.UnpublishedContentId;
 
             parameters.Content.MapTo(content);
+            if (parameters.ExcludePropertyData)
+            {
+                // A save without property data keeps the draft, so it keeps the link to it too: the caller's copy
+                // may be older than the draft (a tree node loaded before "Save only"), and creating a draft does
+                // not change DateUpdated, so the concurrency check would not catch it (ZA-047)
+                content.UnpublishedContentId = storedUnpublishedContentId;
+            }
+
             content.LastUpdatedById = user!.Id;
             content.DateUpdated = DateTime.UtcNow;
 
@@ -219,12 +244,111 @@ public class ContentService(
             UpdateContentRoles(dbContext, content, parameters);
         }
 
-        if (unpublishedContent != null)
+        // A save with property data publishes the editor's values, so a pending draft is replaced by it. A save
+        // without property data (sort, move, restrict access, culture & domains, restore) only changes where or
+        // how the page is shown, so its draft stays (ZA-047).
+        if (unpublishedContent != null && !parameters.ExcludePropertyData)
         {
             dbContext.UnpublishedContent.Remove(unpublishedContent);
         }
 
+        if (isUpdate && content.ParentId != storedParentId && content.ParentId != null)
+        {
+            // A page can't be moved under itself or one of its own descendants: the tree would become a loop
+            var newParentId = content.ParentId.Value;
+            var isOwnDescendant = newParentId == content.Id ||
+                                  (await GetDescendantsAsync(dbContext, content.Id, tracked: false, cancellationToken))
+                                  .Any(x => x.Id == newParentId);
+            if (isOwnDescendant)
+            {
+                handlerResult.AddMessage("Content can't be moved below itself", ResultMessageType.Error);
+                return handlerResult;
+            }
+        }
+
         content.Path = content.BuildPath(dbContext, isUpdate, settings);
+
+        var isRestore = isUpdate && wasDeleted && !content.Deleted;
+        if (isRestore && content.ParentId is { } restoreParentId &&
+            await dbContext.Contents.AsNoTracking().AnyAsync(x => x.Id == restoreParentId && x.Deleted, cancellationToken))
+        {
+            // It would be live under a page that is not, unreachable in both trees (ZA-048)
+            handlerResult.AddMessage("Restore the parent page first: it is still in the recycle bin",
+                ResultMessageType.Error);
+            return handlerResult;
+        }
+
+        var pathChanged = isUpdate && !storedPath.SequenceEqual(content.Path);
+        var reservedUrls = new HashSet<string>(StringComparer.Ordinal);
+
+        // Every page needs its own URL: the front end resolves a URL to one page, and the language lookup keys on
+        // it (ZA-046). A URL typed by the editor is refused when taken; a generated or restored one gets a suffix.
+        if (!content.IsNestedContent && !content.Deleted && !content.Url().IsNullOrWhiteSpace())
+        {
+            var url = content.Url()!;
+            var urlChanged = !isUpdate || isRestore || !string.Equals(url, storedUrl, StringComparison.Ordinal);
+            if (urlChanged && IsUrlTaken(dbContext, url, content.Id))
+            {
+                if (urlGenerated || isRestore)
+                {
+#pragma warning disable CS0618 // Type or member is obsolete
+                    content.Url = GenerateUniqueUrl(dbContext, url, content.Id);
+#pragma warning restore CS0618 // Type or member is obsolete
+                    if (isRestore)
+                    {
+                        handlerResult.AddMessage(
+                            $"The URL '{url}' is now used by another page, so the restored page has the URL '{content.Url()}'",
+                            ResultMessageType.Warning);
+                    }
+                }
+                else
+                {
+                    handlerResult.AddMessage($"The URL '{url}' is already used by another page", ResultMessageType.Error);
+                    return handlerResult;
+                }
+            }
+
+            reservedUrls.Add(content.Url()!);
+        }
+
+        if (isRestore || pathChanged)
+        {
+            // Restore brings back the pages that went to the recycle bin with this one (ZA-048), and a move or
+            // re-parent rewrites the stored path of everything below it (ZA-079). Nearest first, so a parent's
+            // new path is known before its children are updated.
+            var newPaths = new Dictionary<Guid, List<Guid>> { [content.Id] = content.Path };
+            foreach (var descendant in await GetDescendantsAsync(dbContext, content.Id, tracked: true, cancellationToken))
+            {
+                if (descendant.ParentId is { } parentId && newPaths.TryGetValue(parentId, out var parentPath))
+                {
+                    descendant.Path = [.. parentPath, descendant.Id];
+                }
+
+                newPaths[descendant.Id] = descendant.Path;
+
+                // Only the pages that went to the bin with this one: recycling stamps them with the same DateUpdated.
+                // A page binned on its own earlier stays in the bin (and shows there once this one is back).
+                if (isRestore && descendant.Deleted && descendant.DateUpdated == storedDateUpdated)
+                {
+                    descendant.Deleted = false;
+                    var descendantUrl = descendant.Url();
+                    if (!descendant.IsNestedContent && !descendantUrl.IsNullOrWhiteSpace())
+                    {
+                        if (reservedUrls.Contains(descendantUrl!) || IsUrlTaken(dbContext, descendantUrl!, descendant.Id))
+                        {
+#pragma warning disable CS0618 // Type or member is obsolete
+                            descendant.Url = GenerateUniqueUrl(dbContext, descendantUrl!, descendant.Id, reservedUrls);
+#pragma warning restore CS0618 // Type or member is obsolete
+                            handlerResult.AddMessage(
+                                $"The URL '{descendantUrl}' is now used by another page, so the restored page '{descendant.Name}' has the URL '{descendant.Url()}'",
+                                ResultMessageType.Warning);
+                        }
+
+                        reservedUrls.Add(descendant.Url()!);
+                    }
+                }
+            }
+        }
 
         // Server-side validation of BlockListEditor AllowedElementTypeIds.
         // UI restrictions can be bypassed via a crafted save (or an old payload after settings change),
@@ -369,22 +493,51 @@ public class ContentService(
 
         if (parameters.MoveToRecycleBin)
         {
+            // The page goes to the recycle bin with everything below it (ZA-048): a child left live would still
+            // resolve by URL, be in no tree, and block the parent's permanent delete. Restore brings them back.
+            // One timestamp for the page and everything binned with it, so Restore brings back exactly that group
+            var recycledAt = DateTime.UtcNow;
             content.Deleted = true;
-            await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Recycle Binned", cancellationToken);
-            var recycleResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
-                cancellationToken);
-            if (recycleResult.Success)
+            content.DateUpdated = recycledAt;
+            foreach (var descendant in await GetDescendantsAsync(dbContext, content.Id, tracked: true, cancellationToken))
             {
+                if (!descendant.Deleted)
+                {
+                    descendant.Deleted = true;
+                    descendant.DateUpdated = recycledAt;
+                }
+            }
+
+            await using var recycleTransaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Recycle Binned", cancellationToken);
+                var recycleResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService,
+                    extensionManager, cancellationToken);
+                if (!recycleResult.Success)
+                {
+                    await recycleTransaction.RollbackAsync(cancellationToken);
+                    return recycleResult;
+                }
+
+                await recycleTransaction.CommitAsync(cancellationToken);
                 // Notify subscribers (admin tree, listings) that this content has effectively
                 // been removed from the live set so they refresh — without this, recycle bin
                 // moves only refresh on a manual reload.
                 await appState.NotifyContentDeleted(content, authState.User.Identity?.Name!);
+                return recycleResult;
             }
-            return recycleResult;
+            catch
+            {
+                await recycleTransaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
 
-        var children = dbContext.Contents.AsNoTracking().Where(x => x.ParentId == content.Id);
-        if (await children.AnyAsync(cancellationToken))
+        // Permanent delete takes the items below with it only when they are all in the recycle bin (they went
+        // there with this one, or on their own). A live item below is never deleted as a side effect.
+        var descendants = await GetDescendantsAsync(dbContext, content.Id, tracked: true, cancellationToken);
+        if (descendants.Any(x => !x.Deleted && !x.IsNestedContent))
         {
             handlerResult.AddMessage(
                 "Unable to delete content with child content, delete or move those items first",
@@ -392,13 +545,22 @@ public class ContentService(
             return handlerResult;
         }
 
+        // Deepest first, then the item itself
+        var toDelete = descendants.AsEnumerable().Reverse().Append(content).ToList();
+        var toDeleteIds = toDelete.Select(x => x.Id).ToHashSet();
+
         // Hard-delete needs to cascade through any BlockListEditor properties this content holds.
         // Without this, nested block rows (IsNestedContent=true) become orphans because the parent's
         // property-data goes away but the nested rows it referenced stay in ZauberContents.
         var nestedToDelete = new List<Guid>();
-        var processed = new HashSet<Guid> { content.Id };
-        await CollectNestedBlockListContentIdsAsync(dbContext, content.Id, processed, nestedToDelete,
-            depth: 0, cancellationToken);
+        var processed = new HashSet<Guid>(toDeleteIds);
+        foreach (var item in toDelete)
+        {
+            await CollectNestedBlockListContentIdsAsync(dbContext, item.Id, processed, nestedToDelete,
+                depth: 0, cancellationToken);
+        }
+
+        nestedToDelete = nestedToDelete.Where(id => !toDeleteIds.Contains(id)).ToList();
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -432,18 +594,32 @@ public class ContentService(
                     content.Id, nestedRows.Count);
             }
 
-            var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == content.Id);
-            dbContext.ContentPropertyValues.RemoveRange(propertyDataToDelete);
-
-            if (content.UnpublishedContentId != null)
+            foreach (var item in toDelete)
             {
-                var uContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == content.UnpublishedContentId);
-                if (uContent != null) dbContext.UnpublishedContent.Remove(uContent);
+                var propertyDataToDelete = dbContext.ContentPropertyValues.Where(x => x.ContentId == item.Id);
+                dbContext.ContentPropertyValues.RemoveRange(propertyDataToDelete);
+
+                if (item.UnpublishedContentId != null)
+                {
+                    var uContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == item.UnpublishedContentId);
+                    if (uContent != null) dbContext.UnpublishedContent.Remove(uContent);
+                }
+
+                item.PropertyData.Clear();
             }
 
-            content.PropertyData.Clear();
+            if (descendants.Count > 0)
+            {
+                logger.LogInformation(
+                    "Permanent delete of content {ContentId} also deleted {DescendantCount} recycled item(s) below it",
+                    content.Id, descendants.Count);
+            }
+
             await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Deleted", cancellationToken);
-            dbContext.Contents.Remove(content);
+            foreach (var item in toDelete)
+            {
+                dbContext.Contents.Remove(item);
+            }
 
             var result = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
                 cancellationToken);
@@ -613,6 +789,11 @@ public class ContentService(
                 clone.DateUpdated = DateTime.UtcNow;
                 clone.LastUpdatedById = currentUser?.Id;
                 clone.Deleted = false;
+                // Not the original block's draft (ZA-049), and blocks have no URL (ZA-067)
+                clone.UnpublishedContentId = null;
+#pragma warning disable CS0618 // Type or member is obsolete
+                clone.Url = null;
+#pragma warning restore CS0618 // Type or member is obsolete
                 // IsNestedContent stays true (it's a block); ParentId/Path inherit from original
                 clone.PropertyData = original.PropertyData.Select(p => new ContentPropertyValue
                 {
@@ -668,6 +849,8 @@ public class ContentService(
         }
 
         var idMap = new Dictionary<Guid, Guid>();
+        // URLs handed out in this copy but not saved yet, so two copies never get the same one (ZA-046)
+        var reservedUrls = new HashSet<string>(StringComparer.Ordinal);
         var newParentId = parameters.CopyTo ?? contentToCopy.ParentId;
         var copiedContent = CreateCopy(contentToCopy, user, newParentId);
 
@@ -691,23 +874,32 @@ public class ContentService(
 
         if (parameters.IncludeDescendants)
         {
-            var descendants = await dbContext.Contents
-                .WherePathLike(contentToCopy.Id)
-                .AsNoTracking()
-                .Include(content => content.PropertyData)
-                .ToListAsync(cancellationToken);
+            // Walk the tree by ParentId (nearest first, so a parent's copy exists before its children's) rather
+            // than matching stored paths with raw SQL. Items in the recycle bin are not copied.
+            var copiedPaths = new Dictionary<Guid, List<Guid>> { [copiedContent.Id] = copiedContent.Path };
+            var descendantIds = (await GetDescendantsAsync(dbContext, contentToCopy.Id, tracked: false, cancellationToken))
+                .Select(x => x.Id).ToList();
+            var treeOrder = descendantIds.Select((id, index) => (id, index)).ToDictionary(x => x.id, x => x.index);
+            var descendants = (await dbContext.Contents
+                    .AsNoTracking()
+                    .Include(content => content.PropertyData)
+                    .Where(x => descendantIds.Contains(x.Id))
+                    .ToListAsync(cancellationToken))
+                .OrderBy(x => treeOrder[x.Id]);
 
-            foreach (var descendant in descendants.Where(x => x.Id != contentToCopy.Id))
+            foreach (var descendant in descendants)
             {
-                if (descendant.ParentId != null)
+                if (descendant.ParentId == null || descendant.Deleted ||
+                    !idMap.TryGetValue(descendant.ParentId.Value, out var newParentIdForDescendant))
                 {
-                    var newParentIdForDescendant = idMap[descendant.ParentId.Value];
-                    var copiedDescendant = CreateCopy(descendant, user, newParentIdForDescendant);
-                    copiedDescendant.Path = descendant.Path
-                        .Select(id => idMap.TryGetValue(id, out var value) ? value : id).ToList();
-                    idMap[descendant.Id] = copiedDescendant.Id;
-                    dbContext.Add(copiedDescendant);
+                    continue;
                 }
+
+                var copiedDescendant = CreateCopy(descendant, user, newParentIdForDescendant);
+                copiedDescendant.Path = [.. copiedPaths[newParentIdForDescendant], copiedDescendant.Id];
+                copiedPaths[copiedDescendant.Id] = copiedDescendant.Path;
+                idMap[descendant.Id] = copiedDescendant.Id;
+                dbContext.Add(copiedDescendant);
             }
         }
 
@@ -748,8 +940,14 @@ public class ContentService(
             copy.Id = Guid.NewGuid().NewSequentialGuid();
             copy.Name = original.Name + " (Copy)";
 #pragma warning disable CS0618 // Type or member is obsolete
-            copy.Url = original.Url + "-copy";
+            copy.Url = original.IsNestedContent
+                ? null
+                : GenerateUniqueUrl(dbContext,
+                    (original.Url().IsNullOrWhiteSpace() ? new SlugHelper().GenerateSlug(original.Name) : original.Url) + "-copy",
+                    reserved: reservedUrls);
 #pragma warning restore CS0618 // Type or member is obsolete
+            // The original's pending draft belongs to the original; sharing the row breaks both on publish (ZA-049)
+            copy.UnpublishedContentId = null;
             copy.LastUpdatedById = currentUser?.Id;
             copy.ParentId = parentId;
             copy.DateCreated = DateTime.UtcNow;
@@ -780,12 +978,24 @@ public class ContentService(
     public async Task<EntryModel> GetContentFromRequestAsync(GetContentFromRequestParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        var cacheKey = parameters.GenerateCacheKey<Models.Content>("GetContentFromRequest");
+        // URLs are stored lower case without slashes around them, so the slug is compared in that form on every
+        // database provider (ZA-066): /About-Us/ finds about-us. An empty slug is the root page.
+        var slug = ContentUrl.Normalize(parameters.Slug);
+        var request = new GetContentFromRequestParameters
+        {
+            Slug = slug.Length == 0 ? null : slug,
+            IsRootContent = parameters.IsRootContent || slug.Length == 0,
+            IncludeChildren = parameters.IncludeChildren,
+            IgnoreInternalRedirect = parameters.IgnoreInternalRedirect,
+            Url = parameters.Url
+        };
+
+        var cacheKey = request.GenerateCacheKey<Models.Content>("GetContentFromRequest");
         return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
             using var scope = serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-            return await FetchEntryModelAsync(parameters, dbContext, cancellationToken);
+            return await FetchEntryModelAsync(request, dbContext, cancellationToken);
         }, 0, 5))!;
     }
 
@@ -970,11 +1180,11 @@ public class ContentService(
         var user = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<ContentType>();
 
-        // Check for regular content using this ContentType
-        var contentUsingContentType =
-            await QueryContentAsync(new QueryContentParameters { ContentTypeId = parameters.ContentTypeId },
-                cancellationToken);
-        if (contentUsingContentType.Items.Any())
+        // Check for regular content using this ContentType: drafts and recycled pages too, because deleting the
+        // type cascades to every row that uses it (ZA-070)
+        var contentUsingContentType = await dbContext.Contents.AsNoTracking()
+            .AnyAsync(x => x.ContentTypeId == parameters.ContentTypeId && !x.IsNestedContent, cancellationToken);
+        if (contentUsingContentType)
         {
             handlerResult.Success = false;
             handlerResult.AddMessage("Unable to delete, because this ContentType is being used by content items",
@@ -987,14 +1197,11 @@ public class ContentService(
         // from a ContentType (or its composition removed) — the property's JSON value lingers,
         // along with the nested Content row. Treat those as orphans and clean them up so the
         // Element Type can actually be deleted instead of being blocked forever.
-        var nestedContentUsingContentType =
-            await QueryContentAsync(new QueryContentParameters
-            {
-                ContentTypeId = parameters.ContentTypeId,
-                NestedFilter = QueryContentParameters.NestedContentFilter.Only,
-                IncludeUnpublished = true
-            }, cancellationToken);
-        if (nestedContentUsingContentType.Items.Any())
+        // Every nested row, not one page of published ones (ZA-070)
+        var nestedContentUsingContentType = await dbContext.Contents.AsNoTracking()
+            .Where(x => x.ContentTypeId == parameters.ContentTypeId && x.IsNestedContent)
+            .ToListAsync(cancellationToken);
+        if (nestedContentUsingContentType.Count != 0)
         {
             // Build the set of property type IDs that are still attached to some ContentType.
             // ContentProperties is stored as JSON inside ZauberContentTypes, so we materialise
@@ -1009,7 +1216,7 @@ public class ContentService(
             var liveItems = new List<Models.Content>();
             var orphanedItems = new List<Models.Content>();
 
-            foreach (var nestedItem in nestedContentUsingContentType.Items)
+            foreach (var nestedItem in nestedContentUsingContentType)
             {
                 var idString = nestedItem.Id.ToString();
                 var hasLiveReference = await dbContext.ContentPropertyValues
@@ -1020,7 +1227,9 @@ public class ContentService(
 
                 if (hasLiveReference)
                 {
+                    // One is enough to refuse; don't scan the property values once per remaining block
                     liveItems.Add(nestedItem);
+                    break;
                 }
                 else
                 {
@@ -1031,9 +1240,8 @@ public class ContentService(
             if (liveItems.Count != 0)
             {
                 handlerResult.Success = false;
-                var count = liveItems.Count;
                 handlerResult.AddMessage(
-                    $"Unable to delete, because this Element Type is used by {count} nested content item{(count == 1 ? "" : "s")}",
+                    "Unable to delete, because this Element Type is used by nested content",
                     ResultMessageType.Warning);
                 return handlerResult;
             }
@@ -1090,14 +1298,35 @@ public class ContentService(
                 }
             }
 
-            if (user != null)
+            // Orphan clean-up, audit row and delete commit together: a failed delete leaves no audit row
+            // claiming it happened (ZA-070)
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            try
             {
-                await SaveAuditAsync(dbContext, $"{user.Name} Deleted {contentType.Name}", cancellationToken);
-            }
+                if (user != null)
+                {
+                    await SaveAuditAsync(dbContext, $"{user.Name} Deleted {contentType.Name}", cancellationToken);
+                }
 
-            dbContext.ContentTypes.Remove(contentType);
-            return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager,
-                cancellationToken);
+                dbContext.ContentTypes.Remove(contentType);
+                var deleteResult = await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService,
+                    extensionManager, cancellationToken);
+                if (deleteResult.Success)
+                {
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                else
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                }
+
+                return deleteResult;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
 
         handlerResult.AddMessage("Unable to delete, as no ContentType with that id exists", ResultMessageType.Warning);
@@ -1352,7 +1581,7 @@ public class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = dbContext.Contents.AsNoTracking()
-            .Where(x => !x.Deleted)
+            .Where(x => !x.Deleted && !x.IsNestedContent)
             .Include(x => x.Language)
 #pragma warning disable CS0618 // Type or member is obsolete
             .Select(c => new { c.Id, c.Url, c.Language })
@@ -1367,8 +1596,10 @@ public class ContentService(
             var dict = new Dictionary<object, string>();
             foreach (var c in contentLanguages)
             {
-                dict.Add(c.Url!, c.Language!.LanguageIsoCode!);
-                dict.Add(c.Id, c.Language!.LanguageIsoCode!);
+                // TryAdd: this runs on every front-end request, so one duplicate URL (older data, or two sites
+                // with the same slug) must not take every page down (ZA-046). The first page with it wins.
+                dict.TryAdd(c.Url!, c.Language!.LanguageIsoCode!);
+                dict.TryAdd(c.Id, c.Language!.LanguageIsoCode!);
             }
 
             return dict;
@@ -1440,7 +1671,7 @@ public class ContentService(
 
         if (parameters.IncludeChildren)
         {
-            query = query.Include(x => x.Children).AsSplitQuery();
+            query = query.Include(x => x.Children.Where(c => !c.Deleted)).AsSplitQuery();
         }
 
         if (parameters.AsNoTracking)
@@ -1910,10 +2141,11 @@ public class ContentService(
 
             if (request.IncludeChildren)
             {
+                // Recycled children are never included, whatever IsDeleted asks of the items themselves (ZA-065)
                 query = request.IncludeUnpublished
-                    ? query.Include(x => x.Children)
+                    ? query.Include(x => x.Children.Where(c => !c.Deleted))
                         .ThenInclude(x => x.UnpublishedContent)
-                    : query.Include(x => x.Children.Where(c => c.Published));
+                    : query.Include(x => x.Children.Where(c => c.Published && !c.Deleted));
             }
 
             if (request.RootContentOnly)
@@ -2010,16 +2242,18 @@ public class ContentService(
 
         var matchedDomain = MatchDomainWithContent(request.Url ?? string.Empty, domains);
 
+        // Only live pages are served: published, not in the recycle bin, and not a block (ZA-065, ZA-067)
+        var liveContent = contentQueryable.Where(c => c.Published && !c.Deleted && !c.IsNestedContent);
         var content = request.IsRootContent
             ? matchedDomain != null
-                ? await contentQueryable.Where(c => !c.Deleted).Select(c => new
+                ? await liveContent.Select(c => new
                         { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(x => x.Id == matchedDomain.ContentId, cancellationToken)
-                : await contentQueryable.Where(c => c.IsRootContent && c.Published && !c.Deleted)
+                : await liveContent.Where(c => c.IsRootContent)
                     .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(cancellationToken)
 #pragma warning disable CS0618 // Type or member is obsolete
-            : await contentQueryable.Where(c => c.Url == request.Slug && c.Published && !c.Deleted)
+            : await liveContent.Where(c => c.Url == request.Slug)
 #pragma warning restore CS0618 // Type or member is obsolete
                 .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                 .FirstOrDefaultAsync(cancellationToken);
@@ -2027,7 +2261,7 @@ public class ContentService(
         if (content?.InternalRedirectId != null && content.InternalRedirectId != Guid.Empty)
         {
             var internalRedirectIdValue = content.InternalRedirectId.Value;
-            content = await contentQueryable.Where(c => c.Id == internalRedirectIdValue && !c.Deleted)
+            content = await liveContent.Where(c => c.Id == internalRedirectIdValue)
                 .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                 .FirstOrDefaultAsync(cancellationToken);
         }
@@ -2047,7 +2281,8 @@ public class ContentService(
 
         if (request.IncludeChildren || content.IncludeChildren)
         {
-            query = query.Include(x => x.Children);
+            // A view lists its children: only the ones a visitor may see (ZA-065)
+            query = query.Include(x => x.Children.Where(c => c.Published && !c.Deleted && !c.IsNestedContent));
         }
 
         var fullContent =
@@ -2115,26 +2350,63 @@ public class ContentService(
         });
     }
 
-    private static string GenerateUniqueUrl(IZauberDbContext dbContext, string baseSlug)
+    /// <summary>
+    /// <paramref name="baseSlug"/>, or it with the first free <c>-1</c>, <c>-2</c>… suffix. Taken means used by
+    /// another page that is not in the recycle bin (blocks have no URL), or in <paramref name="reserved"/>: URLs
+    /// handed out earlier in the same operation and not saved yet.
+    /// </summary>
+    private static string GenerateUniqueUrl(IZauberDbContext dbContext, string baseSlug, Guid? ownId = null,
+        ISet<string>? reserved = null)
     {
         var url = baseSlug;
-#pragma warning disable CS0618 // Type or member is obsolete
-        if (!dbContext.Contents.Any(c => c.Url == url && !c.Deleted))
-#pragma warning restore CS0618 // Type or member is obsolete
-        {
-            return url;
-        }
-
         var counter = 1;
-#pragma warning disable CS0618 // Type or member is obsolete
-        while (dbContext.Contents.Any(c => c.Url == url && !c.Deleted))
-#pragma warning restore CS0618 // Type or member is obsolete
+        while ((reserved?.Contains(url) ?? false) || IsUrlTaken(dbContext, url, ownId))
         {
             url = $"{baseSlug}-{counter}";
             counter++;
         }
 
+        reserved?.Add(url);
         return url;
+    }
+
+    /// <summary>True when a page other than <paramref name="ownId"/> that is not in the recycle bin has this URL.</summary>
+    private static bool IsUrlTaken(IZauberDbContext dbContext, string url, Guid? ownId)
+    {
+        var id = ownId ?? Guid.Empty;
+#pragma warning disable CS0618 // Type or member is obsolete
+        return dbContext.Contents.AsNoTracking()
+            .Any(c => c.Url == url && !c.Deleted && !c.IsNestedContent && c.Id != id);
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    /// <summary>
+    /// Every item below <paramref name="contentId"/> through <c>ParentId</c> (recycled ones included), nearest first.
+    /// Walks the tree level by level instead of matching the stored path, so it works on every database provider
+    /// and is right even where a stored path is out of date.
+    /// </summary>
+    private static async Task<List<Models.Content>> GetDescendantsAsync(IZauberDbContext dbContext, Guid contentId,
+        bool tracked, CancellationToken cancellationToken)
+    {
+        var descendants = new List<Models.Content>();
+        var seen = new HashSet<Guid> { contentId };
+        var level = new List<Guid> { contentId };
+        while (level.Count > 0)
+        {
+            var parentIds = level;
+            var query = dbContext.Contents.Where(c => c.ParentId != null && parentIds.Contains(c.ParentId.Value));
+            query = tracked ? query.AsTracking() : query.AsNoTracking();
+            var children = await query.ToListAsync(cancellationToken);
+
+            level = [];
+            foreach (var child in children.Where(child => seen.Add(child.Id)))
+            {
+                descendants.Add(child);
+                level.Add(child.Id);
+            }
+        }
+
+        return descendants;
     }
 
     private static void UpdateContentRoles(IZauberDbContext dbContext, Models.Content content,
