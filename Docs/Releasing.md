@@ -25,7 +25,8 @@
   5. Tag `vX.Y.Z`, then commit `Bump csproj versions to X.Y.Z [skip ci]` back to `main-static` (needs
      `contents: write` and push rights for the bot). Pull before your next push.
 - Major/minor release: bump `<Version>` in the csprojs (it is a floor), or pre-create and push the tag on HEAD before
-  pushing — with a pre-existing tag the stamp/commit-back step is skipped.
+  pushing — with a pre-existing tag the version is still stamped for the build, but the tag and
+  commit-back steps are skipped (csprojs in the repo keep the old version until the next push).
 
 ## Local fallback — `release.ps1`
 

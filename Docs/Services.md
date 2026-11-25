@@ -27,8 +27,9 @@ How Core services are built. Paths relative to `ZauberCMS.Core/`. Standards: [St
   `HandlerResult<T>` (`Entity`, `Success`, `Messages`, `RefreshSignIn`). Add messages with
   `handlerResult.AddMessage(text, ResultMessageType.Error|Warning|Info|Success)`.
 - Parameter conventions: `Cached`, `AsNoTracking = true`, collections `= []`, nullable filters, `OrderBy` enum,
-  `PageIndex` (1-based) / `AmountPerPage`. Soft delete: Get parameters use `IncludeDeleted`; Query parameters use
-  `bool? IsDeleted = false` (`true` = recycle bin, `null` = both).
+  `PageIndex` (1-based) / `AmountPerPage`. Soft delete is inconsistent today: Get parameters and the Media/User
+  Query parameters use `IncludeDeleted`; only `QueryContentParameters` uses `bool? IsDeleted = false` (`true` =
+  recycle bin, `null` = both).
   - `WhereClause` (expression) is always applied on top of standard filters.
   - `Query` (`Func<IQueryable<T>>`) **replaces** the whole query — including the soft-delete filter. Callers own it.
 
@@ -72,7 +73,7 @@ Cached results must be no-tracking and must not depend on user/culture unless th
   removal). Content hard delete also removes nested block-list descendants in a transaction.
 - User: always soft delete + security-stamp reset.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
-- Recycle-bin code paths must pass `IncludeDeleted = true` (Get) / `IsDeleted = true` (Query).
+- Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).
 
 ## Audit
 

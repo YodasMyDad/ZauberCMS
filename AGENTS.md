@@ -1,6 +1,8 @@
 # AGENTS.md — ZauberCMS
 
 Single source of truth for AI agents and new contributors. Read this first. `CLAUDE.md` only imports this file.
+**Active work: the 2026 rework on branch `rework-2026` — read [Docs/Roadmap.md](Docs/Roadmap.md) next** (status, owner
+decisions, phase order). Don't push or merge to `main-static` during the rework.
 Deep detail lives in [Docs/](Docs/) — open the one doc that matches the task, not all of them.
 
 ## What this is
@@ -48,7 +50,8 @@ don't reorder without a reason written in the commit.
    consumer sites. No breaking change without `[Obsolete]` first and a major version. **Type full names are persisted
    data**: views (`Content.ViewComponent`), property editors (`PropertyType.Component`) and fallback views in settings
    are stored as `Type.FullName` — renaming a class *or its namespace* breaks existing sites.
-3. **Extensions are discovered, not registered.** `ExtensionManager` reflects over public, non-abstract types in the
+3. **Extensions are discovered, not registered.** `ExtensionManager` reflects over public, non-abstract types (make
+   extension types public — only the bootstrap path also sees non-public ones) in the
    scanned assemblies (Core, Components, host entry assembly, `AddZauberCms(extra)` assemblies, Routing last).
    Wrong interface or unscanned assembly = silently invisible; check those before touching DI. Instances are built with
    `ActivatorUtilities` (ctor DI works), except `IStartupPlugin`/`IExternalAuthenticationProvider` which are created
@@ -90,7 +93,8 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
 - Events: singleton `AppState` with `WeakEventManager` (`OnXChanged/Saved/Deleted` for Content, ContentType, User,
   Media). Handlers fire on the publisher's thread in every circuit → marshal with `InvokeAsync`.
 - Identity tables are `Zauber*`-prefixed; migrations history table `ZauberMigrations`. Keys are sequential GUIDs.
-- Login-like pages use rate-limit policy `"login"` (per-IP 10 / 5 min); Identity lockout 6 attempts / 5 min.
+- Login-like pages use rate-limit policy `"login"` (per-IP 10 / 5 min). Identity lockout is configured (6 / 5 min) but
+  **not active**: sign-in passes `lockoutOnFailure: false` (ZA-059).
 - Admin is gated by `[Authorize(Roles = Admin)]` in `ZauberCMS.Components/Admin/_Imports.razor` (that folder only — admin
   pages elsewhere must add it) and the `GlobalSettings.AllowedAdminIpAddress` check in `SectionLayout.razor`.
 
@@ -121,6 +125,7 @@ Open findings with IDs: [.audit/report.md](.audit/report.md).
 
 | Task | Read |
 | --- | --- |
+| Current rework: status, decisions, what to do next | [Docs/Roadmap.md](Docs/Roadmap.md) |
 | Engineering standards, Blazor/.NET patterns, testing, security bar | [Docs/Standards.md](Docs/Standards.md) |
 | Services, parameter classes, caching, results, audit, events | [Docs/Services.md](Docs/Services.md) |
 | Entities, mappings, migrations, provider gotchas | [Docs/Data.md](Docs/Data.md) |

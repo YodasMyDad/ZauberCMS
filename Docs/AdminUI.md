@@ -36,7 +36,7 @@ instances created by `ActivatorUtilities` — `[Inject]` is **not** populated th
 | Dashboard tab | component `@implements ISectionDashboard` (TabName, SortOrder, SectionAlias) | `Admin/Dashboards/LatestUsersDashboard.razor` |
 
 Tree aliases: `Constants.Sections.Trees`. Trees are built on `Trees/BaseTree.razor` / `GenericTree` / `ContentTree` /
-`MediaTree` / `TreeButton`, not raw `RadzenTree`.
+`MediaTree`, plus `Shared/TreeButton.razor` for single links — not raw `RadzenTree`.
 
 ## Dialogs, confirms, notifications
 
