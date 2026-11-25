@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Routing brings Components and Core with it. All three are needed because the real bootstrap
+             (ZauberSetup.AddZauberCms) loads ZauberCMS.Components and ZauberCMS.Routing by name. -->
+        <ProjectReference Include="..\..\ZauberCMS.Routing\ZauberCMS.Routing.csproj" />
+    </ItemGroup>
+
+</Project>

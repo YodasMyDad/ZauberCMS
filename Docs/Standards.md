@@ -97,13 +97,26 @@ patterns into new code.
 - Don't call `ExtensionManager.GetInstances<T>()` per item in a loop; resolve once.
 - `[GeneratedRegex]` for regexes; avoid allocations in loops; stream large files.
 
-## 9. Testing (target — no test project exists yet)
+## 9. Testing
 
-- Target layout: `tests/ZauberCMS.Core.Tests` (xUnit v3, EF Core SQLite in-memory for service tests),
-  `tests/ZauberCMS.Components.Tests` (bUnit) and a template smoke test (`dotnet new zaubercms` → build).
-- Until that exists: every behavioural change states how it was verified (manual steps in `ZauberCMS.Web`), and
-  regression-prone areas (soft delete, recycle bin, block list save, migrations) get a written check in the PR.
-- When adding the first tests, start with the regression list in [.audit/report.md](../.audit/report.md).
+Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it on every PR and before publishing.
+`global.json` selects the Microsoft.Testing.Platform runner, which xUnit v3 needs on the .NET 10 SDK.
+
+- `tests/ZauberCMS.Core.Tests` — service tests. `Infrastructure/TestSite` builds the **real** DI graph with
+  `AddZauberCms`, a private in-memory SQLite database created by the real migrations, the seeders, and a signed-in
+  user (`TestSite.SignIn`). The web server is not started. Create a `TestSite` per test class (`IAsyncLifetime`),
+  call services through a scope, and assert on what is stored with `QueryDatabaseAsync` (fresh DbContext).
+- `tests/ZauberCMS.Components.Tests` — plain unit tests of component-side models (`BlockListState`) and the
+  snapshot of shipped property-editor type names (`Discovery/Snapshots/PropertyEditors.txt`: adding an editor means
+  adding a line; a line may never be removed or renamed — the names are stored in site databases).
+- Settings shared by both projects live in `tests/Directory.Build.props` (warnings are errors there).
+- **Every bug fix has a regression test.** A test that describes the correct behaviour of a bug that is still open
+  is committed with `Skip = "ZA-NNN (open): …"` after it has been seen to fail; the fix removes the skip. Never
+  write a test that asserts the buggy behaviour.
+- Test the behaviour through the public service or type, not private details. One behaviour per test, named as a
+  sentence. No shared mutable state between tests; no sleeps; no network.
+- Not built yet: bUnit component tests, tests on SQL Server/PostgreSQL/Redis (Phase 6), and a template smoke test
+  (`dotnet new zaubercms` → build). UI behaviour without a test still needs its manual verification written down.
 
 ## 10. Repo hygiene (target)
 

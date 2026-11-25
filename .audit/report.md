@@ -733,7 +733,8 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 ### ZA-131 [Low/High] Engineering baseline still absent (roll-up)
 
 - Where: repo root · Category: F · Since: 2026-11-25
-- Issue / Fix: No test project, `Directory.Build.props`, central package management, `.editorconfig`, `global.json` or `.gitattributes`; CI runs no tests or vulnerability scan. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
+- Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
+- Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
 ### ZA-132 [Medium/High] Admin authorisation has no defence in depth
 
@@ -826,7 +827,12 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   `SeoService`, `TagService`, `LanguageService`; per-editor settings round-trip (only Numeric and ContentPicker read);
   `ContentTypeEditor`, compositions, and the Sort/Move dialogs; double-submit and re-entrancy in admin dialogs;
   focus and keyboard behaviour in side panels; Radzen 10 obsolete API usage (hidden by `NoWarn`).
-- Highest-value first tests (none exist): recycle-bin restore/final delete (ZA-001); soft-delete query defaults
+- Tests now exist for (Roadmap Phase 2, 2026-11-25): soft-delete Get/Query defaults, recycle, restore and permanent
+  delete at service level; user delete; container validation ×3 providers; no pending model changes ×3; empty SQLite
+  database migrates; `BlockListState`; property-editor type names; appsettings key parity. Still untested from the
+  list below: the recycle-bin context menus themselves (ZA-001 is in Components), external sign-in (ZA-002), draft
+  save and blocks (ZA-038), ZA-037, PostgreSQL migration on a real server (ZA-050), template smoke test.
+- Original list of highest-value first tests: recycle-bin restore/final delete (ZA-001); soft-delete query defaults
   (ZA-016); external sign-in with and without a verified-email claim (ZA-002); user delete persists (ZA-045, ZA-088);
   DI container validation for all three providers (ZA-011); `BlockListState` units (ZA-034…ZA-037); draft save leaves
   blocks unpublished (ZA-038); no pending model changes ×3 and an empty database migrates (ZA-050); discovery

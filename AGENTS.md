@@ -30,6 +30,7 @@ Adding interactive code to an SSR view silently does nothing.
 | `ZauberCMS` | Umbrella: `App.razor`, `Routes.razor`, packaged `appsettings.json`, `ZauberCMS.targets` | NuGet |
 | `ZauberCMS.Template` | `dotnet new zaubercms` template (non-compiling csproj) | NuGet (template) |
 | `ZauberCMS.Web` | **Local dev runner + sample site only** (SQLite `app.db`, tracked — don't commit dev changes to it) | no |
+| `tests/ZauberCMS.Core.Tests`, `tests/ZauberCMS.Components.Tests` | xUnit tests (services on in-memory SQLite through the real bootstrap; component models) | no |
 
 Core folders are by feature: `<Feature>/{Interfaces,Services,Parameters,Models,Mapping}` (Content, Media, Membership,
 Languages, Tags, Seo, Audit, Data, Email, …). Copy the nearest existing feature rather than inventing a layout.
@@ -115,8 +116,9 @@ Open findings with IDs: [.audit/report.md](.audit/report.md).
 
 1. `dotnet build ZauberCMS.sln -c Release` succeeds with **no new warnings**.
 2. Schema touched → three migrations via `migrations.ps1`. Public API touched → no unannounced break (rule 2).
-3. Tests added/updated for changed behaviour once a test project exists (none yet — see Standards.md; until then state
-   how it was verified).
+3. `dotnet test --solution ZauberCMS.sln -c Release` passes. Tests added/updated for changed behaviour: a bug fix
+   comes with a regression test (or un-skips the one waiting for it); UI behaviour with no test yet → state how it
+   was verified. → [Docs/Standards.md](Docs/Standards.md) §9
 4. **Docs updated in the same change** when behaviour, an extension point, a convention or a fact in this file changes.
    A doc that disagrees with code is a bug. Never write versions into docs — point at the csproj.
 5. Self-review with the `doublecheck` skill; larger changes or before a release run the `audit` skill.

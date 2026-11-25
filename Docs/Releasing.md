@@ -16,7 +16,7 @@
 
 ## CI — `.github/workflows/ci.yml` (primary path)
 
-- PRs to `main-static`: build only.
+- PRs to `main-static`: build and run the tests.
 - Push to `main-static` (**publishes**):
   1. Version: reuse a `vX.Y.Z` tag already on HEAD; else `max(csproj <Version>, latest tag)` + patch bump.
   2. sed-stamp the version into the six csprojs (four libs, template, template site).

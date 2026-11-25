@@ -1,0 +1,30 @@
+# Full type names of the property editors shipped in ZauberCMS.Components.
+# These names are stored in site databases (PropertyType.Component). Never rename or remove one.
+ZauberCMS.Components.Editors.ApiKeysPickerProperty
+ZauberCMS.Components.Editors.BlockListEditorProperty
+ZauberCMS.Components.Editors.CheckboxListProperty
+ZauberCMS.Components.Editors.CodeEditorProperty
+ZauberCMS.Components.Editors.ColourPickerProperty
+ZauberCMS.Components.Editors.ColourThemePickerProperty
+ZauberCMS.Components.Editors.ContentPickerProperty
+ZauberCMS.Components.Editors.CustomComponentPicker
+ZauberCMS.Components.Editors.DatePickerProperty
+ZauberCMS.Components.Editors.DictionaryManagerProperty
+ZauberCMS.Components.Editors.DropdownListProperty
+ZauberCMS.Components.Editors.EditorNotesProperty
+ZauberCMS.Components.Editors.GoogleMapsProperty
+ZauberCMS.Components.Editors.ListManagerProperty
+ZauberCMS.Components.Editors.MaterialIconsPickerProperty
+ZauberCMS.Components.Editors.MediaPickerProperty
+ZauberCMS.Components.Editors.NavigationProperty
+ZauberCMS.Components.Editors.NumericProperty
+ZauberCMS.Components.Editors.RadioButtonListProperty
+ZauberCMS.Components.Editors.RatingProperty
+ZauberCMS.Components.Editors.RichTextEditorProperty
+ZauberCMS.Components.Editors.SeoProperty
+ZauberCMS.Components.Editors.SwitchProperty
+ZauberCMS.Components.Editors.TagsProperty
+ZauberCMS.Components.Editors.TextAreaProperty
+ZauberCMS.Components.Editors.TextProperty
+ZauberCMS.Components.Editors.TinyMceProperty
+ZauberCMS.Components.Editors.ZauberCMSEditorProperty

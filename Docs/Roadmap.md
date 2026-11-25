@@ -8,11 +8,12 @@
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
 - Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-136`).
-- **Phase 0 done** (ZA-044) and **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10 versions).
-  **132 open findings** (0 Critical, 28 High, 66 Medium, 38 Low). **Next: Phase 2.**
+- **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
+  versions) and **Phase 2 done** (test projects + CI test step).
+  **132 open findings** (0 Critical, 28 High, 66 Medium, 38 Low). **Next: Phase 3.**
 - Findings come from reading code + a real build/package scan. Nothing was run in a browser or against
   PostgreSQL/Redis — items marked "needs repro" must be reproduced before or while fixing.
-- No test project exists.
+- Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
 
 ## Owner decisions (2026-11-25)
 
@@ -35,7 +36,8 @@
    stale. Re-run `/audit changed` at the end of each phase.
 4. Schema changes: three migrations via `migrations.ps1` — and from Phase 6 on, verify on PostgreSQL too.
 5. Public API: obsolete, don't break, until the v5 phase (Phase 11) where breaks are batched deliberately.
-6. Add a regression test with each fix once the test project exists (Phase 2).
+6. Add a regression test with each fix. Where a skipped test is already waiting for the finding
+   (`Skip = "ZA-NNN (open)…"`), remove the skip in the same change.
 
 ## Phases (in order)
 
@@ -60,9 +62,17 @@
 - Still to smoke-test by hand when convenient: media insert in the editor (sample DB has no media), two editors on
   one page, the user editor, large content, sending an email.
 
-### Phase 2 — Test foundation
-- Create `tests/ZauberCMS.Core.Tests` (xUnit, EF Core SQLite) and wire into CI build job (PR validation).
-- First tests = the list under "Coverage" in the audit report. They pin the bugs fixed in Phases 3–5.
+### Phase 2 — Test foundation — DONE 2026-11-25
+- `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` (xUnit v3) are in the solution; CI runs them
+  in the build job, which the publish job depends on. 54 tests: 50 pass, 4 are skipped because they describe open
+  bugs (ZA-011, ZA-036, ZA-045, ZA-118) — each was seen failing first; remove the skip with the fix.
+- Covered: DI container builds and validates for all three providers; an empty SQLite database migrates; no model
+  changes missing from the migrations ×3; same migrations on all providers; content soft delete, recycle, restore
+  and permanent delete defaults; content save (slug, unique URL); user delete; `BlockListState`; property-editor
+  type names; appsettings key parity.
+- Not built yet, add with the phase that needs them: external sign-in (ZA-002, Phase 4), draft save leaves blocks
+  unpublished (ZA-038, needs bUnit or the block list redesign), tests on real PostgreSQL/SQL Server/Redis (Phase 6),
+  template smoke test (Phase 11). The CI test step has not run on GitHub yet (CI only runs for `main-static`).
 
 ### Phase 3 — Broken admin actions (small, high impact)
 ZA-001 (recycle-bin restore / final delete / open), ZA-045 + ZA-088 (delete user), ZA-076 (Culture & Domains false
@@ -121,6 +131,17 @@ path (ZA-090), `ICurrentUserAccessor` (ZA-093), naming conventions (ZA-124). Rem
 Retarget to `net11.0`, move Microsoft/EF/Npgsql packages to 11.x, Serilog.AspNetCore 11, **ZauberCMS.RTE 4** (adds
 embeds — then add the CMS render step that expands embed placeholders on the public site, closing ZA-134), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
+
+Owner instructions for this phase (2026-11-25):
+- **Read the release notes first.** Before this move, and before every future .NET version change, read the
+  official "What's new" / release notes and breaking changes for .NET, ASP.NET Core, Blazor, EF Core and C# of that
+  version, and write a short summary of what affects ZauberCMS into this file before changing any code.
+- **Investigate the async change.** The owner understands a new .NET release makes async work happen in the runtime
+  "by default" (believed to be the runtime-async feature), which may change how async code should be written here.
+  Establish from the release notes what it actually is, whether it is on by default in .NET 11, and what (if
+  anything) should change in this codebase. Do not remove `async`/`await` on an assumption — confirm first.
+- **Hot reload.** Check that hot reload works well for ZauberCMS in the dev site and in a template-built site
+  (Razor, C# and CSS edits, admin and front-end), and fix what stops it.
 
 ## Open questions for the owner
 

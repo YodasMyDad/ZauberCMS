@@ -25,6 +25,9 @@ jobs:
       - name: Build solution
         run: dotnet build ZauberCMS.sln -c Release --no-restore
 
+      - name: Run tests
+        run: dotnet test --solution ZauberCMS.sln -c Release --no-build
+
   publish-nuget:
     name: Publish NuGet
     if: github.event_name == 'push' && github.ref == 'refs/heads/main-static'

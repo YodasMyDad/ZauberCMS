@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\ZauberCMS.Components\ZauberCMS.Components.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Discovery\Snapshots\*.txt" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+</Project>
