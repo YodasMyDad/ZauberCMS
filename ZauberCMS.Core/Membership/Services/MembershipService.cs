@@ -358,22 +358,32 @@ public class MembershipService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var loggedInUser = await userManager.GetUserAsync(authState.User);
-        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<User>();
 
-        var user = await userManager.FindByIdAsync(parameters.Id.ToString());
+#pragma warning disable CS0618 // UserId is the obsolete name of Id; callers that still set it must keep working
+        var userId = parameters.Id != Guid.Empty ? parameters.Id : parameters.UserId;
+#pragma warning restore CS0618
+
+        var user = userId == Guid.Empty ? null : await userManager.FindByIdAsync(userId.ToString());
         if (user != null)
         {
             logger.LogInformation("Audit logging for user {UserName} Delete", user.Name);
 
             user.Deleted = true;
             user.DateUpdated = DateTime.UtcNow;
-            await dbContext.SaveChangesAsync(cancellationToken);
 
-            // Invalidate any active sessions for the soft-deleted user.
-            await userManager.UpdateSecurityStampAsync(user);
+            // One write through the UserManager's own DbContext: stores the flag and replaces the security stamp,
+            // which ends the deleted user's active sessions.
+            var updateResult = await userManager.UpdateSecurityStampAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                foreach (var error in updateResult.Errors)
+                {
+                    handlerResult.Messages.Add(new ResultMessage(error.Description, ResultMessageType.Error));
+                }
+
+                return handlerResult;
+            }
 
             cacheService.ClearCachedItemsWithPrefix(nameof(User));
 
@@ -851,9 +861,38 @@ public class MembershipService(
                 return confirmationResult;
             }
 
-            var result = await userManager.ConfirmEmailAsync(user, parameters.Code!);
+            // The emailed link carries the token Base64Url-encoded (EmailService.SendEmailConfirmationAsync).
+            string token;
+            try
+            {
+                token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(parameters.Code ?? string.Empty));
+            }
+            catch (FormatException)
+            {
+                confirmationResult.AddMessage("The confirmation link is not valid.", ResultMessageType.Error);
+                return confirmationResult;
+            }
+
+            IdentityResult result;
+            if (parameters.IsEmailUpdate)
+            {
+                if (parameters.NewEmailAddress.IsNullOrWhiteSpace())
+                {
+                    confirmationResult.AddMessage("The confirmation link is not valid.", ResultMessageType.Error);
+                    return confirmationResult;
+                }
+
+                // The token was issued for this exact address, so a different address in the link is refused.
+                result = await userManager.ChangeEmailAsync(user, parameters.NewEmailAddress!, token);
+            }
+            else
+            {
+                result = await userManager.ConfirmEmailAsync(user, token);
+            }
+
             if (result.Succeeded)
             {
+                cacheService.ClearCachedItemsWithPrefix(nameof(User));
                 confirmationResult.Success = true;
                 confirmationResult.NavigateToUrl = parameters.ReturnUrl;
             }

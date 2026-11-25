@@ -1,4 +1,5 @@
-﻿@using ZauberCMS.Core.Plugins
+﻿@using Microsoft.Extensions.Logging
+@using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Sections.Interfaces
 
 @foreach (var nav in NavGroups.OrderBy(x => x.Value.SortOrder))
@@ -35,6 +36,8 @@
     
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ILogger<SectionTrees> Logger { get; set; } = null!;
     
     private Dictionary<string, ISectionNavGroup> NavGroups { get; set; } = new();
     private Dictionary<string, ISectionNav> NavItems { get; set; } = new();
@@ -96,8 +99,19 @@
 
         if (ContextMenus.TryGetValue(value, out var contextMenu))
         {
-            await contextMenu.ContextMenuAction(e, navigationManager, contextMenuService, modalService);
-            StateHasChanged();
+            // The menu is opened with a callback that cannot be awaited, so a failure here would otherwise be
+            // lost: no log entry and nothing on screen (ZA-081).
+            try
+            {
+                await contextMenu.ContextMenuAction(e, navigationManager, contextMenuService, modalService);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Context menu action {ContextMenu} failed", contextMenu.GetType().FullName);
+                contextMenuService.Close();
+                NotificationService.ShowErrorNotification("Action failed", "The action could not be completed. The error has been logged.");
+            }
         }
     }
     

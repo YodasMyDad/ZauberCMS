@@ -1,5 +1,6 @@
 ﻿@using ZauberCMS.Components.ContextMenus
 @using ZauberCMS.Core
+@using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared.Interfaces
 @using ZauberCMS.Core.Shared
@@ -44,6 +45,8 @@
     [Inject] public TreeState TreeState { get; set; } = null!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ILogger<BaseTree<T>> Logger { get; set; } = null!;
     
     private RadzenTree Tree { get; set; } = null!;
 
@@ -158,8 +161,19 @@
 
         if (ContextMenus.TryGetValue(value, out var contextMenu))
         {
-            await contextMenu.ContextMenuAction(args, e, navigationManager, contextMenuService, modalService);
-            StateHasChanged();
+            // The menu is opened with a callback that cannot be awaited, so a failure here would otherwise be
+            // lost: no log entry and nothing on screen (ZA-081).
+            try
+            {
+                await contextMenu.ContextMenuAction(args, e, navigationManager, contextMenuService, modalService);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Context menu action {ContextMenu} failed", contextMenu.GetType().FullName);
+                contextMenuService.Close();
+                NotificationService.ShowErrorNotification("Action failed", "The action could not be completed. The error has been logged.");
+            }
         }
     }
 }

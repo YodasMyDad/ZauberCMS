@@ -397,7 +397,7 @@ else
     {
         if (ContentId != null)
         {
-            Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true });
+            Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true, IncludeDeleted = true });
             if (Content == null)
             {
                 // Lookup failed (deleted/missing id); avoid NRE on the ContentTypeId deref below

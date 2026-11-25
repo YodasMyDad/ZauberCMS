@@ -74,6 +74,12 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 - User: always soft delete + security-stamp reset.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).
+  That includes the admin editor that opens an item from the bin (`EditContent`, `ContentEditor`).
+- `IDataService.GetDataGridAsync<T>` (dashboard grids) leaves out deleted Content/Media/User rows unless
+  `DataGridParameters.IncludeDeleted` is set.
+- Content saves are checked against `DateUpdated`: a loaded copy can be saved **once**; a second save of the same
+  object is refused as an edit of an outdated copy. A dialog that saves must be the only one that saves — the code
+  that opened it uses the saved entity from the dialog result and does not save again.
 
 ## Audit
 

@@ -108,26 +108,39 @@
 
     private async Task Save()
     {
-        // Save the content, if the language has been set
-        var saveContentResult = await ContentService.SaveContentAsync(new SaveContentParameters { Content = Content });
-        if (saveContentResult.Success)
+        // This dialog is the only place that saves (the context menu that opens it does not save again).
+        // Only the language changes here, so property values are left alone.
+        var saveContentResult = await ContentService.SaveContentAsync(new SaveContentParameters { Content = Content, ExcludePropertyData = true });
+        if (!saveContentResult.Success)
         {
-            // Save domains
-            foreach (var domain in Domains)
-            {
-                var domainSave = await ContentService.SaveDomainAsync(new SaveDomainParameters { Domain = domain });
-                if (!domainSave.Success)
-                {
-                    NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = domainSave.Messages.MessagesAsString(), Duration = 4000 });
-                }
-            }
-        }
-        else
-        {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = saveContentResult.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.ShowErrorNotification("Error", saveContentResult.Messages.MessagesAsString());
+            return;
         }
 
-        await BlazoredModal.CloseAsync(ModalResult.Ok(Content));
+        var allDomainsSaved = true;
+        foreach (var domain in Domains)
+        {
+            var domainSave = await ContentService.SaveDomainAsync(new SaveDomainParameters { Domain = domain });
+            if (!domainSave.Success)
+            {
+                allDomainsSaved = false;
+                NotificationService.ShowErrorNotification("Error", domainSave.Messages.MessagesAsString());
+            }
+        }
+
+        if (!allDomainsSaved)
+        {
+            // Stay open so the failed domain can be corrected. The content was saved, so take its new
+            // DateUpdated or the next Save would be refused as a concurrent edit.
+            if (saveContentResult.Entity != null)
+            {
+                Content.DateUpdated = saveContentResult.Entity.DateUpdated;
+            }
+
+            return;
+        }
+
+        await BlazoredModal.CloseAsync(ModalResult.Ok(saveContentResult.Entity ?? Content));
     }
 
 }

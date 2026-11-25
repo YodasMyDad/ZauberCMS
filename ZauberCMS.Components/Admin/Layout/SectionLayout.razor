@@ -16,7 +16,9 @@
 <RadzenComponents />
 <CascadingBlazoredModal>
     <RadzenLayout>
-        <CascadingValue Value="@this">
+        @* IsFixed: consumers only call SetSection. Without it every layout re-render (sidebar toggle,
+           SetSection) sets the parameters of every consumer again, which made editors reload (ZA-058). *@
+        <CascadingValue Value="@this" IsFixed="true">
             <RadzenHeader class="rz-background-color-primary-darker flex justify-between items-center">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="5"
                              Style="height: 100%;">

@@ -144,8 +144,21 @@
         ContentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
     }
 
+    private bool IsLoaded { get; set; }
+    private Guid? LoadedRoleId { get; set; }
+
     protected override async Task OnParametersSetAsync()
     {
+        // Parameters are set again whenever a parent re-renders. Reloading then would replace the model being
+        // edited and drop unsaved changes (ZA-058), so load only when the route values actually change.
+        if (IsLoaded && LoadedRoleId == RoleId)
+        {
+            return;
+        }
+
+        IsLoaded = true;
+        LoadedRoleId = RoleId;
+
         if (RoleId != null)
         {
             Role = await MembershipService.GetRoleAsync(new GetRoleParameters { Id = RoleId.Value });

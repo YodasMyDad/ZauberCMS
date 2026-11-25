@@ -7,10 +7,10 @@
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-136`).
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-138`).
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
-  versions) and **Phase 2 done** (test projects + CI test step).
-  **132 open findings** (0 Critical, 28 High, 66 Medium, 38 Low). **Next: Phase 3.**
+  versions), **Phase 2 done** (test projects + CI test step) and **Phase 3 done** (broken admin actions).
+  **126 open findings** (0 Critical, 25 High, 62 Medium, 39 Low). **Next: Phase 4.**
 - Findings come from reading code + a real build/package scan. Nothing was run in a browser or against
   PostgreSQL/Redis — items marked "needs repro" must be reproduced before or while fixing.
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -74,9 +74,17 @@
   unpublished (ZA-038, needs bUnit or the block list redesign), tests on real PostgreSQL/SQL Server/Redis (Phase 6),
   template smoke test (Phase 11). The CI test step has not run on GitHub yet (CI only runs for `main-static`).
 
-### Phase 3 — Broken admin actions (small, high impact)
-ZA-001 (recycle-bin restore / final delete / open), ZA-045 + ZA-088 (delete user), ZA-076 (Culture & Domains false
-error), ZA-103 (email confirmation), ZA-058 (layout re-render wipes edits), ZA-081 (silent context-menu failures).
+### Phase 3 — Broken admin actions — DONE 2026-11-25
+- Fixed: ZA-001 (recycle-bin restore / final delete / open), ZA-045 + ZA-088 (delete user), ZA-076 (Culture &
+  Domains false error), ZA-103 (email confirmation, incl. change of email), ZA-058 (layout re-render reloaded
+  editors), ZA-081 (silent context-menu failures), and ZA-137 (new: dashboard grids listed soft-deleted rows).
+  Details and how each was verified: "Fixed" section of the audit report.
+- Public API additions (no breaks): `DeleteUserParameters.UserId` is `[Obsolete]` (use `Id`; still honoured);
+  new `ConfirmEmailParameters.NewEmailAddress` and `DataGridParameters.IncludeDeleted`. Behaviour change for
+  the release notes: `GetDataGridAsync` no longer returns soft-deleted Content/Media/User rows by default.
+- Found, not fixed: ZA-138 (`SectionLayout` renders `<RadzenComponents>` twice, so every notification and dialog
+  is doubled). Small; fix it whenever the owner wants.
+- Not verified: a real confirmation email round trip; a forced context-menu failure in the browser.
 
 ### Phase 4 — Access control & identity
 ZA-053 (restricted media public when recycled / case bypass), ZA-052 (`refreshsignin`), ZA-002 (external sign-up —

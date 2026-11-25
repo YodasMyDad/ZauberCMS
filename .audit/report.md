@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
@@ -14,20 +15,13 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 28 | 1 | 0 |
-| Medium | 66 | 2 | 0 |
-| Low | 38 | 0 | 0 |
+| High | 25 | 4 | 0 |
+| Medium | 62 | 7 | 0 |
+| Low | 39 | 0 | 0 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), committed on `rework-2026`. Next free ID: ZA-137.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), committed on `rework-2026`. Next free ID: ZA-139.
 
 ## Open findings
-
-### ZA-001 [High/High] Recycle-bin Restore and Final Delete silently do nothing (regression)
-
-- Where: `ZauberCMS.Components/ContextMenus/RecycleBinMenus/RestoreContextMenu.cs:37`, `FinalDeleteContentContextMenu.cs:35` · Category: C · Since: `ca91ca1`
-- Issue / Trigger: `GetContentAsync` now excludes deleted rows by default; these menus don't pass `IncludeDeleted = true`, get `null`, and return silently. Delete content → Recycle bin → Restore.
-- Fix: pass `IncludeDeleted = true`; grep all other recycle-bin callers. · Blocked by: nothing (verify in app).
-- Reconciled 2026-11-25: same regression also stops recycle-bin items being opened (`RecycleBinTree.razor:82` → `EditContent.razor:42` → `ContentEditor.razor:400` shows "Unable to load").
 
 ### ZA-002 [High/High] External (OAuth) sign-up likely always refused (regression)
 
@@ -111,12 +105,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: F9. Every open content editor in every circuit refreshes (unsaved edits lost), on the publisher's thread.
 - Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
 
-### ZA-045 [High/High] Admin "Delete user" never deletes, but reports success
-
-- Where: `ZauberCMS.Components/Admin/UsersSection/UserEditor.razor:232-236`, `ZauberCMS.Core/Membership/Services/MembershipService.cs:366`, `ZauberCMS.Core/Membership/Parameters/DeleteUserParameters.cs:9-10` · Category: C · Since: 2026-11-25
-- Issue / Trigger: The editor sets `UserId`, the service reads `Id` (empty) and returns "User not found"; the editor's check is inverted (`if (!Success)`), so it announces the delete and navigates away. The account stays fully active. Users → open user → Delete → Yes.
-- Fix: read one property (obsolete the other), fix the condition, show errors. · Blocked by: public parameter class (`[Obsolete]`, don't remove).
-
 ### ZA-046 [High/High] Duplicate content URL on language-assigned content breaks every front-end page
 
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs:1492-1496` · Category: C · Since: 2026-11-25
@@ -190,12 +178,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Extensions/ContentExtensions.cs:133-139,218` · Category: B · Since: 2026-11-25
 - Issue / Trigger: `GetBlocks` queries without `Cached` — 3 DB round-trips per block list per request, repeated per nested list — and single-media lookups cost one each. Every page with a block list pays this on every request.
 - Fix: `Cached = true` on the non-preview path; skip the COUNT for id queries. · Blocked by: admin preview shares the method.
-
-### ZA-058 [High/Medium] Admin layout re-render makes editors reload and drop unsaved edits
-
-- Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:19,90-95`; `ZauberCMS.Components/Admin/StructureSection/ContentTypeEditor.razor:360-408`, `ZauberCMS.Components/Admin/UsersSection/UserEditor.razor:149-160`, `ZauberCMS.Components/Admin/UsersSection/RoleEditor.razor:147-156` · Category: E · Since: 2026-11-25
-- Issue / Trigger: `<CascadingValue Value="@this">` is not `IsFixed`, so every layout re-render re-runs `OnParametersSetAsync` on all consumers; these three editors re-fetch their model there with no guard. Edit a content type, toggle the sidebar → edits gone. Read, not reproduced.
-- Fix: `IsFixed="true"`; load in `OnInitializedAsync` or guard on a changed id. · Blocked by: nothing.
 
 ### ZA-008 [Medium/Medium] Block-list parent version snapshot taken before blocks are saved
 
@@ -400,12 +382,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: Restore sets parent, path, sort order, language and published from the snapshot: a moved page jumps back and a draft version unpublishes a live page. Bypasses `SaveChangesAndLog` and audit.
 - Fix: restore name and properties only; clear the draft; audit. · Blocked by: UX change.
 
-### ZA-076 [Medium/High] Culture & Domains always ends in a false "modified by another user" error
-
-- Where: `ZauberCMS.Components/Admin/ContentSection/Dialogs/CultureDomains.razor:112,130`, `ZauberCMS.Components/ContextMenus/ContentMenus/CultureDomainsContentContextMenu.cs:61-65` · Category: C · Since: 2026-11-25
-- Issue / Trigger: The dialog saves, then the menu re-saves the same stale object.
-- Fix: remove the second save. · Blocked by: nothing.
-
 ### ZA-077 [Medium/High] Importing a content type over an existing alias orphans all its values
 
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs:1791-1815,1737,1951` · Category: C · Since: 2026-11-25
@@ -429,12 +405,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:603-611`, `ZauberCMS.Components/Admin/ContentSection/ContentVersions.razor:160-199`, `ZauberCMS.Components/Admin/MediaSection/UpdateMedia.razor:36-44` · Category: A · Since: 2026-11-25
 - Issue / Trigger: Handlers mutate component state and call navigation off the dispatcher; the versions panel reloads on any content save anywhere.
 - Fix: `InvokeAsync`, filter by id. · Blocked by: fix ZA-040 first.
-
-### ZA-081 [Medium/High] Context-menu actions are fire-and-forget
-
-- Where: `ZauberCMS.Components/Trees/BaseTree.razor:130`, `ZauberCMS.Components/Admin/Layout/SectionTrees.razor:74` · Category: A · Since: 2026-11-25
-- Issue / Trigger: `_ = MenuAction(...)`: failures in delete, restore, copy or move are never logged or shown.
-- Fix: await inside try/catch with log + notification. · Blocked by: nothing.
 
 ### ZA-082 [Medium/High] Sync EF calls inside async service methods (~30 sites)
 
@@ -465,12 +435,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Components/ZauberCMS.Components.csproj:73-76` · Category: F · Since: 2026-11-25
 - Issue / Trigger: `package.json` and `package-lock.json` ship as content files; the existing exclusion uses a stale machine-specific path.
 - Fix: `Content Remove="package*.json"` + `Pack="false"`. · Blocked by: nothing.
-
-### ZA-088 [Medium/High] `DeleteUserAsync` saves on the wrong DbContext and always reports success
-
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:366-381` · Category: C/F · Since: 2026-11-25
-- Issue / Trigger: The user is loaded via `UserManager` but saved on the separate `IZauberDbContext`; `Deleted` only persists as a side effect of the stamp update, whose result is ignored. Concrete symptom of ZA-011.
-- Fix: `userManager.UpdateAsync` and check the result. · Blocked by: nothing.
 
 ### ZA-089 [Medium/High] CI can publish one version built from two commits
 
@@ -547,14 +511,8 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 ### ZA-101 [Medium/High] Admin prerenders, so every page initialises twice
 
 - Where: `ZauberCMS/Components/App.razor:29,79-90` · Category: E · Since: 2026-11-25
-- Issue / Trigger: Double loads and flicker; with ZA-058 some pages load four times.
+- Issue / Trigger: Double loads and flicker; before ZA-058 was fixed (Roadmap Phase 3) some pages loaded four times.
 - Fix: `InteractiveServerRenderMode(prerender: false)` for admin. · Blocked by: the IP allow-list must move to middleware first (ZA-060).
-
-### ZA-103 [Medium/High] Email confirmation always fails (code never decoded)
-
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:854`, `ZauberCMS.Core/Email/Services/EmailService.cs:46`, `ZauberCMS.Components/Account/Pages/ConfirmEmail.razor:47-50` · Category: C/D · Since: 2026-11-25
-- Issue / Trigger: The token is Base64Url-encoded when sent but passed raw to `ConfirmEmailAsync`; `IsEmailUpdate` is ignored. `SignInRequireConfirmedAccount = true` is therefore unusable (keeps ZA-023 open).
-- Fix: decode before confirming; handle the change-email branch. · Blocked by: nothing.
 
 ### ZA-025 [Low/High] Duplicate tree alias constant
 
@@ -593,7 +551,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 ### ZA-033 [Low/Medium] Soft-deleted users keep username/email unique-index slots and PII
 
 - Where: `MembershipService.cs:371-376` · Category: C/D · Issue: same email may be unable to re-register; GDPR erase path absent.
-- Reconciled 2026-11-25: currently unreachable from the admin UI because user delete is broken (ZA-045); no restore or purge UI exists.
+- Reconciled 2026-11-25: reachable from the admin UI since user delete was fixed (ZA-045, Roadmap Phase 3); no restore or purge UI exists.
 
 ### ZA-085 [Low/High] SEO checker blocks the circuit: sync HTTP, no timeout or cancellation
 
@@ -760,7 +718,51 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Issue / Trigger: Found in the browser on 3.0.0. (1) `GetLinkAtCursorAsync` throws when the cursor is not in a link (empty interop stream) — the item now checks `api.State.InLink` first. (2) `SelectLinkAtCursorAsync` after `RestoreSelectionAsync` (dialog closed) does not select the link, so the edited link nested inside the old one — the item now selects the link *before* opening the dialog. (3) `LinkInfo.Rel` is missing in 3.0.0, so editing an existing link does not pre-fill Rel. (4) Editing an existing content link on the Manual tab drops `data-contentid` (not new in 3.x).
 - Fix: when RTE 3.1 is published, bump both csprojs, restore `_rel = ExistingLink.Rel`, re-test (1) and (2) and drop the workarounds if fixed; carry `data-contentid` through the Manual tab. · Blocked by: RTE 3.1 release.
 
+### ZA-138 [Low/High] `SectionLayout` renders `<RadzenComponents>` twice
+
+- Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:10,16` · Category: E · Since: 2026-11-25 (seen in the browser during Phase 3; both lines predate the rework)
+- Issue / Trigger: Two Radzen hosts are on the page, so every notification, confirm dialog and context menu is rendered twice (two `.rz-dialog`, two notification items, two context menus in the DOM; both notification copies are visible). Any admin action that shows a notification.
+- Fix: keep one `<RadzenComponents>`; check dialogs, notifications, context menus and tooltips still work in every section. · Blocked by: nothing.
+
 ## Fixed this run / Resolved since last run
+
+- **Roadmap Phase 3 — broken admin actions — fixed 2026-11-25.** Build 0 warnings; 65 tests (62 pass, 3 skipped
+  for other open findings). Each UI fix below was checked in the browser on a scratch copy of the dev database.
+  - **ZA-001 [High] Recycle-bin Restore, Delete and open did nothing.** `RestoreContextMenu`,
+    `FinalDeleteContentContextMenu`, `EditContent` and `ContentEditor.RefreshContent` now pass
+    `IncludeDeleted = true`. Browser: recycle a page → open it from the bin (editor loads) → Restore (back in the
+    content tree) → recycle again → Delete (gone). The service half was already covered by `ContentSoftDeleteTests`.
+  - **ZA-045 [High] + ZA-088 [Medium] Delete user.** `DeleteUserParameters.Id` is the property; `UserId` is
+    `[Obsolete]` and still honoured when `Id` is empty. The service writes once through `UserManager`
+    (`UpdateSecurityStampAsync` stores the flag and the new stamp) and returns the Identity errors on failure; the
+    unused second DbContext is gone. `UserEditor` had the success check inverted; it now shows "User deleted" or the
+    errors. Tests: `DeleteUserTests` (the waiting skip is removed). Browser: delete a user → notification, back to
+    the list, `Deleted = 1` in the database.
+  - **ZA-137 [Medium, new] Dashboard grids listed soft-deleted rows.** Found while checking ZA-045: the deleted user
+    stayed in "Latest Users". `DataService.GetDataGridAsync` had no soft-delete filter; it now leaves out deleted
+    Content, Media and User rows unless the new `DataGridParameters.IncludeDeleted` is set. Tests:
+    `DataGridSoftDeleteTests` (seen failing first). Browser: the deleted user is no longer listed.
+  - **ZA-076 [Medium] Culture & Domains false "modified by another user".** Only the dialog saves now (with
+    `ExcludePropertyData`, it only changes the language); the context menu no longer saves the same object a second
+    time. The dialog edits a fresh copy instead of the tree's object, stays open when a save fails, and the menu
+    reports an item that cannot be loaded. Tests: `ContentSaveTests` pins the rule behind the bug (an outdated copy
+    is refused) and the language-only save. Browser: set a language and save, twice in a row → "Culture Updated"
+    both times, no error, the saved language is preselected the second time.
+  - **ZA-103 [Medium] Email confirmation always failed.** `ConfirmEmailAsync` decodes the Base64Url code; a malformed
+    code gives a message instead of an exception. The change-of-email branch works: the emailed link now carries the
+    new address (`&email=`), `ConfirmEmailParameters.NewEmailAddress` is new, and the page passes it on. The page
+    shows a success message (it showed nothing before). `returnUrl` in the link is now URL-encoded. Tests:
+    `ConfirmEmailTests` (confirm, change email, code refused for another address, malformed codes); the first two
+    were seen failing without the fix. Not verified: a real email round trip (no email provider in the test site).
+    ZA-023 (`SignInRequireConfirmedAccount`) stays open — it is a separate decision.
+  - **ZA-058 [High] Layout re-render reloaded editors.** `SectionLayout`'s cascading value is `IsFixed`, and
+    `ContentTypeEditor`, `UserEditor` and `RoleEditor` reload only when their route values change. Browser: edit a
+    content type name, toggle the sidebar twice → the edit is still there; clicking another content type loads it,
+    going back reloads the original. The data loss itself was never reproduced before the fix (finding was "read,
+    not reproduced"), so this is verified as "does not happen now", not as a before/after.
+  - **ZA-081 [Medium] Context-menu failures were silent.** `BaseTree` and `SectionTrees` catch a failing menu
+    action, log it with the menu's type name and show a generic "Action failed" notification. Not verified by a
+    forced failure in the browser; the normal path was exercised by every menu action above.
 
 - **ZA-133 [Medium] Blazored.Modal is deprecated and archived — fixed 2026-11-25 (owner decision: vendor it).**
   Radzen side dialogs cannot nest (one slot; `OpenSide*` closes the open one — Radzen 13.3 `DialogService.cs`), and
@@ -827,6 +829,10 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   `SeoService`, `TagService`, `LanguageService`; per-editor settings round-trip (only Numeric and ContentPicker read);
   `ContentTypeEditor`, compositions, and the Sort/Move dialogs; double-submit and re-entrancy in admin dialogs;
   focus and keyboard behaviour in side panels; Radzen 10 obsolete API usage (hidden by `NoWarn`).
+- Runtime checks done in a browser so far (scratch SQLite database): the Phase 1 package/editor smoke test and the
+  Phase 3 admin actions listed under "Fixed". Still nothing on PostgreSQL, SQL Server, Redis or behind a proxy.
+- Tests added in Roadmap Phase 3: email confirmation and change of email; delete by the obsolete `UserId`;
+  data-grid soft delete; outdated-copy save refused; language-only save.
 - Tests now exist for (Roadmap Phase 2, 2026-11-25): soft-delete Get/Query defaults, recycle, restore and permanent
   delete at service level; user delete; container validation ×3 providers; no pending model changes ×3; empty SQLite
   database migrates; `BlockListState`; property-editor type names; appsettings key parity. Still untested from the

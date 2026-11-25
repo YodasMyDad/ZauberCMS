@@ -45,34 +45,30 @@ public class CultureDomainsContentContextMenu(
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var content = (Content)args.Value!;
-        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = content.Id, IncludeChildren = true });
-        var currentUser = await membershipService.GetCurrentUser();
+        // The dialog edits and saves this fresh copy, not the tree's object: the tree's copy can be stale (a stale
+        // DateUpdated is refused as a concurrent edit) and must not be changed if the dialog is cancelled.
+        var dbContent = await contentService.GetContentAsync(new GetContentParameters
+            { Id = content.Id, IncludeUnpublished = true, Cached = false });
         contextMenuService.Close();
+        if (dbContent is null)
+        {
+            notificationService.ShowErrorNotification("Unable to load this content item");
+            return;
+        }
+
+        var currentUser = await membershipService.GetCurrentUser();
         var languageDialog = modalService.OpenSidePanel<CultureDomains>("Domains & Culture",
             new Dictionary<string, object>
             {
-                { "Content", content }
+                { "Content", dbContent }
             });
         var languageDialogResult = await languageDialog.Result;
         if (languageDialogResult is { Confirmed: true })
         {
-            // Do we need to do anything here?     
-            var savedContent = languageDialogResult.Data as Content;
-            if (savedContent?.LanguageId != null)
-            {
-                // Save the content
-                var saveResult = await contentService.SaveContentAsync(new SaveContentParameters
-                    { Content = savedContent, ExcludePropertyData = true });
-                if (!saveResult.Success)
-                {
-                    notificationService.ShowErrorNotification("Error", saveResult.Messages.MessagesAsString());
-                }
-                else
-                {
-                    notificationService.ShowSuccessNotification("Culture Updated");
-                    await appState.NotifyContentChanged(dbContent, currentUser?.Name ?? "Unknown");
-                }
-            }
+            // The dialog has already saved the content and its domains; saving again here would be refused as a
+            // concurrent edit (ZA-076).
+            notificationService.ShowSuccessNotification("Culture Updated");
+            await appState.NotifyContentChanged(languageDialogResult.Data as Content ?? dbContent, currentUser?.Name ?? "Unknown");
         }
     }
 

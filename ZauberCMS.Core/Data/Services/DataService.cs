@@ -130,7 +130,19 @@ public class DataService(
 
         // Now you have the DbSet<T> and can query it
         var query = dbSet.AsQueryable();
-        
+
+        // No global query filters exist, so the three soft-deleted types are filtered here (AGENTS.md rule 4).
+        if (!parameters.IncludeDeleted)
+        {
+            query = query switch
+            {
+                IQueryable<Content.Models.Content> contents => (IQueryable<T>)contents.Where(x => !x.Deleted),
+                IQueryable<Media.Models.Media> media => (IQueryable<T>)media.Where(x => !x.Deleted),
+                IQueryable<Membership.Models.User> users => (IQueryable<T>)users.Where(x => !x.Deleted),
+                _ => query
+            };
+        }
+
         if (!string.IsNullOrEmpty(parameters.Filter))
         {
             // Filter via the Where method

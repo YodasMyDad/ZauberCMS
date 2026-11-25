@@ -9,7 +9,4 @@ public static class KnownBug
 {
     public const string Za011 =
         "ZA-011 (open): Identity and the services get two different DbContext instances per scope.";
-
-    public const string Za045 =
-        "ZA-045 (open): DeleteUserAsync ignores DeleteUserParameters.UserId, which is what the admin user editor sets.";
 }

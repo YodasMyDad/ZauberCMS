@@ -39,7 +39,7 @@
         if (ContentId != null)
         {
             // Have to get the content to see which view to show
-            Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId, IncludeUnpublished = true });
+            Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId, IncludeUnpublished = true, IncludeDeleted = true });
             ShowListView = Content?.ContentType?.EnableListView ?? false;
         }
         else

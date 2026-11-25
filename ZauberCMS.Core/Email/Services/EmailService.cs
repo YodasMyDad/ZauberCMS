@@ -45,7 +45,12 @@ public class EmailService(
 
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-        var callbackUrl = $"{httpContextAccessor.ToAbsoluteUrl(Urls.Account.ConfirmEmail)}?userId={userId}&code={code}&change={isChange}&returnUrl={parameters.ReturnUrl}";
+        var callbackUrl = $"{httpContextAccessor.ToAbsoluteUrl(Urls.Account.ConfirmEmail)}?userId={userId}&code={code}&change={isChange}&returnUrl={Uri.EscapeDataString(parameters.ReturnUrl ?? string.Empty)}";
+        if (isChange == "true")
+        {
+            // The confirm page needs the new address to apply the change; the code is only valid for it.
+            callbackUrl += $"&email={Uri.EscapeDataString(email)}";
+        }
         
         var paragraphs = new List<string> { $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>." };
 

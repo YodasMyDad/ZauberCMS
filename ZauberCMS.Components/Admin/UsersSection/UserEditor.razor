@@ -146,8 +146,21 @@
         Layout?.SetSection(Constants.Sections.UsersSection);
     }
 
+    private bool IsLoaded { get; set; }
+    private Guid? LoadedUserId { get; set; }
+
     protected override async Task OnParametersSetAsync()
     {
+        // Parameters are set again whenever a parent re-renders. Reloading then would replace the model being
+        // edited and drop unsaved changes (ZA-058), so load only when the route values actually change.
+        if (IsLoaded && LoadedUserId == UserId)
+        {
+            return;
+        }
+
+        IsLoaded = true;
+        LoadedUserId = UserId;
+
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         AllProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (UserId != null)
@@ -229,11 +242,16 @@
         var delete = await DialogService.Confirm("Do you really want to delete this user?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
         if (delete == true)
         {
-            var roleUpdateResult = await MembershipService.DeleteUserAsync(new DeleteUserParameters { UserId = User!.Id });
-            if (!roleUpdateResult.Success)
+            var deleteResult = await MembershipService.DeleteUserAsync(new DeleteUserParameters { Id = User!.Id });
+            if (deleteResult.Success)
             {
+                NotificationService.ShowSuccessNotification("User deleted");
                 await AppState.NotifyUserDeleted(User, AuthState.User.Identity?.Name!);
                 NavigationManager.NavigateTo(Urls.AdminUsersBaseUrl);
+            }
+            else
+            {
+                NotificationService.ShowErrorNotification(deleteResult.Messages.MessagesAsString());
             }
         }
     }

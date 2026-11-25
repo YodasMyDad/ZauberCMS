@@ -22,6 +22,7 @@
     [SupplyParameterFromQuery] private string? UserId { get; set; }
     [SupplyParameterFromQuery] private string? Code { get; set; }
     [SupplyParameterFromQuery] private bool? Change { get; set; }
+    [SupplyParameterFromQuery] private string? Email { get; set; }
 
     private Type LayoutType { get; set; } = null!;
     private List<ResultMessage> ResultMessages { get; set; } = [];
@@ -47,11 +48,18 @@
             {
                 Code = Code,
                 UserId = UserId,
-                IsEmailUpdate = Change ?? false
+                IsEmailUpdate = Change ?? false,
+                NewEmailAddress = Email
             };
 
             var result = await MembershipService.ConfirmEmailAsync(confirmEmailCommand);
             ResultMessages = result.Messages;
+            if (result.Success && ResultMessages.Count == 0)
+            {
+                ResultMessages.Add(new ResultMessage(
+                    confirmEmailCommand.IsEmailUpdate ? "Your email address has been changed." : "Thank you for confirming your email.",
+                    ResultMessageType.Success));
+            }
         }
     }
 

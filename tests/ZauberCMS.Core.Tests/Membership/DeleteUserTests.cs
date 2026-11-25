@@ -39,13 +39,15 @@ public class DeleteUserTests : IAsyncLifetime
         Assert.NotEqual(stampBefore, await StampAsync(user.Id));
     }
 
-    // The admin user editor sets UserId, not Id.
-    [Fact(Skip = KnownBug.Za045)]
-    public async Task Delete_by_UserId_flags_the_user_deleted_in_the_database()
+    // UserId is the obsolete name of Id; sites compiled against it must still delete the user (ZA-045).
+    [Fact]
+    public async Task Delete_by_the_obsolete_UserId_still_flags_the_user_deleted_in_the_database()
     {
         var user = await _site.CreateUserAsync("leaver");
 
+#pragma warning disable CS0618
         var result = await DeleteAsync(new DeleteUserParameters { UserId = user.Id });
+#pragma warning restore CS0618
 
         Assert.True(result.Success, TestSite.Describe(result.Messages));
         Assert.True(await IsDeletedAsync(user.Id));

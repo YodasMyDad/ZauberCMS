@@ -34,7 +34,7 @@ public class RestoreContextMenu(IContentService contentService, IMembershipServi
             return;
         }
 
-        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true });
+        var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = branch.Id, IncludeChildren = true, IncludeUnpublished = true, IncludeDeleted = true });
         if (dbContent is null)
         {
             return;

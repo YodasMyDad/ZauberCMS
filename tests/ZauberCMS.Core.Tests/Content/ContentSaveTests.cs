@@ -1,7 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
+using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Tests.Infrastructure;
+
+using ContentItem = ZauberCMS.Core.Content.Models.Content;
 
 namespace ZauberCMS.Core.Tests.Content;
 
@@ -39,5 +45,63 @@ public class ContentSaveTests : IAsyncLifetime
             .Where(x => x.Id == first.Id || x.Id == second.Id).ToListAsync());
 
         Assert.Equal(2, stored.Select(x => x.Url()).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
+
+    // A loaded copy may be saved once. This is why a dialog and the menu that opened it must not both save the
+    // same object (ZA-076): the second save is, correctly, refused as an edit of an outdated copy.
+    [Fact]
+    public async Task Saving_an_outdated_copy_is_refused_and_does_not_overwrite_the_newer_save()
+    {
+        var page = await _site.CreateContentAsync(_pageType, "Home");
+        var copy = await LoadAsync(page.Id);
+
+        copy.Name = "First save";
+        var first = await SaveAsync(copy);
+        Assert.True(first.Success, TestSite.Describe(first.Messages));
+
+        copy.Name = "Second save of the same copy";
+        var second = await SaveAsync(copy);
+
+        Assert.False(second.Success);
+        Assert.Equal("First save", await _site.QueryDatabaseAsync(db =>
+            db.Contents.AsNoTracking().Where(x => x.Id == page.Id).Select(x => x.Name).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task Saving_without_property_data_changes_the_content_and_keeps_its_language()
+    {
+        var page = await _site.CreateContentAsync(_pageType, "Home");
+        var languageId = await _site.QueryDatabaseAsync(async db =>
+        {
+            var language = new ZauberCMS.Core.Languages.Models.Language { LanguageIsoCode = "de-DE", LanguageCultureName = "German (Germany)" };
+            db.Languages.Add(language);
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            return language.Id;
+        });
+        var copy = await LoadAsync(page.Id);
+
+        copy.LanguageId = languageId;
+        var saved = await SaveAsync(copy, excludePropertyData: true);
+
+        Assert.True(saved.Success, TestSite.Describe(saved.Messages));
+        Assert.Equal(languageId, await _site.QueryDatabaseAsync(db =>
+            db.Contents.AsNoTracking().Where(x => x.Id == page.Id).Select(x => x.LanguageId).SingleAsync()));
+    }
+
+    private async Task<ContentItem> LoadAsync(Guid id)
+    {
+        using var scope = _site.CreateScope();
+        var content = await scope.ServiceProvider.GetRequiredService<IContentService>()
+            .GetContentAsync(new GetContentParameters { Id = id, IncludeUnpublished = true, Cached = false },
+                TestContext.Current.CancellationToken);
+        return content ?? throw new InvalidOperationException("Content not found.");
+    }
+
+    private async Task<HandlerResult<ContentItem>> SaveAsync(ContentItem content, bool excludePropertyData = false)
+    {
+        using var scope = _site.CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<IContentService>()
+            .SaveContentAsync(new SaveContentParameters { Content = content, ExcludePropertyData = excludePropertyData },
+                TestContext.Current.CancellationToken);
     }
 }

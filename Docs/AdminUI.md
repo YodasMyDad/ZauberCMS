@@ -21,6 +21,11 @@ instances created by `ActivatorUtilities` — `[Inject]` is **not** populated th
 - Route under `/admin` — that is what gives InteractiveServer and loads Radzen/admin assets (`ZauberCMS/Components/App.razor`).
 - `Admin/Layout/SectionLayout.razor`: top nav (`SectionLinks`), sidebar trees (`SectionTrees`), the cascading modal,
   and the `AllowedAdminIpAddress` check (non-whitelisted → forced logout via `Urls.ApiLogout`).
+  The layout is cascaded with `IsFixed="true"`: use it to call `SetSection`, don't read changing state from it.
+- An editor page loads its model when its route values change, not on every `OnParametersSetAsync` — parameters
+  are set again whenever a parent re-renders, and reloading there drops unsaved edits (see `ContentTypeEditor`).
+- Context-menu actions (`ITreeContextMenu`, `ISectionNavGroupAction`) are run by `BaseTree` / `SectionTrees`, which
+  log an exception and show a generic error. Still report expected failures yourself (`HandlerResult.Messages`).
 - Routes are found because `Routes.razor` passes `ExtensionManager.GetFilteredAssemblies(null)` as additional assemblies.
 - Admin URLs live in `ZauberCMS.Core/Urls.cs` (e.g. `Urls.AdminUpdateContent`). Plugins use their own constants.
 
