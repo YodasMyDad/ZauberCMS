@@ -37,7 +37,7 @@
 | D14 | **PostgreSQL Initial migration:** reproduce on a real PostgreSQL first; if it fails, correct the PostgreSQL `Initial` migration (one-off exception to rule 1, explained in the commit and `Docs/Data.md`), then add the missing ContentVersion indexes for all three providers through `migrations.ps1`, clearing duplicate "current published" flags before the unique index. (2026-11-25) | ZA-050 |
 | D15 | **Tests run against real PostgreSQL and Redis containers locally and in CI** on every push; skipped with a clear message when Docker isn't available. SQL Server stays on SQLite-level coverage for now. (2026-11-25) | Phase 6 |
 | D16 | **ZA-143 goes at the end of Phase 6**, after the PostgreSQL/Redis work, both halves together. (2026-11-25) | ZA-143 |
-| D17 | **ZA-044 hotfix: prepare and verify a branch from `main-static` with only the three `[Authorize]` attributes; the owner merges and pushes** (that publishes 4.1.4). Not done yet. (2026-11-25) | ZA-044 |
+| D17 | **No hotfix for ZA-044.** The fix ships with the v5 release when the owner is ready; 4.1.3 stays as published until then. (2026-11-25) | ZA-044 |
 | D18 | **A v5 major is acceptable, together with .NET 11** (Phases 11 + 12 in one release). The rework ships as 4.x minors with `[Obsolete]` shims; v5 removes them. (2026-11-25) | Phase 11, 12 |
 
 ## Working rules for the rework
@@ -60,7 +60,7 @@
 - **ZA-044** fixed: `[Authorize(Roles = Admin)]` added to the three `/admin/seo/*` pages. Verified by running the
   app (anonymous requests redirect to login); details in the audit report.
   ⚠ The hole is still in the **published 4.1.3 packages**: the fix is only on `rework-2026`. Owner decision D17:
-  a hotfix branch from `main-static` is prepared and verified; the owner merges and pushes it (4.1.4).
+  no hotfix; the fix ships with the v5 release.
 
 ### Phase 1 — Dependencies to latest on .NET 10 (D4) — DONE 2026-11-25
 - Everything is on its latest version that runs on .NET 10 (Radzen 13, MailKit 5, HtmlSanitizer 11, ZauberCMS.RTE
