@@ -39,6 +39,11 @@
 | D16 | **ZA-143 goes at the end of Phase 6**, after the PostgreSQL/Redis work, both halves together. (2026-11-25) | ZA-143 |
 | D17 | **No hotfix for ZA-044.** The fix ships with the v5 release when the owner is ready; 4.1.3 stays as published until then. (2026-11-25) | ZA-044 |
 | D18 | **A v5 major is acceptable, together with .NET 11** (Phases 11 + 12 in one release). The rework ships as 4.x minors with `[Obsolete]` shims; v5 removes them. (2026-11-25) | Phase 11, 12 |
+| D19 | **Installer works like Umbraco's (large scope):** database (SQLite / SQL Server / PostgreSQL, connection test) → admin account → site name and default language → optional starter content → summary. It writes `Zauber:DatabaseProvider` / `ConnectionString` into `appsettings.json` and restarts. No unattended install. (2026-11-25) | ZA-004, Phase 7 |
+| D20 | **The installer is open to the first visitor while the site is not installed** (as in Umbraco and WordPress), no setup code. Install the site before making it public; say so in the docs. (2026-11-25) | ZA-004 |
+| D21 | **"Installed" is a flag stored in the database**, set by the installer. On upgrade, a site with any user is marked installed automatically. The installer never reopens, even with no admin left; recovery is a documented config key that promotes one existing user on the next start. (2026-11-25) | ZA-004 |
+| D22 | **`AdminEmailAddresses` promotes only after the email is confirmed.** (2026-11-25) | ZA-023 |
+| D23 | **Public registration switch:** existing sites default ON (no change on upgrade), the installer asks (default OFF for new sites); off = page 404 and link hidden. When on: built-in honeypot + minimum fill time, its own rate limit, and a discovered extension interface for CAPTCHA providers (Turnstile, reCAPTCHA, hCaptcha) from the site's project. (2026-11-25) | ZA-024 |
 
 ## Working rules for the rework
 
@@ -209,13 +214,16 @@
 - Then ZA-143 (D16): resolve content only for the content catch-all route, and give a front-end circuit the
   language of its page, together.
 
-### Phase 7 — Installer (D2)
-- Replace `RoleExtensions` first-user promotion with a setup flow. Requirements: runs only while the site is
-  uninitialised; cannot be re-triggered by soft-deleting users; creates the first admin explicitly; static SSR page
-  with rate limiting + antiforgery; clear "already installed" state.
-- "Slick" scope to **agree with the owner before building**: e.g. DB provider + connection test, admin account,
-  site name/language, optional starter content, final summary. Also settle `AdminEmailAddresses` auto-promotion
-  (ZA-023) and a switch for public registration (ZA-024).
+### Phase 7 — Installer (D2, D19–D23)
+- Replace `RoleExtensions` first-user promotion with an Umbraco-style installer (D19): database step with
+  connection test that writes `appsettings.json` and restarts, admin account, site name and language, optional
+  starter content, summary. Static SSR pages with rate limiting + antiforgery.
+- Open to the first visitor while not installed (D20); "installed" is a database flag that never reopens, set
+  automatically on upgrade for sites with users; documented recovery key (D21).
+- ZA-023: `AdminEmailAddresses` promotes only after email confirmation (D22).
+- ZA-024: public registration switch, honeypot + fill-time check, own rate limit, CAPTCHA extension interface (D23).
+- Open while building: what the installer does when `appsettings.json` is not writable (show the values to set);
+  the starter content to ship.
 
 ### Phase 8 — Media recycle bin (D3)
 - Media section recycle bin: list, restore, permanent delete (removes file via `IStorageProvider`), empty bin.
@@ -261,5 +269,4 @@ Owner instructions for this phase (2026-11-25):
 
 ## Open questions for the owner
 
-- Installer scope (Phase 7), including the registration switch / CAPTCHA (ZA-024).
-- Answered: SVG uploads (D6), sanitiser policy (D7), Phase 6 design (D13–D16), ZA-044 hotfix (D17), v5 (D18).
+- Answered: SVG uploads (D6), sanitiser policy (D7), Phase 6 design (D13–D16), ZA-044 hotfix (D17), v5 (D18), installer (D19–D23).
