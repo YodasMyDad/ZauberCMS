@@ -24,11 +24,11 @@ You can also find us on [Twitter / X](https://twitter.com/zaubercms) and [Facebo
 
 ## Getting Started
 
-Fastest way to get started building your own website is using the .NET Template, firstly install the ZauberCMS template (You must use rc release to get v4)
+Fastest way to get started building your own website is using the .NET Template, firstly install the ZauberCMS template
 
 ```ps
 # Ensure we have the latest ZauberCMS templates
-dotnet new install ZauberCMS.Template@4.1.0 --force
+dotnet new install ZauberCMS.Template --force
 
 # Create your CMS
 dotnet new zaubercms -n "YourSiteName"
@@ -55,7 +55,7 @@ This repo comes with a starter site example so you can see some of the most comm
     <ItemGroup>
       <!--Remove this line 👇🏼 and uncomment the below line-->
       <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
-      <!--<PackageReference Include="ZauberCMS" Version="4.1.0" />-->
+      <!--<PackageReference Include="ZauberCMS" Version="x.y.z" />  (latest version from nuget.org)-->
     </ItemGroup>
 
 

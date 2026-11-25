@@ -1,338 +1,101 @@
----
-description: Deep dive on the BlockListEditor — nested editors, live previews, shadow DOM, persistence, versioning
-alwaysApply: true
----
-
-# BlockListEditor
-
-Read this **before** changing anything in `ZauberCMS.Components/Editors/BlockList*`, `ContentEditor.razor`'s block-list code paths, `ProcessBlockListEditorChangesAsync`, or block versioning. The BlockListEditor is the single most architecturally complex piece of ZauberCMS — nesting, live preview, shadow DOM, and snapshot versioning all interact, and most failure modes are silent.
-
-## Summary
-
-A BlockListEditor property holds an ordered list of **block content items**. Each block is a full `Content` row in `ZauberContents` flagged `IsNestedContent = true`. Blocks can themselves contain BlockListEditor properties — nesting is unbounded ("inception" style). The admin UI renders each block's preview into its own **open shadow DOM root** so consumer-supplied front-end CSS can style previews without leaking into the admin.
-
-The four things that make this complex and easy to break:
-
-1. **Nesting** — each level is a separate `BlockListEditorProperty` instance with its own immutable state; changes propagate up via callback chain.
-2. **Live preview** — edits made in nested modal dialogs need to render in the parent's preview *before* save. Done via an in-memory `Content.PendingBlockListChanges` dictionary.
-3. **Shadow DOM** — applies at the **outermost** block boundary only; nested previews share the parent block's shadow root.
-4. **Versioning** — the version snapshot recursively captures the full nested tree, so rolling back an old version restores blocks that may have been deleted since.
-
-## Data model & storage shape
-
-Each BlockListEditor property value is a JSON array of GUIDs:
-
-```json
-["1f2a...", "5b8c...", "9e3d..."]
-```
-
-Stored in `ContentPropertyValue.Value` (string, no length limit), see [ContentPropertyValue.cs:16](../ZauberCMS.Core/Content/Models/ContentPropertyValue.cs#L16).
-
-**Nesting is by ID reference, never by JSON nesting.** Every block is its own `Content` row. A nested block list inside Block A simply means Block A's `Content` row has its own BlockListEditor property whose `ContentPropertyValue.Value` holds another array of GUIDs:
-
-```
-Parent Content (top-level page)
-  └─ property "blocks"        →  [B, C]
-       Content B (IsNestedContent=true)
-         └─ property "subBlocks"  →  [D, E]
-              Content D (IsNestedContent=true)
-                └─ property "leafBlocks" → [F]
-                     Content F (IsNestedContent=true)
-```
-
-`IsNestedContent` (see [Content.cs:88-91](../ZauberCMS.Core/Content/Models/Content.cs#L88-L91)) excludes blocks from regular content queries. Block lookup uses `QueryContentParameters { NestedFilter = NestedContentFilter.Only }`.
-
-## Render tree (admin)
-
-```
-BlockListEditorProperty       ← outer Razor component, one per property on a content type
- ├─ BlockListDropZone           ← insert / reorder target (between every pair of items)
- └─ BlockListItem (per block)
-     └─ RenderBlock              ← initialises shadow DOM, dispatches to preview
-         └─ <DynamicComponent>   ← resolves matching IContentBlockPreview by class name
-             └─ user-supplied IContentBlockPreview (or ContentBlockPreviewFallback)
-```
-
-Files:
-- [BlockListEditorProperty.razor](../ZauberCMS.Components/Editors/BlockListEditorProperty.razor) — main component, change-tracking state, modal launch.
-- [BlockListItem.razor](../ZauberCMS.Components/Editors/Components/BlockListItem.razor) — single block UI, drag handle, edit/delete actions.
-- [BlockListDropZone.razor](../ZauberCMS.Components/Editors/Components/BlockListDropZone.razor) — drop target between items.
-- [RenderBlock.razor](../ZauberCMS.Components/ContentComponents/RenderBlock.razor) — preview dispatcher + shadow DOM init.
-- [ContentBlockPreviewFallback.razor](../ZauberCMS.Components/ContentComponents/ContentBlockPreviewFallback.razor) — default when no preview class matches.
-
-State is kept in an immutable record:
-
-- [BlockListState.cs](../ZauberCMS.Components/Editors/Models/BlockListState.cs) — `Items`, `AddedItems`, `UpdatedItems`, `DeletedItems`, plus the critical `MergeNestedChanges` method (lines 193-246).
-- [BlockListChanges.cs](../ZauberCMS.Core/Content/Models/BlockListChanges.cs) — DTO carrying Added/Updated/Deleted lists between levels.
-
-## Nested editors ("inception")
-
-Each level is a fresh `BlockListEditorProperty` instance. There is **no shared mutable state** between levels — only an event-callback chain.
-
-Editing a block opens `ContentEditor` in a modal with three flags ([BlockListEditorProperty.razor:236-312](../ZauberCMS.Components/Editors/BlockListEditorProperty.razor#L236-L312)):
-
-```csharp
-{ nameof(ContentEditor.IsBlockList),       true                                    },
-{ nameof(ContentEditor.NestedParentId),    Content!.Id                             },
-{ nameof(ContentEditor.OnBlockListChanges), new Action<BlockListChanges>(HandleNestedChanges) }
-```
-
-If that block's content type itself contains a BlockListEditor property, the modal renders another `BlockListEditorProperty` — and so on, recursively.
-
-### Change propagation
-
-When a deeply-nested edit happens, changes bubble upward one level at a time:
-
-```
-Level 3 BlockListEditorProperty
-  edit/add/delete → State.AddItem/UpdateItem/DeleteItem
-  → NotifyChanges()
-       → ChangesPending.Invoke(changes)   ← passed to its parent ContentEditor as OnBlockListChanges
-
-Level 2 ContentEditor receives changes
-  → HandleBlockListChanges() stores in PendingBlockListChanges
-  → on its block list editor (Level 2 BlockListEditorProperty), HandleNestedChanges fires
-       → State.MergeNestedChanges(nestedChanges)
-       → NotifyChanges()
-       → ChangesPending.Invoke(nestedChanges)   ← bubbles to its own parent
-
-Level 1 ContentEditor receives changes
-  → … same pattern, all the way to the root
-```
-
-The merge logic in `BlockListState.MergeNestedChanges` ([BlockListState.cs:193-246](../ZauberCMS.Components/Editors/Models/BlockListState.cs#L193-L246)) handles dedup and avoids marking newly-added items as Updated.
-
-### `async void HandleNestedChanges` — keep the try/catch
-
-`OnBlockListChanges` is typed `Action<BlockListChanges>` (synchronous) on `ContentEditor`, but `HandleNestedChanges` needs to do async work. `async void` is the only option, and **without** the try/catch any exception bubbles to the synchronization context and **tears down the Blazor circuit** — the entire admin tab dies. Don't strip the catch:
-
-```csharp
-// async void is required because OnBlockListChanges on ContentEditor is typed Action<BlockListChanges>.
-// Without try/catch an exception here would propagate to the SynchronizationContext and tear down the Blazor circuit.
-private async void HandleNestedChanges(BlockListChanges nestedChanges)
-{
-    try
-    {
-        State = State.MergeNestedChanges(nestedChanges);
-        await NotifyChanges();
-        ChangesPending?.Invoke(nestedChanges);
-        StateHasChanged();
-    }
-    catch (Exception ex)
-    {
-        Logger.LogError(ex, "Failed to handle nested block list changes");
-    }
-}
-```
-
-See [BlockListEditorProperty.razor:314-329](../ZauberCMS.Components/Editors/BlockListEditorProperty.razor#L314-L329).
-
-## Live preview & `PendingBlockListChanges`
-
-The challenge: when a user edits a nested block in a modal, they expect the parent's preview to update immediately — but the change isn't in the database yet. Solution: an in-memory dictionary on `Content` itself.
-
-```csharp
-// Content.cs:196-198
-[NotMapped]
-[JsonIgnore]
-public Dictionary<string, Dictionary<Guid, Content>> PendingBlockListChanges { get; set; } = new();
-//          ^ keyed by property alias       ^ keyed by block content ID
-```
-
-`BlockListEditorProperty.NotifyChanges()` populates this dictionary on every edit ([BlockListEditorProperty.razor:331-350](../ZauberCMS.Components/Editors/BlockListEditorProperty.razor#L331-L350)).
-
-Preview components read it via the `includePendingChanges: true` overload of `GetBlocks`:
-
-```csharp
-// In an IContentBlockPreview component (admin only)
-FaqItems = await Content.GetBlocks("FAQs", ContentService, includePendingChanges: true);
-
-// In an IContentView (front-end), use the no-flag overload
-FaqItems = await Content.GetBlocks("FAQs", ContentService);
-```
-
-See [ContentExtensions.cs:116-172](../ZauberCMS.Core/Extensions/ContentExtensions.cs#L116-L172).
-
-**Rule**: admin-side previews always pass `includePendingChanges: true`. Front-end views must not — pending changes never persist outside a single editing session and don't exist on the front-end's `Content` instances.
-
-## Shadow DOM & previews
-
-[RenderBlock.razor](../ZauberCMS.Components/ContentComponents/RenderBlock.razor) attaches an open shadow root on first render and injects the per-editor stylesheets configured in `BlockListEditorSettingsModel.Stylesheets`:
-
-```csharp
-protected override async Task OnAfterRenderAsync(bool firstRender)
-{
-    if (firstRender && Stylesheets.Count > 0)
-    {
-        await JsRuntime.InvokeVoidAsync("initializeShadowDOMWithMultipleStylesheets", _componentDiv, Stylesheets);
-    }
-}
-```
-
-JS side: [shadow-dom.js](../ZauberCMS.Components/wwwroot/js/shadow-dom.js) calls `attachShadow({ mode: 'open' })`, then loads each stylesheet as a `<link>` inside the shadow root (with a module-level cache to avoid duplicate fetches across blocks).
-
-### Important: only the outermost block has its own shadow root
-
-A block's preview component may itself render nested block previews (e.g. an `FAQ` preview that lists `FAQItem` previews inside it). Those nested previews **share the outer block's shadow root** — they do not get their own shadow boundaries.
-
-This is by design: from the user's perspective, the entire preview of one block is a single isolated visual unit. Don't try to wrap nested previews in their own `RenderBlock` shadow root; you'll fragment styling and lose CSS inheritance the consumer's stylesheet relies on.
-
-## Save flow
-
-### Client side
-
-`BlockListEditorProperty.NotifyChanges` serializes the property value as `JsonSerializer.Serialize(List<Guid>)` — only the ordered IDs. Block content itself stays in the in-memory state until save.
-
-### Server side
-
-`ContentService.SaveContentAsync` saves the parent first, then `ProcessBlockListEditorChangesAsync` recursively walks the tree:
-
-```csharp
-// ContentService.cs:1951-2020 (paraphrased)
-private async Task ProcessBlockListEditorChangesAsync(Content content, ...)
-{
-    // 1. Find all block-list properties on this content type
-    var blockListPropertyIds = contentType.ContentProperties
-        .Where(p => p.ComponentAlias == "ZauberCMS.BlockListEditor")
-        .Select(p => p.Id).ToHashSet();
-
-    // 2. Parse each one to get the IDs it references
-    foreach (var property in blockListProperties)
-    {
-        var contentIds = JsonSerializer.Deserialize<List<Guid>>(property.Value);
-        // …gather all referenced block content rows
-    }
-
-    // 3. Recursively save each block (which itself may have block-list properties)
-    foreach (var nestedContent in nestedContents)
-    {
-        await SaveContentAsync(nestedSaveParams, cancellationToken);
-    }
-}
-```
-
-See [ContentService.cs:65-257](../ZauberCMS.Core/Content/Services/ContentService.cs#L65-L257) and [ContentService.cs:1951-2020](../ZauberCMS.Core/Content/Services/ContentService.cs#L1951-L2020). Parent + all descendants are saved within one logical operation.
-
-`ContentEditor.ProcessBlockListChanges` ([ContentEditor.razor:608-678](../ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor#L608-L678)) deduplicates the Added/Updated/Deleted lists and resolves overlap (e.g. an item that was added then deleted is dropped entirely) before passing to the service.
-
-## Versioning
-
-Versioning is **snapshot-based**, in a separate `ZauberContentVersions` table. A `ContentVersion` carries:
-
-- `Snapshot` — the parent content metadata at the time
-- `PropertySnapshots` — the parent's property values
-- `BlockListSnapshots` — **a recursive capture of every nested block** (`List<BlockListContentSnapshot>`)
-
-See [ContentVersion.cs](../ZauberCMS.Core/Content/Models/ContentVersion.cs).
-
-Snapshot creation walks the block tree recursively with cycle protection:
-
-```csharp
-// ContentVersioningService.cs:621-689
-private static async Task CreateBlockListSnapshotsRecursiveAsync(
-    IZauberDbContext dbContext, Content content,
-    List<BlockListContentSnapshot> snapshots,
-    HashSet<Guid> processedContentIds)   // ← cycle guard
-{
-    // Parse each block-list property, load referenced contents,
-    // snapshot each, then recurse into each block's own block-list properties.
-}
-```
-
-Publishing an older version calls `RestoreBlockListContentAsync` ([ContentVersioningService.cs:691-800](../ZauberCMS.Core/Content/Services/ContentVersioningService.cs#L691-L800)) which:
-
-- For blocks that still exist: overwrites their `Name` and `PropertyData` from the snapshot.
-- For blocks that were deleted since: **recreates them from the snapshot**, including the original `Id`.
-
-This means a soft-deleted block can be brought back by publishing an older version — there is no "permanently lost block" state until the row itself is hard-deleted (which only happens in orphan cleanup; see Known gaps).
-
-Cache invalidation on version operations: `cacheService.ClearCachedItemsWithPrefix($"Content_{content.Id}")` — by parent content ID prefix only.
-
-## Front-end read path
-
-Consumers use `Content.GetBlocks(alias, ContentService)` to read a block list at runtime:
-
-```csharp
-// ContentExtensions.cs:116-172 (paraphrased)
-public static async Task<IEnumerable<Content>> GetBlocks(
-    this IHasPropertyValues content, string alias, IContentService contentService)
-{
-    var ids = content.GetValue<List<Guid>>(alias);
-    if (ids is null || ids.Count == 0) return [];
-
-    var blockList = await contentService.QueryContentAsync(new QueryContentParameters
-    {
-        Ids = ids,
-        AmountPerPage = 150,
-        NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only
-    });
-
-    // Preserve original ordering from the JSON array
-    var dict = blockList.Items.ToDictionary(x => x.Id, x => x);
-    return ids.Where(dict.ContainsKey).Select(id => dict[id]);
-}
-```
-
-Notes:
-- Returns `IEnumerable<Content>` — not typed models. Callers extract values with `block.GetValue<T>("propAlias")`.
-- One level only. To read a grandchild block list, the caller calls `GetBlocks` again on each child.
-- Order is preserved by dict lookup against the JSON array.
-
-## Adding a new block content type
-
-1. Create an Element Type in admin (`OnlyElementTypes = true` on the content type). Element types don't appear in the content tree — they exist only to be used as blocks.
-2. Optionally, restrict which element types are allowed in a particular block list by setting `BlockListEditorSettingsModel.AllowedElementTypeIds` on that property's settings.
-3. Optionally, supply a custom preview: implement `IContentBlockPreview` (the alias-to-preview match is by **class name**, not file name — see how `IContentView` works in [.claude/CLAUDE.md](../.claude/CLAUDE.md)). With no custom preview, `ContentBlockPreviewFallback` shows the block's name and content type.
-4. For consumer-side rendering on the front-end, the consumer's site project provides a normal Blazor component that calls `Content.GetBlocks(alias, ContentService)` and renders each block however it wants.
-
-See [FAQ.razor](../ZauberCMS.Web/ContentBlockPreviews/FAQ.razor) for a worked example of a preview that itself reads a nested block list.
-
-## Known gaps / gotchas
-
-These are real, currently un-addressed limitations. Don't try to "fix" them in passing — they each need a design decision.
-
-### 1. Settings key typo: `Styleheets`
-
-[BlockListEditorSettingsModel.cs:5](../ZauberCMS.Components/Editors/Models/BlockListEditorSettingsModel.cs#L5) and [BlockListEditorSettings.razor:10](../ZauberCMS.Components/Editors/Settings/BlockListEditorSettings.razor#L10) both use `Styleheets` (missing a "t"). Renaming is breaking for any settings JSON already stored in `ContentTypeProperty.Settings`. If a future change renames it, read both keys for back-compat.
-
-### 2. Reflection-based wiring of `ChangesPending`
-
-[DynamicContentProperty.razor:27](../ZauberCMS.Components/Admin/DynamicContentProperty.razor#L27):
-
-```csharp
-if (ChangesPending != null && ComponentType?.Name == "BlockListEditorProperty")
-{
-    parameters["ChangesPending"] = ChangesPending;
-}
-```
-
-The dispatcher hard-codes the class name as a string. Renaming `BlockListEditorProperty` (or replacing it with a different implementation) silently breaks nested change propagation — there is no compile error, no runtime error, edits just stop bubbling up. A marker interface (e.g. `ISupportsBlockListChanges`) would be a sounder fix; not worth doing as a drive-by but worth knowing about.
-
-### 3. Orphan cleanup runs only on ContentType deletion
-
-`ContentService.DeleteContentTypeAsync` ([ContentService.cs:659-737](../ZauberCMS.Core/Content/Services/ContentService.cs#L659-L737)) detects nested content rows no longer referenced by any property value and force-deletes them. **This is the only place orphan cleanup runs.** Other actions that can leave orphans:
-
-- Removing a BlockListEditor property from a ContentType (the property goes away; the nested rows it referenced stay).
-- Renaming a property alias.
-- Manually editing the JSON value in the DB.
-
-These leak nested `Content` rows with `IsNestedContent = true` that no living property references.
-
-### 4. Cache invalidation is parent-prefix only
-
-Block content cache keys are scoped to their parent (`Content_{parentId}_*`). The standard edit flow (open the parent → edit nested block → save) invalidates correctly because the parent gets re-saved. But any out-of-band write to a nested block (e.g. via a custom service call) won't invalidate the parent's cached query.
-
-### 5. `GetBlocks` does one level only
-
-Easy to forget when writing a preview that consumes nested blocks. There is no recursive "get me everything" API — recursion is the caller's responsibility.
-
-## When making changes — minimum verification
-
-If you touch any code in `ZauberCMS.Components/Editors/BlockList*`, `RenderBlock.razor`, `ProcessBlockListEditorChangesAsync`, `Content.PendingBlockListChanges`, or `ContentExtensions.GetBlocks`, run through this checklist by hand in `ZauberCMS.Web` against `app.db`:
-
-1. **Two-level edit cycle**: open a content item that uses a block list, add a block whose type contains its own block list, add a sub-block, save. Reload and confirm everything persisted at both levels.
-2. **Three-level live preview**: with the parent open, edit a sub-block in a modal, save the modal but **don't save the parent yet**. Confirm the parent's preview updates before save (this exercises `PendingBlockListChanges`).
-3. **Reorder**: drag-reorder blocks; confirm the JSON `List<Guid>` order in the DB matches what you see.
-4. **Delete + version restore**: delete a block, save the parent, then republish a previous version from the version history. The deleted block should reappear (this exercises `RestoreBlockListContentAsync`).
-5. **Shadow DOM isolation**: configure a custom stylesheet in the editor settings, give it a rule that conflicts with admin styling (e.g. set body colour). Confirm the rule applies inside the block preview but doesn't bleed into admin chrome.
-6. **Front-end render**: in the consumer view that renders this content, confirm `Content.GetBlocks("alias", ContentService)` (without `includePendingChanges`) returns the saved blocks in order.
+# Block List Editor
+
+**Highest-risk area of the codebase.** Read this before touching `ZauberCMS.Components/Editors/BlockList*`,
+`ContentEditor.razor` block handling (`HandleBlockListChanges`, `ProcessBlockListChanges`, `IsBlockList` mode),
+`DynamicContentProperty` (`ISupportsBlockListChanges`), `RenderBlock.razor`/`shadow-dom.js`,
+`ContentExtensions.GetBlocks`, or block snapshots in `ContentVersioningService`.
+
+Status: the current design (change sets bubbled up through callbacks, per-block saves, Blazor nodes moved into a shadow
+root) has known data-loss bugs (§5). The agreed direction is §6. **Don't add features to the callback chain or copy it
+into new editors** — fix within it only, or implement the §6 redesign.
+
+## 1. Data model
+
+- Property value = JSON `List<Guid>` of block IDs in `ContentPropertyValue.Value`. **Order lives only in that list.**
+- Each block is a full `Content` row: `IsNestedContent = true`, `RelatedContentId = <owning content id>`,
+  `Published = true`, element type (`ContentType.IsElementType`). Blocks can contain block lists.
+- Limits: `MaxBlockListNestingDepth = 20`, `MaxSnapshotsPerVersion = 5000`.
+- `AllowedElementTypeIds` validation on save is warning-only and runs before new blocks exist (so new blocks are
+  effectively unchecked server-side).
+- Core code that walks block trees (delete cascade, version snapshots, copy, validation) **assumes "a JSON array of
+  GUIDs"**. Any editor storing nested IDs in another shape gets no cascade delete, no snapshots and shared (not
+  cloned) blocks on copy.
+
+## 2. How an edit flows today (R → B1 → B2 → B3, all existing)
+
+| Step | What happens | State |
+| --- | --- | --- |
+| Open root | `ContentEditor` (E0) loads R → `WorkingCopy` W0; `BlockListEditorProperty` (BLEP0) loads B1 into `BlockListState.Items` | W0 deep copy, but its `PendingBlockListChanges` inner dictionaries are copied shallowly |
+| Open B1…B3 | `BlockListState`'s `OpenContentEditor` opens a stacked side panel `ContentEditor` (E1…E3) with `Content = Bn` (same object), `NestedParentId`, `OnBlockListChanges = parentBLEP.HandleNestedChanges` | each En builds its own Wn |
+| Edit in B3 | `UpdateProperty` changes W3 only | |
+| Close B3 (Save) | `IsBlockList` → `CloseAsync(Ok(W3))`; **nothing persisted** | |
+| Back in BLEP2 | new B3′ copied from W3 → `UpdateItem` → `NotifyChanges`: writes W2's JSON, sets `W2.PendingBlockListChanges[alias]`, calls `ChangesPending` → E2 → BLEP1 `HandleNestedChanges` (`async void`) → `MergeNestedChanges` → `NotifyChanges` … up to E0 | B3′ is one shared object across all levels' lists |
+| Close B2, B1 | same bubbling | root ends with `Updated = [B3′, B2′, B1′]` (children first) |
+| Save root | `SaveContentAsync(W0)` (own transaction; **R's version snapshot taken here, from the DB = old blocks**) → `ProcessBlockListChanges`: `SaveContentAsync` per added/updated block, `DeleteContentAsync(MoveToRecycleBin = false)` per deleted block (hard delete + nested cascade), each in its own transaction with its own audit row, version and cache clear → pending set to null → `NotifyContentSaved` → refresh | only now is anything written |
+
+Previews: `IContentBlockPreview` components call `GetBlocks(alias, contentService, includePendingChanges: true)`, which
+returns only pending items when any exist (no DB merge). `RenderBlock` attaches a shadow root (only when the editor has
+`Stylesheets`) and `shadow-dom.js` **moves Blazor-rendered nodes into it**. Front-end uses `GetBlocks` without the flag
+(one level, ordered, unpublished excluded).
+
+## 3. Invariants (any change must preserve or move towards these)
+
+1. A block row exists **iff** some saved property JSON on its parent references it — no orphans, no dangling IDs.
+2. Nothing reaches the DB until the root save, and the root save is **all-or-nothing**.
+3. Cancel at any level discards every change made inside that modal, including descendants.
+4. Block changes follow the parent's publish mode: a draft ("Save only") must not change the live site.
+5. Removing a block removes its whole subtree, pending and persisted.
+6. A version snapshot reflects the state **after** the save, parent and blocks together.
+7. After a successful save, editor state equals the DB (fresh `DateUpdated`, empty change lists).
+8. Multiple block-list properties (same content, compositions, any depth) are independent and all persisted.
+9. Block IDs are unique in the tree; lists never share a block; copy clones the tree with new IDs.
+10. Blazor-owned nodes never live inside a shadow root; front-end CSS never reaches the admin.
+11. Content notifications name the affected root content (never `null`) and are handled on the owning circuit's thread.
+
+## 4. Rules for changes today
+
+- Keep the `try/catch` in `async void HandleNestedChanges` — an escaped exception kills the circuit.
+- `NotifyChanges` must keep writing **every** item to `PendingBlockListChanges` (previews drop IDs missing from it).
+- Run the manual check (§7) after any change in this area; there are no automated tests.
+- New editors that host nested content: don't implement `ISupportsBlockListChanges` and the bubbling pattern — raise
+  it first; build on the §6 session design instead.
+
+## 5. Known failure modes (tracked in [.audit/report.md](../.audit/report.md) ZA-008…ZA-010, ZA-034…ZA-043)
+
+| Id | Failure | Trigger |
+| --- | --- | --- |
+| F1 | **Cancel leaks** — changes merge into ancestors immediately; `Cancel` only clears its own copy | open B1, delete nested B2, Cancel, save R → B2 hard-deleted while B1 JSON still references it |
+| F2 | Root **replaces** pending changes instead of merging (`HandleBlockListChanges`), and each level bubbles twice | two block-list properties on one type → one property's new blocks never inserted |
+| F3 | `MergeNestedChanges` drops an update when the item is already in Added | add B1 with new B2, reopen, edit B2, save → B2 saved with old values |
+| F4 | Deleting a block keeps its pending descendants | new descendants inserted as orphans |
+| F5 | Partial save — blocks processed even if parent save failed; no overall transaction; pending cleared on failure | concurrency conflict on parent |
+| F6 | "Save only" on published content saves blocks live | block edits go live before publish |
+| F7 | Stale state after save (old `DateUpdated`, change lists kept) — *needs repro* | save, edit a block again, save → false concurrency error / failed delete |
+| F8 | Version N has parent N with blocks N−1; ~2N+2 cache clears per save | restore/publish version N reverts its block edits |
+| F9 | Hard delete raises `NotifyContentDeleted(null)` on the singleton → every open editor in every session refreshes, losing unsaved edits | any block delete while others edit |
+| F10 | Bubbling is re-entrant and grows 2^(depth−1) | deep nesting → slow, racy |
+| F12 | `OnParametersSetAsync` rebuilds `WorkingCopy` each time — *needs repro* | stacked modal re-supplies params → in-modal edits reset |
+| F13 | Shadow DOM: Blazor nodes moved into shadow root (new nodes may not render; clicks in previews don't fire); no isolation without stylesheets; stylesheets also leak as global `<link>` | preview switching from placeholder to list |
+
+## 6. Simplification direction (planned — not implemented)
+
+1. **`IContentEditSession`** (cascading, one per root editor): `Guid → draft + parent + alias + state`, with
+   `BeginScope/Commit/Rollback` per modal, `GetChildren`, `OpenChildEditorAsync`, `Remove` (subtree), `SetOrder`.
+   Replaces callback bubbling and `PendingBlockListChanges` (kept as `[Obsolete]` shims). Fixes F1–F4, F7, F10, F12.
+2. **`IContentService.SaveContentTreeAsync`**: one context + one transaction; prune unreachable drafts; parents first;
+   validate; respect publish mode (blocks get drafts via existing `UnpublishedContentId`); **one** version after
+   children; one cache clear; one notification. Additive API, no schema change. Fixes F5, F6, F8, F9, F11.
+3. **Static previews**: render preview HTML with `HtmlRenderer` and set `shadowRoot.innerHTML` via JS (Blazor never
+   owns those nodes); remove global `<link>`s. Fixes F13.
+4. **`INestedContentReferenceProvider`** (discovered): `GetReferencedIds(value)` / `RemapIds(value, map)` per editor
+   alias, used by delete cascade, snapshots, copy and validation — lets future editors (grid/layout) store any shape.
+5. If 1–3 slip, stopgaps: merge per alias at root, remove the duplicate `ChangesPending` call, fix Added-merge,
+   drop descendants on delete, skip blocks when parent save fails, remount after save, notify with root content.
+
+Not recommended now: storing blocks inline in the parent JSON (changes persisted format; needs data migration).
+
+## 7. Manual check after changes
+
+3-level nested add → reorder → edit a nested block → delete a block with children → Cancel inside a nested modal →
+save → reload: order, values, deletions and the cancel all hold; no orphan rows; front-end matches; restoring the
+previous version restores blocks; previews update live before save; two block-list properties on one type both persist.

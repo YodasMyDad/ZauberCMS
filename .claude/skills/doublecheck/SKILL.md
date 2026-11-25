@@ -24,4 +24,12 @@ Thoroughly review and verify all code changes made in this session.
 
 4. **Check for linter errors and warnings**: Review code style, unused imports, unused variables, naming conventions, and any compiler warnings. Fix any found issues whether pre-existing or newly introduced.
 
-5. **Build the solution**: Run the build once all changes are finalized. Fix any errors or warnings that appear.
+5. **Check against the project rules**: walk the Definition of Done in `AGENTS.md` and the relevant sections of
+   `Docs/Standards.md` (public API / persisted type names, soft-delete filters, `SaveChangesAndLog`, three migrations,
+   render modes, cancellation tokens). For every member, parameter or default you changed, grep all callers.
+
+6. **Docs**: if behaviour, an extension point or a documented fact changed, update `AGENTS.md` / `Docs/*.md` in the
+   same change.
+
+7. **Build the solution**: `dotnet build ZauberCMS.sln -c Release` once all changes are finalized. Fix any errors or
+   new warnings.

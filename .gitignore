@@ -36,3 +36,9 @@ riderModule.iml
 /ZauberCMS.Web/wwwroot/sitemap.xml
 /ZauberCMS.Web/wwwroot/_mediacache/*
 /.vscode/*
+
+# Agent tooling: personal/machine-local settings and empty editor rule folders
+/.claude/settings.local.json
+/.cursor/
+*.csproj.user
+/ZauberCMS.Core/app.db*
