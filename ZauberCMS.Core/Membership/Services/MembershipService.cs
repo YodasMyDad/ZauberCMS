@@ -126,8 +126,8 @@ public class MembershipService(
                     }
                 }
 
-                // Update other properties
-                parameters.User.MapTo(user);
+                // The profile fields only: the sign-in and security fields change through UserManager (ZA-117)
+                parameters.User.MapProfileTo(user);
                 user.DateUpdated = DateTime.UtcNow;
                 
                 var updateResult = await userManager.UpdateAsync(user);
@@ -271,8 +271,8 @@ public class MembershipService(
                     }
                 }
 
-                // Update other properties
-                parameters.User.MapTo(user);
+                // The profile fields only: the sign-in and security fields change through UserManager (ZA-117)
+                parameters.User.MapProfileTo(user);
                 user.DateUpdated = DateTime.UtcNow;
                 
                 var updateResult = await userManager.UpdateAsync(user);

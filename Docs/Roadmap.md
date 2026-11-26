@@ -15,9 +15,10 @@
   2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
   **Phase 10 done** (performance & async, 2026-11-26).
   **Phase 10a done** (callers outside a circuit, D27, 2026-11-26).
-  **65 open findings** (0 Critical, 0 High, 18 Medium, 47 Low), each one assigned below to Phase 10b–10e, Phase 11
-  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10b** (save hooks and content data; ask the owner the
-  two questions listed there first).
+  **Phase 10b done** (save hooks and content data, D28–D29, 2026-11-26).
+  **56 open findings** (0 Critical, 0 High, 14 Medium, 42 Low), each one assigned below to Phase 10c–10e, Phase 11
+  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10c** (property editors and stored values; ZA-029 has a
+  design question, which the owner has delegated: decide it Umbraco's way and record it).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -53,6 +54,8 @@
 | D25 | **Content versions are pruned: the newest N per page are kept** (plus its published version and latest draft), by the daily job; a new setting `Zauber:ContentVersionsToKeep`, on by default (50) — existing sites start pruning on upgrade (release notes). (owner, 2026-11-26, Phase 10) | ZA-069 |
 | D26 | **Admin trees page their children with a "Show more" row**: the first 100 of a node, then a row at the bottom that loads the next 100. (owner, 2026-11-26, Phase 10) | ZA-068 |
 | D27 | **Services do no authorisation; access is checked where a call comes in** (the page, component or endpoint), as in Umbraco and WordPress. Replaces D10: the opt-in permission hook was weighed in Phase 10a and dropped (no shipped path needs it, it does nothing against plugin code, and it would put a rule on every write method). What Phase 10a does instead: `ICurrentUserAccessor`, so services can be called outside a circuit (ZA-093). Back-office roles other than Admin go to the Backlog; that is where service checks would be looked at again. (owner, 2026-11-26) | ZA-140, ZA-093 |
+| D28 | **Save hooks see every row a change writes, and one veto stops the whole change.** `SaveChangesAndLog` runs `IBeforeEntitySave<T>` for every row the save writes, of every entity type (the change tracker), each with its own state, then saves once, then runs `IAfterEntitySave<T>` for the same rows. A move, recycle, restore, permanent delete or emptied bin is one change: any `false` from a before-save hook and nothing of it is written (the transaction rolls back). Umbraco does the same: cancelling `Moving`, `Deleting` or `EmptyingRecycleBin` cancels the whole operation, and the "-ed" notifications list every item moved or deleted. Our hooks are per row rather than per operation, so they also see the items below (Umbraco's "-ing" notifications list only the item named). Not hooked: bulk maintenance that runs straight against the database (audit and version retention, orphan clean-up). (owner delegated to Umbraco parity, 2026-11-26, Phase 10b) | ZA-012, ZA-157, ZA-159, ZA-018 |
+| D29 | **A "Save only" draft runs the hooks of the rows it writes, like any save: the draft rows, not the live page.** It writes `UnpublishedContent` (the page's and its blocks' drafts), so `IBeforeEntitySave<UnpublishedContent>` runs; the live `Content` row only gets its link to the draft (Modified), and a new block's row, which only the draft reaches, is Added. A plugin that mirrors the live site (a search index) watches `Content`; one that wants drafts too watches `UnpublishedContent`. Umbraco separates the same way: Save raises `Saving`/`Saved` and Publish raises `Publishing`/`Published` as well; its external index holds published content only. Tag links follow the live values, as Umbraco's tags do: a draft leaves them, a publish, version restore or copy writes them, a permanent delete removes them. (owner delegated to Umbraco parity, 2026-11-26, Phase 10b) | ZA-159, ZA-099 |
 
 ## Working rules for the rework
 
@@ -598,19 +601,67 @@ was built is the part with real bugs behind it:
     should use `ICurrentUserAccessor` or `StarterKitContext.Administrator`.
   - A caller signed in by another authentication scheme whose id is not a ZauberCMS user id counts as nobody.
 
-### Phase 10b — Save hooks and content data
-ZA-012, ZA-018, ZA-077, ZA-099 (Medium); ZA-117, ZA-144, ZA-145, ZA-146, ZA-157, ZA-159 (Low).
-- **Save hooks see every row a change touches.** ZA-012: sort, move, restore, the recycle path and content-type
-  saves still give hooks `Unchanged` entities, and a content-type veto can't roll back. ZA-157: media (and content)
-  binned, restored or deleted below the named item, and an emptied bin, run no hooks. ZA-159: blocks removed by
-  Clear changes or rewritten by a version restore run none. ZA-018: tag saves skip the hooks.
-- ZA-099: the tags editor saves tag links on every render (prerender too), before the page is saved, even when the
-  edit is cancelled. Tags move into the page save, with ZA-018.
-- ZA-077: importing a content type over an existing alias makes new property and tab ids, so the values are lost.
-- ZA-146 (two publishes at once lose a version row), ZA-117 (user save overwrites identity fields from a stale
-  copy), ZA-144 (draft keeps the old URL after restore), ZA-145 (move and copy load the subtree twice).
-- **Ask the owner first:** what a veto on one item of a group change does (stop the whole group?), and which hooks
-  a draft save fires (ZA-157, ZA-159).
+### Phase 10b — Save hooks and content data — DONE (2026-11-26)
+ZA-012, ZA-018, ZA-077, ZA-099 (Medium); ZA-117, ZA-144, ZA-145, ZA-146, ZA-157, ZA-159 (Low), all fixed; ZA-162
+(content type export always threw) found and fixed on the way. The owner delegated the two design questions ("an
+enterprise CMS; decide as Umbraco does"): D28 and D29.
+- **Save hooks follow the change tracker (D28).** `SaveChangesAndLog` (both overloads, one implementation) runs the
+  hooks for every row the save writes, of every entity type, each with its own state; the named entity's hooks run
+  first and even when it has no changes, as before. One veto and nothing is written. So sort, move, restore,
+  recycle, permanent delete, content type saves (ZA-012), media binned, restored or deleted below an item and an
+  emptied media bin (ZA-157), blocks deleted by Clear changes or rewritten by a version restore (ZA-159) all reach
+  the hooks. The early audit saves that made hooks see `Unchanged` are gone: audit rows are staged and written by
+  the change's own save, so a vetoed or failed change leaves none. Copy and content import (raw `SaveChangesAsync`)
+  and version delete now go through `SaveChangesAndLog` too. The cache prefix of every type written is cleared.
+- **Drafts (D29).** A "Save only" runs the `UnpublishedContent` hooks for the drafts it writes; `Content` hooks see
+  only the rows it really changes (the page's link to its draft, a new block's row).
+- **Tags (ZA-018, ZA-099).** `SaveTagItemAsync` writes the links and their audit rows in one save through the hooks.
+  The tags editor no longer writes to the database (it did on every render, prerender included, before the page was
+  saved): the page save writes an item's tag links from the values it publishes, through a new discovered
+  `ITagReferenceProvider` (built-in `TagsPropertyTagReferenceProvider` for `ZauberCMS.Tags`). A draft leaves the
+  links; a publish, version restore, copy or import writes them; a permanent delete (and a block removed by a save)
+  removes them. A value naming a deleted tag is skipped. An item whose type has no tag property keeps links set by
+  code.
+- **Import (ZA-077).** Importing a content type over an existing alias keeps the ids of the tabs and properties it
+  already has, matched by alias, so stored values stay theirs; the system tab keeps its fixed id; imported content
+  records no user instead of `Guid.Empty`. Export (ZA-162) `Include`d the JSON tabs column and threw on every call.
+- **Versions (ZA-146).** A version write locks the page's row (an update that changes nothing) and numbers the
+  version inside its transaction, so two at once run one after the other; the old current-published / latest-draft
+  flag is switched off as tracked rows (hooks see it) and saved before the new one. Version restore runs in one
+  transaction from the flag switch to the save.
+- ZA-117: `SaveUserAsync` / `CreateUpdateUserAsync` copy only the profile fields (new `UserMappingExtensions.MapProfileTo`:
+  phone number, extended data; user name and email through `UserManager` as before). ZA-144: a restore that gives a
+  page a new URL gives its pending draft that URL. ZA-145: a move loads the subtree once (tracked) for the loop check
+  and the path rewrite; copy walks ids only.
+- Tests: `SaveHookTests` (moves, recycle veto, content type veto, media bin and emptied bin with a veto, drafts,
+  tag links; on all three databases), `ContentDataTests` (tag links, import, restore URL; all three),
+  `ContentVersionRaceTests` (four versions at once; PostgreSQL and SQL Server), `UserSaveTests`. Test hooks are
+  discovered for the whole test assembly and act only on the async flow of a test that starts a `SaveHookRecorder`.
+- `/audit changed` (one reviewer): two Mediums fixed — a save passed the caller's copy (media) ran the hooks twice,
+  once for the copy as Detached (the hooks now get the tracked row with that key, once); a block added in a "Save
+  only" got no tag links when the page was published later (the publish now writes the links of every block it
+  reaches). Lows fixed: removed values were still read for tags; `CreateVersionAsync` read the page before the lock
+  (the lock now comes first, so the snapshot is serialised too); the `Tag` cache was not cleared by a link change
+  (`TagItem` writes clear the `Tag` prefix); two tabs or properties with one alias got the same kept id on import;
+  deleting a content type left its content's tag links. Noted: a version restore holds the page row's lock while it
+  reads the block tree.
+- Not browser-tested: the tags editor (it now only sets its value; the page save does the rest, covered by tests).
+- **Release notes (D18):**
+  - Save hooks run for more rows: every row a save writes, of every type, including the items below a moved,
+    binned, restored or deleted item, drafts, blocks, tag links and audit rows. A hook that assumed it only sees the
+    item named should check the row it is given. One `false` stops the whole change.
+  - A concurrency conflict on a single-entity save comes back as the user-readable message, as the many-entity save
+    already did.
+  - Tag links are written by the page save from the published value, not by the tags editor as it renders. A "Save
+    only" no longer changes them. Sites upgrading keep their links; the next publish of a page sets them from its
+    value.
+  - `SaveUserAsync` and `CreateUpdateUserAsync` no longer write the password hash, security and concurrency stamps,
+    lockout, failed sign-ins, two-factor, email/phone confirmation or normalised names from the copy passed in;
+    change those through `UserManager`.
+  - Importing a content type over an existing alias keeps its property and tab ids (before, the values were lost).
+  - The tags editor component no longer injects `NotificationService`.
+- After-save hooks still run inside the change's transaction, before the commit (Umbraco raises its "-ed"
+  notifications after the scope completes); see the Backlog.
 
 ### Phase 10c — Property editors and stored values
 ZA-015, ZA-078, ZA-100 (Medium); ZA-027, ZA-028, ZA-029, ZA-112, ZA-127 (Low).
@@ -698,6 +749,7 @@ right. Move one into a phase when that is settled.
 | ZA-129 [Low] The admin UI is not localised | A feature: which languages, resource files, who translates. Owner decision. |
 | ZA-151 [Low] The installer's pages cannot be restyled or extended from a site | Open question for the owner (below). |
 | — Back-office roles other than Admin (an "Editor" who may edit content but not users) | A feature (D27). Hiding screens and actions per role is the start; whether services then check access too is decided then. |
+| ZA-163 [Low] After-save hooks run before the commit, so a change that is rolled back after them (a media file that can't be removed) has already been reported to them | Needs an after-commit point in the hook API (Umbraco raises its "-ed" notifications when the scope completes). A new interface or a change to `IAfterEntitySave<T>`'s contract (it can ask for a re-save inside the transaction): owner decision. |
 | ZA-155 [Low] Resized copies of a deleted image stay in `_mediacache` | Needs a way to remove one file's entries from the ImageResize package, or a decision to prune that cache on a schedule. |
 
 ## Open questions for the owner

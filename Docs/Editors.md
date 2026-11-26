@@ -23,6 +23,10 @@ that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/Edit
 - Optional: `[Parameter] string? PropertyAlias`. An editor that holds blocks (nested content) takes the cascading
   `ContentEditScope` and registers an `INestedContentReferenceProvider` for its alias
   (see [BlockListEditor.md](BlockListEditor.md) §7). `ISupportsBlockListChanges` is obsolete and never called.
+- An editor never writes to the database: it only raises `ValueChanged`, and the page save writes what the value
+  implies, in its transaction. An editor whose value holds tags registers an `ITagReferenceProvider` for its alias, and
+  the save writes the item's tag links from the published value (the built-in `ZauberCMS.Tags` editor does this;
+  [Services.md](Services.md) "Deletes", Tags).
 - `[CascadingParameter] IModalService? ModalService` for dialogs (`ModalService.OpenSidePanel<T>(…)`, then `await modal.Result`).
 - `Content` is **null** when the editor renders for User/Role properties — handle it.
 - `SettingsComponent = null` → admin shows "No settings available".

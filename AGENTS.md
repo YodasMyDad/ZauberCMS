@@ -90,8 +90,11 @@ don't reorder without a reason written in the commit.
    else is hard-deleted; recycle-bin purge is a hard delete. Content and Media recycle, restore and purge act on the
    whole subtree; a media purge also removes the files, and recycled media is not served
    (→ [Docs/Services.md](Docs/Services.md) "Deletes").
-5. **Writes go through `SaveChangesAndLog`** (runs `IBeforeEntitySave<T>`/`IAfterEntitySave<T>` hooks and clears the
-   `typeof(T).Name` cache prefix). Clear related prefixes yourself. → [Docs/Services.md](Docs/Services.md)
+5. **Writes go through `SaveChangesAndLog`**: stage the whole change (audit row included), then call it once. It runs
+   the `IBeforeEntitySave<T>`/`IAfterEntitySave<T>` hooks for every row the save writes, of every type, and one veto
+   stops the whole change (Roadmap D28); it clears the cache prefix of each type written. Never `SaveChangesAsync`
+   before it: the hooks would see those rows `Unchanged`. Clear related prefixes yourself.
+   → [Docs/Services.md](Docs/Services.md)
 6. **No MediatR / CQRS libraries.** Services are `IXService` + parameter class + `HandlerResult<T>`.
 7. **Follow [Docs/Standards.md](Docs/Standards.md)** for every change. It defines the engineering bar and the
    Definition of Done below.
@@ -113,7 +116,8 @@ don't reorder without a reason written in the commit.
 | `IExternalAuthenticationProvider`, `IStartupPlugin` | OAuth providers, DI/startup hooks (parameterless ctor) |
 | `ISeedData` | Runs every boot after migrations |
 | `IValidate<T>`, FluentValidation `IValidator<T>` | Admin-side validation |
-| `IBeforeEntitySave<T>`, `IAfterEntitySave<T>` | Save hooks (before can veto) |
+| `ITagReferenceProvider` | Which tags an editor's value holds (by editor alias), so the page save writes the tag links |
+| `IBeforeEntitySave<T>`, `IAfterEntitySave<T>` | Save hooks, per row written (before can veto the whole change) |
 
 `IContentFinder` / `ContentFinderPipeline` and the MVC `RenderBlocksViewComponent` path are currently unwired (routes
 commented out in `ZauberSetup.cs`) — don't build on them without discussing.

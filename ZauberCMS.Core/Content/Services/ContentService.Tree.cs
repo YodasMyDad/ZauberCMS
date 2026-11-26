@@ -8,6 +8,7 @@ using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Tags.Services;
 
 namespace ZauberCMS.Core.Content.Services;
 
@@ -170,7 +171,21 @@ public partial class ContentService
             }
         }
 
-        // Blocks reached before and not any more, with everything below them
+        // A publish writes the tag links from the values it publishes; a draft leaves them as the live site has
+        // them, like Umbraco (ZA-099)
+        if (!draftMode)
+        {
+            // Every block the published page reaches, the untouched ones as stored: a block added in a "Save only"
+            // got no links then, and is published now without being sent again
+            var changedIds = hookEntities.Select(x => x.Id).ToHashSet();
+            await ContentTagLinks.StageAsync(dbContext, extensionManager,
+            [
+                .. hookEntities,
+                .. newTree.Nodes.Where(n => n.Stored != null && !changedIds.Contains(n.Id)).Select(n => n.Stored!)
+            ], cancellationToken);
+        }
+
+        // Blocks reached before and not any more, with everything below them (and their tag links)
         var removed = await tree.StageDeleteAsync(before.Where(id => !after.Contains(id)).ToList(), cancellationToken);
         if (removed.Count > 0)
         {

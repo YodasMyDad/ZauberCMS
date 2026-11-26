@@ -6,6 +6,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Tags.Services;
 
 namespace ZauberCMS.Core.Content.Services;
 
@@ -250,6 +251,7 @@ internal sealed class NestedContentTree(IZauberDbContext dbContext, ExtensionMan
         dbContext.ContentPropertyValues.RemoveRange(
             await dbContext.ContentPropertyValues.AsTracking().Where(x => rowIds.Contains(x.ContentId))
                 .ToListAsync(cancellationToken));
+        await ContentTagLinks.StageRemoveAsync(dbContext, rowIds, cancellationToken);
 
         var draftIds = rows.Where(x => x.UnpublishedContentId != null).Select(x => x.UnpublishedContentId!.Value).ToList();
         if (draftIds.Count > 0)

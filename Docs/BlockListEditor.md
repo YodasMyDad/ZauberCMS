@@ -78,14 +78,16 @@ One scope, one DbContext, one transaction:
    their drafts removed; unedited blocks with a draft from an earlier "Save only" are published. "Save only": edited
    existing blocks get a draft, new blocks are inserted (only the draft reaches them, so the live site doesn't).
 5. Delete `before − after` (in "Save only", the live tree stays reached): property values, drafts, rows.
-6. One audit row (not for drafts), one `SaveChangesAndLog` that runs the Content save hooks for the page and every
-   block row it writes, publishes or deletes (drafts are not rows: no hooks; a new block in a "Save only" is a row, so
-   it does fire "Added"), commit, then **one** version of the page, taken after the blocks are written.
+6. One audit row (not for drafts), the tag links of the page and its blocks from the published values (not for
+   drafts), one `SaveChangesAndLog` that runs the save hooks for every row it writes (Roadmap D28, D29): `Content`
+   for the page and every block row it writes, publishes or deletes, `UnpublishedContent` for the drafts a "Save
+   only" writes (a new block in a "Save only" is a row, so it fires `Content` "Added"); commit, then **one** version
+   of the page, taken after the blocks are written.
 
 It raises no `AppState` events; the editor raises one for the page. `AllowedElementTypeIds` is still a warning only,
 now checked for new blocks too. Publishing a page from code without passing any blocks (an import, a site's own
-publish) publishes the whole page, its blocks' drafts included. Clear changes and version restore delete and rewrite
-blocks without running the save hooks per block.
+publish) publishes the whole page, its blocks' drafts included. Clear changes and version restore run the save hooks
+for every block they delete or rewrite, and every draft they drop.
 
 Restoring a version writes the version's blocks, drops the drafts of every block the restored values reach, and
 deletes only blocks the restored values no longer reach (a version made by the old editor may lack snapshots of

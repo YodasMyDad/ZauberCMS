@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 10b (2026-11-26): Build PASS · Warnings: 0 · Tests: 876 (875 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase. ZA-012, ZA-018, ZA-077, ZA-099, ZA-117, ZA-144, ZA-145, ZA-146, ZA-157, ZA-159 fixed; ZA-162 found and fixed; ZA-163 new (Backlog). Next free ID: ZA-164
 After Roadmap Phase 10a (2026-11-26): Build PASS · Warnings: 0 · Tests: 837 (836 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (one reviewer: its two Mediums — a request id that is not ours threw, `RunAs` reached other circuits' event handlers — and its Lows fixed). ZA-093 fixed, ZA-140 closed (D27), ZA-152 resolved. Next free ID: ZA-162
 After Roadmap Phase 10 (2026-11-26): Build PASS · Warnings: 0 · Tests: 828 (827 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their High and Mediums fixed — tree flags wiped by the bin trees, a front-end cache that never expired on busy pages or kept misses — the rest fixed or recorded as ZA-161). Next free ID: ZA-162
 After Roadmap Phase 9 (2026-11-26): Build PASS · Warnings: 0 · Tests: 768 (766 pass, 2 skipped for open findings ZA-011, ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers and a git-history search). Next free ID: ZA-160
@@ -25,34 +26,18 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 18 | 54 | 1 |
-| Low | 47 | 7 | 3 |
+| Medium | 14 | 59 | 1 |
+| Low | 42 | 13 | 3 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
 a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086, ZA-011 and ZA-113 (Phase 10), ZA-093, with ZA-140 closed by D27 and ZA-152 resolved (Phase 10a), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-162.
 
 ## Open findings
 
-### ZA-012 [Medium/High] `SaveChangesAndLog` hooks see `Unchanged` after audit save; ContentType veto can't roll back
-
-- Where: `ContentService.cs:369,982-985` · Category: C
-- Reconciled 2026-11-25: same pattern on the recycle path (`ContentService.cs:497-498`).
-- Phase 9 (2026-11-26): content saves of values now go through the many-entity `SaveChangesAndLog` (hooks get Added/Modified and a veto stops the save). Still open for saves with `ExcludePropertyData` (sort, move, restore), the recycle path and ContentType saves.
-
 ### ZA-015 [Medium/High] `AddFluentValidation` never unsubscribes
 
 - Where: `ZauberCMS.Core/Shared/Validation/EditContextFluentValidationExtensions.cs:22,25` · Category: A
 - Reconciled 2026-11-25: same file also has unsynchronised static lists and `async` handlers with no try/catch (a throwing validator ends the circuit) — lines 12-13, 107-125.
-
-### ZA-018 [Medium/Medium] `SaveTagItemAsync` bypasses `SaveChangesAndLog` hooks
-
-- Where: `ZauberCMS.Core/Tags/Services/TagService.cs:222-224` · Category: C
-
-### ZA-077 [Medium/High] Importing a content type over an existing alias orphans all its values
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:1791-1815,1737,1951` · Category: C · Since: 2026-11-25
-- Issue / Trigger: Property and tab IDs are regenerated, so the next save drops unmatched values; content import is lossy too. Public API only — no admin caller.
-- Fix: match existing properties by alias and keep IDs. · Blocked by: nothing.
 
 ### ZA-078 [Medium/High] Multi-pick order is lost on the front-end
 
@@ -120,12 +105,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/Program.cs:13`, `ZauberCMS.Web/Program.cs:13` · Category: E · Since: 2026-11-25
 - Issue / Trigger: The template ships the exception handler commented out and setup adds none: production errors return an empty 500.
 - Fix: ship an error route and wire the handler in setup. · Blocked by: pipeline order; new setting.
-
-### ZA-099 [Medium/High] Tags editor writes to the database on every render
-
-- Where: `ZauberCMS.Components/Editors/TagsProperty.razor:47-64,78-83` · Category: E · Since: 2026-11-25
-- Issue / Trigger: `SaveTagItemAsync` runs from `OnParametersSetAsync` (including prerender) and tag links persist before the content is saved — even for cancelled content.
-- Fix: persist tags in the content save path. · Blocked by: tag sync behaviour.
 
 ### ZA-100 [Medium/High] Selecting files in more than one batch breaks the upload
 
@@ -245,11 +224,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Where: `ZauberCMS.Core/Middleware/RedirectMiddleware.cs:140-150` · Category: C · Since: 2026-11-25
 - Issue / Fix: Explicit "is regex" flag (schema).
 
-### ZA-117 [Low/High] User `MapTo` overwrites identity fields from a stale editor copy
-
-- Where: `ZauberCMS.Core/Membership/Mapping/UserMappingExtensions.cs:26-34`, `ZauberCMS.Core/Membership/Services/MembershipService.cs:133,147,197` · Category: C · Since: 2026-11-25
-- Issue / Fix: A concurrent password reset or lockout is reverted; map profile fields only.
-
 ### ZA-118 [Low/High] Packaged `appsettings.json` has no `Zauber:ImageResize` section
 
 - Where: `ZauberCMS/appsettings.json:88` (end of `Plugins`; Web and template continue with `ImageResize` at `:89`) · Category: F · Since: 2026-11-25
@@ -312,32 +286,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
 - Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
-### ZA-144 [Low/High] A pending draft keeps the old URL after Restore gave the page a new one
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs` (restore URL suffix in `SaveContentAsync`),
-  `ContentMappingExtensions.MapDraftTo` (copies `Url`) · Category: C · Since: 2026-11-25 (Phase 5 audit)
-- Issue / Trigger: Restore gives a page `offers-1` because `offers` was taken meanwhile, but its draft still holds
-  `offers`; the editor shows the draft's URL, so publishing is refused ("already used") until the URL is changed.
-- Fix: update the draft's URL when restore adds a suffix (or have the editor prefer the live URL when it changed
-  after the draft was saved). · Blocked by: nothing.
-
-### ZA-145 [Low/High] Move and copy load the subtree twice
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs` (`SaveContentAsync` loop check then path rewrite;
-  `CopyContentAsync` descendants then `Include(PropertyData)` reload) · Category: B · Since: 2026-11-25
-- Issue / Trigger: Moving a page with a large subtree walks it twice (untracked, then tracked); copy loads full rows
-  and then loads them again with property data.
-- Fix: project IDs only for the loop check / reuse the tracked load; walk IDs only in copy. · Blocked by: nothing.
-
-### ZA-146 [Low/Medium] Two publishes of one page at the same moment: the second version row is not written
-- Where: `ZauberCMS.Core/Content/Services/ContentVersioningService.cs` (`CreateVersionAsync`: `maxVersion` read
-  before the transaction; flag clear by `ExecuteUpdateAsync`) · Category: A/C · Since: 2026-11-25 (Phase 6 audit)
-- Issue / Trigger: two saves of the same page commit at once (two editors, or a double click). Under READ COMMITTED
-  the second clear doesn't see the first insert, so the second insert breaks the unique "current published" index;
-  `ContentService` logs it and the content save still succeeds, but that version is missing. Version numbers can
-  also repeat. (Before Phase 6 both rows were stored, both flagged.) The flag switch also runs as a direct update,
-  so `IBeforeEntitySave`/`IAfterEntitySave<ContentVersion>` hooks don't see the old version's flag go off.
-- Fix: lock the content row first (`UPDATE … SET DateUpdated = DateUpdated WHERE Id = @id`) and read `maxVersion`
-  inside the transaction, or retry once on a unique violation. · Blocked by: nothing.
-
 ### ZA-149 [Low/High] The login and registration rate limits are fixed in code
 - Where: `ZauberCMS.Core/ZauberSetup.cs` (`AddRateLimiter`: policies `"login"` and `"register"`) · Category: F · Since: 2026-11-26 (Phase 7 audit)
 - Issue / Trigger: 10 requests per address in 5 minutes for login-like pages, 5 POSTs in 10 minutes for
@@ -378,23 +326,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Reconciled 2026-11-26 (after Phase 10): the content bin now pages 100 at a time with a "Show more" row
   (`RecycleBinTree.razor`); the media bin still loads 500 (`MediaRecycleBinTree.razor:60`) and no binned folder opens.
 
-### ZA-157 [Low/High] Save hooks do not see the media below the item, nor an emptied bin
-- Where: `ZauberCMS.Core/Media/Services/MediaService.cs` (`DeleteMediaAsync`, `RestoreMediaAsync`, `EmptyMediaRecycleBinAsync`) · Category: F · Since: 2026-11-26 (Phase 8 audit)
-- Issue / Trigger: `IBeforeEntitySave<Media>` / `IAfterEntitySave<Media>` run for the item a call names, not for the
-  items below it that are binned, restored or deleted with it, and not at all when the bin is emptied. A plugin
-  that mirrors media elsewhere misses those. Content behaves the same. Documented in `Docs/Services.md`.
-- Fix: run the hooks per item (a veto on one item would then have to stop the whole group). · Blocked by: design
-  of the hooks for group changes.
-
-### ZA-159 [Low/High] Content save hooks don't run per block on Clear changes and version restore
-- Where: `ContentService.ClearUnpublishedContentAsync`, `ContentVersioningService.PublishVersionAsync` · Category: F · Since: 2026-11-26 (Phase 9 audit)
-- Issue / Trigger: blocks deleted by Clear changes, and blocks rewritten or deleted by a version restore, don't run
-  `IBeforeEntitySave<Content>`/`IAfterEntitySave<Content>`; in a "Save only", block drafts run none and a new block
-  (a row only the draft reaches) fires "Added". A plugin mirroring content elsewhere (a search index) misses or
-  indexes these. Same family as ZA-012 and ZA-157. Documented in `Docs/BlockListEditor.md` §4.
-- Fix: pass those rows to the many-entity `SaveChangesAndLog` overload; decide what hooks a draft should see.
-
-
 ### ZA-160 [Low/Medium] A component on the media folder page calls JavaScript while its circuit is torn down
 
 - Where: `ZauberCMS.Components/Admin/MediaSection/Folder.razor` page (component not identified) · Category: E · Since: 2026-11-26
@@ -407,7 +338,41 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Issue / Trigger: Radzen moves its selection to the row when it is clicked; the tree puts its `Value` back, but Radzen re-syncs the highlight only from a null value, so the open page is no longer highlighted (the selection itself is kept).
 - Fix: render the row as a button inside the template with `@onclick:stopPropagation`, so the tree item is never selected. · Blocked by: nothing.
 
+### ZA-163 [Low/High] After-save hooks run before the commit
+- Where: `ZauberCMS.Core/Extensions/DbContextExtensions.cs` (`SaveChangesAndLog`), `MediaService.PurgeAsync` · Category: F · Since: 2026-11-26 (Phase 10b)
+- Issue / Trigger: `IAfterEntitySave<T>` runs once the rows are written, inside the caller's transaction. A change
+  rolled back after that (a media purge whose file can't be removed) was already reported to the hooks as done; a
+  plugin mirroring media elsewhere removes a file that is back. Umbraco raises its "-ed" notifications when the scope
+  completes.
+- Fix: an after-commit point in the hook API. · Blocked by: public API (owner decision; Roadmap Backlog).
+
 ## Fixed this run / Resolved since last run
+
+- **Phase 10b (2026-11-26): save hooks and content data (Roadmap D28, D29).**
+  - **ZA-012 [Medium] Hooks saw `Unchanged`; a content type veto could not roll back — fixed.** `SaveChangesAndLog`
+    runs the hooks for every row the save writes (change tracker, every entity type, each row's own state) and one
+    veto stops the whole change; the early audit saves are gone (audit rows are staged and written by the change's
+    save). Covers sort, move, restore, recycle, permanent delete, content types, copy, import and version delete.
+  - **ZA-157 [Low] Media below an item and an emptied bin ran no hooks — fixed** by the same change; a veto on any item
+    stops the bin, restore or purge.
+  - **ZA-159 [Low] Blocks of Clear changes and version restore ran no hooks; drafts ran none — fixed.** Those rows reach
+    the hooks; a "Save only" runs the `UnpublishedContent` hooks (D29).
+  - **ZA-018 [Medium] `SaveTagItemAsync` skipped the hooks — fixed.** Links and audit rows in one hooked save.
+  - **ZA-099 [Medium] The tags editor wrote to the database on every render — fixed.** The page save writes the tag
+    links from the published values through the new discovered `ITagReferenceProvider`; drafts leave them, a permanent
+    delete removes them.
+  - **ZA-077 [Medium] Import over an existing alias orphaned the values — fixed.** Tab and property ids kept by alias.
+  - **ZA-162 [Medium] Content type export always threw — fixed** (found by the ZA-077 test): it `Include`d the JSON
+    tabs column.
+  - **ZA-146 [Low] Two version writes at once lost one — fixed.** The page row is locked and the number read inside
+    the transaction; the old flag is switched off as tracked rows, saved first.
+  - **ZA-117 [Low] User save overwrote identity fields from a stale copy — fixed** (`MapProfileTo`).
+  - **ZA-144 [Low] A draft kept the old URL after a restore — fixed.**
+  - **ZA-145 [Low] Move and copy loaded the subtree twice — fixed.**
+  - Tests: `Shared/SaveHookTests.cs`, `Content/ContentDataTests.cs` (with `ContentVersionRaceTests`),
+    `Membership/UserSaveTests.cs`; new finding ZA-163 (Backlog).
+  - `/audit changed` on the phase (one reviewer): its two Mediums (hooks twice for a caller's copy; no tag links for
+    a block added in a draft and published later) and five Lows fixed with tests or code (see Roadmap Phase 10b).
 
 - **Phase 10a (2026-11-26): who is calling (Roadmap D27).**
   - **ZA-093 [Medium] Write services need a Blazor component scope — fixed.** The services read the caller through the

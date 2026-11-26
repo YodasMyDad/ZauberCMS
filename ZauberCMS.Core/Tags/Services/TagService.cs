@@ -172,9 +172,9 @@ public class TagService(
         }
 
         // Retrieve existing TagItems for the ItemId
-        var existingTagItems = dbContext.TagItems
+        var existingTagItems = await dbContext.TagItems.AsTracking()
             .Where(x => x.ItemId == parameters.ItemId)
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         var existingTagIds = existingTagItems.Select(x => x.TagId).ToHashSet();
         var newTagIds = parameters.TagIds.ToHashSet();
@@ -183,40 +183,28 @@ public class TagService(
         var tagIdsToAdd = newTagIds.Except(existingTagIds).ToList();
         var tagIdsToRemove = existingTagIds.Except(newTagIds).ToList();
 
-        // Add new TagItems
+        // The links and their audit rows are written by one save, through the save hooks (ZA-018): a veto or a
+        // failure leaves neither
         foreach (var tagId in tagIdsToAdd)
         {
-            var tagItem = new TagItem { TagId = tagId, ItemId = parameters.ItemId };
-            dbContext.TagItems.Add(tagItem);
-
-            var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-            await user.AddAudit(tagItem, $"Tag Item (TagId: {tagId}) added",
-                AuditExtensions.AuditAction.Create, auditService,
-                cancellationToken);
+            dbContext.TagItems.Add(new TagItem { TagId = tagId, ItemId = parameters.ItemId });
+            AddAudit(dbContext, user, $"Created Tag Item (TagId: {tagId}) added");
         }
 
-        // Remove TagItems that are no longer associated
-        foreach (var tagId in tagIdsToRemove)
+        foreach (var tagItem in existingTagItems.Where(x => tagIdsToRemove.Contains(x.TagId)))
         {
-            var tagItem = existingTagItems.FirstOrDefault(x => x.TagId == tagId);
-            if (tagItem != null)
-            {
-                dbContext.TagItems.Remove(tagItem);
-
-                var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await user.AddAudit(tagItem, $"Tag Item (TagId: {tagId}) removed",
-                    AuditExtensions.AuditAction.Delete, auditService,
-                    cancellationToken);
-            }
+            dbContext.TagItems.Remove(tagItem);
+            AddAudit(dbContext, user, $"Deleted Tag Item (TagId: {tagItem.TagId}) removed");
         }
 
-        // Save changes and update the handler result
-        await dbContext.SaveChangesAsync(cancellationToken);
-        cacheService.ClearCachedItemsWithPrefix(nameof(TagItem));
-        cacheService.ClearCachedItemsWithPrefix(nameof(Tag));
-        handlerResult.Success = true;
+        var saved = await dbContext.SaveChangesAndLog(Array.Empty<TagItem>(), null, handlerResult, cacheService,
+            extensionManager, cancellationToken);
+        if (saved.Success)
+        {
+            cacheService.ClearCachedItemsWithPrefix(nameof(Tag));
+        }
 
-        return handlerResult;
+        return saved;
     }
 
     /// <summary>
@@ -264,6 +252,13 @@ public class TagService(
         }
 
         return (await dbContext.SaveChangesAndLog(tagItem, handlerResult, cacheService, extensionManager, cancellationToken))!;
+    }
+
+    /// <summary>Stages an audit row for the save that follows. Nobody signed in, no row (D27).</summary>
+    private static void AddAudit(IZauberDbContext dbContext, Membership.Models.User? user, string action)
+    {
+        if (user == null) return;
+        dbContext.Audits.Add(new Audit.Models.Audit { Description = $"{user.Name} {action}" });
     }
 
     private static IQueryable<Tag> BuildQuery(QueryTagParameters parameters, IZauberDbContext dbContext)

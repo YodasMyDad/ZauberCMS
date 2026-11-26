@@ -47,6 +47,22 @@ public static class UserMappingExtensions
     }
 
     /// <summary>
+    /// Copies the profile fields a user save changes (phone number, extended data) and nothing else. User name and
+    /// email go through <c>UserManager</c> (normalised, security stamp); the password, security and concurrency
+    /// stamps, lockout, failed sign-ins, two-factor and confirmation flags change only through <c>UserManager</c>, so an
+    /// editor's copy loaded before a password reset or a lockout can't put the old values back (ZA-117).
+    /// </summary>
+    /// <param name="source">The caller's copy of the user.</param>
+    /// <param name="target">The user as stored (tracked).</param>
+    /// <returns>The updated <paramref name="target"/>.</returns>
+    public static User MapProfileTo(this User source, User target)
+    {
+        target.PhoneNumber = source.PhoneNumber;
+        target.ExtendedData = source.ExtendedData;
+        return target;
+    }
+
+    /// <summary>
     /// Creates a new User entity with properties mapped from source
     /// </summary>
     /// <param name="source">Source User entity</param>

@@ -13,6 +13,7 @@ using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Tags.Services;
 using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
@@ -132,10 +133,8 @@ public partial class ContentService(
 
         var (content, isUpdate) = staged;
 
-        // Wrap save + audit in a single transaction so a failed save (e.g. concurrency conflict)
-        // doesn't leave behind an orphan "user updated X" audit row claiming an update that never
-        // happened. SaveAuditAsync internally calls SaveChangesAsync, so it MUST run inside this
-        // explicit transaction to share its commit/rollback semantics.
+        // The audit row is written by the same save, so a failed or vetoed save leaves none. The transaction holds
+        // a second save an after-save hook asks for.
         HandlerResult<Models.Content> saveResult;
         await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
         {
@@ -143,7 +142,7 @@ public partial class ContentService(
             {
                 var nameText = content.Name ?? nameof(Models.Content);
                 var actionText = isUpdate ? "Updated" : "Created";
-                await SaveAuditIfUser(dbContext, user, nameText, actionText, cancellationToken);
+                AddAuditIfUser(dbContext, user, nameText, actionText);
 
                 saveResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
                     cancellationToken);
@@ -381,13 +380,14 @@ public partial class ContentService(
             dbContext.UnpublishedContent.Remove(unpublishedContent);
         }
 
+        // The items below, loaded once (tracked) for the loop check and the path rewrite (ZA-145)
+        List<Models.Content>? descendants = null;
         if (isUpdate && content.ParentId != storedParentId && content.ParentId != null)
         {
             // A page can't be moved under itself or one of its own descendants: the tree would become a loop
             var newParentId = content.ParentId.Value;
-            var isOwnDescendant = newParentId == content.Id ||
-                                  (await GetDescendantsAsync(dbContext, content.Id, tracked: false, cancellationToken))
-                                  .Any(x => x.Id == newParentId);
+            descendants = await GetDescendantsAsync(dbContext, content.Id, tracked: true, cancellationToken);
+            var isOwnDescendant = newParentId == content.Id || descendants.Any(x => x.Id == newParentId);
             if (isOwnDescendant)
             {
                 handlerResult.AddMessage("Content can't be moved below itself", ResultMessageType.Error);
@@ -425,6 +425,7 @@ public partial class ContentService(
 #pragma warning restore CS0618 // Type or member is obsolete
                     if (isRestore)
                     {
+                        await KeepDraftUrlAsync(dbContext, content, cancellationToken);
                         handlerResult.AddMessage(
                             $"The URL '{url}' is now used by another page, so the restored page has the URL '{content.Url()}'",
                             ResultMessageType.Warning);
@@ -446,7 +447,8 @@ public partial class ContentService(
             // re-parent rewrites the stored path of everything below it (ZA-079). Nearest first, so a parent's
             // new path is known before its children are updated.
             var newPaths = new Dictionary<Guid, List<Guid>> { [content.Id] = content.Path };
-            foreach (var descendant in await GetDescendantsAsync(dbContext, content.Id, tracked: true, cancellationToken))
+            descendants ??= await GetDescendantsAsync(dbContext, content.Id, tracked: true, cancellationToken);
+            foreach (var descendant in descendants)
             {
                 if (descendant.ParentId is { } parentId && newPaths.TryGetValue(parentId, out var parentPath))
                 {
@@ -468,6 +470,7 @@ public partial class ContentService(
 #pragma warning disable CS0618 // Type or member is obsolete
                             descendant.Url = await GenerateUniqueUrlAsync(dbContext, descendantUrl!, cancellationToken, descendant.Id, reservedUrls);
 #pragma warning restore CS0618 // Type or member is obsolete
+                            await KeepDraftUrlAsync(dbContext, descendant, cancellationToken);
                             handlerResult.AddMessage(
                                 $"The URL '{descendantUrl}' is now used by another page, so the restored page '{descendant.Name}' has the URL '{descendant.Url()}'",
                                 ResultMessageType.Warning);
@@ -553,7 +556,7 @@ public partial class ContentService(
             await using var recycleTransaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Recycle Binned", cancellationToken);
+                AddAuditIfUser(dbContext, loggedInUser, content.Name, "Recycle Binned");
                 var recycleResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService,
                     extensionManager, cancellationToken);
                 if (!recycleResult.Success)
@@ -662,7 +665,8 @@ public partial class ContentService(
                     content.Id, descendants.Count);
             }
 
-            await SaveAuditIfUser(dbContext, loggedInUser, content.Name, "Deleted", cancellationToken);
+            await ContentTagLinks.StageRemoveAsync(dbContext, [.. toDeleteIds, .. nestedToDelete], cancellationToken);
+            AddAuditIfUser(dbContext, loggedInUser, content.Name, "Deleted");
             foreach (var item in toDelete)
             {
                 dbContext.Contents.Remove(item);
@@ -828,8 +832,8 @@ public partial class ContentService(
             // Walk the tree by ParentId (nearest first, so a parent's copy exists before its children's) rather
             // than matching stored paths with raw SQL. Items in the recycle bin are not copied.
             var copiedPaths = new Dictionary<Guid, List<Guid>> { [copiedContent.Id] = copiedContent.Path };
-            var descendantIds = (await GetDescendantsAsync(dbContext, contentToCopy.Id, tracked: false, cancellationToken))
-                .Select(x => x.Id).ToList();
+            // Ids only for the walk; the rows are loaded once below, with their values (ZA-145)
+            var descendantIds = await GetDescendantIdsAsync(dbContext, contentToCopy.Id, cancellationToken);
             var treeOrder = descendantIds.Select((id, index) => (id, index)).ToDictionary(x => x.id, x => x.index);
             var descendants = (await dbContext.Contents
                     .AsNoTracking()
@@ -867,15 +871,27 @@ public partial class ContentService(
             .OfType<Models.Content>()
             .ToList();
         await CloneBlockListContentTreeAsync(copiedPages, cloneTree, dbContext, user, nestedIdMap, cancellationToken);
+        // The copies' tag links, from the copied values (ZA-099)
+        await ContentTagLinks.StageAsync(dbContext, extensionManager,
+            dbContext.Contents.Local.Where(c => dbContext.Entry(c).State == EntityState.Added).ToList(),
+            cancellationToken);
+        AddAuditIfUser(dbContext, user, contentToCopy.Name, "Copied");
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        if (user != null)
+        // One save for the copies, their blocks and the audit row; the save hooks see every row as added
+        await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
         {
-            await SaveAuditAsync(dbContext, $"{user.Name} Copied {contentToCopy.Name}", cancellationToken);
+            var saved = await dbContext.SaveChangesAndLog([copiedContent], copiedContent, handlerResult, cacheService,
+                extensionManager, cancellationToken);
+            if (!saved.Success)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                return saved;
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
         }
 
-        handlerResult.Success = true;
-        handlerResult.Entity = copiedContent;
         handlerResult.AddMessage("Content copied successfully.", ResultMessageType.Success);
         return handlerResult;
 
@@ -1052,7 +1068,7 @@ public partial class ContentService(
         }
 
         var actionText = isUpdate ? "Updated" : "Created";
-        await SaveAuditIfUser(dbContext, user, contentType.Name, actionText, cancellationToken);
+        AddAuditIfUser(dbContext, user, contentType.Name, actionText);
 
         var savedType = await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager,
             cancellationToken);
@@ -1265,6 +1281,10 @@ public partial class ContentService(
 
                 dbContext.Contents.Remove(orphan);
             }
+
+            // Their tag links go with them (TagItem has no foreign key to cascade)
+            await ContentTagLinks.StageRemoveAsync(dbContext, orphanedItems.Select(x => x.Id).ToList(),
+                cancellationToken);
         }
 
         var children =
@@ -1299,10 +1319,7 @@ public partial class ContentService(
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                if (user != null)
-                {
-                    await SaveAuditAsync(dbContext, $"{user.Name} Deleted {contentType.Name}", cancellationToken);
-                }
+                AddAuditIfUser(dbContext, user, contentType.Name, "Deleted");
 
                 dbContext.ContentTypes.Remove(contentType);
                 var deleteResult = await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService,
@@ -1397,11 +1414,7 @@ public partial class ContentService(
             domain.DateUpdated = DateTime.UtcNow;
         }
 
-        if (user != null)
-        {
-            var actionText = isUpdate ? "Updated" : "Created";
-            await SaveAuditAsync(dbContext, $"{user.Name} {actionText} Domain ({domain.Url})", cancellationToken);
-        }
+        AddAuditIfUser(dbContext, user, $"Domain ({domain.Url})", isUpdate ? "Updated" : "Created");
 
         var saved = await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager,
             cancellationToken);
@@ -1500,10 +1513,7 @@ public partial class ContentService(
 
         if (domain != null)
         {
-            if (user != null)
-            {
-                await SaveAuditAsync(dbContext, $"{user.Name} Deleted Domain ({domain.Url})", cancellationToken);
-            }
+            AddAuditIfUser(dbContext, user, $"Domain ({domain.Url})", "Deleted");
 
             dbContext.Domains.Remove(domain);
             var deleted = await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager,
@@ -1773,8 +1783,8 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
-        var contentType = await dbContext.ContentTypes
-            .Include(x => x.Tabs)
+        // Tabs and properties are columns of the type (JSON), not navigations: an Include of them threw
+        var contentType = await dbContext.ContentTypes.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Alias == alias);
 
         if (contentType == null) return null;
@@ -1901,7 +1911,8 @@ public partial class ContentService(
 
         // Import ContentType
         var export = package.Type;
-        var existing = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == export.Alias);
+        // Not tracked: the type is saved through SaveContentTypeAsync, the content below on this context
+        var existing = await dbContext.ContentTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Alias == export.Alias);
 
         var contentType = existing ?? new ContentType { Alias = export.Alias };
 
@@ -1917,24 +1928,38 @@ public partial class ContentService(
         contentType.IsComposition = export.IsComposition;
         contentType.MediaIdAsString = export.MediaIdAsString;
 
-        // Regenerate Tab Ids
+        // Tabs and properties the type already has keep their ids, matched by alias: stored values point at the
+        // property id, so a new id would leave every value behind on the next save (ZA-077). Anything new gets a new
+        // id, so the same package imported into two sites can't clash with ids already used there. The system tab
+        // keeps its fixed id.
+        var existingTabIds = (existing?.Tabs ?? [])
+            .GroupBy(t => t.Alias, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+        var existingPropertyIds = (existing?.ContentProperties ?? [])
+            .GroupBy(p => p.Alias ?? p.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+
         var tabMap = new Dictionary<string, Guid>();
         foreach (var tab in export.Tabs)
         {
-            var newId = Guid.NewGuid().NewSequentialGuid();
+            // Each kept id once: a second tab or property with the same alias gets a new one
+            var newId = tab.IsSystemTab
+                ? tab.Id
+                : existingTabIds.Remove(tab.Alias, out var keptTabId) ? keptTabId : Guid.NewGuid().NewSequentialGuid();
             tabMap[tab.Alias] = newId;
             tab.Id = newId;
         }
 
         contentType.Tabs = export.Tabs;
 
-        // Set PropertyType TabIds based on map, regenerate Ids, create alias map
+        // Set PropertyType TabIds based on map, keep or make ids, create alias map
         var propMap = new Dictionary<string, Guid>();
         foreach (var prop in export.ContentProperties)
         {
-            var newId = Guid.NewGuid().NewSequentialGuid();
+            var key = prop.Alias ?? prop.Name ?? string.Empty;
+            var newId = existingPropertyIds.Remove(key, out var keptId) ? keptId : Guid.NewGuid().NewSequentialGuid();
             prop.Id = newId;
-            propMap[prop.Alias ?? prop.Name ?? string.Empty] = newId;
+            propMap[key] = newId;
             if (!string.IsNullOrEmpty(prop.TabAlias) && tabMap.TryGetValue(prop.TabAlias, out var newTabId))
             {
                 prop.TabId = newTabId;
@@ -2006,7 +2031,16 @@ public partial class ContentService(
             await ImportContentRecursive(rootExp, null, contentType, dbContext, user, propMap, handlerResult);
         }
 
-        await dbContext.SaveChangesAsync();
+        // One save for the imported content and its tag links, with the save hooks
+        await ContentTagLinks.StageAsync(dbContext, extensionManager, dbContext.Contents.Local.ToList(),
+            CancellationToken.None);
+        var contentResult = await dbContext.SaveChangesAndLog(Array.Empty<Models.Content>(), null,
+            new HandlerResult<Models.Content>(), cacheService, extensionManager, CancellationToken.None);
+        if (!contentResult.Success)
+        {
+            typeResult.Success = false;
+            typeResult.Messages.AddRange(contentResult.Messages);
+        }
 
         return typeResult;
     }
@@ -2030,7 +2064,8 @@ public partial class ContentService(
             SortOrder = exp.SortOrder,
             ViewComponent = exp.ViewComponent,
             ParentId = parentId,
-            LastUpdatedById = user?.Id ?? Guid.Empty,
+            // Nobody signed in records no user (D27); Guid.Empty would point at no account
+            LastUpdatedById = user?.Id,
             DateCreated = DateTime.UtcNow,
             DateUpdated = DateTime.UtcNow
         };
@@ -2441,6 +2476,44 @@ public partial class ContentService(
         return descendants;
     }
 
+    /// <summary>
+    /// Gives the item's pending draft the URL a restore had to change: the editor shows the draft's URL, so the
+    /// draft would otherwise be refused on publish for a URL another page now has (ZA-144).
+    /// </summary>
+    private static async Task KeepDraftUrlAsync(IZauberDbContext dbContext, Models.Content item,
+        CancellationToken cancellationToken)
+    {
+        if (item.UnpublishedContentId is not { } draftId) return;
+        var draft = await dbContext.UnpublishedContent.FirstOrDefaultAsync(x => x.Id == draftId, cancellationToken);
+        if (draft == null) return;
+#pragma warning disable CS0618 // Type or member is obsolete
+        draft.JsonContent.Url = item.Url;
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    /// <summary>The ids of every item below <paramref name="contentId"/> (recycled ones included), nearest first,
+    /// without loading the rows.</summary>
+    private static async Task<List<Guid>> GetDescendantIdsAsync(IZauberDbContext dbContext, Guid contentId,
+        CancellationToken cancellationToken)
+    {
+        var ids = new List<Guid>();
+        var seen = new HashSet<Guid> { contentId };
+        var level = new List<Guid> { contentId };
+        while (level.Count > 0)
+        {
+            var parentIds = level;
+            var children = await dbContext.Contents.AsNoTracking()
+                .Where(c => c.ParentId != null && parentIds.Contains(c.ParentId.Value))
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+
+            level = children.Where(seen.Add).ToList();
+            ids.AddRange(level);
+        }
+
+        return ids;
+    }
+
     private static async Task UpdateContentRolesAsync(IZauberDbContext dbContext, Models.Content content,
         SaveContentParameters request, CancellationToken cancellationToken)
     {
@@ -2508,19 +2581,17 @@ public partial class ContentService(
         return await query.ToPaginatedListAsync(1, int.MaxValue, cancellationToken);
     }
 
-    private static async Task SaveAuditIfUser(IZauberDbContext dbContext, User? user, string? name, string action,
-        CancellationToken cancellationToken)
+    /// <summary>
+    /// Stages the audit row of a change; the change's own save writes it, so a vetoed or failed change leaves none,
+    /// and the save hooks still see the change's rows as added, modified or deleted (ZA-012). Nobody signed in, no row.
+    /// </summary>
+    private static void AddAuditIfUser(IZauberDbContext dbContext, User? user, string? name, string action)
     {
         if (user == null) return;
-        await SaveAuditAsync(dbContext, $"{user.Name} {action} {name ?? string.Empty}", cancellationToken);
-    }
-
-    private static async Task SaveAuditAsync(IZauberDbContext dbContext, string description,
-        CancellationToken cancellationToken)
-    {
-        // Inline minimal audit creation to avoid Mediator usage in services
-        dbContext.Audits.Add(new ZauberCMS.Core.Audit.Models.Audit { Description = description });
-        await dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Audits.Add(new ZauberCMS.Core.Audit.Models.Audit
+        {
+            Description = $"{user.Name} {action} {name ?? string.Empty}"
+        });
     }
 
     public async Task<HandlerResult<int>> CleanupOrphanedRelatedContentAsync(

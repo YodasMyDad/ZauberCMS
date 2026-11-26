@@ -11,6 +11,7 @@ using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
+using ZauberCMS.Core.Tags.Services;
 
 namespace ZauberCMS.Core.Content.Services;
 
@@ -40,6 +41,12 @@ public class ContentVersioningService(
             return handlerResult;
         }
 
+        // One transaction (disposed without a commit, it rolls back), the page row locked first: two versions of
+        // one page at the same moment run one after the other, each reading the page, numbering itself and switching
+        // the old flag after the other has committed (ZA-146)
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await LockContentRowAsync(dbContext, parameters.Content.Id, cancellationToken);
+
         var content = await dbContext.Contents
             .Include(c => c.PropertyData)
             .Include(c => c.ContentType)
@@ -50,11 +57,6 @@ public class ContentVersioningService(
             handlerResult.AddMessage("Content not found", ResultMessageType.Error);
             return handlerResult;
         }
-
-        // Get next version number
-        var maxVersion = await dbContext.ContentVersions
-            .Where(v => v.ContentId == content.Id)
-            .MaxAsync(v => (int?)v.VersionNumber, cancellationToken) ?? 0;
 
         // A draft version records the draft: its name and values are in the stored draft, while the live row
         // still has the published ones (ZA-074). Where the page sits in the tree comes from the live row.
@@ -73,7 +75,7 @@ public class ContentVersioningService(
         var version = new ContentVersion
         {
             ContentId = content.Id,
-            VersionNumber = maxVersion + 1,
+            // Numbered below, under the lock
             VersionName = parameters.VersionName,
             Status = parameters.Status,
             Comments = parameters.Comments,
@@ -108,31 +110,33 @@ public class ContentVersioningService(
             version.DatePublished = null;
         }
 
-        dbContext.ContentVersions.Add(version);
-
         // The version records the content as it is; it is not written back to it (that only touched DateUpdated,
         // the concurrency token, so the next save of the copy the editor holds was refused)
 
         // A page has one current published version and one latest draft (unique indexes). The old flag is switched
-        // off in the database first, in the same transaction: in one save the order of the two writes is not fixed.
-        HandlerResult<ContentVersion> result;
-        await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
+        // off and saved first, in the same transaction: in one save the order of the two writes is not fixed.
+        version.VersionNumber = (await dbContext.ContentVersions
+            .Where(v => v.ContentId == content.Id)
+            .MaxAsync(v => (int?)v.VersionNumber, cancellationToken) ?? 0) + 1;
+
+        var cleared = await ClearFlagsAsync(dbContext, content.Id, version.IsCurrentPublished,
+            version.IsLatestDraft, null, cancellationToken);
+        if (!cleared.Success)
         {
-            if (version.IsCurrentPublished)
-            {
-                await ClearCurrentPublishedFlagAsync(dbContext, content.Id, null, cancellationToken);
-            }
+            handlerResult.Messages.AddRange(cleared.Messages);
+            return handlerResult;
+        }
 
-            if (version.IsLatestDraft)
-            {
-                await ClearLatestDraftFlagAsync(dbContext, content.Id, cancellationToken);
-            }
-
-            result = await dbContext.SaveChangesAndLog(version, handlerResult, cacheService, extensionManager, cancellationToken);
-            if (result.Success)
-            {
-                await transaction.CommitAsync(cancellationToken);
-            }
+        dbContext.ContentVersions.Add(version);
+        var result = await dbContext.SaveChangesAndLog(version, handlerResult, cacheService, extensionManager,
+            cancellationToken);
+        if (result.Success)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
+        else
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
         }
 
         // Invalidate content cache. Cache keys are formatted "{TypeName}-{hash}" (see
@@ -173,6 +177,22 @@ public class ContentVersioningService(
             return handlerResult;
         }
 
+        // One transaction from here (disposed without a commit, it rolls back). The page row is locked first, so a
+        // version saved for the page at the same moment waits (ZA-146); the old published version's flag is switched
+        // off and saved before anything else changes, so the save hooks see it and the unique index holds.
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await LockContentRowAsync(dbContext, content.Id, cancellationToken);
+        if (content.Published || version.IsCurrentPublished)
+        {
+            var cleared = await ClearFlagsAsync(dbContext, content.Id, currentPublished: true, latestDraft: false,
+                keepVersionId: version.Id, cancellationToken);
+            if (!cleared.Success)
+            {
+                handlerResult.Messages.AddRange(cleared.Messages);
+                return handlerResult;
+            }
+        }
+
         // The blocks the content reaches now, live and through drafts, before the restore changes its values
         var tree = new NestedContentTree(dbContext, extensionManager, logger);
         var storedContent = (await tree.LoadAsync([content.Id], cancellationToken))[content.Id];
@@ -185,7 +205,7 @@ public class ContentVersioningService(
 
         if (content.Published)
         {
-            // The restored values are what is live now (the old flag is cleared in the save's transaction below)
+            // The restored values are what is live now (the old flag was switched off above)
             version.Status = ContentVersionStatus.Published;
             version.IsCurrentPublished = true;
             version.DatePublished = DateTime.UtcNow;
@@ -236,34 +256,21 @@ public class ContentVersioningService(
             Description = $"{userName ?? "Unknown"} Restored {content.Name} to version {version.VersionNumber}"
         });
 
-        // Through SaveChangesAndLog so content save hooks run and the content cache is cleared, in one transaction
-        // with the audit row
-        var contentResult = new HandlerResult<Models.Content>();
-        await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
-        {
-            try
-            {
-                if (version.IsCurrentPublished)
-                {
-                    await ClearCurrentPublishedFlagAsync(dbContext, content.Id, version.Id, cancellationToken);
-                }
+        // The restored values set the tag links, as a publish does
+        await ContentTagLinks.StageAsync(dbContext, extensionManager, [content, .. restoredBlocks.Values],
+            cancellationToken);
 
-                contentResult = await dbContext.SaveChangesAndLog(content, contentResult, cacheService,
-                    extensionManager, cancellationToken);
-                if (contentResult.Success)
-                {
-                    await transaction.CommitAsync(cancellationToken);
-                }
-                else
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                }
-            }
-            catch
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
+        // Through SaveChangesAndLog so the save hooks run for every row the restore writes (the page, its blocks,
+        // their drafts, the version, the audit row) and the content cache is cleared
+        var contentResult = await dbContext.SaveChangesAndLog(content, new HandlerResult<Models.Content>(),
+            cacheService, extensionManager, cancellationToken);
+        if (contentResult.Success)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
+        else
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
         }
 
         handlerResult.Success = contentResult.Success;
@@ -423,10 +430,11 @@ public class ContentVersioningService(
         }
 
         dbContext.ContentVersions.Remove(version);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        handlerResult.Success = true;
-        handlerResult.Entity = true;
+        var deleted = await dbContext.SaveChangesAndLog(version, new HandlerResult<ContentVersion>(), cacheService,
+            extensionManager, cancellationToken);
+        handlerResult.Success = deleted.Success;
+        handlerResult.Messages.AddRange(deleted.Messages);
+        handlerResult.Entity = deleted.Success;
 
         return handlerResult;
     }
@@ -508,18 +516,41 @@ public class ContentVersioningService(
 
     #region Private Methods
 
-    // Run straight against the database (inside the caller's transaction), before the new flag is saved
-    private static Task ClearCurrentPublishedFlagAsync(IZauberDbContext dbContext, Guid contentId, Guid? keepVersionId,
+    /// <summary>
+    /// Locks the page's row until the caller's transaction ends (an update that changes nothing), so two version
+    /// writes for one page run one after the other on every database provider (ZA-146).
+    /// </summary>
+    private static Task LockContentRowAsync(IZauberDbContext dbContext, Guid contentId,
         CancellationToken cancellationToken) =>
-        dbContext.ContentVersions
-            .Where(v => v.ContentId == contentId && v.IsCurrentPublished && v.Id != keepVersionId)
-            .ExecuteUpdateAsync(s => s.SetProperty(v => v.IsCurrentPublished, false), cancellationToken);
+        dbContext.Contents.Where(c => c.Id == contentId)
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.DateUpdated, c => c.DateUpdated), cancellationToken);
 
-    private static Task ClearLatestDraftFlagAsync(IZauberDbContext dbContext, Guid contentId,
-        CancellationToken cancellationToken) =>
-        dbContext.ContentVersions
-            .Where(v => v.ContentId == contentId && v.IsLatestDraft)
-            .ExecuteUpdateAsync(s => s.SetProperty(v => v.IsLatestDraft, false), cancellationToken);
+    /// <summary>
+    /// Switches the page's current-published and/or latest-draft flag off on its other versions and saves that on
+    /// its own (inside the caller's transaction), through the save hooks, before the new flag is saved: a page has one
+    /// of each (unique indexes), and in one save the order of the two writes is not fixed.
+    /// </summary>
+    private async Task<HandlerResult<ContentVersion>> ClearFlagsAsync(IZauberDbContext dbContext, Guid contentId,
+        bool currentPublished, bool latestDraft, Guid? keepVersionId, CancellationToken cancellationToken)
+    {
+        var result = new HandlerResult<ContentVersion> { Success = true };
+        if (!currentPublished && !latestDraft) return result;
+
+        var flagged = await dbContext.ContentVersions.AsTracking()
+            .Where(v => v.ContentId == contentId && v.Id != keepVersionId &&
+                        ((currentPublished && v.IsCurrentPublished) || (latestDraft && v.IsLatestDraft)))
+            .ToListAsync(cancellationToken);
+        if (flagged.Count == 0) return result;
+
+        foreach (var previous in flagged)
+        {
+            if (currentPublished) previous.IsCurrentPublished = false;
+            if (latestDraft) previous.IsLatestDraft = false;
+        }
+
+        return await dbContext.SaveChangesAndLog(flagged, null, result, cacheService, extensionManager,
+            cancellationToken);
+    }
 
     // Mutates entities tracked by the supplied dbContext so the caller's save persists them.
     // Only what an editor edits comes back: name, navigation settings and property values. Tree position

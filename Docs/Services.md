@@ -134,15 +134,26 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
 1. Load the tracked entity (or create one: `Id = Guid.NewGuid().NewSequentialGuid()`).
 2. `parameters.X.MapTo(entity)` — new properties must be added to `MapTo`.
 3. Set `LastUpdatedById`, `DateUpdated = DateTime.UtcNow`.
-4. `await dbContext.SaveChangesAndLog(entity, handlerResult, cacheService, extensionManager, cancellationToken)`:
-   runs `IBeforeEntitySave<T>` (can veto) → saves → clears cache prefix `typeof(T).Name` → runs `IAfterEntitySave<T>`.
-   It catches exceptions into `Success = false`.
-5. Clear related prefixes yourself (`cacheService.ClearCachedItemsWithPrefix(nameof(Related))`) — e.g. tags and
-   languages do this. Prefix match is `StartsWith`: `"Content"` also clears `ContentType-…`, `ContentVersion-…`.
-6. Multi-entity writes: `await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken)`.
-   The `SaveChangesAndLog(entities, resultEntity, …)` overload saves once and runs the hooks for each listed entity
-   with its own state (added, modified, deleted); a concurrency conflict comes back as a user-readable error.
-7. Content saves set the original `DateUpdated` (optimistic concurrency) and handle `DbUpdateConcurrencyException`.
+4. `await dbContext.SaveChangesAndLog(entity, handlerResult, cacheService, extensionManager, cancellationToken)`
+   saves every pending change on the context once, with the save hooks (Roadmap D28): `IBeforeEntitySave<T>` for
+   every row the save writes, of every entity type (from the change tracker), each with its own state (added,
+   modified, deleted) → one `SaveChanges` → the cache prefix of `T` and of every type written cleared →
+   `IAfterEntitySave<T>` for the same rows (any `true` saves once more, without hooks). The named entity's hooks run
+   first, even when it has no changes. **One `false` from a before-save hook and nothing is written**: a move,
+   recycle, restore, delete or emptied bin is one change. A concurrency conflict comes back as a user-readable
+   error; other exceptions as `Success = false`.
+5. Stage everything first, save once. Don't call `SaveChangesAsync` before it (an audit row saved early wrote the
+   change too, so the hooks saw `Unchanged` and a veto could not stop it — ZA-012): add the audit row to the context
+   and let the change's save write it. Clear related prefixes yourself
+   (`cacheService.ClearCachedItemsWithPrefix(nameof(Related))`). Prefix match is `StartsWith`: `"Content"` also
+   clears `ContentType-…`, `ContentVersion-…`.
+6. Multi-entity writes: `await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken)`, so
+   a second save an after-save hook asks for, or two saves that must be in order (a version's old flag, then the new
+   one), commit together. The `SaveChangesAndLog(entities, resultEntity, …)` overload names several entities.
+7. Content saves set the original `DateUpdated` (optimistic concurrency).
+8. After-save hooks run inside the caller's transaction, before the commit: a change rolled back after them (a
+   media file that can't be removed) has been reported to them already (ZA-163). Bulk maintenance that runs straight
+   against the database has no hooks: audit and version retention, orphan clean-up.
 
 ## Deletes
 
@@ -172,8 +183,8 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   files go before the commit, and one that can't be removed rolls the rows back, because a file left without its row
   is served to anyone. A file another media row still points at is kept. `EmptyMediaRecycleBinAsync` does the same
   for the whole bin and keeps a binned folder that still holds live media. `IBeforeEntitySave<Media>` /
-  `IAfterEntitySave<Media>` run for the item the call names, not for the items below it, and not at all when the
-  bin is emptied. `GetMediaUsageAsync` finds the content and members whose property values contain the media's id
+  `IAfterEntitySave<Media>` run for every item binned, restored or deleted, the items below the named one and an
+  emptied bin's included; a veto on any of them stops the whole call (D28). `GetMediaUsageAsync` finds the content and members whose property values contain the media's id
   (pickers, and the `media/{id}/` folder of a disk file) or URL: a scan of every property value, for a delete
   confirmation, never for a hot path; drafts are not searched.
   Recycled media is not served: `RestrictedMediaMiddleware` answers 404 to anyone but an administrator, unless a live
@@ -190,7 +201,16 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   `UnpublishedContentId`, whatever the caller's copy says. The editor shows a
   draft with `MapDraftTo`, so tree position, language and dates always come from the live row (a block's draft also
   carries its publish switch: `MapBlockDraftTo`). `ClearUnpublishedContentAsync` also drops the drafts of the page's
-  blocks and deletes blocks only its draft used.
+  blocks and deletes blocks only its draft used. A "Save only" runs the `UnpublishedContent` save hooks for the
+  drafts it writes; the `Content` hooks see only the live rows it changes (the link to the draft, a new block's row)
+  (D29). A restore that gives a page a new URL gives its draft that URL too.
+- Tags: an item's tag links (`TagItem`, read by `QueryContentParameters.TagSlugs`) are written by the save that
+  publishes its values (save, version restore, copy, import), in the same transaction, from the values of the
+  properties whose editor has an `ITagReferenceProvider` (discovered; the built-in one reads `ZauberCMS.Tags`). A draft
+  leaves them; a permanent delete removes them; a tag id that no longer exists is skipped. An item whose type has no
+  tag property keeps links set through `ITagService.SaveTagItemAsync`. Property editors don't write to the database.
+- Content type import over an existing alias keeps the ids of the tabs and properties it already has (matched by
+  alias), so stored values stay attached.
 - Versions: a draft version records the stored draft, and its blocks' drafts. Restoring a version
   (`PublishVersionAsync`) brings back name, navigation settings, property values and blocks only — not tree position,
   language or publish state — discards the pending drafts of the page and its blocks, deletes blocks the version does
