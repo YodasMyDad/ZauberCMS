@@ -9,7 +9,7 @@ namespace ZauberCMS.Components.Editors.Models;
 /// Opening a block opens a child scope of the editor it was opened from: what is edited there, blocks inside it
 /// included, stays in that scope until its editor is saved (<see cref="Commit"/>, into the parent scope) or cancelled
 /// (<see cref="Rollback"/>, gone). Nothing reaches the database until the page is saved, and then every block edit
-/// goes in that one save (<c>IContentService.SaveContentTreeAsync</c> with the root scope's <see cref="Drafts"/>).
+/// goes in that one save (<c>IContentService.SaveContentAsync</c> with the root scope's <see cref="Drafts"/> as <c>Blocks</c>).
 /// <para>
 /// Which blocks a list holds, and their order, lives in the list's property value on the item that owns it, as it
 /// always did; a scope only holds the edited blocks themselves. A block that was removed, or whose edit was cancelled

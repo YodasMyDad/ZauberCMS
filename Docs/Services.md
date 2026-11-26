@@ -98,11 +98,12 @@ Cached results must be no-tracking and must not depend on user/culture unless th
   (recycle-bin purge). Content hard delete also removes the blocks of every deleted item (those its draft reaches
   too) in the same transaction, and notifies with the deleted item. Blocks are found through
   `INestedContentReferenceProvider` (→ [BlockListEditor.md](BlockListEditor.md) §2).
-- A page and its blocks are saved with `SaveContentTreeAsync` (the admin editor does): one transaction, blocks no
-  longer reached deleted with everything below them, one audit row and one version after the blocks are written; with
-  `SaveUnpublishedOnly` the page and its edited blocks get drafts and the live site stays as it is. It raises no
-  events. A copy opened before someone else's "Save only" is refused. `SaveContentAsync` saves one item and leaves
-  its blocks alone (their drafts too: the next tree save publishes them, "Clear changes" drops them).
+- `SaveContentAsync` saves an item's values together with its blocks (`SaveContentParameters.Blocks` = the blocks
+  added or edited; the admin editor passes its edits, other code usually none): one transaction, blocks no longer
+  reached deleted with everything below them, the blocks' pending drafts published, one audit row and one version
+  after the blocks are written; with `SaveUnpublishedOnly` the item and its edited blocks get drafts and the live
+  site stays as it is. It raises no events. A copy opened before someone else's "Save only" is refused. A save with
+  `ExcludePropertyData` (sort, move, restore, restrict, culture) leaves values and blocks alone.
 - Content and its tree (Phase 5): recycling a page recycles every page below it, all stamped with one `DateUpdated`;
   a save that sets `Deleted = false` (the bin's Restore) restores the pages with that stamp — a page binned on its
   own earlier stays in the bin — and gives a page whose URL was taken meanwhile a `-1` suffix (warning message).

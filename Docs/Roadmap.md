@@ -13,7 +13,7 @@
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
   2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
-  **85 open findings** (0 Critical, 3 High, 34 Medium, 48 Low). **Next: Phase 10.**
+  **84 open findings** (0 Critical, 3 High, 34 Medium, 47 Low). **Next: Phase 10.**
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -426,7 +426,7 @@
 - What was built (no schema change, no new setting):
   - **Edit session**: `ContentEditScope`. The page editor holds the root scope; every block side panel gets a child
     scope that the list commits on Save and rolls back on Cancel or close. Nothing is stored until the page is saved.
-  - **One save**: `IContentService.SaveContentTreeAsync` saves the page and every block edited below it in one
+  - **One save**: `IContentService.SaveContentAsync` (with the new `SaveContentParameters.Blocks`) saves the page and every block edited below it in one
     transaction, deletes blocks no longer reached (with everything below), one audit row, one version taken after the
     blocks are written. "Save only" of a published page gives the page and its edited blocks drafts; the live site
     doesn't change until publish, which also publishes the blocks' drafts. Clear changes and version restore handle
@@ -443,13 +443,13 @@
   found and fixed or documented, see the audit section below), and the editor was checked in a browser four levels
   deep (FAQ → item → FAQ → item), with a site stylesheet on level 3.
 - Schema: none. Public API:
-  - Added: `IContentService.SaveContentTreeAsync`, `SaveContentTreeParameters`, `INestedContentReferenceProvider`,
+  - Added: `SaveContentParameters.Blocks`, `INestedContentReferenceProvider`,
     `BlockListNestedContentReferenceProvider`, `ContentMappingExtensions.MapBlockDraftTo`, the many-entity
     `SaveChangesAndLog` overload, `ContentEditScope`, `BlockPreview`, `ContentEditor.EditScope`,
     `BlockListItem.PreviewContent`. `CopyContentAsync` now returns the copy as `Entity`.
   - Obsolete (never called now): `ISupportsBlockListChanges`, `BlockListChanges`, `ContentEditor.OnBlockListChanges`,
     `DynamicContentProperty.ChangesPending`, `RenderBlock.Stylesheets`.
-  - Breaking (D18): `IContentService` has a new member; `BlockListState` lost its change tracking (`AddedItems`,
+  - Breaking (D18): `BlockListState` lost its change tracking (`AddedItems`,
     `UpdatedItems`, `DeletedItems`, `GetChanges`, `MergeNestedChanges`); `BlockListEditorProperty` no longer
     implements `ISupportsBlockListChanges`; `RenderBlock` lost its injected `JsRuntime`/`Logger` properties;
     `shadow-dom.js` (and its global `initializeShadowDOMWithMultipleStylesheets`) is replaced by `block-preview.js`.
@@ -470,8 +470,15 @@
     a change to its own item (with a warning when that drops unsaved block edits).
   - A "Save only" (or publish) from a copy opened before someone else's "Save only" is refused instead of overwriting
     that draft.
-- Not done: `SaveContentAsync` (one item) still publishes a page's own draft without its blocks' drafts (the next tree
-  save or Clear changes deals with them); Clear changes and version restore don't run save hooks per block. Logged.
+  - `SaveContentAsync` of an item's values now saves it with its blocks: publishing a page from code also publishes
+    its blocks' pending drafts and deletes blocks the page no longer uses; a "Save only" of an item that was never
+    saved is refused; `IBeforeEntitySave<Content>` / `IAfterEntitySave<Content>` now get Added/Modified (before:
+    Unchanged) and a veto stops the save.
+- Owner decision (2026-11-26, after the review): one save method. Every `SaveContentAsync` of an item's values goes
+  through the page-with-blocks save (the briefly added `SaveContentTreeAsync` was folded in before release), so code
+  that publishes a page also publishes its blocks' drafts and removes unused blocks (fixes ZA-158), and content saves
+  run the save hooks with the right state (most of ZA-012). Saves with `ExcludePropertyData` keep their own path.
+- Not done: Clear changes and version restore don't run save hooks per block (ZA-159).
 - Tests: `ContentTreeSaveTests` (Core, 22 per database: nested add, removal with subtree, two lists, cancelled and
   re-edited blocks, all-or-nothing, drafts with publish and clear at depth, stale draft refused, version restore
   incl. an old-style version, delete, copy, the 20-level limit), `ContentEditScopeTests`, `BlockListStateTests`.

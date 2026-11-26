@@ -10,16 +10,16 @@ namespace ZauberCMS.Core.Content.Interfaces;
 public interface IContentService
 {
     Task<Models.Content?> GetContentAsync(GetContentParameters parameters, CancellationToken cancellationToken = default);
-    Task<HandlerResult<Models.Content>> SaveContentAsync(SaveContentParameters parameters, CancellationToken cancellationToken = default);
-
     /// <summary>
-    /// Saves a content item and its blocks as one change: one transaction, one audit entry, one version taken after
-    /// the blocks are written. Blocks the new values no longer reach are deleted with everything below them. With
-    /// <see cref="SaveContentTreeParameters.SaveUnpublishedOnly"/> the item and its blocks get drafts and the live
-    /// site does not change; without it, pending drafts of the item's blocks are published too.
-    /// Does not raise <c>AppState</c> events; the caller does, once, for the item.
+    /// Creates or updates a content item. A save of its values saves the item and its blocks as one change: one
+    /// transaction, one audit entry, one version taken after the blocks are written; blocks the new values no longer
+    /// reach are deleted with everything below them (<see cref="SaveContentParameters.Blocks"/>). With
+    /// <see cref="SaveContentParameters.SaveUnpublishedOnly"/> the item and its edited blocks get drafts and the live
+    /// site does not change; without it, pending drafts of the item's blocks are published too. A save with
+    /// <see cref="SaveContentParameters.ExcludePropertyData"/> (sort, move, restore, …) changes only where or how
+    /// the item is shown. Does not raise <c>AppState</c> events; the caller does, once, for the item.
     /// </summary>
-    Task<HandlerResult<Models.Content>> SaveContentTreeAsync(SaveContentTreeParameters parameters, CancellationToken cancellationToken = default);
+    Task<HandlerResult<Models.Content>> SaveContentAsync(SaveContentParameters parameters, CancellationToken cancellationToken = default);
     Task<PaginatedList<Models.Content>> QueryContentAsync(QueryContentParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<Models.Content>> DeleteContentAsync(DeleteContentParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<Models.Content>> CopyContentAsync(CopyContentParameters parameters, CancellationToken cancellationToken = default);

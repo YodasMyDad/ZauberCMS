@@ -151,7 +151,7 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
 ## High-risk areas — read the doc before editing
 
 - **Block List editor & nested content** (`Editors/BlockList*`, `ContentEditScope`, `BlockPreview`, `ContentEditor.razor`
-  block mode and save, `SaveContentTreeAsync` / `NestedContentTree`, block snapshots). Block edits live in a
+  block mode and save, `SaveContentAsync` (`ContentService.Tree.cs`) / `NestedContentTree`, block snapshots). Block edits live in a
   `ContentEditScope` (child scope per side panel: commit on save, rollback on cancel) and the page is saved with its
   blocks in one transaction; Core finds blocks only through `INestedContentReferenceProvider`. Never save a block on its
   own from the editor, and don't revive the obsolete callback types. → [Docs/BlockListEditor.md](Docs/BlockListEditor.md)

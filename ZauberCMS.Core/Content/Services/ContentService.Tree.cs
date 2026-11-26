@@ -14,9 +14,12 @@ namespace ZauberCMS.Core.Content.Services;
 // Saving a page together with its blocks (Docs/BlockListEditor.md).
 public partial class ContentService
 {
-    /// <inheritdoc />
-    public async Task<HandlerResult<Models.Content>> SaveContentTreeAsync(SaveContentTreeParameters parameters,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// <see cref="SaveContentAsync"/> for a save of the item's values: the item and its blocks as one change (see
+    /// <see cref="SaveContentParameters.Blocks"/>).
+    /// </summary>
+    private async Task<HandlerResult<Models.Content>> SaveWithBlocksAsync(SaveContentParameters parameters,
+        CancellationToken cancellationToken)
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -131,8 +134,10 @@ public partial class ContentService
         }
         else
         {
-            var staged = await StageContentAsync(dbContext, user, new SaveContentParameters { Content = root },
-                handlerResult, validateBlockTypes: false, cancellationToken);
+            var staged = await StageContentAsync(dbContext, user, new SaveContentParameters
+            {
+                Content = root, Roles = parameters.Roles, UpdateContentRoles = parameters.UpdateContentRoles
+            }, handlerResult, validateBlockTypes: false, cancellationToken);
             if (staged == null)
             {
                 return handlerResult;

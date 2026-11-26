@@ -5,9 +5,9 @@ namespace ZauberCMS.Core.Content.Models;
 
 /// <summary>
 /// No longer used by ZauberCMS: the admin editor saves a page and its blocks together with
-/// <c>IContentService.SaveContentTreeAsync</c>, which works out what was added, changed and removed.
+/// <c>IContentService.SaveContentAsync</c> with <c>SaveContentParameters.Blocks</c>, which works out what was added, changed and removed.
 /// </summary>
-[Obsolete("Save the page with IContentService.SaveContentTreeAsync; it works out added, changed and removed blocks.")]
+[Obsolete("Save the page with IContentService.SaveContentAsync and SaveContentParameters.Blocks; it works out added, changed and removed blocks.")]
 public class BlockListChanges
 {
     public List<Content> AddedItems { get; set; } = [];

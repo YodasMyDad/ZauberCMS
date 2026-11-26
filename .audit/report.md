@@ -24,9 +24,9 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Critical | 0 | 1 | 0 |
 | High | 3 | 27 | 0 |
 | Medium | 34 | 39 | 0 |
-| Low | 48 | 6 | 1 |
+| Low | 47 | 7 | 1 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010 and ZA-034 … ZA-043 (Phase 9), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-160.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-160.
 
 ## Open findings
 
@@ -58,6 +58,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 - Where: `ContentService.cs:369,982-985` · Category: C
 - Reconciled 2026-11-25: same pattern on the recycle path (`ContentService.cs:497-498`).
+- Phase 9 (2026-11-26): content saves of values now go through the many-entity `SaveChangesAndLog` (hooks get Added/Modified and a veto stops the save). Still open for saves with `ExcludePropertyData` (sort, move, restore), the recycle path and ContentType saves.
 
 ### ZA-015 [Medium/High] `AddFluentValidation` never unsubscribes
 
@@ -506,15 +507,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Fix: run the hooks per item (a veto on one item would then have to stop the whole group). · Blocked by: design
   of the hooks for group changes.
 
-### ZA-158 [Low/High] The single-item save publishes a page's draft but not its blocks' drafts
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs` (`SaveContentAsync` → `StageContentAsync`) · Category: C · Since: 2026-11-26 (Phase 9 audit)
-- Issue / Trigger: code that publishes a page with `SaveContentAsync` (property data, no `SaveUnpublishedOnly`)
-  removes the page's draft but leaves the drafts of its blocks and the blocks only those drafts reach. Nothing is
-  lost: the next `SaveContentTreeAsync` walks them and publishes them, and "Clear changes" drops them. The admin
-  editor uses the tree save. Documented in `Docs/Services.md` and `Docs/BlockListEditor.md` §4.
-- Fix: have `SaveContentAsync` with property data publish or drop the blocks' drafts too (or route it through the
-  tree save). · Blocked by: behaviour change for existing callers; decide with the owner.
-
 ### ZA-159 [Low/High] Content save hooks don't run per block on Clear changes and version restore
 - Where: `ContentService.ClearUnpublishedContentAsync`, `ContentVersioningService.PublishVersionAsync` · Category: F · Since: 2026-11-26 (Phase 9 audit)
 - Issue / Trigger: blocks deleted by Clear changes, and blocks rewritten or deleted by a version restore, don't run
@@ -534,14 +526,14 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
     every value. Test: two lists both saved.
   - **ZA-036 [High] Nested update dropped when pending as added — fixed.** The newest draft wins in the scope; the
     skipped test is replaced by `Editing_a_block_again_keeps_the_newest_values` and a tree-save test.
-  - **ZA-038 [High] "Save only" saved blocks live — fixed.** `SaveContentTreeAsync` with `SaveUnpublishedOnly` gives
+  - **ZA-038 [High] "Save only" saved blocks live — fixed.** `SaveContentAsync` with `SaveUnpublishedOnly` gives
     edited blocks drafts and inserts new ones only the draft reaches; publish promotes block drafts; Clear changes and
     version restore drop them. Tests at depth 1 and 2; browser at depth 4.
   - **ZA-040 [High] Hard delete notified `null` to every editor — fixed.** Delete and version restore name the item;
     the editor reloads only for its own item, on `InvokeAsync`, and warns when that drops unsaved block edits.
   - **ZA-008 [Medium] Version taken before the blocks were saved — fixed.** One version after the commit, with the
     blocks as saved (draft versions record block drafts). Test.
-  - **ZA-009 [Medium] Block-list save not atomic — fixed.** `SaveContentTreeAsync`: one context and transaction;
+  - **ZA-009 [Medium] Block-list save not atomic — fixed.** `SaveContentAsync` with `Blocks`: one context and transaction;
     a failure on one block writes nothing. Test.
   - **ZA-010 [Medium] Block stylesheets leaked into the admin — fixed.** No global `<link>`; stylesheets go only into
     each preview's shadow root (`block-preview.js`).
@@ -564,7 +556,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
     racing, re-rendering on every reorder, rendering in parallel, and navigating away through links; an open
     panel's edit lost without a word when the page reloaded; editors reloading on unrelated events; Clear changes
     loading twice; block edit/delete not reachable by keyboard; custom editors' unsaved blocks missing in previews.
-    Logged: ZA-158, ZA-159.
+    Logged: ZA-159.
+  - **ZA-158 [Low] Publishing a page from code left its blocks' drafts — fixed (owner decision).** `SaveContentAsync`
+    of an item's values is the page-with-blocks save (`SaveContentParameters.Blocks`; the separate
+    `SaveContentTreeAsync` was folded in before release), so it publishes block drafts and deletes unused blocks.
+    Test: `Publishing_a_page_without_passing_blocks_publishes_its_block_drafts`.
 - **Phase 8 (2026-11-26): media recycle bin (D3).** How it works: [Docs/Services.md](../Docs/Services.md) "Deletes".
   - **ZA-006 [High] Media recycle bin had no UI — fixed.** Media section → Recycle Bin (`MediaRecycleBinTree`) with
     Restore, Delete permanently and Empty recycle bin (`ContextMenus/MediaRecycleBinMenus/`). Deleting moves an item

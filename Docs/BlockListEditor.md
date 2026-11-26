@@ -1,7 +1,7 @@
 # Block List Editor
 
 **High-risk area.** Read this before touching `ZauberCMS.Components/Editors/BlockList*`, `ContentEditScope`,
-`BlockPreview`, `ContentEditor.razor` (block mode and its save), `IContentService.SaveContentTreeAsync`
+`BlockPreview`, `ContentEditor.razor` (block mode and its save), `IContentService.SaveContentAsync`
 (`ContentService.Tree.cs`), `NestedContentTree`, `ContentExtensions.GetBlocks`, or block snapshots in
 `ContentVersioningService`.
 
@@ -29,7 +29,7 @@ tree through the providers, level by level, and is used by:
 
 | Operation | What it does with the tree |
 | --- | --- |
-| `SaveContentTreeAsync` | saves the blocks the new values reach, deletes the ones no longer reached |
+| `SaveContentAsync` (a save of values) | saves the blocks the new values reach, deletes the ones no longer reached |
 | `DeleteContentAsync` (permanent) | deletes the blocks of every deleted item, those its draft reaches too |
 | `ClearUnpublishedContentAsync` | drops the blocks' drafts and deletes blocks only the draft reached |
 | `CreateVersionAsync` | snapshots every block (a draft version records the blocks' drafts) |
@@ -49,7 +49,7 @@ snapshotted or cloned.
 | Open B2 inside B1 | same again, one level down |
 | Save in B2 | `EditScope.SetDraft(WorkingCopy)`, close Ok; B1's list `Commit()`s the child scope (B2's values move into B1's scope) and updates its value if B2 is new |
 | Cancel (or close) | the list `Rollback()`s the child scope: everything done inside, deeper blocks included, is gone |
-| Save the page | `SaveContentTreeAsync(WorkingCopy, RootScope.Drafts, SaveUnpublishedOnly)`; on success one `NotifyContentSaved(page)`, and the editor reloads from the database with a fresh scope |
+| Save the page | `SaveContentAsync` with `Content = WorkingCopy`, `Blocks = RootScope.Drafts`, `SaveUnpublishedOnly`; on success one `NotifyContentSaved(page)`, and the editor reloads from the database with a fresh scope |
 
 The scope only holds edited blocks. Which blocks a list holds, and their order, is the list's value on the item that
 owns it, so removing a block is just removing its id: the save deletes it (and everything below it) once nothing
@@ -58,7 +58,12 @@ reaches it. A draft left behind by a cancelled or removed edit is not reached an
 `ContentEditor` loads once per (`ContentId`, `ParentId`, `Content`, `EditScope`): stacked side panels hand their
 parameters in again on every render, and reloading would drop the panel's edits.
 
-## 4. Saving: `IContentService.SaveContentTreeAsync`
+## 4. Saving: `IContentService.SaveContentAsync`
+
+Every save of an item's values (any save without `ExcludePropertyData`) saves the item with its blocks:
+`SaveContentParameters.Blocks` lists the blocks that were added or edited (the editor passes its root scope's drafts;
+code that only changes the page passes none). Saves with `ExcludePropertyData` (sort, move, restore, restrict access,
+culture) change only where or how the item is shown and leave blocks alone. The steps of a save of values:
 
 One scope, one DbContext, one transaction:
 
@@ -78,9 +83,9 @@ One scope, one DbContext, one transaction:
    it does fire "Added"), commit, then **one** version of the page, taken after the blocks are written.
 
 It raises no `AppState` events; the editor raises one for the page. `AllowedElementTypeIds` is still a warning only,
-now checked for new blocks too. `SaveContentAsync` (one item) publishes a page's own draft but leaves its blocks'
-drafts; the next tree save publishes them (step 1 walks them), and "Clear changes" drops them. Clear changes and
-version restore delete and rewrite blocks without running the save hooks per block.
+now checked for new blocks too. Publishing a page from code without passing any blocks (an import, a site's own
+publish) publishes the whole page, its blocks' drafts included. Clear changes and version restore delete and rewrite
+blocks without running the save hooks per block.
 
 Restoring a version writes the version's blocks, drops the drafts of every block the restored values reach, and
 deletes only blocks the restored values no longer reach (a version made by the old editor may lack snapshots of

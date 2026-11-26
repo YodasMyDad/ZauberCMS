@@ -720,7 +720,7 @@ else
         }
 
         // The page and every block edited below it, in one save
-        var result = await ContentService.SaveContentTreeAsync(new SaveContentTreeParameters
+        var result = await ContentService.SaveContentAsync(new SaveContentParameters
         {
             Content = WorkingCopy,
             Blocks = RootScope.Drafts.ToList(),

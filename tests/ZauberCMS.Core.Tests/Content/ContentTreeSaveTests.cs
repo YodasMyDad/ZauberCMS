@@ -14,7 +14,7 @@ using ContentItem = ZauberCMS.Core.Content.Models.Content;
 namespace ZauberCMS.Core.Tests.Content;
 
 /// <summary>
-/// A page saved together with its blocks (<see cref="IContentService.SaveContentTreeAsync"/>), as the admin editor
+/// A page saved together with its blocks (<see cref="IContentService.SaveContentAsync"/> with blocks), as the admin editor
 /// saves it. The failure modes are in Docs/BlockListEditor.md §5.
 /// </summary>
 public class ContentTreeSaveTests : IAsyncLifetime
@@ -375,23 +375,31 @@ public class ContentTreeSaveTests : IAsyncLifetime
         Assert.Empty(await RowsAsync(added.Id));
     }
 
-    // SaveContentAsync publishes the page's draft but leaves its blocks' drafts: the editor must still save it
+    // ZA-158: code that publishes a page without passing any blocks (an import, a site's own publish) publishes the
+    // whole page, the drafts of its blocks included, and leaves no unused block rows
     [Fact]
-    public async Task A_page_published_with_the_single_item_save_can_still_be_saved_with_its_blocks()
+    public async Task Publishing_a_page_without_passing_blocks_publishes_its_block_drafts()
     {
         var (page, block) = await CreatePageWithBlockAsync("parent");
         var child = NewBlock("added in draft");
+        var removed = NewBlock("removed in draft");
+        var withRemoved = await LoadAsync(page.Id);
+        SetValue(withRemoved, "blocks", Ids(block, removed));
+        Assert.True((await SaveTreeAsync(withRemoved, [removed])).Success);
+
+        var draftPage = await LoadAsync(page.Id);
+        SetValue(draftPage, "blocks", Ids(block));
         var draftParent = await LoadAsync(block.Id);
         SetValue(draftParent, "children", Ids(child));
-        Assert.True((await SaveTreeAsync(await LoadAsync(page.Id), [draftParent, child], draftOnly: true)).Success);
-        var single = await WithContentService(async s => await s.SaveContentAsync(
-            new SaveContentParameters { Content = await LoadAsDraftAsync(page.Id) }, Ct));
-        Assert.True(single.Success, TestSite.Describe(single.Messages));
+        Assert.True((await SaveTreeAsync(draftPage, [draftParent, child], draftOnly: true)).Success);
 
-        var result = await SaveTreeAsync(await LoadAsync(page.Id), []);
+        var result = await WithContentService(async s => await s.SaveContentAsync(
+            new SaveContentParameters { Content = await LoadAsDraftAsync(page.Id) }, Ct));
 
         Assert.True(result.Success, TestSite.Describe(result.Messages));
         Assert.Equal(Ids(child), await StoredValueAsync(block.Id, "children"));
+        Assert.Empty(await RowsAsync(removed.Id));
+        Assert.Equal(0, await _site.QueryDatabaseAsync(db => db.UnpublishedContent.CountAsync(Ct)));
     }
 
     // Two editors with the same page open: the one that saves a draft later must not overwrite the other's draft
@@ -514,7 +522,7 @@ public class ContentTreeSaveTests : IAsyncLifetime
 
     private Task<HandlerResult<ContentItem>> SaveTreeAsync(ContentItem root, List<ContentItem> blocks,
         bool draftOnly = false) =>
-        WithContentService(s => s.SaveContentTreeAsync(new SaveContentTreeParameters
+        WithContentService(s => s.SaveContentAsync(new SaveContentParameters
         {
             Content = root, Blocks = blocks, SaveUnpublishedOnly = draftOnly
         }, Ct));

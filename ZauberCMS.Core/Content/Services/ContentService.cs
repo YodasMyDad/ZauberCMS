@@ -58,15 +58,17 @@ public partial class ContentService(
         return await FetchContentAsync(query, cancellationToken);
     }
 
-    /// <summary>
-    /// Creates or updates a content item, including property data and roles. Logs audit entries and invalidates cache.
-    /// </summary>
-    /// <param name="parameters">The content to save and related options.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Result including success state and messages.</returns>
+    /// <inheritdoc />
     public async Task<HandlerResult<Models.Content>> SaveContentAsync(SaveContentParameters parameters,
         CancellationToken cancellationToken = default)
     {
+        if (parameters.Content != null && !parameters.ExcludePropertyData)
+        {
+            // A save of the item's values is a save of the item with its blocks (ContentService.Tree.cs)
+            return await SaveWithBlocksAsync(parameters, cancellationToken);
+        }
+
+        // Sort, move, restore, restrict access, culture: where or how the item is shown, not its values or blocks
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
@@ -174,8 +176,7 @@ public partial class ContentService(
             }
         }
 
-        // Blocks are saved with their page by SaveContentTreeAsync, which the admin editor uses; this method saves
-        // one item. The version below snapshots the blocks as they are stored now.
+        // This path changes no values, so the blocks stay as they are; the version below snapshots them as stored.
 
         // Create version after successful save
         if (saveResult is { Success: true, Entity: not null })
