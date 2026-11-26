@@ -215,8 +215,9 @@ public static class ZauberSetup
         }
 
         // The provider is read when a scope first asks, so the database the installer has just written into
-        // appsettings.json is used without a restart. Each of these gets a context of its own, as before.
-        builder.Services.AddScoped(sp => (IZauberDbContext)ActivatorUtilities.CreateInstance(sp, ActiveContextType(sp)));
+        // appsettings.json is used without a restart. The services and the Identity stores share the scope's one
+        // context (the AddDbContext instance), so one SaveChanges or transaction covers both (ZA-011).
+        builder.Services.AddScoped(sp => (IZauberDbContext)sp.GetRequiredService(ActiveContextType(sp)));
         builder.Services.AddScoped(sp => (IUserStore<User>)ActivatorUtilities.CreateInstance(sp,
             typeof(UserStore<,,,,,,,,>).MakeGenericType(typeof(User), typeof(Role), ActiveContextType(sp), typeof(Guid),
                 typeof(UserClaim), typeof(UserRole), typeof(UserLogin), typeof(UserToken), typeof(RoleClaim))));

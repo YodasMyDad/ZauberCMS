@@ -24,7 +24,7 @@ public partial class ContentService
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await GetCurrentUserAsync(authState);
         var handlerResult = new HandlerResult<Models.Content>();
 
         var root = parameters.Content;

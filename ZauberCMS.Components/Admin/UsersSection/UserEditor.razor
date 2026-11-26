@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Components.Admin.UsersSection.Dialogs
 @using ZauberCMS.Core.Membership.Models
@@ -122,7 +123,7 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public DialogService DialogService { get; set; } = null!;
-    [Inject] public UserManager<User> UserManager { get; set; } = null!;
+    [Inject] public IServiceScopeFactory ScopeFactory { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public ValidateService<User> ValidateService { get; set; } = null!;
 
@@ -187,8 +188,12 @@
             if (identityResult.Succeeded)
             {
                 // Handle success
-                var user = await UserManager.FindByIdAsync(User.Id.ToString());
-                if (user != null) await UserManager.UpdateSecurityStampAsync(user);
+                // A UserManager for this change, not one that lives as long as the circuit and returns the user as
+                // it was first loaded (ZA-086)
+                await using var scope = ScopeFactory.CreateAsyncScope();
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+                var user = await userManager.FindByIdAsync(User.Id.ToString());
+                if (user != null) await userManager.UpdateSecurityStampAsync(user);
                 NotificationService.ShowSuccessNotification("Password Updated");
             }
             else

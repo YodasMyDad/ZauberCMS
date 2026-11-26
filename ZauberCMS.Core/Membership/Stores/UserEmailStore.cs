@@ -62,7 +62,8 @@ namespace ZauberCMS.Core.Membership.Stores
                     // TODO: dispose managed state (managed objects)
                 }
 
-                db.Dispose();
+                // The context belongs to the DI scope (and is the one the services and Identity share, ZA-011):
+                // disposing it here would break them
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 // TODO: set large fields to null

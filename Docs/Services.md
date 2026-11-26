@@ -40,8 +40,10 @@ using var scope = serviceScopeFactory.CreateScope();
 var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 ```
 
-Don't hold a context beyond the method. Identity (`UserManager`/`RoleManager`) uses a **different** context instance
-from `IZauberDbContext` (see Standards → known deviations): don't expect one `SaveChanges` to commit both.
+Don't hold a context beyond the method. Within one scope, `IZauberDbContext` and Identity's stores
+(`UserManager`/`RoleManager` resolved from that scope) share one context (Phase 10, ZA-011), so a transaction
+covers both. Resolve `UserManager` from the operation's scope, not by constructor injection into a service: a
+circuit's one lives as long as the circuit and returns users as first loaded (ZA-086).
 
 ## Read path
 

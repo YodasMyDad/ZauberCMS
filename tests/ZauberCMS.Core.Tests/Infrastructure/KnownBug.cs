@@ -7,6 +7,4 @@ namespace ZauberCMS.Core.Tests.Infrastructure;
 /// </summary>
 public static class KnownBug
 {
-    public const string Za011 =
-        "ZA-011 (open): Identity and the services get two different DbContext instances per scope.";
 }

@@ -157,16 +157,25 @@ else
         AppState.OnContentChanged -= HandleContentChanged;
     }
 
-    private async Task HandleContentSaved(ZauberCMS.Core.Content.Models.Content? content, string username)
-    {
-        // Refresh versions when any content is saved
-        await LoadVersionsAsync();
-    }
+    // Events come from every admin circuit, on the publisher's thread: only this item's, on this circuit (ZA-080)
+    private Task HandleContentSaved(ZauberCMS.Core.Content.Models.Content? content, string username)
+        => ReloadIfOwnAsync(content);
 
-    private async Task HandleContentChanged(ZauberCMS.Core.Content.Models.Content? content, string username)
+    private Task HandleContentChanged(ZauberCMS.Core.Content.Models.Content? content, string username)
+        => ReloadIfOwnAsync(content);
+
+    private Task ReloadIfOwnAsync(ZauberCMS.Core.Content.Models.Content? content)
     {
-        // Refresh versions when any content changes
-        await LoadVersionsAsync();
+        if (content?.Id != ContentId)
+        {
+            return Task.CompletedTask;
+        }
+
+        return InvokeAsync(async () =>
+        {
+            await LoadVersionsAsync();
+            StateHasChanged();
+        });
     }
 
     private async Task LoadVersionsAsync()

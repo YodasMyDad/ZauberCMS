@@ -150,7 +150,6 @@ CI running tests and `dotnet list package --vulnerable`.
 | Pattern in code | Target | Example |
 | --- | --- | --- |
 | `IServiceScopeFactory` scope per method + `GetRequiredService` inside services | `IDbContextFactory<T>` / constructor injection (planned refactor) | `Content/Services/ContentService.cs` |
-| `AddDbContext` + separate `AddScoped<IZauberDbContext>` → two contexts per scope (Identity has its own tracker) | single registration | `ZauberSetup.cs` DbContext and store registrations |
 | `SaveChangesAndLog` swallows exceptions into UI message text | log + generic message | `Extensions/DbContextExtensions.cs` |
 | Static `Serilog.Log.*` alongside `ILogger<T>` | `ILogger<T>` only | `DbContextExtensions.cs`, `ZauberSetup.cs` |
 | `ToLower()` search comparisons | provider-safe comparisons | `ContentService`, `MembershipService` |

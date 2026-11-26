@@ -13,8 +13,8 @@
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
   2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
-  **Phase 10 in progress** (performance & async): steps A, B and C done.
-  **71 open findings** (0 Critical, 0 High, 23 Medium, 48 Low). **Next: Phase 10 step D** (ZA-080, ZA-086, ZA-011).
+  **Phase 10 done** (performance & async, 2026-11-26).
+  **68 open findings** (0 Critical, 0 High, 20 Medium, 48 Low). **Next: Phase 10a** (service authorisation, design with the owner first).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -514,6 +514,10 @@ Done so far (2026-11-26), in steps:
   context menus and Public Access on a tree node, expanded nodes kept open after a refresh, the three structure trees,
   the recycle bin. Not clicked: the recycle bin's own "Show more" (no 100 binned items), the pickers in dialogs (same
   component), a list editor on a content-type data source.
+- **Step D — circuits and contexts** (ZA-080, ZA-086, ZA-011): the version panel reloads only for its own page on
+  the circuit's dispatcher; `UserManager` is resolved per operation in services; one DbContext per scope shared by the
+  services and Identity. Not done: replacing scope-per-method with `IDbContextFactory` everywhere (no finding asks
+  for more than one context per scope; it stays in Standards → Known deviations, for Phase 11 if wanted).
 - Tests: `QueryAndCacheTests` (Core, all three databases). Not covered by a test: the upload streaming (needs an
   `IBrowserFile`), the sitemap generator (a hosted service), the per-request view discovery (build only).
 - **Release notes (D18):**
@@ -532,6 +536,10 @@ Done so far (2026-11-26), in steps:
     carry property values or children (a custom `ITreeContextMenu` that read them loads the item by id); content
     pickers' trees now list unpublished root pages too. `ContentTree`/`MediaTree` refresh themselves; a section
     that passed `Data` no longer needs to. The list editors load their data source after the first render.
+  - Step D: `ContentService` and `EmailService` constructors no longer take `UserManager<User>` (subclasses
+    change their base call). Within one DI scope the services and Identity now share one DbContext: a `SaveChanges`
+    on `IZauberDbContext` also saves changes Identity has tracked in that scope (Identity saves its own at once, so
+    normally there are none).
   - `AnyContentAsync` ignores content in the recycle bin. `DiskStorageProvider` reports a generic error message and
     logs the detail. Sitemap `priority` is written in the invariant culture and `lastmod` in UTC.
 

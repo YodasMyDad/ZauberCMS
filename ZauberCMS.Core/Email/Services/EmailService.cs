@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Email.Parameters;
 using ZauberCMS.Core.Extensions;
@@ -12,7 +13,7 @@ using ZauberCMS.Core.Providers;
 namespace ZauberCMS.Core.Email.Services;
 
 public class EmailService(
-    UserManager<User> userManager,
+    IServiceScopeFactory serviceScopeFactory,
     IHttpContextAccessor httpContextAccessor,
     ProviderService providerService)
     : IEmailService
@@ -24,6 +25,9 @@ public class EmailService(
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SendEmailConfirmationAsync(SendEmailConfirmationParameters parameters, CancellationToken cancellationToken = default)
     {
+        // A UserManager per call, not the circuit's, which lives as long as the circuit (ZA-086)
+        using var scope = serviceScopeFactory.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var userId = await userManager.GetUserIdAsync(parameters.User!);
 
         string code;

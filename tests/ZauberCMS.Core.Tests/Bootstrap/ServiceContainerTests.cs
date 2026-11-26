@@ -98,7 +98,7 @@ public class ServiceContainerTests
         Assert.NotNull(scope.ServiceProvider.GetRequiredService(serviceType));
     }
 
-    [Fact(Skip = KnownBug.Za011)]
+    [Fact]
     public async Task One_DbContext_instance_is_shared_within_a_scope()
     {
         await using var site = await TestSite.CreateAsync();
@@ -106,7 +106,11 @@ public class ServiceContainerTests
 
         var viaInterface = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var viaConcreteType = scope.ServiceProvider.GetRequiredService<SqliteZauberDbContext>();
+        // Identity's user store (UserStore<…>.Context) works on the same one, so a transaction covers both
+        var userStore = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.IUserStore<ZauberCMS.Core.Membership.Models.User>>();
+        var storeContext = userStore.GetType().GetProperty("Context")!.GetValue(userStore);
 
         Assert.Same(viaConcreteType, viaInterface);
+        Assert.Same(viaConcreteType, storeContext);
     }
 }

@@ -27,7 +27,6 @@ public partial class ContentService(
     ICacheService cacheService,
     IOptions<ZauberSettings> settings,
     AuthenticationStateProvider authenticationStateProvider,
-    UserManager<User> userManager,
     ExtensionManager extensionManager,
     AppState appState,
     ILanguageService languageService,
@@ -35,6 +34,16 @@ public partial class ContentService(
     : IContentService
 {
     private const string BlockListEditorComponentAlias = BlockListNestedContentReferenceProvider.BlockListEditorAlias;
+
+    /// <summary>
+    /// The signed-in user, through a <c>UserManager</c> (and context) of its own: the circuit's lives as long as the
+    /// circuit and keeps returning the user as it was first loaded (ZA-086).
+    /// </summary>
+    private async Task<User?> GetCurrentUserAsync(AuthenticationState authState)
+    {
+        using var userScope = serviceScopeFactory.CreateScope();
+        return await userScope.ServiceProvider.GetRequiredService<UserManager<User>>().GetUserAsync(authState.User);
+    }
 
     /// <summary>
     /// Retrieves a single content item based on the provided parameters. Can optionally use cache.
@@ -73,7 +82,7 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        User? user = await userManager.GetUserAsync(authState.User);
+        User? user = await GetCurrentUserAsync(authState);
         var handlerResult = new HandlerResult<Models.Content>();
 
         if (parameters.Content == null)
@@ -527,7 +536,7 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var loggedInUser = await userManager.GetUserAsync(authState.User);
+        var loggedInUser = await GetCurrentUserAsync(authState);
         var handlerResult = new HandlerResult<Models.Content>();
 
         var content = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == parameters.ContentId, cancellationToken);
@@ -789,7 +798,7 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await GetCurrentUserAsync(authState);
         var handlerResult = new HandlerResult<Models.Content>();
 
         var contentToCopy = await dbContext.Contents
@@ -1015,7 +1024,7 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await GetCurrentUserAsync(authState);
         var handlerResult = new HandlerResult<ContentType>();
         var isUpdate = false;
 
@@ -1169,7 +1178,7 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await GetCurrentUserAsync(authState);
         var handlerResult = new HandlerResult<ContentType>();
 
         // Check for regular content using this ContentType: drafts and recycled pages too, because deleting the
@@ -1371,7 +1380,7 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await GetCurrentUserAsync(authState);
         var handlerResult = new HandlerResult<Domain>();
         var isUpdate = false;
 
@@ -1481,7 +1490,7 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await GetCurrentUserAsync(authState);
         var handlerResult = new HandlerResult<Domain?>();
 
         Domain? domain = null;
@@ -1896,7 +1905,7 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await GetCurrentUserAsync(authState);
 
         // Import ContentType
         var export = package.Type;

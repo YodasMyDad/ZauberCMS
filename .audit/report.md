@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 10 (2026-11-26): Build PASS · Warnings: 0 · Tests: 822 (821 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase. Next free ID: ZA-161
 After Roadmap Phase 9 (2026-11-26): Build PASS · Warnings: 0 · Tests: 768 (766 pass, 2 skipped for open findings ZA-011, ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers and a git-history search). Next free ID: ZA-160
 After Roadmap Phase 8 (2026-11-26): Build PASS · Warnings: 0 · Tests: 700 (697 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118), all SQL Server variants run for the first time (LocalDB via `ZAUBER_TEST_SQLSERVER`), PostgreSQL and Redis in Docker; `/audit changed` run on the phase (two reviewers). Next free ID: ZA-158
 After Roadmap Phase 7 (2026-11-26): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 628 (528 pass, 100 skipped: 97 SQL Server variants without `ZAUBER_TEST_SQLSERVER`, 3 for open findings ZA-011, ZA-036, ZA-118), PostgreSQL and Redis tests in Docker; `/audit changed` run on the phase (three reviewers). Next free ID: ZA-153
@@ -23,18 +24,12 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 23 | 50 | 0 |
+| Medium | 20 | 53 | 0 |
 | Low | 48 | 7 | 1 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068 and ZA-082 (Phase 10), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-161.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086 and ZA-011 (Phase 10), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-161.
 
 ## Open findings
-
-### ZA-011 [Medium/High] Two DbContext instances per scope
-
-- Where: `ZauberCMS.Core/ZauberSetup.cs:195-219` (`AddDbContext` per provider + factory `AddScoped` for `IZauberDbContext`, `IUserStore<User>`, `IRoleStore<Role>`) · Category: A/F
-- Issue: Identity stores and services don't share tracker/transaction. Listed in Standards → Known deviations.
-- Reconciled 2026-11-26 (Phase 7): the per-provider `AddScoped<IZauberDbContext, …>` and `AddEntityFrameworkStores` calls are gone (the `switch` now only calls `AddDbContext`); `IZauberDbContext` is built by a factory while the Identity stores take the `AddDbContext` instance, so there are still two contexts per scope.
 
 ### ZA-012 [Medium/High] `SaveChangesAndLog` hooks see `Unchanged` after audit save; ContentType veto can't roll back
 
@@ -62,18 +57,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Extensions/ContentExtensions.cs:208-209,244-262,285-293` · Category: C · Since: 2026-11-25
 - Issue / Trigger: Media, content and user pickers return query order, not the editor's order (unlike `GetBlocks`).
 - Fix: reorder by stored IDs. · Blocked by: visible order change.
-
-### ZA-080 [Medium/High] AppState handlers run on other users' circuits without marshalling or filtering
-
-- Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:603-611`, `ZauberCMS.Components/Admin/ContentSection/ContentVersions.razor:160-199`, `ZauberCMS.Components/Admin/MediaSection/UpdateMedia.razor:36-44` · Category: A · Since: 2026-11-25
-- Issue / Trigger: Handlers mutate component state and call navigation off the dispatcher; the versions panel reloads on any content save anywhere.
-- Fix: `InvokeAsync`, filter by id. · Blocked by: fix ZA-040 first.
-
-### ZA-086 [Medium/Medium] UserManager and its DbContext live for the whole circuit
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:30`, `ZauberCMS.Core/Email/Services/EmailService.cs:15`, `ZauberCMS.Components/Admin/UsersSection/UserEditor.razor:125,177` · Category: A · Since: 2026-11-25
-- Issue / Trigger: Stale tracked users and "a second operation was started on this context" under overlapping operations.
-- Fix: resolve per operation. · Blocked by: public constructor signature.
 
 ### ZA-087 [Medium/High] Components package leaks npm manifests into consumer projects
 
@@ -440,6 +423,10 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed this run / Resolved since last run
 
+- **Phase 10 (2026-11-26), step D: circuits and contexts.**
+  - **ZA-080 [Medium] AppState handlers run on other users' circuits without marshalling or filtering — fixed.** The version panel reloads only for its own page, on `InvokeAsync` (the editor and media page were fixed in Phases 8–9); every AppState handler in the admin now marshals. Browser: two saves with the panel open.
+  - **ZA-086 [Medium] UserManager and its DbContext live for the whole circuit — fixed.** `ContentService` and `EmailService` resolve `UserManager` from a scope per call (the constructor parameter is gone); `UserEditor` uses a scope for the security-stamp update.
+  - **ZA-011 [Medium] Two DbContext instances per scope — fixed.** `IZauberDbContext` resolves to the scope's `AddDbContext` instance, the one the Identity stores use; `UserEmailStore` no longer disposes the context DI gave it. The skipped regression test is un-skipped and also checks the user store's context. The scope-per-method pattern (vs `IDbContextFactory`) stays a known deviation in Standards.
 - **Phase 10 (2026-11-26), step C: async paging and admin trees.**
   - **ZA-054 [High] Admin trees block the circuit with sync-over-async (latent deadlock) — fixed.** No tree waits on a task any more: content and media trees load each level with its child flags (`GetContentTreeLevelAsync`, `GetMediaTreeLevelAsync`) and `HasChildren` reads `TreeState`; content-type trees load the whole tree once and expand from memory; the folder picker in `MultipleMediaUpload` uses `MediaTree`; list editors call the new `IDataListSource.GetItemsAsync` (default method, `ContentTypesDataSource` implements it). Browser: content, media, structure and recycle-bin trees.
   - **ZA-068 [Medium] Admin trees over-fetch and silently stop at 100 children — fixed.** D26: tree levels load without property values or children, 100 at a time, with a "Show N more" row (content, media, recycle bin) or button (media folder grid). Tests `ZA068_…` (×2). Browser: 107 children under a page, 106 in a media folder, both paged; expanded nodes stay open after a refresh.
