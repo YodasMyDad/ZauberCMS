@@ -14,7 +14,9 @@
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
   2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
   **Phase 10 done** (performance & async, 2026-11-26).
-  **69 open findings** (0 Critical, 0 High, 20 Medium, 49 Low). **Next: Phase 10a** (service authorisation, design with the owner first).
+  **68 open findings** (0 Critical, 0 High, 20 Medium, 48 Low), each one assigned below to Phase 10a–10e, Phase 11
+  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10a** (service authorisation, design with the owner
+  first); Phases 10b–10e don't depend on it and can go first while that design is open.
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -492,7 +494,7 @@
   labelled edit/delete buttons, and the warning in one tab when another tab saves the page under unsaved block edits.
   Not checked in a browser: the warning in an open panel when its page reloads underneath it (same mechanism).
 
-### Phase 10 — Performance & async
+### Phase 10 — Performance & async — DONE 2026-11-26
 ZA-057, ZA-061…ZA-064, ZA-056, ZA-068, ZA-069, ZA-071, ZA-073 (queries/caching); ZA-054 + ZA-082 with the
 `PaginatedList` async refactor (must land together); ZA-083, ZA-084, ZA-086, ZA-080; then the
 `IServiceScopeFactory` → `IDbContextFactory` / single-context refactor (ZA-011).
@@ -559,17 +561,88 @@ Done so far (2026-11-26), in steps:
     recompiles). Sitemap `priority` is written in the invariant culture and `lastmod` in UTC.
 
 ### Phase 10a — Service authorisation (D10)
-ZA-140. Design first, with the owner: a replaceable permission service the Core services ask before a write
-(who, which entity, which action), default "allow" so existing sites and front-end code that saves on purpose
-keep working, a strict mode a site can switch on, and the way front-end or plugin code declares an intended
-write. This is also the base for non-admin back-office roles (editors). Whether strict becomes the default is
-a v5 question (Phase 11).
+ZA-140 (Medium), ZA-093 (Medium). Design first, with the owner: a replaceable permission service the Core services
+ask before a write (who, which entity, which action), default "allow" so existing sites and front-end code that
+saves on purpose keep working, a strict mode a site can switch on, and the way front-end or plugin code declares an
+intended write. This is also the base for non-admin back-office roles (editors). Whether strict becomes the default
+is a v5 question (Phase 11).
+- The check needs to know who is calling outside a circuit, so `ICurrentUserAccessor` (ZA-093: the services read
+  the user from `AuthenticationStateProvider`, so a controller, API or hosted service can't save or delete) is built
+  here, not in Phase 11. It also replaces the installer's `RunAsAsync` work-around.
+
+### Phase 10b — Save hooks and content data
+ZA-012, ZA-018, ZA-077, ZA-099 (Medium); ZA-117, ZA-144, ZA-145, ZA-146, ZA-157, ZA-159 (Low).
+- **Save hooks see every row a change touches.** ZA-012: sort, move, restore, the recycle path and content-type
+  saves still give hooks `Unchanged` entities, and a content-type veto can't roll back. ZA-157: media (and content)
+  binned, restored or deleted below the named item, and an emptied bin, run no hooks. ZA-159: blocks removed by
+  Clear changes or rewritten by a version restore run none. ZA-018: tag saves skip the hooks.
+- ZA-099: the tags editor saves tag links on every render (prerender too), before the page is saved, even when the
+  edit is cancelled. Tags move into the page save, with ZA-018.
+- ZA-077: importing a content type over an existing alias makes new property and tab ids, so the values are lost.
+- ZA-146 (two publishes at once lose a version row), ZA-117 (user save overwrites identity fields from a stale
+  copy), ZA-144 (draft keeps the old URL after restore), ZA-145 (move and copy load the subtree twice).
+- **Ask the owner first:** what a veto on one item of a group change does (stop the whole group?), and which hooks
+  a draft save fires (ZA-157, ZA-159).
+
+### Phase 10c — Property editors and stored values
+ZA-015, ZA-078, ZA-100 (Medium); ZA-027, ZA-028, ZA-029, ZA-112, ZA-127 (Low).
+- ZA-078: media, content and user pickers return query order on the front end, not the order the editor chose.
+  A visible change → release notes.
+- ZA-100: picking files in two batches breaks the upload (earlier `IBrowserFile`s are no longer readable).
+- ZA-015: `AddFluentValidation` never unsubscribes, keeps static lists, and a throwing validator ends the circuit.
+- ZA-027 (numeric editor reads and writes in the current culture), ZA-028 (duplicate property aliases throw in
+  `ToDictionary`), ZA-029 (content picker stores one item as a string, several as JSON), ZA-112 (`SortableList`
+  drops callback tasks, `DotNetObjectReference` can leak), ZA-127 (component lifecycle roll-up: work repeated per
+  parameter set, components writing their own parameters, loops without `@key`).
+- **Ask the owner first:** ZA-029 — rewrite existing values to one shape (a data migration), or keep reading both
+  and write one.
+
+### Phase 10d — Admin UI robustness
+ZA-096, ZA-097, ZA-101 (Medium); ZA-025, ZA-026, ZA-085, ZA-108, ZA-156, ZA-160, ZA-161 (Low).
+- ZA-097: no `ErrorBoundary`, so one exception in a property editor, dashboard or block preview ends the circuit and
+  all unsaved work. Boundaries round the section body, each editor and each preview.
+- ZA-101: the admin prerenders, so every page initialises twice. Turn prerendering off for `/admin`.
+- ZA-096: admin scripts don't run after enhanced navigation into `/admin` (browser check first).
+- ZA-085 (SEO checker: sync HTTP, no timeout), ZA-108 (Sortable.js from a CDN without SRI, package scripts not
+  fingerprinted), ZA-156 (media bin stops at 500 and a binned folder can't be opened; the content bin pages since
+  Phase 10), ZA-160 (`JSDisconnectedException` on a media folder reload), ZA-161 (highlight lost after "Show more"),
+  ZA-025 (duplicate tree alias constant), ZA-026 (`<RadzenComponents/>` twice).
+- **Ask the owner first:** what the error boundary shows, and whether it offers a retry (ZA-097).
+
+### Phase 10e — Front end, security and identity hardening
+ZA-095, ZA-098 (Medium); ZA-030, ZA-031, ZA-032, ZA-033, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114,
+ZA-115, ZA-116, ZA-149, ZA-150 (Low).
+- **Front end and routing.** ZA-095: `/administration` renders as admin and `/accounting` or `/api-docs` skip
+  culture and redirects (prefix match; match on a path segment, one shared helper). ZA-098: no working front-end
+  error page (the template has the handler commented out). ZA-110 (restricted-content gate relies on `NavigateTo`
+  throwing), ZA-114 (layouts set the process-wide culture; sitemap culture and home page), ZA-115 (smaller
+  performance items: redirect cache not cleared on save, regex built per call, unstable ordering), ZA-116 (redirect
+  rules with "?" are treated as regex; no loop guard), ZA-111 (hosted services and middleware ignore cancellation).
+- **Security and identity.** ZA-104 (image-resize cache unbounded, upscaling on), ZA-105 (public
+  `ExternalLoginAsync` skips the verified-email and `CanSignIn` checks), ZA-106 (login reveals unconfirmed accounts,
+  resends without a limit), ZA-107 (email addresses in logs), ZA-030 (logout by GET), ZA-031 (MD5 hashing), ZA-032
+  (placeholder secrets in packaged settings), ZA-149 (rate limits fixed in code → settings with today's values),
+  ZA-150 (form-protection token reusable for 12 hours; `IFormProtectionService` is public from v5, decide before
+  release), ZA-033 (deleted users keep their username, email and personal data).
+- **Ask the owner first:** ZA-098 (which error page ships, and a setting for its address), ZA-116 (an "is regex"
+  flag is a schema change: three migrations), ZA-033 (a user recycle bin with purge, as content and media have, or
+  anonymise on delete), ZA-104 (new defaults existing sites would notice → release notes).
 
 ### Phase 11 — Engineering baseline, API clean-up, v5
-`Directory.Build.props`, analyzers, `.editorconfig`, `.gitattributes`, CI hardening (ZA-089, ZA-109), packaging
-(ZA-087, ZA-094, ZA-118, ZA-119), error handling (ZA-097, ZA-098), then the deliberate breaking batch for v5:
-internalise non-contract types (ZA-092), move Radzen-typed contracts out of Core (ZA-091), remove the unwired MVC
-path (ZA-090), `ICurrentUserAccessor` (ZA-093), naming conventions (ZA-124). Remaining Mediums/Lows by area.
+ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123, ZA-124,
+ZA-125, ZA-126, ZA-131, ZA-152 (Low).
+- **Baseline:** ZA-131 (`Directory.Build.props`, analyzers, central package management, `.editorconfig`,
+  `.gitattributes`, an SDK pin, a vulnerability scan in CI); CI and release hardening ZA-089, ZA-109.
+- **Packaging and template:** ZA-087 (npm manifests in the Components package), ZA-094 (pinned asset package in the
+  template), ZA-118 (un-skips its waiting test), ZA-119 (package metadata), ZA-123 (template rough edges).
+- **Start-up, DI and tests:** ZA-120 (discovery and configuration fail silently), ZA-121 (DI leftovers), ZA-152
+  (test sign-in shared across scopes).
+- **The deliberate breaking batch for v5:** internalise non-contract types (ZA-092), move Radzen-typed contracts
+  out of Core (ZA-091), remove the unwired MVC path (ZA-090), naming conventions (ZA-124), split the very large
+  services and remove `Content.Url` (ZA-125), give interactive custom components an id or DTO instead of the whole
+  `Content` (ZA-126).
+- The method-scoped DbContexts → `IDbContextFactory` (a known deviation in [Standards.md](Standards.md); no finding
+  needs it since ZA-011 was fixed in Phase 10). Do it here or drop it from the deviations list.
 
 ### Phase 12 — .NET 11 (D4)
 Retarget to `net11.0`, move Microsoft/EF/Npgsql packages to 11.x, Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
@@ -585,6 +658,18 @@ Owner instructions for this phase (2026-11-25):
   anything) should change in this codebase. Do not remove `async`/`await` on an assumption — confirm first.
 - **Hot reload.** Check that hot reload works well for ZauberCMS in the dev site and in a template-built site
   (Razor, C# and CSS edits, admin and front-end), and fix what stops it.
+
+## Backlog (no phase yet)
+
+Open findings that are not in a phase: each needs an owner decision, outside work, or is a feature in its own
+right. Move one into a phase when that is settled.
+
+| Finding | Why it has no phase |
+| --- | --- |
+| ZA-128 [Low] Accessibility roll-up (unlabelled icon buttons, clickable divs, inputs without labels) | A pass over every admin screen. Best done once, after Phase 10d's admin changes; the owner decides when. |
+| ZA-129 [Low] The admin UI is not localised | A feature: which languages, resource files, who translates. Owner decision. |
+| ZA-151 [Low] The installer's pages cannot be restyled or extended from a site | Open question for the owner (below). |
+| ZA-155 [Low] Resized copies of a deleted image stay in `_mediacache` | Needs a way to remove one file's entries from the ImageResize package, or a decision to prune that cache on a schedule. |
 
 ## Open questions for the owner
 

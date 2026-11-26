@@ -25,9 +25,10 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
 | Medium | 20 | 53 | 0 |
-| Low | 49 | 7 | 1 |
+| Low | 48 | 7 | 2 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086 and ZA-011 (Phase 10), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-162.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
+a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086, ZA-011 and ZA-113 (Phase 10), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-162.
 
 ## Open findings
 
@@ -235,11 +236,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Components/Shared/SortableList.razor:73-99` · Category: A · Since: 2026-11-25
 - Issue / Fix: Return the task; try/finally on dispose.
 
-### ZA-113 [Low/High] EF used directly in a context menu, scope held across a dialog
-
-- Where: `ZauberCMS.Components/ContextMenus/ContentMenus/RestrictAccessContextMenu.cs:53-76` · Category: A/E · Since: 2026-11-25
-- Issue / Fix: Move to a service method.
-
 ### ZA-114 [Low/High] Layouts set process-wide culture; sitemap formats with current culture and drops the home page
 
 - Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:81-85`, `ZauberCMS.Components/Pages/BlankLayout.razor:29-33`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:74-77,180-181` · Category: A/C · Since: 2026-11-25
@@ -397,6 +393,8 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   expanded to see what went to the bin with it (restore or delete the folder as a whole). The content bin has the
   same limits (300).
 - Fix: page the bin, and let a binned folder expand. · Blocked by: nothing (UX).
+- Reconciled 2026-11-26 (after Phase 10): the content bin now pages 100 at a time with a "Show more" row
+  (`RecycleBinTree.razor`); the media bin still loads 500 (`MediaRecycleBinTree.razor:60`) and no binned folder opens.
 
 ### ZA-157 [Low/High] Save hooks do not see the media below the item, nor an emptied bin
 - Where: `ZauberCMS.Core/Media/Services/MediaService.cs` (`DeleteMediaAsync`, `RestoreMediaAsync`, `EmptyMediaRecycleBinAsync`) · Category: F · Since: 2026-11-26 (Phase 8 audit)
@@ -429,6 +427,10 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed this run / Resolved since last run
 
+- **Reconciled 2026-11-26, after Phase 10 (findings assigned to phases).**
+  - **ZA-113 [Low] EF used directly in a context menu, scope held across a dialog — resolved by 1b6f154.**
+    `RestrictAccessContextMenu` now calls `IContentService.SetContentRolesAsync` after the dialog closes; it holds
+    no scope or DbContext (fixed with ZA-073).
 - **Phase 10 (2026-11-26), step D: circuits and contexts.**
   - **ZA-080 [Medium] AppState handlers run on other users' circuits without marshalling or filtering — fixed.** The version panel reloads only for its own page, on `InvokeAsync` (the editor and media page were fixed in Phases 8–9); every AppState handler in the admin now marshals. Browser: two saves with the panel open.
   - **ZA-086 [Medium] UserManager and its DbContext live for the whole circuit — fixed.** `ContentService` and `EmailService` resolve `UserManager` from a scope per call (the constructor parameter is gone); `UserEditor` uses a scope for the security-stamp update.
