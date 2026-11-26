@@ -47,12 +47,16 @@ from `IZauberDbContext` (see Standards → known deviations): don't expect one `
 
 ```text
 BuildQuery(parameters, dbContext)          // AsNoTracking, !Deleted / IncludeDeleted, filters, includes
-  → var key = query.GenerateCacheKey<T>()  // "TypeName-" + SHA256(SQL + Include calls); append page for paged queries
-  → parameters.Cached ? cacheService.GetSetCachedItemAsync(key, factory) : factory()
+  → if (parameters.Cached)                 // the key renders the SQL: build it only when caching
+      key = query.GenerateCacheKey<T>()    // "TypeName-" + SHA256(SQL + Include calls); append page for paged queries
+      cacheService.GetSetCachedItemAsync(key, factory)
+    else factory()
 ```
 
 Reference: `ContentService.BuildQuery` / `QueryContentAsync`. Default cache TTL 240 min (`Extensions/CacheExtensions.cs`).
-Cached results must be no-tracking and must not depend on user/culture unless that is part of the key.
+Cached results must be no-tracking and must not depend on user/culture unless that is part of the key. Don't run a
+query inside `BuildQuery` (filter by a joined column instead, as `ContentTypeAlias` does): it would run before the
+cache check on every call. Paging (`ToPaginatedList`) skips the `COUNT` when the first page isn't full.
 
 ## Cache (Roadmap D13)
 
@@ -76,6 +80,13 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 - Writes inside a transaction: `SaveChangesAndLog` clears before the commit, so clear the prefix again after
   `CommitAsync` (a read in between may have cached the old rows) — see `ContentService` save, recycle and purge.
 - `IDistributedCache` is still Redis when configured, for site code; ZauberCMS itself does not use it.
+- Front-end hot path (Phase 10): the URL → page lookup (`GetContentFromRequestAsync`) is cached for 5 minutes
+  (sliding) on slug, host and path — not the query string — under the Content prefix; domain saves and deletes clear
+  that prefix too. Its language keys and the default-language fallback are applied outside that cache, so dictionary
+  and settings changes show at once. `GetBlocks` (without pending changes), `GetMedia`/`GetMediaItems` and
+  `AnyContentAsync` (the 404 check; recycled content doesn't count) are cached as well; the items are shared, so
+  don't change them. View, block-view and editor types are discovered once per app (`GetImplementations`, a static
+  alias map in `RenderBlock`), not instantiated per request.
 
 ## Write path
 
@@ -142,7 +153,13 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 - Versions: a draft version records the stored draft, and its blocks' drafts. Restoring a version
   (`PublishVersionAsync`) brings back name, navigation settings, property values and blocks only — not tree position,
   language or publish state — discards the pending drafts of the page and its blocks, deletes blocks the version does
-  not have, and writes an audit row through `SaveChangesAndLog`.
+  not have, and writes an audit row through `SaveChangesAndLog`. Retention (D25): the daily job keeps the newest
+  `Zauber:ContentVersionsToKeep` versions of each page (default 50; 0 keeps all) plus its published version and
+  latest draft (`PruneVersionsAsync`). `GetContentVersionsAsync` is not tracked and gives `CreatedBy` only id, name and
+  email; `IncludeSnapshots = false` leaves the snapshots out (the admin list does).
+- Public access: `SetContentRolesAsync` sets a page's roles on it and every page below it in one transaction (one
+  audit row, the `ContentRole` save hooks, no versions) and is refused under an ancestor that already restricts
+  access. Role queries (`GetRoleAsync`, `QueryRolesAsync`) load the role's members only with `IncludeUsers`.
 - User: always soft delete + security-stamp reset.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).
@@ -166,6 +183,8 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 - `user.AddAudit(entity, name, AuditAction.X, auditService, cancellationToken)` (`Extensions/AuditExtensions.cs`) —
   Media, Tag, Seo, Language services.
 - inline audit inside the save transaction — `ContentService`.
+
+Audit rows older than 90 days are removed by the daily job (`CleanupOldAuditsAsync`, one `DELETE` in the database).
 
 ## AppState events
 

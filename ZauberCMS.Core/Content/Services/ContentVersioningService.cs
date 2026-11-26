@@ -7,6 +7,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -286,8 +287,7 @@ public class ContentVersioningService(
         using var scope = _serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
-        var query = dbContext.ContentVersions
-            .Include(v => v.CreatedBy)
+        var query = dbContext.ContentVersions.AsNoTracking()
             .Where(v => v.ContentId == parameters.ContentId);
 
         // Apply filters
@@ -331,10 +331,36 @@ public class ContentVersioningService(
         };
 
         var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query
+        var page = query
             .Skip((parameters.PageIndex - 1) * parameters.AmountPerPage)
-            .Take(parameters.AmountPerPage)
-            .ToListAsync(cancellationToken);
+            .Take(parameters.AmountPerPage);
+        // Not tracked, and CreatedBy without the rest of the user row (password hash, security stamp); the
+        // snapshots only when asked for (ZA-069)
+        var items = parameters.IncludeSnapshots
+            ? await page.Select(v => new ContentVersion
+            {
+                Id = v.Id, ContentId = v.ContentId, VersionNumber = v.VersionNumber, VersionName = v.VersionName,
+                Status = v.Status, CreatedById = v.CreatedById, DateCreated = v.DateCreated,
+                DatePublished = v.DatePublished, Comments = v.Comments, IsCurrentPublished = v.IsCurrentPublished,
+                IsLatestDraft = v.IsLatestDraft, ParentVersionId = v.ParentVersionId, Tags = v.Tags,
+                IsAutoSave = v.IsAutoSave, ContentSize = v.ContentSize,
+                Snapshot = v.Snapshot, PropertySnapshots = v.PropertySnapshots,
+                BlockListSnapshots = v.BlockListSnapshots,
+                CreatedBy = v.CreatedBy == null
+                    ? null
+                    : new User { Id = v.CreatedBy.Id, UserName = v.CreatedBy.UserName, Email = v.CreatedBy.Email }
+            }).ToListAsync(cancellationToken)
+            : await page.Select(v => new ContentVersion
+            {
+                Id = v.Id, ContentId = v.ContentId, VersionNumber = v.VersionNumber, VersionName = v.VersionName,
+                Status = v.Status, CreatedById = v.CreatedById, DateCreated = v.DateCreated,
+                DatePublished = v.DatePublished, Comments = v.Comments, IsCurrentPublished = v.IsCurrentPublished,
+                IsLatestDraft = v.IsLatestDraft, ParentVersionId = v.ParentVersionId, Tags = v.Tags,
+                IsAutoSave = v.IsAutoSave, ContentSize = v.ContentSize,
+                CreatedBy = v.CreatedBy == null
+                    ? null
+                    : new User { Id = v.CreatedBy.Id, UserName = v.CreatedBy.UserName, Email = v.CreatedBy.Email }
+            }).ToListAsync(cancellationToken);
 
         return new PaginatedList<ContentVersion>
         {
@@ -403,6 +429,58 @@ public class ContentVersioningService(
         handlerResult.Entity = true;
 
         return handlerResult;
+    }
+
+    /// <inheritdoc />
+    public async Task<HandlerResult<int>> PruneVersionsAsync(PruneContentVersionsParameters parameters,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new HandlerResult<int> { Success = true };
+        if (parameters.VersionsToKeep <= 0)
+        {
+            return result;
+        }
+
+        using var scope = _serviceScopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+        var keep = parameters.VersionsToKeep;
+
+        // Only the pages over the limit, one page at a time: a version row can be large (snapshots)
+        var contentIds = await dbContext.ContentVersions.AsNoTracking()
+            .GroupBy(v => v.ContentId)
+            .Where(g => g.Count() > keep)
+            .Select(g => g.Key)
+            .ToListAsync(cancellationToken);
+
+        foreach (var contentId in contentIds)
+        {
+            var oldIds = await dbContext.ContentVersions.AsNoTracking()
+                .Where(v => v.ContentId == contentId)
+                .OrderByDescending(v => v.VersionNumber)
+                .Skip(keep)
+                .Where(v => !v.IsCurrentPublished && !v.IsLatestDraft)
+                .Select(v => v.Id)
+                .ToListAsync(cancellationToken);
+
+            foreach (var chunk in oldIds.Chunk(500))
+            {
+                // A kept version may name a removed one as its parent (the foreign key has no cascade)
+                await dbContext.ContentVersions
+                    .Where(v => v.ParentVersionId != null && chunk.Contains(v.ParentVersionId.Value))
+                    .ExecuteUpdateAsync(s => s.SetProperty(v => v.ParentVersionId, (Guid?)null), cancellationToken);
+                result.Entity += await dbContext.ContentVersions
+                    .Where(v => chunk.Contains(v.Id))
+                    .ExecuteDeleteAsync(cancellationToken);
+            }
+        }
+
+        if (result.Entity > 0)
+        {
+            logger.LogInformation("Removed {Count} content versions beyond the newest {Keep} of each page",
+                result.Entity, keep);
+        }
+
+        return result;
     }
 
     /// <summary>

@@ -178,7 +178,9 @@ else
             {
                 ContentId = ContentId,
                 AmountPerPage = 100,
-                OrderBy = ContentVersionOrderBy.DateCreated
+                OrderBy = ContentVersionOrderBy.DateCreated,
+                // The list shows names and dates; compare and restore load the versions they need (ZA-069)
+                IncludeSnapshots = false
             };
             var result = await ContentVersioningService.GetContentVersionsAsync(parameters);
             Versions = result.Items.ToList();

@@ -35,4 +35,11 @@ public interface IContentVersioningService
     /// Compares two versions and returns the differences
     /// </summary>
     Task<ContentVersionComparison> CompareVersionsAsync(CompareContentVersionsParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes each page's versions beyond the newest <see cref="PruneContentVersionsParameters.VersionsToKeep"/>,
+    /// never its published version or latest draft. Run by the daily job with <c>Zauber:ContentVersionsToKeep</c>.
+    /// </summary>
+    /// <returns>The number of versions removed.</returns>
+    Task<HandlerResult<int>> PruneVersionsAsync(PruneContentVersionsParameters parameters, CancellationToken cancellationToken = default);
 }

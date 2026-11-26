@@ -1,15 +1,12 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 using ZauberCMS.Components.Admin.ContentSection.Dialogs;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
-using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
@@ -18,7 +15,6 @@ using ZauberCMS.Core.Shared;
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
 public class RestrictAccessContextMenu(
-    IServiceProvider serviceProvider,
     NotificationService notificationService,
     IMembershipService membershipService,
     IContentService contentService,
@@ -45,13 +41,10 @@ public class RestrictAccessContextMenu(
 
     private IModalReference? Modal { get; set; }
 
-
     public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e,
         NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
-        using var scope = serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var currentUser = await membershipService.GetCurrentUser();
         contextMenuService.Close();
         var content = (Content)args.Value!;
@@ -62,83 +55,24 @@ public class RestrictAccessContextMenu(
 
         Modal = modalService.OpenSidePanel<RestrictAccess>("Public Access", parameters);
         var result = await Modal.Result;
-        if (result is { Confirmed: true, Data: (bool alreadyHadContentRoles, List<Role> selectedRoles) })
+        if (result is { Confirmed: true, Data: (bool _, List<Role> selectedRoles) })
         {
-            // Need to check if the roles are defined by an ancestor
-            // If so we ignore this and return a message
-            var ancestorHasRoles = false;
-            var parentId = content.ParentId;
-            if (parentId != null)
+            // The page and every page below it in one change, checked against the ancestors by the service (ZA-073)
+            var saveResult = await contentService.SetContentRolesAsync(new SetContentRolesParameters
             {
-                while (parentId != null)
-                {
-                    var parent = await dbContext.Contents.Include(x => x.ContentRoles).AsSplitQuery().FirstOrDefaultAsync(c => c.Id == parentId);
-                    if (parent is { ContentRoles.Count: > 0 })
-                    {
-                        ancestorHasRoles = true;
-                        break;
-                    }
-                    parentId = parent?.ParentId;
-                }   
-            }
-            
-            if (ancestorHasRoles)
+                ContentId = content.Id,
+                RoleIds = selectedRoles.Select(r => r.Id).ToList()
+            });
+            if (!saveResult.Success)
             {
-                notificationService.ShowErrorNotification(
-                    "Cannot change access to this content as it has roles already defined by an ancestor.");
+                notificationService.ShowNotifications(saveResult.Messages);
+                return;
             }
-            
-            // Do any ancestors have roles on them
-            else
-            {
-                // Fetch all descendants and the original content, as these need to be added or removed too
-                var descendants = dbContext.Contents
-                    .WherePathLike(content.Id)
-                    .Include(x => x.ContentRoles)
-                    .AsSplitQuery()
-                    .ToList();
 
-                if (alreadyHadContentRoles && selectedRoles.Count == 0)
-                {
-                    // Remove all the content roles
-                    foreach (var descendant in descendants)
-                    {
-                        descendant.ContentRoles.Clear();
-                    }
+            notificationService.ShowSuccessNotification(selectedRoles.Count == 0
+                ? "Public access removed"
+                : "Public access updated");
 
-                    await dbContext.SaveChangesAsync();
-                    notificationService.ShowSuccessNotification("Public access removed");
-                }
-                else
-                {
-                    var wasError = false;
-                    
-                    // Add the content roles to the content and descendants 
-                    foreach (var descendant in descendants)
-                    {
-                        var saveResult = await contentService.SaveContentAsync(new SaveContentParameters
-                        {
-                            Content = descendant,
-                            Roles = selectedRoles,
-                            UpdateContentRoles = true,
-                            ExcludePropertyData = true
-                        });
-                        
-                        if (saveResult.Success == false)
-                        {
-                            notificationService.ShowNotifications(saveResult.Messages);
-                            wasError = true;
-                            break;
-                        }
-                    }
-
-                    if (wasError == false)
-                    {
-                        notificationService.ShowSuccessNotification("Public access updated");   
-                    }
-                }
-            }
-            
             await appState.NotifyContentChanged(content, currentUser?.Name ?? "Unknown");
         }
     }

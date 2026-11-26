@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Audit.Parameters;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Installer;
+using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Jobs;
 
@@ -13,9 +15,13 @@ public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger
 {
     private Timer? _timer;
 
+    /// <summary>How long after start-up the first run waits.</summary>
+    internal static readonly TimeSpan FirstRunDelay = TimeSpan.FromMinutes(5);
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromHours(24));
+        // First run a few minutes after start-up, not during it (ZA-083), then once a day
+        _timer = new Timer(DoWork, null, FirstRunDelay, TimeSpan.FromHours(24));
         return Task.CompletedTask;
     }
 
@@ -38,6 +44,12 @@ public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger
 
             // Cleanup orphaned RelatedContentId references
             await contentService.CleanupOrphanedRelatedContentAsync(new CleanupOrphanedRelatedContentParameters());
+
+            // Keep the newest versions of each page (Zauber:ContentVersionsToKeep, Roadmap D25)
+            var versionsToKeep = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>().Value
+                .ContentVersionsToKeep;
+            await scope.ServiceProvider.GetRequiredService<IContentVersioningService>()
+                .PruneVersionsAsync(new PruneContentVersionsParameters { VersionsToKeep = versionsToKeep });
         }
         catch (Exception e)
         {

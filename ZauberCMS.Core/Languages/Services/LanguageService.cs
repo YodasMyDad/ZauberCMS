@@ -353,26 +353,44 @@ public class LanguageService(
     /// <returns>Dictionary ISO -> (Key -> Value).</returns>
     public async Task<Dictionary<string, Dictionary<string, string>>> GetCachedAllLanguageDictionariesAsync(GetCachedAllLanguageDictionariesParameters parameters, CancellationToken cancellationToken = default)
     {
-        using var scope = serviceScopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var cacheKey = typeof(LanguageDictionary).ToCacheKey("GetCachedAllLanguageDictionaries");
-        
-        return (await cacheService.GetSetCachedItemAsync(cacheKey, () =>
+
+        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
-            var allLanguages = dbContext.Languages.Include(x=>x.LanguageTexts).AsNoTracking().AsSplitQuery();
-            var allLanguageDictionaries = dbContext.LanguageDictionaries.AsNoTracking();
+            using var scope = serviceScopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+
+            // Three queries and a lookup: the dictionaries were read again for every language, and each text was
+            // found by a linear search (ZA-071)
+            var languages = await dbContext.Languages.AsNoTracking()
+                .Where(x => x.LanguageIsoCode != null)
+                .Select(x => new { x.Id, x.LanguageIsoCode })
+                .ToListAsync(cancellationToken);
+            var dictionaries = await dbContext.LanguageDictionaries.AsNoTracking()
+                .Select(x => new { x.Id, x.Key })
+                .ToListAsync(cancellationToken);
+            var texts = new Dictionary<(Guid LanguageId, Guid DictionaryId), string>();
+            foreach (var text in await dbContext.LanguageTexts.AsNoTracking()
+                         .Select(x => new { x.LanguageId, x.LanguageDictionaryId, x.Value })
+                         .ToListAsync(cancellationToken))
+            {
+                texts.TryAdd((text.LanguageId, text.LanguageDictionaryId), text.Value);
+            }
+
             var returnDict = new Dictionary<string, Dictionary<string, string>>();
-            foreach (var language in allLanguages)
+            foreach (var language in languages)
             {
                 var langTextDict = new Dictionary<string, string>();
-                foreach (var languageDictionary in allLanguageDictionaries)
+                foreach (var dictionary in dictionaries)
                 {
-                    langTextDict.Add(languageDictionary.Key, language.LanguageTexts.FirstOrDefault(x => x.LanguageDictionaryId == languageDictionary.Id)?.Value ?? string.Empty);
+                    langTextDict.TryAdd(dictionary.Key,
+                        texts.GetValueOrDefault((language.Id, dictionary.Id)) ?? string.Empty);
                 }
 
-                if (language.LanguageIsoCode != null) returnDict.Add(language.LanguageIsoCode, langTextDict);
+                returnDict.TryAdd(language.LanguageIsoCode!, langTextDict);
             }
-            return Task.FromResult(returnDict);
+
+            return returnDict;
         }))!;
     }
 

@@ -46,10 +46,9 @@ public class MediaService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey();
-
         if (parameters.Cached)
         {
+            var cacheKey = query.GenerateCacheKey();
             return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.FirstOrDefaultAsync(cancellationToken));
         }
 
@@ -204,10 +203,9 @@ public class MediaService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = $"{query.GenerateCacheKey<Models.Media>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
-
         if (parameters.Cached)
         {
+            var cacheKey = $"{query.GenerateCacheKey<Models.Media>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
             return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
         }
 
@@ -690,10 +688,9 @@ public class MediaService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(dbContext);
-        var cacheKey = query.GenerateCacheKey<Models.Media>();
-
         if (parameters.Cached)
         {
+            var cacheKey = query.GenerateCacheKey<Models.Media>();
             return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.Select(x => new { x.Url, x.Id }).ToDictionaryAsync(x => x.Url ?? string.Empty, x => x.Id, cancellationToken: cancellationToken)) ?? new Dictionary<string, Guid>();
         }
 

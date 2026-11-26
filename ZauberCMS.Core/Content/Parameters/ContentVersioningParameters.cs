@@ -32,6 +32,20 @@ public class QueryContentVersionsParameters
     public ContentVersionOrderBy OrderBy { get; set; } = ContentVersionOrderBy.VersionNumber;
     public int PageIndex { get; set; } = 1;
     public int AmountPerPage { get; set; } = 10;
+
+    /// <summary>
+    /// Load each version's snapshots (page, properties, blocks). A list that only shows the versions can turn it
+    /// off: the snapshots are the bulk of each row (ZA-069). <c>CreatedBy</c> holds only the user's id, name and
+    /// email either way.
+    /// </summary>
+    public bool IncludeSnapshots { get; set; } = true;
+}
+
+public class PruneContentVersionsParameters
+{
+    /// <summary>The newest versions of each page to keep. The published version and the latest draft are always
+    /// kept as well. 0 or less keeps everything.</summary>
+    public int VersionsToKeep { get; set; } = 50;
 }
 
 public enum ContentVersionOrderBy

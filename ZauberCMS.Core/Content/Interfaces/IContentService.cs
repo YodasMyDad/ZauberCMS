@@ -43,6 +43,13 @@ public interface IContentService
     Task<Dictionary<object, string>> GetContentLanguagesAsync(GetContentLanguagesParameters parameters, CancellationToken cancellationToken = default);
     Task<List<Domain>> GetCachedDomainsAsync(CachedDomainsParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<UnpublishedContent>> ClearUnpublishedContentAsync(ClearUnpublishedContentParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Public access: sets the roles that may see a page on the page and every page below it, in one transaction
+    /// (one audit row; the <c>ContentRole</c> save hooks run, no content versions are made). Refused when an
+    /// ancestor already restricts access. An empty list removes the restriction.
+    /// </summary>
+    Task<HandlerResult<Models.Content>> SetContentRolesAsync(SetContentRolesParameters parameters, CancellationToken cancellationToken = default);
     Task<DataGridResult<Models.Content>> GetDataGridContentAsync(DataGridContentParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<int>> CleanupOrphanedRelatedContentAsync(CleanupOrphanedRelatedContentParameters parameters, CancellationToken cancellationToken = default);
 }

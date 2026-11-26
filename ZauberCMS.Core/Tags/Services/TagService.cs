@@ -102,9 +102,9 @@ public class TagService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = $"{query.GenerateCacheKey<Tag>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
         if (parameters.Cached)
         {
+            var cacheKey = $"{query.GenerateCacheKey<Tag>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
             return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
         }
         return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);

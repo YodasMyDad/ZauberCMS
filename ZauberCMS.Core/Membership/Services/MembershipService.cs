@@ -52,10 +52,9 @@ public class MembershipService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey<User>();
-
         if (parameters.Cached)
         {
+            var cacheKey = query.GenerateCacheKey<User>();
             return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.FirstOrDefaultAsync(cancellationToken: cancellationToken));
         }
 
@@ -420,10 +419,9 @@ public class MembershipService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = $"{query.GenerateCacheKey<User>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
-
         if (parameters.Cached)
         {
+            var cacheKey = $"{query.GenerateCacheKey<User>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
             return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
         }
 
@@ -442,12 +440,13 @@ public class MembershipService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
-        var query = dbContext.Roles
-            .Include(x => x.UserRoles)
-            .ThenInclude(x => x.User)
-            .AsNoTracking()
-            .AsSplitQuery()
-            .Where(x => x.Id == parameters.Id);
+        IQueryable<Role> query = dbContext.Roles.AsNoTracking();
+        if (parameters.IncludeUsers)
+        {
+            query = query.Include(x => x.UserRoles).ThenInclude(x => x.User).AsSplitQuery();
+        }
+
+        query = query.Where(x => x.Id == parameters.Id);
 
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
     }
@@ -563,10 +562,10 @@ public class MembershipService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         
-        var query = dbContext.Roles
-            .Include(x => x.UserRoles)
-            .ThenInclude(x => x.User)
-            .AsQueryable();
+        // Members only when asked for (ZA-056)
+        var query = parameters.IncludeUsers
+            ? dbContext.Roles.Include(x => x.UserRoles).ThenInclude(x => x.User).AsSplitQuery()
+            : dbContext.Roles.AsQueryable();
 
         if (parameters.Query != null)
         {

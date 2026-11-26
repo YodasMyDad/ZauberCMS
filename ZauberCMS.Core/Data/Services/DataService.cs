@@ -31,10 +31,9 @@ public class DataService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey<GlobalData>();
-        
         if (parameters.Cached)
         {
+            var cacheKey = query.GenerateCacheKey<GlobalData>();
             return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.FirstOrDefaultAsync(cancellationToken: cancellationToken));
         }
 

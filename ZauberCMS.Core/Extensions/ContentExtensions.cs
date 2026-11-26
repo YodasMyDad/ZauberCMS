@@ -118,7 +118,6 @@ public static class ContentExtensions
         string alias,
         IContentService contentService)
     {
-        // Original efficient path - direct database query with zero overhead
         var rawIds = content.GetValue<List<Guid>>(alias);
         if (rawIds == null || rawIds.Count == 0) return [];
 
@@ -136,7 +135,10 @@ public static class ContentExtensions
             {
                 Ids = ids,
                 AmountPerPage = ids.Count, // Don't truncate large block lists
-                NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only
+                NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only,
+                // Every page view renders its block lists: cached under the Content prefix, which every content
+                // save clears (ZA-057). The items are shared: don't change them.
+                Cached = true
             });
         // Ensure the returned items are in the same order as the input ids
         var dict = blockList.Items.ToDictionary(x => x.Id, x => x);
@@ -236,7 +238,8 @@ public static class ContentExtensions
                     var mediaId = content.GetValue<Guid>(alias);
                     if (mediaId != Guid.Empty)
                     {
-                        var media = await mediaService.GetMediaAsync(new GetMediaParameters {Id = mediaId});
+                        // Cached like the multi-item path above (ZA-057)
+                        var media = await mediaService.GetMediaAsync(new GetMediaParameters {Id = mediaId, Cached = true});
                         if (media != null)
                         {
                             return [media];

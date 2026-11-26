@@ -13,7 +13,8 @@
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
   2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
-  **84 open findings** (0 Critical, 3 High, 34 Medium, 47 Low). **Next: Phase 10.**
+  **Phase 10 in progress** (performance & async): steps A and B done.
+  **73 open findings** (0 Critical, 1 High, 25 Medium, 47 Low). **Next: Phase 10 step C** (async paging and trees).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -46,6 +47,8 @@
 | D22 | **`AdminEmailAddresses` promotes only after the email is confirmed.** (2026-11-25) | ZA-023 |
 | D23 | **Public registration switch:** existing sites default ON (no change on upgrade), the installer asks (default OFF for new sites); off = page 404 and link hidden. When on: built-in honeypot + minimum fill time, its own rate limit, and a discovered extension interface for CAPTCHA providers (Turnstile, reCAPTCHA, hCaptcha) from the site's project. (2026-11-25) | ZA-024 |
 | D24 | **No switch to turn the installer off.** Empty database settings always mean "show the installer", as decided in D20. That a live site which loses its database settings (a publish overwriting `appsettings.json`, a missing environment variable) then shows the installer is accepted: it is logged as an error at start-up and documented, with the instruction to put the settings into the project or the environment after installing on a server. (owner, 2026-11-26, asked during Phase 7 after the audit raised it) | ZA-004, [Installer.md](Installer.md) |
+| D25 | **Content versions are pruned: the newest N per page are kept** (plus its published version and latest draft), by the daily job; a new setting `Zauber:ContentVersionsToKeep`, on by default (50) — existing sites start pruning on upgrade (release notes). (owner, 2026-11-26, Phase 10) | ZA-069 |
+| D26 | **Admin trees page their children with a "Show more" row**: the first 100 of a node, then a row at the bottom that loads the next 100. (owner, 2026-11-26, Phase 10) | ZA-068 |
 
 ## Working rules for the rework
 
@@ -493,6 +496,30 @@
 ZA-057, ZA-061…ZA-064, ZA-056, ZA-068, ZA-069, ZA-071, ZA-073 (queries/caching); ZA-054 + ZA-082 with the
 `PaginatedList` async refactor (must land together); ZA-083, ZA-084, ZA-086, ZA-080; then the
 `IServiceScopeFactory` → `IDbContextFactory` / single-context refactor (ZA-011).
+
+Done so far (2026-11-26), in steps:
+- **Step A — front-end caching and queries** (ZA-056, ZA-057, ZA-061 … ZA-064, ZA-071, ZA-083, ZA-084): the URL →
+  page lookup is cached 5 minutes on host + path (not the query string), with language keys applied outside the
+  cache; block lists, media pickers and the 404 check are cached; `ContentTypeAlias` filters in SQL; cache keys are
+  built only when caching; views, block views and editor assets are discovered once, not instantiated per request;
+  role queries load members only on request; dictionaries load in three queries; the audit cleanup is one `DELETE`
+  and the daily job starts five minutes after start-up; uploads stream to disk and log their errors.
+- **Step B — versions and bulk operations** (ZA-069, ZA-073; D25): version retention, a lighter version list,
+  public access set in one transaction, copy one query per block level, the sitemap pages through every page.
+- Tests: `QueryAndCacheTests` (Core, all three databases). Not covered by a test: the upload streaming (needs an
+  `IBrowserFile`), the sitemap generator (a hosted service), the per-request view discovery (build only).
+- **Release notes (D18):**
+  - `Zauber:ContentVersionsToKeep` (default 50): existing sites start removing older versions on upgrade, on the
+    first daily run; set 0 to keep everything.
+  - `GetRoleAsync`/`QueryRolesAsync` no longer load `Role.UserRoles`; pass `IncludeUsers = true`.
+  - `GetContentVersionsAsync` returns untracked versions whose `CreatedBy` has only id, name and email.
+  - Public access ("restrict access") no longer saves each page below through `SaveContentAsync`: no Content save
+    hooks and no versions for it; the `ContentRole` hooks run instead. New: `IContentService.SetContentRolesAsync`,
+    `IContentVersioningService.PruneVersionsAsync` (implementers of these interfaces add them).
+  - The front-end page lookup is cached 5 minutes instead of 5 seconds; changes made straight in the database (not
+    through the services) show after that.
+  - `AnyContentAsync` ignores content in the recycle bin. `DiskStorageProvider` reports a generic error message and
+    logs the detail. Sitemap `priority` is written in the invariant culture and `lastmod` in UTC.
 
 ### Phase 10a — Service authorisation (D10)
 ZA-140. Design first, with the owner: a replaceable permission service the Core services ask before a write

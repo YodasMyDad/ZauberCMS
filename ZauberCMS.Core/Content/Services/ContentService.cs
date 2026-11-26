@@ -48,9 +48,10 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey();
         if (parameters.Cached)
         {
+            // The key renders the SQL: only worth it when the result is cached (ZA-062)
+            var cacheKey = query.GenerateCacheKey();
             return await cacheService.GetSetCachedItemAsync(cacheKey,
                 async () => await FetchContentAsync(query, cancellationToken));
         }
@@ -504,9 +505,9 @@ public partial class ContentService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = $"{query.GenerateCacheKey()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
         if (parameters.Cached)
         {
+            var cacheKey = $"{query.GenerateCacheKey()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
             return (await cacheService.GetSetCachedItemAsync(cacheKey,
                 async () => await FetchContentAsync(query, parameters)))!;
         }
@@ -697,66 +698,82 @@ public partial class ContentService(
     }
 
     /// <summary>
-    /// Gives <paramref name="copiedContent"/> copies of its blocks: each block its nested content properties point at
-    /// is cloned with a new id (and its own blocks with it), and the property values are rewritten to the clones.
-    /// <paramref name="originalToCloneMap"/> is shared by the whole copy, so a block reached twice gets one clone.
+    /// Gives each of <paramref name="copiedItems"/> copies of its blocks: each block its nested content properties
+    /// point at is cloned with a new id (and its own blocks with it), and the property values are rewritten to the
+    /// clones. Level by level, one query per level (ZA-073). <paramref name="originalToCloneMap"/> is shared by the
+    /// whole copy, so a block reached twice gets one clone.
     /// </summary>
-    private async Task CloneBlockListContentTreeAsync(Models.Content copiedContent, NestedContentTree tree,
+    private async Task CloneBlockListContentTreeAsync(IReadOnlyList<Models.Content> copiedItems, NestedContentTree tree,
         IZauberDbContext dbContext, User? currentUser, Dictionary<Guid, Guid> originalToCloneMap,
-        int depth, CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
-        if (depth >= NestedContentTree.MaxDepth)
+        var level = copiedItems.ToList();
+        for (var depth = 0; level.Count > 0; depth++)
         {
-            logger.LogWarning("Blocks of content {ContentId} are nested deeper than {MaxDepth}; the rest is not copied",
-                copiedContent.Id, NestedContentTree.MaxDepth);
-            return;
-        }
-
-        foreach (var (value, property, ids) in await tree.GetReferencesAsync(copiedContent, cancellationToken))
-        {
-            if (ids.Count == 0) continue;
-            var originals = await tree.LoadAsync(ids.Where(id => !originalToCloneMap.ContainsKey(id)).ToList(),
-                cancellationToken);
-            foreach (var origId in ids)
+            if (depth >= NestedContentTree.MaxDepth)
             {
-                // Already cloned (another property, another copied item), or not a block: the reference stays
-                if (originalToCloneMap.ContainsKey(origId) ||
-                    !originals.TryGetValue(origId, out var original) || !original.IsNestedContent)
-                {
-                    continue;
-                }
-
-                var clone = original.MapToNew();
-                clone.Id = Guid.NewGuid().NewSequentialGuid();
-                clone.DateCreated = DateTime.UtcNow;
-                clone.DateUpdated = DateTime.UtcNow;
-                clone.LastUpdatedById = currentUser?.Id;
-                clone.Deleted = false;
-                clone.RelatedContentId = copiedContent.Id;
-                // Not the original block's draft (ZA-049), and blocks have no URL (ZA-067)
-                clone.UnpublishedContentId = null;
-#pragma warning disable CS0618 // Type or member is obsolete
-                clone.Url = null;
-#pragma warning restore CS0618 // Type or member is obsolete
-                clone.PropertyData = original.PropertyData.Select(p => new ContentPropertyValue
-                {
-                    Id = Guid.NewGuid().NewSequentialGuid(),
-                    DateCreated = p.DateCreated,
-                    DateUpdated = p.DateUpdated,
-                    ContentTypePropertyId = p.ContentTypePropertyId,
-                    Value = p.Value,
-                    ContentId = clone.Id,
-                    Alias = p.Alias
-                }).ToList();
-
-                // Mapped before recursing, so a cycle in stored data stops at this clone
-                originalToCloneMap[origId] = clone.Id;
-                dbContext.Contents.Add(clone);
-                await CloneBlockListContentTreeAsync(clone, tree, dbContext, currentUser, originalToCloneMap,
-                    depth + 1, cancellationToken);
+                logger.LogWarning("Blocks of copied content are nested deeper than {MaxDepth}; the rest is not copied",
+                    NestedContentTree.MaxDepth);
+                return;
             }
 
-            value.Value = property.Provider.RemapIds(value.Value, originalToCloneMap) ?? value.Value;
+            var references = new List<(Models.Content Owner, ContentPropertyValue Value,
+                NestedContentTree.NestedProperty Property, IReadOnlyList<Guid> Ids)>();
+            foreach (var item in level)
+            {
+                foreach (var (value, property, ids) in await tree.GetReferencesAsync(item, cancellationToken))
+                {
+                    references.Add((item, value, property, ids));
+                }
+            }
+
+            var originals = await tree.LoadAsync(references.SelectMany(r => r.Ids)
+                .Where(id => !originalToCloneMap.ContainsKey(id)).Distinct().ToList(), cancellationToken);
+            var next = new List<Models.Content>();
+            foreach (var (owner, value, property, ids) in references)
+            {
+                foreach (var origId in ids)
+                {
+                    // Already cloned (another property, another copied item), or not a block: the reference stays
+                    if (originalToCloneMap.ContainsKey(origId) ||
+                        !originals.TryGetValue(origId, out var original) || !original.IsNestedContent)
+                    {
+                        continue;
+                    }
+
+                    var clone = original.MapToNew();
+                    clone.Id = Guid.NewGuid().NewSequentialGuid();
+                    clone.DateCreated = DateTime.UtcNow;
+                    clone.DateUpdated = DateTime.UtcNow;
+                    clone.LastUpdatedById = currentUser?.Id;
+                    clone.Deleted = false;
+                    clone.RelatedContentId = owner.Id;
+                    // Not the original block's draft (ZA-049), and blocks have no URL (ZA-067)
+                    clone.UnpublishedContentId = null;
+#pragma warning disable CS0618 // Type or member is obsolete
+                    clone.Url = null;
+#pragma warning restore CS0618 // Type or member is obsolete
+                    clone.PropertyData = original.PropertyData.Select(p => new ContentPropertyValue
+                    {
+                        Id = Guid.NewGuid().NewSequentialGuid(),
+                        DateCreated = p.DateCreated,
+                        DateUpdated = p.DateUpdated,
+                        ContentTypePropertyId = p.ContentTypePropertyId,
+                        Value = p.Value,
+                        ContentId = clone.Id,
+                        Alias = p.Alias
+                    }).ToList();
+
+                    // Mapped before the next level, so a cycle in stored data stops at this clone
+                    originalToCloneMap[origId] = clone.Id;
+                    dbContext.Contents.Add(clone);
+                    next.Add(clone);
+                }
+
+                value.Value = property.Provider.RemapIds(value.Value, originalToCloneMap) ?? value.Value;
+            }
+
+            level = next;
         }
     }
 
@@ -848,21 +865,13 @@ public partial class ContentService(
         // referenced by multiple properties or multiple descendants resolves to the same new clone.
         var nestedIdMap = new Dictionary<Guid, Guid>();
         var cloneTree = new NestedContentTree(dbContext, extensionManager, logger);
-        // Snapshot the descendant IDs before we start adding new clones to the change tracker,
-        // so the foreach below isn't iterating a value that grows during recursion.
-        var descendantNewIds = idMap.Values.Where(id => id != copiedContent.Id).ToList();
-        await CloneBlockListContentTreeAsync(copiedContent, cloneTree, dbContext, user, nestedIdMap,
-            depth: 0, cancellationToken);
-        foreach (var descendantNewId in descendantNewIds)
-        {
-            // Pull the tracked copy from the change tracker — they were Add()ed above.
-            var tracked = dbContext.Contents.Local.FirstOrDefault(c => c.Id == descendantNewId);
-            if (tracked != null)
-            {
-                await CloneBlockListContentTreeAsync(tracked, cloneTree, dbContext, user, nestedIdMap,
-                    depth: 0, cancellationToken);
-            }
-        }
+        // The copied page and its copied descendants (tracked: they were added above), taken before any clone is
+        // added to the change tracker
+        var copiedPages = idMap.Values
+            .Select(id => dbContext.Contents.Local.FirstOrDefault(c => c.Id == id))
+            .OfType<Models.Content>()
+            .ToList();
+        await CloneBlockListContentTreeAsync(copiedPages, cloneTree, dbContext, user, nestedIdMap, cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
         if (user != null)
@@ -928,17 +937,56 @@ public partial class ContentService(
             IsRootContent = parameters.IsRootContent || slug.Length == 0,
             IncludeChildren = parameters.IncludeChildren,
             IgnoreInternalRedirect = parameters.IgnoreInternalRedirect,
-            Url = parameters.Url
+            // Only the host and path pick the page (domains match on them): the query string and fragment stay out
+            // of the key, or every ?utm_… link would be its own cache entry (ZA-061)
+            Url = RequestUrlForLookup(parameters.Url)
         };
 
+        // Cached for 5 minutes (it was 5 seconds by mistake, ZA-061). Content and domain saves clear the Content
+        // prefix; the language keys and the default-language fallback are applied below, outside the cache, because
+        // they change without a content save.
         var cacheKey = request.GenerateCacheKey<Models.Content>("GetContentFromRequest");
-        return (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
+        var cached = (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
             using var scope = serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
             return await FetchEntryModelAsync(request, dbContext, cancellationToken);
-        }, 0, 5))!;
+        }, EntryCacheMinutes))!;
+
+        var entryModel = new EntryModel { Content = cached.Content, LanguageIsoCode = cached.LanguageIsoCode };
+        if (entryModel.Content == null)
+        {
+            return entryModel;
+        }
+
+        if (entryModel.LanguageIsoCode.IsNullOrWhiteSpace())
+        {
+            // The site's default language (set by the installer, or in Global Settings); a site that has none keeps
+            // the old fallback, the admin's language
+            using var settingsScope = serviceScopeFactory.CreateScope();
+            var defaultLanguage = (await settingsScope.ServiceProvider.GetRequiredService<Data.Interfaces.IDataService>()
+                .GetGlobalSettings()).DefaultLanguage;
+            entryModel.LanguageIsoCode = defaultLanguage.IsNullOrWhiteSpace()
+                ? settings.Value.AdminDefaultLanguage
+                : defaultLanguage;
+        }
+
+        var allLanguageData = await languageService.GetCachedAllLanguageDictionariesAsync(
+            new ZauberCMS.Core.Languages.Parameters.GetCachedAllLanguageDictionariesParameters(), cancellationToken);
+        if (allLanguageData.TryGetValue(entryModel.LanguageIsoCode!, out var languageKeys) && languageKeys != null)
+        {
+            entryModel.LanguageKeys = languageKeys;
+        }
+
+        return entryModel;
     }
+
+    /// <summary>How long a front-end URL → page lookup stays cached (sliding; saves clear it sooner).</summary>
+    private const int EntryCacheMinutes = 5;
+
+    /// <summary>Scheme, host, port and path of a request URL, without the query string and fragment.</summary>
+    private static string? RequestUrlForLookup(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Path).ToLowerInvariant() : url;
 
     /// <summary>
     /// Retrieves a single content type by id.
@@ -1352,8 +1400,15 @@ public partial class ContentService(
             await SaveAuditAsync(dbContext, $"{user.Name} {actionText} Domain ({domain.Url})", cancellationToken);
         }
 
-        return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager,
+        var saved = await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager,
             cancellationToken);
+        if (saved.Success)
+        {
+            // Cached front-end lookups (URL → page and language) depend on the domains
+            cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
+        }
+
+        return saved;
     }
 
     /// <summary>
@@ -1449,8 +1504,15 @@ public partial class ContentService(
             }
 
             dbContext.Domains.Remove(domain);
-            return await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager,
+            var deleted = await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager,
                 cancellationToken);
+            if (deleted.Success)
+            {
+                // Cached front-end lookups (URL → page and language) depend on the domains
+                cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
+            }
+
+            return deleted;
         }
 
         handlerResult.AddMessage("Unable to delete, as no Domain with that id exists", ResultMessageType.Warning);
@@ -1464,9 +1526,14 @@ public partial class ContentService(
     /// <returns>True if any content exists.</returns>
     public async Task<bool> AnyContentAsync(CancellationToken cancellationToken = default)
     {
-        using var scope = serviceScopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        return await dbContext.Contents.AsNoTracking().AnyAsync(cancellationToken: cancellationToken);
+        // Asked on every front-end 404: cached under the Content prefix, which every content save and delete
+        // clears (ZA-064). Content in the recycle bin doesn't count.
+        return await cacheService.GetSetCachedItemAsync("AnyContent".GenerateCacheKey<Models.Content>(), async () =>
+        {
+            using var scope = serviceScopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+            return await dbContext.Contents.AsNoTracking().AnyAsync(x => !x.Deleted, cancellationToken);
+        });
     }
 
     /// <summary>
@@ -1480,9 +1547,9 @@ public partial class ContentService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = parameters.GenerateCacheKey<Models.Content>("HasChild");
         if (parameters.Cached)
         {
+            var cacheKey = parameters.GenerateCacheKey<Models.Content>("HasChild");
             return await cacheService.GetSetCachedItemAsync(cacheKey,
                 async () => await dbContext.Contents.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId && !c.Deleted,
                     cancellationToken: cancellationToken));
@@ -1503,9 +1570,9 @@ public partial class ContentService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var cacheKey = parameters.GenerateCacheKey<ContentType>("HasContentTypeChild");
         if (parameters.Cached)
         {
+            var cacheKey = parameters.GenerateCacheKey<ContentType>("HasContentTypeChild");
             return await cacheService.GetSetCachedItemAsync(cacheKey,
                 async () => await dbContext.ContentTypes.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId,
                     cancellationToken: cancellationToken));
@@ -2147,12 +2214,12 @@ public partial class ContentService(
 
             if (!string.IsNullOrWhiteSpace(request.ContentTypeAlias))
             {
-                var contentType = dbContext.ContentTypes.AsNoTracking()
-                    .FirstOrDefault(x => x.Alias == request.ContentTypeAlias);
-                request.ContentTypeId = contentType?.Id ?? Guid.Empty;
+                // Filtered in SQL: looking the type up first was an extra, uncached query before the cache check
+                // on every call (ZA-062). The alias wins over ContentTypeId, as before.
+                var contentTypeAlias = request.ContentTypeAlias;
+                query = query.Where(x => x.ContentType != null && x.ContentType.Alias == contentTypeAlias);
             }
-
-            if (request.ContentTypeId != null)
+            else if (request.ContentTypeId != null)
             {
                 query = query.Where(x => x.ContentTypeId == request.ContentTypeId);
             }
@@ -2281,37 +2348,21 @@ public partial class ContentService(
                     break;
                 }
             }
-
-            if (languageIsoCode.IsNullOrWhiteSpace())
-            {
-                // The site's default language (set by the installer, or in Global Settings); a site that has
-                // none keeps the old fallback, the admin's language
-                using var settingsScope = serviceScopeFactory.CreateScope();
-                var defaultLanguage = (await settingsScope.ServiceProvider.GetRequiredService<Data.Interfaces.IDataService>()
-                    .GetGlobalSettings()).DefaultLanguage;
-                languageIsoCode = defaultLanguage.IsNullOrWhiteSpace()
-                    ? settings.Value.AdminDefaultLanguage
-                    : defaultLanguage;
-            }
         }
 
-        entryModel.LanguageIsoCode = languageIsoCode;
-        var allLanguageData = await languageService.GetCachedAllLanguageDictionariesAsync(
-            new ZauberCMS.Core.Languages.Parameters.GetCachedAllLanguageDictionariesParameters(), cancellationToken);
-        if (allLanguageData.TryGetValue(languageIsoCode, out var lng))
-        {
-            if (lng != null)
-            {
-                entryModel.LanguageKeys = lng;
-            }
-        }
-
+        // Null when neither a domain nor the page or an ancestor sets one: the caller falls back to the default
+        entryModel.LanguageIsoCode = languageIsoCode.IsNullOrWhiteSpace() ? null : languageIsoCode;
         return entryModel;
     }
 
     private static Domain? MatchDomainWithContent(string url, List<Domain> domains)
     {
-        var uri = new Uri(url);
+        // A caller without a full URL (code, a test) matches no domain instead of throwing
+        if (domains.Count == 0 || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
         var requestHost = uri.Host.ToLowerInvariant();
         var requestPath = uri.AbsolutePath.TrimStart('/').ToLowerInvariant();
         return domains.FirstOrDefault(domain =>

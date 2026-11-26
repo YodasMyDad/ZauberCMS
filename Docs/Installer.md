@@ -51,8 +51,8 @@ result is the same whichever one runs:
   PostgreSQL, when the login may). `DatabaseSetupOnServerTests` runs this against real servers.
 - What a site without a database skips at start-up, and what happens instead: the language list for request
   localisation is just the admin language until the next start (content pages set their culture themselves, so
-  they are not affected); `DailyJob` and the sitemap generator do nothing on their first run and work from their
-  next one (24 and 6 hours later). Nothing else at start-up touches the database.
+  they are not affected); `DailyJob` (first run five minutes after start-up) and the sitemap generator do nothing
+  on their first run and work from their next one (24 and 6 hours later). Nothing else at start-up touches the database.
 - **Plugins:** asking for `IZauberDbContext` while there is no database throws `InvalidOperationException` naming
   `/install`. The installer middleware keeps every request away, so only code that runs outside a request can
   meet it. A hosted service that uses the database when it starts must check

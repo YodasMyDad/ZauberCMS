@@ -117,18 +117,13 @@ public class AuditService(
         {
             var cutoffDate = DateTime.UtcNow.AddDays(-parameters.DaysToKeep);
             
-            var oldAudits = dbContext.Audits
-                .Where(a => a.DateCreated < cutoffDate);
-            
-            var auditCount = await oldAudits.CountAsync(cancellationToken);
-            
+            // One DELETE in the database: RemoveRange loaded and tracked every expired row first (ZA-083)
+            var auditCount = await dbContext.Audits
+                .Where(a => a.DateCreated < cutoffDate)
+                .ExecuteDeleteAsync(cancellationToken);
+
             if (auditCount > 0)
             {
-                logger.LogInformation("Deleting {AuditCount} audit records older than {DaysToKeep} days", auditCount, parameters.DaysToKeep);
-                
-                dbContext.RemoveRange(oldAudits);
-                await dbContext.SaveChangesAsync(cancellationToken);
-                
                 logger.LogInformation("Successfully deleted {AuditCount} old audit records", auditCount);
                 
                 handlerResult.Entity = auditCount;

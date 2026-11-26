@@ -76,21 +76,40 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                     rootPage = await contentService.GetContent(rootPage.InternalRedirectId);
                 }
 
-                if (rootPage != null) await AddPageToSitemap(rootPage, sitemapEntries, seoSitemap, ns, contentService, true);
+                var seoProperties = new Dictionary<Guid, PropertyType?>();
+                if (rootPage != null) await AddPageToSitemap(rootPage, sitemapEntries, seoSitemap, ns, contentService, seoProperties, true);
 
-                var contentItems = await contentService.QueryContentAsync(new QueryContentParameters
+                // Every page of the chosen types, a page of results at a time: one query stopped at 2000 (ZA-073).
+                // A sitemap file holds at most 50,000 addresses.
+                for (var pageIndex = 1; sitemapEntries.Count < MaxSitemapEntries; pageIndex++)
                 {
-                    AmountPerPage = 2000,
-                    WhereClause = content => seoSitemap.ContentTypeIds.Contains(content.ContentTypeId)
-                });
-
-                foreach (var content in contentItems.Items)
-                {
-                    // Only allow if this item is under the root id
-                    if (content.Path.Contains(seoSitemap.RootContentId))
+                    var contentItems = await contentService.QueryContentAsync(new QueryContentParameters
                     {
-                        await AddPageToSitemap(content, sitemapEntries, seoSitemap, ns, contentService);
+                        PageIndex = pageIndex,
+                        AmountPerPage = QueryPageSize,
+                        OrderBy = GetContentsOrderBy.DateCreated,
+                        WhereClause = content => seoSitemap.ContentTypeIds.Contains(content.ContentTypeId)
+                    });
+
+                    foreach (var content in contentItems.Items)
+                    {
+                        // Only allow if this item is under the root id
+                        if (content.Path.Contains(seoSitemap.RootContentId) && sitemapEntries.Count < MaxSitemapEntries)
+                        {
+                            await AddPageToSitemap(content, sitemapEntries, seoSitemap, ns, contentService, seoProperties);
+                        }
                     }
+
+                    if (contentItems.IsLastPage)
+                    {
+                        break;
+                    }
+                }
+
+                if (sitemapEntries.Count >= MaxSitemapEntries)
+                {
+                    logger.LogWarning("Sitemap {FileName} has reached {Max} addresses; the rest are left out",
+                        seoSitemap.FileName, MaxSitemapEntries);
                 }
     
                 // Create the sitemap XML document
@@ -121,20 +140,36 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
         }
     }
     
-    private static async Task<PropertyType?> FindSeoPropertyAsync(Content content, IContentService contentService)
+    /// <summary>The most addresses one sitemap file may hold (sitemaps.org).</summary>
+    private const int MaxSitemapEntries = 50_000;
+
+    private const int QueryPageSize = 500;
+
+    private static async Task<PropertyType?> FindSeoPropertyAsync(Content content, IContentService contentService,
+        Dictionary<Guid, PropertyType?> seoProperties)
     {
         if (content.ContentType == null) return null;
+        // Once per content type and run: the compositions were looked up again for every page
+        if (seoProperties.TryGetValue(content.ContentType.Id, out var known)) return known;
+        var found = await FindSeoPropertyOfTypeAsync(content.ContentType, contentService);
+        seoProperties[content.ContentType.Id] = found;
+        return found;
+    }
+
+    private static async Task<PropertyType?> FindSeoPropertyOfTypeAsync(ContentType contentType,
+        IContentService contentService)
+    {
         
         // Check main ContentType first
-        var seoProperty = content.ContentType.ContentProperties
+        var seoProperty = contentType.ContentProperties
             .FirstOrDefault(x => x.Component == "ZauberCMS.Components.Editors.SeoProperty");
         
         if (seoProperty != null) return seoProperty;
         
         // Check compositions if not found
-        if (content.ContentType.CompositionIds.Count > 0)
+        if (contentType.CompositionIds.Count > 0)
         {
-            foreach (var compositionId in content.ContentType.CompositionIds)
+            foreach (var compositionId in contentType.CompositionIds)
             {
                 var compositionType = await contentService.GetContentTypeAsync(
                     new GetContentTypeParameters { Id = compositionId });
@@ -152,12 +187,13 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
         return null;
     }
     
-    private static async Task AddPageToSitemap(Content content, List<XElement> sitemapEntries, SeoSitemap seoSitemap, XNamespace ns, IContentService contentService, bool isRootItem = false)
+    private static async Task AddPageToSitemap(Content content, List<XElement> sitemapEntries, SeoSitemap seoSitemap,
+        XNamespace ns, IContentService contentService, Dictionary<Guid, PropertyType?> seoProperties, bool isRootItem = false)
     {
         // Finally, need to see if this is using the SEO property and whether they
         // have ticked noindex or remove from sitemap
         var allowInSitemap = true;
-        var seoProperty = await FindSeoPropertyAsync(content, contentService);
+        var seoProperty = await FindSeoPropertyAsync(content, contentService, seoProperties);
         
         Meta? metaData = null;
         if (seoProperty != null)
@@ -176,9 +212,11 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
             // Add content data to the sitemap list
             sitemapEntries.Add(new XElement(ns + "url",
                 new XElement(ns + "loc", fullUrl),
-                new XElement(ns + "lastmod", $"{content.DateUpdated:yyyy-MM-ddTHH:mm:sszzz}"),
-                new XElement(ns + "changefreq", metaData != null ? metaData.ChangeFrequency.ToString().ToLower(CultureInfo.CurrentCulture) : "weekly"),
-                new XElement(ns + "priority", metaData != null ? metaData.Priority.ToString(CultureInfo.CurrentCulture) : "0.5")
+                // Stored in UTC: "zzz" printed the server's own offset after a UTC time
+                new XElement(ns + "lastmod", content.DateUpdated.ToString("yyyy-MM-ddTHH:mm:ss'Z'", CultureInfo.InvariantCulture)),
+                new XElement(ns + "changefreq", metaData != null ? metaData.ChangeFrequency.ToString().ToLowerInvariant() : "weekly"),
+                // The sitemap format wants 0.5, never the server culture's 0,5
+                new XElement(ns + "priority", metaData != null ? metaData.Priority.ToString(CultureInfo.InvariantCulture) : "0.5")
             ));   
         }
     }

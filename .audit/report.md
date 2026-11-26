@@ -22,11 +22,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 3 | 27 | 0 |
-| Medium | 34 | 39 | 0 |
+| High | 1 | 29 | 0 |
+| Medium | 25 | 48 | 0 |
 | Low | 47 | 7 | 1 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-160.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083 and ZA-084 (Phase 10), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-160.
 
 ## Open findings
 
@@ -35,18 +35,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Components/Trees/ContentTree.razor:89-96,127`, `ZauberCMS.Components/Trees/MediaTree.razor:117-123,167`, `ZauberCMS.Components/Trees/ContentTypeTree.razor:73-79,117`, `ZauberCMS.Components/Admin/StructureSection/Navigation/CompositionsTree.razor:78,101`, `ZauberCMS.Components/DataSources/ContentTypesDataSource.cs:17-22` · Category: A · Since: 2026-11-25
 - Issue / Trigger: Expand handlers call `.GetAwaiter().GetResult()` on the renderer context and `HasChildren` does a blocking DB call per node per render. It works only because the paged query methods are synchronous today; making `PaginatedList` async (the stated target) would deadlock every tree.
 - Fix: `await` in handlers, batch child flags into `TreeState`, add async `IDataListSource.GetItemsAsync`. · Blocked by: public interface (add + obsolete); must land with the paging refactor.
-
-### ZA-056 [High/High] Role queries always load every user in the role
-
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:425-430,546-549` · Category: B · Since: 2026-11-25
-- Issue / Trigger: `GetRoleAsync`/`QueryRolesAsync` unconditionally include `UserRoles → User`: full user rows including password hashes, soft-deleted users included. Opening the Users section on a site with many members loads them all.
-- Fix: drop the include; opt-in `IncludeUsers` or a count projection. · Blocked by: callers reading `Role.UserRoles`.
-
-### ZA-057 [High/High] Block lists and single media pickers are uncached on the front-end
-
-- Where: `ZauberCMS.Core/Extensions/ContentExtensions.cs:133-139,218` · Category: B · Since: 2026-11-25
-- Issue / Trigger: `GetBlocks` queries without `Cached` — 3 DB round-trips per block list per request, repeated per nested list — and single-media lookups cost one each. Every page with a block list pays this on every request.
-- Fix: `Cached = true` on the non-preview path; skip the COUNT for id queries. · Blocked by: admin preview shares the method.
 
 ### ZA-011 [Medium/High] Two DbContext instances per scope
 
@@ -69,53 +57,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 - Where: `ZauberCMS.Core/Tags/Services/TagService.cs:222-224` · Category: C
 
-### ZA-061 [Medium/High] Front-end entry cache is 5 seconds, not 5 minutes; key includes host and query string
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:999-1005`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:55-61` · Category: B · Since: 2026-11-25
-- Issue / Trigger: The call passes `(0, 5)` = 5 s sliding; any URL idle longer re-runs 4-5 queries and every distinct query string is its own entry.
-- Fix: intended TTL; key on host + path. · Blocked by: nothing.
-
-### ZA-062 [Medium/High] "Cached" content queries still hit the database
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:2083-2088,179,462` · Category: B · Since: 2026-11-25
-- Issue / Trigger: `BuildQuery` does a sync content-type lookup for `ContentTypeAlias` before the cache check, on every request; the cache key is computed even when not caching.
-- Fix: cached alias lookup or join; compute the key only when `Cached`. · Blocked by: nothing.
-
-### ZA-063 [Medium/High] Every extension component is instantiated per request and per block
-
-- Where: `ZauberCMS.Components/Pages/EntryPage.razor:44`, `ZauberCMS/Components/App.razor:60`, `ZauberCMS.Components/ContentComponents/RenderBlock.razor:8,45` · Category: B · Since: 2026-11-25
-- Issue / Trigger: `GetInstances<T>` builds every view per request, every property editor per request (only needed in admin) and every block view per `RenderBlock`.
-- Fix: `GetImplementations<T>` plus a static alias → type map. · Blocked by: nothing.
-
-### ZA-064 [Medium/High] 404s cost two uncached queries each
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:1414-1419`, `ZauberCMS.Components/Pages/EntryPage.razor:112` · Category: B · Since: 2026-11-25
-- Issue / Trigger: `AnyContentAsync` is uncached with no `Deleted` filter; bot traffic to dotted paths skips the middleware and takes the fallback.
-- Fix: cache under the Content prefix. · Blocked by: nothing.
-
 ### ZA-068 [Medium/High] Admin trees over-fetch and silently stop at 100 children
 
 - Where: `ZauberCMS.Components/Trees/ContentTree.razor:43-51,60-69,88-95`, `ZauberCMS.Components/Admin/ContentSection/Navigation/ContentSectionTree.razor:60-68`, `ZauberCMS.Components/Admin/MediaSection/Folder.razor:105` · Category: B · Since: 2026-11-25
 - Issue / Trigger: Tree queries load property data, children and roles they never read; children are capped at 100 (media 200, recycle bin 300) with no paging, so later items are unreachable.
 - Fix: tree projection query and load-more. · Blocked by: UX; new service method.
-
-### ZA-069 [Medium/High] Content versions grow without bound
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:254,432`, `ZauberCMS.Core/Content/Services/ContentVersioningService.cs:193-241` · Category: B · Since: 2026-11-25
-- Issue / Trigger: Every save — including each block — writes a full snapshot with no retention; the version list is tracked and loads full snapshot JSON.
-- Fix: retention setting + daily prune; no-tracking projection. · Blocked by: new config key ×3.
-
-### ZA-071 [Medium/High] Language dictionary load is N+1 and synchronous
-
-- Where: `ZauberCMS.Core/Languages/Services/LanguageService.cs:360-376` · Category: B · Since: 2026-11-25
-- Issue / Trigger: Dictionaries are re-queried per language with a linear lookup per key.
-- Fix: two `ToListAsync` calls and a lookup. · Blocked by: nothing.
-
-### ZA-073 [Medium/Medium] Bulk admin operations run item by item
-
-- Where: `ZauberCMS.Components/ContextMenus/ContentMenus/RestrictAccessContextMenu.cs:94-125`, `ZauberCMS.Core/Content/Services/ContentService.cs:739-741,785-788,899`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:81-85,137-140` · Category: B · Since: 2026-11-25
-- Issue / Trigger: Restrict-access does a full save (version + cache flush) per descendant with no transaction; copy queries per block; the sitemap stops at 2000 items.
-- Fix: batch. · Blocked by: save-hook behaviour.
 
 ### ZA-077 [Medium/High] Importing a content type over an existing alias orphans all its values
 
@@ -140,18 +86,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs:212,224,291-299,487,564,958,961,2261-2269,2282`, `ZauberCMS.Core/Extensions/DbContextExtensions.cs:66-70,89-93`, `ZauberCMS.Core/Media/Services/MediaService.cs:98,187`, `ZauberCMS.Core/Languages/Services/LanguageService.cs:362-375` · Category: A · Since: 2026-11-25
 - Issue / Trigger: Every content, media or type save blocks a circuit thread on several round-trips.
 - Fix: `…Async` overloads with the token; `BuildPathAsync`. · Blocked by: `BuildPath` is a public extension (obsolete).
-
-### ZA-083 [Medium/High] Daily audit cleanup loads every expired row, on every app start
-
-- Where: `ZauberCMS.Core/Audit/Services/AuditService.cs:120-130`, `ZauberCMS.Core/Jobs/DailyJob.cs:18` · Category: A · Since: 2026-11-25
-- Issue / Trigger: `RemoveRange(IQueryable)` materialises and tracks all audits older than 90 days.
-- Fix: `ExecuteDeleteAsync`. · Blocked by: nothing.
-
-### ZA-084 [Medium/High] Non-image uploads are buffered twice in memory; raw exception text shown
-
-- Where: `ZauberCMS.Core/Providers/DiskStorageProvider.cs:221-223,232-236` · Category: A · Since: 2026-11-25
-- Issue / Trigger: `MemoryStream` then `ToArray()` holds about twice the file size per upload; failures return `ex.Message` to the user unlogged.
-- Fix: stream straight to a `FileStream`; log and return a generic message. · Blocked by: nothing.
 
 ### ZA-086 [Medium/Medium] UserManager and its DbContext live for the whole circuit
 
@@ -518,6 +452,18 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed this run / Resolved since last run
 
+- **Phase 10 (2026-11-26), steps A and B: front-end caching, queries, version retention, bulk operations.**
+  - **ZA-056 [High] Role queries always load every user in the role — fixed.** `GetRoleAsync`/`QueryRolesAsync` load members only with the new `IncludeUsers`. Test `ZA056_…`. Release note: code that read `Role.UserRoles` sets `IncludeUsers = true`.
+  - **ZA-057 [High] Block lists and single media pickers are uncached on the front-end — fixed.** `GetBlocks` (no pending changes) and the single-media `GetMediaItems` path are cached under their prefixes; paging skips the `COUNT` when the first page isn't full. Test `ZA057_…` (paging counts).
+  - **ZA-061 [Medium] Front-end entry cache is 5 seconds, not 5 minutes; key includes host and query string — fixed.** 5 minutes sliding; key on slug + scheme/host/path (no query string); domain save/delete clears the Content prefix; language keys and the default-language fallback applied outside the cache; a lookup without a full URL no longer throws. Tests `ZA061_…` (×4).
+  - **ZA-062 [Medium] "Cached" content queries still hit the database — fixed.** `ContentTypeAlias` filters by a join instead of a lookup before the cache check; every service builds the SQL-hashed key only when `Cached`. Test `ZA062_…`.
+  - **ZA-063 [Medium] Every extension component is instantiated per request and per block — fixed.** `EntryPage` uses the cached view types, `RenderBlock` a static alias → type map per view kind, `App.razor` reads editor scripts/styles once and only in the admin. Verified by build and the front-end tests; no browser run.
+  - **ZA-064 [Medium] 404s cost two uncached queries each — fixed.** `AnyContentAsync` is cached under the Content prefix and ignores recycled content. Test `ZA064_…`.
+  - **ZA-069 [Medium] Content versions grow without bound — fixed.** D25: `Zauber:ContentVersionsToKeep` (default 50, 0 = all) in the three appsettings; the daily job calls the new `IContentVersioningService.PruneVersionsAsync` (keeps the published version and latest draft, clears `ParentVersionId` links first). The version list is no-tracking, `CreatedBy` slimmed to id/name/email, `IncludeSnapshots = false` for the admin list. Tests `ZA069_…` (×3).
+  - **ZA-071 [Medium] Language dictionary load is N+1 and synchronous — fixed.** Three async projections and a lookup. Test `ZA071_…`.
+  - **ZA-073 [Medium] Bulk admin operations run item by item — fixed.** Public access goes through the new `IContentService.SetContentRolesAsync` (one transaction and audit row, `ContentRole` hooks, no versions; its "remove" path now clears the cache too); copy clones blocks one query per level; the sitemap pages through every page (up to 50,000), caches the SEO property per content type and writes invariant-culture priority and UTC `lastmod`. Tests `ZA073_…` (×2); copy covered by `ContentTreeSaveTests`; sitemap not run.
+  - **ZA-083 [Medium] Daily audit cleanup loads every expired row, on every app start — fixed.** `ExecuteDeleteAsync`; the daily job's first run is five minutes after start-up. Test `ZA083_…`.
+  - **ZA-084 [Medium] Non-image uploads are buffered twice in memory; raw exception text shown — fixed.** Streamed to a `FileStream` (a partial file is removed on failure); the error is logged and the editor gets a generic message. `DiskStorageProvider` takes an optional `ILogger`. Not covered by a test (needs an `IBrowserFile` upload); build only.
 - **Phase 9 (2026-11-26): Block List redesign (D5).** How it works: [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) (its §6 maps every old failure to the fix).
   - **ZA-034 [High] Cancel in a nested panel leaked its changes — fixed.** `ContentEditScope`: each block panel edits
     in a child scope; the list commits it on Save and rolls it back on Cancel or close, deeper panels included.

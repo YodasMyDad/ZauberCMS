@@ -1,15 +1,12 @@
 ﻿@using ZauberCMS.Core.Plugins
 @typeparam TView where TView : IContentBlock
 
-@if (Content != null && BlockViews != null)
+@if (Content != null)
 {
-    var contentTypeAlias = Content.ContentTypeAlias;
-    var blockViewPair = BlockViews.FirstOrDefault(pair => pair.Value.ContentTypeAlias == contentTypeAlias);
-
-    if (blockViewPair.Value != null)
+    if (Content.ContentTypeAlias != null && ViewsByAlias.TryGetValue(Content.ContentTypeAlias, out var blockViewType))
     {
         <div>
-            <DynamicComponent Parameters="@(Parameters)" Type="@blockViewPair.Value.GetType()" />
+            <DynamicComponent Parameters="@(Parameters)" Type="@blockViewType" />
         </div>
     }
     else if (FallbackComponentType != null)
@@ -30,7 +27,16 @@
     [Obsolete("Ignored. Admin block previews are rendered by BlockPreview with the Block List editor's stylesheets.")]
     [Parameter] public List<string> Stylesheets { get; set; } = [];
 
-    private Dictionary<string, TView>? BlockViews { get; set; }
+    // The block view type for each content type alias, built once per TView: making an instance of every block
+    // view to read its alias, on every render of every block, was the cost (ZA-063). The first view found for an
+    // alias wins, as before.
+    private static IReadOnlyDictionary<string, Type>? _viewsByAlias;
+
+    private IReadOnlyDictionary<string, Type> ViewsByAlias => _viewsByAlias ??= ExtensionManager
+        .GetInstances<TView>(true).Values
+        .Where(view => view.ContentTypeAlias != null)
+        .GroupBy(view => view.ContentTypeAlias!, StringComparer.Ordinal)
+        .ToDictionary(group => group.Key, group => group.First().GetType(), StringComparer.Ordinal);
 
     protected override void OnParametersSet()
     {
@@ -41,7 +47,5 @@
             ["Content"] = Content!
         };
         Parameters = newParameters;
-
-        BlockViews = ExtensionManager.GetInstances<TView>(true);
     }
 }

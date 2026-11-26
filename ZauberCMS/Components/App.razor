@@ -51,14 +51,27 @@
     private List<string> PageScripts { get; set; } = [];
     private List<string> PageStyles { get; set; } = [];
     
+    // The property editors' scripts and styles, read once: they are only rendered in the admin, and making an
+    // instance of every editor on every front-end request was the cost (ZA-063)
+    private static (List<string> Scripts, List<string> Styles)? _editorAssets;
+
     protected override void OnInitialized()
     {
-        var contentProperties = ExtensionManager.GetInstances<IContentProperty>(true);
-        if (contentProperties.Any())
+        if (!IsAdmin)
         {
-            PageScripts = contentProperties.SelectMany(x => x.Value.Scripts)?.Distinct().ToList() ?? [];
-            PageStyles = contentProperties.SelectMany(x => x.Value.Styles)?.Distinct().ToList() ?? [];
+            return;
         }
+
+        _editorAssets ??= ReadEditorAssets();
+        PageScripts = _editorAssets.Value.Scripts;
+        PageStyles = _editorAssets.Value.Styles;
+    }
+
+    private (List<string> Scripts, List<string> Styles) ReadEditorAssets()
+    {
+        var contentProperties = ExtensionManager.GetInstances<IContentProperty>(true).Values.ToList();
+        return (contentProperties.SelectMany(x => x.Scripts).Distinct().ToList(),
+            contentProperties.SelectMany(x => x.Styles).Distinct().ToList());
     }
 
     private bool IsAdmin

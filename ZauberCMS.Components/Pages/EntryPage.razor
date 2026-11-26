@@ -1,5 +1,4 @@
-﻿@using System.Collections.Concurrent
-@using Microsoft.AspNetCore.Components.Authorization
+﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
@@ -13,7 +12,7 @@
 @if (ComponentView != null)
 {
     <LayoutView Layout="LayoutType">
-        <DynamicComponent Type="@ComponentView.GetType()" Parameters="@Parameters" />
+        <DynamicComponent Type="@ComponentView" Parameters="@Parameters" />
     </LayoutView>
 }
 
@@ -32,8 +31,9 @@
     private Content? Content { get; set; }
     private Dictionary<string, string> LanguageKeys { get; set; } = [];
     private string? LanguageIso { get; set; }
-    private ConcurrentDictionary<string, IContentView> AllContentViews { get; set; } = new();
-    private IContentView? ComponentView { get; set; }
+    // View types by full name, discovered once and cached: no view instances per request (ZA-063)
+    private IReadOnlyDictionary<string, Type> AllContentViews { get; set; } = new Dictionary<string, Type>();
+    private Type? ComponentView { get; set; }
     private Dictionary<string, object> Parameters { get; set; } = new();
     private Type LayoutType { get; set; } = null!;
     private AuthenticationState AuthState { get; set; } = null!;
@@ -41,8 +41,7 @@
     protected override async Task OnParametersSetAsync()
     {
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var instances = ExtensionManager.GetInstances<IContentView>(true);
-        AllContentViews = new ConcurrentDictionary<string, IContentView>(instances);
+        AllContentViews = ExtensionManager.GetImplementations<IContentView>(true);
         
         // Try to get EntryModel from middleware first (avoids duplicate query)
         var entryModel = CultureMiddleware.GetEntryModel(HttpContext);
@@ -61,7 +60,7 @@
             if (AllContentViews.TryGetValue(Content.ViewComponent, out var contentView))
             {
                 ComponentView = contentView;
-                LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                LayoutType = LayoutResolver.GetLayoutType(ComponentView);
                 Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };
                 
                 // Note: Culture is now set by CultureMiddleware before this component renders
@@ -103,7 +102,7 @@
             else if (AllContentViews.TryGetValue(Settings.Value.MissingView!, out var missing))
             {
                 ComponentView = missing;
-                LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                LayoutType = LayoutResolver.GetLayoutType(ComponentView);
                 Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };
             }
         }
@@ -115,13 +114,13 @@
                 if (AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
                 {
                     ComponentView = notFound;
-                    LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                    LayoutType = LayoutResolver.GetLayoutType(ComponentView);
                 }
             }
             else if (AllContentViews.TryGetValue(Settings.Value.StarterComponent!, out var starter))
             {
                 ComponentView = starter;
-                LayoutType = LayoutResolver.GetLayoutType(ComponentView.GetType());
+                LayoutType = LayoutResolver.GetLayoutType(ComponentView);
             }
         }
     }

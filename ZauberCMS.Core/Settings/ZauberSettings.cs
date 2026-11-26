@@ -13,6 +13,12 @@ public class ZauberSettings
     public string? Default404Url { get; set; }
 
     /// <summary>
+    /// How many versions of each page are kept. The daily job removes older ones, never the published version or
+    /// the latest draft. 0 keeps every version (the table then grows with every save).
+    /// </summary>
+    public int ContentVersionsToKeep { get; set; } = 50;
+
+    /// <summary>
     /// The public address of the site, for example <c>https://www.example.com</c>. Links in emails (password
     /// reset, email confirmation) are built from it. When it is empty they are built from the Host header of the
     /// request, which the sender of the request controls, so set this (or restrict <c>AllowedHosts</c>) on any

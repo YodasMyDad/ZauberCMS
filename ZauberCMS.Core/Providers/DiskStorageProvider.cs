@@ -3,6 +3,8 @@ using ImageResize.Core.Extensions;
 using ImageResize.Core.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using ZauberCMS.Core.Data.Interfaces;
@@ -17,10 +19,12 @@ public class DiskStorageProvider(
     IWebHostEnvironment env,
     IDataService dataService,
     IOptions<ZauberSettings> settings,
-    IImageResizerService imageResizerService)
+    IImageResizerService imageResizerService,
+    ILogger<DiskStorageProvider>? logger = null)
     : IStorageProvider
 {
     private readonly ZauberSettings _settings = settings.Value;
+    private readonly ILogger _logger = logger ?? NullLogger<DiskStorageProvider>.Instance;
 
     /// <inheritdoc />
     public async Task<HandlerResult<Media.Models.Media>> CanUseFile(IBrowserFile file, bool onlyImages = false)
@@ -200,9 +204,19 @@ public class DiskStorageProvider(
                     }
                     else
                     {
-                        using var mstream = new MemoryStream();
-                        await stream.CopyToAsync(mstream);
-                        await File.WriteAllBytesAsync(filePath, mstream.ToArray());
+                        // Straight to the file: buffering in memory held about twice the file's size per upload
+                        // (ZA-084). A failed copy (too large, the browser went away) leaves no partial file.
+                        try
+                        {
+                            await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write,
+                                FileShare.None, 81920, useAsync: true);
+                            await stream.CopyToAsync(fileStream);
+                        }
+                        catch
+                        {
+                            TryDeleteFile(filePath);
+                            throw;
+                        }
                     }
                 }
 
@@ -213,7 +227,9 @@ public class DiskStorageProvider(
             }
             catch (Exception ex)
             {
-                result.AddMessage(ex.Message, ResultMessageType.Error);
+                // Logged with the detail; the editor gets a message without server paths or internals (ZA-084)
+                _logger.LogError(ex, "Saving the uploaded file {FileName} failed", file.Name);
+                result.AddMessage("The file could not be saved; the error is in the site's log", ResultMessageType.Error);
                 result.Success = false;
             }
 
@@ -221,6 +237,18 @@ public class DiskStorageProvider(
         }
 
         return result;
+    }
+
+    private void TryDeleteFile(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning(ex, "Could not remove the partly written file {Path}", path);
+        }
     }
 
     /// <summary>

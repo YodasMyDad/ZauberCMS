@@ -18,6 +18,10 @@ public class QueryRolesParameters
     public Expression<Func<Role, bool>>? WhereClause { get; set; }
     public Func<IQueryable<Role>>? Query { get; set; }
     public string? SearchTerm { get; set; }
+
+    /// <summary>Also load the role's members (<c>Role.UserRoles</c> with each <c>User</c>, recycled users
+    /// included). Off by default: a role on a site with many members loaded all of them (ZA-056).</summary>
+    public bool IncludeUsers { get; set; }
 }
 
 public enum GetRolesOrderBy

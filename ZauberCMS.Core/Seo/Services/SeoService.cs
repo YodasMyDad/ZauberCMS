@@ -87,10 +87,9 @@ public class SeoService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var query = BuildQuery(parameters, dbContext);
-        var cacheKey = query.GenerateCacheKey<SeoRedirect>();
-        
         if (parameters.Cached)
         {
+            var cacheKey = query.GenerateCacheKey<SeoRedirect>();
             return await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToListAsync(cancellationToken: cancellationToken)) ?? new List<SeoRedirect>();
         }
 
