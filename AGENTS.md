@@ -52,7 +52,7 @@ in every phase of the rework, against this:
 | `ZauberCMS.Routing` | Front-end catch-all `CatchAll.razor` (`@page "/{**slug}"`) — **must load last** | NuGet |
 | `ZauberCMS` | Umbrella: `App.razor`, `Routes.razor`, packaged `appsettings.json`, `ZauberCMS.targets` | NuGet |
 | `ZauberCMS.Template` | `dotnet new zaubercms` template (non-compiling csproj); ships the starter kit and its views | NuGet (template) |
-| `ZauberCMS.Web` | **Local dev runner + sample site only** (SQLite `app.db`, tracked — don't commit dev changes to it) | no |
+| `ZauberCMS.Web` | **Local dev runner + sample site only** (SQLite `app.db`, tracked: sample content, **no accounts** — a clone runs the installer to create its administrator; don't commit dev changes to it) | no |
 | `tests/ZauberCMS.Core.Tests`, `tests/ZauberCMS.Components.Tests` | xUnit tests (services on in-memory SQLite through the real bootstrap; component models) | no |
 
 Core folders are by feature: `<Feature>/{Interfaces,Services,Parameters,Models,Mapping}` (Content, Media, Membership,

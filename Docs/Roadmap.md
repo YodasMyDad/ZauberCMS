@@ -418,6 +418,3 @@ Owner instructions for this phase (2026-11-25):
     that a publish does not overwrite? It would close the common case behind D24; it changes D19's "into
     `appsettings.json`" and does not survive deployments that delete extra files.
   - The installer's pages cannot be restyled or given extra steps from a site (ZA-151). Wanted?
-  - The sample site's database has only the author's administrator account. `ReadMe.md` now tells people who
-    clone the repository to register and use `RecoverAdminUser`; a sample login, or no tracked database at all,
-    would be friendlier.

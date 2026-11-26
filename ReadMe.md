@@ -48,7 +48,7 @@ This video shows building a very simple site from scratch, hopefully you'll see 
 
 ## Example Site
 
-This repo comes with a starter site example so you can see some of the most common concepts, if you clone this repo, build and run the **ZauberCMS.Web** project you will see the starter kit. Its sample database already has an administrator account that only its author can use, so to look around the admin: register at /Account/Register, set `Zauber:Identity:RecoverAdminUser` in `ZauberCMS.Web/appsettings.json` to the email address you registered with, restart, and remove the key again. (A new site of your own starts with the installer, which creates the administrator account.)
+This repo comes with a starter site example so you can see some of the most common concepts, if you clone this repo, build and run the **ZauberCMS.Web** project you will see the starter kit. Its sample database has the sample content but no accounts, so the first time you run it the installer asks you to create the administrator account; after that, go to /admin and sign in with it.
 
 **Use the example site:** If you want to use this starter site as a starting point for your own website. Remove the project from the source, and remove the project reference in the csproj and uncomment the nuget package reference.
 
