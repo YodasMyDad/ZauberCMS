@@ -114,6 +114,7 @@ public class DiskStorageProvider(
             if (File.Exists(fullFilePath))
             {
                 File.Delete(fullFilePath);
+                RemoveEmptyUploadFolder(Path.GetDirectoryName(fullFilePath));
                 return true;
             }
 
@@ -220,6 +221,36 @@ public class DiskStorageProvider(
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Each upload has its own folder (<c>media/{id}/</c>): once its file is gone, the empty folder goes too.
+    /// Never the upload folder itself, and nothing outside it.
+    /// </summary>
+    private void RemoveEmptyUploadFolder(string? directory)
+    {
+        if (directory.IsNullOrWhiteSpace() ||
+            !TryResolveUnderWebRoot(_settings.UploadFolderName ?? "media", out var uploadRoot))
+        {
+            return;
+        }
+
+        var uploadRootWithSep = uploadRoot.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var full = Path.GetFullPath(directory!);
+        if (!full.StartsWith(uploadRootWithSep, StringComparison.OrdinalIgnoreCase) ||
+            !Directory.Exists(full) || Directory.EnumerateFileSystemEntries(full).Any())
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.Delete(full);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Something was written to it in the meantime, or it can't be removed: the file is gone, keep the folder
+        }
     }
 
     private bool TryResolveUnderWebRoot(string relativeOrUrlPath, out string fullPath)

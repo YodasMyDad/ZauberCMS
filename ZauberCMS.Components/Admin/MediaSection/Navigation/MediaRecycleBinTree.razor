@@ -1,0 +1,114 @@
+@using ZauberCMS.Core.Media.Models
+@using ZauberCMS.Core.Media.Parameters
+@using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
+@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
+@implements IDisposable
+
+@* The media recycle bin (Roadmap D3). Its actions are the ITreeContextMenu items for MediaRecycleBinTree:
+   Restore and Delete on an item, Empty on the root. An item that went to the bin with its folder is listed,
+   restored and deleted through that folder. *@
+<div>
+    <BaseTree
+        TreeAlias="@Constants.Sections.Trees.MediaRecycleBinTree"
+        T="TreeStub"
+        Data="@TreeItems"
+        Expand="@OnExpandHandler"
+        Change="@OnChangeHandler"
+        @bind-Value="@Selection"
+        HasChildren="@(e => HasChildren(e))"
+        ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
+        DisableSectionOnlyContextMenu="@(true)"
+        Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
+    </BaseTree>
+</div>
+
+@code {
+    [Inject] public AppState AppState { get; set; } = null!;
+    [Inject] public TreeState TreeState { get; set; } = null!;
+
+    public int SortOrder => 100;
+    public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.MediaNavGroup;
+
+    private object? Selection { get; set; }
+    private IEnumerable<TreeStub> TreeItems { get; set; } = [];
+    private List<Media> BinnedItems { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await DataRefresh();
+        TreeState.OnTreeValueChanged += TreeStateOnTreeValueChanged;
+        AppState.OnMediaChanged += HandleMediaChanged;
+    }
+
+    private void TreeStateOnTreeValueChanged(object? obj)
+    {
+        if (obj != Selection)
+        {
+            Selection = null;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DataRefresh()
+    {
+        var binned = await MediaService.QueryMediaAsync(new QueryMediaParameters
+        {
+            WhereClause = x => x.Deleted,
+            IncludeDeleted = true,
+            OrderBy = GetMediaOrderBy.DateUpdatedDescending,
+            AmountPerPage = 500
+        });
+
+        var binnedIds = binned.Items.Select(x => x.Id).ToHashSet();
+        BinnedItems = binned.Items
+            .Where(x => x.ParentId == null || !binnedIds.Contains(x.ParentId.Value))
+            .ToList();
+
+        TreeItems =
+        [
+            new TreeStub
+            {
+                Id = Constants.Guids.MediaRecycleBinRootId,
+                Name = "Recycle Bin",
+                Icon = "delete",
+                SortOrder = 1,
+                StubType = typeof(TreeStub)
+            }
+        ];
+    }
+
+    private Task HandleMediaChanged(Media? media, string username)
+        => InvokeAsync(async () =>
+        {
+            TreeState.ClearChildCache(null);
+            await DataRefresh();
+            StateHasChanged();
+        });
+
+    private void OnExpandHandler(TreeExpandEventArgs args)
+    {
+        if (args.Value is TreeStub treeStub)
+        {
+            args.Children!.Data = BinnedItems;
+            args.Children.TextProperty = "Name";
+            args.Children.Template = TreeExtensions.CreateMediaTreeTemplate<RadzenTreeItem>();
+            args.Children.HasChildren = HasChildren;
+            TreeState.NodeExpanded(treeStub.Id);
+        }
+    }
+
+    // Nothing to open: the editor is for live media. Restore or delete from the item's menu.
+    private void OnChangeHandler() => TreeState.TreeValue = Selection;
+
+    private bool HasChildren(object data) => data is TreeStub && BinnedItems.Count > 0;
+
+    private bool ShouldBeExpanded(object data) =>
+        data is TreeStub tree && (TreeState.IsNodeExpanded(tree.Id) || BinnedItems.Count > 0);
+
+    public void Dispose()
+    {
+        AppState.OnMediaChanged -= HandleMediaChanged;
+        TreeState.OnTreeValueChanged -= TreeStateOnTreeValueChanged;
+    }
+}

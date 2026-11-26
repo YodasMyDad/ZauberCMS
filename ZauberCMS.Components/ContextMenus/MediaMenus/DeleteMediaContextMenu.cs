@@ -6,17 +6,14 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;
-using ZauberCMS.Core.Membership.Interfaces;
-using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
+/// <summary>Moves media (a folder with everything in it) to the media recycle bin.</summary>
 public class DeleteMediaContextMenu(
-    IMediaService mediaService, 
-    IMembershipService membershipService,
+    IMediaService mediaService,
     DialogService dialogService,
-    NotificationService notificationService,
-    AppState appState) : ITreeContextMenu
+    NotificationService notificationService) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
@@ -27,28 +24,23 @@ public class DeleteMediaContextMenu(
     {
         return args.Value is Media;
     }
-    
+
     public async Task ContextMenuAction(TreeItemContextMenuEventArgs args, MenuItemEventArgs e, NavigationManager navigationManager,
         ContextMenuService contextMenuService, IModalService modalService)
     {
         var media = (Media)args.Value!;
-        var dbMedia = await mediaService.GetMediaAsync(new GetMediaParameters { Id = media.Id, IncludeChildren = true, Cached = false });
-        var currentUser = await membershipService.GetCurrentUser();
-        
-        // Show confirmation dialog
-        var hasChildren = dbMedia?.Children.Count > 0;
-        var message = hasChildren
-            ? "Are you sure you want to delete this media and all its children?"
-            : "Are you sure you want to delete this media?";
+        var message = media.MediaType == MediaType.Folder
+            ? "Move this folder and everything in it to the recycle bin?"
+            : "Move this media to the recycle bin?";
         var delete = await dialogService.Confirm(message, "Delete Media", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
-        
-        if (delete == true && dbMedia != null)
+
+        if (delete == true)
         {
-            var deleteResult = await mediaService.DeleteMediaAsync(new DeleteMediaParameters { MediaId = dbMedia.Id });
+            // The service raises the media events (ZA-013: this menu raised them a second time)
+            var deleteResult = await mediaService.DeleteMediaAsync(new DeleteMediaParameters { MediaId = media.Id });
             if (deleteResult.Success)
             {
-                notificationService.ShowSuccessNotification("Media deleted");
-                await appState.NotifyMediaDeleted(dbMedia, currentUser?.Name ?? "Unknown");
+                notificationService.ShowSuccessNotification("Moved to the recycle bin");
             }
             else
             {
@@ -56,6 +48,6 @@ public class DeleteMediaContextMenu(
             }
         }
     }
-    
+
     public int SortOrder => 100;
 }

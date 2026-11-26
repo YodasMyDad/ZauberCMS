@@ -131,7 +131,8 @@ Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it o
   `TestContainers.RedisConnectionStringAsync()`. Without Docker these tests are skipped with a message; on CI (the
   `CI` variable is set) they fail instead.
 - SQL Server is not in a container: set `ZAUBER_TEST_SQLSERVER` to a connection string without a database (for
-  example `Server=myserver;Integrated Security=true;TrustServerCertificate=true`; the login needs CREATE DATABASE)
+  example `Server=myserver;Integrated Security=true;TrustServerCertificate=true`, or on Windows the per-user LocalDB
+  `Server=(localdb)\MSSQLLocalDB;Integrated Security=true;TrustServerCertificate=true`; the login needs CREATE DATABASE)
   and the `…OnSqlServer` classes run, each site on its own database, dropped afterwards. Unset (also on CI) they
   are skipped.
 - Not built yet: bUnit component tests, and a template smoke test

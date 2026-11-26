@@ -34,7 +34,14 @@ internal static class InstallerDatabase
 
                 case DatabaseProviders.SqlServer:
                 {
-                    var builder = new SqlConnectionStringBuilder(connectionString) { ConnectTimeout = ConnectTimeoutSeconds };
+                    // Pooling off, as for PostgreSQL, and also because SqlClient's pool remembers a failed open: for
+                    // a few seconds after "database does not exist" every open with the same string fails the same
+                    // way, so a test straight after the database was created would still say it is missing.
+                    var builder = new SqlConnectionStringBuilder(connectionString)
+                    {
+                        ConnectTimeout = ConnectTimeoutSeconds,
+                        Pooling = false
+                    };
                     var database = builder.InitialCatalog;
                     return await TestServerAsync(database,
                         () => new SqlConnection(builder.ConnectionString),

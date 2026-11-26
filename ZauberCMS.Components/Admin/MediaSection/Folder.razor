@@ -94,6 +94,13 @@
     private Task HandleMediaChanged(Media? media, string username)
         => InvokeAsync(async () =>
         {
+            // This folder (or one above it) went to the recycle bin or was deleted
+            if (await MediaService.GetMediaAsync(new GetMediaParameters { Id = FolderId }) == null)
+            {
+                NavigationManager.NavigateTo(Urls.AdminMediaBaseUrl);
+                return;
+            }
+
             await SetContents(FolderId);
             StateHasChanged();
         });

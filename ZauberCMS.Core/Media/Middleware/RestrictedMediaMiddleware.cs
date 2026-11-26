@@ -14,8 +14,11 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
 {
     public async Task InvokeAsync(HttpContext context)
     {
-        // Check if the request is for a media file
-        if (context.Request.Path.StartsWithSegments($"/{settings.Value.UploadFolderName}", StringComparison.OrdinalIgnoreCase))
+        // Check if the request is for a media file. Compared in normalised form: the static file handler serves
+        // "//media/a.png" and "/media//a.png" as "/media/a.png", so a raw prefix test could be walked round.
+        var uploadFolder = Services.MediaService.NormaliseMediaPath(settings.Value.UploadFolderName).TrimEnd('/') + "/";
+        if (Services.MediaService.NormaliseMediaPath(context.Request.Path.Value)
+            .StartsWith(uploadFolder, StringComparison.Ordinal))
         {
             using var scope = serviceProvider.CreateScope();
             var mediaService = scope.ServiceProvider.GetRequiredService<IMediaService>();
@@ -28,6 +31,13 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
 
             if (entry is not null)
             {
+                // Recycled media is not served: only an administrator (the recycle bin shows it) gets the file
+                if (entry.InRecycleBin && !context.User.IsInRole(Constants.Roles.AdminRoleName))
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
+                    return;
+                }
+
                 if (context.User.Identity?.IsAuthenticated != true)
                 {
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -50,6 +60,14 @@ public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider se
 
                 // Authentication (and role check, if any) passed - let downstream middleware handle the request
                 context.Items["ZauberMediaAuthenticated"] = true;
+
+                // Only this user may have it: no shared cache (CDN, proxy) may keep it and hand it to someone else.
+                // Set as the response starts, so the image resizer's own caching headers don't replace it.
+                context.Response.OnStarting(() =>
+                {
+                    context.Response.Headers.CacheControl = "private, no-store";
+                    return Task.CompletedTask;
+                });
             }
         }
 

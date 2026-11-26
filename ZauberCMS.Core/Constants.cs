@@ -21,6 +21,7 @@ public static class Constants
         public static readonly Guid UsersTreeRootId = new("86000c41-647d-49d2-9de5-e481b7b4a1c1");
         public static readonly Guid RolesTreeRootId = new("b30e0814-d163-40d3-8913-65225cfa3652");
         public static readonly Guid RecycleBinRootId = new("97a0c80e-cbf2-4a70-a185-5a199f4cb8e2");
+        public static readonly Guid MediaRecycleBinRootId = new("3f1d6c0e-8b4a-4e57-9a2d-6c0b7e5f41a9");
     }
     
     public static List<string> UserAgents { get; } =
@@ -80,6 +81,7 @@ public static class Constants
             public const string ContentTree = "ContentTree";
             public const string GenericTree = "GenericTree";
             public const string MediaTree = "MediaTree";
+            public const string MediaRecycleBinTree = "MediaRecycleBinTree";
             public const string NavigationPropertyTree = "NavigationPropertyTree";
             public const string BaseTree = "BaseTree";
             

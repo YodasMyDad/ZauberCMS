@@ -7,13 +7,13 @@
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-152`).
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-157`).
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
-  2026-11-26).
-  **95 open findings** (0 Critical, 9 High, 43 Medium, 43 Low). **Next: Phase 8.**
+  2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26).
+  **96 open findings** (0 Critical, 8 High, 42 Medium, 46 Low). **Next: Phase 9.**
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -360,9 +360,65 @@
   read-only (the override case was used to reach the same screen); the published template package (it cannot
   build until the packages with these APIs exist — see [Releasing.md](Releasing.md) for the check that was done).
 
-### Phase 8 — Media recycle bin (D3)
-- Media section recycle bin: list, restore, permanent delete (removes file via `IStorageProvider`), empty bin.
-- Recycled media must not be publicly served (ties to ZA-053); notifications fixed (ZA-013).
+### Phase 8 — Media recycle bin (D3) — DONE 2026-11-26
+- Fixed: ZA-006 (no media recycle bin), ZA-013 (media events before the save, or twice), and two found on the way:
+  ZA-154 (restricted media could be fetched with a doubled slash in the address — older than this phase, found by
+  its audit) and ZA-153 (the installer's SQL Server connection test, found by running the SQL Server tests for the
+  first time). Details: "Fixed" section of the audit report; how it works: [Services.md](Services.md) "Deletes".
+- What was built:
+  - Media section → **Recycle Bin** under the media tree. Delete moves an item, a folder with everything in it, to
+    the bin. On a binned item: Restore, Delete permanently; on the bin: Empty recycle bin. The bin's menus are
+    `ITreeContextMenu`s for `MediaRecycleBinTree`, so a plugin can add its own.
+  - Restore brings back what went to the bin with the item (one timestamp, as for content) and is refused while
+    the parent folder is still in the bin.
+  - A permanent delete removes the rows and the files (and the default disk provider's empty `media/{id}/`
+    folder). The confirmation names the pages, blocks and members whose property values still point at the media.
+    A file that can't be removed stops the delete, so no file is left on disk without its row (it would be public).
+  - Recycled media is served to administrators only; everyone else gets 404. Restricted and binned files are sent
+    with `Cache-Control: private, no-store`.
+  - Saving media that is in the bin, or into a binned folder, is refused (a dialog opened before the delete).
+- As in D3, a permanent delete straight from the media tree is allowed by the service (`MoveToRecycleBin =
+  false`) but has no menu item: the admin always goes through the bin. Not built, so nothing to decide unless
+  wanted.
+- Schema: none. Public API:
+  - Added: `IMediaService.RestoreMediaAsync`, `EmptyMediaRecycleBinAsync`, `GetMediaUsageAsync`;
+    `RestoreMediaParameters`, `EmptyMediaRecycleBinParameters`, `GetMediaUsageParameters`; `MediaUsage`,
+    `MediaUsageSource`; `RestrictedMediaEntry.InRecycleBin`; `AuditAction.Restore` (added at the end);
+    `Constants.Guids.MediaRecycleBinRootId`, `Constants.Sections.Trees.MediaRecycleBinTree`; components
+    `MediaRecycleBinTree`, `RestoreMediaContextMenu`, `DeleteMediaPermanentlyContextMenu`,
+    `EmptyMediaRecycleBinContextMenu`.
+  - Breaking (D18): `IMediaService` has three new members (a class implementing or decorating it must add them);
+    `MediaService` takes an `ILogger<MediaService>`; `DeleteMediaContextMenu` no longer takes `IMembershipService`
+    and `AppState`; `RestrictedMediaEntry` has a third positional parameter (source compatible, binary break).
+- Behaviour changes for the release notes:
+  - Deleting media moves it, and everything in a folder, to the recycle bin; before, a folder with media in it
+    could not be deleted, and deleted media could not be brought back or removed.
+  - `DeleteMediaParameters.DeleteFile` now defaults to `true`: a permanent delete removes the file unless the
+    caller says otherwise. A permanent delete takes the binned items below with it and is refused while anything
+    below is live.
+  - `SaveMediaAsync` no longer moves media in or out of the bin (it warns when asked to), refuses to change binned
+    media, and refuses to save into a binned folder. A folder's included `Children` no longer contain binned items.
+  - Media in the recycle bin is no longer served to visitors (404), whether or not it was restricted; pages that
+    still use it show a missing image. A CDN keeps copies it took while the file was public until it is purged; a
+    storage provider that serves files from its own address must keep binned files private itself.
+  - Media events (`AppState`) are raised once, by the service, after the save succeeded.
+- `/audit changed` (two independent reviewers: correctness and data; security, admin UI and API) found ZA-154 and
+  about ten smaller problems in the first version. Fixed before the commit: the doubled-slash bypass; caching
+  headers; a file left without its row after a failed delete; saving a binned item moving it off its group's
+  timestamp (Restore then left its contents behind); uploads into a binned folder; binned children in a folder's
+  `Children` (the Sort dialog saved them); the usage check's cost (fewer terms, parameterised, the whole bin checked
+  on the server); a shared file matched only by exact URL; the release-notes list. Logged as new Low findings:
+  ZA-155 (resized copies stay in `_mediacache`), ZA-156 (bin lists 500 items, a binned folder can't be opened),
+  ZA-157 (save hooks don't see the items below or an emptied bin).
+- Tests: see the audit report header for the count. New: `tests/ZauberCMS.Core.Tests/Media/MediaRecycleBinTests.cs`;
+  additions to `RestrictedMediaTests`. **The SQL Server variants of every test now ran for the first time**, on
+  LocalDB (`ZAUBER_TEST_SQLSERVER=Server=(localdb)\MSSQLLocalDB;Integrated Security=true;TrustServerCertificate=true`),
+  which found ZA-153. Build 0 warnings.
+- Checked in a browser (scratch copy of the sample site with its own `wwwroot`, nothing in the repository's
+  `app.db` or media): folder to the bin (tree and menus), recycled file 404 for anonymous requests in any case and
+  through the resizer and 200 for the administrator, restore, permanent delete with "Still used by 1 page or block:
+  Home", empty bin with a folder of two files, files and folders gone from disk, audit rows. Not re-checked in the
+  browser after the audit fixes (their tests pass): the dialog wording and the refused save of a binned item.
 
 ### Phase 9 — Block List redesign (D5)
 Follow [BlockListEditor.md](BlockListEditor.md) §6: edit session → `SaveContentTreeAsync` → static previews →

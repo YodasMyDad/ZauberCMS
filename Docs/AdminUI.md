@@ -48,6 +48,12 @@ instances created by `ActivatorUtilities` — `[Inject]` is **not** populated th
 Tree aliases: `Constants.Sections.Trees`. Trees are built on `Trees/BaseTree.razor` / `GenericTree` / `ContentTree` /
 `MediaTree`, plus `Shared/TreeButton.razor` for single links — not raw `RadzenTree`.
 
+Recycle bins: Content has `RecycleBinTree`, Media has `MediaRecycleBinTree` (`Admin/MediaSection/Navigation/`).
+Both set `DisableSectionOnlyContextMenu`, so only menus listing their `TreeAlias` show there — a section-wide menu
+(`Sections = [MediaSection]`, such as Delete or Move) never acts on a binned item. A plugin menu for binned media
+adds `Constants.Sections.Trees.MediaRecycleBinTree` to its `TreeAlias`; the item is the `Media` (root:
+`TreeStub` with `Constants.Guids.MediaRecycleBinRootId`). The built-in actions are in `ContextMenus/MediaRecycleBinMenus/`.
+
 ## Dialogs, confirms, notifications
 
 ```csharp

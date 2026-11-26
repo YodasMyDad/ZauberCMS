@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 8 (2026-11-26): Build PASS · Warnings: 0 · Tests: 700 (697 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118), all SQL Server variants run for the first time (LocalDB via `ZAUBER_TEST_SQLSERVER`), PostgreSQL and Redis in Docker; `/audit changed` run on the phase (two reviewers). Next free ID: ZA-158
 After Roadmap Phase 7 (2026-11-26): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 628 (528 pass, 100 skipped: 97 SQL Server variants without `ZAUBER_TEST_SQLSERVER`, 3 for open findings ZA-011, ZA-036, ZA-118), PostgreSQL and Redis tests in Docker; `/audit changed` run on the phase (three reviewers). Next free ID: ZA-153
 After Roadmap Phase 6 (2026-11-25): Build PASS · Warnings: 0 · Tests: 428 (425 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118), PostgreSQL and Redis tests in Docker; `/audit changed` run on the phase
 After Roadmap Phase 5 (2026-11-25): Build PASS · Warnings: 0 · Tests: 315 (312 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118); `/audit changed` run on the phase
@@ -20,20 +21,13 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 9 | 20 | 0 |
-| Medium | 43 | 30 | 0 |
-| Low | 43 | 5 | 1 |
+| High | 8 | 22 | 0 |
+| Medium | 42 | 31 | 0 |
+| Low | 46 | 6 | 1 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-148.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-158.
 
 ## Open findings
-
-### ZA-006 [High/Medium] Media recycle bin has no UI — soft-deleted media can't be restored or purged
-
-- Where: `ZauberCMS.Core/Media/Services/MediaService.cs:200-214`, `ZauberCMS.Components/ContextMenus/MediaMenus/DeleteMediaContextMenu.cs:47` · Category: C
-- Fix: media recycle-bin section or hard-delete with confirmation. · Blocked by: UX decision.
-- Reconciled 2026-11-25: the hard-delete branch is unreachable from the UI, so media files are never removed from disk.
-- Owner decision 2026-11-25: build a media recycle bin (restore + permanent delete; deleting from the bin removes row and file) (Roadmap Phase 8).
 
 ### ZA-034 [High/High] Block list: Cancel in a nested modal does not discard its changes (data loss)
 
@@ -112,11 +106,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 - Where: `ContentService.cs:369,982-985` · Category: C
 - Reconciled 2026-11-25: same pattern on the recycle path (`ContentService.cs:497-498`).
-
-### ZA-013 [Medium/High] Media delete notifies before save
-
-- Where: `ZauberCMS.Core/Media/Services/MediaService.cs:215-216` · Category: C
-- Reconciled 2026-11-25: also double notify on soft delete (service + `DeleteMediaContextMenu.cs:51`) and `NotifyMediaSaved` fires even when the save failed (`MediaService.cs:119,137`).
 
 ### ZA-015 [Medium/High] `AddFluentValidation` never unsubscribes
 
@@ -573,7 +562,53 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   the user on the wrong scope. The browser run with a starter kit is what covers it today.
 - Fix: a per-scope sign-in holder in the test site, falling back to the shared one. · Blocked by: nothing.
 
+### ZA-155 [Low/High] Resized copies of a deleted image stay in `_mediacache`
+- Where: `ZauberCMS.Core/Media/Services/MediaService.cs` (`PurgeAsync`), ImageResize cache root (`ZauberSetup.cs`, `_mediacache`) · Category: D · Since: 2026-11-26 (Phase 8 audit)
+- Issue / Trigger: a permanent media delete removes the original file, not the resized copies ImageResize made of
+  it. Their names are hashes of path, options and file date, so they are hard to guess, but a "delete it for
+  good" request (GDPR) is not fully met. Documented in `Docs/Services.md`.
+- Fix: remove the cache entries for the file on purge (needs an ImageResize API for it) or prune the cache. ·
+  Blocked by: the ImageResize package.
+
+### ZA-156 [Low/High] The media recycle bin lists 500 items and does not open a binned folder
+- Where: `ZauberCMS.Components/Admin/MediaSection/Navigation/MediaRecycleBinTree.razor` · Category: E · Since: 2026-11-26 (Phase 8 audit)
+- Issue / Trigger: the tree shows the 500 most recently binned top-level items, and a binned folder cannot be
+  expanded to see what went to the bin with it (restore or delete the folder as a whole). The content bin has the
+  same limits (300).
+- Fix: page the bin, and let a binned folder expand. · Blocked by: nothing (UX).
+
+### ZA-157 [Low/High] Save hooks do not see the media below the item, nor an emptied bin
+- Where: `ZauberCMS.Core/Media/Services/MediaService.cs` (`DeleteMediaAsync`, `RestoreMediaAsync`, `EmptyMediaRecycleBinAsync`) · Category: F · Since: 2026-11-26 (Phase 8 audit)
+- Issue / Trigger: `IBeforeEntitySave<Media>` / `IAfterEntitySave<Media>` run for the item a call names, not for the
+  items below it that are binned, restored or deleted with it, and not at all when the bin is emptied. A plugin
+  that mirrors media elsewhere misses those. Content behaves the same. Documented in `Docs/Services.md`.
+- Fix: run the hooks per item (a veto on one item would then have to stop the whole group). · Blocked by: design
+  of the hooks for group changes.
+
 ## Fixed this run / Resolved since last run
+
+- **Phase 8 (2026-11-26): media recycle bin (D3).** How it works: [Docs/Services.md](../Docs/Services.md) "Deletes".
+  - **ZA-006 [High] Media recycle bin had no UI — fixed.** Media section → Recycle Bin (`MediaRecycleBinTree`) with
+    Restore, Delete permanently and Empty recycle bin (`ContextMenus/MediaRecycleBinMenus/`). Deleting moves an item
+    and everything below it to the bin (`DeleteMediaAsync`); `RestoreMediaAsync` brings back that group; a permanent
+    delete removes the rows and the files, files first so that a file that can't be removed rolls the delete back.
+    The confirmation lists the pages and members that still use the media (`GetMediaUsageAsync`). Recycled media is
+    served to administrators only (404 for everyone else). Tests: `MediaRecycleBinTests` (17, on all three
+    databases), `RestrictedMediaTests`. Browser: bin, 404 for anonymous and 200 for an administrator, restore,
+    permanent delete with the usage warning, empty bin, files and their folders gone.
+  - **ZA-013 [Medium] Media delete notified before the save — fixed.** `MediaService` raises media events once,
+    after a successful save, for save, recycle, restore, purge and empty; `DeleteMediaContextMenu` no longer raises
+    its own. Tests: the two event tests in `MediaRecycleBinTests`.
+  - **ZA-154 [High] Restricted media could be fetched with a doubled slash — fixed** (found by this phase's audit;
+    older than the phase). `RestrictedMediaMiddleware` compared the raw path, which Kestrel does not clean up, while
+    the static file handler reads `/media//x.pdf` and `//media/x.pdf` as `/media/x.pdf`. Paths are now normalised
+    (`NormaliseMediaPath` merges slashes) before both the folder check and the lookup, and a restricted or binned
+    file that is let through is sent with `Cache-Control: private, no-store`. Tests: `RestrictedMediaTests`.
+  - **ZA-153 [Low] The installer's SQL Server test said a just-created database was missing — fixed** (found by
+    running the SQL Server tests for the first time). SqlClient's pool remembers a failed open for a few seconds,
+    so after "database does not exist" every test with the same string failed the same way. The installer's test
+    connections no longer use the pool (PostgreSQL's already didn't). Test: `DatabaseSetupOnServerTests` (SQL
+    Server).
 
 - **Phase 7 (2026-11-26): installer, first administrator, registration.** How it works: [Docs/Installer.md](../Docs/Installer.md).
   - **ZA-004 [High] First registered user became Admin — fixed.** `RoleExtensions.AssignStartingRoleAsync` no

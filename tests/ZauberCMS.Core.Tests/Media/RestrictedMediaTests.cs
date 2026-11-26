@@ -45,8 +45,59 @@ public class RestrictedMediaTests : IAsyncLifetime
 
         var (status, passedOn) = await RequestAsync("/media/members/Report.pdf", signedIn: false);
 
-        Assert.Equal(StatusCodes.Status401Unauthorized, status);
+        Assert.Equal(StatusCodes.Status404NotFound, status);
         Assert.False(passedOn);
+    }
+
+    // Roadmap Phase 8: recycled media is not served, whether or not it was restricted
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Public_media_in_the_recycle_bin_is_not_found_by_anyone_but_an_administrator(bool signedIn)
+    {
+        await AddMediaAsync("/media/public/Logo.png", requiresAuthentication: false, deleted: true);
+
+        var (status, passedOn) = await RequestAsync("/MEDIA/public/logo.png", signedIn);
+
+        Assert.Equal(StatusCodes.Status404NotFound, status);
+        Assert.False(passedOn);
+    }
+
+    // The static file handler reads "//" as "/", so the lookup must too (found by the Phase 8 audit)
+    [Theory]
+    [InlineData("/media//public/Logo.png", false)]
+    [InlineData("//media/public//Logo.png", false)]
+    [InlineData("/media//members/Report.pdf", true)]
+    public async Task A_doubled_slash_does_not_get_round_the_check(string requestPath, bool restricted)
+    {
+        await AddMediaAsync("/media/public/Logo.png", requiresAuthentication: false, deleted: true);
+        await AddMediaAsync("/media/members/Report.pdf", requiresAuthentication: true, deleted: false);
+
+        var (status, passedOn) = await RequestAsync(requestPath, signedIn: false);
+
+        Assert.Equal(restricted ? StatusCodes.Status401Unauthorized : StatusCodes.Status404NotFound, status);
+        Assert.False(passedOn);
+    }
+
+    [Fact]
+    public async Task An_administrator_gets_media_in_the_recycle_bin()
+    {
+        await AddMediaAsync("/media/public/Logo.png", requiresAuthentication: false, deleted: true);
+
+        var (_, passedOn) = await RequestAsync("/media/public/Logo.png", signedIn: true, admin: true);
+
+        Assert.True(passedOn);
+    }
+
+    [Fact]
+    public async Task A_recycled_item_does_not_hide_a_file_that_a_live_public_item_also_uses()
+    {
+        await AddMediaAsync("/media/public/Logo.png", requiresAuthentication: false, deleted: true);
+        await AddMediaAsync("/media/public/Logo.png", requiresAuthentication: false, deleted: false);
+
+        var (_, passedOn) = await RequestAsync("/media/public/Logo.png", signedIn: false);
+
+        Assert.True(passedOn);
     }
 
     [Fact]
@@ -81,7 +132,7 @@ public class RestrictedMediaTests : IAsyncLifetime
         });
     }
 
-    private async Task<(int Status, bool PassedOn)> RequestAsync(string path, bool signedIn)
+    private async Task<(int Status, bool PassedOn)> RequestAsync(string path, bool signedIn, bool admin = false)
     {
         var passedOn = false;
         var middleware = new RestrictedMediaMiddleware(
@@ -98,7 +149,13 @@ public class RestrictedMediaTests : IAsyncLifetime
         context.Response.Body = new MemoryStream();
         if (signedIn)
         {
-            context.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "member")], "Test"));
+            List<Claim> claims = [new Claim(ClaimTypes.Name, admin ? "admin" : "member")];
+            if (admin)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, Constants.Roles.AdminRoleName));
+            }
+
+            context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
         }
 
         await middleware.InvokeAsync(context);

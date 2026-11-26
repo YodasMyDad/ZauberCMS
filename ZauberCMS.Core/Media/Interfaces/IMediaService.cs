@@ -13,6 +13,15 @@ public interface IMediaService
     Task<HandlerResult<Models.Media>> SaveMediaAsync(SaveMediaParameters parameters, CancellationToken cancellationToken = default);
     Task<PaginatedList<Models.Media>> QueryMediaAsync(QueryMediaParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<Models.Media>> DeleteMediaAsync(DeleteMediaParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>Takes an item out of the recycle bin, with the items that went to the bin with it.</summary>
+    Task<HandlerResult<Models.Media>> RestoreMediaAsync(RestoreMediaParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>Permanently deletes everything in the media recycle bin; <c>Entity</c> is the number of items deleted.</summary>
+    Task<HandlerResult<int?>> EmptyMediaRecycleBinAsync(EmptyMediaRecycleBinParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>The pages (and blocks) and members whose property values point at the given media items.</summary>
+    Task<List<Models.MediaUsage>> GetMediaUsageAsync(GetMediaUsageParameters parameters, CancellationToken cancellationToken = default);
     Task<bool> HasChildMediaAsync(HasChildMediaParameters parameters, CancellationToken cancellationToken = default);
     Task<Dictionary<string, Guid>> GetRestrictedMediaUrlsAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default);
     Task<Dictionary<string, Models.RestrictedMediaEntry>> GetRestrictedMediaAccessAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default);

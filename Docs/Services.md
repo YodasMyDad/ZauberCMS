@@ -92,8 +92,8 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 
 ## Deletes
 
-- Content/Media: `MoveToRecycleBin = true` → `Deleted = true`; otherwise hard delete (recycle-bin purge, block
-  removal). Content hard delete also removes nested block-list descendants in a transaction.
+- Content/Media: `MoveToRecycleBin = true` (the Media default) → `Deleted = true`; otherwise hard delete
+  (recycle-bin purge, block removal). Content hard delete also removes nested block-list descendants in a transaction.
 - Content and its tree (Phase 5): recycling a page recycles every page below it, all stamped with one `DateUpdated`;
   a save that sets `Deleted = false` (the bin's Restore) restores the pages with that stamp — a page binned on its
   own earlier stays in the bin — and gives a page whose URL was taken meanwhile a `-1` suffix (warning message).
@@ -101,6 +101,25 @@ Cached results must be no-tracking and must not depend on user/culture unless th
   Permanent delete takes the recycled pages below with it and is refused while any page below is live. Descendants
   are found by walking `ParentId` (`GetDescendantsAsync`), not by the stored `Path`. A save that changes the parent
   rewrites the `Path` of everything below and refuses a move under the page's own descendant.
+- Media and its tree (Phase 8, D3) work the same way, with their own methods instead of a save:
+  `DeleteMediaAsync` bins an item with everything below it (one `DateUpdated` stamp); `RestoreMediaAsync` brings back
+  that group and is refused while the parent folder is in the bin. `SaveMediaAsync` never changes `Deleted`, refuses
+  to change an item that is in the bin (that would move its stamp off the group) and refuses to put anything into a
+  binned folder; included `Children` never contain binned items. `DeleteMediaAsync` with `MoveToRecycleBin = false`
+  deletes the rows (refused while anything below is live) and the files (`DeleteFile`, default true) together: the
+  files go before the commit, and one that can't be removed rolls the rows back, because a file left without its row
+  is served to anyone. A file another media row still points at is kept. `EmptyMediaRecycleBinAsync` does the same
+  for the whole bin and keeps a binned folder that still holds live media. `IBeforeEntitySave<Media>` /
+  `IAfterEntitySave<Media>` run for the item the call names, not for the items below it, and not at all when the
+  bin is emptied. `GetMediaUsageAsync` finds the content and members whose property values contain the media's id
+  (pickers, and the `media/{id}/` folder of a disk file) or URL: a scan of every property value, for a delete
+  confirmation, never for a hot path; drafts are not searched.
+  Recycled media is not served: `RestrictedMediaMiddleware` answers 404 to anyone but an administrator, unless a live
+  public item has the same file, and marks every restricted or binned file it lets through `Cache-Control: private,
+  no-store`. That covers files served by the site (`media/…`); a storage provider that serves files from its own
+  address (a CDN, a bucket) has to keep binned files private itself, and a CDN in front of the site keeps the copies
+  it took while the file was public until it is purged. Resized copies in `_mediacache` are not removed by a delete.
+  The default `DiskStorageProvider` also removes the empty `media/{id}/` folder.
 - Content URLs: one per page (not blocks; blocks have none). A typed URL another live page has is refused; a
   generated, copied or restored one gets a suffix. Stored form and request slugs go through `ContentUrl.Normalize`
   (lower case, no slashes around); links on the site use `ContentUrl.SiteRelative` (`/blog`).
@@ -137,7 +156,7 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 
 ## AppState events
 
-- Services raise: content deletes, media saves/deletes.
+- Services raise: content deletes, media saves/deletes/restores (after the save succeeded, once — ZA-013).
 - Admin components raise after a successful service call: content saves, content-type and user events
   (`ContentEditor`, `ContentTypeEditor`, `UserEditor`, context menus).
 - Don't raise the same event in both places. When adding a service-side notify, remove the component-side one.
