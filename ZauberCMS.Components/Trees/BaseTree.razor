@@ -120,8 +120,8 @@
 
     private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
     {
-        // The "Show more" row has no menu
-        if (!DisableContextMenu && args.Value is not TreeLoadMore)
+        // The "Show more" row has no menu (the recycle bin's is a TreeBranch standing for one)
+        if (!DisableContextMenu && !IsLoadMoreRow(args.Value))
         {
             if (ItemContextMenu.HasDelegate)
             {
@@ -138,6 +138,9 @@
             }   
         }
     }
+
+    private static bool IsLoadMoreRow(object? value) =>
+        value is TreeLoadMore || (value is TreeBranch branch && branch.BranchType == typeof(TreeLoadMore));
 
     private List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
     {

@@ -951,16 +951,20 @@ public partial class ContentService(
             Url = RequestUrlForLookup(parameters.Url)
         };
 
-        // Cached for 5 minutes (it was 5 seconds by mistake, ZA-061). Content and domain saves clear the Content
-        // prefix; the language keys and the default-language fallback are applied below, outside the cache, because
+        // Cached for up to 5 minutes (it was 5 seconds by mistake, ZA-061). Content, domain, content type, role and
+        // language saves clear the Content prefix; the language keys and the default-language fallback are applied below, outside the cache, because
         // they change without a content save.
-        var cacheKey = request.GenerateCacheKey<Models.Content>("GetContentFromRequest");
+        // The key changes every EntryCacheMinutes, so an entry lives at most that long even on a page that is hit
+        // all the time (the expiry is sliding), and changes the cache isn't told about show within it. A miss (no
+        // page) is not kept: its key comes from the visitor's host and path.
+        var bucket = DateTime.UtcNow.Ticks / TimeSpan.FromMinutes(EntryCacheMinutes).Ticks;
+        var cacheKey = request.GenerateCacheKey<Models.Content>($"GetContentFromRequest-{bucket}");
         var cached = (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
             using var scope = serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
             return await FetchEntryModelAsync(request, dbContext, cancellationToken);
-        }, EntryCacheMinutes))!;
+        }, EntryCacheMinutes, entry => entry.Content != null))!;
 
         var entryModel = new EntryModel { Content = cached.Content, LanguageIsoCode = cached.LanguageIsoCode };
         if (entryModel.Content == null)
@@ -1065,8 +1069,15 @@ public partial class ContentService(
         var actionText = isUpdate ? "Updated" : "Created";
         await SaveAuditAsync(dbContext, $"{user.Name} {actionText} {contentType.Name}", cancellationToken);
 
-        return await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager,
+        var savedType = await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager,
             cancellationToken);
+        if (savedType.Success)
+        {
+            // Cached front-end pages hold their content type (IncludeChildren, the view)
+            cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
+        }
+
+        return savedType;
     }
 
     /// <summary>

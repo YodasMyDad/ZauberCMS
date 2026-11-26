@@ -51,7 +51,8 @@ Tree aliases: `Constants.Sections.Trees`. Trees are built on `Trees/BaseTree.raz
 Tree data (Phase 10, D26): `ContentTree` and `MediaTree` load and refresh themselves (leave `Data` empty) a page of a
 node at a time through `IContentService.GetContentTreeLevelAsync` / `IMediaService.GetMediaTreeLevelAsync`, which
 also say which items have children; the rest of a node is a `TreeLoadMore` row ("Show 100 more"). `HasChildren` and
-`ShouldBeExpanded` are called while rendering: they must read memory (`TreeState.HasChildren`), never query.
+`ShouldBeExpanded` are called while rendering: they must read memory (each tree keeps the flags it loaded), never
+query.
 `ContentTypeTree` loads the whole type tree once (`OnlyElementTypes` / `OnlyCompositions` pick the kind). Tree nodes
 carry no property values: a context menu that needs them loads the item by id. A level that mixes item types sets
 `Text = TreeExtensions.TreeNodeText`, not `TextProperty` (Radzen reads it as the first item's type).
@@ -84,8 +85,8 @@ if (result is { Confirmed: true, Data: MyType value }) { … }
 - `AppState` (singleton, weak refs): subscribe in `OnInitialized` with a method group, unsubscribe in `Dispose`.
   Handlers run on the publisher's thread in every admin circuit → `await InvokeAsync(StateHasChanged)`.
   Who raises which event: [Services.md → AppState events](Services.md#appstate-events). Don't double-notify.
-- `TreeState` (scoped per circuit): selected node, expanded nodes, child flags (`SetChildren`, `HasChildren`,
-  `ClearChildCache`), `CurrentSection`.
+- `TreeState` (scoped per circuit): selected node, expanded nodes, `CurrentSection`, and an old shared child cache
+  (`HasChildrenCache`, `ClearChildCache`) that the built-in content, media and content-type trees no longer use.
 
 ## Styling
 

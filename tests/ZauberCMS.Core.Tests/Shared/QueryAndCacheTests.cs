@@ -117,6 +117,47 @@ public class QueryAndCacheTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ZA061_A_miss_is_not_cached()
+    {
+        var before = await GetEntryAsync("late", "http://example.test/late");
+        // Written straight to the database: no save clears the cache
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            db.Contents.Add(new ContentItemModel
+            {
+                Name = "Late", ContentTypeId = _pageType.Id, ContentTypeAlias = _pageType.Alias, Published = true,
+#pragma warning disable CS0618
+                Url = "late"
+#pragma warning restore CS0618
+            });
+            return await db.SaveChangesAsync(Ct);
+        });
+        var after = await GetEntryAsync("late", "http://example.test/late");
+
+        Assert.Null(before.Content);
+        Assert.Equal("Late", after.Content?.Name);
+    }
+
+    [Fact]
+    public async Task ZA061_Renaming_a_role_reaches_the_cached_page_at_once()
+    {
+        var roleId = await CreateRoleAsync("Members");
+        var page = await _site.CreateContentAsync(_pageType, "Members area");
+        Assert.True((await SetRolesAsync(page.Id, roleId)).Success);
+        var before = await GetEntryAsync("members-area", "http://example.test/members-area");
+
+        var role = await WithService<IMembershipService, Role?>(s => s.GetRoleAsync(new GetRoleParameters { Id = roleId }, Ct));
+        role!.Name = "Subscribers";
+        var saved = await WithService<IMembershipService, HandlerResult<Role>>(s =>
+            s.SaveRoleAsync(new SaveRoleParameters { Role = role }, Ct));
+        var after = await GetEntryAsync("members-area", "http://example.test/members-area");
+
+        Assert.True(saved.Success, TestSite.Describe(saved.Messages));
+        Assert.Equal("Members", Assert.Single(before.Content!.ContentRoles).Role.Name);
+        Assert.Equal("Subscribers", Assert.Single(after.Content!.ContentRoles).Role.Name);
+    }
+
+    [Fact]
     public async Task ZA062_Querying_by_content_type_alias_filters_in_the_query()
     {
         var otherType = await _site.CreateContentTypeAsync("other");

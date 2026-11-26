@@ -28,6 +28,24 @@ public class DefaultCacheService(ServerCache serverCache, ICacheInvalidationBus 
         return value;
     }
 
+    public async Task<T?> GetSetCachedItemAsync<T>(string cacheKey, Func<Task<T>> getCacheItemAsync,
+        int cacheTimeInMinutes, Func<T, bool> shouldCache)
+    {
+        if (serverCache.TryGet(cacheKey, out T? cached))
+        {
+            return cached;
+        }
+
+        var generation = serverCache.Generation;
+        var value = await getCacheItemAsync();
+        if (shouldCache(value))
+        {
+            serverCache.Set(cacheKey, value, Expiration(cacheTimeInMinutes, 0), generation);
+        }
+
+        return value;
+    }
+
     public T? GetSetCachedItem<T>(string cacheKey, Func<T> getCacheItem,
         int cacheTimeInMinutes = CacheExtensions.MemoryCacheInMinutes) =>
         GetSetCachedItem(cacheKey, getCacheItem, cacheTimeInMinutes, 0);

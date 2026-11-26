@@ -84,9 +84,10 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
 - Writes inside a transaction: `SaveChangesAndLog` clears before the commit, so clear the prefix again after
   `CommitAsync` (a read in between may have cached the old rows) — see `ContentService` save, recycle and purge.
 - `IDistributedCache` is still Redis when configured, for site code; ZauberCMS itself does not use it.
-- Front-end hot path (Phase 10): the URL → page lookup (`GetContentFromRequestAsync`) is cached for 5 minutes
-  (sliding) on slug, host and path — not the query string — under the Content prefix; domain saves and deletes clear
-  that prefix too. Its language keys and the default-language fallback are applied outside that cache, so dictionary
+- Front-end hot path (Phase 10): the URL → page lookup (`GetContentFromRequestAsync`) is cached on slug, host and
+  path — not the query string — under the Content prefix, at most 5 minutes (the key carries a 5-minute time
+  window); a lookup that finds no page is not cached (`GetSetCachedItemAsync` with `shouldCache`). Domain, content
+  type, role and language saves clear the Content prefix too: the cached page holds its type, roles and language. Its language keys and the default-language fallback are applied outside that cache, so dictionary
   and settings changes show at once. `GetBlocks` (without pending changes), `GetMedia`/`GetMediaItems` and
   `AnyContentAsync` (the 404 check; recycled content doesn't count) are cached as well; the items are shared, so
   don't change them. View, block-view and editor types are discovered once per app (`GetImplementations`, a static

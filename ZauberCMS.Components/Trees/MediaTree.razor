@@ -43,6 +43,10 @@
     private bool _loaded;
     private object? _lastValue;
 
+    // This tree's own "has children" flags: TreeState's are shared by every tree in the circuit (a bin tree clears
+    // them, a filtered picker writes different values for the same folder) and nothing would load them again
+    private readonly HashSet<Guid> _withChildren = [];
+
     private bool OwnsData => !Data.Any();
 
     protected override void OnInitialized()
@@ -52,6 +56,12 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (Value is not TreeLoadMore)
+        {
+            // What "Show more" puts back: the caller may have changed or cleared the selection
+            _lastValue = Value;
+        }
+
         if (OwnsData)
         {
             if (!_loaded || _givenData != null)
@@ -70,7 +80,7 @@
             {
                 Ids = given.Select(m => m.Id).ToList(), Take = given.Count, MediaTypes = MediaTypes
             });
-            TreeState.SetChildren(given.Select(m => m.Id), level.IdsWithChildren);
+            _withChildren.UnionWith(level.IdsWithChildren);
             _roots = given.Cast<object>().ToList();
         }
     }
@@ -80,11 +90,17 @@
     /// <summary>Reloads the tree's own top level (a tree given its top level by its caller is refreshed by it).</summary>
     public async Task RefreshData()
     {
-        TreeState.ClearChildCache(null);
+        _withChildren.Clear();
         _children.Clear();
         if (OwnsData)
         {
             await LoadRootsAsync();
+        }
+        else
+        {
+            // A top level from the caller: load its flags again
+            _givenData = null;
+            await OnParametersSetAsync();
         }
 
         StateHasChanged();
@@ -104,7 +120,12 @@
         {
             ParentId = parentId, Skip = skip, MediaTypes = MediaTypes
         });
-        TreeState.SetChildren(level.Items.Select(m => m.Id), level.IdsWithChildren);
+        foreach (var item in level.Items)
+        {
+            _withChildren.Remove(item.Id);
+        }
+
+        _withChildren.UnionWith(level.IdsWithChildren);
         var items = level.Items.Cast<object>().ToList();
         if (TreeLoadMore.After(level, parentId) is { } more)
         {
@@ -164,7 +185,12 @@
         }
 
         var next = await LoadLevelAsync(more.ParentId, more.Skip);
-        list.Remove(more);
+        if (!list.Remove(more))
+        {
+            // Already loaded (clicked again while loading), or the level was reloaded meanwhile
+            return;
+        }
+
         list.AddRange(next);
         if (more.ParentId == null)
         {
@@ -177,7 +203,7 @@
 
     // From the flags loaded with the folder's level: no query while rendering (ZA-054)
     private bool HasChildren(object data) =>
-        data is Media { MediaType: MediaType.Folder } media && TreeState.HasChildren(media.Id);
+        data is Media { MediaType: MediaType.Folder } media && _withChildren.Contains(media.Id);
 
     private bool ShouldBeExpanded(object data) =>
         data is Media { MediaType: MediaType.Folder } media && TreeState.IsNodeExpanded(media.Id);

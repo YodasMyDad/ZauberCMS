@@ -82,8 +82,17 @@
     private Media? EditFolder { get; set; }
     private AuthenticationState AuthState { get; set; } = null!;
 
+    private Guid? _loadedFolderId;
+
     protected override async Task OnParametersSetAsync()
     {
+        // Only when the folder changes: a re-render would drop the pages added with "Show more"
+        if (_loadedFolderId == FolderId)
+        {
+            return;
+        }
+
+        _loadedFolderId = FolderId;
         await SetContents(FolderId);
         EditFolder = await MediaService.GetMediaAsync(new GetMediaParameters { Id = FolderId });
     }
@@ -109,13 +118,17 @@
                 return;
             }
 
-            await SetContents(FolderId);
+            // As many items as are shown, so an upload elsewhere doesn't fold the list back to its first page
+            await SetContents(FolderId, Math.Max(Contents.Count(), TreeLoadMore.PageSize));
             StateHasChanged();
         });
 
-    private async Task SetContents(Guid folderId)
+    private async Task SetContents(Guid folderId, int take = TreeLoadMore.PageSize)
     {
-        var level = await MediaService.GetMediaTreeLevelAsync(new MediaTreeLevelParameters { ParentId = folderId });
+        var level = await MediaService.GetMediaTreeLevelAsync(new MediaTreeLevelParameters
+        {
+            ParentId = folderId, Take = take
+        });
         Contents = level.Items;
         _more = TreeLoadMore.After(level, folderId);
     }

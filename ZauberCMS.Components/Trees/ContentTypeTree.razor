@@ -94,6 +94,8 @@
             args.Children.TextProperty = "Name";
             args.Children.Template = TreeExtensions.CreateContentTypeTreeTemplate<RadzenTreeItem>();
             args.Children.HasChildren = HasChildren;
+            // Folders that were open stay open when the tree reloads
+            args.Children.Expanded = ShouldBeExpanded;
 
             TreeState.NodeExpanded(content.Id);
         }

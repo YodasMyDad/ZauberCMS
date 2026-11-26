@@ -54,10 +54,13 @@
     
     private TreeStub? _bin;
     private int _binPagesLoaded;
+    // Bumped by every refresh: a page load that finishes after a newer refresh is dropped
+    private int _binVersion;
 
     private async Task DataRefresh()
     {
-        _bin = new TreeStub
+        var version = ++_binVersion;
+        var bin = new TreeStub
         {
             Id = Constants.Guids.RecycleBinRootId,
             Name = "Recycle Bin",
@@ -65,14 +68,12 @@
             SortOrder = 1,
             StubType = typeof(TreeStub)
         };
-        _binPagesLoaded = 0;
-        await LoadBinPageAsync();
-        TreeItems = [_bin];
+        await LoadBinPageAsync(bin, 0, version);
     }
 
-    /// <summary>The next page of the bin's top-level items, then a "Show more" branch while there are more
-    /// (Roadmap D26; the bin used to stop at 300 items).</summary>
-    private async Task LoadBinPageAsync()
+    /// <summary>Page <paramref name="pagesLoaded"/> + 1 of the bin's top-level items into <paramref name="bin"/>,
+    /// then a "Show more" branch while there are more (Roadmap D26; the bin used to stop at 300 items).</summary>
+    private async Task LoadBinPageAsync(TreeStub bin, int pagesLoaded, int version)
     {
         // Items that went to the bin with their parent are listed (and restored, deleted) through that parent
         var page = await ContentService.QueryContentAsync(new QueryContentParameters
@@ -81,40 +82,43 @@
             IsDeleted = true, // Only get deleted items
             IncludeUnpublished = true,
             WhereClause = x => x.ParentId == null || !x.Parent!.Deleted,
-            PageIndex = _binPagesLoaded + 1,
+            PageIndex = pagesLoaded + 1,
             AmountPerPage = TreeLoadMore.PageSize
         });
-        _binPagesLoaded++;
-
-        _bin!.Branches.RemoveAll(x => x.BranchType == typeof(TreeLoadMore));
-        foreach (var content in page.Items)
+        if (version != _binVersion)
         {
-            _bin.Branches.Add(new TreeBranch
-            {
-                Icon = content.ContentType?.Icon,
-                Id = content.Id,
-                Name = content.Name,
-                Url = $"{Urls.AdminUpdateContent}/{content.Id}",
-                BranchType = typeof(Content)
-            });
+            return;
         }
 
+        var branches = bin.Branches.Where(x => x.BranchType != typeof(TreeLoadMore)).ToList();
+        branches.AddRange(page.Items.Select(content => new TreeBranch
+        {
+            Icon = content.ContentType?.Icon,
+            Id = content.Id,
+            Name = content.Name,
+            Url = $"{Urls.AdminUpdateContent}/{content.Id}",
+            BranchType = typeof(Content)
+        }));
         if (page.HasNextPage)
         {
-            var shown = _bin.Branches.Count;
-            _bin.Branches.Add(new TreeBranch
+            branches.Add(new TreeBranch
             {
                 Icon = "expand_more",
-                Name = new TreeLoadMore { Skip = shown, TotalItems = page.TotalItems }.Name,
+                Name = new TreeLoadMore { Skip = branches.Count, TotalItems = page.TotalItems }.Name,
                 BranchType = typeof(TreeLoadMore)
             });
         }
+
+        // Set in one step, so a render never sees half a page
+        bin.Branches = branches;
+        _bin = bin;
+        _binPagesLoaded = pagesLoaded + 1;
+        TreeItems = [bin];
     }
 
     private Task HandleContentChanged(Content? media, string username)
         => InvokeAsync(async () =>
         {
-            TreeState.ClearChildCache(null);
             await DataRefresh();
             StateHasChanged();
         });
@@ -142,15 +146,22 @@
 
     private async Task OnChangeHandler()
     {
+        if (Selection is TreeBranch { BranchType: var branchType } && branchType == typeof(TreeLoadMore))
+        {
+            // Not a selection (and not one other trees should clear theirs for): the next page of the bin
+            Selection = null;
+            if (_bin != null)
+            {
+                await LoadBinPageAsync(_bin, _binPagesLoaded, _binVersion);
+            }
+
+            StateHasChanged();
+            return;
+        }
+
         TreeState.TreeValue = Selection;
         switch (Selection)
         {
-            case TreeBranch { BranchType: var branchType } when branchType == typeof(TreeLoadMore):
-                // Not a selection: the next page of the bin
-                Selection = null;
-                await LoadBinPageAsync();
-                StateHasChanged();
-                break;
             case TreeBranch treeStub:
             {
                 if (!treeStub.Url.IsNullOrWhiteSpace())

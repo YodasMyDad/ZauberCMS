@@ -7,14 +7,14 @@
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-160`).
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-161`).
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
   2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
   **Phase 10 done** (performance & async, 2026-11-26).
-  **68 open findings** (0 Critical, 0 High, 20 Medium, 48 Low). **Next: Phase 10a** (service authorisation, design with the owner first).
+  **69 open findings** (0 Critical, 0 High, 20 Medium, 49 Low). **Next: Phase 10a** (service authorisation, design with the owner first).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -518,6 +518,12 @@ Done so far (2026-11-26), in steps:
   the circuit's dispatcher; `UserManager` is resolved per operation in services; one DbContext per scope shared by the
   services and Identity. Not done: replacing scope-per-method with `IDbContextFactory` everywhere (no finding asks
   for more than one context per scope; it stays in Standards → Known deviations, for Phase 11 if wanted).
+- Review (`/audit changed`, two reviewers): fixed — the bin trees wiped the content and media trees' child flags
+  (each tree now keeps its own), the page cache never expired on a busy page and kept misses (5-minute key window,
+  misses not cached, role, content type and language saves clear it), overlapping bin refreshes, "Show more" twice,
+  the media folder grid folding back, the bin's "Show more" menu and selection, content-type child levels, release
+  notes. Recorded: ZA-161 (the highlight after "Show more"). Not changed: the reviewer's "public access no longer
+  notifies" (the menu still raises the event) and "editor assets left the front end" (they were admin-only before).
 - Tests: `QueryAndCacheTests` (Core, all three databases). Not covered by a test: the upload streaming (needs an
   `IBrowserFile`), the sitemap generator (a hosted service), the per-request view discovery (build only).
 - **Release notes (D18):**
@@ -528,20 +534,29 @@ Done so far (2026-11-26), in steps:
   - Public access ("restrict access") no longer saves each page below through `SaveContentAsync`: no Content save
     hooks and no versions for it; the `ContentRole` hooks run instead. New: `IContentService.SetContentRolesAsync`,
     `IContentVersioningService.PruneVersionsAsync` (implementers of these interfaces add them).
-  - The front-end page lookup is cached 5 minutes instead of 5 seconds; changes made straight in the database (not
-    through the services) show after that.
+  - The front-end page lookup is cached up to 5 minutes instead of 5 seconds (a fixed 5-minute window, not
+    sliding; a lookup that finds no page is not cached). Content, domain, content type, role and language saves clear
+    it at once; changes made straight in the database, or on another server without `RedisConnectionString`, show
+    within those 5 minutes. New: an `ICacheService.GetSetCachedItemAsync` overload with a `shouldCache` filter (a
+    default method: existing cache services keep working).
   - Step C: `ToPaginatedList`, the `PaginatedList(IQueryable…)` constructor and `BuildPath` are obsolete (use
-    `ToPaginatedListAsync`, `BuildPathAsync`). New: `GetContentTreeLevelAsync`, `GetMediaTreeLevelAsync`,
+    `ToPaginatedListAsync`, `BuildPathAsync`). New: `IContentService.GetContentTreeLevelAsync`,
+    `IMediaService.GetMediaTreeLevelAsync` (implementers of these interfaces add them),
     `IDataListSource.GetItemsAsync` (a default method: existing sources keep working). Admin tree nodes no longer
     carry property values or children (a custom `ITreeContextMenu` that read them loads the item by id); content
     pickers' trees now list unpublished root pages too. `ContentTree`/`MediaTree` refresh themselves; a section
-    that passed `Data` no longer needs to. The list editors load their data source after the first render.
+    that passed `Data` no longer needs to; `MediaTree` no longer has public `ContextMenuService` and
+    `NotificationService` properties. The list editors load their data source after the first render:
+    `ListPropertyBaseComponent` does its setup in `OnInitializedAsync`, so a subclass that read `SettingsModel` after
+    `base.OnInitialized()` reads it in `OnInitializedAsync` after `await base.OnInitializedAsync()`. The built-in trees
+    keep their own "has children" flags; `TreeState.HasChildrenCache` is no longer filled by them.
   - Step D: `ContentService` and `EmailService` constructors no longer take `UserManager<User>` (subclasses
     change their base call). Within one DI scope the services and Identity now share one DbContext: a `SaveChanges`
     on `IZauberDbContext` also saves changes Identity has tracked in that scope (Identity saves its own at once, so
     normally there are none).
   - `AnyContentAsync` ignores content in the recycle bin. `DiskStorageProvider` reports a generic error message and
-    logs the detail. Sitemap `priority` is written in the invariant culture and `lastmod` in UTC.
+    logs the detail; its constructor has an extra optional `ILogger` parameter (code that constructs or subclasses it
+    recompiles). Sitemap `priority` is written in the invariant culture and `lastmod` in UTC.
 
 ### Phase 10a — Service authorisation (D10)
 ZA-140. Design first, with the owner: a replaceable permission service the Core services ask before a write

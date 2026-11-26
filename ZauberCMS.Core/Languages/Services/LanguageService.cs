@@ -126,7 +126,14 @@ public class LanguageService(
             await user.AddAudit(language, $"Language ({language.LanguageCultureName})",
                 isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, auditService,
                 cancellationToken);
-            return await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken);
+            var saved = await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken);
+            if (saved.Success)
+            {
+                // Cached front-end pages hold their language
+                cacheService.ClearCachedItemsWithPrefix(nameof(Content.Models.Content));
+            }
+
+            return saved;
         }
 
         handlerResult.AddMessage("CultureInfo is null", ResultMessageType.Error);
@@ -231,7 +238,14 @@ public class LanguageService(
             }
         }
 
-        return (await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken))!;
+        var deleted = (await dbContext.SaveChangesAndLog(language, handlerResult, cacheService, extensionManager, cancellationToken))!;
+        if (deleted.Success)
+        {
+            // Cached front-end pages hold their language
+            cacheService.ClearCachedItemsWithPrefix(nameof(Content.Models.Content));
+        }
+
+        return deleted!;
     }
 
     /// <summary>

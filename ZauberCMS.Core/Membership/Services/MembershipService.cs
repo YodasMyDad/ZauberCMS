@@ -509,6 +509,12 @@ public class MembershipService(
             handlerResult.Messages.Add(new ResultMessage("Role is null", ResultMessageType.Error));
         }
 
+        if (handlerResult.Success)
+        {
+            // Cached front-end pages hold their roles (and the role names the access check compares)
+            cacheService.ClearCachedItemsWithPrefix(nameof(Content.Models.Content));
+        }
+
         return handlerResult;
     }
 
@@ -546,6 +552,12 @@ public class MembershipService(
         else
         {
             handlerResult.Messages.Add(new ResultMessage("Role not found", ResultMessageType.Error));
+        }
+
+        if (handlerResult.Success)
+        {
+            // Cached front-end pages hold their roles (and the role names the access check compares)
+            cacheService.ClearCachedItemsWithPrefix(nameof(Content.Models.Content));
         }
 
         return handlerResult;
