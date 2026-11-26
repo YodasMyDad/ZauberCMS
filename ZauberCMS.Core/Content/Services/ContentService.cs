@@ -22,7 +22,7 @@ using System.Text.Json;
 
 namespace ZauberCMS.Core.Content.Services;
 
-public class ContentService(
+public partial class ContentService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     IOptions<ZauberSettings> settings,
@@ -34,11 +34,7 @@ public class ContentService(
     ILogger<ContentService> logger)
     : IContentService
 {
-    // Cap on how deep a BlockListEditor tree can be walked during save/delete/snapshot recursion.
-    // Defends against accidental cycles and crafted-JSON DoS. Normal use never approaches this.
-    private const int MaxBlockListNestingDepth = 20;
-
-    private const string BlockListEditorComponentAlias = "ZauberCMS.BlockListEditor";
+    private const string BlockListEditorComponentAlias = BlockListNestedContentReferenceProvider.BlockListEditorAlias;
 
     /// <summary>
     /// Retrieves a single content item based on the provided parameters. Can optionally use cache.
@@ -75,7 +71,6 @@ public class ContentService(
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         User? user = await userManager.GetUserAsync(authState.User);
-        var isUpdate = true;
         var handlerResult = new HandlerResult<Models.Content>();
 
         if (parameters.Content == null)
@@ -84,27 +79,10 @@ public class ContentService(
             return handlerResult;
         }
 
-        var unpublishedContent =
-            dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == parameters.Content.UnpublishedContentId);
-
         if (parameters.SaveUnpublishedOnly)
         {
-            var isNew = parameters.Content.UnpublishedContentId == null;
-            unpublishedContent ??= new UnpublishedContent();
-            parameters.Content.MapTo(unpublishedContent.JsonContent);
-            unpublishedContent.JsonContent.PropertyData = parameters.Content.PropertyData;
-            unpublishedContent.JsonContent.UnpublishedContentId = unpublishedContent.Id;
-
-            if (isNew)
-            {
-                var dbContent = dbContext.Contents.FirstOrDefault(x => parameters.Content.Id == x.Id);
-                if (dbContent != null)
-                {
-                    dbContent.UnpublishedContentId = unpublishedContent.Id;
-                }
-
-                dbContext.UnpublishedContent.Add(unpublishedContent);
-            }
+            await StageDraftAsync(dbContext, parameters.Content, parameters.Content.UnpublishedContentId,
+                cancellationToken);
 
             var unpublishedResult = await dbContext.SaveChangesAndLog(null, handlerResult, cacheService,
                 extensionManager, cancellationToken);
@@ -144,6 +122,158 @@ public class ContentService(
 
             return unpublishedResult;
         }
+
+        var staged = await StageContentAsync(dbContext, user, parameters, handlerResult, validateBlockTypes: true,
+            cancellationToken);
+        if (staged == null)
+        {
+            return handlerResult;
+        }
+
+        var (content, isUpdate) = staged;
+
+        // Wrap save + audit in a single transaction so a failed save (e.g. concurrency conflict)
+        // doesn't leave behind an orphan "user updated X" audit row claiming an update that never
+        // happened. SaveAuditAsync internally calls SaveChangesAsync, so it MUST run inside this
+        // explicit transaction to share its commit/rollback semantics.
+        HandlerResult<Models.Content> saveResult;
+        await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
+        {
+            try
+            {
+                var nameText = content.Name ?? nameof(Models.Content);
+                var actionText = isUpdate ? "Updated" : "Created";
+                await SaveAuditAsync(dbContext, $"{user!.Name} {actionText} {nameText}", cancellationToken);
+
+                saveResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
+                    cancellationToken);
+
+                if (saveResult.Success)
+                {
+                    await transaction.CommitAsync(cancellationToken);
+                    // Again after the commit: SaveChangesAndLog cleared before it, and a read in between cached the old rows
+                    cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
+                }
+                else
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                }
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                handlerResult.AddMessage(
+                    "Content was modified by another user — please reload and re-apply your changes",
+                    ResultMessageType.Error);
+                return handlerResult;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+
+        // Blocks are saved with their page by SaveContentTreeAsync, which the admin editor uses; this method saves
+        // one item. The version below snapshots the blocks as they are stored now.
+
+        // Create version after successful save
+        if (saveResult is { Success: true, Entity: not null })
+        {
+            await CreateVersionAfterSaveAsync(scope, parameters.Content, content.Published
+                    ? ContentVersionStatus.Published
+                    : ContentVersionStatus.Draft,
+                content.Published
+                    ? (isUpdate ? "Content updated and published" : "Content created and published")
+                    : (isUpdate ? "Content updated" : "Content created"),
+                user?.Id, content.Id, cancellationToken);
+        }
+
+        return saveResult;
+    }
+
+    /// <summary>What <see cref="StageContentAsync"/> staged: the tracked entity and whether it already existed.</summary>
+    private sealed record StagedContent(Models.Content Content, bool IsUpdate);
+
+    /// <summary>
+    /// Stages a draft ("Save only" of published content): the item's values go into its stored draft, the live row
+    /// only gets the link to it. Nothing is saved yet.
+    /// </summary>
+    /// <param name="storedDraftId">The id of the item's draft, if it has one.</param>
+    private static async Task StageDraftAsync(IZauberDbContext dbContext, Models.Content source, Guid? storedDraftId,
+        CancellationToken cancellationToken)
+    {
+        var draft = storedDraftId == null
+            ? null
+            : await dbContext.UnpublishedContent.FirstOrDefaultAsync(x => x.Id == storedDraftId, cancellationToken);
+        var isNew = draft == null;
+        draft ??= new UnpublishedContent();
+        source.MapTo(draft.JsonContent);
+        draft.JsonContent.PropertyData = source.PropertyData;
+        draft.JsonContent.UnpublishedContentId = draft.Id;
+        draft.DateUpdated = DateTime.UtcNow;
+
+        if (isNew)
+        {
+            var row = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == source.Id, cancellationToken);
+            if (row != null)
+            {
+                row.UnpublishedContentId = draft.Id;
+            }
+
+            dbContext.UnpublishedContent.Add(draft);
+        }
+    }
+
+    /// <summary>Creates the content's version after a save. A failure is logged and does not fail the save.</summary>
+    private async Task CreateVersionAfterSaveAsync(IServiceScope scope, Models.Content content,
+        ContentVersionStatus status, string comments, Guid? userId, Guid contentId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var versioningService = scope.ServiceProvider.GetService<IContentVersioningService>();
+            if (versioningService == null)
+            {
+                logger.LogWarning("ContentVersioningService is null - versioning will not work");
+                return;
+            }
+
+            await versioningService.CreateVersionAsync(new CreateContentVersionParameters
+            {
+                Content = content,
+                Status = status,
+                IsAutoSave = false,
+                Comments = comments,
+                CreatedByUserId = userId
+            }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Log version creation error but don't fail the content save
+            logger.LogError(ex, "Failed to create content version for content {ContentId}: {ErrorMessage}",
+                contentId, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Stages a create or update of one content item on <paramref name="dbContext"/>, with every check
+    /// <see cref="SaveContentAsync"/> makes. Nothing is saved yet. Returns null when a check failed (the reason is in
+    /// <paramref name="handlerResult"/>).
+    /// </summary>
+    private async Task<StagedContent?> StageContentAsync(IZauberDbContext dbContext, User? user,
+        SaveContentParameters parameters, HandlerResult<Models.Content> handlerResult, bool validateBlockTypes,
+        CancellationToken cancellationToken)
+    {
+        if (parameters.Content == null)
+        {
+            handlerResult.AddMessage("Content is null", ResultMessageType.Error);
+            return null;
+        }
+
+        var isUpdate = true;
+        var unpublishedContent =
+            dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == parameters.Content.UnpublishedContentId);
 
         var urlGenerated = false;
         if (parameters.Content.IsNestedContent)
@@ -262,7 +392,7 @@ public class ContentService(
             if (isOwnDescendant)
             {
                 handlerResult.AddMessage("Content can't be moved below itself", ResultMessageType.Error);
-                return handlerResult;
+                return null;
             }
         }
 
@@ -275,7 +405,7 @@ public class ContentService(
             // It would be live under a page that is not, unreachable in both trees (ZA-048)
             handlerResult.AddMessage("Restore the parent page first: it is still in the recycle bin",
                 ResultMessageType.Error);
-            return handlerResult;
+            return null;
         }
 
         var pathChanged = isUpdate && !storedPath.SequenceEqual(content.Path);
@@ -304,7 +434,7 @@ public class ContentService(
                 else
                 {
                     handlerResult.AddMessage($"The URL '{url}' is already used by another page", ResultMessageType.Error);
-                    return handlerResult;
+                    return null;
                 }
             }
 
@@ -350,103 +480,15 @@ public class ContentService(
             }
         }
 
-        // Server-side validation of BlockListEditor AllowedElementTypeIds.
-        // UI restrictions can be bypassed via a crafted save (or an old payload after settings change),
-        // so we re-check here and warn — non-fatal so legacy data isn't blocked from saving.
-        await ValidateBlockListAllowedTypesAsync(content, dbContext, handlerResult, cancellationToken);
-
-        // Wrap save + audit in a single transaction so a failed save (e.g. concurrency conflict)
-        // doesn't leave behind an orphan "user updated X" audit row claiming an update that never
-        // happened. SaveAuditAsync internally calls SaveChangesAsync, so it MUST run inside this
-        // explicit transaction to share its commit/rollback semantics.
-        HandlerResult<Models.Content> saveResult;
-        await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
+        if (validateBlockTypes)
         {
-            try
-            {
-                var nameText = content.Name ?? nameof(Models.Content);
-                var actionText = isUpdate ? "Updated" : "Created";
-                await SaveAuditAsync(dbContext, $"{user.Name} {actionText} {nameText}", cancellationToken);
-
-                saveResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
-                    cancellationToken);
-
-                if (saveResult.Success)
-                {
-                    await transaction.CommitAsync(cancellationToken);
-                    // Again after the commit: SaveChangesAndLog cleared before it, and a read in between cached the old rows
-                    cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
-                }
-                else
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                }
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                handlerResult.AddMessage(
-                    "Content was modified by another user — please reload and re-apply your changes",
-                    ResultMessageType.Error);
-                return handlerResult;
-            }
-            catch
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
+            // Server-side validation of BlockListEditor AllowedElementTypeIds.
+            // UI restrictions can be bypassed via a crafted save (or an old payload after settings change),
+            // so we re-check here and warn — non-fatal so legacy data isn't blocked from saving.
+            await ValidateBlockListAllowedTypesAsync(content, dbContext, handlerResult, cancellationToken);
         }
 
-        // NOTE: Previously SaveContentAsync recursively re-saved every nested block referenced by
-        // this content's BlockListEditor JSON. That behaviour caused a new ContentVersion per nested
-        // block on every parent save (50 blocks → 51 versions) and persisted stale DB data over
-        // any concurrent in-memory edits. ContentEditor.ProcessBlockListChanges is the legitimate
-        // entry point for nested saves — it iterates the bubbled Added/Updated/Deleted lists
-        // explicitly and calls SaveContentAsync per nested item. The parent's ContentVersion still
-        // captures the full nested tree via BlockListSnapshots, so version history isn't lost.
-
-        // Create version after successful save
-        if (saveResult is { Success: true, Entity: not null })
-        {
-            try
-            {
-                // Get the versioning service and create a version
-                var versioningService = scope.ServiceProvider.GetService<IContentVersioningService>();
-                if (versioningService != null)
-                {
-                    // Use the parameter content which has the updated PropertyData from the UI
-                    // If content is currently published, create a published version to replace it
-                    // Otherwise create a draft version
-                    var shouldCreatePublishedVersion = content is { Published: true };
-                    var versionParameters = new CreateContentVersionParameters
-                    {
-                        Content = parameters.Content, // Use the original parameter content with updated values
-                        Status = shouldCreatePublishedVersion
-                            ? ContentVersionStatus.Published
-                            : ContentVersionStatus.Draft,
-                        IsAutoSave = false,
-                        Comments = shouldCreatePublishedVersion
-                            ? (isUpdate ? "Content updated and published" : "Content created and published")
-                            : (isUpdate ? "Content updated" : "Content created"),
-                        CreatedByUserId = user?.Id
-                    };
-
-                    await versioningService.CreateVersionAsync(versionParameters, cancellationToken);
-                }
-                else
-                {
-                    logger.LogWarning("ContentVersioningService is null - versioning will not work");
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log version creation error but don't fail the content save
-                logger.LogError(ex, "Failed to create content version for content {ContentId}: {ErrorMessage}", 
-                    content.Id, ex.Message);
-            }
-        }
-
-        return saveResult;
+        return new StagedContent(content, isUpdate);
     }
 
     /// <summary>
@@ -553,18 +595,21 @@ public class ContentService(
         var toDelete = descendants.AsEnumerable().Reverse().Append(content).ToList();
         var toDeleteIds = toDelete.Select(x => x.Id).ToHashSet();
 
-        // Hard-delete needs to cascade through any BlockListEditor properties this content holds.
-        // Without this, nested block rows (IsNestedContent=true) become orphans because the parent's
-        // property-data goes away but the nested rows it referenced stay in ZauberContents.
-        var nestedToDelete = new List<Guid>();
-        var processed = new HashSet<Guid>(toDeleteIds);
-        foreach (var item in toDelete)
+        // The blocks of every deleted item go with it, those its draft reaches too; left behind they would be
+        // rows nothing points at
+        var tree = new NestedContentTree(dbContext, extensionManager, logger);
+        var reachedBlocks = new HashSet<Guid>();
+        foreach (var stored in (await tree.LoadAsync(toDeleteIds.ToList(), cancellationToken)).Values)
         {
-            await CollectNestedBlockListContentIdsAsync(dbContext, item.Id, processed, nestedToDelete,
-                depth: 0, cancellationToken);
+            reachedBlocks.UnionWith((await tree.WalkAsync(stored, null, useStoredDrafts: false, cancellationToken)).Ids);
+            if (stored.UnpublishedContent != null)
+            {
+                reachedBlocks.UnionWith((await tree.WalkAsync(NestedContentTree.WithStoredDraft(stored), null,
+                    useStoredDrafts: true, cancellationToken)).Ids);
+            }
         }
 
-        nestedToDelete = nestedToDelete.Where(id => !toDeleteIds.Contains(id)).ToList();
+        var nestedToDelete = reachedBlocks.Where(id => !toDeleteIds.Contains(id)).ToList();
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -633,7 +678,8 @@ public class ContentService(
                 await transaction.CommitAsync(cancellationToken);
                 // Again after the commit: SaveChangesAndLog cleared before it, and a read in between cached the old rows
                 cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
-                await appState.NotifyContentDeleted(null, authState.User.Identity?.Name!);
+                // The deleted item, so only editors and trees showing it react (ZA-040)
+                await appState.NotifyContentDeleted(content, authState.User.Identity?.Name!);
             }
             else
             {
@@ -650,144 +696,34 @@ public class ContentService(
     }
 
     /// <summary>
-    /// Walks the BlockListEditor JSON references on a content row (and recursively on each referenced
-    /// nested row) collecting all reachable nested content IDs into <paramref name="collected"/>.
-    /// Cycle-protected via <paramref name="processed"/> and depth-capped at MaxBlockListNestingDepth.
+    /// Gives <paramref name="copiedContent"/> copies of its blocks: each block its nested content properties point at
+    /// is cloned with a new id (and its own blocks with it), and the property values are rewritten to the clones.
+    /// <paramref name="originalToCloneMap"/> is shared by the whole copy, so a block reached twice gets one clone.
     /// </summary>
-    private async Task CollectNestedBlockListContentIdsAsync(IZauberDbContext dbContext,
-        Guid contentId, HashSet<Guid> processed, List<Guid> collected, int depth,
-        CancellationToken cancellationToken)
-    {
-        if (depth > MaxBlockListNestingDepth)
-        {
-            logger.LogWarning(
-                "Block list nesting depth exceeded {MaxDepth} during delete cascade from content {ContentId}; stopping recursion",
-                MaxBlockListNestingDepth, contentId);
-            return;
-        }
-
-        // Pull all BlockListEditor property values for this content in one shot
-        var propertyValues = await dbContext.ContentPropertyValues
-            .AsNoTracking()
-            .Where(pv => pv.ContentId == contentId &&
-                         pv.Value != null &&
-                         pv.Value.Length > 0)
-            .Select(pv => pv.Value)
-            .ToListAsync(cancellationToken);
-
-        var directIds = new List<Guid>();
-        foreach (var raw in propertyValues)
-        {
-            var trimmed = raw?.TrimStart();
-            if (string.IsNullOrEmpty(trimmed) || trimmed[0] != '[') continue;
-
-            try
-            {
-                var ids = JsonSerializer.Deserialize<List<Guid>>(raw!);
-                if (ids == null) continue;
-                foreach (var id in ids)
-                {
-                    if (id != Guid.Empty) directIds.Add(id);
-                }
-            }
-            catch (JsonException)
-            {
-                // Non-blocklist JSON (e.g. another picker) — skip.
-            }
-        }
-
-        if (directIds.Count == 0) return;
-
-        // Confirm each is actually nested content (so we don't accidentally cascade-delete root content
-        // referenced via some other property type).
-        var nestedIds = await dbContext.Contents
-            .AsNoTracking()
-            .Where(c => directIds.Contains(c.Id) && c.IsNestedContent)
-            .Select(c => c.Id)
-            .ToListAsync(cancellationToken);
-
-        foreach (var id in nestedIds)
-        {
-            if (!processed.Add(id)) continue; // already handled (cycle or shared sub-block)
-            collected.Add(id);
-            await CollectNestedBlockListContentIdsAsync(dbContext, id, processed, collected,
-                depth + 1, cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// For each BlockListEditor property on <paramref name="copiedContent"/>, clones the referenced
-    /// nested content rows (with new GUIDs) and rewrites the property's JSON to reference the clones.
-    /// Recurses into the clones' own block list properties so the entire nested tree is duplicated
-    /// rather than shared. Uses <paramref name="originalToCloneMap"/> so a block referenced from
-    /// multiple places (sibling properties, multiple descendants, cycles) resolves to one shared
-    /// clone — preventing both lost references and infinite recursion.
-    /// </summary>
-    private async Task CloneBlockListContentTreeAsync(Models.Content copiedContent,
+    private async Task CloneBlockListContentTreeAsync(Models.Content copiedContent, NestedContentTree tree,
         IZauberDbContext dbContext, User? currentUser, Dictionary<Guid, Guid> originalToCloneMap,
         int depth, CancellationToken cancellationToken)
     {
-        if (depth > MaxBlockListNestingDepth)
+        if (depth >= NestedContentTree.MaxDepth)
         {
-            logger.LogWarning(
-                "Block list nesting depth exceeded {MaxDepth} during copy from content {ContentId}; stopping recursion",
-                MaxBlockListNestingDepth, copiedContent.Id);
+            logger.LogWarning("Blocks of content {ContentId} are nested deeper than {MaxDepth}; the rest is not copied",
+                copiedContent.Id, NestedContentTree.MaxDepth);
             return;
         }
 
-        // Identify which properties on the copied content's ContentType are BlockListEditor
-        var contentType = await dbContext.ContentTypes
-            .AsNoTracking()
-            .FirstOrDefaultAsync(ct => ct.Id == copiedContent.ContentTypeId, cancellationToken);
-        if (contentType == null) return;
-
-        var blockListPropertyIds = contentType.ContentProperties
-            .Where(p => p.ComponentAlias == BlockListEditorComponentAlias)
-            .Select(p => p.Id)
-            .ToHashSet();
-        if (blockListPropertyIds.Count == 0) return;
-
-        var blockListProperties = copiedContent.PropertyData
-            .Where(p => blockListPropertyIds.Contains(p.ContentTypePropertyId) &&
-                        !string.IsNullOrWhiteSpace(p.Value))
-            .ToList();
-        if (blockListProperties.Count == 0) return;
-
-        foreach (var pv in blockListProperties)
+        foreach (var (value, property, ids) in await tree.GetReferencesAsync(copiedContent, cancellationToken))
         {
-            List<Guid>? originalIds;
-            try
+            if (ids.Count == 0) continue;
+            var originals = await tree.LoadAsync(ids.Where(id => !originalToCloneMap.ContainsKey(id)).ToList(),
+                cancellationToken);
+            foreach (var origId in ids)
             {
-                originalIds = JsonSerializer.Deserialize<List<Guid>>(pv.Value);
-            }
-            catch (JsonException)
-            {
-                continue;
-            }
-            if (originalIds == null || originalIds.Count == 0) continue;
-
-            // Skip empty/duplicate Guids in the source JSON
-            originalIds = originalIds.Where(id => id != Guid.Empty).Distinct().ToList();
-            if (originalIds.Count == 0) continue;
-
-            var newIds = new List<Guid>(originalIds.Count);
-            foreach (var origId in originalIds)
-            {
-                // If this original has already been cloned (from a sibling property, another
-                // descendant, or a cycle in the recursion above), reuse the existing clone's id
-                // rather than dropping the reference.
-                if (originalToCloneMap.TryGetValue(origId, out var existingCloneId))
+                // Already cloned (another property, another copied item), or not a block: the reference stays
+                if (originalToCloneMap.ContainsKey(origId) ||
+                    !originals.TryGetValue(origId, out var original) || !original.IsNestedContent)
                 {
-                    newIds.Add(existingCloneId);
                     continue;
                 }
-
-                var original = await dbContext.Contents
-                    .AsNoTracking()
-                    .Include(c => c.PropertyData)
-                    .FirstOrDefaultAsync(c => c.Id == origId, cancellationToken);
-
-                if (original == null) continue;
 
                 var clone = original.MapToNew();
                 clone.Id = Guid.NewGuid().NewSequentialGuid();
@@ -795,12 +731,12 @@ public class ContentService(
                 clone.DateUpdated = DateTime.UtcNow;
                 clone.LastUpdatedById = currentUser?.Id;
                 clone.Deleted = false;
+                clone.RelatedContentId = copiedContent.Id;
                 // Not the original block's draft (ZA-049), and blocks have no URL (ZA-067)
                 clone.UnpublishedContentId = null;
 #pragma warning disable CS0618 // Type or member is obsolete
                 clone.Url = null;
 #pragma warning restore CS0618 // Type or member is obsolete
-                // IsNestedContent stays true (it's a block); ParentId/Path inherit from original
                 clone.PropertyData = original.PropertyData.Select(p => new ContentPropertyValue
                 {
                     Id = Guid.NewGuid().NewSequentialGuid(),
@@ -812,18 +748,14 @@ public class ContentService(
                     Alias = p.Alias
                 }).ToList();
 
-                // Record the mapping BEFORE recursing so any cycle / shared reference inside the
-                // recursion finds this clone's id and stops there.
+                // Mapped before recursing, so a cycle in stored data stops at this clone
                 originalToCloneMap[origId] = clone.Id;
                 dbContext.Contents.Add(clone);
-                newIds.Add(clone.Id);
-
-                // Recurse so this clone's own block-list references are also re-pointed at fresh copies
-                await CloneBlockListContentTreeAsync(clone, dbContext, currentUser, originalToCloneMap,
+                await CloneBlockListContentTreeAsync(clone, tree, dbContext, currentUser, originalToCloneMap,
                     depth + 1, cancellationToken);
             }
 
-            pv.Value = JsonSerializer.Serialize(newIds);
+            value.Value = property.Provider.RemapIds(value.Value, originalToCloneMap) ?? value.Value;
         }
     }
 
@@ -914,10 +846,11 @@ public class ContentService(
         // Use a single Original→Clone mapping shared across the whole copy operation so a block
         // referenced by multiple properties or multiple descendants resolves to the same new clone.
         var nestedIdMap = new Dictionary<Guid, Guid>();
+        var cloneTree = new NestedContentTree(dbContext, extensionManager, logger);
         // Snapshot the descendant IDs before we start adding new clones to the change tracker,
         // so the foreach below isn't iterating a value that grows during recursion.
         var descendantNewIds = idMap.Values.Where(id => id != copiedContent.Id).ToList();
-        await CloneBlockListContentTreeAsync(copiedContent, dbContext, user, nestedIdMap,
+        await CloneBlockListContentTreeAsync(copiedContent, cloneTree, dbContext, user, nestedIdMap,
             depth: 0, cancellationToken);
         foreach (var descendantNewId in descendantNewIds)
         {
@@ -925,7 +858,7 @@ public class ContentService(
             var tracked = dbContext.Contents.Local.FirstOrDefault(c => c.Id == descendantNewId);
             if (tracked != null)
             {
-                await CloneBlockListContentTreeAsync(tracked, dbContext, user, nestedIdMap,
+                await CloneBlockListContentTreeAsync(tracked, cloneTree, dbContext, user, nestedIdMap,
                     depth: 0, cancellationToken);
             }
         }
@@ -937,6 +870,7 @@ public class ContentService(
         }
 
         handlerResult.Success = true;
+        handlerResult.Entity = copiedContent;
         handlerResult.AddMessage("Content copied successfully.", ResultMessageType.Success);
         return handlerResult;
 
@@ -1650,12 +1584,35 @@ public class ContentService(
             cancellationToken: cancellationToken);
         if (content?.UnpublishedContentId != null)
         {
+            // The draft's blocks go with it: blocks only the draft reaches are deleted, and the live blocks' own
+            // drafts are dropped, so the content is again what the live site shows
+            var tree = new NestedContentTree(dbContext, extensionManager, logger);
+            var stored = (await tree.LoadAsync([content.Id], cancellationToken))[content.Id];
+            var live = await tree.WalkAsync(stored, null, useStoredDrafts: false, cancellationToken);
+            var draft = await tree.WalkAsync(NestedContentTree.WithStoredDraft(stored), null, useStoredDrafts: true,
+                cancellationToken);
+            await tree.StageDiscardDraftsAsync(live.Ids, cancellationToken);
+            await tree.StageDeleteAsync(draft.Ids.Where(id => !live.Ids.Contains(id)).ToList(), cancellationToken);
+
             var uContent =
                 await dbContext.UnpublishedContent.FirstOrDefaultAsync(x => x.Id == content.UnpublishedContentId,
                     cancellationToken: cancellationToken);
             if (uContent != null) dbContext.UnpublishedContent.Remove(uContent);
+            content.UnpublishedContentId = null;
+
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
             var result = (await dbContext.SaveChangesAndLog(uContent, handlerResult, cacheService, extensionManager,
                 cancellationToken))!;
+            if (result.Success)
+            {
+                await transaction.CommitAsync(cancellationToken);
+                cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
+            }
+            else
+            {
+                await transaction.RollbackAsync(cancellationToken);
+            }
+
             return result;
         }
 

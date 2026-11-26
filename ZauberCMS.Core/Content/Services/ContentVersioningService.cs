@@ -22,10 +22,7 @@ public class ContentVersioningService(
 {
     private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 
-    // Mirror of ContentService.MaxBlockListNestingDepth — guards snapshot recursion against cycles
-    // and crafted-JSON DoS. Keep in sync.
-    private const int MaxBlockListNestingDepth = 20;
-    private const int MaxSnapshotsPerVersion = 5000;
+    private const int MaxSnapshotsPerVersion = NestedContentTree.MaxBlocks;
 
     /// <summary>
     /// Creates a new version of content
@@ -94,7 +91,8 @@ public class ContentVersioningService(
                 DateCreated = p.DateCreated ?? DateTime.UtcNow,
                 DateUpdated = p.DateUpdated ?? DateTime.UtcNow
             }).ToList() ?? [],
-            BlockListSnapshots = await CreateBlockListSnapshotsAsync(dbContext, snapshotSource),
+            BlockListSnapshots = await CreateBlockListSnapshotsAsync(dbContext, snapshotSource,
+                parameters.Status == ContentVersionStatus.Draft, cancellationToken),
             ContentSize = CalculateContentSize(snapshotSource)
         };
 
@@ -174,6 +172,16 @@ public class ContentVersioningService(
             return handlerResult;
         }
 
+        // The blocks the content reaches now, live and through drafts, before the restore changes its values
+        var tree = new NestedContentTree(dbContext, extensionManager, logger);
+        var storedContent = (await tree.LoadAsync([content.Id], cancellationToken))[content.Id];
+        var blocksBefore = (await tree.WalkAsync(storedContent, null, useStoredDrafts: false, cancellationToken)).Ids;
+        if (storedContent.UnpublishedContent != null)
+        {
+            blocksBefore.UnionWith((await tree.WalkAsync(NestedContentTree.WithStoredDraft(storedContent), null,
+                useStoredDrafts: true, cancellationToken)).Ids);
+        }
+
         if (content.Published)
         {
             // The restored values are what is live now (the old flag is cleared in the save's transaction below)
@@ -201,8 +209,15 @@ public class ContentVersioningService(
             }
         }
 
-        // Restore block list content from snapshots
+        // Restore block list content from snapshots. The version's blocks are what the content holds now: their
+        // pending drafts go (they were edits of what this replaces), and blocks only the replaced values used are
+        // deleted.
         await RestoreBlockListContentAsync(dbContext, version, cancellationToken);
+        var restoredBlockIds = version.BlockListSnapshots.Where(s => s.ContentSnapshot.IsNestedContent)
+            .Select(s => s.ContentId).ToHashSet();
+        await tree.StageDiscardDraftsAsync(restoredBlockIds, cancellationToken);
+        await tree.StageDeleteAsync(blocksBefore.Where(id => !restoredBlockIds.Contains(id)).ToList(),
+            cancellationToken);
 
         var userName = parameters.PublishedByUserId == null
             ? null
@@ -687,98 +702,34 @@ public class ContentVersioningService(
         }
     }
 
-    private async Task<List<BlockListContentSnapshot>> CreateBlockListSnapshotsAsync(IZauberDbContext dbContext, Models.Content content)
+    /// <summary>
+    /// Snapshots of every block the content reaches, through the nested content reference providers. A draft version
+    /// records the blocks' drafts where they have one, as the editor shows them.
+    /// </summary>
+    private async Task<List<BlockListContentSnapshot>> CreateBlockListSnapshotsAsync(IZauberDbContext dbContext,
+        Models.Content content, bool useDrafts, CancellationToken cancellationToken)
     {
-        var snapshots = new List<BlockListContentSnapshot>();
-        var processedContentIds = new HashSet<Guid>(); // Prevent infinite recursion
-
-        await CreateBlockListSnapshotsRecursiveAsync(dbContext, content, snapshots, processedContentIds, depth: 0);
-
-        return snapshots;
-    }
-
-    private async Task CreateBlockListSnapshotsRecursiveAsync(IZauberDbContext dbContext, Models.Content content, List<BlockListContentSnapshot> snapshots, HashSet<Guid> processedContentIds, int depth)
-    {
-        // Depth + count guards against accidental cycles and crafted-JSON DoS
-        if (depth > MaxBlockListNestingDepth)
+        var tree = new NestedContentTree(dbContext, extensionManager, logger);
+        var walk = await tree.WalkAsync(content, null, useDrafts, cancellationToken);
+        if (walk.Truncated)
         {
-            logger.LogWarning(
-                "Block list snapshot recursion exceeded depth {MaxDepth} on content {ContentId}; truncating",
-                MaxBlockListNestingDepth, content.Id);
-            return;
-        }
-        if (snapshots.Count >= MaxSnapshotsPerVersion)
-        {
-            logger.LogWarning(
-                "Block list snapshot count exceeded {MaxCount} for content {ContentId}; truncating",
-                MaxSnapshotsPerVersion, content.Id);
-            return;
+            logger.LogWarning("The version of content {ContentId} holds only the first {MaxCount} blocks", content.Id,
+                MaxSnapshotsPerVersion);
         }
 
-        // Find all block list properties in the content
-        var blockListProperties = content.PropertyData.Where(p =>
-            !string.IsNullOrEmpty(p.Value) &&
-            p.Value.TrimStart().StartsWith('[') &&
-            p.Value.TrimEnd().EndsWith(']'));
-
-        foreach (var blockListProperty in blockListProperties)
+        return walk.Nodes.Select(node => new BlockListContentSnapshot
         {
-            try
+            ContentId = node.Id,
+            ContentSnapshot = CreateContentSnapshot(node.Values),
+            PropertySnapshots = node.Values.PropertyData.Select(p => new ContentPropertySnapshot
             {
-                // Parse the JSON array of content IDs
-                var contentIds = System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(blockListProperty.Value);
-                if (contentIds != null && contentIds.Any())
-                {
-                    // Get all the block list content items
-                    var blockListContent = await dbContext.Contents
-                        .Include(c => c.PropertyData)
-                        .Where(c => contentIds.Contains(c.Id))
-                        .ToListAsync();
-
-                    // Create snapshots for each content item
-                    foreach (var blockContent in blockListContent)
-                    {
-                        // Skip if already processed to prevent infinite recursion
-                        if (processedContentIds.Contains(blockContent.Id))
-                        {
-                            continue;
-                        }
-
-                        if (snapshots.Count >= MaxSnapshotsPerVersion)
-                        {
-                            logger.LogWarning(
-                                "Block list snapshot count cap ({MaxCount}) reached while processing content {ContentId}; truncating",
-                                MaxSnapshotsPerVersion, content.Id);
-                            return;
-                        }
-
-                        processedContentIds.Add(blockContent.Id);
-
-                        snapshots.Add(new BlockListContentSnapshot
-                        {
-                            ContentId = blockContent.Id,
-                            ContentSnapshot = CreateContentSnapshot(blockContent),
-                            PropertySnapshots = blockContent.PropertyData?.Select(p => new ContentPropertySnapshot
-                            {
-                                ContentTypePropertyId = p.ContentTypePropertyId,
-                                Alias = p.Alias,
-                                Value = p.Value,
-                                DateCreated = p.DateCreated ?? DateTime.UtcNow,
-                                DateUpdated = p.DateUpdated ?? DateTime.UtcNow
-                            }).ToList() ?? []
-                        });
-
-                        // Recursively process nested block list content
-                        await CreateBlockListSnapshotsRecursiveAsync(dbContext, blockContent, snapshots, processedContentIds, depth + 1);
-                    }
-                }
-            }
-            catch (System.Text.Json.JsonException)
-            {
-                // Skip invalid JSON
-                continue;
-            }
-        }
+                ContentTypePropertyId = p.ContentTypePropertyId,
+                Alias = p.Alias,
+                Value = p.Value,
+                DateCreated = p.DateCreated ?? DateTime.UtcNow,
+                DateUpdated = p.DateUpdated ?? DateTime.UtcNow
+            }).ToList()
+        }).ToList();
     }
 
     private async Task RestoreBlockListContentAsync(IZauberDbContext dbContext, ContentVersion version, CancellationToken cancellationToken)
@@ -801,6 +752,15 @@ public class ContentVersioningService(
 
         foreach (var blockListSnapshot in version.BlockListSnapshots)
         {
+            if (!blockListSnapshot.ContentSnapshot.IsNestedContent)
+            {
+                // Versions made before blocks were read through their editor also hold pages a picker pointed at;
+                // a restore of this page must not overwrite those
+                logger.LogWarning("Restore of content {ContentId}: skipping {SnapshotId}, which is not a block",
+                    version.ContentId, blockListSnapshot.ContentId);
+                continue;
+            }
+
             // Always restore the content from the snapshot - this ensures the block list content
             // matches exactly what was saved in the version. Loaded without filtering soft-deletes
             // so a previously-deleted block can be brought back.

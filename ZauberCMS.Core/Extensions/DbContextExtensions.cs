@@ -209,6 +209,79 @@ public static class DbContextExtensions
 
 
     /// <summary>
+    /// Saves every pending change in one <c>SaveChanges</c>, running the <see cref="IBeforeEntitySave{T}"/> and
+    /// <see cref="IAfterEntitySave{T}"/> hooks for each of <paramref name="entities"/> with its own state (added,
+    /// modified, deleted). Any before-save hook can abandon the whole save. Use it inside a transaction when the
+    /// after-save hooks may save again. A concurrency conflict comes back as a failed result with a message for the user.
+    /// </summary>
+    /// <param name="entities">The entities the save is about; the hooks run for these.</param>
+    /// <param name="resultEntity">Set as the result's entity on success.</param>
+    public static async Task<HandlerResult<T>> SaveChangesAndLog<T>(this IZauberDbContext context,
+        IReadOnlyCollection<T> entities, T? resultEntity, HandlerResult<T> crudResult, ICacheService cacheService,
+        ExtensionManager extensionManager, CancellationToken cancellationToken) where T : class
+    {
+        try
+        {
+            var states = entities.Select(e => (Entity: e, State: context.Entry(e).State)).ToList();
+            var beforeSaves = extensionManager.GetInstances<IBeforeEntitySave<T>>(true).Values
+                .OrderBy(x => x.SortOrder).ToList();
+            foreach (var (entity, state) in states)
+            {
+                foreach (var hook in beforeSaves)
+                {
+                    if (!hook.BeforeSave(entity, state))
+                    {
+                        crudResult.Success = false;
+                        crudResult.AddMessage("Save was purposely abandoned", ResultMessageType.Error);
+                        return crudResult;
+                    }
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            cacheService.ClearCachedItemsWithPrefix(typeof(T).Name);
+            crudResult.Success = true;
+            if (resultEntity != null)
+            {
+                crudResult.Entity = resultEntity;
+            }
+
+            var afterSaves = extensionManager.GetInstances<IAfterEntitySave<T>>(true).Values
+                .OrderBy(x => x.SortOrder).ToList();
+            var shouldReSave = false;
+            foreach (var (entity, state) in states)
+            {
+                foreach (var hook in afterSaves)
+                {
+                    shouldReSave |= hook.AfterSave(entity, state);
+                }
+            }
+
+            if (shouldReSave)
+            {
+                await context.SaveChangesAsync(cancellationToken);
+                cacheService.ClearCachedItemsWithPrefix(typeof(T).Name);
+            }
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            crudResult.Success = false;
+            crudResult.AddMessage(
+                $"{typeof(T).Name} was changed by someone else since it was opened. Reload it and make the changes again.",
+                ResultMessageType.Error);
+            Log.Warning(ex, "{Type} not saved: concurrency conflict", typeof(T).Name);
+        }
+        catch (Exception ex)
+        {
+            crudResult.Success = false;
+            crudResult.AddMessage($"{ex.Message} - {ex.InnerException?.Message}", ResultMessageType.Error);
+            Log.Error(ex, $"{typeof(T).Name} not saved using SaveChangesAsync");
+        }
+
+        return crudResult;
+    }
+
+    /// <summary>
     /// Returns paginated list from a queryable
     /// </summary>
     /// <param name="items"></param>

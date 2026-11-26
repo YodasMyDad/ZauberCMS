@@ -77,6 +77,32 @@ public static class ContentMappingExtensions
     }
 
     /// <summary>
+    /// <see cref="MapDraftTo"/> for a block (nested content), which also takes the draft's publish switch and
+    /// property values: a block is published or hidden by the switch in its editor, as part of its page's draft.
+    /// The property values are copies, so changing the target does not change the draft.
+    /// </summary>
+    /// <param name="draft">The block's stored draft (<c>UnpublishedContent.JsonContent</c>).</param>
+    /// <param name="target">The block, loaded from the database.</param>
+    /// <returns>The updated <paramref name="target"/>.</returns>
+    public static Models.Content MapBlockDraftTo(this Models.Content draft, Models.Content target)
+    {
+        draft.MapDraftTo(target);
+        target.Published = draft.Published;
+        target.PropertyData = draft.PropertyData.Select(p => new Models.ContentPropertyValue
+        {
+            Id = p.Id,
+            ContentId = target.Id,
+            Alias = p.Alias,
+            ContentTypePropertyId = p.ContentTypePropertyId,
+            Value = p.Value,
+            DateCreated = p.DateCreated,
+            DateUpdated = p.DateUpdated
+        }).ToList();
+        target.InvalidateContentValuesCache();
+        return target;
+    }
+
+    /// <summary>
     /// Creates a new Content entity with properties mapped from source
     /// </summary>
     /// <param name="source">Source Content entity</param>
