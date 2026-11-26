@@ -189,9 +189,10 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     public List<ContentRole> ContentRoles { get; set; } = [];
     
     /// <summary>
-    /// In-memory cache of pending block list changes for preview rendering.
-    /// Key: property alias, Value: dictionary of content items by ID
-    /// Used to show edited nested content before it's saved to the database.
+    /// Unsaved blocks for admin previews, by block list property alias, then block id. The admin editor fills it on
+    /// the copy of a block it hands to an <c>IContentBlockPreview</c>, so
+    /// <c>GetBlocks(alias, contentService, includePendingChanges: true)</c> shows edits before the page is saved.
+    /// Never stored; don't set it yourself.
     /// </summary>
     [NotMapped]
     [JsonIgnore]

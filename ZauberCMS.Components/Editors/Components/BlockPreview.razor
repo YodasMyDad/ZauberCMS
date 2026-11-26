@@ -1,0 +1,113 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Logging
+@using ZauberCMS.Components.ContentComponents
+@using ZauberCMS.Core.Content.Interfaces
+@using ZauberCMS.Core.Plugins
+
+@* A block's preview in the Block List editor (Docs/BlockListEditor.md). The site's IContentBlockPreview is rendered
+   to static HTML on the server, so the preview is a picture of the block: Blazor never owns its nodes, and clicks in
+   it do nothing (the preview is inert, so links in it don't navigate away from unsaved edits). With the editor's stylesheets set, the HTML goes into a shadow root with those stylesheets, so the
+   site's CSS styles the preview and nothing else; without them it sits in the page and takes the admin's styles. *@
+
+@if (_html == null)
+{
+    <div class="text-sm text-slate-500">@Content.Name</div>
+}
+else if (Stylesheets.Count > 0)
+{
+    <div @ref="_host" class="block-preview" inert></div>
+}
+else
+{
+    <div class="block-preview" inert>@((MarkupString)_html)</div>
+}
+
+@code {
+    [Parameter, EditorRequired] public Content Content { get; set; } = null!;
+    [Parameter, EditorRequired] public ContentType ContentType { get; set; } = null!;
+    [Parameter] public List<string> Stylesheets { get; set; } = [];
+
+    [Inject] public IServiceProvider Services { get; set; } = null!;
+    [Inject] public ILoggerFactory LoggerFactory { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+    [Inject] public ILogger<BlockPreview> Logger { get; set; } = null!;
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IServiceProvider, SemaphoreSlim> RenderGates = new();
+
+    private ElementReference _host;
+    private string? _html;
+    private Content? _renderedFor;
+    private bool _pushToShadowRoot;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // The editor hands in a new object whenever the block or a block inside it changed
+        if (ReferenceEquals(_renderedFor, Content)) return;
+        var renderingFor = Content;
+        _renderedFor = renderingFor;
+        var html = await RenderPreviewAsync(renderingFor);
+
+        // A newer block arrived while this one rendered: its render shows, not this older one
+        if (!ReferenceEquals(_renderedFor, renderingFor)) return;
+        _html = html;
+        _pushToShadowRoot = Stylesheets.Count > 0;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pushToShadowRoot || _html == null) return;
+        _pushToShadowRoot = false;
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("zauberSetBlockPreview", _host, Stylesheets, _html);
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit is gone
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Could not show the preview of block {BlockId}", Content.Id);
+        }
+    }
+
+    private async Task<string> RenderPreviewAsync(Content block)
+    {
+        var previewType = ExtensionManager.GetInstances<IContentBlockPreview>(true).Values
+            .FirstOrDefault(p => p.ContentTypeAlias == block.ContentTypeAlias)?.GetType()
+            ?? typeof(ContentBlockPreviewFallback);
+        try
+        {
+            // One preview at a time per circuit: each HtmlRenderer has its own dispatcher, and the circuit's scoped
+            // services (which previews use, as before) expect one caller at a time
+            var gate = RenderGates.GetValue(Services, _ => new SemaphoreSlim(1, 1));
+            await gate.WaitAsync();
+            try
+            {
+                // The circuit's services, so a preview can use the content service as before
+                await using var renderer = new HtmlRenderer(Services, LoggerFactory);
+                return await renderer.Dispatcher.InvokeAsync(async () =>
+                {
+                    var output = await renderer.RenderComponentAsync(previewType,
+                        ParameterView.FromDictionary(new Dictionary<string, object?>
+                        {
+                            [nameof(IContentBlockPreview.Content)] = block,
+                            [nameof(IContentBlockPreview.ContentType)] = ContentType
+                        }));
+                    return output.ToHtmlString();
+                });
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "The preview {PreviewType} of block {BlockId} failed", previewType.FullName,
+                block.Id);
+            return $"<div>{System.Net.WebUtility.HtmlEncode(block.Name)}: the preview could not be shown</div>";
+        }
+    }
+}

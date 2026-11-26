@@ -1,5 +1,4 @@
-﻿@using ZauberCMS.Components.Editors.Interfaces
-@using ZauberCMS.Core.Content.Models
+﻿@using ZauberCMS.Core.Content.Models
 
 <CascadingValue Value="this">
     <DynamicComponent Type="@ComponentType" Parameters="@GetParameters()"/>
@@ -11,7 +10,13 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Settings { get; set; } = string.Empty;
     [Parameter] public Content? Content { get; set; }
+
+    /// <summary>No longer passed on: nested block edits go into the cascading <c>ContentEditScope</c>.</summary>
+    [Obsolete("Nested block edits go into the cascading ContentEditScope; this is ignored.")]
+#pragma warning disable CS0618 // Type or member is obsolete
     [Parameter] public Action<BlockListChanges>? ChangesPending { get; set; }
+#pragma warning restore CS0618
+
     [Parameter] public string? PropertyAlias { get; set; }
 
     private Dictionary<string, object> GetParameters()
@@ -23,15 +28,6 @@
             ["Settings"] = Settings,
             ["Content"] = Content!
         };
-
-        // Add ChangesPending callback only for editors that opt in via the marker interface.
-        // Previously matched on the literal class name "BlockListEditorProperty"; renaming the
-        // class would silently break nested change propagation with no error at build or run time.
-        if (ChangesPending != null && ComponentType != null &&
-            typeof(ISupportsBlockListChanges).IsAssignableFrom(ComponentType))
-        {
-            parameters["ChangesPending"] = ChangesPending;
-        }
 
         // Add PropertyAlias if provided and the component supports it
         // Check if the component type has a PropertyAlias property before adding it

@@ -20,8 +20,9 @@ that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/Edit
   `ZauberCMS.` prefix.
 - Required `[Parameter]`s — `DynamicContentProperty` always passes them and throws if one is missing:
   `string? Value`, `EventCallback<string> ValueChanged`, `string? Settings`, `Content? Content`.
-- Optional: `[Parameter] string? PropertyAlias`; implement `ISupportsBlockListChanges` to receive `ChangesPending`
-  (see [BlockListEditor.md](BlockListEditor.md)).
+- Optional: `[Parameter] string? PropertyAlias`. An editor that holds blocks (nested content) takes the cascading
+  `ContentEditScope` and registers an `INestedContentReferenceProvider` for its alias
+  (see [BlockListEditor.md](BlockListEditor.md) §7). `ISupportsBlockListChanges` is obsolete and never called.
 - `[CascadingParameter] IModalService? ModalService` for dialogs (`ModalService.OpenSidePanel<T>(…)`, then `await modal.Result`).
 - `Content` is **null** when the editor renders for User/Role properties — handle it.
 - `SettingsComponent = null` → admin shows "No settings available".

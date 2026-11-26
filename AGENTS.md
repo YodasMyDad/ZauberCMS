@@ -103,6 +103,7 @@ don't reorder without a reason written in the commit.
 | `IContentView` | Front-end page view (needs `@layout`) |
 | `IContentBlockView` / `IContentBlockPreview` | Block render on site / preview in admin (matched by `ContentTypeAlias`) |
 | `IContentProperty` (+ `IContentPropertySettings<T>`) | Property editor (+ its settings UI) |
+| `INestedContentReferenceProvider` | Which blocks an editor's value owns (by editor alias), so they are saved, deleted, versioned and copied with the page |
 | `ISection`, `ISectionNavGroup`, `ISectionNav`, `ISectionNavGroupAction`, `ISectionDashboard` | Admin sections, nav groups, nav items, group "…" actions, dashboard tabs |
 | `ITreeContextMenu` | Admin tree right-click menu items |
 | `ICustomContentComponent`, `IDataListSource`, `ISeoCheck`, `IAccountLayout` | Custom content tabs, list-editor data sources, SEO checks, account-page layout |
@@ -149,11 +150,11 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
 
 ## High-risk areas — read the doc before editing
 
-- **Block List editor & nested content** (`Editors/BlockList*`, `ContentEditor.razor` block handling, `RenderBlock` /
-  `shadow-dom.js`, block snapshots). Changes bubble up through nested modals via callbacks and are persisted only on the
-  root save, one block at a time with no overall transaction. Known data-loss bugs (cancel leaks, multi-property merge,
-  draft saves going live) and a planned redesign (edit session + single `SaveContentTreeAsync` + static previews).
-  **Don't extend the callback pattern or copy it into new editors.** → [Docs/BlockListEditor.md](Docs/BlockListEditor.md)
+- **Block List editor & nested content** (`Editors/BlockList*`, `ContentEditScope`, `BlockPreview`, `ContentEditor.razor`
+  block mode and save, `SaveContentTreeAsync` / `NestedContentTree`, block snapshots). Block edits live in a
+  `ContentEditScope` (child scope per side panel: commit on save, rollback on cancel) and the page is saved with its
+  blocks in one transaction; Core finds blocks only through `INestedContentReferenceProvider`. Never save a block on its
+  own from the editor, and don't revive the obsolete callback types. → [Docs/BlockListEditor.md](Docs/BlockListEditor.md)
 - **Soft delete / recycle bin** — filter defaults on Get/Query parameters; flipping one breaks callers silently (ZA-001).
 - **Bootstrap** (`ZauberSetup.cs`) — assembly order, middleware order, auto-migrate, seeders, and the DbContext
   that is chosen per scope so a site can start without a database.

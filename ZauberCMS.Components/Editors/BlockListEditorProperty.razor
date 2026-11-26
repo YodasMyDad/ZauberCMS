@@ -1,6 +1,5 @@
 @using System.Text.Json
 @using Microsoft.Extensions.Logging
-@using ZauberCMS.Components.Editors.Interfaces
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Components.Editors.Components
@@ -8,35 +7,26 @@
 @using ZauberCMS.Core.Content.Mapping
 @using ZauberCMS.Core.Content.Models
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
-@implements ISupportsBlockListChanges
-
-<!-- Load frontend stylesheets once for all previews -->
-@if (SettingsModel.Stylesheets.Any())
-{
-    foreach (var stylesheet in SettingsModel.Stylesheets)
-    {
-        <link rel="stylesheet" href="@stylesheet" />
-    }
-}
 
 <div class="block-list-editor @(IsDragging ? "dragging-active" : "")">
     @if (State.Items.Any())
     {
         <!-- Top drop zone -->
-        <BlockListDropZone Index="0" 
-                          OnInsert="HandleInsert" 
+        <BlockListDropZone Index="0"
+                          OnInsert="HandleInsert"
                           OnDrop="HandleDropAtIndex"
                           IsDragging="@IsDragging" />
-        
+
         @for (var i = 0; i < State.Items.Count; i++)
         {
             var item = State.Items[i];
             var itemIndex = i; // Capture for closures
-            
+
             @if (State.ContentTypes.TryGetValue(item.ContentTypeId, out var contentType))
             {
                 <BlockListItem @key="item.Id"
                               Content="@item"
+                              PreviewContent="@GetPreviewContent(item)"
                               ContentType="@contentType"
                               Index="@itemIndex"
                               Stylesheets="@SettingsModel.Stylesheets"
@@ -45,25 +35,25 @@
                               OnDropOnItem="HandleDropOnItem"
                               OnDragStart="HandleDragStart"
                               OnDragEnd="HandleDragEnd" />
-                
+
                 <!-- Drop zone between items -->
                 @if (itemIndex < State.Items.Count - 1)
                 {
-                    <BlockListDropZone Index="@(itemIndex + 1)" 
-                                      OnInsert="HandleInsert" 
+                    <BlockListDropZone Index="@(itemIndex + 1)"
+                                      OnInsert="HandleInsert"
                                       OnDrop="HandleDropAtIndex"
                                       IsDragging="@IsDragging" />
                 }
             }
         }
     }
-    
+
     <!-- Add New Block Button -->
-    <RadzenStack Orientation="Orientation.Vertical" Gap="0.2rem" class="rz-pt-3" 
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.2rem" class="rz-pt-3"
                  JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-        <RadzenButton Icon="add" Size="ButtonSize.Medium" 
-                     Click="@(() => HandleInsert(State.Items.Count))" 
-                     class="rz-border-radius-10" />
+        <RadzenButton Icon="add" Size="ButtonSize.Medium"
+                     Click="@(() => HandleInsert(State.Items.Count))"
+                     class="rz-border-radius-10" aria-label="Add new block" />
         <div class="text-sm">Add New Block</div>
     </RadzenStack>
 </div>
@@ -78,47 +68,53 @@
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
     public bool FullWidth { get; set; }
-    
+
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public string? Settings { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public Content? Content { get; set; }
     [Parameter] public string? PropertyAlias { get; set; }
-    
-    // BlockListEditor-specific parameters (not part of IContentProperty)
-    [Parameter] public Action<BlockListChanges>? ChangesPending { get; set; }
-    
+
+    /// <summary>The scope of the content editor this list sits in; block edits go into child scopes of it.</summary>
+    [CascadingParameter] public ContentEditScope? Scope { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
-    [Inject] public DialogService DialogService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public DialogService DialogService { get; set; } = null!;
     [Inject] public ILogger<BlockListEditorProperty> Logger { get; set; } = null!;
-    
+
     private BlockListState State { get; set; } = new();
     private BlockListEditorSettingsModel SettingsModel { get; set; } = new();
     private bool IsDragging { get; set; }
     private int? DragSourceIndex { get; set; }
-    
-    protected override async Task OnInitializedAsync()
+    private bool _typesLoaded;
+
+    // What the list was loaded for: a new value from outside (a reload after a save) or a new scope loads it again
+    private string? _loadedValue;
+    private ContentEditScope? _loadedScope;
+
+    // Preview copies (with the unsaved blocks inside each block), rebuilt when the list changes
+    private readonly Dictionary<Guid, Content> _previews = new();
+
+    protected override async Task OnParametersSetAsync()
     {
-        SettingsModel = Settings.FromJson<BlockListEditorSettingsModel>();
-        
-        // Load content types
-        var contentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters 
-        { 
-            AmountPerPage = 300, 
-            OnlyElementTypes = true
-        });
-        
-        var contentTypesDict = contentTypes.Items.ToDictionary(x => x.Id, x => x);
-        State = State with { ContentTypes = contentTypesDict };
-        
-        // Load existing content items
-        if (!Value.IsNullOrWhiteSpace())
+        if (!_typesLoaded)
         {
-            await LoadContentItems();
+            SettingsModel = Settings.FromJson<BlockListEditorSettingsModel>();
+            var contentTypes = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
+            {
+                AmountPerPage = 300,
+                OnlyElementTypes = true
+            });
+            State = State with { ContentTypes = contentTypes.Items.ToDictionary(x => x.Id, x => x) };
+            _typesLoaded = true;
         }
+
+        if (_loadedValue == Value && ReferenceEquals(_loadedScope, Scope)) return;
+        _loadedValue = Value;
+        _loadedScope = Scope;
+        await LoadContentItems();
     }
-    
+
     private async Task LoadContentItems()
     {
         List<Guid> contentIds;
@@ -126,10 +122,12 @@
         {
             // Defensive .Distinct() — duplicate Guids in the JSON would later throw at the
             // ToDictionary(x => x.Id) below.
-            contentIds = (JsonSerializer.Deserialize<List<Guid>>(Value!) ?? [])
-                .Where(id => id != Guid.Empty)
-                .Distinct()
-                .ToList();
+            contentIds = Value.IsNullOrWhiteSpace()
+                ? []
+                : (JsonSerializer.Deserialize<List<Guid>>(Value!) ?? [])
+                    .Where(id => id != Guid.Empty)
+                    .Distinct()
+                    .ToList();
         }
         catch (JsonException ex)
         {
@@ -139,42 +137,33 @@
             contentIds = [];
         }
 
-        if (!contentIds.Any()) return;
-
-        // In-memory items live in Content.PendingBlockListChanges[PropertyAlias] when the
-        // parent has been edited within this session but not yet persisted. Prefer these
-        // over DB versions so unsaved adds/edits survive a modal close+reopen.
-        var pendingItems = Content != null
-            && !string.IsNullOrWhiteSpace(PropertyAlias)
-            && Content.PendingBlockListChanges.TryGetValue(PropertyAlias!, out var p)
-                ? p
-                : new Dictionary<Guid, Content>();
-
-        var dbIdsNeeded = contentIds.Where(id => !pendingItems.ContainsKey(id)).ToList();
-
+        // Blocks edited in this edit and not saved yet come from the scope; the rest from the database
+        var dbIdsNeeded = contentIds.Where(id => Scope?.GetDraft(id) == null).ToList();
         var dbItems = new Dictionary<Guid, Content>();
         if (dbIdsNeeded.Count > 0)
         {
-            // AmountPerPage = ids.Count so a single block list can never silently truncate.
             var contentResult = await ContentService.QueryContentAsync(new QueryContentParameters
             {
                 Ids = dbIdsNeeded,
                 AmountPerPage = Math.Max(dbIdsNeeded.Count, 1),
                 NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only,
-                IncludeUnpublished = true
+                IncludeUnpublished = true,
+                Cached = false
             });
-            dbItems = contentResult.Items.ToDictionary(x => x.Id, x => x);
+
+            // A block with a pending draft ("Save only" of its page) is edited from the draft. On a copy, so a
+            // cached query result is never changed.
+            dbItems = contentResult.Items.ToDictionary(x => x.Id, x => x.UnpublishedContent == null
+                ? x
+                : x.UnpublishedContent.JsonContent.MapBlockDraftTo(x.MapToNew()));
         }
 
-        // Preserve original order; pending in-memory items win over DB versions.
         var orderedItems = contentIds
-            .Select(id => pendingItems.TryGetValue(id, out var pi) ? pi
-                        : dbItems.TryGetValue(id, out var di) ? di : null)
+            .Select(id => Scope?.GetDraft(id) ?? dbItems.GetValueOrDefault(id))
             .Where(c => c != null)
             .Cast<Content>()
             .ToList();
 
-        // Set ContentTypeAlias for rendering
         foreach (var item in orderedItems)
         {
             if (State.ContentTypes.TryGetValue(item.ContentTypeId, out var contentType))
@@ -192,13 +181,26 @@
         }
 
         State = State with { Items = orderedItems };
+        _previews.Clear();
     }
-    
+
+    private Content GetPreviewContent(Content item)
+    {
+        if (Scope == null) return item;
+        if (!_previews.TryGetValue(item.Id, out var preview))
+        {
+            preview = Scope.CreatePreviewCopy(item);
+            _previews[item.Id] = preview;
+        }
+
+        return preview;
+    }
+
     private async Task HandleInsert(int insertIndex)
     {
         await OpenContentEditor(null, insertIndex);
     }
-    
+
     private async Task HandleEdit(int index)
     {
         if (index >= 0 && index < State.Items.Count)
@@ -206,39 +208,40 @@
             await OpenContentEditor(State.Items[index], null);
         }
     }
-    
+
     private async Task HandleDelete(int index)
     {
         if (index < 0 || index >= State.Items.Count) return;
-        
+
         var content = State.Items[index];
         var confirmed = await DialogService.Confirm(
-            "Are you sure you want to delete this block?", 
-            "Delete Block", 
+            "Are you sure you want to delete this block?",
+            "Delete Block",
             new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
         );
-        
+
         if (confirmed == true)
         {
+            // Only the list changes; the save deletes the block (and the blocks inside it) once nothing lists it
             State = State.DeleteItem(content.Id);
             await NotifyChanges();
         }
     }
-    
+
     private void HandleDragStart(int sourceIndex)
     {
         IsDragging = true;
         DragSourceIndex = sourceIndex;
         StateHasChanged();
     }
-    
+
     private void HandleDragEnd()
     {
         IsDragging = false;
         DragSourceIndex = null;
         StateHasChanged();
     }
-    
+
     private async Task HandleDropOnItem(int targetIndex)
     {
         // Snapshot the source index in case another event mutates DragSourceIndex while we await.
@@ -248,7 +251,6 @@
         {
             State = State.ReorderItems(sourceIndex.Value, targetIndex);
             await NotifyChanges();
-            StateHasChanged();
         }
     }
 
@@ -266,32 +268,33 @@
             {
                 State = State.ReorderItems(sourceIndex.Value, adjustedTarget);
                 await NotifyChanges();
-                StateHasChanged();
             }
         }
     }
 
     private async Task OpenContentEditor(Content? contentToEdit, int? insertAtIndex)
     {
-        if (Content == null)
+        if (Content == null || Scope == null || ModalService == null)
         {
-            Logger.LogWarning("BlockListEditorProperty.OpenContentEditor invoked with null Content; cannot open nested editor");
+            Logger.LogWarning("The block list editor needs its content, the editor's edit scope and the modal service to open a block");
             return;
         }
 
+        // The block's edits, and those of any block opened inside it, stay in this scope until its editor is saved
+        var blockScope = Scope.BeginChild();
         var contentParams = new Dictionary<string, object>
         {
             { nameof(ContentEditor.IsBlockList), true },
             { nameof(ContentEditor.NestedParentId), Content.Id },
-            { nameof(ContentEditor.OnBlockListChanges), new Action<BlockListChanges>(HandleNestedChanges) }
+            { nameof(ContentEditor.EditScope), blockScope }
         };
-        
+
         // Filter allowed element types if configured
         if (SettingsModel.AllowedElementTypeIds.Any())
         {
             contentParams.Add(nameof(ContentEditor.AllowedElementTypeIds), SettingsModel.AllowedElementTypeIds.ToList());
         }
-        
+
         if (contentToEdit != null)
         {
             contentParams.Add(nameof(ContentEditor.Content), contentToEdit);
@@ -300,104 +303,71 @@
         {
             contentParams.Add(nameof(ContentEditor.DefaultName), $"Block {(State.Items.Count + 1).ToWords()}");
         }
-        
-        if (ModalService == null) return;
-        
-        var dialog = ModalService.OpenSidePanel<ContentEditor>("Edit Content Block", contentParams);
-        var result = await dialog.Result;
-        
-        if (result is { Confirmed: true, Data: Content savedContent })
-        {
-            // Block list items are saved in-memory only (deferred save when parent is saved)
-            // Create a new Content instance to force Blazor change detection (same pattern as old implementation)
-            var contentToStore = new Content();
-            savedContent.MapTo(contentToStore);
-            contentToStore.PropertyData = savedContent.PropertyData;
-            
-            // Deep-copy pending block list changes for nested content preview support
-            foreach (var kvp in savedContent.PendingBlockListChanges)
-            {
-                contentToStore.PendingBlockListChanges[kvp.Key] = new Dictionary<Guid, Content>(kvp.Value);
-            }
-            
-            // Ensure ContentType is loaded
-            if (!State.ContentTypes.ContainsKey(contentToStore.ContentTypeId))
-            {
-                var contentType = await ContentService.GetContentTypeAsync(
-                    new GetContentTypeParameters { Id = contentToStore.ContentTypeId }
-                );
-                
-                if (contentType != null)
-                {
-                    State = State.SetContentType(contentType);
-                }
-            }
-            
-            // Set ContentTypeAlias for rendering
-            if (State.ContentTypes.TryGetValue(contentToStore.ContentTypeId, out var ct))
-            {
-                contentToStore.ContentTypeAlias = ct.Alias;
-            }
-            
-            if (contentToEdit != null)
-            {
-                // Update existing item with new instance
-                State = State.UpdateItem(contentToStore);
-            }
-            else
-            {
-                // Add new item
-                State = State.AddItem(contentToStore, insertAtIndex);
-            }
-            
-            await NotifyChanges();
-            StateHasChanged();
-        }
-    }
-    
-    // async void is required because OnBlockListChanges on ContentEditor is typed Action<BlockListChanges>.
-    // Without try/catch an exception here would propagate to the SynchronizationContext and tear down the Blazor circuit.
-    private async void HandleNestedChanges(BlockListChanges nestedChanges)
-    {
+
+        ModalResult result;
         try
         {
-            State = State.MergeNestedChanges(nestedChanges);
-            await NotifyChanges();
-            ChangesPending?.Invoke(nestedChanges);
-            StateHasChanged();
+            result = await ModalService.OpenSidePanel<ContentEditor>("Edit Content Block", contentParams).Result;
         }
-        catch (Exception ex)
+        catch
         {
-            Logger.LogError(ex, "Failed to handle nested block list changes");
+            blockScope.Rollback();
+            throw;
+        }
+
+        if (result is not { Confirmed: true, Data: ZauberCMS.Core.Content.Models.Content savedBlock })
+        {
+            // Cancelled or closed: nothing done in that editor is kept
+            blockScope.Rollback();
+            return;
+        }
+
+        if (blockScope.Parent != Scope || Scope.IsClosed)
+        {
+            // The page was reloaded while the block was open (someone else saved it): its edit has nowhere to go
+            blockScope.Rollback();
             NotificationService.Notify(new NotificationMessage
             {
-                Severity = NotificationSeverity.Error,
-                Summary = "Block list change failed",
-                Detail = "Nested edit could not be applied — your changes may not have been saved. See logs for details.",
-                Duration = 6000
+                Severity = NotificationSeverity.Warning,
+                Summary = "Block changes not kept",
+                Detail = "The page was reloaded while the block was open. Open the block again and redo the changes.",
+                Duration = 10000
             });
+            return;
         }
+
+        blockScope.Commit();
+        var saved = Scope.GetDraft(savedBlock.Id);
+        if (saved == null) return;
+
+        if (!State.ContentTypes.ContainsKey(saved.ContentTypeId))
+        {
+            var contentType = await ContentService.GetContentTypeAsync(
+                new GetContentTypeParameters { Id = saved.ContentTypeId });
+            if (contentType != null)
+            {
+                State = State.SetContentType(contentType);
+            }
+        }
+
+        if (State.ContentTypes.TryGetValue(saved.ContentTypeId, out var ct))
+        {
+            saved.ContentTypeAlias = ct.Alias;
+        }
+
+        State = contentToEdit != null ? State.UpdateItem(saved) : State.AddItem(saved, insertAtIndex);
+        // Only this block's preview changed (it, or a block inside it, was edited)
+        _previews.Remove(saved.Id);
+        await NotifyChanges();
     }
-    
+
     private async Task NotifyChanges()
     {
-        // Update Value with current item IDs
-        var serializedIds = State.GetSerializedIds();
-        Value = JsonSerializer.Serialize(serializedIds);
+        // The list's value is the block ids in order; it is part of the content this editor sits in. A reorder or a
+        // removal changes no block, so the other previews are kept as they are.
+        Value = JsonSerializer.Serialize(State.GetSerializedIds());
+        _loadedValue = Value;
         await ValueChanged.InvokeAsync(Value);
-        
-        // Store current items in Content.PendingBlockListChanges for preview access
-        // This enables nested content previews to show live edits before database save
-        if (Content != null && !string.IsNullOrWhiteSpace(PropertyAlias))
-        {
-            // Convert items list to dictionary for efficient lookup by GetBlocks()
-            var itemsDict = State.Items.ToDictionary(x => x.Id, x => x);
-            Content.PendingBlockListChanges[PropertyAlias] = itemsDict;
-        }
-        
-        // Notify parent of all pending changes for database persistence
-        var changes = State.GetChanges();
-        ChangesPending?.Invoke(changes);
+        StateHasChanged();
     }
 }
-

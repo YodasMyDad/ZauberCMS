@@ -1,5 +1,4 @@
-﻿@using Microsoft.Extensions.Logging
-@using ZauberCMS.Core.Plugins
+﻿@using ZauberCMS.Core.Plugins
 @typeparam TView where TView : IContentBlock
 
 @if (Content != null && BlockViews != null)
@@ -9,7 +8,7 @@
 
     if (blockViewPair.Value != null)
     {
-        <div @ref="_componentDiv">
+        <div>
             <DynamicComponent Parameters="@(Parameters)" Type="@blockViewPair.Value.GetType()" />
         </div>
     }
@@ -22,15 +21,16 @@
 @code
 {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
-    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
-    [Inject] public ILogger<RenderBlock<TView>> Logger { get; set; } = null!;
     [Parameter] public Content? Content { get; set; }
     [Parameter] public Type? FallbackComponentType { get; set; }
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
+
+    /// <summary>No longer used: admin block previews are rendered by the Block List editor's <c>BlockPreview</c>,
+    /// which puts them in a shadow root with these stylesheets.</summary>
+    [Obsolete("Ignored. Admin block previews are rendered by BlockPreview with the Block List editor's stylesheets.")]
     [Parameter] public List<string> Stylesheets { get; set; } = [];
 
     private Dictionary<string, TView>? BlockViews { get; set; }
-    private ElementReference _componentDiv;
 
     protected override void OnParametersSet()
     {
@@ -43,21 +43,5 @@
         Parameters = newParameters;
 
         BlockViews = ExtensionManager.GetInstances<TView>(true);
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && Stylesheets.Count > 0)
-        {
-            try
-            {
-                await JsRuntime.InvokeVoidAsync("initializeShadowDOMWithMultipleStylesheets", _componentDiv, Stylesheets);
-            }
-            catch (Exception ex)
-            {
-                // Don't tear down the render — block preview just won't be shadow-isolated.
-                Logger.LogWarning(ex, "Failed to initialise shadow DOM for block preview");
-            }
-        }
     }
 }

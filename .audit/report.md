@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 9 (2026-11-26): Build PASS · Warnings: 0 · Tests: 768 (766 pass, 2 skipped for open findings ZA-011, ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers and a git-history search). Next free ID: ZA-160
 After Roadmap Phase 8 (2026-11-26): Build PASS · Warnings: 0 · Tests: 700 (697 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118), all SQL Server variants run for the first time (LocalDB via `ZAUBER_TEST_SQLSERVER`), PostgreSQL and Redis in Docker; `/audit changed` run on the phase (two reviewers). Next free ID: ZA-158
 After Roadmap Phase 7 (2026-11-26): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 628 (528 pass, 100 skipped: 97 SQL Server variants without `ZAUBER_TEST_SQLSERVER`, 3 for open findings ZA-011, ZA-036, ZA-118), PostgreSQL and Redis tests in Docker; `/audit changed` run on the phase (three reviewers). Next free ID: ZA-153
 After Roadmap Phase 6 (2026-11-25): Build PASS · Warnings: 0 · Tests: 428 (425 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118), PostgreSQL and Redis tests in Docker; `/audit changed` run on the phase
@@ -21,47 +22,13 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 8 | 22 | 0 |
-| Medium | 42 | 31 | 0 |
-| Low | 46 | 6 | 1 |
+| High | 3 | 27 | 0 |
+| Medium | 34 | 39 | 0 |
+| Low | 48 | 6 | 1 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-158.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010 and ZA-034 … ZA-043 (Phase 9), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-160.
 
 ## Open findings
-
-### ZA-034 [High/High] Block list: Cancel in a nested modal does not discard its changes (data loss)
-
-- Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:595-601`, `ZauberCMS.Components/Editors/BlockListEditorProperty.razor:358-367` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F1. Changes merge into ancestors immediately; Cancel clears only its own copy. Open B1, delete nested B2, Cancel, save → B2 hard-deleted while B1 still references it; cancelled adds become orphan rows.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-- Reconciled 2026-11-25: confirmed by a second independent read.
-
-### ZA-035 [High/High] Block list: root editor replaces pending changes instead of merging
-
-- Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:613-621`, `ZauberCMS.Components/Editors/BlockListEditorProperty.razor:366` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F2. Two block-list properties on one type (or via composition) → only the last-touched property's changes are saved; duplicate `ChangesPending` call leaves root with only the nested subset.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-- Reconciled 2026-11-25: confirmed by a second independent read.
-
-### ZA-036 [High/High] Block list: nested update dropped when item already in Added
-
-- Where: `ZauberCMS.Components/Editors/Models/BlockListState.cs:196-199` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F3. Add B1 with new B2, close, reopen B1, edit B2, save → B2 persisted with original values.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-- Reconciled 2026-11-25: confirmed by a second independent read.
-
-### ZA-038 [High/High] Block list: 'Save only' (draft) on published content saves blocks live
-
-- Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:623-679`, `ZauberCMS.Core/Content/Services/ContentService.cs:214-270` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F6. Parent goes to UnpublishedContent but blocks are saved/deleted live; 'Clear changes' can't revert them.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-- Reconciled 2026-11-25: confirmed by a second independent read.
-
-### ZA-040 [High/Medium] Hard delete notifies `NotifyContentDeleted(null)` to every session
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:578`, `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:607` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F9. Every open content editor in every circuit refreshes (unsaved edits lost), on the publisher's thread.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
 
 ### ZA-054 [High/High] Admin trees block the circuit with sync-over-async (latent deadlock)
 
@@ -80,21 +47,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Extensions/ContentExtensions.cs:133-139,218` · Category: B · Since: 2026-11-25
 - Issue / Trigger: `GetBlocks` queries without `Cached` — 3 DB round-trips per block list per request, repeated per nested list — and single-media lookups cost one each. Every page with a block list pays this on every request.
 - Fix: `Cached = true` on the non-preview path; skip the COUNT for id queries. · Blocked by: admin preview shares the method.
-
-### ZA-008 [Medium/Medium] Block-list parent version snapshot taken before blocks are saved
-
-- Where: `ContentVersioningService.cs:44-47,635+`; `ContentEditor.razor` Save → `ProcessBlockListChanges` · Category: C
-- Issue: parent's version may miss new blocks / hold old block values. Untested. See [Docs/BlockListEditor.md](../Docs/BlockListEditor.md).
-
-### ZA-009 [Medium/High] Block-list save is not atomic
-
-- Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:623-720` · Category: C
-- Issue: parent then each block saved/deleted in separate calls, no transaction — failure mid-way leaves a partial tree.
-
-### ZA-010 [Medium/High] Block stylesheets leak into the admin page
-
-- Where: `ZauberCMS.Components/Editors/BlockListEditorProperty.razor:14-20` · Category: E
-- Issue: stylesheets emitted as normal `<link>` as well as inside the shadow root.
 
 ### ZA-011 [Medium/High] Two DbContext instances per scope
 
@@ -115,37 +67,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 ### ZA-018 [Medium/Medium] `SaveTagItemAsync` bypasses `SaveChangesAndLog` hooks
 
 - Where: `ZauberCMS.Core/Tags/Services/TagService.cs:222-224` · Category: C
-
-### ZA-037 [Medium/High] Block list: deleting a block keeps its pending descendants
-
-- Where: `ZauberCMS.Components/Editors/Models/BlockListState.cs:107-142` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F4. New descendants of a deleted block are inserted as orphans; DB cascade reads stored JSON so never reaches them.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-
-### ZA-039 [Medium/Medium] Block list: editor state stale after save (needs repro)
-
-- Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:681-780` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F7. Change lists and `DateUpdated` kept after save → second save gives false concurrency errors / failed deletes / re-adds.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-
-### ZA-041 [Medium/High] Block list: change bubbling is re-entrant and doubles per level
-
-- Where: `ZauberCMS.Components/Editors/BlockListEditorProperty.razor:358-401` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F10. Change at depth d merged 2^(d-1) times through async void handlers.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-
-### ZA-042 [Medium/Low] Block list: `OnParametersSetAsync` rebuilds WorkingCopy each time (needs repro)
-
-- Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:364-367` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F12. If stacked modals re-supply parameters, in-modal edits reset and child callbacks point at disposed components.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
-- Reconciled 2026-11-25: mechanism confirmed by reading (`ContentEditor.razor:318-381`; Blazored.Modal re-renders every open instance on each show/dismiss). Repro: add a block, choose a type, open the media picker — expect a return to the type chooser.
-
-### ZA-043 [Medium/Medium] Block previews: Blazor-owned nodes moved into shadow root
-
-- Where: `ZauberCMS.Components/ContentComponents/RenderBlock.razor:12-18,50`, `ZauberCMS.Components/wwwroot/js/shadow-dom.js:40-42` · Category: C/E · Since: 2026-11-25 deep-dive
-- Issue / Trigger: F13. New nodes may render outside the shadow root (invisible), clicks inside previews don't fire, no isolation without stylesheets. Fix direction: static HtmlRenderer previews.
-- Fix: see [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) §6 (EditSession + SaveContentTreeAsync) or §6.5 stopgaps.
 
 ### ZA-061 [Medium/High] Front-end entry cache is 5 seconds, not 5 minutes; key includes host and query string
 
@@ -585,8 +506,65 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Fix: run the hooks per item (a veto on one item would then have to stop the whole group). · Blocked by: design
   of the hooks for group changes.
 
+### ZA-158 [Low/High] The single-item save publishes a page's draft but not its blocks' drafts
+- Where: `ZauberCMS.Core/Content/Services/ContentService.cs` (`SaveContentAsync` → `StageContentAsync`) · Category: C · Since: 2026-11-26 (Phase 9 audit)
+- Issue / Trigger: code that publishes a page with `SaveContentAsync` (property data, no `SaveUnpublishedOnly`)
+  removes the page's draft but leaves the drafts of its blocks and the blocks only those drafts reach. Nothing is
+  lost: the next `SaveContentTreeAsync` walks them and publishes them, and "Clear changes" drops them. The admin
+  editor uses the tree save. Documented in `Docs/Services.md` and `Docs/BlockListEditor.md` §4.
+- Fix: have `SaveContentAsync` with property data publish or drop the blocks' drafts too (or route it through the
+  tree save). · Blocked by: behaviour change for existing callers; decide with the owner.
+
+### ZA-159 [Low/High] Content save hooks don't run per block on Clear changes and version restore
+- Where: `ContentService.ClearUnpublishedContentAsync`, `ContentVersioningService.PublishVersionAsync` · Category: F · Since: 2026-11-26 (Phase 9 audit)
+- Issue / Trigger: blocks deleted by Clear changes, and blocks rewritten or deleted by a version restore, don't run
+  `IBeforeEntitySave<Content>`/`IAfterEntitySave<Content>`; in a "Save only", block drafts run none and a new block
+  (a row only the draft reaches) fires "Added". A plugin mirroring content elsewhere (a search index) misses or
+  indexes these. Same family as ZA-012 and ZA-157. Documented in `Docs/BlockListEditor.md` §4.
+- Fix: pass those rows to the many-entity `SaveChangesAndLog` overload; decide what hooks a draft should see.
+
+
 ## Fixed this run / Resolved since last run
 
+- **Phase 9 (2026-11-26): Block List redesign (D5).** How it works: [Docs/BlockListEditor.md](../Docs/BlockListEditor.md) (its §6 maps every old failure to the fix).
+  - **ZA-034 [High] Cancel in a nested panel leaked its changes — fixed.** `ContentEditScope`: each block panel edits
+    in a child scope; the list commits it on Save and rolls it back on Cancel or close, deeper panels included.
+    Tests: `ContentEditScopeTests`, `ContentTreeSaveTests` (unreached drafts ignored). Browser: cancel at levels 2–4.
+  - **ZA-035 [High] Root replaced pending changes (two block lists) — fixed.** One draft map per edit; the save walks
+    every value. Test: two lists both saved.
+  - **ZA-036 [High] Nested update dropped when pending as added — fixed.** The newest draft wins in the scope; the
+    skipped test is replaced by `Editing_a_block_again_keeps_the_newest_values` and a tree-save test.
+  - **ZA-038 [High] "Save only" saved blocks live — fixed.** `SaveContentTreeAsync` with `SaveUnpublishedOnly` gives
+    edited blocks drafts and inserts new ones only the draft reaches; publish promotes block drafts; Clear changes and
+    version restore drop them. Tests at depth 1 and 2; browser at depth 4.
+  - **ZA-040 [High] Hard delete notified `null` to every editor — fixed.** Delete and version restore name the item;
+    the editor reloads only for its own item, on `InvokeAsync`, and warns when that drops unsaved block edits.
+  - **ZA-008 [Medium] Version taken before the blocks were saved — fixed.** One version after the commit, with the
+    blocks as saved (draft versions record block drafts). Test.
+  - **ZA-009 [Medium] Block-list save not atomic — fixed.** `SaveContentTreeAsync`: one context and transaction;
+    a failure on one block writes nothing. Test.
+  - **ZA-010 [Medium] Block stylesheets leaked into the admin — fixed.** No global `<link>`; stylesheets go only into
+    each preview's shadow root (`block-preview.js`).
+  - **ZA-037 [Medium] Deleting a block kept its pending descendants — fixed.** The save deletes everything the page no
+    longer reaches, live or draft. Test.
+  - **ZA-039 [Medium] Stale editor state after save — fixed.** The editor reloads with a fresh scope; lists reload.
+    Browser: two saves in a row without reload.
+  - **ZA-041 [Medium] Re-entrant bubbling doubled per level — fixed.** No callbacks (`ISupportsBlockListChanges` and
+    friends are obsolete and never called).
+  - **ZA-042 [Medium] `OnParametersSetAsync` rebuilt the working copy — fixed.** `ContentEditor` loads once per
+    (id, parent, content, scope), recorded before the load; a new id no longer reuses the previous item.
+  - **ZA-043 [Medium] Blazor nodes moved into a shadow root — fixed.** `BlockPreview` renders the preview to static
+    HTML with `HtmlRenderer` (one at a time per circuit, inert) and sets it into the shadow root from JS.
+  - Also: `INestedContentReferenceProvider` (discovered) is how Core finds blocks for save, delete, snapshots,
+    restore, copy and validation; copies of blocks now belong to the copy; the 20-level limit is exact.
+  - `/audit changed` (two reviewers, plus a search of the git history for every old block-list problem at the
+    owner's request) found, and this phase fixed before the commit: version restore deleting blocks that old-style
+    versions have no snapshot of (High); a page stuck after a single-item publish left block drafts; two editors'
+    "Save only" overwriting each other's drafts and deleting blocks (now refused); the stored draft link; previews
+    racing, re-rendering on every reorder, rendering in parallel, and navigating away through links; an open
+    panel's edit lost without a word when the page reloaded; editors reloading on unrelated events; Clear changes
+    loading twice; block edit/delete not reachable by keyboard; custom editors' unsaved blocks missing in previews.
+    Logged: ZA-158, ZA-159.
 - **Phase 8 (2026-11-26): media recycle bin (D3).** How it works: [Docs/Services.md](../Docs/Services.md) "Deletes".
   - **ZA-006 [High] Media recycle bin had no UI — fixed.** Media section → Recycle Bin (`MediaRecycleBinTree`) with
     Restore, Delete permanently and Empty recycle bin (`ContextMenus/MediaRecycleBinMenus/`). Deleting moves an item

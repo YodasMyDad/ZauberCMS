@@ -58,11 +58,26 @@ public partial class ContentService
             return handlerResult;
         }
 
-        // What the stored item reaches now: through its live values, and through its drafts
+        if (storedRoot != null && !IsCurrentCopy(root, storedRoot, draftMode))
+        {
+            handlerResult.AddMessage(
+                $"{storedRoot.Name} was changed by someone else since it was opened. Reload it and make the changes again.",
+                ResultMessageType.Error);
+            return handlerResult;
+        }
+
+        if (storedRoot != null)
+        {
+            // Which draft a save replaces is what is stored, not what the caller's copy says
+            root.UnpublishedContentId = storedRoot.UnpublishedContentId;
+        }
+
+        // What the stored item reaches now: through its live values, and through drafts (its own, and those its
+        // blocks still have, even when the item's own draft is gone)
         var liveBefore = storedRoot == null
             ? new NestedContentTree.Walk()
             : await tree.WalkAsync(storedRoot, null, useStoredDrafts: false, cancellationToken);
-        var draftBefore = storedRoot?.UnpublishedContent == null
+        var draftBefore = storedRoot == null
             ? liveBefore
             : await tree.WalkAsync(NestedContentTree.WithStoredDraft(storedRoot), null, useStoredDrafts: true,
                 cancellationToken);
@@ -213,6 +228,24 @@ public partial class ContentService
         }
 
         return saveResult;
+    }
+
+    /// <summary>
+    /// Whether the caller edited the item as it is stored. A draft does not change the item's <c>DateUpdated</c>, so
+    /// the stored draft is compared too: a draft saved by someone else after the caller opened the item (or one they
+    /// cleared or published) would otherwise be overwritten, and the blocks only it had deleted. A "Save only" also
+    /// checks <c>DateUpdated</c> itself, which the publish path checks when it saves.
+    /// </summary>
+    private static bool IsCurrentCopy(Models.Content root, Models.Content stored, bool draftMode)
+    {
+        if (root.UnpublishedContentId != stored.UnpublishedContentId) return false;
+        if (stored.UnpublishedContent != null && root.UnpublishedContent != null &&
+            root.UnpublishedContent.DateUpdated != stored.UnpublishedContent.DateUpdated)
+        {
+            return false;
+        }
+
+        return !draftMode || root.DateUpdated == default || root.DateUpdated == stored.DateUpdated;
     }
 
     /// <summary>A copy of the caller's block, made a block of the item it sits under.</summary>

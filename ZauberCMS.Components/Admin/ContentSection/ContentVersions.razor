@@ -223,8 +223,8 @@ else
             {
                 await LoadVersionsAsync();
 
-                // Notify other components that content has changed
-                await AppState.NotifyContentChanged(null, "system");
+                // Name the restored item, so only its editors reload (a null would reload every open editor)
+                await AppState.NotifyContentChanged(new Content { Id = ContentId }, "system");
 
                 NotificationService.Notify(new NotificationMessage
                 {

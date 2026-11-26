@@ -282,6 +282,156 @@ public class ContentTreeSaveTests : IAsyncLifetime
         Assert.Equal("original", await StoredValueAsync(copiedBlock, "text"));
     }
 
+    [Fact]
+    public async Task Publishing_an_edited_block_that_has_a_draft_publishes_the_edit_and_drops_the_draft()
+    {
+        var (page, block) = await CreatePageWithBlockAsync("live");
+        var draftBlock = await LoadAsync(block.Id);
+        SetValue(draftBlock, "text", "draft");
+        Assert.True((await SaveTreeAsync(await LoadAsync(page.Id), [draftBlock], draftOnly: true)).Success);
+
+        var final = await LoadAsDraftAsync(block.Id);
+        Assert.Equal("draft", final.GetValue<string>("text"));
+        SetValue(final, "text", "final");
+        var result = await SaveTreeAsync(await LoadAsDraftAsync(page.Id), [final]);
+
+        Assert.True(result.Success, TestSite.Describe(result.Messages));
+        Assert.Equal(["final"], await LiveBlockTextsAsync(page.Id));
+        Assert.Equal(0, await _site.QueryDatabaseAsync(db => db.UnpublishedContent.CountAsync(Ct)));
+    }
+
+    [Fact]
+    public async Task A_second_save_only_updates_the_drafts_it_made()
+    {
+        var (page, block) = await CreatePageWithBlockAsync("live");
+        var first = await LoadAsync(block.Id);
+        SetValue(first, "text", "first draft");
+        Assert.True((await SaveTreeAsync(await LoadAsync(page.Id), [first], draftOnly: true)).Success);
+
+        var second = await LoadAsDraftAsync(block.Id);
+        SetValue(second, "text", "second draft");
+        var result = await SaveTreeAsync(await LoadAsDraftAsync(page.Id), [second], draftOnly: true);
+
+        Assert.True(result.Success, TestSite.Describe(result.Messages));
+        Assert.Equal(2, await _site.QueryDatabaseAsync(db => db.UnpublishedContent.CountAsync(Ct)));
+        Assert.Equal("second draft", (await LoadAsDraftAsync(block.Id)).GetValue<string>("text"));
+        Assert.Equal(["live"], await LiveBlockTextsAsync(page.Id));
+    }
+
+    // A block only a draft reaches, below a block that is live: publish keeps it, clearing the draft deletes it
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_block_a_draft_adds_inside_a_live_block_follows_the_draft(bool publish)
+    {
+        var (page, block) = await CreatePageWithBlockAsync("parent");
+        var child = NewBlock("added in draft");
+        var draftParent = await LoadAsync(block.Id);
+        SetValue(draftParent, "children", Ids(child));
+        Assert.True((await SaveTreeAsync(await LoadAsync(page.Id), [draftParent, child], draftOnly: true)).Success);
+        Assert.Equal("[]", await StoredValueAsync(block.Id, "children"));
+
+        if (publish)
+        {
+            var result = await SaveTreeAsync(await LoadAsDraftAsync(page.Id), []);
+            Assert.True(result.Success, TestSite.Describe(result.Messages));
+            Assert.Equal(Ids(child), await StoredValueAsync(block.Id, "children"));
+            Assert.Single(await RowsAsync(child.Id));
+        }
+        else
+        {
+            var cleared = await WithContentService(s => s.ClearUnpublishedContentAsync(
+                new ClearUnpublishedContentParameters { ContentId = page.Id }, Ct));
+            Assert.True(cleared.Success, TestSite.Describe(cleared.Messages));
+            Assert.Empty(await RowsAsync(child.Id));
+        }
+
+        Assert.Equal(0, await _site.QueryDatabaseAsync(db => db.UnpublishedContent.CountAsync(Ct)));
+    }
+
+    // Versions made before blocks were saved with their page have no snapshot of the blocks that save added
+    [Fact]
+    public async Task Restoring_a_version_without_a_snapshot_of_a_block_keeps_the_block()
+    {
+        var (page, block) = await CreatePageWithBlockAsync("v1");
+        var oldVersion = Assert.Single(await VersionsAsync(page.Id));
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            var version = await db.ContentVersions.SingleAsync(v => v.Id == oldVersion.Id, Ct);
+            version.BlockListSnapshots = [];
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var added = NewBlock("added later");
+        var reloaded = await LoadAsync(page.Id);
+        SetValue(reloaded, "blocks", Ids(block, added));
+        Assert.True((await SaveTreeAsync(reloaded, [added])).Success);
+
+        var restore = await WithVersioningService(s => s.PublishVersionAsync(
+            new PublishContentVersionParameters { VersionId = oldVersion.Id }, Ct));
+
+        Assert.True(restore.Success, TestSite.Describe(restore.Messages));
+        Assert.Equal(["v1"], await LiveBlockTextsAsync(page.Id));
+        Assert.Empty(await RowsAsync(added.Id));
+    }
+
+    // SaveContentAsync publishes the page's draft but leaves its blocks' drafts: the editor must still save it
+    [Fact]
+    public async Task A_page_published_with_the_single_item_save_can_still_be_saved_with_its_blocks()
+    {
+        var (page, block) = await CreatePageWithBlockAsync("parent");
+        var child = NewBlock("added in draft");
+        var draftParent = await LoadAsync(block.Id);
+        SetValue(draftParent, "children", Ids(child));
+        Assert.True((await SaveTreeAsync(await LoadAsync(page.Id), [draftParent, child], draftOnly: true)).Success);
+        var single = await WithContentService(async s => await s.SaveContentAsync(
+            new SaveContentParameters { Content = await LoadAsDraftAsync(page.Id) }, Ct));
+        Assert.True(single.Success, TestSite.Describe(single.Messages));
+
+        var result = await SaveTreeAsync(await LoadAsync(page.Id), []);
+
+        Assert.True(result.Success, TestSite.Describe(result.Messages));
+        Assert.Equal(Ids(child), await StoredValueAsync(block.Id, "children"));
+    }
+
+    // Two editors with the same page open: the one that saves a draft later must not overwrite the other's draft
+    [Fact]
+    public async Task A_save_from_a_copy_opened_before_someone_else_saved_a_draft_is_refused()
+    {
+        var (page, block) = await CreatePageWithBlockAsync("live");
+        var staleCopy = await LoadAsync(page.Id);
+
+        var added = NewBlock("other editor's draft");
+        var otherCopy = await LoadAsync(page.Id);
+        SetValue(otherCopy, "blocks", Ids(block, added));
+        Assert.True((await SaveTreeAsync(otherCopy, [added], draftOnly: true)).Success);
+
+        var result = await SaveTreeAsync(staleCopy, [], draftOnly: true);
+
+        Assert.False(result.Success);
+        Assert.Single(await RowsAsync(added.Id));
+    }
+
+    [Theory]
+    [InlineData(NestedContentTreeLimit, true)]
+    [InlineData(NestedContentTreeLimit + 1, false)]
+    public async Task Blocks_nest_up_to_the_limit(int depth, bool saved)
+    {
+        var chain = new List<ContentItem>();
+        ContentItem? below = null;
+        for (var level = depth; level >= 1; level--)
+        {
+            below = below == null ? NewBlock($"level {level}") : NewBlock($"level {level}", below);
+            chain.Add(below);
+        }
+
+        var result = await SaveTreeAsync(NewPage("Deep", blocks: [below!]), chain);
+
+        Assert.Equal(saved, result.Success);
+    }
+
+    private const int NestedContentTreeLimit = 20;
+
     // ---- helpers ----
 
     private async Task<(ContentItem Page, ContentItem Block)> CreatePageWithBlockAsync(string text)
@@ -374,14 +524,21 @@ public class ContentTreeSaveTests : IAsyncLifetime
             new GetContentParameters { Id = id, IncludeUnpublished = true, Cached = false }, Ct))
         ?? throw new InvalidOperationException("Content not found.");
 
-    /// <summary>The page as the editor shows it after a "Save only": with its draft's values.</summary>
+    /// <summary>A page or block as the editor shows it after a "Save only": with its draft's values, if it has one.</summary>
     private async Task<ContentItem> LoadAsDraftAsync(Guid id)
     {
         var content = await WithContentService(s => s.GetContentAsync(new GetContentParameters
         {
             Id = id, IncludeUnpublished = true, IncludeUnpublishedContent = true, Cached = false
         }, Ct)) ?? throw new InvalidOperationException("Content not found.");
-        var draft = content.UnpublishedContent!.JsonContent;
+        if (content.UnpublishedContent == null) return content;
+
+        var draft = content.UnpublishedContent.JsonContent;
+        if (content.IsNestedContent)
+        {
+            return draft.MapBlockDraftTo(content);
+        }
+
         draft.MapDraftTo(content);
         content.PropertyData = draft.PropertyData;
         content.InvalidateContentValuesCache();

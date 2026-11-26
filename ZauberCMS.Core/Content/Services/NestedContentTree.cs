@@ -139,14 +139,6 @@ internal sealed class NestedContentTree(IZauberDbContext dbContext, ExtensionMan
 
         for (var depth = 0; level.Count > 0; depth++)
         {
-            if (depth >= MaxDepth)
-            {
-                logger.LogWarning("Blocks of content {ContentId} are nested deeper than {MaxDepth}; the rest is ignored",
-                    root.Id, MaxDepth);
-                walk.Truncated = true;
-                break;
-            }
-
             var references = new List<(Guid ParentId, Guid Id)>();
             foreach (var (parentId, values) in level)
             {
@@ -168,6 +160,15 @@ internal sealed class NestedContentTree(IZauberDbContext dbContext, ExtensionMan
             }
 
             if (references.Count == 0) break;
+
+            // Blocks at level MaxDepth are walked; only blocks below them are over the limit
+            if (depth >= MaxDepth)
+            {
+                logger.LogWarning("Blocks of content {ContentId} are nested deeper than {MaxDepth}; the rest is ignored",
+                    root.Id, MaxDepth);
+                walk.Truncated = true;
+                break;
+            }
 
             var stored = await LoadAsync(references.Select(x => x.Id).ToList(), cancellationToken);
             level = [];

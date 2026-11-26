@@ -74,6 +74,8 @@ Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the reques
 - Front-end block component: implements `IContentBlockView`, `ContentTypeAlias` = the element type alias
   (`ZauberCMS.Web/ContentBlocks/FAQBlock.razor`). Render with `<RenderBlock Content="@block" TView="IContentBlockView"/>`.
 - Admin preview is a **separate** component implementing `IContentBlockPreview` (`ZauberCMS.Web/ContentBlockPreviews/`).
+  It is rendered to static HTML (`HtmlRenderer`) and shown inert: no clicks, JS, `OnAfterRender` or `@rendermode`.
+  To show nested blocks with their unsaved edits, call `GetBlocks(alias, ContentService, includePendingChanges: true)`.
 - `IContentBlockView.RenderMode` is ignored by `RenderBlock` (only the unwired MVC view-component path reads it).
 - Rich text from content is HTML: render through `IHtmlSanitizerService` rather than a raw `MarkupString`
   (`@Sanitizer.SanitizeToMarkup(Content.GetValue<string>("Text"))`). The default sanitiser also turns the

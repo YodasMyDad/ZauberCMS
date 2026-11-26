@@ -7,13 +7,13 @@
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-157`).
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-159`).
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
-  2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26).
-  **96 open findings** (0 Critical, 8 High, 42 Medium, 46 Low). **Next: Phase 9.**
+  2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
+  **85 open findings** (0 Critical, 3 High, 34 Medium, 48 Low). **Next: Phase 10.**
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -420,10 +420,67 @@
   Home", empty bin with a folder of two files, files and folders gone from disk, audit rows. Not re-checked in the
   browser after the audit fixes (their tests pass): the dialog wording and the refused save of a binned item.
 
-### Phase 9 — Block List redesign (D5)
-Follow [BlockListEditor.md](BlockListEditor.md) §6: edit session → `SaveContentTreeAsync` → static previews →
-`INestedContentReferenceProvider`. Write `BlockListState`/tree-save tests first. Closes ZA-008…ZA-010,
-ZA-034…ZA-043.
+### Phase 9 — Block List redesign (D5) — DONE 2026-11-26
+- Fixed: ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 (all the block-list failure modes F1–F13). How it works now:
+  [BlockListEditor.md](BlockListEditor.md); the old design's failures and where each is fixed: its §6 table.
+- What was built (no schema change, no new setting):
+  - **Edit session**: `ContentEditScope`. The page editor holds the root scope; every block side panel gets a child
+    scope that the list commits on Save and rolls back on Cancel or close. Nothing is stored until the page is saved.
+  - **One save**: `IContentService.SaveContentTreeAsync` saves the page and every block edited below it in one
+    transaction, deletes blocks no longer reached (with everything below), one audit row, one version taken after the
+    blocks are written. "Save only" of a published page gives the page and its edited blocks drafts; the live site
+    doesn't change until publish, which also publishes the blocks' drafts. Clear changes and version restore handle
+    block drafts too.
+  - **Static previews**: `BlockPreview` renders the site's `IContentBlockPreview` to HTML on the server, inert, in a
+    shadow root with the editor's stylesheets (no Blazor nodes in the shadow root, no global `<link>`). Previews
+    show unsaved nested blocks at any depth through `GetBlocks(…, includePendingChanges: true)`.
+  - **`INestedContentReferenceProvider`** (discovered, by editor alias; the Block List's built in): how Core finds the
+    blocks a value owns. Used by the tree save, permanent delete, version snapshots and restore, copy and the
+    allowed-types check, so blocks in compositions and drafts are included and pages a picker points at are never
+    treated as blocks. A custom nested editor (grid, layout) gets save/delete/version/copy by implementing it.
+- Owner's concern during the phase (nested lists within lists, and showing changes before save, "always a problem"):
+  the history was searched for every old problem and workaround (20 found; the redesign covers them, six risks
+  found and fixed or documented, see the audit section below), and the editor was checked in a browser four levels
+  deep (FAQ → item → FAQ → item), with a site stylesheet on level 3.
+- Schema: none. Public API:
+  - Added: `IContentService.SaveContentTreeAsync`, `SaveContentTreeParameters`, `INestedContentReferenceProvider`,
+    `BlockListNestedContentReferenceProvider`, `ContentMappingExtensions.MapBlockDraftTo`, the many-entity
+    `SaveChangesAndLog` overload, `ContentEditScope`, `BlockPreview`, `ContentEditor.EditScope`,
+    `BlockListItem.PreviewContent`. `CopyContentAsync` now returns the copy as `Entity`.
+  - Obsolete (never called now): `ISupportsBlockListChanges`, `BlockListChanges`, `ContentEditor.OnBlockListChanges`,
+    `DynamicContentProperty.ChangesPending`, `RenderBlock.Stylesheets`.
+  - Breaking (D18): `IContentService` has a new member; `BlockListState` lost its change tracking (`AddedItems`,
+    `UpdatedItems`, `DeletedItems`, `GetChanges`, `MergeNestedChanges`); `BlockListEditorProperty` no longer
+    implements `ISupportsBlockListChanges`; `RenderBlock` lost its injected `JsRuntime`/`Logger` properties;
+    `shadow-dom.js` (and its global `initializeShadowDOMWithMultipleStylesheets`) is replaced by `block-preview.js`.
+- Behaviour changes for the release notes:
+  - Block edits are saved with the page, all or nothing, and a cancelled block panel keeps nothing. "Save only" no
+    longer changes live blocks.
+  - Admin block previews are static HTML: no interactivity, JS, `OnAfterRender` or admin cascading values in a
+    preview, and clicks in it do nothing. A preview that should show unsaved nested blocks calls
+    `GetBlocks(alias, ContentService, includePendingChanges: true)`; that call now also shows the blocks' stored
+    drafts and unpublished blocks, as the editor does.
+  - The Block List editor's `Stylesheets` setting styles only the previews (no `<link>` in the admin page).
+  - Version history: a page's version now holds its blocks as that save wrote them, and one save makes one version
+    (blocks get none of their own). Restoring a version also drops its blocks' drafts and deletes blocks the restored
+    values don't use. Snapshots, delete and copy only follow block editors (through the provider): a JSON array of
+    ids in another property is no longer treated as blocks.
+  - A copied block belongs to the copy (`RelatedContentId`); before, copies kept the original page's id.
+  - A permanent content delete notifies with the deleted item instead of `null`, and an open editor reloads only for
+    a change to its own item (with a warning when that drops unsaved block edits).
+  - A "Save only" (or publish) from a copy opened before someone else's "Save only" is refused instead of overwriting
+    that draft.
+- Not done: `SaveContentAsync` (one item) still publishes a page's own draft without its blocks' drafts (the next tree
+  save or Clear changes deals with them); Clear changes and version restore don't run save hooks per block. Logged.
+- Tests: `ContentTreeSaveTests` (Core, 22 per database: nested add, removal with subtree, two lists, cancelled and
+  re-edited blocks, all-or-nothing, drafts with publish and clear at depth, stale draft refused, version restore
+  incl. an old-style version, delete, copy, the 20-level limit), `ContentEditScopeTests`, `BlockListStateTests`.
+- Checked in a browser (scratch copy of the sample site): nested add two and four levels deep, cancel at every
+  level, re-edit before save, previews updating before save at every level, save twice without reload, front end,
+  "Save only" (live unchanged, editor shows the draft), Clear changes, delete a block with children (no orphan
+  rows), version restore, drag reorder, the stylesheet shadow root; after the review fixes, the inert previews, the
+  labelled edit/delete buttons, and the warning in one tab when another tab saves the page under unsaved block edits.
+  Not checked in a browser: the warning in an open panel when its page reloads underneath it (same mechanism).
 
 ### Phase 10 — Performance & async
 ZA-057, ZA-061…ZA-064, ZA-056, ZA-068, ZA-069, ZA-071, ZA-073 (queries/caching); ZA-054 + ZA-082 with the

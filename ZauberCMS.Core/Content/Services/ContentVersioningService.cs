@@ -215,9 +215,16 @@ public class ContentVersioningService(
         await RestoreBlockListContentAsync(dbContext, version, cancellationToken);
         var restoredBlockIds = version.BlockListSnapshots.Where(s => s.ContentSnapshot.IsNestedContent)
             .Select(s => s.ContentId).ToHashSet();
-        await tree.StageDiscardDraftsAsync(restoredBlockIds, cancellationToken);
-        await tree.StageDeleteAsync(blocksBefore.Where(id => !restoredBlockIds.Contains(id)).ToList(),
-            cancellationToken);
+
+        // What the restored values reach: the version's blocks as restored, and blocks it has no snapshot of (a
+        // version made before blocks were saved with their page, or one cut off at the limit) as they are stored.
+        // Only blocks reached before and not now are deleted.
+        var restoredBlocks = dbContext.Contents.Local.Where(c => restoredBlockIds.Contains(c.Id))
+            .ToDictionary(c => c.Id);
+        var stillUsed = (await tree.WalkAsync(content, restoredBlocks, useStoredDrafts: false, cancellationToken)).Ids;
+        stillUsed.UnionWith(restoredBlockIds);
+        await tree.StageDiscardDraftsAsync(stillUsed, cancellationToken);
+        await tree.StageDeleteAsync(blocksBefore.Where(id => !stillUsed.Contains(id)).ToList(), cancellationToken);
 
         var userName = parameters.PublishedByUserId == null
             ? null

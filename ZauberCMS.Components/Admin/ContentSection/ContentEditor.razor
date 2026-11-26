@@ -2,6 +2,7 @@
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.Extensions.Localization
+@using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Components.Editors.Dialogs
@@ -28,6 +29,7 @@ else
 {
     @if (ContentType != null && WorkingCopy != null)
     {
+        <CascadingValue Value="@CurrentScope">
         <EditForm @ref="@ContentForm" Model="@WorkingCopy">
 
             <RadzenRow class="rz-pb-2">
@@ -82,8 +84,7 @@ else
                                                                 Content="@WorkingCopy"
                                                                 Value="@contentValue.Value"
                                                                 PropertyAlias="@contentValue.Alias"
-                                                                ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"
-                                                                ChangesPending="@HandleBlockListChanges"/>
+                                                                ValueChanged="@(value => UpdateProperty(contentValue.ContentTypePropertyId, value))"/>
                                                         </CentreColumn>
                                                     </EditorRow>
                                                 }
@@ -253,6 +254,7 @@ else
                 </div>
             }
         </EditForm>
+        </CascadingValue>
     }
     else
     {
@@ -269,6 +271,7 @@ else
     [CascadingParameter] BlazoredModalInstance ContentEditorModal { get; set; } = null!;
     [CascadingParameter] IModalService ModalService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
+    [Inject] public ILogger<ContentEditor> Logger { get; set; } = null!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
@@ -283,8 +286,20 @@ else
     [Parameter] public bool? IsBlockList { get; set; }
     [Parameter] public string? DefaultName { get; set; }
     [Parameter] public List<Guid>? AllowedElementTypeIds { get; set; }
+
+    /// <summary>No longer called: a block's edits go into <see cref="EditScope"/>.</summary>
+    [Obsolete("A block editor's edits go into EditScope; this is never called.")]
+#pragma warning disable CS0618 // Type or member is obsolete
     [Parameter] public Action<BlockListChanges>? OnBlockListChanges { get; set; }
+#pragma warning restore CS0618
+
     [Parameter] public Content? Content { get; set; }
+
+    /// <summary>
+    /// For a block editor (<see cref="IsBlockList"/>): the scope its edits go into. Saving the block puts its values
+    /// there; the editor that opened it commits or rolls the scope back. A page editor makes its own root scope.
+    /// </summary>
+    [Parameter] public ContentEditScope? EditScope { get; set; }
 
     private EditForm ContentForm { get; set; } = null!;
     private ContentType? ContentType { get; set; }
@@ -304,8 +319,18 @@ else
     private List<Content> Breadcrumb { get; set; } = [];
     private User? LastUpdatedBy { get; set; }
     private bool Loading { get; set; } = true;
-    private BlockListChanges? PendingBlockListChanges { get; set; }
     private Content? WorkingCopy { get; set; }
+
+    // A page editor's unsaved block edits; replaced with an empty one whenever the content is (re)loaded
+    private ContentEditScope RootScope { get; set; } = ContentEditScope.CreateRoot();
+    private ContentEditScope CurrentScope => EditScope ?? RootScope;
+
+    // What the editor was loaded for. Stacked side panels hand their parameters in again on every render; loading
+    // again then would drop the edits made in this panel (ZA-042).
+    private (Guid? ContentId, Guid? ParentId, Content? Content, ContentEditScope? Scope)? _loadedFor;
+
+    // The content this editor loaded or created itself (as opposed to one handed in through the Content parameter)
+    private Content? _ownContent;
 
     protected override void OnInitialized()
     {
@@ -316,6 +341,29 @@ else
     }
 
     protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedFor is { } loaded)
+        {
+            var contentHandedIn = !ReferenceEquals(Content, loaded.Content) && !ReferenceEquals(Content, _ownContent);
+            if (!contentHandedIn && loaded.ContentId == ContentId && loaded.ParentId == ParentId &&
+                ReferenceEquals(loaded.Scope, EditScope))
+            {
+                return;
+            }
+
+            // Another item to edit: what this editor loaded for the previous one must not be taken for it
+            if (!contentHandedIn && ReferenceEquals(Content, _ownContent))
+            {
+                Content = null;
+            }
+        }
+
+        // Recorded before loading, so a render that hands the same parameters in again meanwhile doesn't load twice
+        _loadedFor = (ContentId, ParentId, Content, EditScope);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
     {
         Loading = true;
 
@@ -338,6 +386,7 @@ else
                         ParentId = ParentId,
                         IsRootContent = false
                     };
+                    _ownContent = Content;
                 }
                 else
                 {
@@ -345,6 +394,7 @@ else
                     {
                         IsRootContent = IsBlockList != true
                     };
+                    _ownContent = Content;
                 }
 
                 if (IsBlockList == true)
@@ -398,6 +448,7 @@ else
         if (ContentId != null)
         {
             Content = await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId!.Value, IncludeUnpublished = true, IncludeUnpublishedContent = true, IncludeDeleted = true });
+            _ownContent = Content;
             if (Content == null)
             {
                 // Lookup failed (deleted/missing id); avoid NRE on the ContentTypeId deref below
@@ -583,7 +634,8 @@ else
         var removeUnpublishedContent = await ContentService.ClearUnpublishedContentAsync(new ClearUnpublishedContentParameters { ContentId = WorkingCopy!.Id });
         if (removeUnpublishedContent.Success)
         {
-            await RefreshContent();
+            // The block edits went with the draft; this editor reloads once, from the notification
+            RootScope = ContentEditScope.CreateRoot();
             await AppState.NotifyContentSaved(WorkingCopy, AuthState.User.GetUserName()!);
         }
         else
@@ -594,188 +646,136 @@ else
 
     private async Task Cancel()
     {
-        // Drop any in-memory block-list edits so they don't leak into a subsequent edit session.
-        PendingBlockListChanges = null;
-        WorkingCopy?.PendingBlockListChanges.Clear();
+        // A block editor's edits are in its scope, which the editor that opened it rolls back
         await ContentEditorModal.CloseAsync(ModalResult.Cancel());
     }
 
-    private async Task HandleContentChanged(ZauberCMS.Core.Content.Models.Content? content, string username)
+    // Raised on the thread of whoever saved, in every circuit
+    private Task HandleContentChanged(Content? content, string username) => InvokeAsync(async () =>
     {
         // Refresh content when it changes externally (e.g., version restored)
         // Only refresh if this is the currently loaded content
-        if (ContentId != null && (content == null || content.Id == ContentId))
+        // Only a change to this item reloads it: a reload drops what is being edited, and a notification without an
+        // item (a sort, an emptied bin) doesn't change what this editor shows in a way a save could lose (a stale
+        // save is refused by the concurrency check)
+        if (ContentId != null && content?.Id == ContentId)
         {
+            // Someone else saved, restored or cleared this page: the editor shows what is stored now, so block edits
+            // not yet saved here are dropped. Say so rather than lose them quietly. (Our own save resets the scope
+            // before it notifies.)
+            if (RootScope.Drafts.Count > 0)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = $"{WorkingCopy?.Name} was changed elsewhere",
+                    Detail = "It was reloaded. Block changes you had not saved were not kept.",
+                    Duration = 10000
+                });
+            }
+
             await RefreshContent();
+            StateHasChanged();
         }
-    }
-
-    private void HandleBlockListChanges(BlockListChanges changes)
-    {
-        // Store the pending changes to be processed during save
-        PendingBlockListChanges = changes;
-        OnBlockListChanges?.Invoke(changes);
-
-        // Trigger re-rendering so previews update with latest changes
-        StateHasChanged();
-    }
-
-    private async Task<HandlerResult<bool>> ProcessBlockListChanges()
-    {
-        var result = new HandlerResult<bool> { Success = true, Entity = true };
-
-        if (PendingBlockListChanges == null) return result;
-
-        // Centralised dedup logic — same rules apply server-side via BlockListChanges.Deduplicated()
-        // for callers that bypass the editor (custom services, jobs).
-        var deduped = PendingBlockListChanges.Deduplicated();
-        var addedItems = deduped.AddedItems;
-        var updatedItems = deduped.UpdatedItems;
-        var deletedItems = deduped.DeletedItems;
-
-        // Process added items
-        foreach (var addedItem in addedItems)
-        {
-            var saveParams = new SaveContentParameters { Content = addedItem };
-            var saveResult = await ContentService.SaveContentAsync(saveParams);
-            if (!saveResult.Success)
-            {
-                result.Success = false;
-                result.Messages.AddRange(saveResult.Messages);
-                NotificationService.ShowNotifications(saveResult.Messages);
-            }
-        }
-
-        // Process updated items
-        foreach (var updatedItem in updatedItems)
-        {
-            var saveParams = new SaveContentParameters { Content = updatedItem };
-            var saveResult = await ContentService.SaveContentAsync(saveParams);
-            if (!saveResult.Success)
-            {
-                result.Success = false;
-                result.Messages.AddRange(saveResult.Messages);
-                NotificationService.ShowNotifications(saveResult.Messages);
-            }
-        }
-
-        // Process deleted items
-        foreach (var deletedItem in deletedItems)
-        {
-            var deleteParams = new DeleteContentParameters { ContentId = deletedItem.Id, MoveToRecycleBin = false };
-            var deleteResult = await ContentService.DeleteContentAsync(deleteParams);
-            if (!deleteResult.Success)
-            {
-                result.Success = false;
-                result.Messages.AddRange(deleteResult.Messages);
-                NotificationService.ShowNotifications(deleteResult.Messages);
-            }
-        }
-
-        // Clear the pending changes after processing
-        PendingBlockListChanges = null;
-        
-        return result;
-    }
+    });
 
     private async Task Save(RadzenSplitButtonItem? item, bool unpublish)
     {
-        if (await ValidateService.CanSave(WorkingCopy!))
+        if (!await ValidateService.CanSave(WorkingCopy!))
         {
-            if (IsBlockList == true)
+            return;
+        }
+
+        if (IsBlockList == true)
+        {
+            // Nothing is stored yet: the block's values go into its scope, and the page's save writes them.
+            // Its Published switch is part of the values.
+            if (EditScope == null)
             {
-                // For block list items, Published state is controlled by the toggle switch
-                // No need to manipulate it here - just save and return
-                await ContentEditorModal.CloseAsync(ModalResult.Ok(WorkingCopy));
+                // Opened the old way (without a scope): nothing would ever save these edits
+                Logger.LogWarning("Block editor for {BlockId} was opened without an EditScope; its changes are not kept",
+                    WorkingCopy!.Id);
+                NotificationService.ShowErrorNotification("This block editor was opened without an edit scope, so its changes can't be kept");
+                return;
             }
-            else
+
+            EditScope.SetDraft(WorkingCopy!);
+            await ContentEditorModal.CloseAsync(ModalResult.Ok(WorkingCopy));
+            return;
+        }
+
+        var saveOnly = false;
+        if (unpublish)
+        {
+            WorkingCopy!.Published = false;
+        }
+        else if (item == null)
+        {
+            WorkingCopy!.Published = true;
+        }
+        else if (ContentId != null && WorkingCopy!.Published)
+        {
+            // Content exists and is already published, so need to save the unpublished changes only
+            saveOnly = true;
+        }
+
+        // The page and every block edited below it, in one save
+        var result = await ContentService.SaveContentTreeAsync(new SaveContentTreeParameters
+        {
+            Content = WorkingCopy,
+            Blocks = RootScope.Drafts.ToList(),
+            SaveUnpublishedOnly = saveOnly
+        });
+
+        if (!result.Success)
+        {
+            NotificationService.Notify(new NotificationMessage
             {
-                var saveContentCommand = new SaveContentParameters();
+                Severity = NotificationSeverity.Error,
+                Summary = $"{WorkingCopy!.Name} Error",
+                Detail = result.Messages.MessagesAsString(),
+                Duration = 6000
+            });
+            return;
+        }
 
-                if (unpublish)
-                {
-                    WorkingCopy!.Published = false;
-                }
-                else
-                {
-                    if (item == null)
-                    {
-                        WorkingCopy!.Published = true;
-                    }
-                    else if (ContentId != null && WorkingCopy!.Published)
-                    {
-                        // Content exists and is already published, so need to save the unpublished changes only
-                        saveContentCommand.SaveUnpublishedOnly = true;
-                    }
-                }
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = $"{WorkingCopy!.Name} Saved",
+            Detail = "",
+            Duration = 4000
+        });
+        var warnings = result.Messages.Where(m => m.MessageType == ResultMessageType.Warning).ToList();
+        if (warnings.Count > 0)
+        {
+            NotificationService.ShowNotifications(warnings);
+        }
 
-                saveContentCommand.Content = WorkingCopy;
-                var result = await ContentService.SaveContentAsync(saveContentCommand);
-
-                // Process any pending block list changes after main content is saved (so block list items get correct parent ID)
-                HandlerResult<bool>? blockListResult = null;
-                if (PendingBlockListChanges != null)
-                {
-                    blockListResult = await ProcessBlockListChanges();
-                }
-
-                // Determine overall success
-                var overallSuccess = result.Success && (blockListResult == null || blockListResult.Success);
-                
-                // Show appropriate notification based on all results
-                if (overallSuccess)
-                {
-                    NotificationService.Notify(new NotificationMessage 
-                    { 
-                        Severity = NotificationSeverity.Success, 
-                        Summary = $"{WorkingCopy!.Name} Saved", 
-                        Detail = "", 
-                        Duration = 4000 
-                    });
-                }
-                else
-                {
-                    var errorDetail = result.Success ? "Some nested content failed to save" : result.Messages.MessagesAsString();
-                    if (blockListResult != null && !blockListResult.Success)
-                    {
-                        errorDetail += (errorDetail.Length > 0 ? ". " : "") + blockListResult.Messages.MessagesAsString();
-                    }
-                    
-                    NotificationService.Notify(new NotificationMessage 
-                    { 
-                        Severity = NotificationSeverity.Error, 
-                        Summary = $"{WorkingCopy!.Name} Error", 
-                        Detail = errorDetail, 
-                        Duration = 6000 
-                    });
-                }
-
-                // Only proceed with post-save actions if save was successful
-                if (overallSuccess)
-                {
-                    if (ParentId != null)
-                    {
-                        // If we are creating or saving a child item, make sure the parent is open
-                        if (!TreeState.IsNodeExpanded(ParentId.Value))
-                        {
-                        TreeState.ClearChildCache(ParentId.Value);
-                            TreeState.NodeExpanded(ParentId.Value);
-                        }
-                    }
-
-                    await AppState.NotifyContentSaved(WorkingCopy, AuthState.User.GetUserName()!);
-
-                    // If opened as a dialog, close it instead of navigating
-                    if (ContentEditorModal != null)
-                    {
-                        await ContentEditorModal.CloseAsync(ModalResult.Ok(WorkingCopy));
-                    }
-                    else
-                    {
-                        NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{WorkingCopy.Id}");
-                    }
-                }
+        if (ParentId != null)
+        {
+            // If we are creating or saving a child item, make sure the parent is open
+            if (!TreeState.IsNodeExpanded(ParentId.Value))
+            {
+                TreeState.ClearChildCache(ParentId.Value);
+                TreeState.NodeExpanded(ParentId.Value);
             }
+        }
+
+        // Saved: these edits are stored now (and the reload below starts a new scope anyway)
+        RootScope = ContentEditScope.CreateRoot();
+
+        // Once, for the page; this editor reloads from it, so its state matches what is stored (ZA-039)
+        await AppState.NotifyContentSaved(WorkingCopy, AuthState.User.GetUserName()!);
+
+        // If opened as a dialog, close it instead of navigating
+        if (ContentEditorModal != null)
+        {
+            await ContentEditorModal.CloseAsync(ModalResult.Ok(WorkingCopy));
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{WorkingCopy.Id}");
         }
     }
 
@@ -799,12 +799,12 @@ else
             DateUpdated = pd.DateUpdated
         }));
         
-        // Deep-copy pending block list changes
-        foreach (var kvp in source.PendingBlockListChanges)
-        {
-            workingCopy.PendingBlockListChanges[kvp.Key] = new Dictionary<Guid, Content>(kvp.Value);
-        }
-        
+        // For the "(Contains Unpublished Changes)" label; MapTo leaves navigation properties out
+        workingCopy.UnpublishedContent = source.UnpublishedContent;
+
+        // A new working copy starts a new edit: block edits made against the previous one are gone with it
+        RootScope = ContentEditScope.CreateRoot();
+
         return workingCopy;
     }
 

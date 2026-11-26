@@ -3,6 +3,11 @@ using System.Linq;
 
 namespace ZauberCMS.Core.Content.Models;
 
+/// <summary>
+/// No longer used by ZauberCMS: the admin editor saves a page and its blocks together with
+/// <c>IContentService.SaveContentTreeAsync</c>, which works out what was added, changed and removed.
+/// </summary>
+[Obsolete("Save the page with IContentService.SaveContentTreeAsync; it works out added, changed and removed blocks.")]
 public class BlockListChanges
 {
     public List<Content> AddedItems { get; set; } = [];

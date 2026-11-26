@@ -1,4 +1,5 @@
 ﻿using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Mapping;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Parameters;
@@ -149,7 +150,8 @@ public static class ContentExtensions
     /// <param name="content">The content instance implementing <see cref="IHasPropertyValues"/>.</param>
     /// <param name="alias">The alias of the property containing the block IDs.</param>
     /// <param name="contentService">The service for querying content blocks.</param>
-    /// <param name="includePendingChanges">If true, checks in-memory pending changes before querying database (used for live previews in admin).</param>
+    /// <param name="includePendingChanges">For admin previews: the blocks as the editor shows them. Unsaved blocks
+    /// in <c>PendingBlockListChanges</c> win; the others are read with their pending draft, unpublished ones included.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a collection of content blocks.</returns>
     public static async Task<IEnumerable<Content.Models.Content>> GetBlocks(this IHasPropertyValues content,
         string alias,
@@ -172,17 +174,36 @@ public static class ContentExtensions
         var ids = rawIds.Where(id => id != Guid.Empty).Distinct().ToList();
         if (ids.Count == 0) return [];
 
-        // Check if we have pending changes for this property (admin editing only)
-        if (content is Content.Models.Content contentModel &&
-            contentModel.PendingBlockListChanges.TryGetValue(alias, out var pendingChanges) &&
-            pendingChanges.Count > 0)
+        // Unsaved blocks the admin editor put on this copy win; the others come from the database, as the editor
+        // shows them (with a pending draft from "Save only", unpublished ones included)
+        var pendingChanges = content is Content.Models.Content contentModel &&
+                             contentModel.PendingBlockListChanges.TryGetValue(alias, out var pending)
+            ? pending
+            : new Dictionary<Guid, Content.Models.Content>();
+
+        var storedIds = ids.Where(id => !pendingChanges.ContainsKey(id)).ToList();
+        var stored = new Dictionary<Guid, Content.Models.Content>();
+        if (storedIds.Count > 0)
         {
-            // Return items from pending changes in the correct order
-            return ids.Where(pendingChanges.ContainsKey).Select(id => pendingChanges[id]);
+            // Unpublished blocks too: the preview shows what the editor shows
+            var result = await contentService.QueryContentAsync(new QueryContentParameters
+            {
+                Ids = storedIds,
+                AmountPerPage = storedIds.Count,
+                IncludeUnpublished = true,
+                NestedFilter = BaseQueryContentParameters.NestedContentFilter.Only
+            });
+            // A block with a pending draft shows the draft, as in the editor (on a copy: the result may be cached)
+            stored = result.Items.ToDictionary(x => x.Id, x => x.UnpublishedContent == null
+                ? x
+                : x.UnpublishedContent.JsonContent.MapBlockDraftTo(x.MapToNew()));
         }
 
-        // No pending changes, fall back to database query
-        return await content.GetBlocks(alias, contentService);
+        return ids.Select(id => pendingChanges.TryGetValue(id, out var unsaved) ? unsaved
+                : stored.GetValueOrDefault(id))
+            .Where(x => x != null)
+            .Select(x => x!)
+            .ToList();
     }
     
     /// <summary>

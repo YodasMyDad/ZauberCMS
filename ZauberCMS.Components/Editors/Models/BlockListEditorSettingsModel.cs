@@ -6,7 +6,7 @@ public class BlockListEditorSettingsModel
 {
     /// <summary>
     /// CSS stylesheet paths (relative to website root, e.g. "/css/styles.css") loaded into each
-    /// block preview's shadow root and as &lt;link&gt; elements above the editor.
+    /// block preview's shadow root, so the site's CSS styles the previews and nothing else in the admin.
     /// </summary>
     [JsonPropertyName("Stylesheets")]
     public List<string> Stylesheets { get; set; } = [];

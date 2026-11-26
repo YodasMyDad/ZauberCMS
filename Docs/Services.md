@@ -88,12 +88,21 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 5. Clear related prefixes yourself (`cacheService.ClearCachedItemsWithPrefix(nameof(Related))`) — e.g. tags and
    languages do this. Prefix match is `StartsWith`: `"Content"` also clears `ContentType-…`, `ContentVersion-…`.
 6. Multi-entity writes: `await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken)`.
+   The `SaveChangesAndLog(entities, resultEntity, …)` overload saves once and runs the hooks for each listed entity
+   with its own state (added, modified, deleted); a concurrency conflict comes back as a user-readable error.
 7. Content saves set the original `DateUpdated` (optimistic concurrency) and handle `DbUpdateConcurrencyException`.
 
 ## Deletes
 
 - Content/Media: `MoveToRecycleBin = true` (the Media default) → `Deleted = true`; otherwise hard delete
-  (recycle-bin purge, block removal). Content hard delete also removes nested block-list descendants in a transaction.
+  (recycle-bin purge). Content hard delete also removes the blocks of every deleted item (those its draft reaches
+  too) in the same transaction, and notifies with the deleted item. Blocks are found through
+  `INestedContentReferenceProvider` (→ [BlockListEditor.md](BlockListEditor.md) §2).
+- A page and its blocks are saved with `SaveContentTreeAsync` (the admin editor does): one transaction, blocks no
+  longer reached deleted with everything below them, one audit row and one version after the blocks are written; with
+  `SaveUnpublishedOnly` the page and its edited blocks get drafts and the live site stays as it is. It raises no
+  events. A copy opened before someone else's "Save only" is refused. `SaveContentAsync` saves one item and leaves
+  its blocks alone (their drafts too: the next tree save publishes them, "Clear changes" drops them).
 - Content and its tree (Phase 5): recycling a page recycles every page below it, all stamped with one `DateUpdated`;
   a save that sets `Deleted = false` (the bin's Restore) restores the pages with that stamp — a page binned on its
   own earlier stays in the bin — and gives a page whose URL was taken meanwhile a `-1` suffix (warning message).
@@ -126,10 +135,13 @@ Cached results must be no-tracking and must not depend on user/culture unless th
 - Drafts (`UnpublishedContent`): `SaveUnpublishedOnly` stores one; a save with property data publishes over it and
   removes it; a save with `ExcludePropertyData` (sort, move, restrict, culture, restore) keeps it and the stored
   `UnpublishedContentId`, whatever the caller's copy says. The editor shows a
-  draft with `MapDraftTo`, so tree position, language and dates always come from the live row.
-- Versions: a draft version records the stored draft. Restoring a version (`PublishVersionAsync`) brings back name,
-  navigation settings, property values and blocks only — not tree position, language or publish state — discards the
-  pending draft, and writes an audit row through `SaveChangesAndLog`.
+  draft with `MapDraftTo`, so tree position, language and dates always come from the live row (a block's draft also
+  carries its publish switch: `MapBlockDraftTo`). `ClearUnpublishedContentAsync` also drops the drafts of the page's
+  blocks and deletes blocks only its draft used.
+- Versions: a draft version records the stored draft, and its blocks' drafts. Restoring a version
+  (`PublishVersionAsync`) brings back name, navigation settings, property values and blocks only — not tree position,
+  language or publish state — discards the pending drafts of the page and its blocks, deletes blocks the version does
+  not have, and writes an audit row through `SaveChangesAndLog`.
 - User: always soft delete + security-stamp reset.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).
