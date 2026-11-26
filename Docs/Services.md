@@ -56,7 +56,9 @@ BuildQuery(parameters, dbContext)          // AsNoTracking, !Deleted / IncludeDe
 Reference: `ContentService.BuildQuery` / `QueryContentAsync`. Default cache TTL 240 min (`Extensions/CacheExtensions.cs`).
 Cached results must be no-tracking and must not depend on user/culture unless that is part of the key. Don't run a
 query inside `BuildQuery` (filter by a joined column instead, as `ContentTypeAlias` does): it would run before the
-cache check on every call. Paging (`ToPaginatedList`) skips the `COUNT` when the first page isn't full.
+cache check on every call. Page with `await query.ToPaginatedListAsync(pageIndex, size, cancellationToken)` (it skips the
+`COUNT` when the first page isn't full); the sync `ToPaginatedList`, `PaginatedList(IQueryable…)` and `BuildPath` are
+obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async method.
 
 ## Cache (Roadmap D13)
 

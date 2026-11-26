@@ -1,54 +1,36 @@
-﻿@using ZauberCMS.Core.Content.Parameters
-@using ZauberCMS.Core.Shared
-
+﻿@using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 @implements IDisposable
 
-@if (ContentTypeItems.Any())
-{
-    <ContentTypeTree 
-        Alias="@Constants.Sections.Trees.StructureContentTypeTree"
-        Data="@ContentTypeItems"
-        Change="OnChange"
-        DisableContextMenu="@DisableContextMenu"
-        @bind-Value="@Selection" />
-}
+@* The tree loads the whole (small) type tree and refreshes itself when a content type changes (ZA-054) *@
+<ContentTypeTree
+    Alias="@Constants.Sections.Trees.StructureContentTypeTree"
+    Change="OnChange"
+    DisableContextMenu="@DisableContextMenu"
+    @bind-Value="@Selection" />
 
 @code {
-
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.StructureContentTypesNavGroup;
-    
+
     [CascadingParameter] public IModalService ModalService { get; set; } = null!;
-    
-    [Inject] public AppState AppState { get; set; } = null!;
+
     [Inject] public TreeState TreeState { get; set; } = null!;
-    
-    private List<ContentType> ContentTypeItems { get; set; } = [];
-    private object? Selection { get; set; }
 
     [Parameter] public EventCallback<object> ValueChanged { get; set; }
     [Parameter] public bool DisableContextMenu { get; set; }
-    
-    protected override async Task OnInitializedAsync()
+
+    private object? Selection { get; set; }
+
+    protected override void OnInitialized()
     {
-        AppState.OnContentTypeChanged += HandleContentTypeTreeChanged;
         TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
-        await DataRefresh();
     }
 
     public void Dispose()
     {
-        AppState.OnContentTypeChanged -= HandleContentTypeTreeChanged;
         TreeState.OnTreeValueChanged -= TreeStateOnOnTreeValueChanged;
     }
-
-    private Task HandleContentTypeTreeChanged(ContentType? content, string user)
-        => InvokeAsync(async () =>
-        {
-            await DataRefresh();
-            StateHasChanged();
-        });
 
     /// <summary>
     /// Remove the selected state
@@ -61,18 +43,6 @@
             Selection = null;
             StateHasChanged();
         }
-    }
-    
-    private async Task DataRefresh()
-    {
-        var items = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
-        {
-            AmountPerPage = 1000,
-            IncludeFolders = true,
-            WhereClause = x => x.ParentId == null,
-            OrderBy = GetContentTypesOrderBy.Name
-        });
-        ContentTypeItems = items.Items.ToList();
     }
 
     private async Task OnChange()
@@ -91,5 +61,4 @@
             }
         }
     }
-
 }

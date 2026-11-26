@@ -62,7 +62,7 @@ public class AuditService(
     /// <param name="parameters">Query options including paging.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged list of audits.</returns>
-    public Task<PaginatedList<Models.Audit>> QueryAuditsAsync(QueryAuditsParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<Models.Audit>> QueryAuditsAsync(QueryAuditsParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -98,7 +98,7 @@ public class AuditService(
             _ => query.OrderByDescending(p => p.DateCreated)
         };
         
-        return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
+        return await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken);
     }
 
     /// <summary>

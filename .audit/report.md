@@ -22,19 +22,13 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 1 | 29 | 0 |
-| Medium | 25 | 48 | 0 |
-| Low | 47 | 7 | 1 |
+| High | 0 | 30 | 0 |
+| Medium | 23 | 50 | 0 |
+| Low | 48 | 7 | 1 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083 and ZA-084 (Phase 10), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-160.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068 and ZA-082 (Phase 10), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-161.
 
 ## Open findings
-
-### ZA-054 [High/High] Admin trees block the circuit with sync-over-async (latent deadlock)
-
-- Where: `ZauberCMS.Components/Trees/ContentTree.razor:89-96,127`, `ZauberCMS.Components/Trees/MediaTree.razor:117-123,167`, `ZauberCMS.Components/Trees/ContentTypeTree.razor:73-79,117`, `ZauberCMS.Components/Admin/StructureSection/Navigation/CompositionsTree.razor:78,101`, `ZauberCMS.Components/DataSources/ContentTypesDataSource.cs:17-22` · Category: A · Since: 2026-11-25
-- Issue / Trigger: Expand handlers call `.GetAwaiter().GetResult()` on the renderer context and `HasChildren` does a blocking DB call per node per render. It works only because the paged query methods are synchronous today; making `PaginatedList` async (the stated target) would deadlock every tree.
-- Fix: `await` in handlers, batch child flags into `TreeState`, add async `IDataListSource.GetItemsAsync`. · Blocked by: public interface (add + obsolete); must land with the paging refactor.
 
 ### ZA-011 [Medium/High] Two DbContext instances per scope
 
@@ -57,12 +51,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 - Where: `ZauberCMS.Core/Tags/Services/TagService.cs:222-224` · Category: C
 
-### ZA-068 [Medium/High] Admin trees over-fetch and silently stop at 100 children
-
-- Where: `ZauberCMS.Components/Trees/ContentTree.razor:43-51,60-69,88-95`, `ZauberCMS.Components/Admin/ContentSection/Navigation/ContentSectionTree.razor:60-68`, `ZauberCMS.Components/Admin/MediaSection/Folder.razor:105` · Category: B · Since: 2026-11-25
-- Issue / Trigger: Tree queries load property data, children and roles they never read; children are capped at 100 (media 200, recycle bin 300) with no paging, so later items are unreachable.
-- Fix: tree projection query and load-more. · Blocked by: UX; new service method.
-
 ### ZA-077 [Medium/High] Importing a content type over an existing alias orphans all its values
 
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs:1791-1815,1737,1951` · Category: C · Since: 2026-11-25
@@ -80,12 +68,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Components/Admin/ContentSection/ContentEditor.razor:603-611`, `ZauberCMS.Components/Admin/ContentSection/ContentVersions.razor:160-199`, `ZauberCMS.Components/Admin/MediaSection/UpdateMedia.razor:36-44` · Category: A · Since: 2026-11-25
 - Issue / Trigger: Handlers mutate component state and call navigation off the dispatcher; the versions panel reloads on any content save anywhere.
 - Fix: `InvokeAsync`, filter by id. · Blocked by: fix ZA-040 first.
-
-### ZA-082 [Medium/High] Sync EF calls inside async service methods (~30 sites)
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:212,224,291-299,487,564,958,961,2261-2269,2282`, `ZauberCMS.Core/Extensions/DbContextExtensions.cs:66-70,89-93`, `ZauberCMS.Core/Media/Services/MediaService.cs:98,187`, `ZauberCMS.Core/Languages/Services/LanguageService.cs:362-375` · Category: A · Since: 2026-11-25
-- Issue / Trigger: Every content, media or type save blocks a circuit thread on several round-trips.
-- Fix: `…Async` overloads with the token; `BuildPathAsync`. · Blocked by: `BuildPath` is a public extension (obsolete).
 
 ### ZA-086 [Medium/Medium] UserManager and its DbContext live for the whole circuit
 
@@ -450,8 +432,18 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Fix: pass those rows to the many-entity `SaveChangesAndLog` overload; decide what hooks a draft should see.
 
 
+### ZA-160 [Low/Medium] A component on the media folder page calls JavaScript while its circuit is torn down
+
+- Where: `ZauberCMS.Components/Admin/MediaSection/Folder.razor` page (component not identified) · Category: E · Since: 2026-11-26
+- Issue / Trigger: A full reload of a media folder page logged `JSDisconnectedException` from `Renderer.Dispose` ("Unhandled exception rendering component", then "Unhandled exception in circuit") in the old circuit. Harmless for the user (the circuit is already gone), but it is an error in the log on every such reload. `MultipleMediaUpload` already catches it, so it is another component on the page (Radzen or ours).
+- Fix: find the component whose `DisposeAsync` calls JS without catching `JSDisconnectedException`. · Blocked by: nothing.
+
 ## Fixed this run / Resolved since last run
 
+- **Phase 10 (2026-11-26), step C: async paging and admin trees.**
+  - **ZA-054 [High] Admin trees block the circuit with sync-over-async (latent deadlock) — fixed.** No tree waits on a task any more: content and media trees load each level with its child flags (`GetContentTreeLevelAsync`, `GetMediaTreeLevelAsync`) and `HasChildren` reads `TreeState`; content-type trees load the whole tree once and expand from memory; the folder picker in `MultipleMediaUpload` uses `MediaTree`; list editors call the new `IDataListSource.GetItemsAsync` (default method, `ContentTypesDataSource` implements it). Browser: content, media, structure and recycle-bin trees.
+  - **ZA-068 [Medium] Admin trees over-fetch and silently stop at 100 children — fixed.** D26: tree levels load without property values or children, 100 at a time, with a "Show N more" row (content, media, recycle bin) or button (media folder grid). Tests `ZA068_…` (×2). Browser: 107 children under a page, 106 in a media folder, both paged; expanded nodes stay open after a refresh.
+  - **ZA-082 [Medium] Sync EF calls inside async service methods (~30 sites) — fixed.** `ToPaginatedListAsync` everywhere (the sync paging and `BuildPath` are obsolete), `BuildPathAsync`, async URL uniqueness and role updates, and the remaining `FirstOrDefault`/`Any`/`ToList` calls in the content, language, tag, media and membership services. Test `ZA082_…` (in-memory paging); the whole suite runs on the async paths.
 - **Phase 10 (2026-11-26), steps A and B: front-end caching, queries, version retention, bulk operations.**
   - **ZA-056 [High] Role queries always load every user in the role — fixed.** `GetRoleAsync`/`QueryRolesAsync` load members only with the new `IncludeUsers`. Test `ZA056_…`. Release note: code that read `Role.UserRoles` sets `IncludeUsers = true`.
   - **ZA-057 [High] Block lists and single media pickers are uncached on the front-end — fixed.** `GetBlocks` (no pending changes) and the single-media `GetMediaItems` path are cached under their prefixes; paging skips the `COUNT` when the first page isn't full. Test `ZA057_…` (paging counts).

@@ -1,5 +1,4 @@
-﻿@using System.Collections.Concurrent
-@using Microsoft.Extensions.Options
+﻿@using Microsoft.Extensions.Options
 @using Microsoft.JSInterop
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Media.Parameters
@@ -74,7 +73,6 @@
     private List<ResultMessage> ErrorMessages { get; set; } = [];
     private Media? ParentFolder { get; set; }
     private IModalReference? Modal { get; set; }
-    private ConcurrentDictionary<Guid, bool>? HasChildrenCache { get; set; } = new();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -100,22 +98,14 @@
     void OnDragEnter(DragEventArgs e) => HoverClass = "hover";
     void OnDragLeave(DragEventArgs e) => HoverClass = string.Empty;
 
-    private async Task AddMedia()
+    private void AddMedia()
     {
-        var foldersOnly = await MediaService.QueryMediaAsync(new QueryMediaParameters
-        {
-            MediaTypes = [MediaType.Folder],
-            OrderBy = GetMediaOrderBy.Name,
-            AmountPerPage = 250,
-            WhereClause = x => x.ParentId == null
-        });
-        
+        // Folders only; the tree loads them a page at a time with their expand arrows (Roadmap D26)
         var parameters = new Dictionary<string, object>
         {
             { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) },
             { nameof(MediaTree.DisableContextMenu), true },
-            { nameof(MediaTree.Data), foldersOnly.Items },
-            { nameof(MediaTree.OnExpand), EventCallback.Factory.Create<TreeExpandEventArgs>(this, OnExpandHandler) }
+            { nameof(MediaTree.MediaTypes), new List<MediaType> { MediaType.Folder } }
         };
 
         Modal = ModalService?.OpenSidePanel<MediaTree>("Choose Media", parameters);
@@ -129,46 +119,6 @@
         {
             ParentFolder = media;
         }
-    }
-    
-    private async Task OnExpandHandler(TreeExpandEventArgs args)
-    {
-        if (args.Value is Media media)
-        {
-            var items = await MediaService.QueryMediaAsync(new QueryMediaParameters
-            {
-                MediaTypes = [MediaType.Folder],
-                WhereClause = x => x.ParentId == media.Id,
-                OrderBy = GetMediaOrderBy.Name,
-                AmountPerPage = 250
-            });
-            args.Children!.Data = items.Items;
-            args.Children.TextProperty = "Name";
-            args.Children.Template = TreeExtensions.CreateMediaTreeTemplate<RadzenTreeItem>();
-            args.Children.HasChildren = HasChildren;
-            TreeState.NodeExpanded(media.Id);
-        }
-    }
-    
-    // Using same method from MediaTree. Would be nice to have a single place, so easier to re-use trees
-    private bool HasChildren(object data)
-    {
-        if (data is Media { MediaType: MediaType.Folder } media)
-        {
-            // Check if result is cached
-            if (HasChildrenCache!.TryGetValue(media.Id, out var hasChildren))
-            {
-                return hasChildren;
-            }
-
-            // Calculate result and cache it
-            hasChildren = Task.Run(() => MediaService.HasChildMediaAsync(new HasChildMediaParameters { ParentId = media.Id })).GetAwaiter().GetResult();
-            HasChildrenCache[media.Id] = hasChildren;
-
-            return hasChildren;
-        }
-
-        return false;
     }
     
     private void RemoveMedia(IBrowserFile media)
@@ -230,7 +180,6 @@
             }
             
             // Clear local component cache
-            HasChildrenCache?.Clear();
             
             var savedMediaItems = new List<Media>();
             foreach (var browserFile in FilesToUpload)

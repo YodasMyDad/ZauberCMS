@@ -78,7 +78,7 @@ public class LanguageService(
             var language = new Language();
             if (parameters.Id != null)
             {
-                var lang = dbContext.Languages.FirstOrDefault(x => x.Id == parameters.Id);
+                var lang = await dbContext.Languages.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
                 if (lang != null)
                 {
                     if (parameters.CultureInfo.Name == lang.LanguageIsoCode)
@@ -139,7 +139,7 @@ public class LanguageService(
     /// <param name="parameters">Query options including ids and ISO codes.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged list of languages.</returns>
-    public Task<PaginatedList<Language>> QueryLanguageAsync(QueryLanguageParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<Language>> QueryLanguageAsync(QueryLanguageParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -184,7 +184,7 @@ public class LanguageService(
             _ => query.OrderByDescending(p => p.DateCreated)
         };
 
-        return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
+        return await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public class LanguageService(
 
             // Save the language dictionary first
             var langDictionary =
-                dbContext.LanguageDictionaries.FirstOrDefault(x => x.Id == parameters.LanguageDictionary.Id);
+                await dbContext.LanguageDictionaries.FirstOrDefaultAsync(x => x.Id == parameters.LanguageDictionary.Id, cancellationToken);
             if (langDictionary == null)
             {
                 langDictionary = parameters.LanguageDictionary;
@@ -278,7 +278,7 @@ public class LanguageService(
                 var langTextResult = new HandlerResult<LanguageText>();
                 foreach (var languageText in langTexts)
                 {
-                    var lt = dbContext.LanguageTexts.FirstOrDefault(x => x.Id == languageText.Id);
+                    var lt = await dbContext.LanguageTexts.FirstOrDefaultAsync(x => x.Id == languageText.Id, cancellationToken);
                     if (lt == null)
                     {
                         lt = languageText;

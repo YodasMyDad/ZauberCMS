@@ -7,14 +7,14 @@
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-159`).
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-160`).
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
   2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
-  **Phase 10 in progress** (performance & async): steps A and B done.
-  **73 open findings** (0 Critical, 1 High, 25 Medium, 47 Low). **Next: Phase 10 step C** (async paging and trees).
+  **Phase 10 in progress** (performance & async): steps A, B and C done.
+  **71 open findings** (0 Critical, 0 High, 23 Medium, 48 Low). **Next: Phase 10 step D** (ZA-080, ZA-086, ZA-011).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -506,6 +506,14 @@ Done so far (2026-11-26), in steps:
   and the daily job starts five minutes after start-up; uploads stream to disk and log their errors.
 - **Step B — versions and bulk operations** (ZA-069, ZA-073; D25): version retention, a lighter version list,
   public access set in one transaction, copy one query per block level, the sitemap pages through every page.
+- **Step C — async paging and admin trees** (ZA-054, ZA-068, ZA-082; D26): `ToPaginatedListAsync` and async EF calls
+  throughout the services; content and media trees load a page of a node at a time with its child flags and a
+  "Show N more" row (also the recycle bin and the media folder grid); content-type trees load once and expand from
+  memory; `IDataListSource.GetItemsAsync`. Checked in a browser on a scratch copy of the sample site: 107 pages under
+  one page and 106 items in a media folder paged with "Show more", expand arrows right (an empty folder has none),
+  context menus and Public Access on a tree node, expanded nodes kept open after a refresh, the three structure trees,
+  the recycle bin. Not clicked: the recycle bin's own "Show more" (no 100 binned items), the pickers in dialogs (same
+  component), a list editor on a content-type data source.
 - Tests: `QueryAndCacheTests` (Core, all three databases). Not covered by a test: the upload streaming (needs an
   `IBrowserFile`), the sitemap generator (a hosted service), the per-request view discovery (build only).
 - **Release notes (D18):**
@@ -518,6 +526,12 @@ Done so far (2026-11-26), in steps:
     `IContentVersioningService.PruneVersionsAsync` (implementers of these interfaces add them).
   - The front-end page lookup is cached 5 minutes instead of 5 seconds; changes made straight in the database (not
     through the services) show after that.
+  - Step C: `ToPaginatedList`, the `PaginatedList(IQueryable…)` constructor and `BuildPath` are obsolete (use
+    `ToPaginatedListAsync`, `BuildPathAsync`). New: `GetContentTreeLevelAsync`, `GetMediaTreeLevelAsync`,
+    `IDataListSource.GetItemsAsync` (a default method: existing sources keep working). Admin tree nodes no longer
+    carry property values or children (a custom `ITreeContextMenu` that read them loads the item by id); content
+    pickers' trees now list unpublished root pages too. `ContentTree`/`MediaTree` refresh themselves; a section
+    that passed `Data` no longer needs to. The list editors load their data source after the first render.
   - `AnyContentAsync` ignores content in the recycle bin. `DiskStorageProvider` reports a generic error message and
     logs the detail. Sitemap `priority` is written in the invariant culture and `lastmod` in UTC.
 

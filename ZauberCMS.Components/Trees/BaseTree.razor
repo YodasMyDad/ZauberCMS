@@ -4,6 +4,7 @@
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Shared.Interfaces
 @using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
 @typeparam T
 
 <RadzenTree @ref="Tree" 
@@ -15,7 +16,7 @@
             ItemContextMenu="@OnItemContextMenuHandler">
     <RadzenTreeLevel Expanded="@ShouldBeExpanded" 
                      HasChildren="@(e => HasChildren(e))"
-                     TextProperty="Name">
+                     Text="@TreeExtensions.TreeNodeText">
         <Template>
             @if (Template != null)
             {
@@ -119,7 +120,8 @@
 
     private async Task OnItemContextMenuHandler(TreeItemContextMenuEventArgs args)
     {
-        if (!DisableContextMenu)
+        // The "Show more" row has no menu
+        if (!DisableContextMenu && args.Value is not TreeLoadMore)
         {
             if (ItemContextMenu.HasDelegate)
             {

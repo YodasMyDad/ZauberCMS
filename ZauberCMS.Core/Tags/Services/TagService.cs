@@ -46,7 +46,7 @@ public class TagService(
             var tag = new Tag { TagName = parameters.TagName, SortOrder = parameters.SortOrder, Slug = _slugHelper.GenerateSlug(parameters.TagName)};
             if (parameters.Id != null)
             {
-                var dbTag = dbContext.Tags.FirstOrDefault(x => x.Id == parameters.Id);
+                var dbTag = await dbContext.Tags.FirstOrDefaultAsync(x => x.Id == parameters.Id, cancellationToken);
                 if (dbTag != null)
                 {
                     isUpdate = true;
@@ -58,7 +58,7 @@ public class TagService(
             }
             else
             {
-                var dbTag = dbContext.Tags.FirstOrDefault(x => x.TagName == parameters.TagName);
+                var dbTag = await dbContext.Tags.FirstOrDefaultAsync(x => x.TagName == parameters.TagName, cancellationToken);
                 if (dbTag != null)
                 {
                     if (parameters.TagName == dbTag.TagName)
@@ -105,9 +105,9 @@ public class TagService(
         if (parameters.Cached)
         {
             var cacheKey = $"{query.GenerateCacheKey<Tag>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken)))!;
         }
-        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
+        return await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken);
     }
     #pragma warning restore CS1998
 
@@ -260,7 +260,7 @@ public class TagService(
         
         if (parameters.ItemId != null)
         {
-            var tagItems = dbContext.TagItems.Where(l => l.ItemId == parameters.ItemId).ToList();
+            var tagItems = await dbContext.TagItems.Where(l => l.ItemId == parameters.ItemId).ToListAsync(cancellationToken);
             if (tagItems.Any())
             {
                 foreach (var ti in tagItems)

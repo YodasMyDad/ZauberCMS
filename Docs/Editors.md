@@ -54,7 +54,8 @@ that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/Edit
 ## Variants
 
 - List editors (checkbox, dropdown, radio) share `Editors/Models/ListPropertyBaseComponent.cs` and
-  `Settings/ListPropertySettings.razor`; data sources via `IDataListSource`.
+  `Settings/ListPropertySettings.razor`; data sources via `IDataListSource`. The editors call `GetItemsAsync`
+  (default: `GetItems`); a source that queries a database implements `GetItemsAsync` (Phase 10).
 - Rich-text toolbar extensions: `Editors/ToolbarItems/`.
 - Block lists: [BlockListEditor.md](BlockListEditor.md).
 

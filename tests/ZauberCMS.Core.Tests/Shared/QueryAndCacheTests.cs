@@ -11,6 +11,9 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Languages.Parameters;
+using ZauberCMS.Core.Media.Interfaces;
+using ZauberCMS.Core.Media.Models;
+using ZauberCMS.Core.Media.Parameters;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Membership.Parameters;
@@ -19,6 +22,7 @@ using ZauberCMS.Core.Shared.Services;
 using ZauberCMS.Core.Tests.Infrastructure;
 using AuditItem = ZauberCMS.Core.Audit.Models.Audit;
 using ContentItemModel = ZauberCMS.Core.Content.Models.Content;
+using MediaItem = ZauberCMS.Core.Media.Models.Media;
 
 namespace ZauberCMS.Core.Tests.Shared;
 
@@ -356,6 +360,75 @@ public class QueryAndCacheTests : IAsyncLifetime
         Assert.Equal(1, childRoles);
     }
 
+    [Fact]
+    public async Task ZA068_A_content_tree_level_comes_a_page_at_a_time_with_its_child_flags()
+    {
+        var root = await _site.CreateContentAsync(_pageType, "Root");
+        var children = new List<ContentItemModel>();
+        for (var i = 0; i < 5; i++)
+        {
+            children.Add(await _site.CreateContentAsync(_pageType, $"Child {i}", root.Id));
+        }
+
+        await _site.CreateContentAsync(_pageType, "Grandchild", children[1].Id);
+        var recycled = await _site.CreateContentAsync(_pageType, "Recycled grandchild", children[3].Id);
+        await SetDeletedAsync(recycled.Id);
+
+        var rootLevel = await TreeLevelAsync(new ContentTreeLevelParameters());
+        var first = await TreeLevelAsync(new ContentTreeLevelParameters { ParentId = root.Id, Take = 2 });
+        var last = await TreeLevelAsync(new ContentTreeLevelParameters { ParentId = root.Id, Skip = 4, Take = 2 });
+        var given = await TreeLevelAsync(new ContentTreeLevelParameters { Ids = [children[1].Id, children[2].Id], Take = 2 });
+
+        Assert.Equal([root.Id], rootLevel.Items.Select(x => x.Id));
+        Assert.Contains(root.Id, rootLevel.IdsWithChildren);
+        Assert.Equal((5, 2, true), (first.TotalItems, first.Items.Count, first.HasMore));
+        Assert.Equal(children.Take(2).Select(x => x.Id), first.Items.Select(x => x.Id));
+        Assert.Equal([children[1].Id], first.IdsWithChildren);
+        Assert.Equal((5, 1, false), (last.TotalItems, last.Items.Count, last.HasMore));
+        // Only recycled children: no expand arrow
+        Assert.DoesNotContain(children[3].Id, last.IdsWithChildren);
+        Assert.Equal([children[1].Id], given.IdsWithChildren);
+        Assert.All(first.Items, x => Assert.Empty(x.PropertyData));
+        Assert.All(first.Items, x => Assert.NotNull(x.ContentType));
+        var more = TreeLoadMore.After(first, root.Id);
+        Assert.Equal((2, 5), (more!.Skip, more.TotalItems));
+        Assert.Null(TreeLoadMore.After(last, root.Id));
+    }
+
+    [Fact]
+    public async Task ZA068_A_media_tree_level_filters_by_type_in_the_items_and_the_flags()
+    {
+        var folder = new MediaItem { Name = "Folder", MediaType = MediaType.Folder };
+        var imagesOnly = new MediaItem { Name = "Images", MediaType = MediaType.Folder };
+        var docsOnly = new MediaItem { Name = "Docs", MediaType = MediaType.Folder };
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            db.Medias.AddRange(folder, imagesOnly, docsOnly);
+            db.Medias.Add(new MediaItem { Name = "Top image", MediaType = MediaType.Image });
+            db.Medias.Add(new MediaItem { Name = "Picture", MediaType = MediaType.Image, ParentId = imagesOnly.Id });
+            db.Medias.Add(new MediaItem { Name = "Report", MediaType = MediaType.Document, ParentId = docsOnly.Id });
+            db.Medias.Add(new MediaItem { Name = "Binned", MediaType = MediaType.Image, ParentId = folder.Id, Deleted = true });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var all = await MediaLevelAsync(new MediaTreeLevelParameters());
+        var images = await MediaLevelAsync(new MediaTreeLevelParameters { MediaTypes = [MediaType.Image] });
+
+        Assert.Equal(["Docs", "Folder", "Images", "Top image"], all.Items.Select(x => x.Name));
+        Assert.Equal(new[] { imagesOnly.Id, docsOnly.Id }.Order(), all.IdsWithChildren.Order());
+        Assert.Equal(["Docs", "Folder", "Images", "Top image"], images.Items.Select(x => x.Name));
+        Assert.Equal([imagesOnly.Id], images.IdsWithChildren);
+    }
+
+    [Fact]
+    public async Task ZA082_Async_paging_pages_an_in_memory_query_too()
+    {
+        var page = await Enumerable.Range(1, 5).AsQueryable().ToPaginatedListAsync(2, 2, Ct);
+
+        Assert.Equal([3, 4], page.Items);
+        Assert.Equal((5, 3), (page.TotalItems, page.TotalPages));
+    }
+
     // ---- helpers ----
 
     private async Task<TResult> WithService<TService, TResult>(Func<TService, Task<TResult>> call)
@@ -387,6 +460,20 @@ public class QueryAndCacheTests : IAsyncLifetime
         Assert.True((await roleManager.CreateAsync(role)).Succeeded);
         return role.Id;
     }
+
+    private Task<TreeLevel<ContentItemModel>> TreeLevelAsync(ContentTreeLevelParameters parameters) =>
+        WithService<IContentService, TreeLevel<ContentItemModel>>(s => s.GetContentTreeLevelAsync(parameters, Ct));
+
+    private Task<TreeLevel<MediaItem>> MediaLevelAsync(MediaTreeLevelParameters parameters) =>
+        WithService<IMediaService, TreeLevel<MediaItem>>(s => s.GetMediaTreeLevelAsync(parameters, Ct));
+
+    private Task SetDeletedAsync(Guid id) =>
+        _site.QueryDatabaseAsync(async db =>
+        {
+            var row = await db.Contents.SingleAsync(x => x.Id == id, Ct);
+            row.Deleted = true;
+            return await db.SaveChangesAsync(Ct);
+        });
 
     private Task<EntryModel> GetEntryAsync(string slug, string? url) =>
         WithService<IContentService, EntryModel>(s => s.GetContentFromRequestAsync(

@@ -2,6 +2,7 @@
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
 @layout SectionLayout
 @implements IDisposable
 @attribute [Route($"{Urls.AdminMediaFolder}/{{FolderId:guid}}")]
@@ -53,6 +54,12 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
+                @if (_more != null)
+                {
+                    @* A page at a time (Roadmap D26): the list used to stop at 200 items *@
+                    <RadzenButton Text="@_more.Name" Icon="expand_more" Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Primary" Click="@LoadMoreAsync" class="rz-mt-2"/>
+                }
             </RadzenTabsItem>
             <RadzenTabsItem Text="Upload">
                 <MultipleMediaUpload ParentId="@FolderId"/>
@@ -70,6 +77,7 @@
     [Parameter] public Guid FolderId { get; set; }
 
     private IEnumerable<Media> Contents { get; set; } = [];
+    private TreeLoadMore? _more;
     private int SelectedIndex { get; set; }
     private Media? EditFolder { get; set; }
     private AuthenticationState AuthState { get; set; } = null!;
@@ -107,14 +115,25 @@
 
     private async Task SetContents(Guid folderId)
     {
-        var items = await MediaService.QueryMediaAsync(new QueryMediaParameters
-        {
-            AmountPerPage = 200,
-            OrderBy = GetMediaOrderBy.Name,
-            WhereClause = media => media.ParentId == folderId
-        });
+        var level = await MediaService.GetMediaTreeLevelAsync(new MediaTreeLevelParameters { ParentId = folderId });
+        Contents = level.Items;
+        _more = TreeLoadMore.After(level, folderId);
+    }
 
-        Contents = items.Items;
+    private async Task LoadMoreAsync()
+    {
+        if (_more == null)
+        {
+            return;
+        }
+
+        var level = await MediaService.GetMediaTreeLevelAsync(new MediaTreeLevelParameters
+        {
+            ParentId = FolderId, Skip = _more.Skip
+        });
+        // A new list, so the grid sees the change
+        Contents = [.. Contents, .. level.Items];
+        _more = TreeLoadMore.After(level, FolderId);
     }
 
     private void OnRowSelect(object value)

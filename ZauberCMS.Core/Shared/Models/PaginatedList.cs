@@ -14,6 +14,7 @@ public class PaginatedList<T>
     public bool IsLastPage => PageIndex >= TotalPages;
     public bool HasPreviousPage => PageIndex > 1;
     public bool HasNextPage => PageIndex < TotalPages;
+    [Obsolete("Use ToPaginatedListAsync. This blocks the thread on its queries.")]
     public PaginatedList(IQueryable<T> items, int pageIndex, int pageSize)
     {
         PageIndex = pageIndex;

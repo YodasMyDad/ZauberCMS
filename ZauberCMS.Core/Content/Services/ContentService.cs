@@ -275,7 +275,7 @@ public partial class ContentService(
 
         var isUpdate = true;
         var unpublishedContent =
-            dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == parameters.Content.UnpublishedContentId);
+            await dbContext.UnpublishedContent.FirstOrDefaultAsync(x => x.Id == parameters.Content.UnpublishedContentId, cancellationToken);
 
         var urlGenerated = false;
         if (parameters.Content.IsNestedContent)
@@ -290,7 +290,7 @@ public partial class ContentService(
         {
             var baseSlug = new SlugHelper().GenerateSlug(parameters.Content.Name);
 #pragma warning disable CS0618 // Type or member is obsolete
-            parameters.Content.Url = GenerateUniqueUrl(dbContext, baseSlug, parameters.Content.Id);
+            parameters.Content.Url = await GenerateUniqueUrlAsync(dbContext, baseSlug, cancellationToken, parameters.Content.Id);
 #pragma warning restore CS0618 // Type or member is obsolete
             urlGenerated = true;
         }
@@ -373,7 +373,7 @@ public partial class ContentService(
 
         if (parameters.UpdateContentRoles)
         {
-            UpdateContentRoles(dbContext, content, parameters);
+            await UpdateContentRolesAsync(dbContext, content, parameters, cancellationToken);
         }
 
         // A save with property data publishes the editor's values, so a pending draft is replaced by it. A save
@@ -398,7 +398,7 @@ public partial class ContentService(
             }
         }
 
-        content.Path = content.BuildPath(dbContext, isUpdate, settings);
+        content.Path = await content.BuildPathAsync(dbContext, isUpdate, settings, cancellationToken);
 
         var isRestore = isUpdate && wasDeleted && !content.Deleted;
         if (isRestore && content.ParentId is { } restoreParentId &&
@@ -419,12 +419,12 @@ public partial class ContentService(
         {
             var url = content.Url()!;
             var urlChanged = !isUpdate || isRestore || !string.Equals(url, storedUrl, StringComparison.Ordinal);
-            if (urlChanged && IsUrlTaken(dbContext, url, content.Id))
+            if (urlChanged && await IsUrlTakenAsync(dbContext, url, content.Id, cancellationToken))
             {
                 if (urlGenerated || isRestore)
                 {
 #pragma warning disable CS0618 // Type or member is obsolete
-                    content.Url = GenerateUniqueUrl(dbContext, url, content.Id);
+                    content.Url = await GenerateUniqueUrlAsync(dbContext, url, cancellationToken, content.Id);
 #pragma warning restore CS0618 // Type or member is obsolete
                     if (isRestore)
                     {
@@ -466,10 +466,10 @@ public partial class ContentService(
                     var descendantUrl = descendant.Url();
                     if (!descendant.IsNestedContent && !descendantUrl.IsNullOrWhiteSpace())
                     {
-                        if (reservedUrls.Contains(descendantUrl!) || IsUrlTaken(dbContext, descendantUrl!, descendant.Id))
+                        if (reservedUrls.Contains(descendantUrl!) || await IsUrlTakenAsync(dbContext, descendantUrl!, descendant.Id, cancellationToken))
                         {
 #pragma warning disable CS0618 // Type or member is obsolete
-                            descendant.Url = GenerateUniqueUrl(dbContext, descendantUrl!, descendant.Id, reservedUrls);
+                            descendant.Url = await GenerateUniqueUrlAsync(dbContext, descendantUrl!, cancellationToken, descendant.Id, reservedUrls);
 #pragma warning restore CS0618 // Type or member is obsolete
                             handlerResult.AddMessage(
                                 $"The URL '{descendantUrl}' is now used by another page, so the restored page '{descendant.Name}' has the URL '{descendant.Url()}'",
@@ -509,10 +509,10 @@ public partial class ContentService(
         {
             var cacheKey = $"{query.GenerateCacheKey()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
             return (await cacheService.GetSetCachedItemAsync(cacheKey,
-                async () => await FetchContentAsync(query, parameters)))!;
+                async () => await FetchContentAsync(query, parameters, cancellationToken)))!;
         }
 
-        return await FetchContentAsync(query, parameters);
+        return await FetchContentAsync(query, parameters, cancellationToken);
     }
 
     /// <summary>
@@ -530,7 +530,7 @@ public partial class ContentService(
         var loggedInUser = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Models.Content>();
 
-        var content = dbContext.Contents.FirstOrDefault(x => x.Id == parameters.ContentId);
+        var content = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == parameters.ContentId, cancellationToken);
         if (content == null)
         {
             handlerResult.AddMessage("Unable to delete, as no Content with that id exists", ResultMessageType.Warning);
@@ -652,7 +652,7 @@ public partial class ContentService(
 
                 if (item.UnpublishedContentId != null)
                 {
-                    var uContent = dbContext.UnpublishedContent.FirstOrDefault(x => x.Id == item.UnpublishedContentId);
+                    var uContent = await dbContext.UnpublishedContent.FirstOrDefaultAsync(x => x.Id == item.UnpublishedContentId, cancellationToken);
                     if (uContent != null) dbContext.UnpublishedContent.Remove(uContent);
                 }
 
@@ -808,7 +808,7 @@ public partial class ContentService(
         // URLs handed out in this copy but not saved yet, so two copies never get the same one (ZA-046)
         var reservedUrls = new HashSet<string>(StringComparer.Ordinal);
         var newParentId = parameters.CopyTo ?? contentToCopy.ParentId;
-        var copiedContent = CreateCopy(contentToCopy, user, newParentId);
+        var copiedContent = await CreateCopyAsync(contentToCopy, user, newParentId);
 
         idMap[contentToCopy.Id] = copiedContent.Id;
 
@@ -851,7 +851,7 @@ public partial class ContentService(
                     continue;
                 }
 
-                var copiedDescendant = CreateCopy(descendant, user, newParentIdForDescendant);
+                var copiedDescendant = await CreateCopyAsync(descendant, user, newParentIdForDescendant);
                 copiedDescendant.Path = [.. copiedPaths[newParentIdForDescendant], copiedDescendant.Id];
                 copiedPaths[copiedDescendant.Id] = copiedDescendant.Path;
                 idMap[descendant.Id] = copiedDescendant.Id;
@@ -884,7 +884,7 @@ public partial class ContentService(
         handlerResult.AddMessage("Content copied successfully.", ResultMessageType.Success);
         return handlerResult;
 
-        Models.Content CreateCopy(Models.Content original, User? currentUser, Guid? parentId = null)
+        async Task<Models.Content> CreateCopyAsync(Models.Content original, User? currentUser, Guid? parentId = null)
         {
             var copy = original.MapToNew();
             copy.Id = Guid.NewGuid().NewSequentialGuid();
@@ -892,9 +892,9 @@ public partial class ContentService(
 #pragma warning disable CS0618 // Type or member is obsolete
             copy.Url = original.IsNestedContent
                 ? null
-                : GenerateUniqueUrl(dbContext,
+                : await GenerateUniqueUrlAsync(dbContext,
                     (original.Url().IsNullOrWhiteSpace() ? new SlugHelper().GenerateSlug(original.Name) : original.Url) + "-copy",
-                    reserved: reservedUrls);
+                    cancellationToken, reserved: reservedUrls);
 #pragma warning restore CS0618 // Type or member is obsolete
             // The original's pending draft belongs to the original; sharing the row breaks both on publish (ZA-049)
             copy.UnpublishedContentId = null;
@@ -1030,10 +1030,10 @@ public partial class ContentService(
             parameters.ContentType.Alias = parameters.ContentType.Name.ToAlias();
         }
 
-        var contentType = dbContext.ContentTypes.FirstOrDefault(x => x.Id == parameters.ContentType.Id);
+        var contentType = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Id == parameters.ContentType.Id, cancellationToken);
         if (contentType == null)
         {
-            var containsAlias = dbContext.ContentTypes.Any(x => x.Alias == parameters.ContentType.Alias);
+            var containsAlias = await dbContext.ContentTypes.AnyAsync(x => x.Alias == parameters.ContentType.Alias, cancellationToken);
             if (containsAlias)
             {
                 handlerResult.AddMessage("Content Type Alias already exists, change the content type name",
@@ -1066,7 +1066,7 @@ public partial class ContentService(
     /// <param name="parameters">Query options including filters and paging.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged list of content types.</returns>
-    public Task<PaginatedList<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters,
+    public async Task<PaginatedList<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters,
         CancellationToken cancellationToken = default)
     {
         using var scope = serviceScopeFactory.CreateScope();
@@ -1154,7 +1154,7 @@ public partial class ContentService(
             };
         }
 
-        return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
+        return await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken);
     }
 
     /// <summary>
@@ -1245,7 +1245,7 @@ public partial class ContentService(
             // returned entities are detached relative to this dbContext.
             foreach (var orphanItem in orphanedItems)
             {
-                var orphan = dbContext.Contents.FirstOrDefault(x => x.Id == orphanItem.Id);
+                var orphan = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == orphanItem.Id, cancellationToken);
                 if (orphan == null) continue;
 
                 var orphanPropertyValues = dbContext.ContentPropertyValues
@@ -1274,12 +1274,12 @@ public partial class ContentService(
             return handlerResult;
         }
 
-        var contentType = dbContext.ContentTypes.FirstOrDefault(x => x.Id == parameters.ContentTypeId);
+        var contentType = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Id == parameters.ContentTypeId, cancellationToken);
         if (contentType != null)
         {
             if (contentType.IsComposition)
             {
-                var anyUsingThisComposition = QueryContentTypesForComposition(dbContext, parameters.ContentTypeId);
+                var anyUsingThisComposition = await QueryContentTypesForCompositionAsync(dbContext, parameters.ContentTypeId, cancellationToken);
                 if (anyUsingThisComposition.Items.Any())
                 {
                     handlerResult.Success = false;
@@ -1381,7 +1381,7 @@ public partial class ContentService(
             return handlerResult;
         }
 
-        var domain = dbContext.Domains.FirstOrDefault(x => x.Id == parameters.Domain.Id);
+        var domain = await dbContext.Domains.FirstOrDefaultAsync(x => x.Id == parameters.Domain.Id, cancellationToken);
         if (domain == null)
         {
             domain = parameters.Domain;
@@ -1417,7 +1417,7 @@ public partial class ContentService(
     /// <param name="parameters">Query options including ids, where clause and ordering.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged list of domains.</returns>
-    public Task<PaginatedList<Domain>> QueryDomainAsync(QueryDomainParameters parameters,
+    public async Task<PaginatedList<Domain>> QueryDomainAsync(QueryDomainParameters parameters,
         CancellationToken cancellationToken = default)
     {
         using var scope = serviceScopeFactory.CreateScope();
@@ -1466,7 +1466,7 @@ public partial class ContentService(
             };    
         }
         
-        return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
+        return await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken);
     }
 
     /// <summary>
@@ -2257,10 +2257,10 @@ public partial class ContentService(
         return query;
     }
 
-    private Task<PaginatedList<Models.Content>> FetchContentAsync(IQueryable<Models.Content> query,
-        QueryContentParameters request)
+    private static async Task<PaginatedList<Models.Content>> FetchContentAsync(IQueryable<Models.Content> query,
+        QueryContentParameters request, CancellationToken cancellationToken)
     {
-        return Task.FromResult(query.ToPaginatedList(request.PageIndex, request.AmountPerPage));
+        return await query.ToPaginatedListAsync(request.PageIndex, request.AmountPerPage, cancellationToken);
     }
 
     private async Task<Models.Content?> FetchContentAsync(IQueryable<Models.Content> query,
@@ -2385,12 +2385,12 @@ public partial class ContentService(
     /// another page that is not in the recycle bin (blocks have no URL), or in <paramref name="reserved"/>: URLs
     /// handed out earlier in the same operation and not saved yet.
     /// </summary>
-    private static string GenerateUniqueUrl(IZauberDbContext dbContext, string baseSlug, Guid? ownId = null,
-        ISet<string>? reserved = null)
+    private static async Task<string> GenerateUniqueUrlAsync(IZauberDbContext dbContext, string baseSlug,
+        CancellationToken cancellationToken, Guid? ownId = null, ISet<string>? reserved = null)
     {
         var url = baseSlug;
         var counter = 1;
-        while ((reserved?.Contains(url) ?? false) || IsUrlTaken(dbContext, url, ownId))
+        while ((reserved?.Contains(url) ?? false) || await IsUrlTakenAsync(dbContext, url, ownId, cancellationToken))
         {
             url = $"{baseSlug}-{counter}";
             counter++;
@@ -2401,12 +2401,13 @@ public partial class ContentService(
     }
 
     /// <summary>True when a page other than <paramref name="ownId"/> that is not in the recycle bin has this URL.</summary>
-    private static bool IsUrlTaken(IZauberDbContext dbContext, string url, Guid? ownId)
+    private static async Task<bool> IsUrlTakenAsync(IZauberDbContext dbContext, string url, Guid? ownId,
+        CancellationToken cancellationToken)
     {
         var id = ownId ?? Guid.Empty;
 #pragma warning disable CS0618 // Type or member is obsolete
-        return dbContext.Contents.AsNoTracking()
-            .Any(c => c.Url == url && !c.Deleted && !c.IsNestedContent && c.Id != id);
+        return await dbContext.Contents.AsNoTracking()
+            .AnyAsync(c => c.Url == url && !c.Deleted && !c.IsNestedContent && c.Id != id, cancellationToken);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 
@@ -2439,10 +2440,11 @@ public partial class ContentService(
         return descendants;
     }
 
-    private static void UpdateContentRoles(IZauberDbContext dbContext, Models.Content content,
-        SaveContentParameters request)
+    private static async Task UpdateContentRolesAsync(IZauberDbContext dbContext, Models.Content content,
+        SaveContentParameters request, CancellationToken cancellationToken)
     {
-        var existingRoles = dbContext.ContentRoles.AsNoTracking().Where(r => r.ContentId == content.Id).ToList();
+        var existingRoles = await dbContext.ContentRoles.AsNoTracking().Where(r => r.ContentId == content.Id)
+            .ToListAsync(cancellationToken);
         var rolesToRemove = existingRoles.Where(er => request.Roles.All(rr => rr.Id != er.RoleId)).ToList();
         if (rolesToRemove.Count != 0)
         {
@@ -2498,11 +2500,11 @@ public partial class ContentService(
         }
     }
 
-    private static PaginatedList<ContentType> QueryContentTypesForComposition(IZauberDbContext dbContext,
-        Guid compositionId)
+    private static async Task<PaginatedList<ContentType>> QueryContentTypesForCompositionAsync(
+        IZauberDbContext dbContext, Guid compositionId, CancellationToken cancellationToken)
     {
         var query = dbContext.ContentTypes.WhereHasCompositionsUsing(compositionId);
-        return query.ToPaginatedList(1, int.MaxValue);
+        return await query.ToPaginatedListAsync(1, int.MaxValue, cancellationToken);
     }
 
     private static async Task SaveAuditIfUser(IZauberDbContext dbContext, User? user, string? name, string action,

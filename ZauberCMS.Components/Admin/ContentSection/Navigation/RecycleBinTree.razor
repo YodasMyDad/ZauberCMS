@@ -52,18 +52,12 @@
         }
     }
     
+    private TreeStub? _bin;
+    private int _binPagesLoaded;
+
     private async Task DataRefresh()
     {
-        var deletedContent = await ContentService.QueryContentAsync(new QueryContentParameters
-        {
-            OrderBy = GetContentsOrderBy.DateUpdated,
-            IsDeleted = true, // Only get deleted items
-            IncludeUnpublished = true,
-            AmountPerPage = 300 // Need to think about this
-        });
-
-        var tree = new List<TreeStub>();
-        var usersTree = new TreeStub
+        _bin = new TreeStub
         {
             Id = Constants.Guids.RecycleBinRootId,
             Name = "Recycle Bin",
@@ -71,12 +65,31 @@
             SortOrder = 1,
             StubType = typeof(TreeStub)
         };
-        
+        _binPagesLoaded = 0;
+        await LoadBinPageAsync();
+        TreeItems = [_bin];
+    }
+
+    /// <summary>The next page of the bin's top-level items, then a "Show more" branch while there are more
+    /// (Roadmap D26; the bin used to stop at 300 items).</summary>
+    private async Task LoadBinPageAsync()
+    {
         // Items that went to the bin with their parent are listed (and restored, deleted) through that parent
-        var deletedIds = deletedContent.Items.Select(x => x.Id).ToHashSet();
-        foreach (var content in deletedContent.Items.Where(x => x.ParentId == null || !deletedIds.Contains(x.ParentId.Value)))
+        var page = await ContentService.QueryContentAsync(new QueryContentParameters
         {
-            usersTree.Branches.Add(new TreeBranch
+            OrderBy = GetContentsOrderBy.DateUpdated,
+            IsDeleted = true, // Only get deleted items
+            IncludeUnpublished = true,
+            WhereClause = x => x.ParentId == null || !x.Parent!.Deleted,
+            PageIndex = _binPagesLoaded + 1,
+            AmountPerPage = TreeLoadMore.PageSize
+        });
+        _binPagesLoaded++;
+
+        _bin!.Branches.RemoveAll(x => x.BranchType == typeof(TreeLoadMore));
+        foreach (var content in page.Items)
+        {
+            _bin.Branches.Add(new TreeBranch
             {
                 Icon = content.ContentType?.Icon,
                 Id = content.Id,
@@ -86,10 +99,17 @@
             });
         }
 
-        tree.Add(usersTree);
-        TreeItems = tree;
+        if (page.HasNextPage)
+        {
+            var shown = _bin.Branches.Count;
+            _bin.Branches.Add(new TreeBranch
+            {
+                Icon = "expand_more",
+                Name = new TreeLoadMore { Skip = shown, TotalItems = page.TotalItems }.Name,
+                BranchType = typeof(TreeLoadMore)
+            });
+        }
     }
-
 
     private Task HandleContentChanged(Content? media, string username)
         => InvokeAsync(async () =>
@@ -120,11 +140,17 @@
         }
     }
 
-    private void OnChangeHandler()
+    private async Task OnChangeHandler()
     {
         TreeState.TreeValue = Selection;
         switch (Selection)
         {
+            case TreeBranch { BranchType: var branchType } when branchType == typeof(TreeLoadMore):
+                // Not a selection: the next page of the bin
+                Selection = null;
+                await LoadBinPageAsync();
+                StateHasChanged();
+                break;
             case TreeBranch treeStub:
             {
                 if (!treeStub.Url.IsNullOrWhiteSpace())

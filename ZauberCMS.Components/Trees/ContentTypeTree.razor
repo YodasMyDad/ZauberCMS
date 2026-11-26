@@ -5,7 +5,7 @@
 
 <BaseTree
     T="ContentType"
-    Data="@Data"
+    Data="@Roots"
     TreeAlias="@Alias"
     Expand="@OnExpandHandler"
     Change="@OnChangeHandler"
@@ -20,7 +20,8 @@
 @code {
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
-    
+
+    /// <summary>The top level to show. Empty (the default): the top level of the loaded types and folders.</summary>
     [Parameter] public IEnumerable<ContentType> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public Func<object, bool>? Children { get; set; }
@@ -30,60 +31,71 @@
     [Parameter] public bool DisableContextMenu { get; set; }
     [Parameter] public bool DisableSectionOnlyContextMenu { get; set; }
     [Parameter] public string Alias { get; set; } = Constants.Sections.Trees.ContentTypeTree;
-    
-    // Dictionary to cache HasChildren results
-    
+
+    /// <summary>Show element types (and their folders) instead of content types.</summary>
+    [Parameter] public bool OnlyElementTypes { get; set; }
+
+    /// <summary>Show compositions (and their folders) instead of content types.</summary>
+    [Parameter] public bool OnlyCompositions { get; set; }
+
+    // Content types are few: the whole tree is loaded once and every level is read from it. The tree used to query
+    // per expanded node and block the circuit on a query per node to draw the expand arrows (ZA-054).
+    private ILookup<Guid?, ContentType> _byParent = Array.Empty<ContentType>().ToLookup(x => x.ParentId);
+    private (bool, bool)? _loadedFor;
+
+    private IEnumerable<ContentType> Roots => Data.Any() ? Data : _byParent[null];
+
     protected override void OnInitialized()
     {
         AppState.OnContentTypeChanged += HandleContentTypeChanged;
     }
-    
+
     protected override async Task OnParametersSetAsync()
     {
-        if (!Data.Any())
+        if (_loadedFor != (OnlyElementTypes, OnlyCompositions))
         {
-            var items = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
-            {
-                AmountPerPage = 100,
-                IncludeFolders = true,
-                WhereClause = x => x.ParentId == null,
-                OrderBy = GetContentTypesOrderBy.Name
-            });
-            
-            Data = items.Items.ToList();
+            _loadedFor = (OnlyElementTypes, OnlyCompositions);
+            await LoadAsync();
         }
     }
-    
-    private Task HandleContentTypeChanged(ContentType? contentType, string username)
+
+    private async Task LoadAsync()
     {
-        TreeState.ClearChildCache(null);
-        return Task.CompletedTask;
+        var all = await ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
+        {
+            AmountPerPage = int.MaxValue,
+            IncludeFolders = true,
+            OnlyElementTypes = OnlyElementTypes,
+            OnlyCompositions = OnlyCompositions,
+            OrderBy = GetContentTypesOrderBy.Name
+        });
+        _byParent = all.Items.ToLookup(x => x.ParentId);
     }
+
+    private Task HandleContentTypeChanged(ContentType? contentType, string username)
+        => InvokeAsync(async () =>
+        {
+            TreeState.ClearChildCache(null);
+            await LoadAsync();
+            StateHasChanged();
+        });
 
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (OnExpand.HasDelegate)
         {
             await OnExpand.InvokeAsync(args);
+            return;
         }
-        else
-        {
-            if (args.Value is ContentType content)
-            {
-                var items = ContentService.QueryContentTypesAsync(new QueryContentTypesParameters
-                {
-                    WhereClause = x => x.ParentId == content.Id,
-                    AmountPerPage = 100,
-                    IncludeFolders = true,
-                    OrderBy = GetContentTypesOrderBy.Name
-                }).GetAwaiter().GetResult();
-                args.Children!.Data = items.Items;
-                args.Children.TextProperty = "Name";
-                args.Children.Template = TreeExtensions.CreateContentTypeTreeTemplate<RadzenTreeItem>();
-                args.Children.HasChildren = HasChildren;
 
-                TreeState.NodeExpanded(content.Id);
-            }
+        if (args.Value is ContentType content)
+        {
+            args.Children!.Data = _byParent[content.Id].ToList();
+            args.Children.TextProperty = "Name";
+            args.Children.Template = TreeExtensions.CreateContentTypeTreeTemplate<RadzenTreeItem>();
+            args.Children.HasChildren = HasChildren;
+
+            TreeState.NodeExpanded(content.Id);
         }
     }
 
@@ -103,25 +115,8 @@
             // Use the user-provided method
             return Children(data);
         }
-        else
-        {
-            if (data is ContentType content)
-            {
-                // Check if result is cached
-                if (TreeState.HasChildrenCache.TryGetValue(content.Id, out var hasChildren))
-                {
-                    return hasChildren;
-                }
 
-                // Calculate result and cache it
-                hasChildren = Task.Run(() => ContentService.HasChildContentTypeAsync(new HasChildContentTypeParameters { ParentId = content.Id })).GetAwaiter().GetResult();
-                TreeState.SetChildren(content.Id, hasChildren);
-
-                return hasChildren;
-            }
-
-            return false;   
-        }
+        return data is ContentType content && _byParent.Contains(content.Id);
     }
 
     private bool ShouldBeExpanded(object data)

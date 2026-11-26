@@ -61,6 +61,15 @@ public class TreeState
         HasChildrenCache[nodeId] = hasChildren;
     }
 
+    /// <summary>Records for each of <paramref name="nodeIds"/> whether it is in <paramref name="withChildren"/>.</summary>
+    public void SetChildren(IEnumerable<Guid> nodeIds, ISet<Guid> withChildren)
+    {
+        foreach (var nodeId in nodeIds)
+        {
+            HasChildrenCache[nodeId] = withChildren.Contains(nodeId);
+        }
+    }
+
     public void ClearChildCache(Guid? contentId)
     {
         if (contentId != null)

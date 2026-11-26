@@ -32,4 +32,12 @@ public interface IDataListSource
     /// <param name="currentContent">The current content object.</param>
     /// <returns>A collection of DataListItem objects.</returns>
     IEnumerable<DataListItem> GetItems(IServiceScope scope, Models.Content? currentContent);
+
+    /// <summary>
+    /// Retrieves the items without blocking: what the list editors call. The default calls <see cref="GetItems"/>;
+    /// a source that queries a database or a web service implements this instead (and can make
+    /// <see cref="GetItems"/> do the same work synchronously).
+    /// </summary>
+    Task<IEnumerable<DataListItem>> GetItemsAsync(IServiceScope scope, Models.Content? currentContent,
+        CancellationToken cancellationToken = default) => Task.FromResult(GetItems(scope, currentContent));
 }

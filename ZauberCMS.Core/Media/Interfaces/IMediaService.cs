@@ -23,6 +23,12 @@ public interface IMediaService
     /// <summary>The pages (and blocks) and members whose property values point at the given media items.</summary>
     Task<List<Models.MediaUsage>> GetMediaUsageAsync(GetMediaUsageParameters parameters, CancellationToken cancellationToken = default);
     Task<bool> HasChildMediaAsync(HasChildMediaParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// A page of an admin media tree node (a folder's children, or the top level), not in the recycle bin, by name,
+    /// with which folders have children (Roadmap D26).
+    /// </summary>
+    Task<TreeLevel<Models.Media>> GetMediaTreeLevelAsync(MediaTreeLevelParameters parameters, CancellationToken cancellationToken = default);
     Task<Dictionary<string, Guid>> GetRestrictedMediaUrlsAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default);
     Task<Dictionary<string, Models.RestrictedMediaEntry>> GetRestrictedMediaAccessAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default);
 }

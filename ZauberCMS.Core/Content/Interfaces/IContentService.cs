@@ -50,6 +50,12 @@ public interface IContentService
     /// ancestor already restricts access. An empty list removes the restriction.
     /// </summary>
     Task<HandlerResult<Models.Content>> SetContentRolesAsync(SetContentRolesParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// A page of an admin content tree node (a page's children, or the root pages), in sort order, without property
+    /// values or children, with which of them have children (Roadmap D26). Blocks and recycled pages are left out.
+    /// </summary>
+    Task<TreeLevel<Models.Content>> GetContentTreeLevelAsync(ContentTreeLevelParameters parameters, CancellationToken cancellationToken = default);
     Task<DataGridResult<Models.Content>> GetDataGridContentAsync(DataGridContentParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<int>> CleanupOrphanedRelatedContentAsync(CleanupOrphanedRelatedContentParameters parameters, CancellationToken cancellationToken = default);
 }

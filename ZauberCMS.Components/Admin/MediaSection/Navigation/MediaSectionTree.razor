@@ -1,62 +1,21 @@
 ﻿@using ZauberCMS.Core.Media.Models
-@using ZauberCMS.Core.Media.Parameters
-@using ZauberCMS.Core.Shared
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
-@implements IDisposable
 
-<MediaTree @ref="MediaTreeComponent"
-           Data="@MediaItems"
-           OnChange="OnChange"
+@* The tree loads its top level a page at a time and refreshes itself when media changes (Roadmap D26) *@
+<MediaTree OnChange="OnChange"
            @bind-Value="@Selection" />
 
 @code {
-    [Inject] public AppState AppState { get; set; } = null!;
-    
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.MediaNavGroup;
 
-    private List<Media> MediaItems { get; set; } = [];
     private object? Selection { get; set; }
-    private MediaTree? MediaTreeComponent { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await DataRefresh();
-        AppState.OnMediaChanged += HandleMediaChanged;
-    }
-
+    // ISectionNav is IDisposable; the tree unsubscribes from AppState itself
     public void Dispose()
     {
-        AppState.OnMediaChanged -= HandleMediaChanged;
     }
 
-    private Task HandleMediaChanged(Media? media, string username)
-        => InvokeAsync(async () =>
-        {
-            // Refresh the MediaTree component to clear caches first
-            if (MediaTreeComponent != null)
-            {
-                await MediaTreeComponent.RefreshData();
-            }
-
-            // Then refresh the data - creating a new list reference forces the tree to re-evaluate HasChildren
-            await DataRefresh();
-
-            StateHasChanged();
-        });
-
-    private async Task DataRefresh()
-    {
-        var items = await MediaService.QueryMediaAsync(new QueryMediaParameters
-        {
-            AmountPerPage = 250,
-            WhereClause = x => x.ParentId == null,
-            IncludeChildren = true,
-            OrderBy = GetMediaOrderBy.Name
-        });
-        MediaItems = items.Items.ToList();
-    }
-    
     private void OnChange()
     {
         switch (Selection)
@@ -69,6 +28,4 @@
                 break;
         }
     }
-
-
 }

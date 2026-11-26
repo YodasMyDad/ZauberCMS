@@ -149,7 +149,7 @@ public class MediaService(
                     }
 
                     // Calculate and set the Path property
-                    dbMedia.Path = result.Entity.BuildPath(dbContext, parameters.IsUpdate, settings);
+                    dbMedia.Path = await result.Entity.BuildPathAsync(dbContext, parameters.IsUpdate, settings, cancellationToken);
                     var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
                     await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Update, auditService,
                         cancellationToken);
@@ -169,7 +169,7 @@ public class MediaService(
             else
             {
                 // Calculate and set the Path property
-                result.Entity.Path = result.Entity.BuildPath(dbContext, parameters.IsUpdate, settings);
+                result.Entity.Path = await result.Entity.BuildPathAsync(dbContext, parameters.IsUpdate, settings, cancellationToken);
                 dbContext.Medias.Add(result.Entity);
                 var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
                 await user.AddAudit(result.Entity, result.Entity.Name, AuditExtensions.AuditAction.Create, auditService,
@@ -206,10 +206,10 @@ public class MediaService(
         if (parameters.Cached)
         {
             var cacheKey = $"{query.GenerateCacheKey<Models.Media>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken)))!;
         }
 
-        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
+        return await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken);
     }
 #pragma warning restore CS1998
 
@@ -675,6 +675,61 @@ public class MediaService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         return await dbContext.Medias.AsNoTracking().AnyAsync(c => c.ParentId == parameters.ParentId && !c.Deleted, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<TreeLevel<Models.Media>> GetMediaTreeLevelAsync(MediaTreeLevelParameters parameters,
+        CancellationToken cancellationToken = default)
+    {
+        using var scope = serviceScopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+
+        // The same types in a folder's children and in its "has children" flag: a folder holding only filtered-out
+        // files gets no expand arrow
+        var types = parameters.MediaTypes.Count == 0
+            ? null
+            : parameters.MediaTypes.Append(Models.MediaType.Folder).Distinct().ToList();
+        var live = dbContext.Medias.AsNoTracking().Where(m => !m.Deleted);
+        if (types != null)
+        {
+            live = live.Where(m => types.Contains(m.MediaType));
+        }
+
+        IQueryable<Models.Media> query;
+        if (parameters.Ids != null)
+        {
+            var ids = parameters.Ids;
+            query = live.Where(m => ids.Contains(m.Id));
+        }
+        else
+        {
+            query = live.Where(m => m.ParentId == parameters.ParentId);
+        }
+
+        var items = await query
+            .OrderBy(m => m.Name).ThenBy(m => m.Id)
+            .Skip(parameters.Skip).Take(parameters.Take)
+            .ToListAsync(cancellationToken);
+        var total = parameters.Skip == 0 && items.Count < parameters.Take
+            ? items.Count
+            : await query.CountAsync(cancellationToken);
+
+        var folderIds = items.Where(m => m.MediaType == Models.MediaType.Folder).Select(m => m.Id).ToList();
+        var withChildren = folderIds.Count == 0
+            ? []
+            : await live
+                .Where(m => m.ParentId != null && folderIds.Contains(m.ParentId.Value))
+                .Select(m => m.ParentId!.Value)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+        return new TreeLevel<Models.Media>
+        {
+            Items = items,
+            IdsWithChildren = withChildren.ToHashSet(),
+            TotalItems = total,
+            Skip = parameters.Skip
+        };
     }
 
     /// <summary>

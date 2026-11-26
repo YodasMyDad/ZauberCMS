@@ -422,10 +422,10 @@ public class MembershipService(
         if (parameters.Cached)
         {
             var cacheKey = $"{query.GenerateCacheKey<User>()}_Page{parameters.PageIndex}_Amount{parameters.AmountPerPage}";
-            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage)))!;
+            return (await cacheService.GetSetCachedItemAsync(cacheKey, async () => await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken)))!;
         }
 
-        return query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage);
+        return await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken);
     }
     #pragma warning restore CS1998
 
@@ -557,7 +557,7 @@ public class MembershipService(
     /// <param name="parameters">Query options including search and ids.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged list of roles.</returns>
-    public Task<PaginatedList<Role>> QueryRolesAsync(QueryRolesParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<Role>> QueryRolesAsync(QueryRolesParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
@@ -606,7 +606,7 @@ public class MembershipService(
             _ => query.OrderByDescending(p => p.DateCreated)
         };
 
-        return Task.FromResult(query.ToPaginatedList(parameters.PageIndex, parameters.AmountPerPage));
+        return await query.ToPaginatedListAsync(parameters.PageIndex, parameters.AmountPerPage, cancellationToken);
     }
 
     /// <summary>
@@ -1175,7 +1175,7 @@ public class MembershipService(
 
     private async Task<HandlerResult<User>> UpdateUserPropertyValues(IZauberDbContext dbContext, User requestUser, HandlerResult<User> handlerResult, CancellationToken cancellationToken)
     {
-        var user = dbContext.Users.Include(x => x.PropertyData).FirstOrDefault(x => x.Id == requestUser.Id);
+        var user = await dbContext.Users.Include(x => x.PropertyData).FirstOrDefaultAsync(x => x.Id == requestUser.Id, cancellationToken);
 
         // Remove deleted items
         var deletedItems = user!.PropertyData.Where(epv => requestUser.PropertyData.All(npv => npv.Id != epv.Id)).ToList();

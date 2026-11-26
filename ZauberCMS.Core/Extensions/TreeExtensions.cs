@@ -8,6 +8,18 @@ namespace ZauberCMS.Core.Extensions;
 
 public static class TreeExtensions
 {
+    /// <summary>
+    /// A tree node's text: its <c>Name</c>. For trees whose levels mix item types (a "Show more" row after the
+    /// pages): Radzen's <c>TextProperty</c> reads the property as the first item's type and fails on the others.
+    /// </summary>
+    public static string TreeNodeText(object item) => item switch
+    {
+        TreeLoadMore more => more.Name,
+        Content.Models.Content content => content.Name ?? string.Empty,
+        Media.Models.Media media => media.Name ?? string.Empty,
+        _ => item.GetType().GetProperty("Name")?.GetValue(item)?.ToString() ?? string.Empty
+    };
+
     public static RenderFragment<T> CreateStandardTreeTemplate<T>() where T : class
     {
         return context => builder =>
@@ -38,11 +50,17 @@ public static class TreeExtensions
         return context => builder =>
         {
             var treeItem = context as RadzenTreeItem;
-            if (treeItem?.Value is Content.Models.Content content)
+            if (treeItem?.Value is TreeLoadMore more)
             {
+                AddLoadMore(builder, more);
+            }
+            else if (treeItem?.Value is Content.Models.Content content)
+            {
+                // The draft's id is enough: trees don't load the draft itself
+                var hasDraft = content.UnpublishedContent != null || content.UnpublishedContentId != null;
                 var opacity = content.Deleted
                     ? "0.6"
-                    : (content.UnpublishedContent != null ? "0.6" : (content.Published ? "1" : "0.6"));
+                    : (hasDraft ? "0.6" : (content.Published ? "1" : "0.6"));
                 var iconColor = content.ContentType?.Icon != null ? "dimgray" : "inherit";
 
                 // Check if content has roles; if true, set icon color to red
@@ -66,6 +84,20 @@ public static class TreeExtensions
                 builder.CloseElement();
             }
         };
+    }
+
+    /// <summary>The "Show more" row of a node shown a page at a time (Roadmap D26).</summary>
+    private static void AddLoadMore(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder, TreeLoadMore more)
+    {
+        builder.OpenComponent<RadzenIcon>(0);
+        builder.AddAttribute(1, "Icon", "expand_more");
+        builder.AddAttribute(2, "style", "font-weight: 300; color: var(--rz-primary);");
+        builder.CloseComponent();
+        builder.OpenElement(3, "span");
+        builder.AddAttribute(4, "class", "zauber-tree-load-more");
+        builder.AddAttribute(5, "style", "color: var(--rz-primary); white-space: nowrap;");
+        builder.AddContent(6, more.Name);
+        builder.CloseElement();
     }
 
     public static RenderFragment<T> CreateContentTypeTreeTemplate<T>() where T : class
@@ -104,7 +136,11 @@ public static class TreeExtensions
         return context => builder =>
         {
             var treeItem = context as RadzenTreeItem;
-            if (treeItem?.Value is Media.Models.Media media)
+            if (treeItem?.Value is TreeLoadMore more)
+            {
+                AddLoadMore(builder, more);
+            }
+            else if (treeItem?.Value is Media.Models.Media media)
             {
                 if (media.MediaType == MediaType.Image)
                 {

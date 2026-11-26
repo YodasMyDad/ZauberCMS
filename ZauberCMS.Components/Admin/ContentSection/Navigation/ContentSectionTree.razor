@@ -1,46 +1,33 @@
-﻿@using ZauberCMS.Core.Content.Parameters
-@using ZauberCMS.Core.Shared
+﻿@using ZauberCMS.Core.Shared
 @using Content = ZauberCMS.Core.Content.Models.Content
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 @implements IDisposable
 
+@* The tree loads its root pages a page at a time and refreshes itself when content changes (Roadmap D26) *@
 <ContentTree @ref="ContentTree"
-            Data="@ContentItems"
-            OnChange="OnChange" 
+            OnChange="OnChange"
             @bind-Value="@Selection" />
 
 @code {
     public int SortOrder => 0;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
-    
+
     [CascadingParameter] public IModalService ModalService { get; set; } = null!;
-    
-    [Inject] public AppState AppState { get; set; } = null!;
+
     [Inject] public TreeState TreeState { get; set; } = null!;
-    
-    private List<Content> ContentItems { get; set; } = [];
+
     private object? Selection { get; set; }
     private ContentTree? ContentTree { get; set; }
-    
-    protected override async Task OnInitializedAsync()
+
+    protected override void OnInitialized()
     {
-        AppState.OnContentChanged += HandleContentTreeChanged;
         TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
-        await DataRefresh();
     }
 
     public void Dispose()
     {
-        AppState.OnContentChanged -= HandleContentTreeChanged;
         TreeState.OnTreeValueChanged -= TreeStateOnOnTreeValueChanged;
     }
-
-    private Task HandleContentTreeChanged(Content? content, string user)
-        => InvokeAsync(async () =>
-        {
-            await DataRefresh();
-            StateHasChanged();
-        });
 
     /// <summary>
     /// Remove the selected state
@@ -53,20 +40,6 @@
             Selection = null;
             StateHasChanged();
         }
-    }
-    
-    private async Task DataRefresh()
-    {
-        var items = await ContentService.QueryContentAsync(new QueryContentParameters
-        {
-            AmountPerPage = 1000,
-            WhereClause = x => x.IsRootContent,
-            IncludeUnpublished = true,
-            IncludeContentRoles = true,
-            IncludeChildren = true,
-            OrderBy = GetContentsOrderBy.SortOrder
-        });
-        ContentItems = items.Items.ToList();
     }
 
     private void OnChange()

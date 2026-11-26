@@ -1,11 +1,12 @@
 ﻿@using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
 @implements IDisposable
 
 <BaseTree
-    T="Content"
-    Data="@Data"
+    T="object"
+    Data="@_roots"
     TreeAlias="@Alias"
     Expand="@OnExpandHandler"
     Change="@OnChangeHandler"
@@ -20,7 +21,8 @@
 @code {
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
-    
+
+    /// <summary>The top level to show. Empty (the default): the root pages, loaded and refreshed by the tree.</summary>
     [Parameter] public IEnumerable<Content> Data { get; set; } = [];
     [Parameter] public EventCallback<TreeExpandEventArgs> OnExpand { get; set; }
     [Parameter] public EventCallback OnChange { get; set; }
@@ -29,83 +31,121 @@
     [Parameter] public bool DisableContextMenu { get; set; }
     [Parameter] public bool DisableSectionOnlyContextMenu { get; set; }
     [Parameter] public string Alias { get; set; } = Constants.Sections.Trees.ContentTree;
-    
-    // Dictionary to cache HasChildren results
-    
+
+    // Each level is loaded a page at a time with its "has children" flags (Roadmap D26): rendering asks HasChildren
+    // for every node, and that used to block the circuit on a query per node (ZA-054, ZA-068). The lists are kept so
+    // "Show more" can add to them.
+    private List<object> _roots = [];
+    private readonly Dictionary<Guid, List<object>> _children = new();
+    private IEnumerable<Content>? _givenData;
+    private bool _loaded;
+    private object? _lastValue;
+
+    private bool OwnsData => !Data.Any();
+
     protected override void OnInitialized()
     {
         AppState.OnContentChanged += HandleContentChanged;
     }
-    
+
     protected override async Task OnParametersSetAsync()
     {
-        if (!Data.Any())
+        if (OwnsData)
         {
-            var items = await ContentService.QueryContentAsync(new QueryContentParameters
+            if (!_loaded || _givenData != null)
             {
-                AmountPerPage = 100,
-                WhereClause = x => x.IsRootContent,
-                IncludeChildren = true,
-                IncludeContentRoles = true, 
-                OrderBy = GetContentsOrderBy.SortOrder
+                _givenData = null;
+                _loaded = true;
+                await LoadRootsAsync();
+            }
+        }
+        else if (!ReferenceEquals(Data, _givenData))
+        {
+            // A top level from the caller: only its flags are loaded
+            _givenData = Data;
+            var given = Data.ToList();
+            var level = await ContentService.GetContentTreeLevelAsync(new ContentTreeLevelParameters
+            {
+                Ids = given.Select(c => c.Id).ToList(), Take = given.Count
             });
-            
-            Data = items.Items.ToList();
+            TreeState.SetChildren(given.Select(c => c.Id), level.IdsWithChildren);
+            _roots = given.Cast<object>().ToList();
         }
     }
-    
-    private Task HandleContentChanged(Content? media, string username)
-        => InvokeAsync(async () =>
+
+    /// <summary>Reloads the tree's own top level (a tree given its top level by its caller is refreshed by it).</summary>
+    public async Task RefreshAsync()
+    {
+        TreeState.ClearChildCache(null);
+        _children.Clear();
+        if (OwnsData)
         {
-            TreeState.ClearChildCache(null);
+            await LoadRootsAsync();
+        }
 
-            // If OnChange hasn't got a delegate, refresh data standalone
-            if (!OnChange.HasDelegate)
-            {
-                var items = await ContentService.QueryContentAsync(new QueryContentParameters
-                {
-                    AmountPerPage = 100,
-                    WhereClause = x => x.IsRootContent,
-                    IncludeChildren = true,
-                    IncludeContentRoles = true,
-                    OrderBy = GetContentsOrderBy.SortOrder
-                });
-                Data = items.Items.ToList();
-            }
+        StateHasChanged();
+    }
 
-            StateHasChanged();
+    private async Task LoadRootsAsync()
+    {
+        _children.Clear();
+        _roots = await LoadLevelAsync(null, 0);
+    }
+
+    /// <summary>A page of <paramref name="parentId"/>'s children (null: the root pages), with a "Show more" row
+    /// after it when there are more.</summary>
+    private async Task<List<object>> LoadLevelAsync(Guid? parentId, int skip)
+    {
+        var level = await ContentService.GetContentTreeLevelAsync(new ContentTreeLevelParameters
+        {
+            ParentId = parentId, Skip = skip
         });
+        TreeState.SetChildren(level.Items.Select(c => c.Id), level.IdsWithChildren);
+        var items = level.Items.Cast<object>().ToList();
+        if (TreeLoadMore.After(level, parentId) is { } more)
+        {
+            items.Add(more);
+        }
+
+        return items;
+    }
+
+    private Task HandleContentChanged(Content? content, string username) => InvokeAsync(RefreshAsync);
 
     private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
         if (OnExpand.HasDelegate)
         {
             await OnExpand.InvokeAsync(args);
+            return;
         }
-        else
-        {
-            if (args.Value is Content content)
-            {
-                var items = ContentService.QueryContentAsync(new QueryContentParameters
-                {
-                    IncludeUnpublished = true,
-                    AmountPerPage = 100,
-                    WhereClause = x => x.ParentId == content.Id,
-                    IncludeContentRoles = true,
-                    OrderBy = GetContentsOrderBy.SortOrder
-                }).GetAwaiter().GetResult();
-                args.Children!.Data = items.Items;
-                args.Children.TextProperty = "Name";
-                args.Children.Template = TreeExtensions.CreateContentTreeTemplate<RadzenTreeItem>();
-                args.Children.HasChildren = HasChildren;
 
-                TreeState.NodeExpanded(content.Id);
-            }
+        if (args.Value is Content content)
+        {
+            var children = await LoadLevelAsync(content.Id, 0);
+            _children[content.Id] = children;
+            args.Children!.Data = children;
+            args.Children.Text = TreeExtensions.TreeNodeText;
+            args.Children.Template = TreeExtensions.CreateContentTreeTemplate<RadzenTreeItem>();
+            args.Children.HasChildren = HasChildren;
+            // Nodes that were open stay open when the tree reloads
+            args.Children.Expanded = ShouldBeExpanded;
+
+            TreeState.NodeExpanded(content.Id);
         }
     }
 
     private async Task OnChangeHandler()
     {
+        if (Value is TreeLoadMore more)
+        {
+            // Not a selection: load the next page in the row's place and keep what was selected
+            Value = _lastValue;
+            await LoadMoreAsync(more);
+            return;
+        }
+
+        _lastValue = Value;
         await ValueChanged.InvokeAsync(Value);
         if (OnChange.HasDelegate)
         {
@@ -113,25 +153,29 @@
         }
     }
 
-    private bool HasChildren(object data)
+    private async Task LoadMoreAsync(TreeLoadMore more)
     {
-        if (data is Content content)
+        var list = more.ParentId == null ? _roots : _children.GetValueOrDefault(more.ParentId.Value);
+        if (list == null)
         {
-            // Check if result is cached
-            if (TreeState.HasChildrenCache.TryGetValue(content.Id, out var hasChildren))
-            {
-                return !content.ContentType!.EnableListView && hasChildren;
-            }
-
-            // Calculate result and cache it
-            hasChildren = Task.Run(() => ContentService.HasChildContentAsync(new HasChildContentParameters { ParentId = content.Id })).GetAwaiter().GetResult();
-            TreeState.SetChildren(content.Id, hasChildren);
-
-            return !content.ContentType!.EnableListView && hasChildren;
+            return;
         }
 
-        return false;
+        var next = await LoadLevelAsync(more.ParentId, more.Skip);
+        list.Remove(more);
+        list.AddRange(next);
+        if (more.ParentId == null)
+        {
+            // A new list, so the tree sees the change in its top level
+            _roots = [.. _roots];
+        }
+
+        StateHasChanged();
     }
+
+    // From the flags loaded with the node's level: no query while rendering (ZA-054)
+    private bool HasChildren(object data) =>
+        data is Content { ContentType.EnableListView: false } content && TreeState.HasChildren(content.Id);
 
     private bool ShouldBeExpanded(object data)
     {

@@ -48,6 +48,14 @@ instances created by `ActivatorUtilities` — `[Inject]` is **not** populated th
 Tree aliases: `Constants.Sections.Trees`. Trees are built on `Trees/BaseTree.razor` / `GenericTree` / `ContentTree` /
 `MediaTree`, plus `Shared/TreeButton.razor` for single links — not raw `RadzenTree`.
 
+Tree data (Phase 10, D26): `ContentTree` and `MediaTree` load and refresh themselves (leave `Data` empty) a page of a
+node at a time through `IContentService.GetContentTreeLevelAsync` / `IMediaService.GetMediaTreeLevelAsync`, which
+also say which items have children; the rest of a node is a `TreeLoadMore` row ("Show 100 more"). `HasChildren` and
+`ShouldBeExpanded` are called while rendering: they must read memory (`TreeState.HasChildren`), never query.
+`ContentTypeTree` loads the whole type tree once (`OnlyElementTypes` / `OnlyCompositions` pick the kind). Tree nodes
+carry no property values: a context menu that needs them loads the item by id. A level that mixes item types sets
+`Text = TreeExtensions.TreeNodeText`, not `TextProperty` (Radzen reads it as the first item's type).
+
 Recycle bins: Content has `RecycleBinTree`, Media has `MediaRecycleBinTree` (`Admin/MediaSection/Navigation/`).
 Both set `DisableSectionOnlyContextMenu`, so only menus listing their `TreeAlias` show there — a section-wide menu
 (`Sections = [MediaSection]`, such as Delete or Move) never acts on a binned item. A plugin menu for binned media
@@ -76,7 +84,8 @@ if (result is { Confirmed: true, Data: MyType value }) { … }
 - `AppState` (singleton, weak refs): subscribe in `OnInitialized` with a method group, unsubscribe in `Dispose`.
   Handlers run on the publisher's thread in every admin circuit → `await InvokeAsync(StateHasChanged)`.
   Who raises which event: [Services.md → AppState events](Services.md#appstate-events). Don't double-notify.
-- `TreeState` (scoped per circuit): selected node, expanded nodes, child cache (`ClearChildCache`), `CurrentSection`.
+- `TreeState` (scoped per circuit): selected node, expanded nodes, child flags (`SetChildren`, `HasChildren`,
+  `ClearChildCache`), `CurrentSection`.
 
 ## Styling
 

@@ -27,7 +27,7 @@ public class ListPropertyBaseComponent : ComponentBase
     protected string SelectedValue { get; set; } = string.Empty;
     protected ListPropertySettingsModel SettingsModel { get; set; } = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!Value.IsNullOrWhiteSpace())
         {
@@ -50,10 +50,9 @@ public class ListPropertyBaseComponent : ComponentBase
             var allDataListSources = ExtensionManager.GetInstances<IDataListSource>();
             if (allDataListSources.TryGetValue(SettingsModel.DataSource, out var listSource))
             {
-                using (var scope = ServiceProvider.CreateScope())
-                {
-                    SettingsModel.Items = listSource.GetItems(scope, Content).ToList();
-                }
+                using var scope = ServiceProvider.CreateScope();
+                // Async: a source that queries the database must not block the circuit (ZA-054)
+                SettingsModel.Items = (await listSource.GetItemsAsync(scope, Content)).ToList();
             }
         }
     }

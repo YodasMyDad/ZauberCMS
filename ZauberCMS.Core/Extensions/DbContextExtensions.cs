@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -51,7 +52,12 @@ public static class DbContextExtensions
 #pragma warning restore EF1002
     }
     
-    public static List<Guid> BuildPath<T>(this T entity, IZauberDbContext dbContext, bool isUpdate, IOptions<ZauberSettings> settings)
+    /// <summary>
+    /// The entity's <c>Path</c> (its ancestors' ids and its own) from the parent's stored path, and for a new page with
+    /// <c>EnablePathUrls</c> its URL from the ancestors' URLs. Two queries at most, whatever the depth.
+    /// </summary>
+    public static async Task<List<Guid>> BuildPathAsync<T>(this T entity, IZauberDbContext dbContext, bool isUpdate,
+        IOptions<ZauberSettings> settings, CancellationToken cancellationToken = default)
         where T : class, IBaseItem
     {
         var path = new List<Guid>();
@@ -62,11 +68,11 @@ public static class DbContextExtensions
             // Single round-trip: fetch parent's already-stored Path and append the current id.
             // Each ancestor's Path is kept correct by this method on every save, so we can
             // reuse it instead of walking the chain one entity at a time.
-            var parent = dbContext.Set<T>()
+            var parent = await dbContext.Set<T>()
                 .AsNoTracking()
                 .Where(e => e.Id == entity.ParentId.Value)
                 .Select(e => new { e.Path })
-                .FirstOrDefault();
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (parent != null && parent.Path.Count > 0)
             {
@@ -86,11 +92,11 @@ public static class DbContextExtensions
 
             if (ancestorIds is { Count: > 0 })
             {
-                var ancestorUrls = dbContext.Set<T>()
+                var ancestorUrls = await dbContext.Set<T>()
                     .AsNoTracking()
                     .Where(e => ancestorIds.Contains(e.Id) && e.Url != null)
                     .Select(e => new { e.Id, e.Url })
-                    .ToList();
+                    .ToListAsync(cancellationToken);
 
                 orderedUrls.AddRange(ancestorIds
                     .Select(id => ancestorUrls.FirstOrDefault(a => a.Id == id)?.Url)
@@ -104,6 +110,13 @@ public static class DbContextExtensions
 
         return path;
     }
+
+    /// <summary>Blocks on two queries; use <see cref="BuildPathAsync{T}"/> (ZA-082).</summary>
+    [Obsolete("Use BuildPathAsync. This blocks the thread on its queries.")]
+    public static List<Guid> BuildPath<T>(this T entity, IZauberDbContext dbContext, bool isUpdate, IOptions<ZauberSettings> settings)
+        where T : class, IBaseItem
+        // Off the caller's context, so a wait from a Blazor circuit can't deadlock on the continuation
+        => Task.Run(() => entity.BuildPathAsync(dbContext, isUpdate, settings)).GetAwaiter().GetResult();
 
     
     /// <summary>Cache key for a query with <paramref name="cacheType"/> as its prefix (SQL and includes, hashed).</summary>
@@ -289,8 +302,37 @@ public static class DbContextExtensions
     /// <param name="pageSize"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
+    [Obsolete("Use ToPaginatedListAsync. This blocks the thread on its queries.")]
     public static PaginatedList<T> ToPaginatedList<T>(this IQueryable<T> items, int pageIndex, int pageSize)
     {
         return new PaginatedList<T>(items, pageIndex, pageSize);
+    }
+
+    /// <summary>
+    /// One page of <paramref name="items"/> (<paramref name="pageIndex"/> starts at 1), with the total count. A first
+    /// page that isn't full holds every item, so no <c>COUNT</c> is sent for it. A query that isn't EF Core's (an
+    /// in-memory list) is paged in memory.
+    /// </summary>
+    public static async Task<PaginatedList<T>> ToPaginatedListAsync<T>(this IQueryable<T> items, int pageIndex,
+        int pageSize, CancellationToken cancellationToken = default)
+    {
+        if (items.Provider is not IAsyncQueryProvider)
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            return new PaginatedList<T>(items, pageIndex, pageSize);
+#pragma warning restore CS0618
+        }
+
+        var skip = (pageIndex - 1) * pageSize;
+        var list = await (skip > 0 ? items.Skip(skip).Take(pageSize) : items.Take(pageSize))
+            .ToListAsync(cancellationToken);
+        var count = skip <= 0 && list.Count < pageSize ? list.Count : await items.CountAsync(cancellationToken);
+        return new PaginatedList<T>
+        {
+            PageIndex = pageIndex,
+            Items = list,
+            TotalItems = count,
+            TotalPages = (int)Math.Ceiling(count / (double)pageSize)
+        };
     }
 }
