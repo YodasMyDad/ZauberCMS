@@ -5,6 +5,7 @@ using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Audit.Parameters;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
+using ZauberCMS.Core.Installer;
 
 namespace ZauberCMS.Core.Jobs;
 
@@ -22,6 +23,12 @@ public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger
     {
         try
         {
+            if (!serviceProvider.GetRequiredService<InstallState>().IsDatabaseConfigured)
+            {
+                // The installer has not been given a database yet; the next run is tomorrow
+                return;
+            }
+
             using var scope = serviceProvider.CreateScope();
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
             var contentService = scope.ServiceProvider.GetRequiredService<IContentService>();

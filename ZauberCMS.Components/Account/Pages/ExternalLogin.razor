@@ -95,6 +95,8 @@
         }
 
         _message = $"We could not sign you in with {_externalLoginInfo.ProviderDisplayName ?? _externalLoginInfo.LoginProvider}. " +
-                   "An account is only created when the provider confirms your email address.";
+                   ((await DataService.GetGlobalSettings()).AllowRegistration
+                       ? "An account is only created when the provider confirms your email address."
+                       : "This site is not accepting new accounts.");
     }
 }

@@ -1,72 +1,142 @@
 ﻿@page "/Account/Register"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
 @using Microsoft.AspNetCore.RateLimiting
+@using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
+@using ZauberCMS.Core
 @using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Providers
+@using ZauberCMS.Core.Security.Interfaces
+@using ZauberCMS.Core.Security.Models
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
 @attribute [ExcludeFromInteractiveRouting]
-@attribute [EnableRateLimiting("login")]
+@attribute [EnableRateLimiting(ZauberSetup.RegisterRateLimitPolicy)]
 
 <LayoutView Layout="LayoutType">
-    <PageTitle>Register</PageTitle>
-
-    <div style="width: 100%; max-width: 700px;">
-        <StatusMessage ResultMessages="@ResultMessages"/>
-        @if (AuthState?.User.Identity?.IsAuthenticated != true)
+    @if (!RegistrationOpen)
+    {
+        @* Registration is turned off (GlobalSettings.AllowRegistration): this address does not exist *@
+        <PageTitle>Page not found</PageTitle>
+        @if (NotFoundType != null)
         {
-            <EditForm Model="RegisterUserCommand" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register" style="width: 100%;">
-                <DataAnnotationsValidator/>
-                <h3>Create a new account.</h3>
-                <ValidationSummary class="text-danger" role="alert"/>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="RegisterUserCommand!.Username" class="form-control" aria-required="true" placeholder="Username"/>
-                    <label for="username">Username</label>
-                    <ValidationMessage For="() => RegisterUserCommand.Username" class="text-danger"/>
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="RegisterUserCommand.Email" type="email" class="form-control" aria-required="true" placeholder="name@example.com"/>
-                    <label for="email">Email</label>
-                    <ValidationMessage For="() => RegisterUserCommand.Email" class="text-danger"/>
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="RegisterUserCommand.Password" class="form-control" aria-required="true" placeholder="password"/>
-                    <label for="password">Password</label>
-                    <ValidationMessage For="() => RegisterUserCommand.Password" class="text-danger"/>
-                </div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-            </EditForm>
-            <ExternalLoginPicker/>   
+            <DynamicComponent Type="NotFoundType"/>
         }
-    </div>
-    
+        else
+        {
+            <h3>Page not found</h3>
+        }
+    }
+    else
+    {
+        <PageTitle>Register</PageTitle>
+
+        <div style="width: 100%; max-width: 700px;">
+            <StatusMessage ResultMessages="@ResultMessages"/>
+            @if (AuthState?.User.Identity?.IsAuthenticated != true)
+            {
+                <EditForm Model="RegisterUserCommand" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register" style="width: 100%;">
+                    <DataAnnotationsValidator/>
+                    <h3>Create a new account.</h3>
+                    <ValidationSummary class="text-danger" role="alert"/>
+                    <div class="form-floating mb-3">
+                        <InputText id="username" @bind-Value="RegisterUserCommand!.Username" class="form-control" autocomplete="nickname" aria-required="true" placeholder="Username"/>
+                        <label for="username">Username</label>
+                        <ValidationMessage For="() => RegisterUserCommand.Username" class="text-danger"/>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText id="email" @bind-Value="RegisterUserCommand.Email" type="email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com"/>
+                        <label for="email">Email</label>
+                        <ValidationMessage For="() => RegisterUserCommand.Email" class="text-danger"/>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText id="password" type="password" @bind-Value="RegisterUserCommand.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password"/>
+                        <label for="password">Password</label>
+                        <ValidationMessage For="() => RegisterUserCommand.Password" class="text-danger"/>
+                    </div>
+                    <FormProtectionFields Token="@FormToken"/>
+                    @if (CaptchaProvider != null)
+                    {
+                        <div class="mb-3">
+                            <DynamicComponent Type="CaptchaProvider.Component"/>
+                        </div>
+                    }
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+                </EditForm>
+                <ExternalLoginPicker/>
+            }
+        </div>
+    }
 </LayoutView>
 
 @code {
     [SupplyParameterFromForm] public RegisterUserParameters? RegisterUserCommand { get; set; }
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
 
     [Inject] public IdentityRedirectManager RedirectManager { get; set; } = null!;
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    [Inject] public IFormProtectionService FormProtection { get; set; } = null!;
+    [Inject] public ProviderService ProviderService { get; set; } = null!;
+    [Inject] public ILogger<Register> Logger { get; set; } = null!;
 
     private List<ResultMessage> ResultMessages { get; set; } = [];
     private Type LayoutType { get; set; } = null!;
     private AuthenticationState? AuthState { get; set; }
+    private bool RegistrationOpen { get; set; }
+    private Type? NotFoundType { get; set; }
+    private ICaptchaProvider? CaptchaProvider { get; set; }
+    private string? FormToken { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
-        RegisterUserCommand ??= new();
         var allLayouts = ExtensionManager.GetImplementations<IAccountLayout>(true);
         if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
         {
             LayoutType = accountLayout;
         }
+
+        RegistrationOpen = (await DataService.GetGlobalSettings()).AllowRegistration;
+        if (!RegistrationOpen)
+        {
+            if (HttpContext is { Response.HasStarted: false })
+            {
+                HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            }
+
+            var notFound = Settings.Value.NotFoundComponent;
+            if (notFound != null && ExtensionManager.GetImplementations<IContentView>(true).TryGetValue(notFound, out var view))
+            {
+                NotFoundType = view;
+            }
+
+            return;
+        }
+
+        CaptchaProvider = ProviderService.CaptchaProvider;
+
+        // Shown again after a refused post: keep the token that came with it, so the time the visitor has
+        // already spent on the form still counts
+        if (HttpContext != null && HttpMethods.IsPost(HttpContext.Request.Method) && HttpContext.Request.HasFormContentType)
+        {
+            var posted = HttpContext.Request.Form[FormProtection.TokenFieldName].ToString();
+            if (FormProtection.Validate(posted, null) != FormProtectionResult.Expired)
+            {
+                FormToken = posted;
+            }
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        RegisterUserCommand ??= new();
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (AuthState?.User.Identity?.IsAuthenticated == true)
+        if (RegistrationOpen && AuthState?.User.Identity?.IsAuthenticated == true && ResultMessages.Count == 0)
         {
             ResultMessages.Add(new ResultMessage{Message = "You are already logged in", MessageType = ResultMessageType.Warning});
         }
@@ -74,24 +144,64 @@
 
     public async Task RegisterUser(EditContext editContext)
     {
-        if (editContext.Validate())
+        if (!RegistrationOpen || HttpContext == null || !editContext.Validate())
         {
-            RegisterUserCommand!.AutoLogin = true;
-            var result = await MembershipService.RegisterUserAsync(RegisterUserCommand);
+            return;
+        }
 
-            if (result.Success)
-            {
-                if (!result.NavigateToUrl.IsNullOrWhiteSpace())
+        // A script, not a person? (the hidden field, and how quickly the form came back)
+        var protection = FormProtection.Validate(HttpContext);
+        if (protection != FormProtectionResult.Passed)
+        {
+            Logger.LogInformation("Registration from {RemoteIp} refused by form protection: {Reason}",
+                HttpContext.Connection.RemoteIpAddress, protection);
+            ResultMessages =
+            [
+                new ResultMessage(protection switch
                 {
-                    RedirectManager.RedirectTo(result.NavigateToUrl);
-                }
+                    FormProtectionResult.TooFast => "That was quick. Please send the form again.",
+                    FormProtectionResult.Expired => "The form was open for too long. Please send it again.",
+                    _ => "We could not create your account. Please try again."
+                }, ResultMessageType.Error)
+            ];
+            return;
+        }
 
-                ResultMessages = result.Messages.SuccessMessages().ToList();
-            }
-            else
+        if (CaptchaProvider != null)
+        {
+            bool verified;
+            try
             {
-                ResultMessages = result.Messages.ErrorMessages().ToList();
+                verified = await CaptchaProvider.VerifyAsync(HttpContext, HttpContext.RequestAborted);
             }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Logger.LogError(ex, "CAPTCHA provider {Provider} failed", CaptchaProvider.GetType().FullName);
+                verified = false;
+            }
+
+            if (!verified)
+            {
+                ResultMessages = [new ResultMessage("Please complete the check and send the form again.", ResultMessageType.Error)];
+                return;
+            }
+        }
+
+        RegisterUserCommand!.AutoLogin = true;
+        var result = await MembershipService.RegisterUserAsync(RegisterUserCommand);
+
+        if (result.Success)
+        {
+            if (!result.NavigateToUrl.IsNullOrWhiteSpace())
+            {
+                RedirectManager.RedirectTo(result.NavigateToUrl);
+            }
+
+            ResultMessages = result.Messages.SuccessMessages().ToList();
+        }
+        else
+        {
+            ResultMessages = result.Messages.ErrorMessages().ToList();
         }
     }
 

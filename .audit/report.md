@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 7 (2026-11-26): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 628 (528 pass, 100 skipped: 97 SQL Server variants without `ZAUBER_TEST_SQLSERVER`, 3 for open findings ZA-011, ZA-036, ZA-118), PostgreSQL and Redis tests in Docker; `/audit changed` run on the phase (three reviewers). Next free ID: ZA-153
 After Roadmap Phase 6 (2026-11-25): Build PASS · Warnings: 0 · Tests: 428 (425 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118), PostgreSQL and Redis tests in Docker; `/audit changed` run on the phase
 After Roadmap Phase 5 (2026-11-25): Build PASS · Warnings: 0 · Tests: 315 (312 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118); `/audit changed` run on the phase
 After the Phase 4 follow-ups (2026-11-25, RTE 4.0.0): Build PASS · Warnings: 0 · Tests: 259 (256 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118)
@@ -19,19 +20,13 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | Severity | Open | Fixed this run | Resolved since last run |
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
-| High | 10 | 19 | 0 |
-| Medium | 45 | 27 | 0 |
-| Low | 39 | 5 | 1 |
+| High | 9 | 20 | 0 |
+| Medium | 43 | 30 | 0 |
+| Low | 43 | 5 | 1 |
 
-**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-148.
+**Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-148.
 
 ## Open findings
-
-### ZA-004 [High/High] First registered user becomes Admin (re-opens if all users soft-deleted)
-
-- Where: `ZauberCMS.Core/Extensions/RoleExtensions.cs:31` · Category: D
-- Fix: install-time setup flow / explicit bootstrap token. · Blocked by: product decision.
-- Owner decision 2026-11-25: replace with an explicit setup step — a polished installer (Roadmap Phase 7). No longer blocked.
 
 ### ZA-006 [High/Medium] Media recycle bin has no UI — soft-deleted media can't be restored or purged
 
@@ -109,8 +104,9 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-011 [Medium/High] Two DbContext instances per scope
 
-- Where: `ZauberCMS.Core/ZauberSetup.cs:169-186` (`AddDbContext` + `AddScoped<IZauberDbContext, …>`) · Category: A/F
+- Where: `ZauberCMS.Core/ZauberSetup.cs:195-219` (`AddDbContext` per provider + factory `AddScoped` for `IZauberDbContext`, `IUserStore<User>`, `IRoleStore<Role>`) · Category: A/F
 - Issue: Identity stores and services don't share tracker/transaction. Listed in Standards → Known deviations.
+- Reconciled 2026-11-26 (Phase 7): the per-provider `AddScoped<IZauberDbContext, …>` and `AddEntityFrameworkStores` calls are gone (the `switch` now only calls `AddDbContext`); `IZauberDbContext` is built by a factory while the Identity stores take the `AddDbContext` instance, so there are still two contexts per scope.
 
 ### ZA-012 [Medium/High] `SaveChangesAndLog` hooks see `Unchanged` after audit save; ContentType veto can't roll back
 
@@ -130,14 +126,6 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 ### ZA-018 [Medium/Medium] `SaveTagItemAsync` bypasses `SaveChangesAndLog` hooks
 
 - Where: `ZauberCMS.Core/Tags/Services/TagService.cs:222-224` · Category: C
-
-### ZA-023 [Medium/Medium] Promotion via `AdminEmailAddresses` without confirmed email
-
-- Where: `RoleExtensions.cs:32-33`; `SignInRequireConfirmedAccount: false` · Category: D · Blocked by: deliberate feature.
-
-### ZA-024 [Medium/Low] Registration flooding — only the shared "login" limiter, no CAPTCHA
-
-- Where: `ZauberCMS.Components/Account/Pages/Register.razor:11` · Category: D · Blocked by: new dependency.
 
 ### ZA-037 [Medium/High] Block list: deleting a block keeps its pending descendants
 
@@ -172,7 +160,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-061 [Medium/High] Front-end entry cache is 5 seconds, not 5 minutes; key includes host and query string
 
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:907-913`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:40-46` · Category: B · Since: 2026-11-25
+- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:999-1005`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:55-61` · Category: B · Since: 2026-11-25
 - Issue / Trigger: The call passes `(0, 5)` = 5 s sliding; any URL idle longer re-runs 4-5 queries and every distinct query string is its own entry.
 - Fix: intended TTL; key on host + path. · Blocked by: nothing.
 
@@ -214,7 +202,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-073 [Medium/Medium] Bulk admin operations run item by item
 
-- Where: `ZauberCMS.Components/ContextMenus/ContentMenus/RestrictAccessContextMenu.cs:94-125`, `ZauberCMS.Core/Content/Services/ContentService.cs:681-683,727-730,828`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:74-78,130-133` · Category: B · Since: 2026-11-25
+- Where: `ZauberCMS.Components/ContextMenus/ContentMenus/RestrictAccessContextMenu.cs:94-125`, `ZauberCMS.Core/Content/Services/ContentService.cs:739-741,785-788,899`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:81-85,137-140` · Category: B · Since: 2026-11-25
 - Issue / Trigger: Restrict-access does a full save (version + cache flush) per descendant with no transaction; copy queries per block; the sitemap stops at 2000 items.
 - Fix: batch. · Blocked by: save-hook behaviour.
 
@@ -244,7 +232,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-083 [Medium/High] Daily audit cleanup loads every expired row, on every app start
 
-- Where: `ZauberCMS.Core/Audit/Services/AuditService.cs:120-130`, `ZauberCMS.Core/Jobs/DailyJob.cs:17` · Category: A · Since: 2026-11-25
+- Where: `ZauberCMS.Core/Audit/Services/AuditService.cs:120-130`, `ZauberCMS.Core/Jobs/DailyJob.cs:18` · Category: A · Since: 2026-11-25
 - Issue / Trigger: `RemoveRange(IQueryable)` materialises and tracks all audits older than 90 days.
 - Fix: `ExecuteDeleteAsync`. · Blocked by: nothing.
 
@@ -274,7 +262,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-090 [Medium/High] Unwired MVC rendering path ships as public API
 
-- Where: `ZauberCMS.Core/ZauberSetup.cs:121,239,308-313,423-433`, `ZauberCMS.Routing/ZauberCMS.Routing.csproj:17` · Category: F · Since: 2026-11-25
+- Where: `ZauberCMS.Core/ZauberSetup.cs:135,295,372-377,554-564`, `ZauberCMS.Routing/ZauberCMS.Routing.csproj:17` · Category: F · Since: 2026-11-25
 - Issue / Trigger: `ZauberRouteValueTransformer`, `ContentFinderPipeline`, `Views/ZauberRender/*`, view components and `Rendering/*` are registered or shipped but never mapped.
 - Fix: `[Obsolete]` now, remove in the next major; register memory cache explicitly first. · Blocked by: public API.
 
@@ -289,12 +277,14 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Where: `ZauberCMS.Core/Plugins/AssemblyManager.cs:10-12,23` · Category: F · Since: 2026-11-25
 - Issue / Trigger: Implementations, mappings, factories, middleware and unused public mutable statics are all frozen by the compatibility rule.
 - Fix: make non-contract types internal before the next major. · Blocked by: public API.
+- Reconciled 2026-11-26 (Phase 7): the installer and form protection added 28 more public types (`ZauberCMS.Core.Installer`, `ZauberCMS.Core.Security`: 22 in `.cs` files and six Razor components); "no internal ones" no longer holds — `InstallerDatabase` and `InstallerAssets` are internal.
 
 ### ZA-093 [Medium/Medium] Write services need a Blazor component scope
 
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs:29`, `ZauberCMS.Core/Membership/Services/MembershipService.cs:35`, `ZauberCMS.Core/Media/Services/MediaService.cs:30` · Category: F · Since: 2026-11-25
 - Issue / Trigger: Services inject `AuthenticationStateProvider` (27 uses), so save or delete can't be called from a controller, API or hosted service.
 - Fix: `ICurrentUserAccessor` with an HttpContext fallback. · Blocked by: public constructors.
+- Reconciled 2026-11-26 (Phase 7): the installer works around the same limitation by setting the authentication state for its own scope (`ZauberCMS.Core/Installer/Services/InstallService.cs:444-453`, `RunAsAsync`).
 
 ### ZA-094 [Medium/Medium] Template pins an SDK-internal asset package at 10.0.0
 
@@ -304,13 +294,13 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-095 [Medium/High] Admin and reserved-path detection is a bare prefix match
 
-- Where: `ZauberCMS/Components/App.razor:68-77`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:28-30`, `ZauberCMS.Core/Middleware/RedirectMiddleware.cs:26-28` · Category: E · Since: 2026-11-25
+- Where: `ZauberCMS/Components/App.razor:64-73`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:42-44`, `ZauberCMS.Core/Middleware/RedirectMiddleware.cs:34-36` · Category: E · Since: 2026-11-25
 - Issue / Trigger: A page at `/administration` renders as admin (interactive circuit, Radzen assets) for visitors; `/accounting` or `/api-docs` skip culture and redirect handling.
 - Fix: match on a segment boundary via one shared helper. · Blocked by: nothing.
 
 ### ZA-096 [Medium/Medium] Admin scripts don't load when arriving by enhanced navigation
 
-- Where: `ZauberCMS/Components/App.razor:34-45`, `ZauberCMS.Components/Pages/NewSite.razor:8` · Category: E · Since: 2026-11-25
+- Where: `ZauberCMS/Components/App.razor:32-41`, `ZauberCMS.Components/Pages/NewSite.razor:8` · Category: E · Since: 2026-11-25
 - Issue / Trigger: Scripts inserted by enhanced navigation don't execute, so Radzen interop throws. Needs a browser check.
 - Fix: `data-enhance-nav="false"` on links into admin. · Blocked by: nothing.
 
@@ -371,11 +361,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-031 [Low/High] MD5 for username/gravatar hashing
 
-- Where: `ZauberCMS.Core/Extensions/StringExtensions.cs:315`, `Membership/ZauberSignInManager.cs:149` · Category: D
+- Where: `ZauberCMS.Core/Extensions/StringExtensions.cs:315`, `Membership/ZauberSignInManager.cs:168` · Category: D
 
 ### ZA-032 [Low/High] Placeholder secrets in packaged appsettings
 
-- Where: `ZauberCMS/appsettings.json:51,59,69` · Category: D
+- Where: `ZauberCMS/appsettings.json:61,70,81` · Category: D
 - Reconciled 2026-11-25: placeholders are now at lines 68-69 in all three appsettings files.
 
 ### ZA-033 [Low/Medium] Soft-deleted users keep username/email unique-index slots and PII
@@ -390,13 +380,14 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-104 [Low/High] Image-resize cache is unbounded and upscaling is on
 
-- Where: `ZauberCMS.Core/Settings/ZauberSettings.cs:48,60` · Category: D · Since: 2026-11-25
+- Where: `ZauberCMS.Core/Settings/ZauberSettings.cs:100,112` · Category: D · Since: 2026-11-25
 - Issue / Fix: Anonymous size/quality variations can fill the disk; default `AllowUpscale=false` and a finite `MaxCacheBytes`.
 
 ### ZA-105 [Low/High] Public `ExternalLoginAsync` skips the verified-email and `CanSignIn` gates
 
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:791-810` · Category: D · Since: 2026-11-25
+- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:841-860` · Category: D · Since: 2026-11-25
 - Issue / Fix: Unused by shipped pages; remove the fallback or mark `[Obsolete]`.
+- Reconciled 2026-11-26 (Phase 7): the fallback now refuses when `GlobalSettings.AllowRegistration` is off (`:835-839`); the rest of the finding stands.
 
 ### ZA-106 [Low/Medium] Login reveals unconfirmed accounts and re-sends confirmation emails
 
@@ -405,8 +396,9 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-107 [Low/High] Email addresses written to logs
 
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:643,664,750,920,972`, `ZauberCMS.Core/Membership/ZauberSignInManager.cs:76` · Category: D · Since: 2026-11-25
+- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:664,685,795,1001,1086`, `ZauberCMS.Core/Installer/Services/InstallService.cs` (`RecoverAdminAsync`) · Category: D · Since: 2026-11-25
 - Issue / Fix: Log the user id instead.
+- Reconciled 2026-11-26 (Phase 7): `InstallService.RecoverAdminAsync` logs the user name of the account named by `Zauber:Identity:RecoverAdminUser` (not the configured value). The `ZauberSignInManager.cs:76` log cited before (unverified email) was removed in Phase 4.
 
 ### ZA-108 [Low/High] Admin loads Sortable.js from a CDN without SRI; package scripts not fingerprinted
 
@@ -425,7 +417,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-111 [Low/High] Hosted services and middleware ignore cancellation
 
-- Where: `ZauberCMS.Core/Jobs/DailyJob.cs:21-45`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:33,43,108`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:41` · Category: A · Since: 2026-11-25
+- Where: `ZauberCMS.Core/Jobs/DailyJob.cs:22-52`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:34,44,115`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:56` · Category: A · Since: 2026-11-25
 - Issue / Fix: `BackgroundService` + `PeriodicTimer`; forward `RequestAborted`.
 
 ### ZA-112 [Low/High] SortableList drops callback tasks; `DotNetObjectReference` can leak
@@ -440,7 +432,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-114 [Low/High] Layouts set process-wide culture; sitemap formats with current culture and drops the home page
 
-- Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:81-85`, `ZauberCMS.Components/Pages/BlankLayout.razor:29-33`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:66-69,173-174` · Category: A/C · Since: 2026-11-25
+- Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:81-85`, `ZauberCMS.Components/Pages/BlankLayout.razor:29-33`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:74-77,180-181` · Category: A/C · Since: 2026-11-25
 - Issue / Fix: Remove `DefaultThreadCurrentCulture` writes; invariant culture; treat `Guid.Empty` redirect as null.
 
 ### ZA-115 [Low/High] Smaller performance items
@@ -460,7 +452,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-118 [Low/High] Packaged `appsettings.json` has no `Zauber:ImageResize` section
 
-- Where: `ZauberCMS/appsettings.json:74` · Category: F · Since: 2026-11-25
+- Where: `ZauberCMS/appsettings.json:88` (end of `Plugins`; Web and template continue with `ImageResize` at `:89`) · Category: F · Since: 2026-11-25
 - Issue / Fix: Web and template have it; behaviour identical via code defaults. Add it and a key-parity test.
 
 ### ZA-119 [Low/High] Package metadata gaps and csproj cruft
@@ -470,18 +462,19 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ### ZA-120 [Low/High] Discovery and configuration fail silently or late
 
-- Where: `ZauberCMS.Core/Plugins/ExtensionManager.cs:43,68,192,203`, `ZauberCMS.Core/ZauberSetup.cs:70-72` · Category: F · Since: 2026-11-25
+- Where: `ZauberCMS.Core/Plugins/ExtensionManager.cs:43,68,192,203`, `ZauberCMS.Core/ZauberSetup.cs:83-85` · Category: F · Since: 2026-11-25
 - Issue / Fix: Bootstrap skips are not logged; type cache keyed by `T` alone; mistyped `Zauber:Plugins:*` throws `KeyNotFoundException`; no options validation.
 
 ### ZA-121 [Low/High] DI leftovers
 
-- Where: `ZauberCMS.Core/ZauberSetup.cs:95-102,198,201,236` · Category: F · Since: 2026-11-25
+- Where: `ZauberCMS.Core/ZauberSetup.cs:109-116,223,226,287` · Category: F · Since: 2026-11-25
 - Issue / Fix: Unused scoped `HttpClient` and `IUserEmailStore`; `SignInManager` registered twice; unused `Actions` on `ContentNavGroup`.
 
 ### ZA-123 [Low/High] Template and sample rough edges
 
-- Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/Properties/launchSettings.json:19` · Category: F · Since: 2026-11-25
+- Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/Properties/launchSettings.json:19`, `ZauberCMS.Web/Program.cs:13` · Category: F · Since: 2026-11-25
 - Issue / Fix: Launch profile named "Umbraco.Web.UI"; no template `.gitignore`; no starter `_Imports`, layout or view; sample points at a non-existent `/Home/Error`.
+- Reconciled 2026-11-26 (Phase 7): the starter kit added `_Imports.razor`, `Layouts/MainLayout.razor` and two views (`Views/HomeView.razor`, `Views/TextPageView.razor`) to the template, so that part is resolved. Still open: the "Umbraco.Web.UI" profile name, no template `.gitignore`, and `/Home/Error` (the sample's `ZauberCMS.Web/Program.cs:13` uses it and no such route exists; the template's `Program.cs:13` has the same line commented out).
 
 ### ZA-124 [Low/High] API convention drift to settle before the next major
 
@@ -550,8 +543,87 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 - Fix: lock the content row first (`UPDATE … SET DateUpdated = DateUpdated WHERE Id = @id`) and read `maxVersion`
   inside the transaction, or retry once on a unique violation. · Blocked by: nothing.
 
+### ZA-149 [Low/High] The login and registration rate limits are fixed in code
+- Where: `ZauberCMS.Core/ZauberSetup.cs` (`AddRateLimiter`: policies `"login"` and `"register"`) · Category: F · Since: 2026-11-26 (Phase 7 audit)
+- Issue / Trigger: 10 requests per address in 5 minutes for login-like pages, 5 POSTs in 10 minutes for
+  registration, counting refused attempts. A site cannot change them (a second `AddPolicy` with the same name
+  throws), and behind a proxy without `Zauber:ForwardedHeaders` every visitor shares one allowance.
+- Fix: bind the limits to `Zauber:Identity` settings with today's values as defaults. · Blocked by: nothing.
+
+### ZA-150 [Low/High] A form-protection token can be used again for 12 hours
+- Where: `ZauberCMS.Core/Security/Services/FormProtectionService.cs` · Category: D · Since: 2026-11-26 (Phase 7 audit)
+- Issue / Trigger: the token is a signed timestamp, not single-use and not tied to a visitor. A script written
+  for the site fetches one token, waits out the minimum fill time once and reuses it; only the rate limit and a
+  CAPTCHA stop it. Documented in `Docs/Installer.md` as the limit of these checks.
+- Fix: add a random id to the token and remember used ids until they expire (per server unless stored in shared
+  state). · Blocked by: `IFormProtectionService` is public API from v5 on; decide before release.
+
+### ZA-151 [Low/Medium] The installer's pages cannot be restyled or extended from a site
+- Where: `ZauberCMS.Core/Installer/Middleware/InstallerMiddleware.cs` (renders `InstallerPage` directly), `ZauberCMS.Core/Installer/Components/` · Category: F · Since: 2026-11-26 (Phase 7 audit)
+- Issue / Trigger: `IInstallService` can be replaced and `InstallService`'s methods are virtual, but the pages,
+  their steps and their styling are fixed. An agency cannot brand the installer or add a question, which sits
+  badly with "replaceable defaults".
+- Fix: a replaceable page component or a discovered "installer step" interface. · Blocked by: owner decision
+  (Roadmap, open questions).
+
+### ZA-152 [Low/High] The tests cannot see a scoping mistake in "run as the new administrator"
+- Where: `tests/ZauberCMS.Core.Tests/Infrastructure/TestSite.cs` (`TestAuthenticationStateProvider`, `TestSignIn`), `ZauberCMS.Core/Installer/Services/InstallService.cs` (`RunAsAsync`) · Category: F · Since: 2026-11-26 (Phase 7 audit)
+- Issue / Trigger: the test provider writes the signed-in user to one object shared by every scope, while the real
+  provider is per scope. `The_starter_kit_runs_as_the_new_administrator` would still pass if the installer set
+  the user on the wrong scope. The browser run with a starter kit is what covers it today.
+- Fix: a per-scope sign-in holder in the test site, falling back to the shared one. · Blocked by: nothing.
+
 ## Fixed this run / Resolved since last run
 
+- **Phase 7 (2026-11-26): installer, first administrator, registration.** How it works: [Docs/Installer.md](../Docs/Installer.md).
+  - **ZA-004 [High] First registered user became Admin — fixed.** `RoleExtensions.AssignStartingRoleAsync` no
+    longer looks at how many users exist. The administrator is created by the installer (`InstallerMiddleware`,
+    `IInstallService`), which is reachable only while the database has no installed flag (`GlobalData` alias
+    `ZauberInstalled`). The flag is never removed, and a database with any user row, deleted or not, gets it at
+    start-up, so the path cannot reopen by deleting accounts. Recovery for a site without an administrator is the
+    configuration key `Zauber:Identity:RecoverAdminUser`. Accepted by the owner (D20): until a new site is
+    installed, whoever reaches `/install` first becomes its administrator; both pre-install states log a warning.
+    Tests: `InstallServiceTests`, `InstallerMiddlewareTests`, `DatabaseSetupTests`, `StartingRoleTests`,
+    `RecoverAdminTests`. Browser: see the roadmap, Phase 7.
+  - **ZA-023 [Medium] Admin-list promotion without proof of the address — fixed (D22, built differently).**
+    Promotion at registration needs `EmailConfirmed`, which only a provider-verified external sign-up has. A
+    password registration with a listed address gets the starting role and is emailed a link to choose the
+    password; `MembershipService.ResetPasswordAsync` then confirms the address and promotes
+    (`PromoteListedAdminAsync`). `ConfirmEmailAsync` deliberately does not promote: the first version did, and
+    the phase's audit showed that a stranger who registers with an administrator's address and their own
+    password becomes an administrator when the confirmation link is opened by its recipient or a mail scanner.
+    The list is compared without case. Tests: `StartingRoleTests` (the attack, the reset path, the change-email
+    path, the email that is sent). Not verified: delivery to a real mailbox.
+  - **ZA-024 [Medium] Registration flooding — fixed (D23).** `GlobalSettings.AllowRegistration` (off: page 404,
+    link hidden, external first sign-in refused); honeypot + minimum fill time (`IFormProtectionService`); own
+    rate limit policy `"register"` (5 POSTs per address in 10 minutes); discovery interface `ICaptchaProvider`,
+    no provider shipped. Tests: `FormProtectionTests`, `ExternalSignUpTests`. Browser: too fast, honeypot,
+    success, 429 after five posts, 404 when off. Not verified: a real CAPTCHA provider.
+  - **ZA-148 [Medium] The home page did not run in its content language — found and fixed in this phase.**
+    Since the ZA-143 fix `CultureMiddleware.IsContentEndpoint` accepted only the `{**slug}` catch-all, but `/` is
+    answered by `ZauberCMS/Components/Pages/Index.razor` (`@page "/"`), so the home page ran in the default
+    request culture while every page below it ran in its own. The Phase 6 test used the catch-all endpoint for
+    `/`, which a real request never has. Now a Razor page at `/` counts as content. Seen in the browser
+    (`<html lang>` of `/` was `en`, of `/about` `de`; both `de` after the fix). Tests: `ContentCultureTests`
+    (`The_home_page_*`).
+
+  - **Found by `/audit changed` on this phase and fixed before the commit** (three independent reviewers):
+    the ZA-023 promotion above; an install that a closed tab could leave half-done, with registration open
+    against the installer's choice (`GlobalSettings` now go in before the account, no request cancellation from
+    the account onwards, a half-made account is removed); the provider sticking after one wrong value typed by
+    hand (`InstallState` fixes it only once a database has been prepared); "has users → installed" able to fire
+    in the middle of an install (only start-up and the install itself apply that rule now); `ISeedData` able to
+    run twice at once (`InitialiseDatabaseAsync` serialises); `AppSettingsWriter` dropping the file's
+    permissions and breaking a file that uses flat `Zauber:Key` names; a starter kit whose constructor throws
+    taking the installer down; no error page for the installer's GET; `RecoverAdminUser` matching a user name
+    that looks like an email address and leaving an unconfirmed account unable to sign in;
+    `IMembershipService.ExternalLoginAsync` creating accounts with registration off (the rest of ZA-105 stands);
+    a SQLite path on a network share accepted by the database step; raw exception text on the installer's
+    catch-all error page.
+  - **Accepted, not fixed:** a live site that loses its database settings shows the installer (owner decision
+    D24: documented and logged as an error at start-up); before install, the database step lets a visitor make
+    the server try connections and check paths (D20: install before the site is public); the factory
+    registrations of the DbContext and Identity stores use reflection on every resolve (microseconds, with ZA-011).
 - **ZA-147 [Low] resolved — not a bug (checked in the browser, 2026-11-25).** Sample site on a scratch copy of the
   dev database, a temporary interactive probe on the German and Spanish pages, enhanced navigation between them and
   the English contact page. Order seen in the log: the circuit hears of the new address first, then the browser

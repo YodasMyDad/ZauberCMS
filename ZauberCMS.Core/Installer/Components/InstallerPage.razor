@@ -1,0 +1,108 @@
+@* The whole installer response. Rendered to a string by InstallerMiddleware (no router, no layout, no
+   interactivity): everything it needs is in the model. *@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="robots" content="noindex, nofollow"/>
+    <title>@(HasProblem ? "Error: " : "")@Title – ZauberCMS</title>
+    <style nonce="@Model.Nonce">@((MarkupString)InstallerAssets.Css)</style>
+</head>
+<body>
+<aside class="rail">
+    <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1105.1 724.1" aria-hidden="true" focusable="false">
+            <path d="M1105.1 433.4C906 361.3 698.3 287.6 496.3 225.5c-98.7-30.4-197.8-59.8-297.7-85.6 17.9-10.1 38.6-15.8 60.6-15.8-68.5 0-124.1-55.6-124.1-124.1 0 68.5-55.6 124.1-124.1 124.1 68.5 0 124.1 55.6 124.1 124.1 0-40.3 19.3-76.2 49-98.8 47.5 24 95.5 46.8 143.6 69.4C473 286.6 620.5 349.9 769.1 410.4 553.9 458.3 340 511.2 127.6 570.9L0 606.7l125.3 30.2c135.9 32.6 272.1 63.7 409.8 87.3-88.6-39-178.8-74.2-269.4-108.3 93.6-17.1 186.9-35.4 280-54.6 183.4-37.6 376.6-83.6 559.4-127.7v-.2ZM135.1 175c-12.4-20.9-30-38.5-50.9-50.9 20.9-12.4 38.5-30 50.9-50.9 12.4 20.9 30 38.5 50.9 50.9-20.9 12.4-38.5 30-50.9 50.9Z"/>
+        </svg>
+        <span>ZauberCMS</span>
+    </div>
+
+    <ol class="steps" aria-label="Installation steps">
+        <li data-state="@DatabaseState" aria-current="@(DatabaseState == "current" ? "step" : null)">
+            Database
+            @if (Model.ConfiguredDatabase != null)
+            {
+                <small>@Model.ConfiguredDatabase</small>
+            }
+        </li>
+        <li data-rail="admin" data-state="@PaneState("admin")">Administrator</li>
+        <li data-rail="site" data-state="@PaneState("site")">Your site</li>
+        <li data-rail="starter" data-state="@PaneState("starter")">Starter content</li>
+        <li data-rail="review" data-state="@PaneState("review")">Review</li>
+    </ol>
+
+    <div class="rail-note">
+        <p>Until the site is installed, anyone who can open this page can install it. Finish before you make the site public.</p>
+        @if (!string.IsNullOrEmpty(Model.Version))
+        {
+            <p>Version @Model.Version</p>
+        }
+    </div>
+</aside>
+
+<main>
+    <div class="sheet">
+        @switch (Model.Step)
+        {
+            case InstallerStep.Database:
+                <InstallerDatabaseStep Model="Model"/>
+                break;
+            case InstallerStep.ManualConfiguration:
+                <InstallerManualStep Model="Model"/>
+                break;
+            case InstallerStep.Setup:
+                <InstallerSetupStep Model="Model"/>
+                break;
+            default:
+                <InstallerMessageStep Model="Model"/>
+                break;
+        }
+    </div>
+</main>
+
+<script nonce="@Model.Nonce">@((MarkupString)InstallerAssets.Script)</script>
+</body>
+</html>
+
+@code {
+    [Parameter, EditorRequired] public InstallerPageModel Model { get; set; } = null!;
+
+    private static readonly string[] Panes = ["admin", "site", "starter", "review"];
+
+    private bool HasProblem =>
+        Model.Errors.Count > 0 || Model.TestResult is { Success: false } || Model.MessageIsProblem;
+
+    private string Title => Model.Step switch
+    {
+        InstallerStep.Database => "Choose a database",
+        InstallerStep.ManualConfiguration => "Finish the database set-up",
+        InstallerStep.Setup => "Install",
+        _ => Model.MessageTitle ?? "Install"
+    };
+
+    private string DatabaseState => Model.Step switch
+    {
+        InstallerStep.Database or InstallerStep.ManualConfiguration => "current",
+        InstallerStep.Message when Model.ConfiguredDatabase == null => "current",
+        _ => "done"
+    };
+
+    // The script moves these as the visitor steps through the form; this is the state before it runs
+    private string PaneState(string pane)
+    {
+        if (Model.Step == InstallerStep.Message && Model.ConfiguredDatabase != null && !Model.MessageIsProblem)
+        {
+            return "done";
+        }
+
+        if (Model.Step != InstallerStep.Setup)
+        {
+            return "todo";
+        }
+
+        var start = Array.IndexOf(Panes, Model.StartPane);
+        var index = Array.IndexOf(Panes, pane);
+        return index < start ? "done" : index == start ? "current" : "todo";
+    }
+}

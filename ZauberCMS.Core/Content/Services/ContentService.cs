@@ -2326,7 +2326,14 @@ public class ContentService(
 
             if (languageIsoCode.IsNullOrWhiteSpace())
             {
-                languageIsoCode = settings.Value.AdminDefaultLanguage;
+                // The site's default language (set by the installer, or in Global Settings); a site that has
+                // none keeps the old fallback, the admin's language
+                using var settingsScope = serviceScopeFactory.CreateScope();
+                var defaultLanguage = (await settingsScope.ServiceProvider.GetRequiredService<Data.Interfaces.IDataService>()
+                    .GetGlobalSettings()).DefaultLanguage;
+                languageIsoCode = defaultLanguage.IsNullOrWhiteSpace()
+                    ? settings.Value.AdminDefaultLanguage
+                    : defaultLanguage;
             }
         }
 

@@ -56,8 +56,10 @@ public sealed class TestSite : IAsyncDisposable
     /// <param name="extraSettings">Configuration keys added to (or replacing) the test defaults.</param>
     /// <param name="databaseProvider"><see cref="SqliteProvider"/> (default), <see cref="PostgreSqlProvider"/> (skips
     /// without Docker) or <see cref="SqlServerProvider"/> (skips without <c>ZAUBER_TEST_SQLSERVER</c>).</param>
+    /// <param name="createUser">False leaves the database without any user and nobody signed in: a site that
+    /// has not been installed yet.</param>
     public static async Task<TestSite> CreateAsync(IDictionary<string, string?>? extraSettings = null,
-        string databaseProvider = SqliteProvider)
+        string databaseProvider = SqliteProvider, bool createUser = true)
     {
         string connectionString;
         SqliteConnection? keepAlive = null;
@@ -95,8 +97,12 @@ public sealed class TestSite : IAsyncDisposable
             }
         }
 
-        site.CurrentUser = await site.CreateUserAsync("test-admin");
-        site.SignIn(site.CurrentUser);
+        if (createUser)
+        {
+            site.CurrentUser = await site.CreateUserAsync("test-admin");
+            site.SignIn(site.CurrentUser);
+        }
+
         return site;
     }
 
@@ -104,8 +110,10 @@ public sealed class TestSite : IAsyncDisposable
     /// Builds the application through the real bootstrap without touching the database.
     /// <paramref name="validateContainer"/> makes the container check every registration and scope rule on build.
     /// </summary>
+    /// <param name="readSettingsFile">Also read <c>appsettings.json</c> in the content root (it wins over the
+    /// test defaults), as a real site does. For tests of the installer, which writes that file.</param>
     public static WebApplication BuildApp(string databaseProvider, string connectionString, string contentRoot,
-        bool validateContainer, IDictionary<string, string?>? extraSettings = null)
+        bool validateContainer, IDictionary<string, string?>? extraSettings = null, bool readSettingsFile = false)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
@@ -129,6 +137,12 @@ public sealed class TestSite : IAsyncDisposable
         if (extraSettings != null)
         {
             builder.Configuration.AddInMemoryCollection(extraSettings);
+        }
+
+        if (readSettingsFile)
+        {
+            builder.Configuration.AddJsonFile(Path.Combine(contentRoot, "appsettings.json"), optional: true,
+                reloadOnChange: false);
         }
 
         builder.AddZauberCms();
@@ -265,8 +279,13 @@ public sealed class TestSignIn
     public ClaimsPrincipal Principal { get; set; } = new(new ClaimsIdentity());
 }
 
-public sealed class TestAuthenticationStateProvider(TestSignIn signIn) : AuthenticationStateProvider
+public sealed class TestAuthenticationStateProvider(TestSignIn signIn)
+    : AuthenticationStateProvider, IHostEnvironmentAuthenticationStateProvider
 {
     public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
         Task.FromResult(new AuthenticationState(signIn.Principal));
+
+    // What code outside a Blazor component uses to run as a user (the installer does, for its new administrator)
+    public void SetAuthenticationState(Task<AuthenticationState> authenticationStateTask) =>
+        signIn.Principal = authenticationStateTask.GetAwaiter().GetResult().User;
 }

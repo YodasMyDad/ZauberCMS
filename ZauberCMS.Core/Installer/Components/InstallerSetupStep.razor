@@ -1,0 +1,124 @@
+@* Administrator, site, starter content and review are one form, sent once: nothing is saved until the last
+   button, so an abandoned install leaves nothing behind. The script shows one part at a time; without it the
+   parts follow each other on the page. *@
+<form method="post" action="@Model.FormAction" data-installer data-start="@Model.StartPane">
+    <input type="hidden" name="@Model.AntiforgeryFieldName" value="@Model.AntiforgeryToken"/>
+    <input type="hidden" name="step" value="setup"/>
+
+    @* Above the parts, so a refused install is explained whichever part is open *@
+    <InstallerNotices Model="Model"/>
+
+    <section data-pane="admin">
+        <h1>Create the administrator</h1>
+        <p class="lead">This account can change everything on the site. You sign in with the email address and the password.</p>
+
+        <div class="field">
+            <label for="admin-name">User name</label>
+            @* Sign-in is by email address: that field is the "username" a password manager should save *@
+            <input type="text" id="admin-name" name="adminName" value="@Model.Setup.AdminName" required maxlength="150" autocomplete="nickname" aria-describedby="admin-name-hint"/>
+            <span class="hint" id="admin-name-hint">Shown next to what you change, in the audit log for example.</span>
+        </div>
+        <div class="field">
+            <label for="admin-email">Email address</label>
+            <input type="email" id="admin-email" name="adminEmail" value="@Model.Setup.AdminEmail" required maxlength="256" autocomplete="username"/>
+        </div>
+        <div class="field">
+            <label for="admin-password">Password</label>
+            <div class="with-button">
+                <input type="password" id="admin-password" name="adminPassword" required autocomplete="new-password" aria-describedby="admin-password-rules"/>
+                <button type="button" class="quiet" data-reveal="admin-password">Show</button>
+            </div>
+            <span class="hint" id="admin-password-rules">@Model.PasswordRules</span>
+        </div>
+
+        <div class="actions">
+            <button type="button" data-go="next">Continue</button>
+        </div>
+    </section>
+
+    <section data-pane="site">
+        <h1>Name your site</h1>
+        <p class="lead">All of this can be changed later in the admin, under Settings.</p>
+
+        <div class="field">
+            <label for="site-name">Site name</label>
+            <input type="text" id="site-name" name="siteName" value="@Model.Setup.SiteName" required maxlength="200"/>
+        </div>
+        @if (Model.Languages.Count > 0)
+        {
+            <div class="field">
+                <label for="site-language">Language</label>
+                <select id="site-language" name="language" required aria-describedby="site-language-hint">
+                    @foreach (var language in Model.Languages)
+                    {
+                        <option value="@language.Value" selected="@(language.Value == Model.Setup.Language)">@language.Name</option>
+                    }
+                </select>
+                <span class="hint" id="site-language-hint">The language your pages are written in. More can be added later.</span>
+            </div>
+        }
+        <div class="check">
+            <input type="checkbox" id="site-registration" name="allowRegistration" value="true" checked="@Model.Setup.AllowRegistration" aria-describedby="site-registration-hint"/>
+            <label for="site-registration">Let visitors create accounts</label>
+            <span class="hint" id="site-registration-hint">Leave this off unless the site has members. While it is off there is no registration page.</span>
+        </div>
+
+        <div class="actions">
+            <button type="button" data-go="next">Continue</button>
+            <button type="button" class="plain" data-go="back">Back</button>
+        </div>
+    </section>
+
+    <section data-pane="starter">
+        <h1>Start with some content?</h1>
+        <p class="lead">Starter content gives you pages and page types to change into your own. An empty site leaves all of that to you.</p>
+
+        <fieldset>
+            <legend class="legend">Starter content</legend>
+            <div class="choices">
+                @foreach (var kit in Model.StarterKits)
+                {
+                    <label class="choice">
+                        <input type="radio" name="starterKit" value="@kit.Value" data-label="@kit.Name" checked="@(kit.Value == (Model.Setup.StarterKit ?? string.Empty))"/>
+                        <span><b>@kit.Name</b>@kit.Description</span>
+                    </label>
+                }
+            </div>
+            @if (Model.StarterKits.Count == 1)
+            {
+                <span class="hint">This project contains no starter content. A site made with <code>dotnet new zaubercms</code> has some.</span>
+            }
+        </fieldset>
+
+        <div class="actions">
+            <button type="button" data-go="next">Continue</button>
+            <button type="button" class="plain" data-go="back">Back</button>
+        </div>
+    </section>
+
+    <section data-pane="review">
+        <h1>Ready to install</h1>
+        <p class="lead">Check what you entered. The administrator, the site details and the starter content are saved when you install.</p>
+
+        <dl class="review">
+            <div><dt>Database</dt><dd>@Model.ConfiguredDatabase</dd></div>
+            <div><dt>Administrator</dt><dd><span data-review="adminName"></span><br/><span data-review="adminEmail"></span></dd></div>
+            <div><dt>Site name</dt><dd data-review="siteName"></dd></div>
+            @if (Model.Languages.Count > 0)
+            {
+                <div><dt>Language</dt><dd data-review="language"></dd></div>
+            }
+            <div><dt>Visitor accounts</dt><dd data-review="allowRegistration" data-on="Visitors can register" data-off="No registration"></dd></div>
+            <div><dt>Starter content</dt><dd data-review="starterKit"></dd></div>
+        </dl>
+
+        <div class="actions">
+            <button type="submit">Install ZauberCMS</button>
+            <button type="button" class="plain" data-go="back">Back</button>
+        </div>
+    </section>
+</form>
+
+@code {
+    [Parameter, EditorRequired] public InstallerPageModel Model { get; set; } = null!;
+}

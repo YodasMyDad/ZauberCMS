@@ -37,6 +37,33 @@ public class ServiceContainerTests
         }
     }
 
+    // A site that starts without a database must still build: the installer chooses the provider later, so all
+    // three DbContexts are registered. A site that has a database registers its own only, as it always has.
+    [Fact]
+    public async Task A_site_without_a_database_builds_a_valid_container_that_can_serve_any_provider()
+    {
+        var contentRoot = TestSite.CreateContentRoot();
+        try
+        {
+            await using var app = TestSite.BuildApp("", "", contentRoot, validateContainer: true);
+            var registered = app.Services.GetRequiredService<IServiceProviderIsService>();
+
+            Assert.True(registered.IsService(typeof(SqliteZauberDbContext)));
+            Assert.True(registered.IsService(typeof(ZauberDbContext)));
+            Assert.True(registered.IsService(typeof(PostgreSqlZauberDbContext)));
+
+            await using var configured = TestSite.BuildApp("Sqlite", "DataSource=:memory:", contentRoot, validateContainer: true);
+            var registeredWhenConfigured = configured.Services.GetRequiredService<IServiceProviderIsService>();
+            Assert.True(registeredWhenConfigured.IsService(typeof(SqliteZauberDbContext)));
+            Assert.False(registeredWhenConfigured.IsService(typeof(ZauberDbContext)));
+            Assert.False(registeredWhenConfigured.IsService(typeof(PostgreSqlZauberDbContext)));
+        }
+        finally
+        {
+            Directory.Delete(contentRoot, recursive: true);
+        }
+    }
+
     [Fact]
     public void Unknown_database_provider_fails_at_startup()
     {

@@ -1,0 +1,50 @@
+@inherits LayoutComponentBase
+@inject IContentService ContentService
+@inject IDataService DataService
+@* The layout of the starter site: the site name, a menu of the pages under the home page, and a footer.
+   It is yours: change the markup here and the styles in wwwroot/css/site.css. *@
+
+<HeadContent>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="@Assets["css/site.css"]"/>
+</HeadContent>
+
+<header class="site-header">
+    <a class="site-name" href="/">@(string.IsNullOrWhiteSpace(SiteName) ? "Home" : SiteName)</a>
+    <nav aria-label="Main">
+        <a href="/">Home</a>
+        @foreach (var item in MenuPages)
+        {
+            @* Always build links to pages with ContentUrl: it knows how a stored URL becomes an address *@
+            <a href="@ContentUrl.SiteRelative(item)">@item.Name</a>
+        }
+    </nav>
+</header>
+
+<main class="site-main">
+    @Body
+</main>
+
+<footer class="site-footer">
+    &copy; @DateTime.UtcNow.Year @SiteName
+</footer>
+
+@code {
+    private string? SiteName { get; set; }
+    private List<Content> MenuPages { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        // The name typed into the installer; change it in the admin under Settings > Global Settings
+        SiteName = (await DataService.GetGlobalSettings()).SiteName;
+
+        var home = await ContentService.GetContentAsync(new GetContentParameters
+        {
+            ContentTypeAlias = Starter.StarterSite.HomePageAlias,
+            IncludeChildren = true,
+            Cached = true
+        });
+        MenuPages = home?.Children.Where(x => !x.HideFromNavigation).OrderBy(x => x.SortOrder).ToList() ?? [];
+    }
+}

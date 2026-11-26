@@ -1,0 +1,59 @@
+/* Styles of the starter site. Nothing here is required by ZauberCMS: replace it with your own. */
+:root {
+    --text: #1f2430;
+    --muted: #5d6475;
+    --line: #dfe2ea;
+    --accent: #3d4fd0;
+    --page: 44rem;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font: 1.05rem/1.65 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: #fff;
+}
+
+a { color: var(--accent); }
+
+.site-header, .site-main, .site-footer {
+    max-width: var(--page);
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+.site-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .5rem 2rem;
+    padding-top: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.site-name { font-weight: 700; font-size: 1.2rem; color: var(--text); text-decoration: none; }
+
+.site-header nav { display: flex; flex-wrap: wrap; gap: 1.25rem; }
+.site-header nav a { color: var(--muted); text-decoration: none; }
+.site-header nav a:hover { color: var(--accent); }
+
+.site-main { padding-top: 3rem; padding-bottom: 4rem; }
+
+.hero h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; margin: 0 0 1rem; }
+.hero p { font-size: 1.25rem; color: var(--muted); margin: 0 0 2.5rem; }
+
+.prose h1 { font-size: clamp(1.8rem, 5vw, 2.4rem); line-height: 1.15; margin: 0 0 1.5rem; }
+.prose h2 { font-size: 1.4rem; margin: 2.25rem 0 .75rem; }
+.prose img { max-width: 100%; height: auto; }
+
+.site-footer {
+    padding-top: 1.25rem;
+    padding-bottom: 2.5rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: .9rem;
+}

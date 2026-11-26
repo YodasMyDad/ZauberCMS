@@ -59,6 +59,56 @@ public class ContentCultureTests : IAsyncLifetime
         Assert.False(CultureMiddleware.IsContentEndpoint(null));
     }
 
+    // The installer's "language of the site" (GlobalSettings.DefaultLanguage) is the language of pages that
+    // have none of their own, before the admin's language
+    [Fact]
+    public async Task A_page_without_a_language_runs_in_the_default_language_of_the_site()
+    {
+        var pageType = await _site.CreateContentTypeAsync("plain");
+        var orphan = await _site.CreateContentAsync(pageType, "Plain");
+        // Not under the German home page: nothing in its path has a language
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            var page = await db.Contents.SingleAsync(c => c.Id == orphan.Id, Ct);
+            page.IsRootContent = false;
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var before = await RunMiddlewareAsync("/plain", Endpoint("/{**slug}"));
+        Assert.Equal("en-US", before.Culture);
+
+        using (var scope = _site.CreateScope())
+        {
+            var dataService = scope.ServiceProvider.GetRequiredService<ZauberCMS.Core.Data.Interfaces.IDataService>();
+            var settings = await ZauberCMS.Core.Extensions.ServiceExtensions.GetGlobalSettings(dataService);
+            settings.DefaultLanguage = "it-IT";
+            Assert.True(await ZauberCMS.Core.Extensions.ServiceExtensions.SaveGlobalSettings(dataService, settings));
+            scope.ServiceProvider.GetRequiredService<ZauberCMS.Core.Shared.Services.ICacheService>()
+                .ClearCachedItemsWithPrefix(nameof(Content));
+        }
+
+        var after = await RunMiddlewareAsync("/plain", Endpoint("/{**slug}"));
+        Assert.NotNull(after.Entry?.Content);
+        Assert.Equal("it-IT", after.Culture);
+    }
+
+    // ZA-148: "/" is answered by a page of its own (Index.razor), not by the catch-all
+    [Fact]
+    public void The_home_page_route_is_content_only_when_a_Razor_page_answers_it()
+    {
+        Assert.True(CultureMiddleware.IsContentEndpoint(HomePageEndpoint()));
+        Assert.False(CultureMiddleware.IsContentEndpoint(Endpoint("/")));
+    }
+
+    [Fact]
+    public async Task The_home_page_runs_in_the_language_of_the_root_page()
+    {
+        var (entry, culture) = await RunMiddlewareAsync("/", HomePageEndpoint());
+
+        Assert.NotNull(entry?.Content);
+        Assert.Equal("de-DE", culture);
+    }
+
     [Fact]
     public async Task A_request_that_is_not_a_page_is_not_looked_up_as_the_root_page()
     {
@@ -224,6 +274,14 @@ public class ContentCultureTests : IAsyncLifetime
 
     private static RouteEndpoint Endpoint(string route) =>
         new(_ => Task.CompletedTask, RoutePatternFactory.Parse(route), 0, EndpointMetadataCollection.Empty, route);
+
+    // What MapRazorComponents builds for a page with @page "/"
+    private static RouteEndpoint HomePageEndpoint() =>
+        new(_ => Task.CompletedTask, RoutePatternFactory.Parse("/"), 0,
+            new EndpointMetadataCollection(
+                new Microsoft.AspNetCore.Components.Endpoints.ComponentTypeMetadata(typeof(HomePage))), "/");
+
+    private sealed class HomePage : ComponentBase;
 
     private sealed class TestNavigation : NavigationManager
     {

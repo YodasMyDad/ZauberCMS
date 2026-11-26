@@ -1,0 +1,38 @@
+<h1>@Model.MessageTitle</h1>
+
+@if (Model.MessageIsProblem)
+{
+    <div class="notice bad" role="alert">
+        @if (Model.MessageLines.Count == 1)
+        {
+            @Model.MessageLines[0]
+        }
+        else
+        {
+            <ul>
+                @foreach (var line in Model.MessageLines)
+                {
+                    <li>@line</li>
+                }
+            </ul>
+        }
+    </div>
+}
+else
+{
+    @foreach (var line in Model.MessageLines)
+    {
+        <p>@line</p>
+    }
+}
+
+@if (Model.MessageLinkUrl != null)
+{
+    <div class="actions">
+        <a class="button" href="@Model.MessageLinkUrl">@Model.MessageLinkText</a>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public InstallerPageModel Model { get; set; } = null!;
+}

@@ -1,0 +1,21 @@
+@implements IContentView
+@layout MainLayout
+@inject IHtmlSanitizerService Sanitizer
+@* The view of the "Home Page" page type. Content is the page being shown; read its properties by alias. *@
+
+<PageTitle>@Content?.Name</PageTitle>
+
+<section class="hero">
+    <h1>@(Content?.GetValue<string>("Heading"))</h1>
+    <p>@(Content?.GetValue<string>("Intro"))</p>
+</section>
+
+<article class="prose">
+    @* Rich text is stored as HTML: always send it through the sanitiser *@
+    @Sanitizer.SanitizeToMarkup(Content?.GetValue<string>("Body"))
+</article>
+
+@code {
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
+}

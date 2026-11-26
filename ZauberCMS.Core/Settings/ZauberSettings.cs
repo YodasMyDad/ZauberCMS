@@ -30,6 +30,7 @@ public class ZauberSettings
     public ImageResizeSettings ImageResize { get; set; } = new();
     public ForwardedHeadersSettings ForwardedHeaders { get; set; } = new();
     public HtmlSanitizerSettings HtmlSanitizer { get; set; } = new();
+    public FormProtectionSettings FormProtection { get; set; } = new();
     public string? NotFoundComponent { get; set; } = "ZauberCMS.Components.Pages.NotFound404";
     public string? StarterComponent { get; set; } = "ZauberCMS.Components.Pages.NewSite";
     public string? MissingView { get; set; } = "ZauberCMS.Components.Pages.MissingView";
@@ -44,6 +45,13 @@ public class Identity
     public int PasswordRequiredLength { get; set; } = 8;
     public int PasswordRequiredUniqueChars { get; set; } = 1;
     public bool SignInRequireConfirmedAccount { get; set; }
+
+    /// <summary>
+    /// Recovery for a site that has no administrator left: the email address or user name of an existing user
+    /// who is made an administrator the next time the site starts (a deleted user is restored and a locked one
+    /// unlocked). Remove the key once it has done its job; while it is set, every start logs a warning.
+    /// </summary>
+    public string? RecoverAdminUser { get; set; }
     public string? AccountLayout { get; set; } = "ZauberCMS.Components.Pages.BlankLayout";
     
     public string DefaultLoginRedirectUrl { get; set; } = "/account/login";
@@ -67,6 +75,16 @@ public class ForwardedHeadersSettings
 
     /// <summary>Networks of trusted proxies in CIDR form, for example <c>10.0.0.0/8</c>.</summary>
     public string[]? KnownNetworks { get; set; }
+}
+
+/// <summary>For <c>IFormProtectionService</c>: the registration page, and any form of a site that uses it.</summary>
+public class FormProtectionSettings
+{
+    /// <summary>
+    /// Seconds that must pass between showing a form and receiving it. A form that comes back faster was
+    /// filled in by a script. 0 turns the check off.
+    /// </summary>
+    public int MinimumFillSeconds { get; set; } = 3;
 }
 
 public class HtmlSanitizerSettings
@@ -110,6 +128,12 @@ public class PluginSettings
 {
     public string? StorageProvider { get; set; }
     public string? EmailProvider { get; set; }
+
+    /// <summary>
+    /// Full type name of the <c>ICaptchaProvider</c> the registration page uses. When empty, the provider the
+    /// site's project contains is used (the first by type name when there are several); with none, no CAPTCHA.
+    /// </summary>
+    public string? CaptchaProvider { get; set; }
 }
 
 public class EmailSettings

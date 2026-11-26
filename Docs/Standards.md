@@ -30,7 +30,7 @@ patterns into new code.
 
 ## 3. Async, lifetimes, DI
 
-- Async all the way. No `.Result`, `.Wait()`, `GetAwaiter().GetResult()` (one documented exception in `ZauberSetup`).
+- Async all the way. No `.Result`, `.Wait()`, `GetAwaiter().GetResult()` (two documented exceptions in `ZauberSetup`, both at start-up: the database initialise and the culture query).
   No sync EF calls (`ToList`, `FirstOrDefault`, `Count`) inside async methods — use the `…Async` overloads.
 - Every public async method takes `CancellationToken cancellationToken = default` **last** and forwards it to EF,
   HTTP and I/O. Components pass a token tied to their lifetime where the work can outlive the component.
@@ -149,7 +149,7 @@ CI running tests and `dotnet list package --vulnerable`.
 | Pattern in code | Target | Example |
 | --- | --- | --- |
 | `IServiceScopeFactory` scope per method + `GetRequiredService` inside services | `IDbContextFactory<T>` / constructor injection (planned refactor) | `Content/Services/ContentService.cs` |
-| `AddDbContext` + separate `AddScoped<IZauberDbContext>` → two contexts per scope (Identity has its own tracker) | single registration | `ZauberSetup.cs` provider switch |
+| `AddDbContext` + separate `AddScoped<IZauberDbContext>` → two contexts per scope (Identity has its own tracker) | single registration | `ZauberSetup.cs` DbContext and store registrations |
 | `PaginatedList` ctor does sync `Count()`/`ToList()` wrapped in `Task.FromResult` | async paging | `Shared/Models/PaginatedList.cs` |
 | `SaveChangesAndLog` swallows exceptions into UI message text | log + generic message | `Extensions/DbContextExtensions.cs` |
 | Static `Serilog.Log.*` alongside `ILogger<T>` | `ILogger<T>` only | `DbContextExtensions.cs`, `ZauberSetup.cs` |

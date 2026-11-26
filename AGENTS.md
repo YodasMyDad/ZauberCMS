@@ -51,7 +51,7 @@ in every phase of the rework, against this:
 | `ZauberCMS.Components` | Razor class lib: admin UI, property editors, dialogs, trees, context menus, account pages | NuGet |
 | `ZauberCMS.Routing` | Front-end catch-all `CatchAll.razor` (`@page "/{**slug}"`) — **must load last** | NuGet |
 | `ZauberCMS` | Umbrella: `App.razor`, `Routes.razor`, packaged `appsettings.json`, `ZauberCMS.targets` | NuGet |
-| `ZauberCMS.Template` | `dotnet new zaubercms` template (non-compiling csproj) | NuGet (template) |
+| `ZauberCMS.Template` | `dotnet new zaubercms` template (non-compiling csproj); ships the starter kit and its views | NuGet (template) |
 | `ZauberCMS.Web` | **Local dev runner + sample site only** (SQLite `app.db`, tracked — don't commit dev changes to it) | no |
 | `tests/ZauberCMS.Core.Tests`, `tests/ZauberCMS.Components.Tests` | xUnit tests (services on in-memory SQLite through the real bootstrap; component models) | no |
 
@@ -60,9 +60,12 @@ Languages, Tags, Seo, Audit, Data, Email, …). Copy the nearest existing featur
 
 Bootstrap (both `ZauberCMS.Web/Program.cs` and the template): `builder.AddZauberCms(params Assembly[] extra)` then
 `app.AddZauberCms<App>()` — both in `ZauberCMS.Core/ZauberSetup.cs`. At startup it **auto-runs EF migrations**, runs
-every `ISeedData`, and does one intentional sync-over-async culture query. Middleware order there is deliberate
-(forwarded headers when enabled → media security headers → restricted-media → image-resize → static files →
-routing → redirect → culture → admin access → rate limiter → authz → antiforgery);
+every `ISeedData`, works out whether the site is installed, and makes two intentional sync-over-async calls (the database
+initialise and the culture query).
+A site whose `Zauber:DatabaseProvider` / `ConnectionString` are empty starts **without a database** and serves only
+the installer (→ [Docs/Installer.md](Docs/Installer.md)). Middleware order there is deliberate
+(forwarded headers when enabled → installer → authentication → media security headers → restricted-media →
+image-resize → static files → routing → redirect → culture → admin access → rate limiter → authz → antiforgery);
 don't reorder without a reason written in the commit.
 
 ## Non-negotiable rules
@@ -103,6 +106,8 @@ don't reorder without a reason written in the commit.
 | `ITreeContextMenu` | Admin tree right-click menu items |
 | `ICustomContentComponent`, `IDataListSource`, `ISeoCheck`, `IAccountLayout` | Custom content tabs, list-editor data sources, SEO checks, account-page layout |
 | `IStorageProvider`, `IEmailProvider` | Media storage / email backend (selected by `Zauber:Plugins:*`) |
+| `ICaptchaProvider` | CAPTCHA on the registration page (none shipped; `Zauber:Plugins:CaptchaProvider` when there are several) |
+| `IStarterKit` | Starter content offered by the installer (the template ships one) |
 | `IExternalAuthenticationProvider`, `IStartupPlugin` | OAuth providers, DI/startup hooks (parameterless ctor) |
 | `ISeedData` | Runs every boot after migrations |
 | `IValidate<T>`, FluentValidation `IValidator<T>` | Admin-side validation |
@@ -121,8 +126,16 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
 - Events: singleton `AppState` with `WeakEventManager` (`OnXChanged/Saved/Deleted` for Content, ContentType, User,
   Media). Handlers fire on the publisher's thread in every circuit → marshal with `InvokeAsync`.
 - Identity tables are `Zauber*`-prefixed; migrations history table `ZauberMigrations`. Keys are sequential GUIDs.
-- Login-like pages use rate-limit policy `"login"` (per-IP 10 / 5 min). Identity lockout is active: six wrong
-  passwords lock the account for five minutes.
+- Login-like pages use rate-limit policy `"login"` (per-IP 10 / 5 min); the registration page has its own,
+  `"register"` (per-IP 5 POSTs / 10 min). Identity lockout is active: six wrong passwords lock the account for
+  five minutes.
+- The first administrator comes from the installer, never from registering first. "Installed" is a `GlobalData`
+  flag that is never unset; `Zauber:Identity:RecoverAdminUser` is the way back in for a site with no administrator.
+  There is no switch for the installer: empty database settings always show it (D24).
+  `GlobalSettings.AdminEmailAddresses` promotes an address only when its owner has proven it (a social login, or
+  setting the password from an emailed link); an opened confirmation link is not enough. `GlobalSettings.AllowRegistration` turns
+  public registration off (page 404, external first sign-in refused); when on, the page uses the replaceable
+  `IFormProtectionService` (honeypot + fill time). → [Docs/Installer.md](Docs/Installer.md)
 - Admin is gated by `[Authorize(Roles = Admin)]` in `ZauberCMS.Components/Admin/_Imports.razor` (that folder only).
   `AdminAccessMiddleware` (requests) and `Routes.razor` (navigation inside a circuit) treat any other page under
   `/admin` that has no `[Authorize]`/`[AllowAnonymous]` of its own as admin-only, and the middleware enforces
@@ -141,7 +154,10 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
   draft saves going live) and a planned redesign (edit session + single `SaveContentTreeAsync` + static previews).
   **Don't extend the callback pattern or copy it into new editors.** → [Docs/BlockListEditor.md](Docs/BlockListEditor.md)
 - **Soft delete / recycle bin** — filter defaults on Get/Query parameters; flipping one breaks callers silently (ZA-001).
-- **Bootstrap** (`ZauberSetup.cs`) — assembly order, middleware order, auto-migrate, seeders.
+- **Bootstrap** (`ZauberSetup.cs`) — assembly order, middleware order, auto-migrate, seeders, and the DbContext
+  that is chosen per scope so a site can start without a database.
+- **Installer** (`ZauberCMS.Core/Installer/`) — runs with no database, no static files and nobody signed in, and
+  is open to the first visitor until it finishes. → [Docs/Installer.md](Docs/Installer.md)
 - **Migrations** — three providers, silent drift.
 
 Open findings with IDs: [.audit/report.md](.audit/report.md).
@@ -163,6 +179,7 @@ Open findings with IDs: [.audit/report.md](.audit/report.md).
 | --- | --- |
 | Current rework: status, decisions, what to do next | [Docs/Roadmap.md](Docs/Roadmap.md) |
 | Engineering standards, Blazor/.NET patterns, testing, security bar | [Docs/Standards.md](Docs/Standards.md) |
+| Installer, first administrator, registration switch, CAPTCHA, starter kits | [Docs/Installer.md](Docs/Installer.md) |
 | Services, parameter classes, caching, results, audit, events | [Docs/Services.md](Docs/Services.md) |
 | Entities, mappings, migrations, provider gotchas | [Docs/Data.md](Docs/Data.md) |
 | Front-end views, layouts, blocks, helpers, routing | [Docs/FrontEnd.md](Docs/FrontEnd.md) |

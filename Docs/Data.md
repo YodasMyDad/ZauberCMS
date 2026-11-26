@@ -7,7 +7,7 @@ existing JSON/property-value storage. Schema changes need sign-off.
 
 | Provider (`Zauber:DatabaseProvider`) | Context | Migrations folder |
 | --- | --- | --- |
-| `Sqlite` (default) | `Data/SqliteZauberDbContext.cs` | `Data/Migrations/SqLite/` |
+| `Sqlite` (also when the key is missing) | `Data/SqliteZauberDbContext.cs` | `Data/Migrations/SqLite/` |
 | `SqlServer` | `Data/ZauberDbContext.cs` | `Data/Migrations/SqlServer/` |
 | `PostgreSql` | `Data/PostgreSqlZauberDbContext.cs` | `Data/Migrations/PostgreSql/` |
 
@@ -15,8 +15,10 @@ existing JSON/property-value storage. Schema changes need sign-off.
 - Each context configures itself in `OnConfiguring` from `Zauber:ConnectionString`; history table `ZauberMigrations`;
   split queries by default; `EnableSensitiveDataLogging` in DEBUG only.
 - `PendingModelChangesWarning` is **suppressed** → a forgotten migration does not fail anything. Drift is silent.
-- Migrations are applied automatically at startup (`ZauberSetup.cs`, `Database.Migrate()`), then every `ISeedData` runs.
-- Design-time factory (`Data/ZauberDesignTimeDbContextFactory.cs`) reads `../ZauberCMS/appSettings.json` relative to
+- Migrations are applied automatically, then every `ISeedData` runs (`InstallService.InitialiseDatabaseAsync`): at
+  start-up when the site has a connection string, otherwise by the installer's database step. A new site ships
+  with `DatabaseProvider` and `ConnectionString` empty → [Installer.md](Installer.md).
+- Design-time factory (`Data/ZauberDesignTimeDbContextFactory.cs`) reads `../ZauberCMS/appsettings.json` (its connection string is empty; the tools never connect) relative to
   the working directory → run migrations from the **repo root**.
 
 ## Making a schema change

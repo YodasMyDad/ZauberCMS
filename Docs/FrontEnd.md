@@ -14,8 +14,11 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
    bin and not blocks are served — also as a domain root or an internal-redirect target — and the `Children` it
    loads follow the same rule. Blocks have no URL.
    `CultureMiddleware` looks content up only when the matched endpoint is the content catch-all (a route that is just
-   `{**slug}`, see `CultureMiddleware.IsContentEndpoint`). A site's own pages and endpoints, `/_blazor` and 404s are
+   `{**slug}`) or the Razor page at `/` (the home page has a page of its own, `Index.razor`; see
+   `CultureMiddleware.IsContentEndpoint`). A site's own pages and endpoints, `/_blazor` and 404s are
    not looked up as the root page and run in the default request culture.
+   A page's language is its domain's, its own, or its nearest ancestor's; with none of those it is
+   `GlobalSettings.DefaultLanguage` (set by the installer), and only then `Zauber:AdminDefaultLanguage`.
 3. Role-restricted content (`ContentRoles`) redirects to `Zauber:Identity:DefaultLoginRedirectUrl` unless the user has
    a role (admins always pass).
 4. The view is looked up by `Content.ViewComponent` == **view type `FullName`** (namespace + class) among

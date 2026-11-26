@@ -47,9 +47,12 @@
                         <p>
                             <a href="/Account/ForgotPassword">Forgot your password?</a>
                         </p>
-                        <p>
-                            <a href="@(NavigationManager.GetUriWithQueryParameters("/Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                        </p>
+                        @if (RegistrationOpen)
+                        {
+                            <p>
+                                <a href="@(NavigationManager.GetUriWithQueryParameters("/Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
+                            </p>
+                        }
                     </div>
                 </EditForm>
                 <ExternalLoginPicker/>
@@ -75,10 +78,12 @@
     private List<ResultMessage> ResultMessages { get; set; } = [];
     private Type LayoutType { get; set; } = null!;
     private AuthenticationState? AuthState { get; set; }
+    private bool RegistrationOpen { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
         LoginUserCommand ??= new();
+        RegistrationOpen = (await DataService.GetGlobalSettings()).AllowRegistration;
         var allLayouts = ExtensionManager.GetImplementations<IAccountLayout>(true);
         if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
         {

@@ -41,8 +41,16 @@ template, drops all five nupkgs in `NugetSource/` for a manual `dotnet nuget pus
   `IncludeBuildOutput=false`, `Compile Remove="**\*"`, content from `template/`. It is in `ZauberCMS.sln` but compiles
   nothing.
 - `template/.template.config/template.json`: `shortName: zaubercms`, `sourceName: ZauberCMSTemplate`.
-- Scaffold `template/ZauberCMSTemplate.Site/`: minimal `Program.cs`, full `appsettings.json` (SQLite), launch settings,
-  `ZauberCMSTemplate.sln`. Keep its `appsettings.json` in step with `ZauberCMS/appsettings.json` and the Web one.
+- Scaffold `template/ZauberCMSTemplate.Site/`: minimal `Program.cs`, full `appsettings.json` (database keys empty:
+  the installer asks, → [Installer.md](Installer.md)), launch settings, `ZauberCMSTemplate.sln`, and the starter
+  kit: `Starter/StarterSite.cs` (`IStarterKit`), `Views/`, `Layouts/`, `_Imports.razor`, `wwwroot/css/site.css`.
+  Keep its `appsettings.json` in step with `ZauberCMS/appsettings.json` and the Web one (the template and
+  Web files have the same keys, the packaged one still lacks `ImageResize`, ZA-118; the Web one keeps its SQLite
+  values).
+- The template site references the **published** package, so nothing in this repository compiles its `.cs` and
+  `.razor` files. After changing them (or an API they use), build a copy against the source: copy the site folder
+  somewhere outside the repo, replace the `ZauberCMS` `PackageReference` with a `ProjectReference` to
+  `ZauberCMS/ZauberCMS.csproj`, `dotnet build`, run it and go through the installer with the starter kit chosen.
 
 Test locally:
 

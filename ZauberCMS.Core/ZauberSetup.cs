@@ -24,6 +24,10 @@ using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Installer;
+using ZauberCMS.Core.Installer.Interfaces;
+using ZauberCMS.Core.Installer.Middleware;
+using ZauberCMS.Core.Installer.Services;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Services;
 using ZauberCMS.Core.Membership.Interfaces;
@@ -36,6 +40,8 @@ using ZauberCMS.Core.Tags.Interfaces;
 using ZauberCMS.Core.Tags.Services;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Audit.Services;
+using ZauberCMS.Core.Security.Interfaces;
+using ZauberCMS.Core.Security.Services;
 using ZauberCMS.Core.Seo;
 using ZauberCMS.Core.Seo.Interfaces;
 using ZauberCMS.Core.Seo.Services;
@@ -62,6 +68,9 @@ namespace ZauberCMS.Core;
 
 public static class ZauberSetup
 {
+    /// <summary>The rate limit policy of the registration page: 5 posts per address in 10 minutes.</summary>
+    public const string RegisterRateLimitPolicy = "register";
+
     public static void AddZauberCms(this WebApplicationBuilder builder, params Assembly[] additionalAssemblies)
     {
         builder.Host.UseSerilog((context, configuration) =>
@@ -138,77 +147,89 @@ public static class ZauberSetup
             });
         }
 
-        var databaseProvider = zauberSettings.DatabaseProvider;
-        if (databaseProvider != null)
-        {
-            var identityBuilder = builder.Services.AddIdentityCore<User>(options =>
-            {
-                {
-                    // Password settings.
-                    options.Password.RequireDigit = zauberSettings.Identity.PasswordRequireDigit;
-                    options.Password.RequireLowercase = zauberSettings.Identity.PasswordRequireLowercase;
-                    options.Password.RequireNonAlphanumeric = zauberSettings.Identity.PasswordRequireNonAlphanumeric;
-                    options.Password.RequireUppercase = zauberSettings.Identity.PasswordRequireUppercase;
-                    options.Password.RequiredLength = zauberSettings.Identity.PasswordRequiredLength;
-                    options.Password.RequiredUniqueChars = zauberSettings.Identity.PasswordRequiredUniqueChars;
-
-                    // Lockout settings.
-                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                    options.Lockout.MaxFailedAccessAttempts = 6;
-                    options.Lockout.AllowedForNewUsers = true;
-
-                    // User settings.
-                    options.User.RequireUniqueEmail = true;
-                    options.User.AllowedUserNameCharacters += " ";
-
-                    // Email
-                    options.SignIn.RequireConfirmedAccount = zauberSettings.Identity.SignInRequireConfirmedAccount;
-                }
-            });
-            
-            identityBuilder.AddRoles<Role>();
-            
-            switch (databaseProvider.ToLowerInvariant())
-            {
-                case "sqlite":
-                    builder.Services.AddDbContext<SqliteZauberDbContext>();
-                    builder.Services.AddScoped<IZauberDbContext, SqliteZauberDbContext>();
-                    identityBuilder
-                        .AddEntityFrameworkStores<SqliteZauberDbContext>()
-                        .AddUserStore<UserStore<User, Role, SqliteZauberDbContext, Guid, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>>()
-                        .AddRoleStore<RoleStore<Role, SqliteZauberDbContext, Guid, UserRole, RoleClaim>>();
-                    break;
-                case "postgresql":
-                    builder.Services.AddDbContext<PostgreSqlZauberDbContext>();
-                    builder.Services.AddScoped<IZauberDbContext, PostgreSqlZauberDbContext>();
-                    identityBuilder
-                        .AddEntityFrameworkStores<PostgreSqlZauberDbContext>()
-                        .AddUserStore<UserStore<User, Role, PostgreSqlZauberDbContext, Guid, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>>()
-                        .AddRoleStore<RoleStore<Role, PostgreSqlZauberDbContext, Guid, UserRole, RoleClaim>>();
-                    break;
-                case "sqlserver":
-                    builder.Services.AddDbContext<ZauberDbContext>();
-                    builder.Services.AddScoped<IZauberDbContext, ZauberDbContext>();
-                    identityBuilder
-                        .AddEntityFrameworkStores<ZauberDbContext>()
-                        .AddUserStore<UserStore<User, Role, ZauberDbContext, Guid, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>>()
-                        .AddRoleStore<RoleStore<Role, ZauberDbContext, Guid, UserRole, RoleClaim>>();
-                    break;
-                default:
-                    throw new Exception("Unable to find database provider in appSettings");
-            }
-            
-            identityBuilder
-                .AddClaimsPrincipalFactory<ZauberUserClaimsPrincipalFactory>()
-                .AddSignInManager()
-                .AddDefaultTokenProviders();
-
-            builder.Services.AddScoped<IUserEmailStore<User>, UserEmailStore>();
-        }
-        else
+        // A provider that is named but unknown is a configuration mistake. A blank one (or a blank connection
+        // string) means the site has no database yet: it starts, and the installer asks for one.
+        if (!zauberSettings.DatabaseProvider.IsNullOrWhiteSpace() &&
+            DatabaseProviders.Normalise(zauberSettings.DatabaseProvider) == null)
         {
             throw new Exception("Unable to find database provider in appSettings");
         }
+
+        var installState = new InstallState(builder.Configuration);
+        if (installState.IsDatabaseConfigured)
+        {
+            // Only this provider's services are registered below, so it is the provider until the next start
+            installState.FixProvider();
+        }
+
+        builder.Services.AddSingleton(installState);
+        builder.Services.AddScoped<IInstallService, InstallService>();
+        builder.Services.AddSingleton<IFormProtectionService, FormProtectionService>();
+
+        var identityBuilder = builder.Services.AddIdentityCore<User>(options =>
+        {
+            {
+                // Password settings.
+                options.Password.RequireDigit = zauberSettings.Identity.PasswordRequireDigit;
+                options.Password.RequireLowercase = zauberSettings.Identity.PasswordRequireLowercase;
+                options.Password.RequireNonAlphanumeric = zauberSettings.Identity.PasswordRequireNonAlphanumeric;
+                options.Password.RequireUppercase = zauberSettings.Identity.PasswordRequireUppercase;
+                options.Password.RequiredLength = zauberSettings.Identity.PasswordRequiredLength;
+                options.Password.RequiredUniqueChars = zauberSettings.Identity.PasswordRequiredUniqueChars;
+
+                // Lockout settings.
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 6;
+                options.Lockout.AllowedForNewUsers = true;
+
+                // User settings.
+                options.User.RequireUniqueEmail = true;
+                options.User.AllowedUserNameCharacters += " ";
+
+                // Email
+                options.SignIn.RequireConfirmedAccount = zauberSettings.Identity.SignInRequireConfirmedAccount;
+            }
+        });
+
+        identityBuilder.AddRoles<Role>();
+
+        // A site with a database registers that provider's DbContext only, as it always has. A site without one
+        // registers all three, because the installer's database step decides which is used.
+        var providersToRegister = installState.IsDatabaseConfigured
+            ? [installState.DatabaseProvider!]
+            : DatabaseProviders.All;
+        foreach (var provider in providersToRegister)
+        {
+            switch (provider)
+            {
+                case DatabaseProviders.Sqlite:
+                    builder.Services.AddDbContext<SqliteZauberDbContext>();
+                    break;
+                case DatabaseProviders.PostgreSql:
+                    builder.Services.AddDbContext<PostgreSqlZauberDbContext>();
+                    break;
+                default:
+                    builder.Services.AddDbContext<ZauberDbContext>();
+                    break;
+            }
+        }
+
+        // The provider is read when a scope first asks, so the database the installer has just written into
+        // appsettings.json is used without a restart. Each of these gets a context of its own, as before.
+        builder.Services.AddScoped(sp => (IZauberDbContext)ActivatorUtilities.CreateInstance(sp, ActiveContextType(sp)));
+        builder.Services.AddScoped(sp => (IUserStore<User>)ActivatorUtilities.CreateInstance(sp,
+            typeof(UserStore<,,,,,,,,>).MakeGenericType(typeof(User), typeof(Role), ActiveContextType(sp), typeof(Guid),
+                typeof(UserClaim), typeof(UserRole), typeof(UserLogin), typeof(UserToken), typeof(RoleClaim))));
+        builder.Services.AddScoped(sp => (IRoleStore<Role>)ActivatorUtilities.CreateInstance(sp,
+            typeof(RoleStore<,,,,>).MakeGenericType(typeof(Role), ActiveContextType(sp), typeof(Guid),
+                typeof(UserRole), typeof(RoleClaim))));
+
+        identityBuilder
+            .AddClaimsPrincipalFactory<ZauberUserClaimsPrincipalFactory>()
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
+
+        builder.Services.AddScoped<IUserEmailStore<User>, UserEmailStore>();
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddAntiforgery();
@@ -231,6 +252,23 @@ public static class ZauberSetup
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 0 // No queueing
                     }));
+
+            // Registration has a limit of its own, so a flood of sign-ups neither uses up the login allowance
+            // of the people behind the same address nor hides inside it. Only the posts count: looking at the
+            // form is free, sending it is not (5 per address in 10 minutes).
+            options.AddPolicy(RegisterRateLimitPolicy, httpContext =>
+                HttpMethods.IsPost(httpContext.Request.Method)
+                    ? RateLimitPartition.GetSlidingWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new SlidingWindowRateLimiterOptions
+                        {
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromMinutes(10),
+                            SegmentsPerWindow = 5,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        })
+                    : RateLimitPartition.GetNoLimiter("register-view"));
         });
 
         builder.Services.AddScoped<ExtensionManager>();
@@ -364,6 +402,20 @@ public static class ZauberSetup
         builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
     }
 
+    // The DbContext for the database this site uses now. Fails with a readable message while there is none.
+    private static Type ActiveContextType(IServiceProvider services)
+    {
+        var installState = services.GetRequiredService<InstallState>();
+        if (!installState.IsDatabaseConfigured)
+        {
+            throw new InvalidOperationException(
+                "This site has no database yet. Open " + InstallerMiddleware.Path + " in a browser to set one up, " +
+                "or set Zauber:DatabaseProvider and Zauber:ConnectionString.");
+        }
+
+        return DatabaseProviders.ContextType(installState.DatabaseProvider);
+    }
+
     /// <summary>Builds the forwarded-headers options from <c>Zauber:ForwardedHeaders</c>.</summary>
     /// <exception cref="InvalidOperationException">An entry is not an IP address or a network in CIDR form.</exception>
     public static ForwardedHeadersOptions BuildForwardedHeadersOptions(ForwardedHeadersSettings settings)
@@ -417,56 +469,53 @@ public static class ZauberSetup
                         "controls. Set Zauber:SiteUrl to the public address of the site");
         }
 
-        using (var scope = app.Services.CreateScope())
+        // en-US must be the default culture as that's what the backoffice resource is
+        var supportedCultures = new List<string> { zauberSettings.AdminDefaultLanguage };
+
+        var installState = app.Services.GetRequiredService<InstallState>();
+        if (installState.IsDatabaseConfigured)
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-            var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
-            var languageService = scope.ServiceProvider.GetRequiredService<ILanguageService>();
-            var settings = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>();
+            using var scope = app.Services.CreateScope();
 
-            // Migrations — must succeed; let exceptions propagate so the host fails fast
-            // and the orchestrator can surface the failure instead of running half-migrated.
-            if (dbContext.Database.GetPendingMigrations().Any())
-            {
-                dbContext.Database.Migrate();
-            }
-
-            // Seed data — third-party plugins; tolerate per-plugin failures so a single
-            // misbehaving seeder cannot bring the host down.
-            var seedData = extensionManager.GetInstances<ISeedData>();
-            foreach (var data in seedData)
-            {
-                try
-                {
-                    data.Value.Initialise(dbContext);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Seed data plugin {Plugin} failed during startup", data.Value.GetType().FullName);
-                }
-            }
+            // Migrations (must succeed; the exception stops the host so it never runs half-migrated), seed
+            // data, whether the site is installed, and the admin recovery key.
+            scope.ServiceProvider.GetRequiredService<IInstallService>()
+                .InitialiseDatabaseAsync().GetAwaiter().GetResult();
 
             // Localization — must succeed.
+            var languageService = scope.ServiceProvider.GetRequiredService<ILanguageService>();
             var langs = languageService.QueryLanguageAsync(new QueryLanguageParameters { AmountPerPage = 200 }).GetAwaiter().GetResult();
-
-            // en-US must be the default culture as that's what the backoffice resource is
-            var supportedCultures = new List<string> { settings.Value.AdminDefaultLanguage };
-
             foreach (var langsItem in langs.Items)
             {
                 if (langsItem.LanguageIsoCode != null) supportedCultures.Add(langsItem.LanguageIsoCode);
             }
-
-            var supportedCulturesArray = supportedCultures.Distinct().ToArray();
-            var localizationOptions = new RequestLocalizationOptions()
-                .SetDefaultCulture(settings.Value.AdminDefaultLanguage)
-                .AddSupportedCultures(supportedCulturesArray)
-                .AddSupportedUICultures(supportedCulturesArray);
-            app.UseRequestLocalization(localizationOptions);
         }
+        else
+        {
+            // Error, not Warning: for a new site this is the expected first start, but for a site that was
+            // working it means its database settings are gone (a deployment that overwrote appsettings.json,
+            // a missing environment variable) and the public now sees the installer.
+            Log.Error("This site has no database (Zauber:DatabaseProvider / Zauber:ConnectionString are empty). " +
+                      "Every request is sent to the installer at {Path}, and the first visitor to finish it " +
+                      "becomes the administrator. A new site: install it before making it public. A site that " +
+                      "was installed before: put its database settings back and restart",
+                InstallerMiddleware.Path);
+        }
+
+        var supportedCulturesArray = supportedCultures.Distinct().ToArray();
+        var localizationOptions = new RequestLocalizationOptions()
+            .SetDefaultCulture(zauberSettings.AdminDefaultLanguage)
+            .AddSupportedCultures(supportedCulturesArray)
+            .AddSupportedUICultures(supportedCulturesArray);
+        app.UseRequestLocalization(localizationOptions);
 
         app.UseSerilogRequestLogging();
         app.UseHttpsRedirection();
+
+        // The installer. Until the site is installed it answers every request itself, so nothing below runs
+        // without a database or an administrator; afterwards it passes everything through. In front of
+        // authentication because a site with no database cannot validate a sign-in cookie.
+        app.UseMiddleware<InstallerMiddleware>();
 
         app.UseAuthentication();
 

@@ -85,7 +85,8 @@ UX? callers affected?)`.
 ### D. Security
 - AuthZ on every admin page/component outside `Components/Admin/`, controllers, endpoints; IDOR on content/media/user/role.
 - Admin IP whitelist bypass; rate limiting on every login-like/registration/reset page; lockout on all sign-in paths.
-- Identity: first-user-admin, `AdminEmailAddresses` promotion, external login (`state`, verified email mapping,
+- Identity: the installer and the installed flag (can it be reached or reopened after install?),
+  `AdminEmailAddresses` promotion (only when the account holder proved the address), `RecoverAdminUser`, external login (`state`, verified email mapping,
   auto-link by email), security-stamp rotation on privilege change, cookie flags.
 - Injection: `FromSqlRaw`/`ExecuteSqlRaw` with concatenation; Dynamic LINQ from browser strings without allow-list;
   `Type.GetType(input)`.

@@ -69,6 +69,23 @@ public class ExternalSignUpTests : IAsyncLifetime
         Assert.False(await _site.QueryDatabaseAsync(db => db.Users.AnyAsync(x => x.Email == "mallory@example.test")));
     }
 
+    // ZA-024 / D23: a first sign-in through a provider is a registration
+    [Fact]
+    public async Task With_registration_turned_off_a_first_external_sign_in_creates_no_user()
+    {
+        using var scope = _site.CreateScope();
+        var dataService = scope.ServiceProvider.GetRequiredService<ZauberCMS.Core.Data.Interfaces.IDataService>();
+        var settings = await ZauberCMS.Core.Extensions.ServiceExtensions.GetGlobalSettings(dataService);
+        settings.AllowRegistration = false;
+        Assert.True(await ZauberCMS.Core.Extensions.ServiceExtensions.SaveGlobalSettings(dataService, settings));
+
+        var user = await SignInManager(scope).CreateExternalUserAsync(
+            Login("Google", "google-key-closed", "grace@example.test", emailVerified: "True"));
+
+        Assert.Null(user);
+        Assert.False(await _site.QueryDatabaseAsync(db => db.Users.AnyAsync(x => x.Email == "grace@example.test")));
+    }
+
     [Fact]
     public async Task A_login_without_an_email_creates_no_user()
     {

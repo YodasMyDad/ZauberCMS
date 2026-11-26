@@ -731,15 +731,39 @@ public class MembershipService(
 
                 var user = await userManager.FindByEmailAsync(parameters.Email);
 
+                // An address on the admin list (ZA-023). Whoever registered chose this account's password, and
+                // that need not be the owner of the address. So the owner is not asked to confirm (a link that
+                // anybody, or a mail scanner, can open would hand the registrant an administrator account):
+                // they are sent a link to set the password themselves, and that is what promotes the account
+                // (ResetPasswordAsync). The page says nothing that tells a stranger the address is on the list.
+                var onAdminList = user is { EmailConfirmed: false } &&
+                                  (await dataService.GetGlobalSettings()).IsAdminEmailAddress(user.Email);
+                if (onAdminList)
+                {
+                    try
+                    {
+                        await SendSetPasswordEmailAsync(userManager, user!);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Could not send the set-password email to {UserName}, whose address is " +
+                                            "on the admin list. They can ask for it with \"Forgot your password\"",
+                            user!.UserName);
+                    }
+                }
+
                 if (userManager.Options.SignIn.RequireConfirmedAccount)
                 {
-                    var sendConfirmationEmailCommand = new SendEmailConfirmationParameters
+                    if (!onAdminList)
                     {
-                        ReturnUrl = parameters.ReturnUrl,
-                        User = user
-                    };
-                    
-                    await emailService.SendEmailConfirmationAsync(sendConfirmationEmailCommand, cancellationToken);
+                        var sendConfirmationEmailCommand = new SendEmailConfirmationParameters
+                        {
+                            ReturnUrl = parameters.ReturnUrl,
+                            User = user
+                        };
+
+                        await emailService.SendEmailConfirmationAsync(sendConfirmationEmailCommand, cancellationToken);
+                    }
 
                     registrationResult.AddMessage("Please check your email and click the link to confirm your account", ResultMessageType.Success);
                 }
@@ -807,6 +831,11 @@ public class MembershipService(
             else if (signInResult.IsLockedOut)
             {
                 loginResult.AddMessage("Account is locked out", ResultMessageType.Error);
+            }
+            else if (!(await dataService.GetGlobalSettings()).AllowRegistration)
+            {
+                // A first sign-in through a provider is a registration, and registration is turned off
+                loginResult.AddMessage("This site is not accepting new accounts", ResultMessageType.Error);
             }
             else
             {
@@ -903,6 +932,8 @@ public class MembershipService(
 
             if (result.Succeeded)
             {
+                // Deliberately no promotion here for an address on the admin list: opening a link proves that
+                // somebody saw the email, not that the account is theirs (see RegisterUserAsync)
                 cacheService.ClearCachedItemsWithPrefix(nameof(User));
                 confirmationResult.Success = true;
                 confirmationResult.NavigateToUrl = parameters.ReturnUrl;
@@ -975,6 +1006,23 @@ public class MembershipService(
         return forgotPasswordResult;
     }
 
+    // The email for an address on the admin list that somebody registered with a password: the same link as
+    // "Forgot your password", with words that explain why it arrived.
+    private async Task SendSetPasswordEmailAsync(UserManager<User> userManager, User user)
+    {
+        var code = WebEncoders.Base64UrlEncode(
+            Encoding.UTF8.GetBytes(await userManager.GeneratePasswordResetTokenAsync(user)));
+        var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ResetPassword, new { code, email = user.Email });
+
+        var paragraphs = new List<string>
+        {
+            "An account was registered on this site with your email address.",
+            $"To finish setting it up, choose its password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.",
+            "If you did not register, you can ignore this email."
+        };
+        await providerService.EmailProvider!.SendEmailWithTemplateAsync(user.Email!, "Finish setting up your account", paragraphs);
+    }
+
     /// <summary>
     /// Completes the password reset using the provided token.
     /// </summary>
@@ -1001,6 +1049,22 @@ public class MembershipService(
                 var result = await userManager.ResetPasswordAsync(user, parameters.Code!, parameters.Password!);
                 if (result.Succeeded)
                 {
+                    // The code only ever goes to the account's email address, and the password is now one that
+                    // its reader chose: the address is proven and the account is theirs. For an address on the
+                    // admin list this is the moment it becomes an administrator (ZA-023).
+                    if ((await dataService.GetGlobalSettings()).IsAdminEmailAddress(user.Email))
+                    {
+                        if (!user.EmailConfirmed)
+                        {
+                            user.EmailConfirmed = true;
+                            await userManager.UpdateAsync(user);
+                        }
+
+                        await userManager.PromoteListedAdminAsync(
+                            scope.ServiceProvider.GetRequiredService<RoleManager<Role>>(), logger, dataService, user);
+                        cacheService.ClearCachedItemsWithPrefix(nameof(User));
+                    }
+
                     resetPasswordResult.Success = true;
                     resetPasswordResult.NavigateToUrl = parameters.ReturnUrl;
                     resetPasswordResult.AddMessage($"Your password has been reset, <a class=\"underline\" href=\"{Urls.Account.Login}\">please login</a>", ResultMessageType.Success);

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Microsoft.AspNetCore.Components.Endpoints;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Localization;
@@ -35,8 +36,9 @@ public class CultureMiddleware(
                     new RequestCultureFeature(new RequestCulture(adminCulture, adminCulture), null));
             }
             
-            // Only requests for the content catch-all page are content. Anything else (/_blazor, a site's own
-            // endpoints, files) used to be looked up as the root page and got its language (ZA-143).
+            // Only requests for the home page and the content catch-all page are content. Anything else
+            // (/_blazor, a site's own endpoints, files) used to be looked up as the root page and got its
+            // language (ZA-143).
             if (path.StartsWith("/admin") ||
                 path.StartsWith("/api") ||
                 path.StartsWith("/account") ||
@@ -96,10 +98,24 @@ public class CultureMiddleware(
     /// True for the front-end catch-all page (<c>@page "/{**slug}"</c> in ZauberCMS.Routing, or a site's own
     /// replacement with the same route): a route that is nothing but a catch-all <c>slug</c> parameter.
     /// </summary>
-    public static bool IsContentEndpoint(Endpoint? endpoint) =>
-        endpoint is RouteEndpoint { RoutePattern: var pattern } &&
-        pattern.PathSegments.Count == 1 &&
-        pattern.Parameters is [{ Name: "slug", IsCatchAll: true }];
+    public static bool IsContentEndpoint(Endpoint? endpoint)
+    {
+        if (endpoint is not RouteEndpoint { RoutePattern: var pattern })
+        {
+            return false;
+        }
+
+        // The home page. "/" has a page of its own (Index.razor: an exact route wins over the catch-all), so it
+        // never arrives as the catch-all. Any Razor page at "/" is the site's home page; an endpoint of another
+        // kind there (a site's own MapGet("/")) is not content (ZA-148).
+        if (pattern.PathSegments.Count == 0)
+        {
+            return endpoint.Metadata.GetMetadata<ComponentTypeMetadata>() != null;
+        }
+
+        return pattern.PathSegments.Count == 1 &&
+               pattern.Parameters is [{ Name: "slug", IsCatchAll: true }];
+    }
 
     /// <summary>
     /// Helper method to retrieve the cached EntryModel from HttpContext.

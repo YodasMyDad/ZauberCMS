@@ -1,0 +1,26 @@
+@if (Model.Errors.Count > 0)
+{
+    <div class="notice bad" role="alert">
+        @if (Model.Errors.Count == 1)
+        {
+            @Model.Errors[0]
+        }
+        else
+        {
+            <ul>
+                @foreach (var error in Model.Errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        }
+    </div>
+}
+@if (Model.TestResult != null)
+{
+    <div class="notice @(Model.TestResult.Success ? "good" : "bad")" role="status">@Model.TestResult.Message</div>
+}
+
+@code {
+    [Parameter, EditorRequired] public InstallerPageModel Model { get; set; } = null!;
+}

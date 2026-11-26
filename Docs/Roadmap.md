@@ -3,16 +3,17 @@
 **Start here when resuming the rework.** Read order: [AGENTS.md](../AGENTS.md) → this file →
 [.audit/report.md](../.audit/report.md) (findings by ID) → the Docs file for the area you're touching.
 
-## Status (2026-11-25)
+## Status (2026-11-26)
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
-- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-143`).
+- Done: docs consolidated and fact-checked; first full audit run (IDs now `ZA-001`…`ZA-152`).
 - **Phase 0 done** (ZA-044), **Phase 1 done** (ZA-102, ZA-130, ZA-133: all packages on their latest .NET 10
   versions), **Phase 2 done** (test projects + CI test step), **Phase 3 done** (broken admin actions) and **Phase 4 done**
   (access control & identity). After Phase 4 the owner asked for three follow-ups, also done (see "After Phase 4" below).
-  **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis).
-  **94 open findings** (0 Critical, 10 High, 45 Medium, 39 Low). **Next: Phase 7.**
+  **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
+  2026-11-26).
+  **95 open findings** (0 Critical, 9 High, 43 Medium, 43 Low). **Next: Phase 8.**
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -39,11 +40,12 @@
 | D16 | **ZA-143 goes at the end of Phase 6**, after the PostgreSQL/Redis work, both halves together. (2026-11-25) | ZA-143 |
 | D17 | **No hotfix for ZA-044.** The fix ships with the v5 release when the owner is ready; 4.1.3 stays as published until then. (2026-11-25) | ZA-044 |
 | D18 | **The whole rework ships as one v5 major, together with .NET 11; there are no 4.x releases before it** (owner, 2026-11-25, replacing "4.x minors with shims"). A breaking change is allowed when it buys something, and each one is listed in that phase's release notes so the v5 upgrade notes can be built from them. Keep the `[Obsolete]` path where it costs little. | Phase 11, 12 |
-| D19 | **Installer works like Umbraco's (large scope):** database (SQLite / SQL Server / PostgreSQL, connection test) → admin account → site name and default language → optional starter content → summary. It writes `Zauber:DatabaseProvider` / `ConnectionString` into `appsettings.json` and restarts. No unattended install. (2026-11-25) | ZA-004, Phase 7 |
+| D19 | **Installer works like Umbraco's (large scope):** database (SQLite / SQL Server / PostgreSQL, connection test) → admin account → site name and default language → optional starter content → summary. It writes `Zauber:DatabaseProvider` / `ConnectionString` into `appsettings.json` and restarts. No unattended install. (2026-11-25) *As built (2026-11-26): the site switches to the new database without restarting; see Phase 7.* | ZA-004, Phase 7 |
 | D20 | **The installer is open to the first visitor while the site is not installed** (as in Umbraco and WordPress), no setup code. Install the site before making it public; say so in the docs. (2026-11-25) | ZA-004 |
 | D21 | **"Installed" is a flag stored in the database**, set by the installer. On upgrade, a site with any user is marked installed automatically. The installer never reopens, even with no admin left; recovery is a documented config key that promotes one existing user on the next start. (2026-11-25) | ZA-004 |
 | D22 | **`AdminEmailAddresses` promotes only after the email is confirmed.** (2026-11-25) | ZA-023 |
 | D23 | **Public registration switch:** existing sites default ON (no change on upgrade), the installer asks (default OFF for new sites); off = page 404 and link hidden. When on: built-in honeypot + minimum fill time, its own rate limit, and a discovered extension interface for CAPTCHA providers (Turnstile, reCAPTCHA, hCaptcha) from the site's project. (2026-11-25) | ZA-024 |
+| D24 | **No switch to turn the installer off.** Empty database settings always mean "show the installer", as decided in D20. That a live site which loses its database settings (a publish overwriting `appsettings.json`, a missing environment variable) then shows the installer is accepted: it is logged as an error at start-up and documented, with the instruction to put the settings into the project or the environment after installing on a server. (owner, 2026-11-26, asked during Phase 7 after the audit raised it) | ZA-004, [Installer.md](Installer.md) |
 
 ## Working rules for the rework
 
@@ -251,16 +253,112 @@
   (reconnect path, read but not exercised); creating content through the admin UI on PostgreSQL (service tests only);
   a real multi-server deployment (two sites in one test process stand in for it).
 
-### Phase 7 — Installer (D2, D19–D23)
-- Replace `RoleExtensions` first-user promotion with an Umbraco-style installer (D19): database step with
-  connection test that writes `appsettings.json` and restarts, admin account, site name and language, optional
-  starter content, summary. Static SSR pages with rate limiting + antiforgery.
-- Open to the first visitor while not installed (D20); "installed" is a database flag that never reopens, set
-  automatically on upgrade for sites with users; documented recovery key (D21).
-- ZA-023: `AdminEmailAddresses` promotes only after email confirmation (D22).
-- ZA-024: public registration switch, honeypot + fill-time check, own rate limit, CAPTCHA extension interface (D23).
-- Open while building: what the installer does when `appsettings.json` is not writable (show the values to set);
-  the starter content to ship.
+### Phase 7 — Installer (D2, D19–D24) — DONE 2026-11-26
+- Fixed: ZA-004 (first registered user became admin), ZA-023 (admin-list promotion without proof of the address),
+  ZA-024 (registration flooding), and ZA-148, found while testing this phase (the home page `/` did not run in its
+  content language since the ZA-143 fix). Details: "Fixed" section of the audit report; how it works:
+  [Installer.md](Installer.md).
+- What was built:
+  - A site with empty `Zauber:DatabaseProvider` / `ConnectionString` starts without a database. `InstallerMiddleware`
+    (in front of authentication) serves `/install` and sends everything else there until the site is installed;
+    afterwards it does nothing and `/install` is an ordinary address.
+  - Database step: SQLite / SQL Server / PostgreSQL by fields or connection string, connection test, migrations,
+    then `appsettings.json` is written. When the file cannot be written or something overrides it, the page shows
+    the values to set by hand (the open point from planning).
+  - One form for administrator, site name, language, registration switch and starter content, saved in one go.
+    The administrator is signed in and lands in `/admin`.
+  - "Installed" is a `GlobalData` row (`ZauberInstalled`), never unset; a database with any user gets it at
+    start-up (upgrade). Recovery key `Zauber:Identity:RecoverAdminUser`.
+  - Starter content: discovery interface `IStarterKit`; the kit and its views ship in the **template** project
+    (two page types, two pages), not in the packages, so a site owns and edits them. A site made without the
+    template is offered "An empty site" only.
+  - Registration: `GlobalSettings.AllowRegistration`, honeypot + minimum fill time (`IFormProtectionService`,
+    `<FormProtectionFields />`), rate limit policy `"register"`, discovery interface `ICaptchaProvider`.
+- **Different from D19 as written: no restart.** The DbContexts already read the connection string from
+  configuration on every use, so only the provider had to become a per-scope choice. The installer writes
+  `appsettings.json`, reloads configuration and carries on. A restart would have ended the process under plain
+  Kestrel (`dotnet run`, containers without a restart policy). A site that starts with a database registers only
+  its own provider and behaves as before.
+- **Different from D22 as written: a confirmation link does not promote.** D22 says an Admin Email Address is
+  promoted "only after the email is confirmed". Built that way first, the audit showed it is not safe: a stranger
+  registers with an administrator's address and a password of their own, the administrator (or a mail scanner)
+  opens the confirmation link, and the stranger's account is an administrator. So a listed address is promoted
+  only when the account's holder proves the address: a social login with a verified address, or setting the
+  password from an emailed link (the registration sends that link; "Forgot your password" does too).
+- **D24 (owner, during this phase):** no switch to turn the installer off; a site that loses its database
+  settings shows the installer. Logged as an error at start-up and documented.
+- Also added because the installer asks for them: `GlobalSettings.SiteName` and `GlobalSettings.DefaultLanguage`.
+  The second is the language of pages that have none on themselves, an ancestor or their domain; before, those
+  used the admin language.
+- Schema: none. Public API:
+  - Added: `ZauberCMS.Core.Installer` (`IInstallService`, `InstallService`, `IStarterKit`, `InstallState`,
+    `InstallerMiddleware`, `InstallParameters`, `DatabaseSetupParameters`, `InstallResult`,
+    `DatabaseSetupResult`, `DatabaseTestResult`, `InstallFlag`, `StarterKitContext`; the installer's Razor
+    components with `InstallerPageModel`, `InstallerStep` and `InstallerOption` are public but not for use by
+    sites), `ZauberCMS.Core.Data.DatabaseProviders`, `ZauberCMS.Core.Languages.CultureLookup`,
+    `ZauberCMS.Core.Security` (`ICaptchaProvider`, `IFormProtectionService`, `FormProtectionService`,
+    `FormProtectionResult`), `RoleExtensions.PromoteListedAdminAsync` / `IsAdminEmailAddress`,
+    `ProviderService.CaptchaProvider`, `ZauberSetup.RegisterRateLimitPolicy`, `FormProtectionFields` component,
+    `GlobalSettings.SiteName` / `DefaultLanguage` / `AllowRegistration`, `ZauberSettings.FormProtection`
+    (`MinimumFillSeconds`), `ZauberSettings.Identity.RecoverAdminUser`, `ZauberSettings.Plugins.CaptchaProvider`.
+  - Breaking (D18): none in signatures. `IZauberDbContext`, `IUserStore<User>` and `IRoleStore<Role>` are now
+    registered by factory; code that replaced those registrations after `AddZauberCms` still wins.
+- Behaviour changes for the release notes:
+  - A new site (template or packaged `appsettings.json`) starts with the installer; the database keys ship empty.
+    Existing sites are marked installed on first start (a `ZauberInstalled` row is written) and never see it.
+  - Empty `Zauber:DatabaseProvider` or `ConnectionString` is no longer a start-up failure: the site starts and
+    shows the installer to every visitor (D24). **After installing on a server, put the two settings into the
+    project's `appsettings.json` or the environment before publishing again.**
+  - Until a site is installed every request, a site's own endpoints and static files included, is answered by
+    the installer.
+  - **The first account to register is no longer an administrator.** There is no unattended install. An automated
+    set-up creates a user itself (an `ISeedData`; the site then counts as installed) and names it in
+    `Zauber:Identity:RecoverAdminUser`.
+  - **Plugins:** a hosted service that uses the database when it starts must check
+    `InstallState.IsDatabaseConfigured` first, or it stops the host of a site that has no database yet. On such a
+    site the built-in daily clean-up and sitemap jobs do their first run a day and six hours after the install.
+  - An address in Admin Email Addresses becomes an administrator only through a social login with a verified
+    address or by setting the password from an emailed link; a registration with such an address is sent that
+    link. The comparison ignores case.
+  - With registration turned off, a first sign-in through an external provider creates no account.
+  - The registration page refuses a form sent back in under 3 seconds, or with the hidden field filled, and
+    allows 5 attempts per address in 10 minutes (it shared the login allowance of 10 in 5 minutes).
+  - The home page runs in its content language again (ZA-148).
+  - A page with no language anywhere uses `GlobalSettings.DefaultLanguage` when it is set.
+- `/audit changed` (three independent reviewers: security, correctness, API and docs) found 3 problems worth
+  High and about 30 smaller ones in the first version of this change. Fixed before the commit: the admin-list
+  promotion (above); an install that could be left half-done by a closed tab, with registration open against
+  the installer's choice (settings now go in before the account, no cancellation after it, a failed account is
+  removed); a provider that stuck after one wrong value; "has users → installed" firing in the middle of an
+  install; seeders able to run twice at once; `appsettings.json` losing its permissions when rewritten, and
+  breaking when it used flat `Zauber:Key` names; a starter kit that cannot be created taking the installer down;
+  the installer's GET having no error page; `RecoverAdminUser` matching a user name that looks like an email
+  address, and leaving an unconfirmed account unable to sign in; `IMembershipService.ExternalLoginAsync`
+  ignoring the registration switch; the settings key for the fill time renamed before it ships
+  (`Zauber:FormProtection:MinimumFillSeconds`); `DatabaseProviders` moved to `ZauberCMS.Core.Data`; accessibility
+  and wording of the installer pages; the template linking pages by hand. Decided by the owner: D24. Logged as
+  new Low findings: ZA-149…ZA-152. The line numbers of 21 open findings in files this phase changed were brought
+  up to date.
+- Tests: 628 (528 pass; 100 skipped: 97 SQL Server variants, which need `ZAUBER_TEST_SQLSERVER`, and the 3 for open
+  findings). New: `tests/ZauberCMS.Core.Tests/Installer/`, `Membership/StartingRoleTests.cs`,
+  `Security/FormProtectionTests.cs`; additions to `ExternalSignUpTests`, `ContentCultureTests` and
+  `ServiceContainerTests`. Build 0 warnings.
+- Checked in a browser (scratch sites, nothing in the repository's `app.db`): a site with no database → database
+  step → SQLite, and separately PostgreSQL in a container (database created by the installer), both without a
+  restart; a site whose connection string is set and whose database is empty (tables created at start-up, the
+  installer starts at the set-up form); refused weak password; install; signed in at `/admin`; starter site from
+  a copy of the template built against this source (`/` and `/about` in the chosen language); registration off →
+  404 and no link; registration on → too fast, honeypot, success as Member, 429 after 5 posts; the "set it by
+  hand" screen; narrow screen; an existing database (copy of the dev site's) → marked installed, `/install` is
+  404. After the audit fixes: the database step's error state, and the whole install with the starter kit on
+  SQLite again.
+- Not verified: the installer with scripts turned off (built to work as one long form; not opened that way);
+  SQL Server through the installer (the SQL Server test variants were skipped here: no `ZAUBER_TEST_SQLSERVER`);
+  the "choose a password" email in a real mailbox (a test records that it is sent and where its link points);
+  the registration page and the "set it by hand" screen in a browser after the audit fixes (their tests pass);
+  a real CAPTCHA provider; `RecoverAdminUser` on a running site (tests only); a host where `appsettings.json` is
+  read-only (the override case was used to reach the same screen); the published template package (it cannot
+  build until the packages with these APIs exist — see [Releasing.md](Releasing.md) for the check that was done).
 
 ### Phase 8 — Media recycle bin (D3)
 - Media section recycle bin: list, restore, permanent delete (removes file via `IStorageProvider`), empty bin.
@@ -307,3 +405,19 @@ Owner instructions for this phase (2026-11-25):
 ## Open questions for the owner
 
 - Answered: SVG uploads (D6), sanitiser policy (D7), Phase 6 design (D13–D16), ZA-044 hotfix (D17), v5 (D18), installer (D19–D23).
+- From Phase 7, for the owner to confirm or change:
+  - The installer does not restart the site (see Phase 7). Say so if a restart is wanted anyway.
+  - An Admin Email Address is promoted by a social login or by setting the password from an emailed link, not by
+    an opened confirmation link (see Phase 7, "Different from D22"). The alternative is to promote social logins
+    only.
+  - Starter content ships in the template only. A built-in kit inside the packages would need views that sites
+    cannot edit.
+  - Should `IMembershipService.RegisterUserAsync` itself refuse when registration is off? Today only the built-in
+    page and the external sign-in paths do, so a site's own registration form keeps working.
+  - Should the installer write the database settings to a file of its own (for example `appsettings.Zauber.json`)
+    that a publish does not overwrite? It would close the common case behind D24; it changes D19's "into
+    `appsettings.json`" and does not survive deployments that delete extra files.
+  - The installer's pages cannot be restyled or given extra steps from a site (ZA-151). Wanted?
+  - The sample site's database has only the author's administrator account. `ReadMe.md` now tells people who
+    clone the repository to register and use `RecoverAdminUser`; a sample login, or no tracked database at all,
+    would be friendlier.

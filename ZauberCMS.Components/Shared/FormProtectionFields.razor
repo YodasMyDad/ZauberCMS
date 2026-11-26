@@ -1,0 +1,23 @@
+@using ZauberCMS.Core.Security.Interfaces
+@inject IFormProtectionService FormProtection
+@* The two fields IFormProtectionService checks. Put it inside a static form (the registration page does) and
+   call FormProtection.Validate(HttpContext) when the form is posted. No Radzen, no script: front-end safe. *@
+<input type="hidden" name="@FormProtection.TokenFieldName" value="@Token"/>
+@* Off-screen instead of display:none, which the simplest scripts skip. People never reach it: it is outside
+   the tab order and hidden from assistive technology. *@
+<div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+    <label>
+        Leave this field empty
+        <input type="text" name="@FormProtection.HoneypotFieldName" value="" tabindex="-1" autocomplete="off"/>
+    </label>
+</div>
+
+@code {
+    /// <summary>
+    /// The token to render. Leave it empty for a new one; pass the posted token back when the form is shown
+    /// again after a validation error, so the visitor is not timed from zero.
+    /// </summary>
+    [Parameter] public string? Token { get; set; }
+
+    protected override void OnParametersSet() => Token ??= FormProtection.CreateToken();
+}

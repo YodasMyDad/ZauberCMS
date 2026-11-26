@@ -12,6 +12,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Installer;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
@@ -44,6 +45,12 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
     {
         try
         {
+            if (!serviceProvider.GetRequiredService<InstallState>().IsDatabaseConfigured)
+            {
+                // The installer has not been given a database yet; the next run is in six hours
+                return;
+            }
+
             using var scope = serviceProvider.CreateScope();
             var contentService = scope.ServiceProvider.GetRequiredService<IContentService>();
             var dataService = scope.ServiceProvider.GetRequiredService<IDataService>();

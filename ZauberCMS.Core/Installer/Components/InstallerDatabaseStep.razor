@@ -1,0 +1,106 @@
+<h1>Where should the site keep its content?</h1>
+<p class="lead">
+    Pages, accounts and settings live in a database. Choose one and the tables are created for you.
+</p>
+
+<InstallerNotices Model="Model"/>
+
+<form method="post" action="@Model.FormAction" autocomplete="off">
+    <input type="hidden" name="@Model.AntiforgeryFieldName" value="@Model.AntiforgeryToken"/>
+    <input type="hidden" name="step" value="database"/>
+
+    <fieldset>
+        <legend class="legend">Database</legend>
+        <div class="choices across">
+            <label class="choice">
+                <input type="radio" name="provider" id="db-sqlite" value="@DatabaseProviders.Sqlite" checked="@Is(DatabaseProviders.Sqlite)"/>
+                <span><b>SQLite</b>A file next to the site. Nothing to set up.</span>
+            </label>
+            <label class="choice">
+                <input type="radio" name="provider" id="db-sqlserver" value="@DatabaseProviders.SqlServer" checked="@Is(DatabaseProviders.SqlServer)"/>
+                <span><b>SQL Server</b>Microsoft SQL Server or Azure SQL.</span>
+            </label>
+            <label class="choice">
+                <input type="radio" name="provider" id="db-postgresql" value="@DatabaseProviders.PostgreSql" checked="@Is(DatabaseProviders.PostgreSql)"/>
+                <span><b>PostgreSQL</b>A PostgreSQL server.</span>
+            </label>
+        </div>
+    </fieldset>
+
+    <div class="for-fields">
+        <div class="field for-sqlite">
+            <label for="db-file">File name</label>
+            <input type="text" id="db-file" name="sqliteFile" value="@Model.Database.SqliteFile" spellcheck="false" aria-describedby="db-file-hint"/>
+            <span class="hint" id="db-file-hint">Created in the folder the site runs in. A full path works too.</span>
+        </div>
+
+        <div class="pair for-server">
+            <div class="field">
+                <label for="db-server">Server</label>
+                <input type="text" id="db-server" name="server" value="@Model.Database.Server" spellcheck="false" autocapitalize="off" aria-describedby="db-server-hint"/>
+                <span class="hint for-sqlserver" id="db-server-hint">For example <code>localhost</code>, <code>.\SQLEXPRESS</code> or <code>db.example.com,1433</code>.</span>
+            </div>
+            <div class="field for-port">
+                <label for="db-port">Port</label>
+                <input type="number" id="db-port" name="port" min="1" max="65535" placeholder="5432" value="@Model.Database.Port"/>
+            </div>
+        </div>
+
+        <div class="field for-server">
+            <label for="db-name">Database name</label>
+            <input type="text" id="db-name" name="database" value="@Model.Database.Database" spellcheck="false" autocapitalize="off" aria-describedby="db-name-hint"/>
+            <span class="hint" id="db-name-hint">If it does not exist yet it is created, when the login is allowed to.</span>
+        </div>
+
+        <div class="check for-sqlserver">
+            <input type="checkbox" id="db-integrated" name="integratedSecurity" value="true" checked="@Model.Database.IntegratedSecurity" aria-describedby="db-integrated-hint"/>
+            <label for="db-integrated">Use Windows authentication</label>
+            <span class="hint" id="db-integrated-hint">The site signs in as the Windows account it runs under.</span>
+        </div>
+
+        <div class="for-server for-login">
+            <div class="field">
+                <label for="db-user">User name</label>
+                <input type="text" id="db-user" name="username" value="@Model.Database.Username" spellcheck="false" autocapitalize="off"/>
+            </div>
+            <div class="field">
+                <label for="db-password">Password</label>
+                <div class="with-button">
+                    @* Sent back after "Test the connection" so it need not be typed twice: the response goes to
+                       the person who typed it and is never stored (Cache-Control: no-store) *@
+                    <input type="password" id="db-password" name="password" autocomplete="new-password" value="@Model.Database.Password"/>
+                    <button type="button" class="quiet" data-reveal="db-password">Show</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="check for-sqlserver">
+            <input type="checkbox" id="db-trust" name="trustServerCertificate" value="true" checked="@Model.Database.TrustServerCertificate" aria-describedby="db-trust-hint"/>
+            <label for="db-trust">Trust the server's certificate</label>
+            <span class="hint" id="db-trust-hint">Needed for most local and test servers, which have no certificate from a trusted authority.</span>
+        </div>
+    </div>
+
+    <div class="check">
+        <input type="checkbox" id="db-string" name="useConnectionString" value="true" checked="@Model.Database.UseConnectionString"/>
+        <label for="db-string">Enter a connection string instead</label>
+    </div>
+
+    <div class="field for-string">
+        <label for="db-connection">Connection string</label>
+        <textarea id="db-connection" name="connectionString" spellcheck="false" autocapitalize="off" aria-describedby="db-connection-hint">@Model.Database.ConnectionString</textarea>
+        <span class="hint" id="db-connection-hint">It is saved in <code>appsettings.json</code> exactly as you type it.</span>
+    </div>
+
+    <div class="actions">
+        <button type="submit" name="action" value="save">Set up the database</button>
+        <button type="submit" name="action" value="test" class="quiet">Test the connection</button>
+    </div>
+</form>
+
+@code {
+    [Parameter, EditorRequired] public InstallerPageModel Model { get; set; } = null!;
+
+    private bool Is(string provider) =>
+        (DatabaseProviders.Normalise(Model.Database.Provider) ?? DatabaseProviders.Sqlite) == provider;
+}

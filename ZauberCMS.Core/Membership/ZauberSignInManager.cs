@@ -81,13 +81,21 @@ public class ZauberSignInManager(
 
     /// <summary>
     /// Creates the local account for a first external sign-in: the user (email confirmed), the external login and
-    /// the starting role. Returns null, and creates nothing, when the provider gave no email address or did not
+    /// the starting role. Returns null, and creates nothing, when registration is turned off
+    /// (<c>GlobalSettings.AllowRegistration</c>), when the provider gave no email address or when it did not
     /// state that the address is verified (<see cref="EmailVerifiedClaimType"/>).
     /// Without that rule an account at the provider with somebody else's unverified address would become that
     /// person here, and an administrator if the address is in <c>GlobalSettings.AdminEmailAddresses</c>.
     /// </summary>
     public async Task<User?> CreateExternalUserAsync(ExternalLoginInfo info)
     {
+        // A first sign-in through a provider is a registration: the switch that closes the page closes this too
+        if (!(await dataService.GetGlobalSettings()).AllowRegistration)
+        {
+            logger.LogWarning("External login {LoginProvider}: registration is turned off; refusing to create account", info.LoginProvider);
+            return null;
+        }
+
         var email = info.Principal.FindFirstValue(ClaimTypes.Email);
         if (string.IsNullOrWhiteSpace(email))
         {
