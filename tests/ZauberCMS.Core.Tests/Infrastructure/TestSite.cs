@@ -50,7 +50,7 @@ public sealed class TestSite : IAsyncDisposable
 
     public IServiceProvider Services => App.Services;
 
-    /// <summary>The user every service call runs as (services read it via AuthenticationStateProvider).</summary>
+    /// <summary>The user every service call runs as (<c>ICurrentUserAccessor</c> reads it from AuthenticationStateProvider).</summary>
     public User CurrentUser { get; private set; } = null!;
 
     /// <param name="extraSettings">Configuration keys added to (or replacing) the test defaults.</param>
@@ -147,7 +147,7 @@ public sealed class TestSite : IAsyncDisposable
 
         builder.AddZauberCms();
 
-        // Services read the signed-in user from AuthenticationStateProvider; the real one needs a Blazor circuit.
+        // ICurrentUserAccessor asks AuthenticationStateProvider first; the real one has a state only inside a Blazor render.
         builder.Services.AddSingleton<TestSignIn>();
         builder.Services.AddScoped<AuthenticationStateProvider, TestAuthenticationStateProvider>();
 
@@ -285,7 +285,7 @@ public sealed class TestAuthenticationStateProvider(TestSignIn signIn)
     public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
         Task.FromResult(new AuthenticationState(signIn.Principal));
 
-    // What code outside a Blazor component uses to run as a user (the installer does, for its new administrator)
+    // How a static page gives the provider its user; code outside a render uses ICurrentUserAccessor.RunAs
     public void SetAuthenticationState(Task<AuthenticationState> authenticationStateTask) =>
         signIn.Principal = authenticationStateTask.GetAwaiter().GetResult().User;
 }

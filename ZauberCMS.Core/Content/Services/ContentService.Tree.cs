@@ -23,20 +23,13 @@ public partial class ContentService
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Models.Content>();
 
         var root = parameters.Content;
         if (root == null)
         {
             handlerResult.AddMessage("Content is null", ResultMessageType.Error);
-            return handlerResult;
-        }
-
-        if (user == null)
-        {
-            handlerResult.AddMessage("Sign in to save content", ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -173,7 +166,7 @@ public partial class ContentService
             else if (!draftMode && node.Stored?.UnpublishedContent != null)
             {
                 // A draft from an earlier "Save only" that this edit did not open: it is published with the item
-                hookEntities.Add(await StagePublishBlockDraftAsync(dbContext, node.Stored, user.Id, cancellationToken));
+                hookEntities.Add(await StagePublishBlockDraftAsync(dbContext, node.Stored, user?.Id, cancellationToken));
             }
         }
 
@@ -185,7 +178,8 @@ public partial class ContentService
                 root.Id, removed.Count);
         }
 
-        if (!draftMode)
+        // Services trust their caller (Roadmap D27): a save with nobody signed in (a job, an import) records no user
+        if (!draftMode && user != null)
         {
             dbContext.Audits.Add(new Audit.Models.Audit
             {
@@ -229,7 +223,7 @@ public partial class ContentService
                     : published
                         ? (isUpdate ? "Content updated and published" : "Content created and published")
                         : (isUpdate ? "Content updated" : "Content created"),
-                user.Id, rootEntity.Id, cancellationToken);
+                user?.Id, rootEntity.Id, cancellationToken);
         }
 
         return saveResult;
@@ -284,7 +278,7 @@ public partial class ContentService
 
     /// <summary>Stages the publish of a block's stored draft onto its row and removes the draft.</summary>
     private static async Task<Models.Content> StagePublishBlockDraftAsync(IZauberDbContext dbContext,
-        Models.Content stored, Guid userId, CancellationToken cancellationToken)
+        Models.Content stored, Guid? userId, CancellationToken cancellationToken)
     {
         var draft = stored.UnpublishedContent!.JsonContent;
         var row = await dbContext.Contents.AsTracking().Include(x => x.PropertyData)

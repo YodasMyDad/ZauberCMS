@@ -16,7 +16,8 @@ How Core services are built. Paths relative to `ZauberCMS.Core/`. Standards: [St
 - Copy from `Data/Services/DataService.cs` (small) or `Seo/Services/SeoService.cs`. `Content/Services/ContentService.cs`
   is the full reference (queries, versioning, block lists, transactions).
 - Primary-constructor DI: `IServiceScopeFactory`, `ICacheService`, `ExtensionManager`, `ILogger<T>`, and as needed
-  `AppState`, `IOptions<ZauberSettings>`, sibling services.
+  `AppState`, `IOptions<ZauberSettings>`, `ICurrentUserAccessor` (when it records who made a change), sibling
+  services.
 - `Components/_Imports.razor` globally injects the main services into every component (`ContentService`,
   `MediaService`, `MembershipService`, `LanguageService`, `TagService`, `SeoService`, `EmailService`, `DataService`).
 
@@ -32,6 +33,41 @@ How Core services are built. Paths relative to `ZauberCMS.Core/`. Standards: [St
   recycle bin, `null` = both). Included `Children` never contain recycled items, whatever the filter.
   - `WhereClause` (expression) is always applied on top of standard filters.
   - `Query` (`Func<IQueryable<T>>`) **replaces** the whole query — including the soft-delete filter. Callers own it.
+
+## Callers and access (Roadmap D27)
+
+- **Services trust their caller.** They don't decide who may do what; whatever calls them does. Admin pages are
+  gated by `[Authorize(Roles = Admin)]` ([AdminUI.md](AdminUI.md)); the account pages have their own checks
+  (registration switch, emailed tokens, passwords, rate limits). A front-end component, controller, minimal API or
+  plugin that calls a write method checks access itself first: `[Authorize]` on the endpoint, or comparing the
+  signed-in user with the item an id from the address points at. Front-end code that writes on purpose (a sign-up
+  form that creates content) needs nothing more. This is how Umbraco and WordPress do it too; a check inside every
+  service was considered (D10, ZA-140) and dropped.
+- **Who made a change.** Services read the caller through `ICurrentUserAccessor` (`Membership/Interfaces/`): for the
+  audit trail, `LastUpdatedById`, a version's `CreatedById`, and refreshing the sign-in of a user who edits their own
+  account. It answers, in order: a principal set by `RunAs`, the Blazor authentication state (a circuit or a static
+  page), the request's user (a controller, a minimal API), nobody. Don't inject `AuthenticationStateProvider` into a
+  service: it has a state only inside a Blazor render, and a save from anywhere else threw (ZA-093).
+- **Nobody signed in** (a hosted service, a job, an import): the write is saved and records no user (null ids, no
+  audit line). To record someone, run the calls as them:
+
+```csharp
+var principal = await signInManager.CreateUserPrincipalAsync(importUser);
+using (currentUserAccessor.RunAs(principal))
+{
+    await contentService.SaveContentAsync(parameters, cancellationToken);
+}
+```
+
+`RunAs` holds for the async flow that called it, not the DI scope (a circuit is one scope for all its events), so
+call it in the method that awaits the work and dispose it there (`using`). It applies to the services of the scope
+it was called in and to scopes with no Blazor render of their own (a job's); a circuit reached through an AppState
+event keeps its own user. It is for jobs, imports and the installer, not components: work a render starts inside
+the block keeps the value, and so do timers or loops first started there. The installer runs the starter kit as
+the new administrator this way. Inside a circuit, use the services the component was given: a write service from a
+fresh scope there falls back to the user the circuit connected with.
+A site can register its own `ICurrentUserAccessor` after `AddZauberCms` to take the caller from somewhere else (an
+API key's account, for example).
 
 ## DbContext per operation
 
@@ -188,6 +224,8 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
 - `user.AddAudit(entity, name, AuditAction.X, auditService, cancellationToken)` (`Extensions/AuditExtensions.cs`) —
   Media, Tag, Seo, Language services.
 - inline audit inside the save transaction — `ContentService`.
+
+Both name the caller from `ICurrentUserAccessor`; with nobody signed in no audit row is written.
 
 Audit rows older than 90 days are removed by the daily job (`CleanupOldAuditsAsync`, one `DELETE` in the database).
 

@@ -96,6 +96,8 @@ in the compiled CSS (or ship their own stylesheet).
 
 ## Rules
 
-- Admin pages outside `Components/Admin/` must add the `[Authorize]` attribute themselves.
+- Admin pages outside `Components/Admin/` must add the `[Authorize]` attribute themselves. The page is the check:
+  the services don't decide who may write ([Services.md](Services.md) "Callers and access"), so a page or menu
+  opened to another role can do whatever the services it calls can do.
 - Never call EF directly from components — use services.
 - Every service save result goes to the user via the notification extensions; never show raw exception text.

@@ -142,6 +142,10 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
   `AdminAccessMiddleware` (requests) and `Routes.razor` (navigation inside a circuit) treat any other page under
   `/admin` that has no `[Authorize]`/`[AllowAnonymous]` of its own as admin-only, and the middleware enforces
   `GlobalSettings.AllowedAdminIpAddress`. A plugin page for another role declares its own `[Authorize(Roles = …)]`.
+- **Services do no authorisation** (Roadmap D27): the page, component or endpoint that calls a service checks
+  access first. Services read the caller only to record who made a change, through `ICurrentUserAccessor` (circuit,
+  static page, controller or job; `RunAs` for code with nobody signed in). Never inject `AuthenticationStateProvider`
+  into a service. → [Docs/Services.md](Docs/Services.md) "Callers and access"
 - Behind a reverse proxy set `Zauber:ForwardedHeaders`; set `Zauber:SiteUrl` on any site that sends email.
 - The admin always runs in `Zauber:AdminDefaultLanguage` (`CultureMiddleware` for requests,
   `AdminCultureCircuitHandler` for circuits); front-end pages run in the language of their content.

@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +20,7 @@ using ZauberCMS.Core.Languages;
 using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Languages.Parameters;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Settings;
@@ -325,7 +325,7 @@ public class InstallService(
             using var scope = serviceScopeFactory.CreateScope();
             var services = scope.ServiceProvider;
 
-            // The kit is created in this scope, so the services it asks for run as the new administrator (below)
+            // The kit's service calls run as the new administrator (RunAs, below)
             IStarterKit? starterKit = null;
             if (!string.IsNullOrWhiteSpace(parameters.StarterKit))
             {
@@ -444,35 +444,46 @@ public class InstallService(
             logger.LogInformation("ZauberCMS installed; administrator {UserName} created", admin.UserName);
 
             // The site is installed from here on. What follows is set-up the administrator can redo in the
-            // admin, so a failure is reported and logged, not rolled back.
-            Language? language = null;
+            // admin, so a failure is reported and logged, not rolled back. Nobody is signed in to this request:
+            // the language and the starter content are saved as the new administrator (audit, "last updated by").
+            IDisposable? runAsAdmin = null;
             try
             {
-                await RunAsAsync(services, admin);
-                language = culture == null ? null : await SaveLanguageAsync(services, culture, result, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "The installer could not finish setting up after the install");
-                result.Warnings.Add($"The language could not be saved: {Describe(ex)}");
-            }
-
-            if (starterKit != null)
-            {
+                Language? language = null;
                 try
                 {
-                    await starterKit.InstallAsync(new StarterKitContext
-                    {
-                        SiteName = siteName!,
-                        Language = language,
-                        Administrator = admin
-                    }, CancellationToken.None);
+                    var principal = await services.GetRequiredService<SignInManager<User>>()
+                        .CreateUserPrincipalAsync(admin);
+                    runAsAdmin = services.GetRequiredService<ICurrentUserAccessor>().RunAs(principal);
+                    language = culture == null ? null : await SaveLanguageAsync(services, culture, result, CancellationToken.None);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Starter kit {Kit} failed", starterKit.GetType().FullName);
-                    result.Warnings.Add($"The starter content \"{starterKit.Name}\" could not be installed: {Describe(ex)}");
+                    logger.LogError(ex, "The installer could not finish setting up after the install");
+                    result.Warnings.Add($"The language could not be saved: {Describe(ex)}");
                 }
+
+                if (starterKit != null)
+                {
+                    try
+                    {
+                        await starterKit.InstallAsync(new StarterKitContext
+                        {
+                            SiteName = siteName!,
+                            Language = language,
+                            Administrator = admin
+                        }, CancellationToken.None);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Starter kit {Kit} failed", starterKit.GetType().FullName);
+                        result.Warnings.Add($"The starter content \"{starterKit.Name}\" could not be installed: {Describe(ex)}");
+                    }
+                }
+            }
+            finally
+            {
+                runAsAdmin?.Dispose();
             }
 
             return result;
@@ -494,17 +505,6 @@ public class InstallService(
         {
             logger.LogError(ex, "Starter kit {Kit} could not be created and is left out", type.FullName);
             return null;
-        }
-    }
-
-    // Services read the signed-in user from AuthenticationStateProvider. Outside a Blazor component nobody has
-    // set it, and the built-in provider throws when asked; give this scope the new administrator.
-    private static async Task RunAsAsync(IServiceProvider services, User user)
-    {
-        if (services.GetService<AuthenticationStateProvider>() is IHostEnvironmentAuthenticationStateProvider provider)
-        {
-            var principal = await services.GetRequiredService<SignInManager<User>>().CreateUserPrincipalAsync(user);
-            provider.SetAuthenticationState(Task.FromResult(new AuthenticationState(principal)));
         }
     }
 

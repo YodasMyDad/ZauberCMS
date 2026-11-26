@@ -123,7 +123,10 @@ start. It does not create accounts.
 
 Discovered (public class in a scanned assembly, constructor injection). The installer lists every kit plus "An
 empty site"; a kit that cannot be created is logged and left out. `InstallAsync(StarterKitContext)` runs after
-the flag is written, as the new administrator, so `IContentService` saves work and are attributed to them.
+the flag is written, inside `ICurrentUserAccessor.RunAs` for the new administrator, so the saves of the services
+injected into the kit are attributed to them. Nobody is signed in to the request: read the user through
+`ICurrentUserAccessor` (or `StarterKitContext.Administrator`), not `AuthenticationStateProvider`, which has no
+state here and throws.
 
 The template project ships one (`Starter/StarterSite.cs`: Home Page and Text Page types, two pages, views in
 `Views/`, layout in `Layouts/`). ZauberCMS packages ship none: a kit needs views, and views belong to the site.

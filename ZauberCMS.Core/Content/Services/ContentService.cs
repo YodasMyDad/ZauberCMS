@@ -1,6 +1,4 @@
 using System.Linq.Dynamic.Core;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,6 +14,7 @@ using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared;
 using System.Text.Json;
@@ -26,7 +25,7 @@ public partial class ContentService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     IOptions<ZauberSettings> settings,
-    AuthenticationStateProvider authenticationStateProvider,
+    ICurrentUserAccessor currentUserAccessor,
     ExtensionManager extensionManager,
     AppState appState,
     ILanguageService languageService,
@@ -34,16 +33,6 @@ public partial class ContentService(
     : IContentService
 {
     private const string BlockListEditorComponentAlias = BlockListNestedContentReferenceProvider.BlockListEditorAlias;
-
-    /// <summary>
-    /// The signed-in user, through a <c>UserManager</c> (and context) of its own: the circuit's lives as long as the
-    /// circuit and keeps returning the user as it was first loaded (ZA-086).
-    /// </summary>
-    private async Task<User?> GetCurrentUserAsync(AuthenticationState authState)
-    {
-        using var userScope = serviceScopeFactory.CreateScope();
-        return await userScope.ServiceProvider.GetRequiredService<UserManager<User>>().GetUserAsync(authState.User);
-    }
 
     /// <summary>
     /// Retrieves a single content item based on the provided parameters. Can optionally use cache.
@@ -81,8 +70,7 @@ public partial class ContentService(
         // Sort, move, restore, restrict access, culture: where or how the item is shown, not its values or blocks
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        User? user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Models.Content>();
 
         if (parameters.Content == null)
@@ -155,7 +143,7 @@ public partial class ContentService(
             {
                 var nameText = content.Name ?? nameof(Models.Content);
                 var actionText = isUpdate ? "Updated" : "Created";
-                await SaveAuditAsync(dbContext, $"{user!.Name} {actionText} {nameText}", cancellationToken);
+                await SaveAuditIfUser(dbContext, user, nameText, actionText, cancellationToken);
 
                 saveResult = await dbContext.SaveChangesAndLog(content, handlerResult, cacheService, extensionManager,
                     cancellationToken);
@@ -342,7 +330,7 @@ public partial class ContentService(
                 content.SortOrder = await GetNextSortOrderAsync(dbContext, content.ParentId, content.IsRootContent, cancellationToken) + 1;
             }
 
-            content.LastUpdatedById = user!.Id;
+            content.LastUpdatedById = user?.Id;
             dbContext.Contents.Add(content);
         }
         else
@@ -364,7 +352,7 @@ public partial class ContentService(
                 content.UnpublishedContentId = storedUnpublishedContentId;
             }
 
-            content.LastUpdatedById = user!.Id;
+            content.LastUpdatedById = user?.Id;
             content.DateUpdated = DateTime.UtcNow;
 
             if (submittedDateUpdated != default)
@@ -535,8 +523,7 @@ public partial class ContentService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var loggedInUser = await GetCurrentUserAsync(authState);
+        var loggedInUser = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Models.Content>();
 
         var content = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == parameters.ContentId, cancellationToken);
@@ -581,7 +568,7 @@ public partial class ContentService(
                 // Notify subscribers (admin tree, listings) that this content has effectively
                 // been removed from the live set so they refresh — without this, recycle bin
                 // moves only refresh on a manual reload.
-                await appState.NotifyContentDeleted(content, authState.User.Identity?.Name!);
+                await appState.NotifyContentDeleted(content, loggedInUser?.UserName ?? string.Empty);
                 return recycleResult;
             }
             catch
@@ -690,7 +677,7 @@ public partial class ContentService(
                 // Again after the commit: SaveChangesAndLog cleared before it, and a read in between cached the old rows
                 cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
                 // The deleted item, so only editors and trees showing it react (ZA-040)
-                await appState.NotifyContentDeleted(content, authState.User.Identity?.Name!);
+                await appState.NotifyContentDeleted(content, loggedInUser?.UserName ?? string.Empty);
             }
             else
             {
@@ -797,8 +784,7 @@ public partial class ContentService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Models.Content>();
 
         var contentToCopy = await dbContext.Contents
@@ -1027,8 +1013,7 @@ public partial class ContentService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<ContentType>();
         var isUpdate = false;
 
@@ -1055,19 +1040,19 @@ public partial class ContentService(
             }
 
             contentType = parameters.ContentType;
-            contentType.LastUpdatedById = user!.Id;
+            contentType.LastUpdatedById = user?.Id;
             dbContext.ContentTypes.Add(contentType);
         }
         else
         {
             isUpdate = true;
             parameters.ContentType.MapTo(contentType);
-            contentType.LastUpdatedById = user!.Id;
+            contentType.LastUpdatedById = user?.Id;
             contentType.DateUpdated = DateTime.UtcNow;
         }
 
         var actionText = isUpdate ? "Updated" : "Created";
-        await SaveAuditAsync(dbContext, $"{user.Name} {actionText} {contentType.Name}", cancellationToken);
+        await SaveAuditIfUser(dbContext, user, contentType.Name, actionText, cancellationToken);
 
         var savedType = await dbContext.SaveChangesAndLog(contentType, handlerResult, cacheService, extensionManager,
             cancellationToken);
@@ -1188,8 +1173,7 @@ public partial class ContentService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<ContentType>();
 
         // Check for regular content using this ContentType: drafts and recycled pages too, because deleting the
@@ -1390,8 +1374,7 @@ public partial class ContentService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Domain>();
         var isUpdate = false;
 
@@ -1500,8 +1483,7 @@ public partial class ContentService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Domain?>();
 
         Domain? domain = null;
@@ -1915,8 +1897,7 @@ public partial class ContentService(
 
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync();
 
         // Import ContentType
         var export = package.Type;

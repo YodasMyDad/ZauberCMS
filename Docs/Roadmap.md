@@ -14,9 +14,10 @@
   **Phase 5 done** (content integrity). **Phase 6 done** (PostgreSQL & Redis). **Phase 7 done** (installer,
   2026-11-26). **Phase 8 done** (media recycle bin, 2026-11-26). **Phase 9 done** (Block List redesign, 2026-11-26).
   **Phase 10 done** (performance & async, 2026-11-26).
-  **68 open findings** (0 Critical, 0 High, 20 Medium, 48 Low), each one assigned below to Phase 10a–10e, Phase 11
-  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10a** (service authorisation, design with the owner
-  first); Phases 10b–10e don't depend on it and can go first while that design is open.
+  **Phase 10a done** (callers outside a circuit, D27, 2026-11-26).
+  **65 open findings** (0 Critical, 0 High, 18 Medium, 47 Low), each one assigned below to Phase 10b–10e, Phase 11
+  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10b** (save hooks and content data; ask the owner the
+  two questions listed there first).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -34,7 +35,7 @@
 | D7 | **Sanitiser: `<iframe>` only from a configurable host allow-list** (default YouTube, Vimeo); `data:` URLs only for images. | ZA-021, ZA-134 |
 | D8 | External sign-up (ZA-002): fix with unit tests now; the owner tests against a real provider later. Until then it is "not verified live". | ZA-002 |
 | D9 | Fix the duplicated `<RadzenComponents>` (ZA-138) in Phase 4. | ZA-138 |
-| D10 | **Service authorisation is an opt-in permission hook, done as its own later phase** (Phase 10a): services ask a replaceable permission service before a write; the default allows everything, a site can switch on a strict mode. A strict default is a question for the major version. | ZA-140 |
+| D10 | *Replaced by D27 (2026-11-26).* **Service authorisation is an opt-in permission hook, done as its own later phase** (Phase 10a): services ask a replaceable permission service before a write; the default allows everything, a site can switch on a strict mode. A strict default is a question for the major version. | ZA-140 |
 | D11 | **Redirects may point at another site** (a full http/https address). | ZA-116 area |
 | D12 | **ZauberCMS.RTE 4 is taken now on .NET 10** (it targets net10.0 and net11.0), not at the .NET 11 move. | ZA-134, ZA-136 |
 | D13 | **Cache: entity graphs stay in each server's memory cache; Redis only carries invalidation** (pub/sub "clear prefix" plus a version counter, so every server drops stale entries). Nothing secret or half-loaded is stored in Redis; no public API change. Shared DTO caching is not planned. (2026-11-25) | ZA-051, ZA-014, ZA-055, ZA-072 |
@@ -51,6 +52,7 @@
 | D24 | **No switch to turn the installer off.** Empty database settings always mean "show the installer", as decided in D20. That a live site which loses its database settings (a publish overwriting `appsettings.json`, a missing environment variable) then shows the installer is accepted: it is logged as an error at start-up and documented, with the instruction to put the settings into the project or the environment after installing on a server. (owner, 2026-11-26, asked during Phase 7 after the audit raised it) | ZA-004, [Installer.md](Installer.md) |
 | D25 | **Content versions are pruned: the newest N per page are kept** (plus its published version and latest draft), by the daily job; a new setting `Zauber:ContentVersionsToKeep`, on by default (50) — existing sites start pruning on upgrade (release notes). (owner, 2026-11-26, Phase 10) | ZA-069 |
 | D26 | **Admin trees page their children with a "Show more" row**: the first 100 of a node, then a row at the bottom that loads the next 100. (owner, 2026-11-26, Phase 10) | ZA-068 |
+| D27 | **Services do no authorisation; access is checked where a call comes in** (the page, component or endpoint), as in Umbraco and WordPress. Replaces D10: the opt-in permission hook was weighed in Phase 10a and dropped (no shipped path needs it, it does nothing against plugin code, and it would put a rule on every write method). What Phase 10a does instead: `ICurrentUserAccessor`, so services can be called outside a circuit (ZA-093). Back-office roles other than Admin go to the Backlog; that is where service checks would be looked at again. (owner, 2026-11-26) | ZA-140, ZA-093 |
 
 ## Working rules for the rework
 
@@ -560,15 +562,41 @@ Done so far (2026-11-26), in steps:
     logs the detail; its constructor has an extra optional `ILogger` parameter (code that constructs or subclasses it
     recompiles). Sitemap `priority` is written in the invariant culture and `lastmod` in UTC.
 
-### Phase 10a — Service authorisation (D10)
-ZA-140 (Medium), ZA-093 (Medium). Design first, with the owner: a replaceable permission service the Core services
-ask before a write (who, which entity, which action), default "allow" so existing sites and front-end code that
-saves on purpose keep working, a strict mode a site can switch on, and the way front-end or plugin code declares an
-intended write. This is also the base for non-admin back-office roles (editors). Whether strict becomes the default
-is a v5 question (Phase 11).
-- The check needs to know who is calling outside a circuit, so `ICurrentUserAccessor` (ZA-093: the services read
-  the user from `AuthenticationStateProvider`, so a controller, API or hosted service can't save or delete) is built
-  here, not in Phase 11. It also replaces the installer's `RunAsAsync` work-around.
+### Phase 10a — Who is calling (D27) — DONE 2026-11-26
+Planned as service authorisation (D10, ZA-140) with ZA-093. The owner weighed the permission hook against what it
+buys and dropped it (D27): services trust their caller, and the page, component or endpoint checks access. What
+was built is the part with real bugs behind it:
+- **`ICurrentUserAccessor`** (`Membership/Interfaces/`, default `CurrentUserAccessor`, replaceable): the caller is
+  a principal set by `RunAs`, else the Blazor authentication state, else the request's user, else nobody. The six
+  services that read the user (Content, Media, Membership, Language, Seo, Tag) use it instead of
+  `AuthenticationStateProvider`, which has a state only inside a Blazor render: a save from a controller, an API or
+  a hosted service threw (ZA-093).
+- **A write with nobody signed in is saved and records no user** (null `LastUpdatedById` / version `CreatedById`, no
+  audit line). Content-type, media, sort/move and audit paths used `user!` and threw; the page save refused.
+- **`RunAs`** holds per async flow (an `AsyncLocal`), not per scope, for the scope that set it and for scopes with
+  no render of their own; a circuit reached through an AppState event keeps its own user. The installer runs the language and the starter
+  kit as the new administrator with it, replacing its own work-around that set the scope's authentication state.
+  The installer test now fails if that run-as is missing, which also closes ZA-152.
+- Rule written down in `AGENTS.md`, [Services.md](Services.md) "Callers and access" and [AdminUI.md](AdminUI.md).
+- Tests: `Membership/CurrentUserAccessorTests.cs` (9): the request's user outside a render, nobody instead of an
+  exception, `RunAs` nesting, `RunAs` not leaking into another flow of the same scope, content / content-type /
+  sort and media saves from a job with nobody signed in, a job that runs as a user, a `RunAs` that does not reach
+  another signed-in scope, a request id that is not ours. Reviewed by a separate agent: its two Mediums (a foreign
+  id threw, `RunAs` reached other circuits' event handlers) and Lows fixed.
+- Findings: ZA-093 fixed, ZA-140 closed by D27, ZA-152 resolved.
+- Release notes (Phase 10a):
+  - **Breaking:** the constructors of `ContentService`, `MediaService`, `MembershipService`, `LanguageService`,
+    `SeoService` and `TagService` take `ICurrentUserAccessor` instead of `AuthenticationStateProvider` (code that
+    constructs or subclasses them recompiles).
+  - Service writes work outside a Blazor circuit (controllers, minimal APIs, hosted services). With nobody signed
+    in they record no user; wrap calls in `ICurrentUserAccessor.RunAs` to record one.
+  - Services don't check who may write (unchanged, now documented): a site's own front-end code, endpoints and
+    plugin pages check access before they call a write method. The page save no longer refuses with "Sign in to
+    save content" when nobody is signed in (a refusal added earlier in the rework; 4.x threw there).
+  - A starter kit runs inside `RunAs` for the new administrator. A kit that read the user from
+    `AuthenticationStateProvider` itself worked because the installer set that state; it now throws there and
+    should use `ICurrentUserAccessor` or `StarterKitContext.Administrator`.
+  - A caller signed in by another authentication scheme whose id is not a ZauberCMS user id counts as nobody.
 
 ### Phase 10b — Save hooks and content data
 ZA-012, ZA-018, ZA-077, ZA-099 (Medium); ZA-117, ZA-144, ZA-145, ZA-146, ZA-157, ZA-159 (Low).
@@ -630,13 +658,13 @@ ZA-115, ZA-116, ZA-149, ZA-150 (Low).
 
 ### Phase 11 — Engineering baseline, API clean-up, v5
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123, ZA-124,
-ZA-125, ZA-126, ZA-131, ZA-152 (Low).
+ZA-125, ZA-126, ZA-131 (Low).
 - **Baseline:** ZA-131 (`Directory.Build.props`, analyzers, central package management, `.editorconfig`,
   `.gitattributes`, an SDK pin, a vulnerability scan in CI); CI and release hardening ZA-089, ZA-109.
 - **Packaging and template:** ZA-087 (npm manifests in the Components package), ZA-094 (pinned asset package in the
   template), ZA-118 (un-skips its waiting test), ZA-119 (package metadata), ZA-123 (template rough edges).
-- **Start-up, DI and tests:** ZA-120 (discovery and configuration fail silently), ZA-121 (DI leftovers), ZA-152
-  (test sign-in shared across scopes).
+- **Start-up and DI:** ZA-120 (discovery and configuration fail silently), ZA-121 (DI leftovers, among them the
+  unused `IdentityUserAccessor` that `ICurrentUserAccessor` replaces).
 - **The deliberate breaking batch for v5:** internalise non-contract types (ZA-092), move Radzen-typed contracts
   out of Core (ZA-091), remove the unwired MVC path (ZA-090), naming conventions (ZA-124), split the very large
   services and remove `Content.Url` (ZA-125), give interactive custom components an id or DTO instead of the whole
@@ -669,6 +697,7 @@ right. Move one into a phase when that is settled.
 | ZA-128 [Low] Accessibility roll-up (unlabelled icon buttons, clickable divs, inputs without labels) | A pass over every admin screen. Best done once, after Phase 10d's admin changes; the owner decides when. |
 | ZA-129 [Low] The admin UI is not localised | A feature: which languages, resource files, who translates. Owner decision. |
 | ZA-151 [Low] The installer's pages cannot be restyled or extended from a site | Open question for the owner (below). |
+| — Back-office roles other than Admin (an "Editor" who may edit content but not users) | A feature (D27). Hiding screens and actions per role is the start; whether services then check access too is decided then. |
 | ZA-155 [Low] Resized copies of a deleted image stay in `_mediacache` | Needs a way to remove one file's entries from the ImageResize package, or a decision to prune that cache on a schedule. |
 
 ## Open questions for the owner

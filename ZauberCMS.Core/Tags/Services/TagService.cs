@@ -1,11 +1,9 @@
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -18,7 +16,7 @@ namespace ZauberCMS.Core.Tags.Services;
 public class TagService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider,
+    ICurrentUserAccessor currentUserAccessor,
     ExtensionManager extensionManager)
     : ITagService
 {
@@ -34,9 +32,7 @@ public class TagService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Tag>();
 
         if (!parameters.TagName.IsNullOrWhiteSpace())
@@ -121,9 +117,7 @@ public class TagService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Tag>();
 
         if (parameters.Id != null)
@@ -168,9 +162,7 @@ public class TagService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<TagItem>();
 
         if (parameters.ItemId == Guid.Empty)
@@ -238,9 +230,7 @@ public class TagService(
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<TagItem>();
 
         TagItem? tagItem = null;

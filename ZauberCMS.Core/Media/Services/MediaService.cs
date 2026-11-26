@@ -1,8 +1,6 @@
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -13,6 +11,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Parameters;
 using ZauberCMS.Core.Media.Mapping;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Providers;
@@ -30,7 +29,7 @@ public class MediaService(
     AppState appState,
     IOptions<ZauberSettings> settings,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider,
+    ICurrentUserAccessor currentUserAccessor,
     ExtensionManager extensionManager,
     ILogger<MediaService> logger)
     : IMediaService
@@ -67,9 +66,7 @@ public class MediaService(
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         var result = new HandlerResult<Models.Media>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
 
         // Nothing goes into a folder that is in the recycle bin (a dialog opened before the folder was binned):
         // it would be live, served, and in neither tree. Checked before a file is written.
@@ -111,7 +108,7 @@ public class MediaService(
                 result.Entity.ParentId = parameters.ParentFolderId;
             }
 
-            result.Entity.LastUpdatedById = user!.Id;
+            result.Entity.LastUpdatedById = user?.Id;
 
             // Now update or add the media item
             if (parameters.IsUpdate)
@@ -157,7 +154,7 @@ public class MediaService(
                         cancellationToken);
                     if (result.Success)
                     {
-                        await appState.NotifyMediaSaved(dbMedia, authState.User.Identity?.Name!);
+                        await appState.NotifyMediaSaved(dbMedia, user?.UserName ?? string.Empty);
                     }
                 }
                 else
@@ -178,7 +175,7 @@ public class MediaService(
                     cancellationToken);
                 if (result.Success)
                 {
-                    await appState.NotifyMediaSaved(result.Entity, authState.User.Identity?.Name!);
+                    await appState.NotifyMediaSaved(result.Entity, user?.UserName ?? string.Empty);
                 }
             }
         }
@@ -224,7 +221,7 @@ public class MediaService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Models.Media>();
 
         var media = await dbContext.Medias.AsTracking().FirstOrDefaultAsync(x => x.Id == parameters.MediaId, cancellationToken);
@@ -258,8 +255,8 @@ public class MediaService(
             var recycleResult = await SaveInTransactionAsync(dbContext, media, handlerResult, cancellationToken);
             if (recycleResult.Success)
             {
-                await AuditAsync(scope, authState, media, AuditExtensions.AuditAction.RecycleBin, cancellationToken);
-                await appState.NotifyMediaDeleted(media, authState.User.Identity?.Name!);
+                await AuditAsync(scope, user, media, AuditExtensions.AuditAction.RecycleBin, cancellationToken);
+                await appState.NotifyMediaDeleted(media, user?.UserName ?? string.Empty);
             }
 
             return recycleResult;
@@ -278,8 +275,8 @@ public class MediaService(
             cancellationToken);
         if (result.Success)
         {
-            await AuditAsync(scope, authState, media, AuditExtensions.AuditAction.Delete, cancellationToken);
-            await appState.NotifyMediaDeleted(media, authState.User.Identity?.Name!);
+            await AuditAsync(scope, user, media, AuditExtensions.AuditAction.Delete, cancellationToken);
+            await appState.NotifyMediaDeleted(media, user?.UserName ?? string.Empty);
         }
 
         return result;
@@ -293,7 +290,7 @@ public class MediaService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Models.Media>();
 
         var media = await dbContext.Medias.AsTracking().FirstOrDefaultAsync(x => x.Id == parameters.MediaId, cancellationToken);
@@ -342,8 +339,8 @@ public class MediaService(
         var result = await SaveInTransactionAsync(dbContext, media, handlerResult, cancellationToken);
         if (result.Success)
         {
-            await AuditAsync(scope, authState, media, AuditExtensions.AuditAction.Restore, cancellationToken);
-            await appState.NotifyMediaSaved(media, authState.User.Identity?.Name!);
+            await AuditAsync(scope, user, media, AuditExtensions.AuditAction.Restore, cancellationToken);
+            await appState.NotifyMediaSaved(media, user?.UserName ?? string.Empty);
         }
 
         return result;
@@ -357,7 +354,7 @@ public class MediaService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var result = new HandlerResult<int?> { Entity = 0 };
 
         var binned = await dbContext.Medias.AsTracking().Where(x => x.Deleted).ToListAsync(cancellationToken);
@@ -406,12 +403,10 @@ public class MediaService(
         if (purge.Success)
         {
             result.Entity = toDelete.Count;
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-            var user = await userManager.GetUserAsync(authState.User);
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
             await user.AddAudit(new Models.Media(), $"{toDelete.Count} media item(s) from the recycle bin",
                 AuditExtensions.AuditAction.Delete, auditService, cancellationToken);
-            await appState.NotifyMediaDeleted(null, authState.User.Identity?.Name!);
+            await appState.NotifyMediaDeleted(null, user?.UserName ?? string.Empty);
         }
 
         return result;
@@ -655,11 +650,9 @@ public class MediaService(
         });
     }
 
-    private static async Task AuditAsync(IServiceScope scope, AuthenticationState authState, Models.Media media,
+    private static async Task AuditAsync(IServiceScope scope, User? user, Models.Media media,
         AuditExtensions.AuditAction action, CancellationToken cancellationToken)
     {
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
         var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
         await user.AddAudit(media, media.Name, action, auditService, cancellationToken);
     }

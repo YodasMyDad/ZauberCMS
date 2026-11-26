@@ -119,7 +119,9 @@ public static class ZauberSetup
         builder.Services.AddScoped<IdentityUserAccessor>();
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-        
+        // Who a service call runs for, in a circuit, a static page, a controller or a job (ZA-093); replaceable
+        builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
+
         // Register Service Interfaces and Implementations
         builder.Services.AddScoped<IContentService, ContentService>();
         builder.Services.AddScoped<IContentVersioningService, ContentVersioningService>();

@@ -17,8 +17,7 @@ public partial class ContentService
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await GetCurrentUserAsync(authState);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Models.Content>();
 
         var content = await dbContext.Contents.AsNoTracking()

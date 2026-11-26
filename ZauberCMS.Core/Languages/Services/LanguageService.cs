@@ -1,6 +1,4 @@
 
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq.Dynamic.Core;
@@ -11,7 +9,7 @@ using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Languages.Parameters;
 using ZauberCMS.Core.Languages.Mapping;
-using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -21,7 +19,7 @@ namespace ZauberCMS.Core.Languages.Services;
 public class LanguageService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider,
+    ICurrentUserAccessor currentUserAccessor,
     ExtensionManager extensionManager)
     : ILanguageService
 {
@@ -66,9 +64,7 @@ public class LanguageService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Language>();
 
         if (parameters.CultureInfo != null)
@@ -204,9 +200,7 @@ public class LanguageService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<Language>();
 
         Language? language = null;
@@ -258,9 +252,7 @@ public class LanguageService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<LanguageDictionary>();
 
         if (parameters.LanguageDictionary != null)
@@ -336,10 +328,8 @@ public class LanguageService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<LanguageDictionary>();
 
         LanguageDictionary? langDict = null;

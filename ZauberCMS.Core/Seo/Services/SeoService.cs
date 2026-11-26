@@ -1,11 +1,9 @@
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
-using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Seo.Interfaces;
 using ZauberCMS.Core.Seo.Models;
@@ -19,7 +17,7 @@ namespace ZauberCMS.Core.Seo.Services;
 public class SeoService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
-    AuthenticationStateProvider authenticationStateProvider,
+    ICurrentUserAccessor currentUserAccessor,
     ExtensionManager extensionManager)
     : ISeoService
 {
@@ -33,9 +31,7 @@ public class SeoService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         
         var handlerResult = new HandlerResult<SeoRedirect>();
         var isUpdate = false;
@@ -106,9 +102,7 @@ public class SeoService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var user = await userManager.GetUserAsync(authState.User);
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
         var handlerResult = new HandlerResult<SeoRedirect>();
 
         SeoRedirect? redirect = null;

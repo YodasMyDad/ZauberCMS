@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -32,7 +31,7 @@ public class MembershipService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     IHttpContextAccessor httpContextAccessor,
-    AuthenticationStateProvider authenticationStateProvider,
+    ICurrentUserAccessor currentUserAccessor,
     ExtensionManager extensionManager,
     IDataService dataService,
     ProviderService providerService,
@@ -71,8 +70,9 @@ public class MembershipService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var loggedInUser = await userManager.GetUserAsync(authState.User);
+        // Whether the caller edits their own account: then their sign-in is refreshed with the new name or address.
+        // Through the user, not the claim: a caller signed in by another scheme may carry an id that is not a GUID.
+        var callerId = (await currentUserAccessor.GetUserAsync(cancellationToken))?.Id;
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var refreshCurrentUser = false;
         var isUpdate = false;
@@ -106,8 +106,7 @@ public class MembershipService(
                         handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                         return handlerResult;
                     }
-                    if (authState.User.Identity?.IsAuthenticated == true
-                        && authState.User.GetUserId() == user.Id)
+                    if (callerId == user.Id)
                     {
                         refreshCurrentUser = true;   
                     }
@@ -121,8 +120,7 @@ public class MembershipService(
                         handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                         return handlerResult;
                     }
-                    if (authState.User.Identity?.IsAuthenticated == true
-                        && authState.User.GetUserId() == user.Id)
+                    if (callerId == user.Id)
                     {
                         refreshCurrentUser = true;   
                     }
@@ -162,8 +160,7 @@ public class MembershipService(
                         return handlerResult;
                     }
 
-                    if (authState.User.Identity?.IsAuthenticated == true
-                        && authState.User.GetUserId() == user.Id)
+                    if (callerId == user.Id)
                     {
                         refreshCurrentUser = true;   
                     }
@@ -178,8 +175,7 @@ public class MembershipService(
                         return handlerResult;
                     }
                     
-                    if (authState.User.Identity?.IsAuthenticated == true
-                        && authState.User.GetUserId() == user.Id)
+                    if (callerId == user.Id)
                     {
                         refreshCurrentUser = true;   
                     }
@@ -219,8 +215,9 @@ public class MembershipService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var loggedInUser = await userManager.GetUserAsync(authState.User);
+        // Whether the caller edits their own account: then their sign-in is refreshed with the new name or address.
+        // Through the user, not the claim: a caller signed in by another scheme may carry an id that is not a GUID.
+        var callerId = (await currentUserAccessor.GetUserAsync(cancellationToken))?.Id;
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var refreshCurrentUser = false;
         var isUpdate = false;
@@ -254,8 +251,7 @@ public class MembershipService(
                         handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                         return handlerResult;
                     }
-                    if (authState.User.Identity?.IsAuthenticated == true
-                        && authState.User.GetUserId() == user.Id)
+                    if (callerId == user.Id)
                     {
                         refreshCurrentUser = true;   
                     }
@@ -269,8 +265,7 @@ public class MembershipService(
                         handlerResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
                         return handlerResult;
                     }
-                    if (authState.User.Identity?.IsAuthenticated == true
-                        && authState.User.GetUserId() == user.Id)
+                    if (callerId == user.Id)
                     {
                         refreshCurrentUser = true;   
                     }
@@ -310,8 +305,7 @@ public class MembershipService(
                         return handlerResult;
                     }
 
-                    if (authState.User.Identity?.IsAuthenticated == true
-                        && authState.User.GetUserId() == user.Id)
+                    if (callerId == user.Id)
                     {
                         refreshCurrentUser = true;   
                     }
@@ -326,8 +320,7 @@ public class MembershipService(
                         return handlerResult;
                     }
                     
-                    if (authState.User.Identity?.IsAuthenticated == true
-                        && authState.User.GetUserId() == user.Id)
+                    if (callerId == user.Id)
                     {
                         refreshCurrentUser = true;   
                     }
@@ -461,9 +454,7 @@ public class MembershipService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var loggedInUser = await userManager.GetUserAsync(authState.User);
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<Role>();
 
@@ -528,9 +519,7 @@ public class MembershipService(
     {
         using var scope = serviceScopeFactory.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var loggedInUser = await userManager.GetUserAsync(authState.User);
         var handlerResult = new HandlerResult<Role>();
 
         var role = await roleManager.FindByIdAsync(parameters.Id.ToString());
@@ -1109,11 +1098,7 @@ public class MembershipService(
     /// <returns>User or null.</returns>
     public async Task<User?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
-        using var scope = serviceScopeFactory.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        
-        return await userManager.GetUserAsync(authState.User);
+        return await currentUserAccessor.GetUserAsync(cancellationToken);
     }
 
     private static IQueryable<User> BuildQuery(GetUserParameters parameters, IZauberDbContext dbContext)

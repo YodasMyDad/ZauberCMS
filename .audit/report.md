@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 10a (2026-11-26): Build PASS · Warnings: 0 · Tests: 837 (836 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (one reviewer: its two Mediums — a request id that is not ours threw, `RunAs` reached other circuits' event handlers — and its Lows fixed). ZA-093 fixed, ZA-140 closed (D27), ZA-152 resolved. Next free ID: ZA-162
 After Roadmap Phase 10 (2026-11-26): Build PASS · Warnings: 0 · Tests: 828 (827 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their High and Mediums fixed — tree flags wiped by the bin trees, a front-end cache that never expired on busy pages or kept misses — the rest fixed or recorded as ZA-161). Next free ID: ZA-162
 After Roadmap Phase 9 (2026-11-26): Build PASS · Warnings: 0 · Tests: 768 (766 pass, 2 skipped for open findings ZA-011, ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers and a git-history search). Next free ID: ZA-160
 After Roadmap Phase 8 (2026-11-26): Build PASS · Warnings: 0 · Tests: 700 (697 pass, 3 skipped for open findings ZA-011, ZA-036, ZA-118), all SQL Server variants run for the first time (LocalDB via `ZAUBER_TEST_SQLSERVER`), PostgreSQL and Redis in Docker; `/audit changed` run on the phase (two reviewers). Next free ID: ZA-158
@@ -24,11 +25,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 20 | 53 | 0 |
-| Low | 48 | 7 | 2 |
+| Medium | 18 | 54 | 1 |
+| Low | 47 | 7 | 3 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086, ZA-011 and ZA-113 (Phase 10), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-162.
+a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086, ZA-011 and ZA-113 (Phase 10), ZA-093, with ZA-140 closed by D27 and ZA-152 resolved (Phase 10a), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-162.
 
 ## Open findings
 
@@ -89,13 +90,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Issue / Trigger: Implementations, mappings, factories, middleware and unused public mutable statics are all frozen by the compatibility rule.
 - Fix: make non-contract types internal before the next major. · Blocked by: public API.
 - Reconciled 2026-11-26 (Phase 7): the installer and form protection added 28 more public types (`ZauberCMS.Core.Installer`, `ZauberCMS.Core.Security`: 22 in `.cs` files and six Razor components); "no internal ones" no longer holds — `InstallerDatabase` and `InstallerAssets` are internal.
-
-### ZA-093 [Medium/Medium] Write services need a Blazor component scope
-
-- Where: `ZauberCMS.Core/Content/Services/ContentService.cs:29`, `ZauberCMS.Core/Membership/Services/MembershipService.cs:35`, `ZauberCMS.Core/Media/Services/MediaService.cs:30` · Category: F · Since: 2026-11-25
-- Issue / Trigger: Services inject `AuthenticationStateProvider` (27 uses), so save or delete can't be called from a controller, API or hosted service.
-- Fix: `ICurrentUserAccessor` with an HttpContext fallback. · Blocked by: public constructors.
-- Reconciled 2026-11-26 (Phase 7): the installer works around the same limitation by setting the authentication state for its own scope (`ZauberCMS.Core/Installer/Services/InstallService.cs:444-453`, `RunAsAsync`).
 
 ### ZA-094 [Medium/Medium] Template pins an SDK-internal asset package at 10.0.0
 
@@ -318,11 +312,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
 - Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
-### ZA-140 [Medium/High] Services do no authorisation of their own
-- Where: every mutating method of `ZauberCMS.Core/*/Services/*Service.cs` (for example `ContentService.SaveContentAsync`, `MembershipService.SaveUserAsync`, `SeoService.SaveRedirectAsync`) · Category: D · Since: 2026-11-25 (split out of ZA-132 when its route half was fixed)
-- Issue / Trigger: Access is decided by the page that calls a service. Any code that can resolve a service (a front-end component, a plugin, an interactive component on a public page) can save or delete anything; the services never check who is signed in.
-- Fix (owner decision D10, 2026-11-25): an opt-in permission hook as its own phase (Roadmap Phase 10a). Services ask a replaceable permission service before a write; the default allows everything, a site can switch on a strict mode; front-end and plugin code that saves on purpose declares it. · Blocked by: design with the owner (Phase 10a); strict-by-default is a v5 question.
-
 ### ZA-144 [Low/High] A pending draft keeps the old URL after Restore gave the page a new one
 - Where: `ZauberCMS.Core/Content/Services/ContentService.cs` (restore URL suffix in `SaveContentAsync`),
   `ContentMappingExtensions.MapDraftTo` (copies `Url`) · Category: C · Since: 2026-11-25 (Phase 5 audit)
@@ -372,13 +361,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Fix: a replaceable page component or a discovered "installer step" interface. · Blocked by: owner decision
   (Roadmap, open questions).
 
-### ZA-152 [Low/High] The tests cannot see a scoping mistake in "run as the new administrator"
-- Where: `tests/ZauberCMS.Core.Tests/Infrastructure/TestSite.cs` (`TestAuthenticationStateProvider`, `TestSignIn`), `ZauberCMS.Core/Installer/Services/InstallService.cs` (`RunAsAsync`) · Category: F · Since: 2026-11-26 (Phase 7 audit)
-- Issue / Trigger: the test provider writes the signed-in user to one object shared by every scope, while the real
-  provider is per scope. `The_starter_kit_runs_as_the_new_administrator` would still pass if the installer set
-  the user on the wrong scope. The browser run with a starter kit is what covers it today.
-- Fix: a per-scope sign-in holder in the test site, falling back to the shared one. · Blocked by: nothing.
-
 ### ZA-155 [Low/High] Resized copies of a deleted image stay in `_mediacache`
 - Where: `ZauberCMS.Core/Media/Services/MediaService.cs` (`PurgeAsync`), ImageResize cache root (`ZauberSetup.cs`, `_mediacache`) · Category: D · Since: 2026-11-26 (Phase 8 audit)
 - Issue / Trigger: a permanent media delete removes the original file, not the resized copies ImageResize made of
@@ -427,6 +409,19 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 
 ## Fixed this run / Resolved since last run
 
+- **Phase 10a (2026-11-26): who is calling (Roadmap D27).**
+  - **ZA-093 [Medium] Write services need a Blazor component scope — fixed.** The services read the caller through the
+    new, replaceable `ICurrentUserAccessor` (`RunAs`, then the Blazor authentication state, then the request's user,
+    then nobody) instead of `AuthenticationStateProvider`; a write with nobody signed in is saved and records no user
+    instead of throwing on `user!`. The installer runs the language and starter kit through `RunAs`. Tests
+    `Membership/CurrentUserAccessorTests.cs`. Release note: six service constructors changed.
+  - **ZA-140 [Medium] Services do no authorisation of their own — closed by owner decision D27.** Services trust their
+    caller; the page, component or endpoint checks access (as in Umbraco and WordPress). No shipped path lets a
+    visitor reach a write it shouldn't; the rule is documented in `AGENTS.md` and `Docs/Services.md` "Callers and
+    access". Back-office roles other than Admin are in the Roadmap Backlog.
+  - **ZA-152 [Low] The tests cannot see a scoping mistake in "run as the new administrator" — resolved.** The run-as no
+    longer depends on a scope: `RunAs` holds for the install's async flow, and nothing else sets the test sign-in, so
+    `The_starter_kit_runs_as_the_new_administrator` fails if the run-as is missing.
 - **Reconciled 2026-11-26, after Phase 10 (findings assigned to phases).**
   - **ZA-113 [Low] EF used directly in a context menu, scope held across a dialog — resolved by 1b6f154.**
     `RestrictAccessContextMenu` now calls `IContentService.SetContentRolesAsync` after the dialog closes; it holds
