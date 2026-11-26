@@ -6,7 +6,7 @@
         </div>
     }
 
-    <div class="flex flex-1 items-center justify-between border border-gray-200 border-solid p-2 rounded hover:bg-slate-50 @CustomClasses">
+    <div class="flex flex-1 items-center justify-between border border-gray-200 border-solid p-2 rounded hover:bg-slate-50 @BoxClasses">
         @if (!HideLeftSection)
         {
             <div class="pr-3 flex items-center">
@@ -48,6 +48,10 @@
     private bool HasImage { get; set; }
     private string IconStyle => $"font-size: {DefaultIconFontSize}";
 
+    // Without its own drag icon the whole box is the handle. Computed, not appended to CustomClasses: that
+    // parameter grew by " cursor-grab" on every render when the parent passed none (ZA-127).
+    private string BoxClasses => ShowDragIcon ? CustomClasses ?? string.Empty : $"{CustomClasses} cursor-grab";
+
     private async Task OnClose()
     {
         if (Close.HasDelegate)
@@ -61,11 +65,6 @@
         HasIcon = !Icon.IsNullOrWhiteSpace();
         HasImage = !Image.IsNullOrWhiteSpace();
         HideLeftSection = !HasIcon && !HasImage;
-
-        if (!ShowDragIcon)
-        {
-            CustomClasses += " cursor-grab";
-        }
     }
 
 }

@@ -26,6 +26,26 @@ public static class EnumerableExtensions
         }
     }
     
+    /// <summary>
+    /// A dictionary of <paramref name="items"/> by alias where the first item with an alias wins, so stored values that
+    /// repeat an alias (older data, or a clash through a composition) can still be read instead of throwing (ZA-028).
+    /// Aliases compare exactly, as before.
+    /// </summary>
+    public static Dictionary<string, TValue> ToValuesByAlias<T, TValue>(this IEnumerable<T> items,
+        Func<T, string?> aliasOf, Func<T, TValue> valueOf)
+    {
+        var result = new Dictionary<string, TValue>();
+        foreach (var item in items)
+        {
+            if (aliasOf(item) is { } alias)
+            {
+                result.TryAdd(alias, valueOf(item));
+            }
+        }
+
+        return result;
+    }
+
     public static string ListToSingleString(this List<string> list, string lineBreak = "<br />")
     {
         var sb = new StringBuilder();

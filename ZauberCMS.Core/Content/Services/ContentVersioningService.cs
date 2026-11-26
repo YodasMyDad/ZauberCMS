@@ -686,8 +686,9 @@ public class ContentVersioningService(
         // This is tricky because snapshots don't store which property they came from
         // We need to find BlockListEditor properties and match snapshots to them
 
-        var version1PropsByAlias = version1.PropertySnapshots.ToDictionary(p => p.Alias);
-        var version2PropsByAlias = version2.PropertySnapshots.ToDictionary(p => p.Alias);
+        // First value per alias, as the page reads it (ZA-028: older data can repeat an alias)
+        var version1PropsByAlias = version1.PropertySnapshots.ToValuesByAlias(p => p.Alias, p => p);
+        var version2PropsByAlias = version2.PropertySnapshots.ToValuesByAlias(p => p.Alias, p => p);
 
         // Find properties that exist in both versions and are BlockListEditor properties (JSON arrays)
         var commonPropertyAliases = version1PropsByAlias.Keys.Intersect(version2PropsByAlias.Keys);

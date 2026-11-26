@@ -38,8 +38,9 @@
         {
             Language = new Language();
         }
-        else
+        else if (!IsUpdate)
         {
+            // Once: a side panel sets its parameters again on every render, which undid the editor's choice (ZA-127)
             IsUpdate = true;
             Selected = Language.LanguageIsoCode;
         }

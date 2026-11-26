@@ -95,15 +95,43 @@ public static partial class StringExtensions
                 return (T)(object)fallbackInt;
             }
 
+            // Numbers are stored in the invariant culture ("1.5"); older values were written in the admin's culture
+            // ("1,5"), so that is the fallback. Float, not Number: "1,5" must never read as 15 (ZA-027).
             if (typeof(T) == typeof(decimal))
             {
-                if (decimal.TryParse(value, out var resultDecimal))
+                if (decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var resultDecimal) ||
+                    decimal.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out resultDecimal))
                 {
                     return (T)(object)resultDecimal;
                 }
 
                 var fallbackDecimal = JsonSerializer.Deserialize<decimal>(value);
                 return (T)(object)fallbackDecimal;
+            }
+
+            // Dates are stored invariant ("2026-11-26T14:30:00"); older values were a long date in the admin's
+            // culture, which is the fallback (ZA-027)
+            if (typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateTime?))
+            {
+                if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var resultDate) ||
+                    DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out resultDate))
+                {
+                    return (T)(object)resultDate;
+                }
+
+                return JsonSerializer.Deserialize<T>(value);
+            }
+
+            if (typeof(T) == typeof(double))
+            {
+                if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var resultDouble) ||
+                    double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out resultDouble))
+                {
+                    return (T)(object)resultDouble;
+                }
+
+                var fallbackDouble = JsonSerializer.Deserialize<double>(value);
+                return (T)(object)fallbackDouble;
             }
 
             if (typeof(T) == typeof(Guid))
@@ -113,8 +141,45 @@ public static partial class StringExtensions
                     return (T)(object)resultGuid;
                 }
 
+                // A one-item picker stores ["id"] (Roadmap D30): the single id is its first
+                if (value.TrimStart().StartsWith('['))
+                {
+                    return (T)(object)value.ToPickerIds().FirstOrDefault();
+                }
+
                 var fallbackGuid = JsonSerializer.Deserialize<Guid>(value);
                 return (T)(object)fallbackGuid;
+            }
+
+            if (typeof(T) == typeof(Guid?))
+            {
+                if (Guid.TryParse(value, out var resultNullableGuid))
+                {
+                    return (T)(object)resultNullableGuid;
+                }
+
+                if (value.TrimStart().StartsWith('['))
+                {
+                    var ids = value.ToPickerIds();
+                    return ids.Count == 0 ? default : (T)(object)ids[0];
+                }
+
+                return JsonSerializer.Deserialize<T>(value);
+            }
+
+            // A picker value from before D30 holds one bare id: as a list, array or sequence of one
+            if (Guid.TryParse(value, out var singleGuid))
+            {
+                if (typeof(T) == typeof(Guid[]))
+                {
+                    return (T)(object)new[] { singleGuid };
+                }
+
+                // List<Guid>, IEnumerable<Guid>, IList<Guid>, IReadOnlyList<Guid>… (not object)
+                if (typeof(IEnumerable<Guid>).IsAssignableFrom(typeof(T)) && typeof(T).IsAssignableFrom(typeof(List<Guid>)))
+                {
+                    return (T)(object)new List<Guid> { singleGuid };
+                }
             }
 
             return JsonSerializer.Deserialize<T>(value);

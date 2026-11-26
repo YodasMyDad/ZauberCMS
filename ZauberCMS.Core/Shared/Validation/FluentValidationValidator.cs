@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components.Forms;
 
 namespace ZauberCMS.Core.Shared.Validation;
 
-public class FluentValidationValidator : ComponentBase
+public class FluentValidationValidator : ComponentBase, IDisposable
 {
     [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
 
@@ -68,7 +68,7 @@ public class FluentValidationValidator : ComponentBase
         }
     }
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
         if (CurrentEditContext == null)
         {
@@ -77,6 +77,28 @@ public class FluentValidationValidator : ComponentBase
                                                 $"inside an {nameof(EditForm)}.");
         }
 
-        CurrentEditContext.AddFluentValidation(ServiceProvider, Validator, this);
+        // Subscribe once per edit context and validator type; a new form model gives a new EditContext, so move to it.
+        // By type, not instance: Validator="@(new PersonValidator())" is a new instance on every render, and moving
+        // clears the messages, so a failed submit would lose its errors at once.
+        if (ReferenceEquals(CurrentEditContext, _subscribedContext) && Validator?.GetType() == _subscribedValidatorType)
+        {
+            return;
+        }
+
+        _subscription?.Dispose();
+        _subscription = CurrentEditContext.AddFluentValidation(ServiceProvider, Validator, this);
+        _subscribedContext = CurrentEditContext;
+        _subscribedValidatorType = Validator?.GetType();
+    }
+
+    private IDisposable? _subscription;
+    private EditContext? _subscribedContext;
+    private Type? _subscribedValidatorType;
+
+    public void Dispose()
+    {
+        _subscription?.Dispose();
+        _subscription = null;
+        GC.SuppressFinalize(this);
     }
 }

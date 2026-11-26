@@ -6,12 +6,12 @@
     if (Content.ContentTypeAlias != null && ViewsByAlias.TryGetValue(Content.ContentTypeAlias, out var blockViewType))
     {
         <div>
-            <DynamicComponent Parameters="@(Parameters)" Type="@blockViewType" />
+            <DynamicComponent Parameters="@(_viewParameters)" Type="@blockViewType" />
         </div>
     }
     else if (FallbackComponentType != null)
     {
-        <DynamicComponent Parameters="@(Parameters)" Type="@FallbackComponentType" />
+        <DynamicComponent Parameters="@(_viewParameters)" Type="@FallbackComponentType" />
     }
 }
 
@@ -38,14 +38,25 @@
         .GroupBy(view => view.ContentTypeAlias!, StringComparer.Ordinal)
         .ToDictionary(group => group.Key, group => group.First().GetType(), StringComparer.Ordinal);
 
+    // The parameters handed to the block view: the caller's plus Content. Built into a field, not written back to the
+    // Parameters parameter (the caller owns it), and only when Content or the caller's dictionary changes (ZA-127).
+    // Nested block lists rely on a new Content reaching the view.
+    private Dictionary<string, object> _viewParameters = new();
+    private Content? _builtFor;
+    private Dictionary<string, object>? _builtFrom;
+
     protected override void OnParametersSet()
     {
-        // Recreate Parameters dictionary to ensure DynamicComponent detects changes
-        // Critical for nested block lists where Content reference may change
-        var newParameters = new Dictionary<string, object>(Parameters)
+        if (ReferenceEquals(Content, _builtFor) && ReferenceEquals(Parameters, _builtFrom))
+        {
+            return;
+        }
+
+        _builtFor = Content;
+        _builtFrom = Parameters;
+        _viewParameters = new Dictionary<string, object>(Parameters)
         {
             ["Content"] = Content!
         };
-        Parameters = newParameters;
     }
 }

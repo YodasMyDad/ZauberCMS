@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Components.Admin.StructureSection.Dialogs
 @using ZauberCMS.Components.Editors.Dialogs
 @using ZauberCMS.Core.Membership.Models
@@ -81,7 +81,7 @@
                                             {
                                                 @foreach (var property in tabProperties)
                                                 {
-                                                    <PropertyEditor Property="property"
+                                                    <PropertyEditor @key="property.Id" Property="property"
                                                                     ContentProperty="@(ContentProperties[property.Component!])"
                                                                     OnSortUp="@(prop => SortProperty(prop, false))"
                                                                     OnSortDown="@(prop => SortProperty(prop, true))"

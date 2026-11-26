@@ -54,18 +54,10 @@
     private Guid MapId { get; set; }
     private string? ApiKey { get; set; }
     
-    protected override async Task OnParametersSetAsync()
+    // Once per editor: a new map id on every parameter set rebuilt the map and lost its position (ZA-127)
+    protected override async Task OnInitializedAsync()
     {
         MapId = Guid.NewGuid();
-        var globalSettingsRequest = await DataService.GetGlobalSettings();
-        if (globalSettingsRequest.ApiKeys.TryGetValue("GoogleMaps", out var apiKey))
-        {
-            ApiKey = apiKey;
-        }
-    }
-
-    protected override void OnInitialized()
-    {
         SettingsModel = Settings.FromJson<GoogleMapsSettingsModel>();
         if (!Value.IsNullOrWhiteSpace())
         {
@@ -75,6 +67,12 @@
         {
             Location.Lng = SettingsModel.DefaultLng.Value;
             Location.Lat = SettingsModel.DefaultLat.Value;
+        }
+
+        var globalSettings = await DataService.GetGlobalSettings();
+        if (globalSettings.ApiKeys.TryGetValue("GoogleMaps", out var apiKey))
+        {
+            ApiKey = apiKey;
         }
     }
 

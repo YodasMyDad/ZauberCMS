@@ -27,18 +27,16 @@
     private NumericPropertySettingsModel SettingsModel { get; set; } = new();
     protected override void OnInitialized()
     {
-        if (!Value.IsNullOrWhiteSpace())
-        {
-            SavedValue = Convert.ToDouble(Value);
-        }
-        
+        // Reads "1.5" and, from before ZA-027, "1,5"; a value that is not a number shows as 0 instead of throwing
+        SavedValue = Value?.ToValue<double>() ?? 0;
         SettingsModel = Settings.FromJson<NumericPropertySettingsModel>();
     }
-    
+
     private async Task OnChange(double changedValue)
     {
         SavedValue = changedValue;
-        await ValueChanged.InvokeAsync(SavedValue.ToString(CultureInfo.CurrentCulture));   
+        // Stored in the invariant culture, so every page culture reads it the same (ZA-027)
+        await ValueChanged.InvokeAsync(SavedValue.ToString(CultureInfo.InvariantCulture));
     }
     
     private IEnumerable<KeyValuePair<string, object?>> GetAdditionalAttributes()

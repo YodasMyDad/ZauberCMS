@@ -98,11 +98,16 @@
     private double ScaledWidth => CropWidth * ScaleX;
     private double ScaledHeight => CropHeight * ScaleY;
 
+    private Media? _sizedFor;
+
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        if (Media != null)
+        // Only for a new image: a side panel sets its parameters again on every render, which reset the crop the
+        // editor had drawn (ZA-127)
+        if (Media != null && !ReferenceEquals(Media, _sizedFor))
         {
+            _sizedFor = Media;
             // If image is smaller than max size, use original size
             if (Media.Width <= MaxContainerWidth && Media.Height <= MaxContainerHeight)
             {

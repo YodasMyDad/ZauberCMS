@@ -1,6 +1,8 @@
 @using System.Diagnostics.CodeAnalysis
+@using Microsoft.Extensions.Logging
 
 @inject IJSRuntime JS
+@inject ILogger<SortableList<T>> Logger
 
 @typeparam T
 @implements IAsyncDisposable
@@ -58,43 +60,75 @@
 
     private DotNetObjectReference<SortableList<T>>? selfReference;
     private IJSObjectReference? _module;
+    private bool _disposed;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             selfReference = DotNetObjectReference.Create(this);
-            _module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/ZauberCMS.Components/Shared/SortableList.razor.js");
-            await _module.InvokeAsync<string>("init", Id, Group, Pull, Put, Sort, Handle, Filter, selfReference, ForceFallback, IgnoreDomChanges);
+            var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/ZauberCMS.Components/Shared/SortableList.razor.js");
+            if (_disposed)
+            {
+                // Disposed while the script loaded: nothing will dispose this module later
+                await DisposeModuleAsync(module);
+                return;
+            }
+
+            _module = module;
+            await _module.InvokeVoidAsync("init", Id, Group, Pull, Put, Sort, Handle, Filter, selfReference, ForceFallback, IgnoreDomChanges);
         }
     }
 
+    // Return the callback's task, so the caller's work (a save after a sort) is awaited and its errors are seen (ZA-112)
     [JSInvokable]
-    public void OnUpdateJS(int oldIndex, int newIndex)
-    {
-        // invoke the OnUpdate event passing in the oldIndex and the newIndex
-        OnUpdate.InvokeAsync((oldIndex, newIndex));
-    }
+    public Task OnUpdateJS(int oldIndex, int newIndex) => InvokeLogged(OnUpdate, oldIndex, newIndex);
 
     [JSInvokable]
-    public void OnRemoveJS(int oldIndex, int newIndex)
+    public Task OnRemoveJS(int oldIndex, int newIndex) => InvokeLogged(OnRemove, oldIndex, newIndex);
+
+    // An error in the caller's handler is logged here (the browser only sees a rejected promise) and still returned
+    private async Task InvokeLogged(EventCallback<(int oldIndex, int newIndex)> callback, int oldIndex, int newIndex)
     {
-        // remove the item from the list
-        OnRemove.InvokeAsync((oldIndex, newIndex));
+        try
+        {
+            await callback.InvokeAsync((oldIndex, newIndex));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Sortable list {Id}: moving item {OldIndex} to {NewIndex} failed", Id, oldIndex, newIndex);
+            throw;
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (_module is not null)
+        _disposed = true;
+        try
         {
-            try
+            if (_module is not null)
             {
-                await _module.DisposeAsync();
-            }
-            catch (JSDisconnectedException)
-            {
+                await DisposeModuleAsync(_module);
+                _module = null;
             }
         }
-        selfReference?.Dispose();
+        finally
+        {
+            // Always released, whatever the module dispose did (ZA-112)
+            selfReference?.Dispose();
+            selfReference = null;
+        }
+    }
+
+    private static async ValueTask DisposeModuleAsync(IJSObjectReference module)
+    {
+        try
+        {
+            await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit is gone, and the module with it
+        }
     }
 }

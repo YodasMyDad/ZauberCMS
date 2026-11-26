@@ -1,6 +1,5 @@
 ﻿@using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Components.Editors.Models
-@using System.Text.Json
 @using ZauberCMS.Core.Content.Parameters
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
@@ -43,40 +42,26 @@
     protected override async Task OnInitializedAsync()
     {
         SettingsModel = Settings.FromJson<ContentPickerSettings>();
-        
-        if (!Value.IsNullOrWhiteSpace())
+
+        var ids = Value.ToPickerIds();
+        if (ids.Count != 0)
         {
-            if (Guid.TryParse(Value, out var singleId)) 
+            // Every picked page, unpublished ones too (the editor shows what is stored), in the order chosen
+            var result = await ContentService.QueryContentAsync(new QueryContentParameters
             {
-                // Value is a single guid
-                var contentItem = await ContentService.QueryContentAsync(new QueryContentParameters
-                {
-                    Ids = [singleId]
-                });
-
-                ContentItems = contentItem.Items.ToList();
-            } 
-            else 
-            {
-                // Value might be a list of guids
-                var contentIds = JsonSerializer.Deserialize<List<Guid>>(Value);
-                if (contentIds != null && contentIds.Any())
-                {
-                    var contentItems = await ContentService.QueryContentAsync(new QueryContentParameters
-                    {
-                        Ids = contentIds
-                    });
-
-                    ContentItems = contentItems.Items.ToList();
-                }
-            }
+                Ids = ids,
+                AmountPerPage = ids.Count,
+                IncludeUnpublished = true
+            });
+            ContentItems = result.Items.InPickerOrder(ids, x => x.Id);
         }
     }
-    
-    private void SortList((int oldIndex, int newIndex) indices)
+
+    private async Task SortList((int oldIndex, int newIndex) indices)
     {
         TupleExtensions.SortList(indices, ContentItems);
-        StateHasChanged();
+        // The new order is the value (ZA-078)
+        await SaveAndUpdate();
     }
 
     private async Task DeleteContent(Content content)
@@ -137,17 +122,9 @@
 
     private async Task SaveAndUpdate()
     {
-        if (ContentItems.Count <= 0)
-        {
-            Value = string.Empty;
-        }
-        else
-        {
-            Value = ContentItems.Count == 1 ?
-                ContentItems[0].Id.ToString() : 
-                JsonSerializer.Serialize(ContentItems.Select(x => x.Id));   
-        }
-        await ValueChanged.InvokeAsync(Value);
+        // One shape for any count: a JSON array of ids (Roadmap D30)
+        // Raised, not written to the parameter: the parent owns Value (ZA-127)
+        await ValueChanged.InvokeAsync(ContentItems.Select(x => x.Id).ToPickerValue());
     }
 
 }

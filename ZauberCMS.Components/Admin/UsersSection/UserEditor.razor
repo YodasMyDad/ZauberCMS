@@ -69,7 +69,10 @@
                                                     AllContentValues.TryGetValue(property.Id, out var contentValue);
                                                     if (contentValue != null)
                                                     {
-                                                        <EditorRow FullWidth="@(property.FullWidth)">
+                                                        @* Keyed on the loaded user: going from one user to another
+                                                           reuses this page, and editors that read Value once must not
+                                                           keep the first user's values (ZA-127) *@
+                                                        <EditorRow @key="(User, property.Id)" FullWidth="@(property.FullWidth)">
                                                             <LeftColumn>
                                                                 <RadzenLabel Style="font-weight: 600;font-size: 14px;"
                                                                              Text="@property.Name"/>

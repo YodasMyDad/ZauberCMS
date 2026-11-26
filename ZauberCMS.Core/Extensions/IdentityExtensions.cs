@@ -21,16 +21,13 @@ public static class IdentityExtensions
     /// <returns>List on media</returns>
     public static async Task<IEnumerable<Media.Models.Media?>> GetMedia(this User user, string alias, IMediaService mediaService, string? fallBackUrl = null)
     {
-        var mediaIds = user.GetValue<List<Guid>?>(alias);
-        if (mediaIds != null)
+        // Both picker shapes, in the stored order (Roadmap D30)
+        var mediaIds = user.GetValue<string>(alias).ToPickerIds();
+        if (mediaIds.Count > 0)
         {
-            var mediaCount = mediaIds.Count;
-            if (mediaCount > 0)
-            {
-                // TODO - Look at caching these
-                var mediaItems=  await mediaService.QueryMediaAsync(new QueryMediaParameters {Ids = mediaIds, AmountPerPage = mediaCount});
-                return mediaItems.Items;
-            }
+            var mediaItems = await mediaService.QueryMediaAsync(new QueryMediaParameters
+                { Ids = mediaIds, AmountPerPage = mediaIds.Count, Cached = true });
+            return mediaItems.Items.InPickerOrder(mediaIds, x => x.Id);
         }
 
         if (!fallBackUrl.IsNullOrWhiteSpace())
@@ -50,16 +47,13 @@ public static class IdentityExtensions
     /// <returns>List of Content</returns>
     public static async Task<IEnumerable<Content.Models.Content>> GetContent(this User user, string alias, IContentService contentService)
     {
-        var contentIds = user.GetValue<List<Guid>?>(alias);
-        if (contentIds != null)
+        // Both picker shapes, in the stored order (Roadmap D30)
+        var contentIds = user.GetValue<string>(alias).ToPickerIds();
+        if (contentIds.Count > 0)
         {
-            var contentCount = contentIds.Count;
-            if (contentCount > 0)
-            {
-                // TODO - Look at caching these
-                var contentItems=  await contentService.QueryContentAsync(new QueryContentParameters {Ids = contentIds, AmountPerPage = contentCount});
-                return contentItems.Items;
-            }
+            var contentItems = await contentService.QueryContentAsync(new QueryContentParameters
+                { Ids = contentIds, AmountPerPage = contentIds.Count, Cached = true });
+            return contentItems.Items.InPickerOrder(contentIds, x => x.Id);
         }
 
         return [];

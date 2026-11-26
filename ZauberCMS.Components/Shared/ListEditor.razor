@@ -12,9 +12,11 @@
             var index = i; // Capture the index
             var item = Value[index]; // Get the current item
 
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" @key="item">
+            @* No @key on the value: two equal values (or editing one to match another) gave two siblings one key,
+               which throws and ends the circuit (ZA-127). Rows are plain text boxes, so position is enough. *@
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem">
                 <RadzenTextBox Value="@item" ValueChanged="@(value => OnValueChanged(value, index))" class="w-full" aria-label="Name TextBox"/>
-                <RadzenButton Click="@(() => RemoveItem(item))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
+                <RadzenButton Click="@(() => RemoveItem(index))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
             </RadzenStack>
         }
     </div>
@@ -28,20 +30,26 @@
 
     private async Task AddItem()
     {
-        if (!string.IsNullOrWhiteSpace(_newItem))
+        var newItem = _newItem.Trim();
+        _newItem = string.Empty;
+        // A value already in the list adds nothing
+        if (newItem.Length != 0 && !Value.Contains(newItem, StringComparer.Ordinal))
         {
-            Value.Add(_newItem);
-            _newItem = string.Empty;
+            Value.Add(newItem);
             await ValueChanged.InvokeAsync(Value);
             StateHasChanged();
         }
     }
 
-    private async Task RemoveItem(string item)
+    // By position: the row clicked, not the first row with its value
+    private async Task RemoveItem(int index)
     {
-        Value.Remove(item);
-        await ValueChanged.InvokeAsync(Value);
-        StateHasChanged();
+        if (index >= 0 && index < Value.Count)
+        {
+            Value.RemoveAt(index);
+            await ValueChanged.InvokeAsync(Value);
+            StateHasChanged();
+        }
     }
 
     private async Task OnValueChanged(string newValue, int index)

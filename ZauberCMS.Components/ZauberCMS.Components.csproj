@@ -48,6 +48,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="ZauberCMS.Components.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="ZauberCMS.Core" Version="4.1.3" />
     </ItemGroup>
 

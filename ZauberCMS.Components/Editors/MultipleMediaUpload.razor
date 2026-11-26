@@ -1,5 +1,7 @@
-﻿@using Microsoft.Extensions.Options
+﻿@using Microsoft.Extensions.Logging
+@using Microsoft.Extensions.Options
 @using Microsoft.JSInterop
+@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Settings
@@ -23,20 +25,21 @@
 <RadzenStack Visible="@FilesToUpload.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="image-container w-full">
     @foreach (var media in FilesToUpload)
     {
-        <PickerItem Icon="@media.Name.ToFileType().GetIcon()" Text="@media.Name" Close="@(() => RemoveMedia(media))" />
+        <PickerItem @key="media" Icon="@media.Name.ToFileType().GetIcon()" Text="@media.Name" Close="@(() => RemoveMedia(media))" />
     }
 </RadzenStack>
 
 <div @ref="FileDropContainer" class="file-drop-zone @HoverClass" @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondragover="OnDragEnter">
     <div class="text-center">
         <label for="file-upload" style="cursor: pointer; position: relative; font-weight: 600; text-decoration: underline; padding: 30px 40px;">
-            <InputFile OnChange="@OnChange" @ref="InputFile" multiple="@(MaxAllowedFiles > 1 ? "multiple" : null)" />
+            @* Disabled while files are read or saved: a new pick makes the browser's earlier files unreadable (ZA-100) *@
+            <InputFile OnChange="@OnChange" @ref="InputFile" disabled="@_busy" multiple="@(MaxAllowedFiles > 1 ? "multiple" : null)" />
         </label>
     </div>
 </div>
 
-<RadzenButton Click="@(() => Save())">Save</RadzenButton>
-<RadzenButton Click="@(() => Clear())">Clear</RadzenButton>
+<RadzenButton Click="@(() => Save())" Disabled="@_busy">Save</RadzenButton>
+<RadzenButton Click="@(() => Clear())" Disabled="@_busy">Clear</RadzenButton>
 
 <RadzenStack Visible="@ErrorMessages.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="error-message-container">
     @foreach (var error in ErrorMessages)
@@ -54,6 +57,7 @@
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
+    [Inject] public ILogger<MultipleMediaUpload> Logger { get; set; } = null!;
     
     [Parameter] public Guid? ParentId { get; set; }
     [Parameter] public int MaxAllowedFiles { get; set; } = 30; // Only allow 30 max at a time, should be setting
@@ -73,9 +77,19 @@
     private List<ResultMessage> ErrorMessages { get; set; } = [];
     private Media? ParentFolder { get; set; }
     private IModalReference? Modal { get; set; }
+    private Guid? _loadedParentId;
+    private bool _busy;
+    private bool _disposed;
 
     protected override async Task OnParametersSetAsync()
     {
+        // Only when the folder changes: every parent render used to reload it (ZA-127)
+        if (ParentId == _loadedParentId)
+        {
+            return;
+        }
+
+        _loadedParentId = ParentId;
         if (ParentId != null)
         {
             var media = await MediaService.GetMediaAsync(new GetMediaParameters { Id = ParentId.Value });
@@ -123,109 +137,159 @@
     
     private void RemoveMedia(IBrowserFile media)
     {
-        var index = FilesToUpload.FindIndex(c => c.Name == media.Name);
-        if (index != -1)
+        // Not during a save: the copy may be being read. The item clicked, not the first with its name.
+        if (!_busy && FilesToUpload.Remove(media))
         {
-            FilesToUpload.RemoveAt(index);
+            DeleteStagedCopy(media);
         }
     }
 
     private async Task OnChange(InputFileChangeEventArgs e)
     {
         ErrorMessages.Clear();
-        
+
         if ((e.FileCount + FilesToUpload.Count) > MaxAllowedFiles)
         {
             ErrorMessages.Add(new ResultMessage{Message = $"Only {MaxAllowedFiles} files can be uploaded", MessageType = ResultMessageType.Error});
             return;
         }
 
-        foreach (var file in e.GetMultipleFiles(MaxAllowedFiles))
+        _busy = true;
+        try
         {
-            var result = await ProviderService.StorageProvider!.CanUseFile(file, OnlyImages);
-            if (result.Success)
+            var maxBytes = (await DataService.GetGlobalSettings()).MaxUploadFileSizeInBytes;
+            foreach (var file in e.GetMultipleFiles(MaxAllowedFiles))
             {
-                FilesToUpload.Add(file);
-            }
-            else
-            {
-                ErrorMessages.AddRange(result.Messages.ErrorMessages());
-            }
-            /*await using var stream = file.OpenReadStream(Settings.Value.MaxUploadFileSizeInBytes);
-            using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);*/
-            //ImageSources.Add($"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}");
-        }
+                var result = await ProviderService.StorageProvider!.CanUseFile(file, OnlyImages);
+                if (!result.Success)
+                {
+                    ErrorMessages.AddRange(result.Messages.ErrorMessages());
+                    continue;
+                }
 
-        HoverClass = string.Empty;
+                // Copied now: the browser's file can't be read after the input's next change, so a second pick
+                // would break the first (ZA-100)
+                try
+                {
+                    var staged = await StagedBrowserFile.CreateAsync(file, maxBytes);
+                    if (_disposed)
+                    {
+                        staged.Dispose();
+                        return;
+                    }
+
+                    FilesToUpload.Add(staged);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // A browser file that went away (JSException, timeout), a temp folder that can't be written: the
+                    // file is not added, the editor says why, and the circuit carries on
+                    Logger.LogWarning(ex, "Upload of {FileName} could not be staged", file.Name);
+                    ErrorMessages.Add(new ResultMessage
+                        { Message = $"{file.Name} could not be read. Choose it again.", MessageType = ResultMessageType.Error });
+                }
+            }
+        }
+        finally
+        {
+            _busy = false;
+            HoverClass = string.Empty;
+        }
     }
 
     private async Task Save()
     {
+        // A copy of the list: a pick during the save adds to the next batch, not to this loop
+        var files = FilesToUpload.ToList();
         if (OnSave.HasDelegate)
         {
             await OnSave.InvokeAsync(FilesToUpload);
         }
         else
         {
-            // Clear caches BEFORE saving to ensure fresh data after save
-            if (ParentFolder != null)
+            _busy = true;
+            try
             {
-                TreeState.ClearChildCache(ParentFolder.Id);
+                await SaveFilesAsync(files);
             }
-            else
+            finally
             {
-                // If saving to root, clear all caches
-                TreeState.ClearChildCache(null);
-            }
-            
-            // Clear local component cache
-            
-            var savedMediaItems = new List<Media>();
-            foreach (var browserFile in FilesToUpload)
-            {
-                var result = await MediaService.SaveMediaAsync(new SaveMediaParameters
+                foreach (var file in files)
                 {
-                    FileToSave = browserFile,
-                    ParentFolderId = ParentFolder?.Id
-                });
+                    FilesToUpload.Remove(file);
+                    DeleteStagedCopy(file);
+                }
 
-                if (!result.Success)
-                {
-                    ErrorMessages.AddRange(result.Messages);
-                }
-                else
-                {
-                    savedMediaItems.Add(result.Entity!);
-                }
+                _busy = false;
             }
-            
-            FilesToUpload.Clear();
-            
-            // Ensure parent folder stays expanded if it was expanded
-            if (ParentFolder != null && TreeState.IsNodeExpanded(ParentFolder.Id))
+        }
+    }
+
+    private async Task SaveFilesAsync(List<IBrowserFile> files)
+    {
+        // Clear caches BEFORE saving to ensure fresh data after save
+        if (ParentFolder != null)
+        {
+            TreeState.ClearChildCache(ParentFolder.Id);
+        }
+        else
+        {
+            // If saving to root, clear all caches
+            TreeState.ClearChildCache(null);
+        }
+
+        var savedMediaItems = new List<Media>();
+        foreach (var browserFile in files)
+        {
+            var result = await MediaService.SaveMediaAsync(new SaveMediaParameters
             {
-                TreeState.NodeExpanded(ParentFolder.Id);
-            }
-            
-            if (ValueChanged.HasDelegate)
+                FileToSave = browserFile,
+                ParentFolderId = ParentFolder?.Id
+            });
+
+            if (!result.Success)
             {
-                await ValueChanged.InvokeAsync(savedMediaItems);
+                ErrorMessages.AddRange(result.Messages);
             }
             else
             {
-                NotificationService.ShowSuccessNotification($"{savedMediaItems.Count} Media Saved");
+                savedMediaItems.Add(result.Entity!);
             }
+        }
+
+        // Ensure parent folder stays expanded if it was expanded
+        if (ParentFolder != null && TreeState.IsNodeExpanded(ParentFolder.Id))
+        {
+            TreeState.NodeExpanded(ParentFolder.Id);
+        }
+
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(savedMediaItems);
+        }
+        else
+        {
+            NotificationService.ShowSuccessNotification($"{savedMediaItems.Count} Media Saved");
         }
     }
 
     private void Clear()
     {
+        foreach (var file in FilesToUpload)
+        {
+            DeleteStagedCopy(file);
+        }
+
         FilesToUpload.Clear();
     }
 
+    // Only the copies this editor made: a caller's own files in FilesToUpload are left alone
+    private static void DeleteStagedCopy(IBrowserFile file) => (file as StagedBrowserFile)?.Dispose();
+
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
+        Clear();
         try
         {
             if (FilePasteFunctionReference != null)

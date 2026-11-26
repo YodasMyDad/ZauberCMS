@@ -215,40 +215,27 @@ public static class ContentExtensions
     /// <param name="alias">The alias of the media property to fetch.</param>
     /// <param name="mediaService">The mediator to send queries to retrieve media information.</param>
     /// <param name="fallBackUrl">A fallback URL to use if no media is found.</param>
-    /// <returns>Returns a list of media items if found; otherwise, returns a list containing a single media item with the fallback URL.</returns>
+    /// <returns>The media in the order the editor chose (recycled media left out); when there is none, a list holding
+    /// one item with the fallback URL, or an empty list.</returns>
     public static async Task<List<Media.Models.Media>> GetMediaItems(this IHasPropertyValues content, string? alias,
         IMediaService mediaService, string? fallBackUrl = null)
     {
         if (!string.IsNullOrEmpty(alias))
         {
-            var valueString = content.GetValue<string>(alias);
-            if (!valueString.IsNullOrWhiteSpace())
+            var mediaIds = content.GetValue<string>(alias).ToPickerIds();
+            if (mediaIds.Count != 0)
             {
-                if (valueString.Contains('['))
+                // Cached: every page view reads its pickers (ZA-057)
+                var result = await mediaService.QueryMediaAsync(new QueryMediaParameters
+                    { Ids = mediaIds, AmountPerPage = mediaIds.Count, Cached = true });
+                var media = result.Items.InPickerOrder(mediaIds, x => x.Id);
+                if (media.Count != 0)
                 {
-                    var mediaIds = content.GetValue<List<Guid>>(alias);
-                    if (mediaIds != null && mediaIds.Count != 0)
-                    {
-                        var result = await mediaService.QueryMediaAsync(new QueryMediaParameters { Ids = mediaIds, AmountPerPage = mediaIds.Count, Cached = true });
-                        return result.Items.ToList();
-                    }                      
-                }
-                else
-                {
-                    var mediaId = content.GetValue<Guid>(alias);
-                    if (mediaId != Guid.Empty)
-                    {
-                        // Cached like the multi-item path above (ZA-057)
-                        var media = await mediaService.GetMediaAsync(new GetMediaParameters {Id = mediaId, Cached = true});
-                        if (media != null)
-                        {
-                            return [media];
-                        }
-                    }   
+                    return media;
                 }
             }
         }
-        
+
         if (!fallBackUrl.IsNullOrWhiteSpace())
         {
             return [new Media.Models.Media{Name = fallBackUrl, Url = fallBackUrl}];
@@ -259,62 +246,35 @@ public static class ContentExtensions
     
     
     /// <summary>
-    /// Extension to get content items
+    /// The pages a content picker holds, in the order the editor chose. Only published pages that are not in the
+    /// recycle bin, as a visitor would see them.
     /// </summary>
-    /// <param name="content"></param>
-    /// <param name="propertyAlias"></param>
-    /// <param name="contentService"></param>
-    /// <returns></returns>
     public static async Task<List<Content.Models.Content>> GetContentItems(this IHasPropertyValues content, string? propertyAlias, IContentService contentService)
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
-            var valueString = content.GetValue<string>(propertyAlias);
-            if (!valueString.IsNullOrWhiteSpace())
+            var ids = content.GetValue<string>(propertyAlias).ToPickerIds();
+            if (ids.Count != 0)
             {
-                if (valueString.Contains('['))
-                {
-                    var ids = content.GetValue<List<Guid>>(propertyAlias);
-                    if (ids != null && ids.Count != 0)
-                    {
-                        var result = await contentService.QueryContentAsync(new QueryContentParameters { Ids = ids, AmountPerPage = ids.Count, Cached = true});
-                        return result.Items.ToList();
-                    }
-                }
-                else
-                {
-                    var id = content.GetValue<Guid>(propertyAlias);
-                    if (id != Guid.Empty)
-                    {
-                        var media = await contentService.GetContent(id);
-                        if (media != null)
-                        {
-                            return [media];
-                        }
-                    }  
-                }
+                var result = await contentService.QueryContentAsync(new QueryContentParameters
+                    { Ids = ids, AmountPerPage = ids.Count, Cached = true });
+                return result.Items.InPickerOrder(ids, x => x.Id);
             }
         }
 
         return [];
     }
-    
-    /// <summary>
-    /// Extension to get users
-    /// </summary>
-    /// <param name="content"></param>
-    /// <param name="propertyAlias"></param>
-    /// <param name="membershipService"></param>
-    /// <returns></returns>
+
+    /// <summary>The users a property holds, in stored order.</summary>
     public static async Task<List<User>> GetUsers(this IHasPropertyValues content, string propertyAlias, IMembershipService membershipService)
     {
         if (!string.IsNullOrEmpty(propertyAlias))
         {
-            var ids = content.GetValue<List<Guid>>(propertyAlias);
-            if (ids != null && ids.Count != 0)
+            var ids = content.GetValue<string>(propertyAlias).ToPickerIds();
+            if (ids.Count != 0)
             {
                 var result = await membershipService.QueryUsersAsync(new QueryUsersParameters { Ids = ids, AmountPerPage = ids.Count, Cached = true});
-                return result.Items.ToList();
+                return result.Items.InPickerOrder(ids, x => x.Id);
             }
         }
 

@@ -19,14 +19,30 @@
 
     private string _generatedTags = string.Empty;
 
+    private (Content? Content, string SeoAlias, string? TitleAlias, string? DescriptionAlias, Media? ImageFallback)? _renderedFor;
+
     protected override async Task OnParametersSetAsync()
     {
-        if (Content != null)
+        // Once per set of inputs (the front end renders this statically; an interactive parent re-sets it on every
+        // render), and no page means no tags rather than the last page's (ZA-127)
+        var inputs = (Content, SeoAlias, TitleAlias, DescriptionAlias, ImageFallback);
+        if (_renderedFor is { } last && ReferenceEquals(last.Content, Content) && last.SeoAlias == SeoAlias &&
+            last.TitleAlias == TitleAlias && last.DescriptionAlias == DescriptionAlias &&
+            ReferenceEquals(last.ImageFallback, ImageFallback))
         {
-            var sb = new StringBuilder();
-            await RenderTags(sb, SeoAlias, Content.Name ?? string.Empty, Content.Url(), Content, TitleAlias, DescriptionAlias, ImageFallback);
-            _generatedTags = sb.ToString();
+            return;
         }
+
+        _renderedFor = inputs;
+        if (Content == null)
+        {
+            _generatedTags = string.Empty;
+            return;
+        }
+
+        var sb = new StringBuilder();
+        await RenderTags(sb, SeoAlias, Content.Name ?? string.Empty, Content.Url(), Content, TitleAlias, DescriptionAlias, ImageFallback);
+        _generatedTags = sb.ToString();
     }
 
     private async Task RenderTags(StringBuilder sb, string? seoAlias, string name, string? url, 

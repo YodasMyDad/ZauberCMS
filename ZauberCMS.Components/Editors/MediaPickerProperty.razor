@@ -1,5 +1,4 @@
-﻿@using System.Text.Json
-@using ZauberCMS.Components.Editors.Models
+﻿@using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Core.Media.Models
 @using ZauberCMS.Core.Media.Parameters
@@ -47,41 +46,26 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (!Value.IsNullOrWhiteSpace())
+        var ids = Value.ToPickerIds();
+        if (ids.Count != 0)
         {
-            if (Guid.TryParse(Value, out var singleId)) 
+            // Every picked item, in the order chosen
+            var result = await MediaService.QueryMediaAsync(new QueryMediaParameters
             {
-                // Value is a single guid
-                var mediaItem = await MediaService.QueryMediaAsync(new QueryMediaParameters
-                {
-                    Ids = [singleId]
-                });
-
-                MediaItems = mediaItem.Items.ToList();
-            } 
-            else 
-            {
-                // Value might be a list of guids
-                var mediaIds = JsonSerializer.Deserialize<List<Guid>>(Value);
-                if (mediaIds != null && mediaIds.Any())
-                {
-                    var mediaItems = await MediaService.QueryMediaAsync(new QueryMediaParameters
-                    {
-                        Ids = mediaIds
-                    });
-
-                    MediaItems = mediaItems.Items.ToList();
-                }
-            }
+                Ids = ids,
+                AmountPerPage = ids.Count
+            });
+            MediaItems = result.Items.InPickerOrder(ids, x => x.Id);
         }
 
         SettingsModel = Settings.FromJson<MediaPickerSettings>();
     }
 
-    private void SortList((int oldIndex, int newIndex) indices)
+    private async Task SortList((int oldIndex, int newIndex) indices)
     {
         TupleExtensions.SortList(indices, MediaItems);
-        StateHasChanged();
+        // The new order is the value (ZA-078)
+        await SaveAndUpdate();
     }
 
     private async Task DeleteMedia(Media media)
@@ -141,17 +125,9 @@
 
     private async Task SaveAndUpdate()
     {
-        if (MediaItems.Count <= 0)
-        {
-            Value = string.Empty;
-        }
-        else
-        {
-            Value = MediaItems.Count == 1 ?
-                MediaItems[0].Id.ToString() : 
-                JsonSerializer.Serialize(MediaItems.Select(x => x.Id));   
-        }
-        await ValueChanged.InvokeAsync(Value);
+        // One shape for any count: a JSON array of ids (Roadmap D30)
+        // Raised, not written to the parameter: the parent owns Value (ZA-127)
+        await ValueChanged.InvokeAsync(MediaItems.Select(x => x.Id).ToPickerValue());
     }
 
 }

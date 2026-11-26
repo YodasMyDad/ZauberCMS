@@ -12,13 +12,20 @@
 @code {
     [Parameter] public Guid? ParentId { get; set; }
     private Media? Media { get; set; }
-    
+    private Guid? _loadedFor;
+    private bool _loaded;
+
     protected override async Task OnParametersSetAsync()
     {
-        if (ParentId != null)
+        // Only when the folder changes; at the root there is no folder, so no "Create File" from an old one (ZA-127)
+        if (_loaded && ParentId == _loadedFor)
         {
-            Media = await MediaService.GetMediaAsync(new GetMediaParameters { Id = ParentId.Value });
+            return;
         }
+
+        _loaded = true;
+        _loadedFor = ParentId;
+        Media = ParentId == null ? null : await MediaService.GetMediaAsync(new GetMediaParameters { Id = ParentId.Value });
     }
 
     private void OnClick(RadzenSplitButtonItem? item, string buttonName)

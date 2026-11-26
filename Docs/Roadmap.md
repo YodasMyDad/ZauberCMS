@@ -16,9 +16,10 @@
   **Phase 10 done** (performance & async, 2026-11-26).
   **Phase 10a done** (callers outside a circuit, D27, 2026-11-26).
   **Phase 10b done** (save hooks and content data, D28–D29, 2026-11-26).
-  **56 open findings** (0 Critical, 0 High, 14 Medium, 42 Low), each one assigned below to Phase 10c–10e, Phase 11
-  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10c** (property editors and stored values; ZA-029 has a
-  design question, which the owner has delegated: decide it Umbraco's way and record it).
+  **Phase 10c done** (property editors and stored values, D30–D31, 2026-11-26).
+  **48 open findings** (0 Critical, 0 High, 11 Medium, 37 Low), each one assigned below to Phase 10d–10e, Phase 11
+  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10d** (admin UI robustness; design questions inside a phase
+  are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -56,6 +57,8 @@
 | D27 | **Services do no authorisation; access is checked where a call comes in** (the page, component or endpoint), as in Umbraco and WordPress. Replaces D10: the opt-in permission hook was weighed in Phase 10a and dropped (no shipped path needs it, it does nothing against plugin code, and it would put a rule on every write method). What Phase 10a does instead: `ICurrentUserAccessor`, so services can be called outside a circuit (ZA-093). Back-office roles other than Admin go to the Backlog; that is where service checks would be looked at again. (owner, 2026-11-26) | ZA-140, ZA-093 |
 | D28 | **Save hooks see every row a change writes, and one veto stops the whole change.** `SaveChangesAndLog` runs `IBeforeEntitySave<T>` for every row the save writes, of every entity type (the change tracker), each with its own state, then saves once, then runs `IAfterEntitySave<T>` for the same rows. A move, recycle, restore, permanent delete or emptied bin is one change: any `false` from a before-save hook and nothing of it is written (the transaction rolls back). Umbraco does the same: cancelling `Moving`, `Deleting` or `EmptyingRecycleBin` cancels the whole operation, and the "-ed" notifications list every item moved or deleted. Our hooks are per row rather than per operation, so they also see the items below (Umbraco's "-ing" notifications list only the item named). Not hooked: bulk maintenance that runs straight against the database (audit and version retention, orphan clean-up). (owner delegated to Umbraco parity, 2026-11-26, Phase 10b) | ZA-012, ZA-157, ZA-159, ZA-018 |
 | D29 | **A "Save only" draft runs the hooks of the rows it writes, like any save: the draft rows, not the live page.** It writes `UnpublishedContent` (the page's and its blocks' drafts), so `IBeforeEntitySave<UnpublishedContent>` runs; the live `Content` row only gets its link to the draft (Modified), and a new block's row, which only the draft reaches, is Added. A plugin that mirrors the live site (a search index) watches `Content`; one that wants drafts too watches `UnpublishedContent`. Umbraco separates the same way: Save raises `Saving`/`Saved` and Publish raises `Publishing`/`Published` as well; its external index holds published content only. Tag links follow the live values, as Umbraco's tags do: a draft leaves them, a publish, version restore or copy writes them, a permanent delete removes them. (owner delegated to Umbraco parity, 2026-11-26, Phase 10b) | ZA-159, ZA-099 |
+| D30 | **A picker stores one shape for any count: a JSON array of ids in the order the editor chose, even for one item; older values are read, not rewritten.** The content and media pickers wrote one item as a bare id and several as a JSON array. They now always write `["id", …]`, and everything that reads a picker value (`ToPickerIds`, `GetContentItems`, `GetMediaItems`, `GetUsers`, `GetValue<Guid>` and `GetValue<List<Guid>>`, the admin's single-id fields) takes both shapes. There is no data migration: values live in pages, drafts, versions and block snapshots across three providers, and a value becomes the new shape the next time its page is saved. Umbraco does the same: Media Picker 3 stores a JSON array whatever the maximum, and its value converters return one item or a list from the property's settings, not from the stored shape; when a stored format changed, its converters kept reading the old one. The read side returns the stored order, as Umbraco's converters do. (owner delegated to Umbraco parity, 2026-11-26, Phase 10c) | ZA-029, ZA-078 |
+| D31 | **Stored values do not depend on the culture: numbers and dates are written in the invariant culture, and property aliases are unique on a page.** The numeric editor writes `1.5` and the date editor `2026-11-26T14:30:00` (with the time, which the long-date text dropped); values written in the admin's culture before this still read, the invariant form first. A content type is refused when two of its properties share an alias, ignoring case, on the type itself or through a composition (from either side); values that already repeat an alias read the first instead of throwing. Umbraco stores decimals and dates invariant, and refuses a document type or composition whose aliases clash. (owner delegated to Umbraco parity, 2026-11-26, Phase 10c) | ZA-027, ZA-028 |
 
 ## Working rules for the rework
 
@@ -663,18 +666,74 @@ enterprise CMS; decide as Umbraco does"): D28 and D29.
 - After-save hooks still run inside the change's transaction, before the commit (Umbraco raises its "-ed"
   notifications after the scope completes); see the Backlog.
 
-### Phase 10c — Property editors and stored values
-ZA-015, ZA-078, ZA-100 (Medium); ZA-027, ZA-028, ZA-029, ZA-112, ZA-127 (Low).
-- ZA-078: media, content and user pickers return query order on the front end, not the order the editor chose.
-  A visible change → release notes.
-- ZA-100: picking files in two batches breaks the upload (earlier `IBrowserFile`s are no longer readable).
-- ZA-015: `AddFluentValidation` never unsubscribes, keeps static lists, and a throwing validator ends the circuit.
-- ZA-027 (numeric editor reads and writes in the current culture), ZA-028 (duplicate property aliases throw in
-  `ToDictionary`), ZA-029 (content picker stores one item as a string, several as JSON), ZA-112 (`SortableList`
-  drops callback tasks, `DotNetObjectReference` can leak), ZA-127 (component lifecycle roll-up: work repeated per
-  parameter set, components writing their own parameters, loops without `@key`).
-- **Ask the owner first:** ZA-029 — rewrite existing values to one shape (a data migration), or keep reading both
-  and write one.
+### Phase 10c — Property editors and stored values — DONE (2026-11-26)
+ZA-015, ZA-078, ZA-100 (Medium); ZA-027, ZA-028, ZA-029, ZA-112, ZA-127 (Low). The design questions were decided
+the Umbraco way (owner delegated): D30 (one picker shape, old values read, no data migration) and D31 (invariant
+numbers and dates, unique aliases).
+- **Pickers (ZA-078, ZA-029, D30).** `PickerValueExtensions` (`ToPickerIds`, `ToPickerValue`, `InPickerOrder`) is
+  the one reader and writer. The content and media pickers write a JSON array for any count, load every picked item
+  (the query default of 10 dropped the rest, and the next change saved the value without them), show unpublished
+  pages, keep the stored order and save after a drag (a drag changed nothing). `GetContentItems`, `GetMediaItems`
+  and `GetUsers` return the stored order and read both shapes; the one-item path now goes through the same cached
+  query, so a picked page that is unpublished or in the recycle bin is no longer shown on the site.
+  `GetValue<Guid>` reads `["id"]` and `GetValue<List<Guid>>` reads a bare id. The admin's single-id fields
+  (internal redirect, content type image, SEO image, sitemap root) take either shape.
+- **Aliases (ZA-028, D31).** `SaveContentTypeAsync` refuses two properties with one alias, ignoring case, on the
+  type or between it and its compositions, from either side. `ContentValues()` (pages and users) and the version
+  compare take the first value of a repeated alias instead of throwing.
+- **Culture (ZA-027, D31).** The numeric editor writes `1.5`; the date editor writes `2026-11-26T14:30:00` and keeps
+  the time (the long-date text dropped it, so the time-only picker could not work), and clearing it now clears the
+  value. `ToValue<decimal|double|DateTime>` reads the invariant form first, then the current culture's; `Float`, so
+  `1,5` is never read as 15. The rating editor no longer throws on a value that is not a number.
+- **Uploads (ZA-100).** `StagedBrowserFile` copies each chosen file to the system temp folder
+  (`ZauberCMS/uploads`) when it is chosen; Save uploads from the copies and deletes them, as do Remove, Clear and
+  closing the editor. Save and Clear are disabled while files are being read; Remove takes the item clicked, not
+  the first with its name.
+- **Validation (ZA-015).** `AddFluentValidation` returns an `IDisposable` that unsubscribes and clears its messages;
+  `FluentValidationValidator` disposes it and moves to a new `EditContext`. A validator that throws is logged and
+  leaves the form invalid (`ValidatorFailedMessage`); the assembly scan is under a lock. A model with no validator
+  now passes `ValidateAsync` instead of throwing "No pending ValidationResult found".
+- **`SortableList` (ZA-112).** `OnUpdateJS`/`OnRemoveJS` return the callback's task; dispose always releases the
+  `DotNetObjectReference`, and a module loaded after the list was disposed is disposed too.
+- **Lifecycle (ZA-127).** Property editor rows in the content and user editors are keyed on the loaded copy, so a
+  version restore, Clear Changes, a save elsewhere or moving to another user no longer leaves editors showing the
+  old values (and saving them back). Also: the map editor builds its map once; the upload editor, the "Create"
+  media buttons and the role's user list load when their id changes (a missing role lists nobody); the tags editor
+  reads its value again when it changes; the SEO checker keeps the URL typed; the image crop and the language
+  dialog keep the editor's choice when the side panel re-renders; `RenderBlock`, `PickerItem` and the pickers no
+  longer write their own parameters; the settings list editor no longer crashes on two equal values (no value
+  `@key`, remove by position, a repeated value isn't added); property rows in the content type and role editors
+  are keyed. Left as it was: `EditContent` reloads the page on each parameter set (a save navigates to the same
+  URL to refresh it).
+- Review (`/audit changed`, one reviewer; nothing High). Fixed: picking or pasting files while the last pick was
+  still being read could end the circuit (the input is disabled while busy, every per-file error is shown, and
+  Remove waits for a save); `FluentValidationValidator` moved to a new subscription whenever `Validator` was a new
+  instance (`Validator="@(new X())"`) and so cleared its own errors (now by type); `User.GetMedia`/`GetContent` kept
+  query order; `GetValue<Guid?>`, `Guid[]` and `IEnumerable<Guid>` read only one shape; saving a composition was
+  refused for a clash already stored inside a type that uses it (a clash counts only when the type being saved is
+  part of it); a failed drag was an unhandled promise in the browser (logged on the server now); removing the
+  sitemap's root page kept it; the SEO tags ignored a changed title, description or fallback image; the staging
+  tests counted files in the shared temp folder. Noted only: a page whose values repeat an alias shows the first in
+  load order.
+- Tests: `Content/PropertyValueTests.cs` (picker order and old values, alias clashes, on all three providers; value
+  formats, repeated aliases and FluentValidation without a database), Components `Editors/StagedBrowserFileTests.cs`.
+  Full suite 897 (896 pass, 1 skipped for ZA-118) on SQLite, PostgreSQL, SQL Server LocalDB and Redis.
+  Not tried in a browser: the picker drag, the two-batch upload and the date editor; the value formats and the
+  service paths they use are covered by tests.
+
+Release notes (Phase 10c):
+- Pickers store one item as `["id"]`, not a bare id. Views using `GetContentItems`/`GetMediaItems`/`GetContent`/
+  `GetMedia`/`GetUsers`, `GetValue<Guid>` or `GetValue<List<Guid>>` keep working; code that parsed the raw string
+  with `Guid.Parse` must use `ToPickerIds()`. Existing values change shape the next time their page is saved.
+- Front-end pickers return items in the order the editor chose, and only published pages not in the recycle bin
+  (before, one picked page was returned even when unpublished or recycled).
+- Numbers are stored as `1.5` and dates as `yyyy-MM-ddTHH:mm:ss`; values written before still read. A date read with
+  `GetValue<DateTime>` now works (before it returned the default).
+- A content type whose properties repeat an alias (ignoring case), on the type or through a composition, can no
+  longer be saved; rename one of them.
+- `AddFluentValidation` returns `IDisposable` (it returned nothing); `SortableList.OnUpdateJS`/`OnRemoveJS` return
+  `Task`. New public helpers: `PickerValueExtensions`, `EnumerableExtensions.ToValuesByAlias`, `StagedBrowserFile`.
+- Uploads are staged in the system temp folder; a host whose temp folder isn't writable can't upload from the admin.
 
 ### Phase 10d — Admin UI robustness
 ZA-096, ZA-097, ZA-101 (Medium); ZA-025, ZA-026, ZA-085, ZA-108, ZA-156, ZA-160, ZA-161 (Low).

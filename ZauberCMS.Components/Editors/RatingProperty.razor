@@ -25,18 +25,15 @@
     
     protected override void OnInitialized()
     {
-        if (!Value.IsNullOrWhiteSpace())
-        {
-            SavedValue = int.Parse(Value);
-        }
-        
+        // A value that is not a number shows as no rating instead of throwing
+        SavedValue = Value?.ToValue<int>() ?? 0;
         RatingPropertySettingsModel = Settings.FromJson<RatingPropertySettingsModel>();
     }
 
     private async Task Changed(int newValue)
     {
         SavedValue = newValue;
-        await ValueChanged.InvokeAsync(SavedValue.ToString());
+        await ValueChanged.InvokeAsync(SavedValue.ToString(System.Globalization.CultureInfo.InvariantCulture));
     }
 
 }

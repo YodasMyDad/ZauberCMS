@@ -1044,6 +1044,15 @@ public partial class ContentService(
             parameters.ContentType.Alias = parameters.ContentType.Name.ToAlias();
         }
 
+        // Each page reads its values by alias: two properties with one alias (on the type, or through its
+        // compositions) would make one value hide the other (ZA-028). Refused, as Umbraco does.
+        var aliasClash = await FindPropertyAliasClashAsync(dbContext, parameters.ContentType, cancellationToken);
+        if (aliasClash != null)
+        {
+            handlerResult.AddMessage(aliasClash, ResultMessageType.Error);
+            return handlerResult;
+        }
+
         var contentType = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Id == parameters.ContentType.Id, cancellationToken);
         if (contentType == null)
         {
@@ -1079,6 +1088,71 @@ public partial class ContentService(
         }
 
         return savedType;
+    }
+
+    /// <summary>
+    /// The error to show when <paramref name="contentType"/> as it is about to be saved would give a page two
+    /// properties with one alias (ignoring case): on the type itself, between the type and its compositions, or, for a
+    /// composition, on any type that uses it. Null when every alias is unique.
+    /// </summary>
+    private static async Task<string?> FindPropertyAliasClashAsync(IZauberDbContext dbContext, ContentType contentType,
+        CancellationToken cancellationToken)
+    {
+        // Content types are few and their properties are a JSON column: compare in memory
+        var others = await dbContext.ContentTypes.AsNoTracking()
+            .Where(x => x.Id != contentType.Id)
+            .ToListAsync(cancellationToken);
+        var byId = others.ToDictionary(x => x.Id);
+        byId[contentType.Id] = contentType;
+
+        var typesToCheck = new List<ContentType> { contentType };
+        if (contentType.IsComposition)
+        {
+            typesToCheck.AddRange(others.Where(x => x.CompositionIds.Contains(contentType.Id)));
+        }
+
+        foreach (var type in typesToCheck)
+        {
+            var sources = new List<ContentType> { type };
+            sources.AddRange(type.CompositionIds.Distinct()
+                .Where(id => id != type.Id)
+                .Select(byId.GetValueOrDefault)
+                .OfType<ContentType>());
+
+            var seen = new Dictionary<string, (ContentType Source, Guid PropertyId)>(StringComparer.OrdinalIgnoreCase);
+            foreach (var source in sources)
+            {
+                foreach (var property in source.ContentProperties.Where(p => !p.Alias.IsNullOrWhiteSpace()))
+                {
+                    var alias = property.Alias!;
+                    if (seen.TryAdd(alias, (source, property.Id)))
+                    {
+                        continue;
+                    }
+
+                    var (first, firstPropertyId) = seen[alias];
+                    if (firstPropertyId == property.Id)
+                    {
+                        // The same property reached twice (a copy of a composition's property): not a clash
+                        continue;
+                    }
+
+                    if (!ReferenceEquals(first, contentType) && !ReferenceEquals(source, contentType))
+                    {
+                        // A clash this save doesn't touch (between two other types, already stored): not this save's
+                        // to refuse, or a composition could never be saved again
+                        continue;
+                    }
+
+                    return ReferenceEquals(first, source)
+                        ? $"Two properties on '{source.Name}' use the alias '{alias}'. Give each property its own alias."
+                        : $"The alias '{alias}' is used by '{first.Name}' and '{source.Name}', which are both on " +
+                          $"'{type.Name}'. Give each property its own alias.";
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

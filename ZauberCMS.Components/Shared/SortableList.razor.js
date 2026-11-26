@@ -18,7 +18,8 @@ export function init(id, group, pull, put, sort, handle, filter, component, forc
             }
             
             // Notify .NET to update its model and re-render
-            component.invokeMethodAsync('OnUpdateJS', event.oldDraggableIndex, event.newDraggableIndex);
+            component.invokeMethodAsync('OnUpdateJS', event.oldDraggableIndex, event.newDraggableIndex)
+                .catch(error => console.error('SortableList: the move could not be applied', error));
         }
     });
 }

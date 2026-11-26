@@ -43,13 +43,21 @@
     private List<Tag> Tags { get; set; } = [];
     private IEnumerable<Guid> SelectedValues { get; set; } = [];
 
+    private string? _readValue;
+    private bool _hasRead;
+
     protected override void OnParametersSet()
     {
-        // Only the value: the page save writes the tag links from it, when the page is published (ZA-099)
-        if (!Value.IsNullOrWhiteSpace())
+        // Only the value: the page save writes the tag links from it, when the page is published (ZA-099).
+        // Read again when it changes, and an empty value clears the chips (ZA-127).
+        if (_hasRead && Value == _readValue)
         {
-            SelectedValues = new TagsPropertyTagReferenceProvider().GetTagIds(Value);
+            return;
         }
+
+        _hasRead = true;
+        _readValue = Value;
+        SelectedValues = Value.IsNullOrWhiteSpace() ? [] : new TagsPropertyTagReferenceProvider().GetTagIds(Value);
     }
 
     protected override async Task OnInitializedAsync()
@@ -66,8 +74,8 @@
     
     private async Task OnChange()
     {
-        Value = JsonSerializer.Serialize(SelectedValues);
-        await ValueChanged.InvokeAsync(Value);
+        // Raised, not written to the parameter: the parent owns Value (ZA-127)
+        await ValueChanged.InvokeAsync(JsonSerializer.Serialize(SelectedValues));
     }
     
     private async Task OpenTagEditor()

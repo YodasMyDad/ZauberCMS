@@ -69,11 +69,20 @@
 
     private async Task ContentSelected(string e)
     {
-        SelectedRootContentIdAsString = e;
-        if (Guid.TryParse(e, out var contentId))
+        // The picker stores a JSON array of ids (Roadmap D30); this one holds at most one
+        var ids = e.ToPickerIds();
+        SelectedRootContentIdAsString = ids.Count == 0 ? null : e;
+        if (ids.Count != 0)
         {
+            var contentId = ids[0];
             SeoSitemap!.RootContentId = contentId;
             SeoSitemap.RootContent = await ContentService.GetContent(contentId);
+        }
+        else
+        {
+            // Removed: no root page, rather than the one removed
+            SeoSitemap!.RootContentId = Guid.Empty;
+            SeoSitemap.RootContent = null;
         }
     }
     

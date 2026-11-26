@@ -4,7 +4,7 @@
 @using ZauberCMS.Core.Seo.Models
 
 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
-    <RadzenTextBox Style="width:26rem;" Placeholder="@(FullUrl)" @bind-Value="@FullUrl" />
+    <RadzenTextBox Style="width:26rem;" Placeholder="@(FullUrl)" @bind-Value="@_url" />
     <RadzenButton Variant="Variant.Filled" Size="ButtonSize.Small" Text="Run SEO Checks" Click="@(() => RunSeoChecks())"/>
     <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" Visible="@ShowLoader">
         <Template>Wait</Template>
@@ -41,6 +41,20 @@
     private bool ShowLoader { get; set; }
     private string? ErrorMessage { get; set; }
 
+    // The URL being checked, typed by the editor: the parent passes FullUrl again on every render, which would
+    // otherwise overwrite what was typed (ZA-127)
+    private string? _url;
+    private string? _lastFullUrl;
+
+    protected override void OnParametersSet()
+    {
+        if (_url == null || FullUrl != _lastFullUrl)
+        {
+            _url = FullUrl;
+            _lastFullUrl = FullUrl;
+        }
+    }
+
     /*
     protected override async Task OnInitializedAsync()
     {
@@ -57,7 +71,7 @@
         SeoCheckResults = [];
         ErrorMessage = null;
 
-        if (!SeoHttp.IsHttpUrl(FullUrl, out var pageUri))
+        if (!SeoHttp.IsHttpUrl(_url, out var pageUri))
         {
             ErrorMessage = "Enter the full address of the page, starting with http:// or https://";
             return;

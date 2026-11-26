@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Shared.Interfaces;
 
 namespace ZauberCMS.Core.Membership.Models;
@@ -27,7 +28,7 @@ public class User : IdentityUser<Guid>, ITreeItem, IHasPropertyValues
 
     public Dictionary<string, string> ContentValues()
     {
-        return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x.Value);
+        return _contentValues ??= PropertyData.ToValuesByAlias(x => x.Alias, x => x.Value);
     }
     
     public Dictionary<string, object> ExtendedData { get; set; } = new();

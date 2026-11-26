@@ -107,9 +107,11 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
             }
             else
             {
-                if (Guid.TryParse(value, out var guidValue))
+                // A bare id, or a content picker's value (a JSON array of ids, Roadmap D30)
+                var ids = value.ToPickerIds();
+                if (ids.Count != 0 || value.TrimStart().StartsWith('['))
                 {
-                    InternalRedirectId = guidValue;
+                    InternalRedirectId = ids.Count == 0 ? Guid.Empty : ids[0];
                 }
             }
         }
@@ -161,7 +163,7 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
 
     public Dictionary<string, string> ContentValues()
     {
-        return _contentValues ??= PropertyData.ToDictionary(x => x.Alias, x => x.Value);
+        return _contentValues ??= PropertyData.ToValuesByAlias(x => x.Alias, x => x.Value);
     }
     
     /// <summary>

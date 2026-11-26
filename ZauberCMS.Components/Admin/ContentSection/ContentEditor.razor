@@ -72,7 +72,10 @@ else
                                                 AllContentValues.TryGetValue(property.Id, out var contentValue);
                                                 if (contentValue != null)
                                                 {
-                                                    <EditorRow FullWidth="@(property.FullWidth)">
+                                                    @* Keyed on the loaded copy: a reload (version restore, Clear
+                                                       Changes, a save elsewhere) builds a new WorkingCopy, and editors
+                                                       that read Value once must start again from it (ZA-127) *@
+                                                    <EditorRow @key="(WorkingCopy, property.Id)" FullWidth="@(property.FullWidth)">
                                                         <LeftColumn>
                                                             <PropertyInfo Name="@property.Name" Alias="@property.Alias"
                                                                           Description="@property.Description"/>
@@ -154,7 +157,7 @@ else
                                     <ContentPickerProperty
                                         Value="@WorkingCopy.InternalRedirectIdAsString"
                                         Settings="@(JsonSerializer.Serialize(new ContentPickerSettings { MaxAllowed = 1 }))"
-                                        ValueChanged="@(e => WorkingCopy.InternalRedirectIdAsString = e.ToString())"/>
+                                        ValueChanged="@(e => WorkingCopy.InternalRedirectIdAsString = e)"/>
                                 </CentreColumn>
                             </EditorRow>
 

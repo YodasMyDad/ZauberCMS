@@ -138,9 +138,11 @@ public class ContentType : ITreeItem
             }
             else
             {
-                if (Guid.TryParse(value, out var guidValue))
+                // A bare id, or a media picker's value (a JSON array of ids, Roadmap D30)
+                var ids = value.ToPickerIds();
+                if (ids.Count != 0 || value.TrimStart().StartsWith('['))
                 {
-                    MediaId = guidValue;
+                    MediaId = ids.Count == 0 ? Guid.Empty : ids[0];
                 }
             }
         }

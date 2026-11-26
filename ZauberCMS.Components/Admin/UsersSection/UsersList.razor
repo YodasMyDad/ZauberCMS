@@ -36,9 +36,20 @@
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
     
     private IEnumerable<User> Users { get; set; } = [];
+    private Guid? _loadedFor;
+    private bool _loaded;
 
     protected override async Task OnParametersSetAsync()
     {
+        // Only when the role changes, and a role that isn't found lists nobody, not the last role's users (ZA-127)
+        if (_loaded && RoleId == _loadedFor)
+        {
+            return;
+        }
+
+        _loaded = true;
+        _loadedFor = RoleId;
+        Users = [];
         if (RoleId != null)
         {
             var role = await MembershipService.GetRoleAsync(new GetRoleParameters {Id = RoleId.Value});

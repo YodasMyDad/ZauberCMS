@@ -37,12 +37,22 @@ that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/Edit
 - A property type stores `Component = editorType.FullName` and `ComponentAlias = Alias`. **Renaming the class or
   namespace orphans every existing property** using it (the sitemap also hard-codes
   `ZauberCMS.Components.Editors.SeoProperty`).
-- The value is always a **string**; complex values are JSON (pickers store `List<Guid>`). Emit with
-  `await ValueChanged.InvokeAsync(value)`.
+- The value is always a **string**; complex values are JSON. Emit with `await ValueChanged.InvokeAsync(value)`; don't
+  assign your own `Value` parameter (the parent owns it, and its next render overwrites what you wrote).
 - The front-end reads it with `content.GetValue<T>(alias)` → `StringExtensions.ToValue<T>`, so the stored format must
-  deserialise to the `T` consumers request. Changing a value format is a breaking change (existing rows keep the old
-  shape — e.g. ContentPicker has both single-string and JSON forms in the wild).
-- Use invariant culture for numbers/dates in stored values (`NumericProperty` currently uses current culture — known issue).
+  deserialise to the `T` consumers request. Changing a value format is a breaking change: existing rows keep the old
+  shape, so the read side must take both (as the pickers do, Roadmap D30).
+- **Pickers** (content, media, users) store a JSON array of ids in the order the editor chose, even for one item:
+  write with `ids.ToPickerValue()`, read with `value.ToPickerIds()` (`Core/Extensions/PickerValueExtensions.cs`),
+  which also reads a bare id from before D30. Query the items with `AmountPerPage = ids.Count` (the default is 10)
+  and put them back in order with `InPickerOrder`; queries return their own order. Save after a drag, not only after
+  an add or remove. `GetContentItems` / `GetMediaItems` / `GetUsers` do this for views.
+- **Numbers and dates** are stored in the invariant culture (`1.5`, `2026-11-26T14:30:00`, format `"s"`); the admin
+  runs in `AdminDefaultLanguage` and a page in its own language, so a culture-formatted value reads differently on the
+  site. `ToValue<double|decimal|DateTime>` reads the invariant form first and the current culture's as a fallback,
+  for values written before D31.
+- An editor that reads files with `InputFile` must copy each file when it is chosen (`StagedBrowserFile`, used by
+  `MultipleMediaUpload`): Blazor's `IBrowserFile` can't be read after the input's next change.
 
 ## Settings round-trip
 

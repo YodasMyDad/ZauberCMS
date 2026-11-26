@@ -139,17 +139,9 @@
     
     private async Task SetOpenGraphMedia(string? e)
     {
-        if (e.IsNullOrWhiteSpace())
-        {
-            Meta.OpenGraphImage = null;
-        }
-        else
-        {
-            if (Guid.TryParse(e, out var ogi))
-            {
-                Meta.OpenGraphImage = ogi;
-            }
-        }
+        // The picker stores a JSON array of ids (Roadmap D30); this one holds at most one
+        var ids = e.ToPickerIds();
+        Meta.OpenGraphImage = ids.Count == 0 ? null : ids[0];
 
         await NotifyValueChanged();
     }

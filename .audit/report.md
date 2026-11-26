@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 10c (2026-11-26): Build PASS · Warnings: 0 · Tests: 897 (896 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (one reviewer, nothing High; its two Mediums — a second pick during staging could end the circuit, a new validator instance per render cleared the errors — and its Lows fixed). ZA-015, ZA-027, ZA-028, ZA-029, ZA-078, ZA-100, ZA-112, ZA-127 fixed. Next free ID: ZA-164
 After Roadmap Phase 10b (2026-11-26): Build PASS · Warnings: 0 · Tests: 876 (875 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase. ZA-012, ZA-018, ZA-077, ZA-099, ZA-117, ZA-144, ZA-145, ZA-146, ZA-157, ZA-159 fixed; ZA-162 found and fixed; ZA-163 new (Backlog). Next free ID: ZA-164
 After Roadmap Phase 10a (2026-11-26): Build PASS · Warnings: 0 · Tests: 837 (836 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (one reviewer: its two Mediums — a request id that is not ours threw, `RunAs` reached other circuits' event handlers — and its Lows fixed). ZA-093 fixed, ZA-140 closed (D27), ZA-152 resolved. Next free ID: ZA-162
 After Roadmap Phase 10 (2026-11-26): Build PASS · Warnings: 0 · Tests: 828 (827 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their High and Mediums fixed — tree flags wiped by the bin trees, a front-end cache that never expired on busy pages or kept misses — the rest fixed or recorded as ZA-161). Next free ID: ZA-162
@@ -26,24 +27,13 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 14 | 59 | 1 |
-| Low | 42 | 13 | 3 |
+| Medium | 11 | 62 | 1 |
+| Low | 37 | 18 | 3 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
 a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086, ZA-011 and ZA-113 (Phase 10), ZA-093, with ZA-140 closed by D27 and ZA-152 resolved (Phase 10a), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-162.
 
 ## Open findings
-
-### ZA-015 [Medium/High] `AddFluentValidation` never unsubscribes
-
-- Where: `ZauberCMS.Core/Shared/Validation/EditContextFluentValidationExtensions.cs:22,25` · Category: A
-- Reconciled 2026-11-25: same file also has unsynchronised static lists and `async` handlers with no try/catch (a throwing validator ends the circuit) — lines 12-13, 107-125.
-
-### ZA-078 [Medium/High] Multi-pick order is lost on the front-end
-
-- Where: `ZauberCMS.Core/Extensions/ContentExtensions.cs:208-209,244-262,285-293` · Category: C · Since: 2026-11-25
-- Issue / Trigger: Media, content and user pickers return query order, not the editor's order (unlike `GetBlocks`).
-- Fix: reorder by stored IDs. · Blocked by: visible order change.
 
 ### ZA-087 [Medium/High] Components package leaks npm manifests into consumer projects
 
@@ -106,12 +96,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Issue / Trigger: The template ships the exception handler commented out and setup adds none: production errors return an empty 500.
 - Fix: ship an error route and wire the handler in setup. · Blocked by: pipeline order; new setting.
 
-### ZA-100 [Medium/High] Selecting files in more than one batch breaks the upload
-
-- Where: `ZauberCMS.Components/Editors/MultipleMediaUpload.razor:183-199,236-242` · Category: E · Since: 2026-11-25
-- Issue / Trigger: Files are accumulated across change events but earlier `IBrowserFile`s are invalidated: pick two, pick another, Save → earlier batch fails.
-- Fix: upload per change event. · Blocked by: UX.
-
 ### ZA-101 [Medium/High] Admin prerenders, so every page initialises twice
 
 - Where: `ZauberCMS/Components/App.razor:29,79-90` · Category: E · Since: 2026-11-25
@@ -125,19 +109,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 ### ZA-026 [Low/High] `<RadzenComponents/>` rendered twice
 
 - Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:10,16` · Category: E
-
-### ZA-027 [Low/Medium] Numeric editor stores values in current culture
-
-- Where: `ZauberCMS.Components/Editors/NumericProperty.razor:41` · Category: C
-- Reconciled 2026-11-25: read side (`:33`, `Convert.ToDouble`) is culture-dependent too.
-
-### ZA-028 [Low/High] Duplicate property aliases throw in `ToDictionary`
-
-- Where: `Content/Models/Content.cs:164`, `Membership/Models/User.cs:30` · Category: C
-
-### ZA-029 [Low/High] ContentPicker stores single item as string, multiple as JSON
-
-- Where: `ZauberCMS.Components/Editors/ContentPickerProperty.razor:146-148` · Category: C · Blocked by: existing data shapes.
 
 ### ZA-030 [Low/Medium] Logout via top-level GET navigation still possible
 
@@ -204,11 +175,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Where: `ZauberCMS.Core/Jobs/DailyJob.cs:22-52`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:34,44,115`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:56` · Category: A · Since: 2026-11-25
 - Issue / Fix: `BackgroundService` + `PeriodicTimer`; forward `RequestAborted`.
 
-### ZA-112 [Low/High] SortableList drops callback tasks; `DotNetObjectReference` can leak
-
-- Where: `ZauberCMS.Components/Shared/SortableList.razor:73-99` · Category: A · Since: 2026-11-25
-- Issue / Fix: Return the task; try/finally on dispose.
-
 ### ZA-114 [Low/High] Layouts set process-wide culture; sitemap formats with current culture and drops the home page
 
 - Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:81-85`, `ZauberCMS.Components/Pages/BlankLayout.razor:29-33`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:74-77,180-181` · Category: A/C · Since: 2026-11-25
@@ -264,11 +230,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 
 - Where: `ZauberCMS.Components/ContentComponents/RenderCustomContent.razor:23-44` · Category: E · Since: 2026-11-25
 - Issue / Fix: Serialised into the page across the SSR boundary; pass an id or DTO (public interface).
-
-### ZA-127 [Low/Medium] Component lifecycle roll-up
-
-- Where: `ZauberCMS.Components/Editors/GoogleMapsProperty.razor:57-65`, `ZauberCMS.Components/Editors/MultipleMediaUpload.razor:79-89` · Category: E · Since: 2026-11-25
-- Issue / Fix: Work repeated on every parameter set; components assigning their own parameters; unkeyed loops (10 `@key` across 35 `@foreach`, no `Virtualize`).
 
 ### ZA-128 [Low/High] Accessibility roll-up
 
@@ -348,6 +309,26 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 
 ## Fixed this run / Resolved since last run
 
+- **Phase 10c (2026-11-26): property editors and stored values (Roadmap D30, D31).**
+  - **ZA-078 [Medium] Pickers lost the editor's order — fixed.** Front-end helpers and the editors put items back in
+    the stored order (`InPickerOrder`); the editors load every picked item (the default page of 10 dropped the rest,
+    and the next change saved without them) and save after a drag.
+  - **ZA-029 [Low] One item stored as a bare id, several as JSON — fixed (D30).** One JSON array for any count, both
+    shapes read everywhere (`ToPickerIds`, `ToValue<Guid>`, `ToValue<List<Guid>>`, the admin's single-id fields); no
+    data migration.
+  - **ZA-100 [Medium] A second file pick broke the first — fixed.** Files are copied to a server temp file when chosen
+    (`StagedBrowserFile`).
+  - **ZA-015 [Medium] `AddFluentValidation` never unsubscribed; a throwing validator ended the circuit — fixed.**
+    Returns `IDisposable`; handlers catch and log, the form stays invalid; locked scan.
+  - **ZA-027 [Low] Numbers in the current culture — fixed (D31)**, with dates (the long-date text also dropped the
+    time): invariant on write, invariant then current culture on read.
+  - **ZA-028 [Low] Repeated aliases threw — fixed (D31).** Content type save refuses clashes, through compositions
+    too; reads take the first value.
+  - **ZA-112 [Low] `SortableList` dropped callback tasks — fixed.**
+  - **ZA-127 [Low] Component lifecycle roll-up — fixed** for the cited editors and the cases a survey of the admin
+    found (14; 13 fixed, `EditContent`'s reload left on purpose). The worst: editor rows not keyed on the loaded
+    copy, so after a version restore or moving to another user the editors kept the old values and saved them back.
+  - Tests: `Content/PropertyValueTests.cs`, Components `Editors/StagedBrowserFileTests.cs`.
 - **Phase 10b (2026-11-26): save hooks and content data (Roadmap D28, D29).**
   - **ZA-012 [Medium] Hooks saw `Unchanged`; a content type veto could not roll back — fixed.** `SaveChangesAndLog`
     runs the hooks for every row the save writes (change tracker, every entity type, each row's own state) and one
