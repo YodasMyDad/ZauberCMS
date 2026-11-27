@@ -3,6 +3,7 @@
 Last full run: 5668365 (2026-11-25, full) · Last changed run: 773505c (2026-11-27, Roadmap Phase 11, 2f4dc41..773505c) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
 Next free IDs: ZA-199 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+After Roadmap Phase 10f-1 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1205 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · ZA-163 (after-commit hook `IAfterEntityCommit<T>`, D62), ZA-155 (resized copies removed with their image, D63), ZA-193 (a domain's redirects deleted through the change) fixed. Next free ID: ZA-199
 After the Phase 11 audit follow-ups (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1175 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · the owner's answers built: ZA-185 (antiforgery attributes on site controllers, D60) and ZA-198 (`Zauber:Jobs` switches, D61) fixed. Next free ID: ZA-199
 After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1165 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `/audit changed` over the whole phase (three unit reviewers, two independent diff reviewers, two verifiers): nothing Critical or High from Phase 11; ZA-169…ZA-186 found and fixed (7 Medium, 11 Low), ZA-187…ZA-198 recorded (1 Medium, 11 Low, older than Phase 11). Next free ID: ZA-199. Earlier after-phase lines: [history.md](history.md) run log
 
@@ -18,7 +19,7 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 (ZA-187 was High, downgraded to Medium on verification) | 0 |
 | Medium | 1 | 8 | 7 |
-| Low | 14 | 22 | 12 |
+| Low | 11 | 22 | 12 |
 
 Trend (first pattern counts, 2026-11-27, Phase 11 run): sync-over-async 48 · async-void 2 · fire-and-forget 7 ·
 empty-catch 15 · unsanitised-markup 15 · raw-sql 1 · new-httpclient 0 · culture-unsafe-compare 6 (the suppressed EF
@@ -27,7 +28,7 @@ event-unsubscribe 22 · httpcontext-accessor 5 · exception-text 11. Flat agains
 suppressed warnings 35 → 18; every hit on an added line is moved code or a suppression with its reason.
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10f: ZA-155, ZA-163, ZA-187, ZA-189, ZA-190, ZA-193; 10g: ZA-188; 10h: ZA-129; 10i: ZA-128, ZA-194,
+a phase (10f-2: ZA-187, ZA-189, ZA-190; 10g: ZA-188; 10h: ZA-129; 10i: ZA-128, ZA-194,
 ZA-197; 12: ZA-191, ZA-192, ZA-195, ZA-196); there is no Backlog (owner, 2026-11-27). The run's two owner questions
 were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
@@ -54,22 +55,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Where: `ZauberCMS.Components/` (166 razor files) · Category: E · Since: 2026-11-25
 - Issue / Fix: 0 localiser uses, ~370 literal strings; `AdminDefaultLanguage` only affects formatting.
 
-### ZA-155 [Low/High] Resized copies of a deleted image stay in `_mediacache`
-- Where: `ZauberCMS.Core/Media/Services/MediaService.cs` (`PurgeAsync`), ImageResize cache root (`ZauberSetup.cs`, `_mediacache`) · Category: D · Since: 2026-11-26 (Phase 8 audit)
-- Issue / Trigger: a permanent media delete removes the original file, not the resized copies ImageResize made of
-  it. Their names are hashes of path, options and file date, so they are hard to guess, but a "delete it for
-  good" request (GDPR) is not fully met. Documented in `Docs/Services.md`.
-- Fix: remove the cache entries for the file on purge (needs an ImageResize API for it) or prune the cache. ·
-  Blocked by: nothing (Roadmap Phase 10f).
-
-### ZA-163 [Low/High] After-save hooks run before the commit
-- Where: `ZauberCMS.Core/Extensions/DbContextExtensions.cs` (`SaveChangesAndLog`), `MediaService.PurgeAsync` · Category: F · Since: 2026-11-26 (Phase 10b)
-- Issue / Trigger: `IAfterEntitySave<T>` runs once the rows are written, inside the caller's transaction. A change
-  rolled back after that (a media purge whose file can't be removed) was already reported to the hooks as done; a
-  plugin mirroring media elsewhere removes a file that is back. Umbraco raises its "-ed" notifications when the scope
-  completes.
-- Fix: an after-commit point in the hook API. · Blocked by: nothing (Roadmap Phase 10f).
-
 ### ZA-188 [Low/High] A role-restricted page whose view is missing skips the role check
 - Where: `ZauberCMS.Components/Pages/EntryPage.razor` (`OnParametersSetAsync`, the `MissingView` branch) · Category: D · Since: 2026-11-27 (code from Phase 10e) · Roadmap: 10g
 - Issue / Fix: the shipped `MissingView` shows only the page's name, but a site's own gets the whole page. Run the
@@ -92,11 +77,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Where: `ZauberCMS.Core/ZauberSetup.cs` (`AddZauberCms(builder)`) · Category: F · Since: 2026-11-27 (older) · Roadmap: 12
 - Issue / Fix: `Configure<ZauberSettings>` changes `IOptions<ZauberSettings>` but not the copy the bootstrap reads
   for ImageResize, Identity, rate limits and Redis. Document it, or read those from the options.
-
-### ZA-193 [Low/High] Deleting a domain deletes its redirects by cascade, outside the change
-- Where: `ZauberCMS.Core/Content/Services/ContentService.Domains.cs` (`DeleteDomainAsync`) · Category: B/F · Since: 2026-11-27 (older) · Roadmap: 10f
-- Issue / Fix: the `SeoRedirect` cache is not cleared and the save hooks never see the deleted redirects (since 11a
-  such a redirect never fires). Delete them in the change, through `SaveChangesAndLog`.
 
 ### ZA-194 [Low/High] With registration off, the not-found view is shown in the account layout
 - Where: `ZauberCMS.Components/Account/Pages/Register.razor` · Category: E · Since: 2026-11-27 (older; visible since 11a sends the HTML) · Roadmap: 10i
@@ -123,6 +103,9 @@ None recorded yet: lenses G (editor UX) and H (Umbraco alignment) were added to 
 not run. The next `full` run (or `/audit G,H`) fills this section.
 
 ## Fixed this run / Resolved since last run
+
+Since this run: Roadmap Phase 10f-1 (2026-11-27) fixed ZA-155, ZA-163 and ZA-193 (Low); details in
+[history.md](history.md).
 
 This run (Phase 11 changed run, 2026-11-27); details and how each was verified in [history.md](history.md):
 - Medium: ZA-169 nested-domain redirects; ZA-170 domains with a scheme, port or trailing dot; ZA-171 canonical on

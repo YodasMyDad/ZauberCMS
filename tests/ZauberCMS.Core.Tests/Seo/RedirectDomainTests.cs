@@ -319,6 +319,64 @@ public class RedirectDomainTests : IAsyncLifetime
         }
     }
 
+    [Fact]
+    public async Task ZA193_deleting_a_domain_deletes_its_redirects_through_the_hooks_and_clears_their_cache()
+    {
+        var domain = await AddDomainAsync("example.test");
+        var other = await AddDomainAsync("other.test");
+        await SaveAsync(new SeoRedirect { FromUrl = "/old", ToUrl = "/new", DomainId = domain.Id });
+        await SaveAsync(new SeoRedirect { FromUrl = "/older", ToUrl = "/new", DomainId = domain.Id });
+        await SaveAsync(new SeoRedirect { FromUrl = "/kept", ToUrl = "/new", DomainId = other.Id });
+        await SaveAsync(new SeoRedirect { FromUrl = "/everywhere", ToUrl = "/new" });
+        Assert.Equal("/new", await RedirectLocationAsync("example.test", "/old"));
+        var cache = _site.Services.GetRequiredService<ServerCache>();
+        Assert.True(cache.TryGet<object>(RedirectMiddleware.CacheKey, out _));
+        using var recorder = SaveHookRecorder.Start();
+
+        using (var scope = _site.CreateScope())
+        {
+            var deleted = await scope.ServiceProvider.GetRequiredService<IContentService>()
+                .DeleteDomainAsync(new DeleteDomainParameters { Id = domain.Id }, Ct);
+            Assert.True(deleted.Success, TestSite.Describe(deleted.Messages));
+        }
+
+        var left = await _site.QueryDatabaseAsync(db => db.Redirects.AsNoTracking().Select(r => r.FromUrl).ToListAsync(Ct));
+        Assert.Equal(["/everywhere", "/kept"], left.Order());
+        foreach (var rows in new[]
+                 {
+                     recorder.Before<SeoRedirect>(EntityState.Deleted), recorder.After<SeoRedirect>(EntityState.Deleted),
+                     recorder.Committed<SeoRedirect>(EntityState.Deleted)
+                 })
+        {
+            Assert.Equal(["/old", "/older"], rows.Select(r => r.FromUrl).Order());
+        }
+
+        Assert.Equal(domain.Id, Assert.Single(recorder.Committed<Domain>(EntityState.Deleted)).Id);
+        Assert.False(cache.TryGet<object>(RedirectMiddleware.CacheKey, out _));
+        Assert.Null(await RedirectLocationAsync("example.test", "/old"));
+        Assert.Equal("/new", await RedirectLocationAsync("example.test", "/everywhere"));
+    }
+
+    [Fact]
+    public async Task ZA193_a_veto_on_one_of_its_redirects_keeps_the_domain_and_every_redirect()
+    {
+        var domain = await AddDomainAsync("example.test");
+        await SaveAsync(new SeoRedirect { FromUrl = "/old", ToUrl = "/new", DomainId = domain.Id });
+        using var recorder = SaveHookRecorder.Start();
+        recorder.Veto = (row, state) => row is SeoRedirect && state == EntityState.Deleted;
+
+        using (var scope = _site.CreateScope())
+        {
+            var deleted = await scope.ServiceProvider.GetRequiredService<IContentService>()
+                .DeleteDomainAsync(new DeleteDomainParameters { Id = domain.Id }, Ct);
+            Assert.False(deleted.Success);
+        }
+
+        Assert.True(await _site.QueryDatabaseAsync(db => db.Domains.AnyAsync(d => d.Id == domain.Id, Ct)));
+        Assert.True(await _site.QueryDatabaseAsync(db => db.Redirects.AnyAsync(r => r.DomainId == domain.Id, Ct)));
+        Assert.Equal(0, recorder.CommittedCount);
+    }
+
     private async Task<EntryModel> GetRootAsync(string url)
     {
         using var scope = _site.CreateScope();

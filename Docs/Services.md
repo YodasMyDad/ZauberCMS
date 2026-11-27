@@ -148,8 +148,9 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
    saves every pending change on the context once, with the save hooks (Roadmap D28): `IBeforeEntitySave<T>` for
    every row the save writes, of every entity type (from the change tracker), each with its own state (added,
    modified, deleted) → one `SaveChanges` → the cache prefix of `T` and of every type written cleared →
-   `IAfterEntitySave<T>` for the same rows (any `true` saves once more, without hooks). The named entity's hooks run
-   first, even when it has no changes. **One `false` from a before-save hook and nothing is written**: a move,
+   `IAfterEntitySave<T>` for the same rows (any `true` saves once more, without hooks) → `IAfterEntityCommit<T>` for
+   the same rows once the change is committed (D62, step 8). The named entity's hooks run first, even when it has no
+   changes. **One `false` from a before-save hook and nothing is written**: a move,
    recycle, restore, delete or emptied bin is one change. A concurrency conflict comes back as a user-readable
    error; other exceptions as `Success = false`.
 5. Stage everything first, save once. Don't call `SaveChangesAsync` before it (an audit row saved early wrote the
@@ -161,8 +162,19 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
    a second save an after-save hook asks for, or two saves that must be in order (a version's old flag, then the new
    one), commit together. The `SaveChangesAndLog(entities, resultEntity, …)` overload names several entities.
 7. Content saves set the original `DateUpdated` (optimistic concurrency).
-8. After-save hooks run inside the caller's transaction, before the commit: a change rolled back after them (a
-   media file that can't be removed) has been reported to them already (ZA-163). Bulk maintenance that runs straight
+8. Two after-hooks, as Umbraco has its "-ed" notifications after the scope completes (Roadmap D62):
+   `IAfterEntitySave<T>` runs inside the caller's transaction, before the commit, and may ask for the second save;
+   the change can still roll back after it (a media file that can't be removed, a later step that fails).
+   `IAfterEntityCommit<T>` (`AfterCommitAsync`, async) runs only once the change is stored: right after the save
+   when no transaction is open (after the second save too, and even if that one fails, since the first is stored),
+   or when the caller's transaction (`Database.BeginTransaction`) commits; a rollback, a failed commit or a
+   transaction disposed without a commit drops its calls. Use it for work outside the database (mirroring files,
+   another system, an index, mail). It gets every row the change wrote, in the order saved, each with the state it
+   was saved in; it cannot veto, and an exception it throws is logged (`Log.Error`, the hook's type) while the other
+   hooks still run and the caller's result stays a success. The commit is seen by an EF Core transaction
+   interceptor (`AfterCommitHooks`) that the three ZauberCMS DbContexts add in `OnConfiguring`; a site's own
+   `IZauberDbContext` without it runs the hooks at the save instead, with one warning. An ambient
+   `TransactionScope` is not seen: inside one the hooks run at the save. Bulk maintenance that runs straight
    against the database has no hooks: audit and version retention, orphan clean-up.
 
 ## Deletes
@@ -194,15 +206,23 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   is served to anyone. A file another media row still points at is kept. `EmptyMediaRecycleBinAsync` does the same
   for the whole bin and keeps a binned folder that still holds live media. `IBeforeEntitySave<Media>` /
   `IAfterEntitySave<Media>` run for every item binned, restored or deleted, the items below the named one and an
-  emptied bin's included; a veto on any of them stops the whole call (D28). `GetMediaUsageAsync` finds the content and members whose property values contain the media's id
+  emptied bin's included; a veto on any of them stops the whole call (D28). `IAfterEntityCommit<Media>` hears of a
+  permanent delete only when its files are gone and the rows are committed (D62). `GetMediaUsageAsync` finds the content and members whose property values contain the media's id
   (pickers, and the `media/{id}/` folder of a disk file) or URL: a scan of every property value, for a delete
   confirmation, never for a hot path; drafts are not searched.
   Recycled media is not served: `RestrictedMediaMiddleware` answers 404 to anyone but an administrator, unless a live
   public item has the same file, and marks every restricted or binned file it lets through `Cache-Control: private,
   no-store`. That covers files served by the site (`media/…`); a storage provider that serves files from its own
   address (a CDN, a bucket) has to keep binned files private itself, and a CDN in front of the site keeps the copies
-  it took while the file was public until it is purged. Resized copies in `_mediacache` are not removed by a delete.
-  The default `DiskStorageProvider` also removes the empty `media/{id}/` folder.
+  it took while the file was public until it is purged. The default `DiskStorageProvider` also removes the empty
+  `media/{id}/` folder, and the image's resized copies (D63): ZauberCMS gives ImageResize's resizer a cache
+  (`ResizedImageCache`) that keeps each image's copies in a folder named by a hash of its path
+  (`{CacheRoot}/{shards}/{hash}/…`), so `DeleteFile` removes that folder; writing a file over one of the same name
+  removes the old copies too. Binning keeps them (a restore brings the image back; a binned file is not served). Only
+  the copies on the server that deletes are removed: a web farm with a cache per server keeps the others' (they are
+  never served again through a resize URL, since the original is gone), as does a site that replaced
+  `IImageResizerService`. A storage provider of a site's own removes whatever it derived from a file in its
+  `DeleteFile`.
 - Content URLs: one per page (not blocks; blocks have none). A typed URL another live page has is refused; a
   generated, copied or restored one gets a suffix. Stored form and request slugs go through `ContentUrl.Normalize`
   (lower case, no slashes around); links on the site use `ContentUrl.SiteRelative` (`/blog`).
@@ -251,7 +271,9 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   for the request's domain wins, and exact rules are still tried before regular expressions. The From URL is the
   whole path, also for a domain with a path (`example.com/fr` → From URL `/fr/old`). The loop check follows the chain
   per host as requests would, working out the domain at each step (`RedirectRules.FindLoop` with the site's domains).
-  Deleting a domain deletes its redirects.
+  Deleting a domain deletes its redirects in the same change, as tracked deletes with an audit row each, so the
+  save hooks see them, one veto keeps the domain and all of them, and the `SeoRedirect` cache is cleared (ZA-193;
+  the database cascade is only a backstop).
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, queries) or `OnlyDeleted = true` (`QueryContentParameters`, bin only).
   That includes the admin editor that opens an item from the bin (`EditContent`, `ContentEditor`).

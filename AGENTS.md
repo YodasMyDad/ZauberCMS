@@ -97,11 +97,12 @@ don't reorder without a reason written in the commit.
 4. **Soft delete is partial.** Only `Content`, `Media`, `User` have `Deleted`. There are **no global query filters** —
    every query on those three must filter `!x.Deleted` (or pass `IncludeDeleted` for recycle-bin paths). Everything
    else is hard-deleted; recycle-bin purge is a hard delete. Content and Media recycle, restore and purge act on the
-   whole subtree; a media purge also removes the files, and recycled media is not served
+   whole subtree; a media purge also removes the files and their resized copies, and recycled media is not served
    (→ [Docs/Services.md](Docs/Services.md) "Deletes").
 5. **Writes go through `SaveChangesAndLog`**: stage the whole change (audit row included), then call it once. It runs
    the `IBeforeEntitySave<T>`/`IAfterEntitySave<T>` hooks for every row the save writes, of every type, and one veto
-   stops the whole change (Roadmap D28); it clears the cache prefix of each type written. Never `SaveChangesAsync`
+   stops the whole change (Roadmap D28); `IAfterEntityCommit<T>` runs once it is committed (D62); it clears the cache
+   prefix of each type written. Never `SaveChangesAsync`
    before it: the hooks would see those rows `Unchanged`. Clear related prefixes yourself.
    → [Docs/Services.md](Docs/Services.md)
 6. **No MediatR / CQRS libraries.** Services are `IXService` + parameter class + `HandlerResult<T>`.
@@ -128,6 +129,7 @@ don't reorder without a reason written in the commit.
 | `IValidate<T>`, FluentValidation `IValidator<T>` | Admin-side validation |
 | `ITagReferenceProvider` | Which tags an editor's value holds (by editor alias), so the page save writes the tag links |
 | `IBeforeEntitySave<T>`, `IAfterEntitySave<T>` | Save hooks, per row written (before can veto the whole change) |
+| `IAfterEntityCommit<T>` | After-commit hook, per row written: runs once the change is committed, never for one rolled back (D62) |
 
 `IContentProperty` and `ISectionNavGroupAction` take Radzen / modal types, so they live in ZauberCMS.Components under
 their `ZauberCMS.Core.*` namespaces (D51); a new contract that needs a UI type goes there too, never in Core.

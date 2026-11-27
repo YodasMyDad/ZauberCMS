@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10f-1 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1205 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-155, ZA-163, ZA-193 fixed (D62, D63). Next free ID: ZA-199
 After the Phase 11 audit follow-ups (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1175 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review. ZA-185 (behaviour, D60) and ZA-198 (D61) fixed. Next free ID: ZA-199
 After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1165 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `/audit changed` over 2f4dc41..773505c (deterministic checks; unit reviewers for the front-end path, bootstrap and the public surface; two independent diff reviewers given only the code; two verifiers). Nothing Critical or High from Phase 11. ZA-169…ZA-186 found and fixed (7 Medium, 11 Low); ZA-187…ZA-198 recorded (1 Medium, 11 Low, all older than Phase 11) and assigned to 10f, 10g, 10i and 12; owner questions ZA-185, ZA-198
 After Roadmap Phase 11g (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1122 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-125, ZA-126 fixed; content finders added at the owner's request (D55). Phase 11 done. Next free ID: ZA-169
@@ -35,6 +36,24 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 10f-1 (2026-11-27, hooks and deletes).** Release notes in the Roadmap's "Phase 10f-1". Each test
+  was seen failing with its fix reverted (controls pass both ways). Full suite 1205 (all pass, none skipped) on
+  SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings; template smoke test passes; checked on
+  the dev site (a resized image's copy written to its image's cache folder).
+  - **ZA-163 (Low) — fixed (D62).** New discovered `IAfterEntityCommit<T>`: `SaveChangesAndLog` runs it right after
+    the save when no transaction is open, otherwise the `AfterCommitHooks` transaction interceptor (added by the three
+    DbContexts) runs it when the caller's transaction commits and drops it on a rollback, failed commit or dispose.
+    A throwing hook is logged and the others run. `IAfterEntitySave<T>` unchanged. Tests:
+    `Shared/AfterCommitHookTests` ×8 on three databases (a media purge whose file can't be removed is rolled back and
+    never reaches the hook; the deferral reverted made four fail).
+  - **ZA-155 (Low) — fixed (D63).** The resizer's cache is wrapped (`ResizedImageCache`) so each image's copies sit in
+    a folder named by a hash of its path; `DiskStorageProvider.DeleteFile` removes it, `SaveFile` over the same name
+    removes the old copies. Tests: `Media/ResizedCopiesTests` ×4 through ImageResize's real resizer (with the removal
+    reverted the purge and overwrite cases fail).
+  - **ZA-193 (Low) — fixed.** `DeleteDomainAsync` deletes the domain's redirects as tracked rows in the same change
+    (audit row each), so the hooks see them, a veto keeps everything, and the `SeoRedirect` cache is cleared. Tests:
+    `Seo/RedirectDomainTests` ZA193 ×2 (both fail with the database cascade left to do it).
 
 - **Phase 11 audit follow-ups (2026-11-27, the owner's answers to the audit's two questions).** Release notes in the
   Roadmap's "Phase 11 audit follow-ups". Each test was seen failing with its fix reverted. Full suite 1175 (all

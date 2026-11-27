@@ -25,6 +25,8 @@ public class SqliteZauberDbContext(
         #endif
         options
             .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
+        // Runs the IAfterEntityCommit hooks of a save inside a transaction when it commits (D62)
+        options.AddInterceptors(AfterCommitHooks.Interceptor);
 
     }
 }

@@ -605,6 +605,7 @@ ZauberCMS.Core: ZauberCMS.Core.Settings.ZauberSettings
 ZauberCMS.Core: ZauberCMS.Core.Shared.AppState
 ZauberCMS.Core: ZauberCMS.Core.Shared.Comparers.ITreeEqualityComparer`1
 ZauberCMS.Core: ZauberCMS.Core.Shared.Dictionary`3
+ZauberCMS.Core: ZauberCMS.Core.Shared.Interfaces.IAfterEntityCommit`1
 ZauberCMS.Core: ZauberCMS.Core.Shared.Interfaces.IAfterEntitySave`1
 ZauberCMS.Core: ZauberCMS.Core.Shared.Interfaces.IBaseItem
 ZauberCMS.Core: ZauberCMS.Core.Shared.Interfaces.IBeforeEntitySave`1

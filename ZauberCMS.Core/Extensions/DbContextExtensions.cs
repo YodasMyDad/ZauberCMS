@@ -144,7 +144,9 @@ public static class DbContextExtensions
     /// <summary>
     /// Saves every pending change in one <c>SaveChanges</c> and runs the save hooks (Roadmap D28): the
     /// <see cref="IBeforeEntitySave{T}"/> hooks of every row the save writes, of any entity type, each with its own
-    /// state (added, modified, deleted), then the save, then the <see cref="IAfterEntitySave{T}"/> hooks. Any
+    /// state (added, modified, deleted), then the save, then the <see cref="IAfterEntitySave{T}"/> hooks, and the
+    /// <see cref="IAfterEntityCommit{T}"/> hooks once the change is committed: at once without a transaction, at the
+    /// commit of the caller's transaction, never when it rolls back (D62). Any
     /// before-save hook abandons the whole save, so nothing is written. <paramref name="entity"/> is the item the
     /// save is about: its hooks run even when it has no changes. Clears the cache prefix of <typeparamref name="T"/>
     /// and of each type written. A concurrency conflict comes back as a failed result with a message for the user.
@@ -159,7 +161,8 @@ public static class DbContextExtensions
     /// Saves every pending change in one <c>SaveChanges</c> and runs the save hooks for every row it writes, as the
     /// single-entity overload does; the hooks of <paramref name="entities"/> run first, and even when they have no
     /// changes. Any before-save hook abandons the whole save. Use it inside a transaction when the after-save hooks
-    /// may save again. A concurrency conflict comes back as a failed result with a message for the user.
+    /// may save again; the after-commit hooks then run when that transaction commits. A concurrency conflict comes
+    /// back as a failed result with a message for the user.
     /// </summary>
     /// <param name="entities">The entities the save is about.</param>
     /// <param name="resultEntity">Set as the result's entity on success.</param>
@@ -173,6 +176,9 @@ public static class DbContextExtensions
         IReadOnlyList<object> named, T? resultEntity, HandlerResult<T> crudResult, ICacheService cacheService,
         ExtensionManager extensionManager, CancellationToken cancellationToken)
     {
+        // The after-commit calls of a save that SaveChanges committed itself (no transaction open): they run even
+        // when an after-save hook's second save then fails, since the first is stored
+        List<AfterCommitHooks.Call>? committed = null;
         try
         {
             var rows = RowsToSave(context, named);
@@ -200,6 +206,21 @@ public static class DbContextExtensions
                 crudResult.Entity = resultEntity;
             }
 
+            // Built now, while the states are the ones saved (D62)
+            var afterCommit = new List<AfterCommitHooks.Call>();
+            foreach (var (row, type, state) in rows)
+            {
+                foreach (var hook in HooksFor(type, extensionManager, hooks).Committed)
+                {
+                    afterCommit.Add(new AfterCommitHooks.Call(hook.Name, ct => hook.Run(row, state, ct)));
+                }
+            }
+
+            if (context.Database.CurrentTransaction == null)
+            {
+                committed = afterCommit;
+            }
+
             var shouldReSave = false;
             foreach (var (row, type, state) in rows)
             {
@@ -215,6 +236,12 @@ public static class DbContextExtensions
                 await context.SaveChangesAsync(cancellationToken);
                 ClearPrefixes(cacheService, written);
             }
+
+            if (committed == null)
+            {
+                // Inside the caller's transaction: they run when it commits, and never when it rolls back
+                await AfterCommitHooks.RunOrDeferAsync(context as DbContext, afterCommit, cancellationToken);
+            }
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -229,6 +256,11 @@ public static class DbContextExtensions
             crudResult.Success = false;
             crudResult.AddMessage($"{ex.Message} - {ex.InnerException?.Message}", ResultMessageType.Error);
             Log.Error(ex, $"{typeof(T).Name} not saved using SaveChangesAsync");
+        }
+
+        if (committed != null)
+        {
+            await AfterCommitHooks.RunOrDeferAsync(null, committed, cancellationToken);
         }
 
         return crudResult;
@@ -315,7 +347,10 @@ public static class DbContextExtensions
 
     private sealed record SaveHook(string Name, Func<object, EntityState, bool> Run);
 
-    private sealed record SaveHooks(IReadOnlyList<SaveHook> Before, IReadOnlyList<SaveHook> After);
+    private sealed record CommitHook(string Name, Func<object, EntityState, CancellationToken, Task> Run);
+
+    private sealed record SaveHooks(IReadOnlyList<SaveHook> Before, IReadOnlyList<SaveHook> After,
+        IReadOnlyList<CommitHook> Committed);
 
     private static readonly ConcurrentDictionary<Type, Func<ExtensionManager, SaveHooks>> HookFactories = new();
 
@@ -341,6 +376,10 @@ public static class DbContextExtensions
         extensionManager.GetInstances<IAfterEntitySave<TEntity>>(true).Values.OrderBy(x => x.SortOrder)
             .Select(h => new SaveHook(h.GetType().FullName ?? h.GetType().Name,
                 (row, state) => h.AfterSave((TEntity)row, state)))
+            .ToList(),
+        extensionManager.GetInstances<IAfterEntityCommit<TEntity>>(true).Values.OrderBy(x => x.SortOrder)
+            .Select(h => new CommitHook(h.GetType().FullName ?? h.GetType().Name,
+                (row, state, ct) => h.AfterCommitAsync((TEntity)row, state, ct)))
             .ToList());
 
     /// <summary>

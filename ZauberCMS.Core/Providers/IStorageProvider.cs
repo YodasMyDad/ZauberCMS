@@ -15,7 +15,8 @@ public interface IStorageProvider
     public Task<HandlerResult<Media.Models.Media>> SaveFile(IBrowserFile browserFile, Media.Models.Media? existingMedia = null, string? parentFolderName = null, bool overwrite = true);
     
     /// <summary>
-    /// Deletes the file
+    /// Deletes the file and what the provider made from it (the disk provider removes the image's resized copies,
+    /// Roadmap D63). A permanent media delete calls it before the commit; an exception rolls the delete back.
     /// </summary>
     /// <param name="url"></param>
     public Task<bool> DeleteFile(string? url);

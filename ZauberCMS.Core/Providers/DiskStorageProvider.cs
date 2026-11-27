@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using ImageResize.Core.Configuration;
 using ImageResize.Core.Extensions;
 using ImageResize.Core.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
@@ -20,11 +21,24 @@ public class DiskStorageProvider(
     IDataService dataService,
     IOptions<ZauberSettings> settings,
     IImageResizerService imageResizerService,
-    ILogger<DiskStorageProvider>? logger = null)
+    ILogger<DiskStorageProvider>? logger = null,
+    IOptions<ImageResizeOptions>? imageResizeOptions = null)
     : IStorageProvider
 {
     private readonly ZauberSettings _settings = settings.Value;
     private readonly ILogger _logger = logger ?? NullLogger<DiskStorageProvider>.Instance;
+
+    /// <summary>
+    /// Removes the resized copies ImageResize made of the file at <paramref name="url"/> (D63, ZA-155): they are the
+    /// image too, and a file removed for good must not live on in the cache.
+    /// </summary>
+    private void RemoveResizedCopies(string url)
+    {
+        if (imageResizeOptions != null)
+        {
+            ResizedImageCache.RemoveCopies(imageResizeOptions.Value, url, _logger);
+        }
+    }
 
     /// <inheritdoc />
     public async Task<HandlerResult<Media.Models.Media>> CanUseFile(IBrowserFile file, bool onlyImages = false)
@@ -118,10 +132,12 @@ public class DiskStorageProvider(
             if (File.Exists(fullFilePath))
             {
                 File.Delete(fullFilePath);
+                RemoveResizedCopies(url!);
                 RemoveEmptyUploadFolder(Path.GetDirectoryName(fullFilePath));
                 return true;
             }
 
+            RemoveResizedCopies(url!);
             return false;
         });
     }
@@ -221,6 +237,8 @@ public class DiskStorageProvider(
                 }
 
                 media.Url = Path.Combine(relativePath, sanitizedFileName).Replace("\\", "/");
+                // A file written over another of the same name: the old image's copies go with it
+                RemoveResizedCopies(media.Url);
                 media.FileSize = file.Size;
                 media.MediaType = file.Name.ToFileType();
                 result.Entity = media;

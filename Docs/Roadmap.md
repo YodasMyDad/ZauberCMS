@@ -30,9 +30,11 @@
   **and audited** (`/audit changed`, 2026-11-27: ZA-169…ZA-186 fixed, ZA-187…ZA-198 recorded; see "Phase 11 audit").
   **Phase 11 audit follow-ups done** (the owner's answers: antiforgery attributes on site controllers, D60, ZA-185;
   `Zauber:Jobs` switches, D61, ZA-198; 2026-11-27).
-  **15 open findings** (0 Critical, 0 High, 1 Medium, 14 Low), each one assigned below to a phase (10f, 10g, 10i,
-  12), plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
-  new finding goes into the phase whose theme fits. **Next: Phase 10f**, then 10g,
+  **Phase 10f-1 done** (after-commit hook `IAfterEntityCommit<T>`, D62, ZA-163; resized copies removed with their
+  image, D63, ZA-155; a domain's redirects deleted through the change, ZA-193; 2026-11-27).
+  **12 open findings** (0 Critical, 0 High, 1 Medium, 11 Low), each one assigned below to a phase (10f-2, 10g, 10h,
+  10i, 12), plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase,
+  and a new finding goes into the phase whose theme fits. **Next: Phase 10f-2** (ZA-187, ZA-189, ZA-190), then 10g,
   10h, 10i, then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner
   delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
@@ -104,6 +106,8 @@
 | D59 | **Services keep a scope per operation for their DbContext; `IDbContextFactory<T>` is not adopted, and the pattern is no longer listed as a deviation.** The scope's `IZauberDbContext` is the context of the provider the site uses now, picked when the scope first asks (`ZauberSetup.ActiveContextType`): the installer writes the database settings and the next scope uses them without a restart, and a site with no database (D24) starts without one. `IDbContextFactory<T>` is typed to one context class fixed at registration, so it would need a factory of ZauberCMS's own that picks the provider, which is what the scope does. Identity's stores (`UserManager`, `RoleManager`) resolved from the same scope share its context, so one transaction covers a user and its content (ZA-011); contexts made by a factory would not be shared. Umbraco works the same way: a unit of work is a scope (`ICoreScopeProvider.CreateCoreScope()`) that owns the database connection, and services do not hold a context. Standards.md §3 states it as the pattern; the deviation row is gone. (owner delegated, 2026-11-27, Phase 11g) | Standards.md, ZA-011, D24 |
 | D60 | **MVC's view features are registered for controllers, without a Razor view engine** (owner, 2026-11-27: "Register them"). `AddZauberCms` calls `AddMvcCore().AddViews()` after `AddControllers()`, so `[ValidateAntiForgeryToken]`, `[AutoValidateAntiforgeryToken]` and `[IgnoreAntiforgeryToken]` on a site's or plugin's controller work as in 4.x (since 11e they answered 500: their filters are view services); TempData, view components and HTML helpers come with them. The Razor view engine, tag helpers and the removed MVC rendering path (D52) stay out; a site with `.cshtml` views calls `AddControllersWithViews()`. `AuthController` keeps its own `IAntiforgery` check. Umbraco registers full MVC with views; ZauberCMS renders through Blazor, so it adds only what controllers need. | ZA-185 |
 | D61 | **Each background job has an on/off switch under `Zauber:Jobs`, on by default** (owner, 2026-11-27: "Zauber:Jobs setting"). `Zauber:Jobs:DailyCleanup` (the daily job: audit rows, orphaned related-content links, page versions) and `Zauber:Jobs:SitemapGenerator` (the sitemap files); those are the only hosted jobs (the Redis cache-clear listener is plumbing every server needs, and the admin culture handler is a circuit handler, not a job). The job reads the switch from `IOptions<ZauberSettings>` when it starts (so code-set options work too) and, when off, logs one line and returns; it is still registered and stays internal. A web farm keeps `DailyCleanup` on one server; `SitemapGenerator` stays on wherever the sitemap file is served. Umbraco runs scheduled work only on its "scheduling publisher" server (server role, detected or set in config); ZauberCMS has no server roles, so the switch is per job and set by config. A new hosted job gets its own switch (a test lists them). | ZA-198 |
+| D62 | **Work that must only follow a stored change runs in a new after-commit hook, `IAfterEntityCommit<T>`; `IAfterEntitySave<T>` keeps running inside the transaction.** `IAfterEntityCommit<T>` (`ZauberCMS.Core.Shared.Interfaces`, discovered like the other save hooks, constructor DI, `SortOrder`) has `Task AfterCommitAsync(entity, state, cancellationToken)` and gets every row the change wrote, each with the state it was saved in. It runs right after the save when no transaction is open, and when the caller's EF transaction commits otherwise; a rollback, a failed commit or a transaction disposed without a commit drops it. The commit is seen by an EF Core transaction interceptor the three ZauberCMS DbContexts add (a site's own context without it gets the hooks at the save, with a warning; an ambient `TransactionScope` is not seen). It cannot veto; an exception is logged and the other hooks still run, since the change is stored. Umbraco does the same: its "-ed" notifications (`ContentSavedNotification`, `MediaDeletedNotification`) are raised when the scope completes, and its file deletes run there. Why a new interface and not a changed one: `IAfterEntitySave<T>`'s contract (inside the transaction, can ask for a second save) is relied on by sites, and the two moments are both real needs (write more in the change / act once it is stored); a flag on the old interface would be a breaking change for every implementation. Async, because after-commit work is I/O. (owner delegated to Umbraco parity, Phase 10f-1) | ZA-163 |
+| D63 | **The resized copies of an image are kept in a folder per image, and a permanent delete removes them.** ImageResize names a copy by a hash of the image's path, the size and the original's date and length, which can't be traced back, and offers no way to remove one image's copies; it does let the cache be replaced. ZauberCMS gives the resizer (`IImageResizerService`) a cache (`ResizedImageCache`, internal) that wraps the registered `IImageCache` and puts each copy in `{CacheRoot}/{shards}/{hash of the image's path}/`; reading, writing, the size limit and the start-up prune stay ImageResize's (the registered `IImageCache` is unchanged, so its prune still runs). `DiskStorageProvider.DeleteFile` removes that folder after the file, and `SaveFile` over a file of the same name removes the old copies. Rejected: clearing the whole cache on every purge (every image on the site would be resized again after each emptied bin), and changing the ImageResize package (another product's release). Umbraco keeps its ImageSharp cache outside the web root and leaves crops of deleted media until `CacheMaxAge` (a year); a delete for good (GDPR) asks for more, so ZauberCMS removes them. Copies on other servers of a web farm with a cache per server stay (they are never served through a resize URL again, the original being gone). (owner delegated, Phase 10f-1) | ZA-155 |
 
 ## Working rules for the rework
 
@@ -1019,7 +1023,8 @@ domain is ignored).
     old data) the first in tree order is served.
 
 ### Phase 10f — Hooks after the commit, resized copies of deleted images
-ZA-163, ZA-155 (Low). Both were in the Backlog, which the owner removed (2026-11-27).
+ZA-163, ZA-155 (Low). Both were in the Backlog, which the owner removed (2026-11-27). Two parts: 10f-1 (hooks and
+deletes: ZA-163, ZA-155, ZA-193, done below) and 10f-2 (front-end cache and domains: ZA-187, ZA-189, ZA-190).
 - **ZA-163:** `IAfterEntitySave<T>` runs inside the change's transaction, before the commit, so a change rolled back
   after it (a media purge whose file can't be removed) was already reported as done. Umbraco raises its "-ed"
   notifications when the scope completes. Add the after-commit point the Umbraco way, keep `IAfterEntitySave<T>`'s
@@ -1036,6 +1041,60 @@ ZA-163, ZA-155 (Low). Both were in the Backlog, which the owner removed (2026-11
   - **ZA-189:** `RedirectMiddleware` compiles only the newest 5000 redirects and ignores older ones silently.
   - **ZA-190:** domains are matched against the path with `PathBase` in a circuit and `EntryPage`, without it in the
     middlewares; a site under a path base gets different domains on the two sides.
+
+#### Phase 10f-1 — Hooks after the commit, resized copies, domain deletes — DONE (2026-11-27)
+ZA-163, ZA-155, ZA-193 (Low) fixed. Decisions D62 and D63 (delegated, Umbraco's way). ZA-187, ZA-189 and ZA-190 are
+part 10f-2.
+- **After-commit hook (ZA-163, D62).** New discovered `IAfterEntityCommit<T>` (`ZauberCMS.Core.Shared.Interfaces`,
+  `AfterCommitAsync(entity, state, cancellationToken)`, `SortOrder`), listed in `ExtensionManager.DiscoveryInterfaces`
+  and AGENTS.md. `SaveChangesAndLog` builds its calls after the save, for every row the change wrote, with the state
+  saved; with no transaction open it runs them after the after-save hooks (and their second save, even if that one
+  fails), otherwise it leaves them with `AfterCommitHooks`, an EF Core `DbTransactionInterceptor` the three DbContexts
+  add in `OnConfiguring`: it runs them when that transaction commits (a synchronous `Commit()` too) and drops them on
+  a rollback, a failed commit, or a transaction disposed without either. A hook that throws is logged; the others run
+  and the result stays a success. `IAfterEntitySave<T>` is unchanged (inside the transaction, can ask for a second
+  save); its documentation now says so and points at the new hook. A site's own `IZauberDbContext` without the
+  interceptor gets the hooks at the save, with one warning.
+- **Resized copies (ZA-155, D63).** `ResizedImageCache` (internal) wraps the registered `IImageCache` for the resizer
+  only (`IImageResizerService` is registered again around it in `AddZauberCms`), so each image's copies sit in
+  `{CacheRoot}/{shards}/{hash of its path}/`; ImageResize's own `IImageCache` stays registered, so its start-up prune
+  and size limit work as before. `DiskStorageProvider.DeleteFile` removes the image's folder after the file (also when
+  the file was already gone), and `SaveFile` over a file of the same name removes the old copies;
+  `DiskStorageProvider` takes an optional `IOptions<ImageResizeOptions>` as its last constructor parameter.
+- **Domain deletes (ZA-193).** `DeleteDomainAsync` loads the domain's redirects tracked and deletes them in the same
+  change, with an audit row each, so the save hooks (before, after, after-commit) see them, one veto keeps the domain
+  and every redirect, and the `SeoRedirect` cache (the compiled redirects) is cleared.
+- Tests (30 new cases): `Shared/AfterCommitHookTests` (8, on all three databases: a save without a transaction; two
+  saves in one transaction wait for the commit; a rollback and a disposed transaction report nothing and a later save
+  only itself; a synchronous commit; a media purge whose file can't be removed (a test storage provider whose delete
+  throws, as a locked file does on Windows) rolled back and unreported while the after-save hooks saw it; a purge that
+  commits reports every row; a throwing hook; discovery), `Seo/RedirectDomainTests` ZA193 ×2 (the redirects deleted
+  through the hooks and the cache cleared, another domain's and the global one kept; a veto on a redirect keeps
+  everything), `Media/ResizedCopiesTests` (4, through ImageResize's real resizer: copies in the image's folder, the
+  registered `IImageCache` still ImageResize's; a purge removes the image's copies and not another's, binning keeps
+  them; a file written over one of the same name; nothing to remove). Each was seen failing with its fix reverted
+  (the controls pass both ways). `SaveHookRecorder` records the after-commit hook. `IAfterEntityCommit`1` added to the
+  public types snapshot. Full suite 1205 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
+  Redis; Release build 0 warnings; the template smoke test passes (Windows PowerShell 5.1). Dev site
+  (`ZauberCMS.Web`, Release, Production): `/` 200, a `/media` image with
+  `?width=40` resized (1878 of 610998 bytes) and its copy written to `_mediacache/f3/fc/ae60…/` (the hash of its
+  path), the original 200.
+- **Not verified:** a permanent delete from the admin in a browser (the dev site has no administrator account; the
+  service path is covered by the tests with the real resizer); a web farm; a site's own DbContext without the
+  interceptor (the fallback is a code path with a warning, no test).
+- **Release notes (D18):**
+  - New: `IAfterEntityCommit<T>`, a save hook that runs once the change is committed and never for one rolled back
+    (Docs/Services.md "Write path"). Move work outside the database (mirroring files, notifying another system,
+    indexing, mail) from `IAfterEntitySave<T>` to it; `IAfterEntitySave<T>` behaves as before.
+  - A permanent media delete removes the image's resized copies from the image cache, and a file written over one of
+    the same name removes the old copies. The cache is laid out per image from this version: copies made before the
+    upgrade are not removed by a delete and are not used any more; delete the cache folder (`_mediacache` by
+    default) once after upgrading to reclaim the space.
+  - Deleting a domain runs the save hooks for its redirects, writes an audit row for each, and a veto on one keeps
+    the domain; the redirects stop applying at once (before, the compiled redirects stayed cached).
+  - `DiskStorageProvider` has a new optional constructor parameter (`IOptions<ImageResizeOptions>`, last); a subclass
+    compiles unchanged, and without it the copies are not removed.
+  - Breaking: none.
 
 ### Phase 10g — Back-office roles: section access per role (D38)
 The feature the owner chose (2026-11-27); it replaces the Backlog row "Back-office roles other than Admin".

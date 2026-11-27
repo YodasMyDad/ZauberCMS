@@ -278,6 +278,7 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         "ZauberCMS.Core.Tags.Interfaces.ITagReferenceProvider",
         "ZauberCMS.Core.Shared.Interfaces.IBeforeEntitySave`1",
         "ZauberCMS.Core.Shared.Interfaces.IAfterEntitySave`1",
+        "ZauberCMS.Core.Shared.Interfaces.IAfterEntityCommit`1",
         "FluentValidation.IValidator`1"
     };
 

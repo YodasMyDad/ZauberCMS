@@ -1,6 +1,9 @@
 using System.Reflection;
 using System.Threading.RateLimiting;
+using ImageResize.Core.Configuration;
 using ImageResize.Core.Extensions;
+using ImageResize.Core.Interfaces;
+using ImageResize.Core.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Components;
@@ -32,6 +35,7 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Services;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Services;
+using ZauberCMS.Core.Media;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Services;
 using ZauberCMS.Core.Languages.Interfaces;
@@ -112,6 +116,13 @@ public static class ZauberSetup
             o.ResponseCache.SendETag = zauberSettings.ImageResize.ResponseCache.SendETag;
             o.ResponseCache.SendLastModified = zauberSettings.ImageResize.ResponseCache.SendLastModified;
         });
+        // The resizer keeps each image's copies in a folder of their own, so a permanent delete removes them (D63).
+        // Only the resizer's cache is wrapped: the registered IImageCache stays ImageResize's (or the site's), so
+        // its start-up prune still runs.
+        builder.Services.Replace(ServiceDescriptor.Singleton<IImageResizerService>(sp =>
+            ActivatorUtilities.CreateInstance<ImageResizerService>(sp,
+                new ResizedImageCache(sp.GetRequiredService<IImageCache>(),
+                    sp.GetRequiredService<IOptions<ImageResizeOptions>>()))));
 
         // IHttpClientFactory for sites and plugins; an injected HttpClient is the factory's default client. ZauberCMS's
         // own scoped HttpClient is gone (ZA-121): its base address was the request's (from the Host header the sender

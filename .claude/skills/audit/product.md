@@ -239,7 +239,7 @@ wherever Umbraco offers one (AGENTS.md, core principle).
 | P4 | Account pages, `IAccountLayout`, `IExternalAuthenticationProvider` | Member login (Razor templates), external login providers for the back office and members | |
 | P4 | `ISection`, `ISectionNav`, `ITreeContextMenu`, `ISectionNavGroupAction` | Sections, trees, entity actions (back-office extensions) | |
 | P4 | `IStartupPlugin` | Composers (`IComposer`) | |
-| P4 | `IBeforeEntitySave<T>` / `IAfterEntitySave<T>` | Notifications (`ContentSavingNotification`… with `INotificationHandler<T>`; the "-ing" ones can cancel) | per row (D28) vs per operation; after the commit (ZA-163) |
+| P4 | `IBeforeEntitySave<T>` / `IAfterEntitySave<T>` / `IAfterEntityCommit<T>` | Notifications (`ContentSavingNotification`… with `INotificationHandler<T>`; the "-ing" ones can cancel, the "-ed" ones are raised when the scope completes) | per row (D28) vs per operation; after-commit hook (D62) |
 | P4 | `IContentView` + layouts | Templates (Razor views) and route hijacking (`RenderController`) | choosing a view per type and per page |
 | P4 | `GetValue<T>` and the value-conversion extensions | Property value converters (`IPropertyValueConverter`), Models Builder | typed models; a way for an editor's author to define its front-end type |
 | P4 | `EntryPage` + `GetContentFromRequestAsync` (no finder pipeline; the unwired `IContentFinder` went in Phase 11e) | Content finders, `IContentLastChanceFinder` (404), URL providers | a site cannot add its own way of finding the page for an address |

@@ -189,6 +189,16 @@ public partial class ContentService
         {
             AddAuditIfUser(dbContext, user, $"Domain ({domain.Url})", "Deleted");
 
+            // The domain's redirects go in the same change, as tracked deletes: the database would cascade them
+            // past the save hooks and the SeoRedirect cache (ZA-193)
+            var redirects = await dbContext.Redirects.AsTracking().Where(x => x.DomainId == domain.Id)
+                .ToListAsync(cancellationToken);
+            foreach (var redirect in redirects)
+            {
+                AddAuditIfUser(dbContext, user, $"Redirect ({redirect.FromUrl} -> {redirect.ToUrl})", "Deleted");
+            }
+
+            dbContext.Redirects.RemoveRange(redirects);
             dbContext.Domains.Remove(domain);
             var deleted = await dbContext.SaveChangesAndLog(domain, handlerResult, cacheService, extensionManager,
                 cancellationToken);
