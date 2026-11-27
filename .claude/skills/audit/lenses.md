@@ -6,7 +6,19 @@ not a pattern to grep. Grep finds the places; reading decides whether something 
 
 ## Rules for every agent
 
-### Output file (`<run>/<agent-id>.md`)
+### Output files
+
+Two files per agent. `<run>/<agent-id>.tsv` has one line per item, tab-separated, for the merge agent:
+
+```text
+kind  key                                   category  severity|value  confidence|effort  open-id  title
+F     ZauberCMS.Core/Jobs/DailyJob.cs#ExecuteAsync  A   High   High   -        An exception in the job stops the site
+P     Components/Admin/ContentSection#publish  H      M      S      -        Publish with descendants
+S     -                                      -         -      -       ZA-111   still open
+```
+
+(Columns are aligned here for reading; write real tabs.) `kind` is F (finding), P (proposal) or S (status of an open item). `key` is `path#member` (a folder or screen for a
+proposal). Write the `.tsv` line when you write the item, not at the end. `<run>/<agent-id>.md` holds the detail:
 
 ```markdown
 # <agent-id>: <unit or lens name>
@@ -82,6 +94,10 @@ traced; **Low** = a suspicion. Low-confidence findings are verified or dropped b
   never awaited.
 - Fire-and-forget on request or circuit paths (`_ = XAsync()`, unawaited calls, `Task.Run` nobody observes): the
   exception vanishes or ends the process, and the work outlives its scope and DbContext.
+- Hosted services: since .NET 6 an exception that escapes `BackgroundService.ExecuteAsync` **stops the whole host**
+  (`BackgroundServiceExceptionBehavior.StopHost`), so one passing database error in `DailyJob` or
+  `SitemapGeneratorService` takes the site down. Each loop iteration catches, logs and carries on; `StartAsync` of an
+  `IHostedService` (the Redis bus start-up) doesn't block or throw for a dependency that is briefly down.
 - `CancellationToken`: public async APIs take it last and pass it to EF, HTTP and I/O; components cancel work that
   can outlive them (loads on navigation, search-as-you-type) on dispose; hosted services and loops honour
   `stoppingToken`; `Task.Delay` gets the token.
@@ -142,6 +158,21 @@ traced; **Low** = a suspicion. Low-confidence findings are verified or dropped b
 - EF change tracker growing in loops (imports, bulk copies, sorts): `AsNoTracking`, or `ChangeTracker.Clear()` per batch.
 - **Shared mutable cache entries**: a cached entity graph handed to many circuits and requests, then changed by one
   caller (the change leaks to every reader and into the next save). Check what callers do with what the cache returns.
+
+### A5 More than one server
+
+D1 makes PostgreSQL and Redis first-class, and a site that uses Redis runs on several servers. Anything that lives in
+one process is then wrong on the others:
+
+- `AppState` events reach only the server that raised them: the Redis bus carries cache clears, not events, so
+  another server's admin trees, lists and open editors stay stale. Is that visible to an editor, and is it said?
+- Per-process state: rate-limit partitions (each server allows the full limit), `InstallState`, in-memory locks and
+  semaphores, static caches outside `ICacheService`.
+- Per-server disk: media on `DiskStorageProvider`, `_mediacache`, sitemap files, temp uploads. Which need shared
+  storage, and do the docs say so?
+- Hosted services run on every server: `DailyJob` pruning twice at once, sitemaps written twice. Umbraco runs
+  once-only jobs through a database-tracked distributed job; what stops two of ours overlapping?
+- Data-protection keys (Standards §7), sticky sessions for circuits, and forwarded headers per node.
 
 ## B. Data access and performance
 
@@ -261,7 +292,7 @@ traced; **Low** = a suspicion. Low-confidence findings are verified or dropped b
   allow-list, `data:` only for images); JS `innerHTML`; rich-text embeds through `IRichTextEmbedService`.
 - **CSRF**: state-changing GETs (ZA-030); antiforgery on SSR forms; mass assignment (form or JSON models that bind
   roles, ids, owners or flags).
-- **Uploads**: extension allow-list + `UploadContentCheck` + `MaxUploadSize` on every path (admin, editors, any
+- **Uploads**: extension allow-list + `UploadContentCheck` + `GlobalSettings.MaxUploadFileSizeInBytes` on every path (admin, editors, any
   `IStorageProvider`); SVG through `SvgSanitizer` (D6); path traversal in names and folders; zip slip in any import;
   `RestrictedMediaMiddleware` bypass (case, encoding, the resizer, `_mediacache`); image-resize dimension DoS.
 - **Outbound and redirects**: SSRF (the SEO checker and any URL fetch use `SeoHttp`), open redirects (`returnUrl`,
@@ -310,7 +341,10 @@ traced; **Low** = a suspicion. Low-confidence findings are verified or dropped b
 - **F1 Public API and persisted contracts**: a break to a public type, discovery interface or parameter class without
   the `[Obsolete]` path or, during the rework, without a release-notes line (D18); persisted identifiers changed
   (type full names, aliases, `GlobalData` aliases, JSON value shapes, cache prefixes); the property-editor snapshot
-  (`tests/ZauberCMS.Components.Tests/Discovery/Snapshots/PropertyEditors.txt`) kept current.
+  (`tests/ZauberCMS.Components.Tests/Discovery/Snapshots/PropertyEditors.txt`) kept current. **Upgrades**: a site on
+  the last release must update without losing data. Check new migrations for drop-and-add renames, NOT NULL columns
+  without a default, data steps that run per row, and SQLite table rebuilds on big tables. K's package validation
+  lists the API breaks, and R1's upgrade probe starts this code on the last release's database.
 - **F2 Pluggable and updatable** (the core principle in `AGENTS.md`). For each area: can a site add to it, customise
   it, or replace it from its own project (an interface, a DI registration, a setting) and then update the packages
   without redoing that? Look for hard-coded lists of built-in types, "our" types special-cased over a consumer's,

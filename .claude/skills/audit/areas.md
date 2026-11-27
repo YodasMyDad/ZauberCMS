@@ -25,12 +25,13 @@ Paths are relative to the repo root. `Core` = `ZauberCMS.Core`, `Components` = `
 
 - **Paths**: `Core/ZauberSetup.cs`, `Core/Constants.cs`, `Core/Urls.cs`, `Core/Plugins/`, `Core/Settings/`, `Core/Data/`
   (contexts, `DataService`, design-time factories; of `Migrations/`, only parity and the newest migration of each
-  provider), `Core/SeedData/`, `Core/Jobs/`, `Core/Middleware/`, `ZauberCMS/` (`App.razor`, `Routes.razor`,
-  `ZauberCMS.targets`, `appsettings.json`), `ZauberCMS.Routing/`.
+  provider), `Core/SeedData/`, `Core/Jobs/`, `Core/Middleware/`, `ZauberCMS/` (`Components/App.razor`,
+  `Components/Routes.razor`, `ZauberCMS.targets`, `appsettings.json`), `ZauberCMS.Routing/`.
 - **Focus**: which assemblies are scanned, and in what order (Routing last); discovery visibility (public,
   non-abstract); new middleware placed with a reason (the order is exempt, a new entry isn't); the DbContext chosen
-  per scope and the start without a database; seeders idempotent and cheap, since they run on every boot; `DailyJob`
-  (overlapping itself, two nodes running it at once, cancellation, batch sizes, D25); the per-request cost of the
+  per scope and the start without a database; seeders idempotent and cheap, since they run on every boot; migration
+  safety for a site upgrading from the last release (lenses F1); `DailyJob` (an exception that escapes it stops the
+  host, lenses A1; overlapping itself; two servers running it at once, A5; cancellation; batch sizes; D25); the per-request cost of the
   culture, redirect and error-page middleware; config defaults and start-up validation (ZA-120); render-mode choice in
   `App.razor`; the admin gate in `Routes.razor`.
 - **Risk**: AGENTS.md "Bootstrap". **Docs**: AGENTS.md, Services.md.
@@ -57,7 +58,8 @@ Paths are relative to the repo root. `Core` = `ZauberCMS.Core`, `Components` = `
 
 ### U4 Content services (~4.8k)
 
-- **Paths**: `Core/Content/Services/`, `Core/Content/ContentFinders/`, `Core/Content/Validation/`.
+- **Paths**: `Core/Content/Services/`, `Core/Content/ContentFinders/`, `Core/Content/Validation/`, and the files at
+  the root of `Core/Content/` (`ContentUrl.cs`: URL normalisation, which every slug and link must go through).
 - **Focus**: `SaveContentAsync` and `NestedContentTree` (blocks saved, deleted, versioned and copied with the page);
   publish, draft and version consistency; recycle, restore and purge of whole subtrees; copy, move and sort (tree
   integrity, moving under one's own descendant); the `DateUpdated` concurrency token; cache clearing per write;
@@ -111,7 +113,7 @@ Paths are relative to the repo root. `Core` = `ZauberCMS.Core`, `Components` = `
 
 ### U10 Admin shell, trees, shared UI, modal (~5.3k; split if it has grown)
 
-- **Paths**: `Components/Admin/{Layout,Dashboards,Shared}/`, `Components/Admin/DynamicContentProperty.razor`,
+- **Paths**: `Components/Admin/_Imports.razor` (the admin's `[Authorize]` gate), `Components/Admin/{Layout,Dashboards,Shared}/`, `Components/Admin/DynamicContentProperty.razor`,
   `Components/Trees/`, `Components/Shared/`, `Components/ContextMenus/SectionNavGroups/`,
   `Components/ContextMenus/ITreeContextMenu.cs`, `Components/DataSources/`, `Components/wwwroot/` (not `lib/`),
   `Components/Tailwind/`, `Components/Resources/`, `Core/Modal/` (vendored Blazored.Modal: ours to maintain),
@@ -169,10 +171,11 @@ Paths are relative to the repo root. `Core` = `ZauberCMS.Core`, `Components` = `
 ### U16 Packaging, CI, template project, tests
 
 - **Paths**: every `*.csproj`, `global.json`, `tests/Directory.Build.props`, `.github/workflows/`, `migrations.ps1`,
-  `ZauberCMS.Template/` (csproj and `template.json`), `ReadMe.md`, `Docs/Releasing.md`, `tests/` (about 10k lines: read
-  it for what is and isn't covered and for tests that cannot fail, not for style).
-- **Focus**: F4, F5; the package rows and the template smoke test in SKILL.md §2; the test infrastructure (containers,
-  the SQL Server variants, CI running the Docker tests); Standards §10 hygiene (ZA-131).
+  `ZauberCMS.Template/` (csproj and `template.json`), `ZauberCMS.Web/Program.cs` (the dev site's bootstrap: compare it
+  with the template's), `ReadMe.md`, `Docs/Releasing.md`, `tests/` (about 10k lines: read it for what is and isn't
+  covered and for tests that cannot fail, not for style).
+- **Focus**: F4, F5; read K's results for the package, API-break and template rows (don't run them again); the test
+  infrastructure (containers, the SQL Server variants, CI running the Docker tests); Standards §10 hygiene (ZA-131).
 
 ## Sweeps (`full`, or when a code lens letter is named)
 
@@ -182,19 +185,23 @@ problem sits between units.
 
 | Sweep | Inventory to build and check |
 | --- | --- |
-| S-A Async, concurrency, memory | every singleton and static field (what it holds, whether it grows, who mutates it); every event subscription and its unsubscribe; every `CreateScope`; every `Task.WhenAll`/parallel loop (shared DbContext?); every hosted service and timer; every disposable that a component or singleton owns |
+| S-A Async, concurrency, memory | every singleton and static field (what it holds, whether it grows, who mutates it); every event subscription and its unsubscribe; every `CreateScope`; every `Task.WhenAll`/parallel loop (shared DbContext?); every hosted service and timer (does an exception stop the host?); every piece of state that lives in one process and breaks with two servers (lenses A5); every disposable that a component or singleton owns |
 | S-B Performance | every query on the front-end path (cached? key dimensions?), every cache prefix with the writes that must clear it, every admin list or tree (paged? virtualised?), every `GetInstances<T>()` call site, every per-request middleware lookup |
 | S-D Security | every routable page, endpoint and controller with its gate; every input that reaches SQL, HTML, the file system, an outbound URL, a regex or a type name; every place that issues or checks a token or cookie |
 | S-E Blazor | every `@rendermode` and interactive component outside the admin; every write to a `[Parameter]`; every JS interop call and its disposal; every `ErrorBoundary`; every form (SSR or interactive) and its antiforgery and `FormName` |
 
 ## Product groups (lenses G and H)
 
-They run one after another, because they share the browser and the scratch site (product.md). Each one walks its
-script, reads the markup and code behind each screen, and compares it with Umbraco.
+They run one after another, because they share the browser and the scratch site (product.md), and then the runtime
+probes run. Each product agent walks its tasks, reads the markup and code behind each screen (the units listed, for
+context: it reports UX and parity, the unit agents report the code), and owns its rows of the Umbraco map.
 
-| Group | Covers | Walkthrough tasks (product.md) |
-| --- | --- | --- |
-| P1 Content editing | installer (first, to create the admin), content tree and editor, blocks, pickers, rich text, versions, recycle bin, list view, copy/move/sort, restrict access, culture and domains | I1, C1–C12 |
-| P2 Media | media tree, upload, folders, image editing, media in pickers, media bin | M1–M5 |
-| P3 Structure and settings | content, element and composition types, property settings, languages, dictionary, global settings, SEO tools, audit log, dashboards | S1–S4, X1–X5 |
-| P4 Users, front end, developer experience | users, roles, account pages, the public site (404, error page, culture, SEO tags, restricted pages), and building on ZauberCMS: template, a view, an editor, a section, a hook | A1–A4, F1–F4, D1–D4 |
+| Group | Covers | Tasks (product.md) | Units behind it |
+| --- | --- | --- | --- |
+| P1a Installer and content creation | the installer on a new template site, content tree and editor, blocks, pickers, rich text, copy/move/sort | I1, C1–C6 | U8, U11, U12 |
+| P1b Content history and control | versions, recycle bin, restrict access, culture and domains, list view at scale, two editors at once, unpublished changes | C7–C12 | U4, U11 |
+| P2 Media | media tree, upload, folders, image editing, media in pickers, media bin | M1–M5 | U6, U14 |
+| P3 Structure and settings | content, element and composition types, property settings, languages, dictionary, global settings, SEO tools, audit log, dashboards | S1–S4, X1–X5 | U9, U13, U15 |
+| P4 Users, front end, developer experience | users, roles, account pages, the public site (404, error page, culture, SEO tags, restricted pages), and building on ZauberCMS: template, a view, an editor, a section, a hook | A1–A4, F1–F4, D1–D4 | U7, U9, U10, U16 |
+| R1 Runtime probe | hot-path budget, memory across circuits, cold-cache burst, upgrade from the last release | product.md "R1" | U1, U2, U9 |
+| R2 Two servers (`full`, with Docker) | lens A5 on PostgreSQL + Redis | product.md "R2" | U1, U2 |

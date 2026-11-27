@@ -4,7 +4,7 @@ Append-only record of what each audit run and Roadmap phase fixed, resolved, clo
 with how it was verified. Open items are in [report.md](report.md); IDs are never reused. Until 2026-11-27 this
 was the "Fixed" section of `report.md`, so older Roadmap notes that say "Details: audit report" mean this file.
 
-Each run adds one section at the top of "Fixed, resolved, closed and declined" (see the audit skill, step 6), and
+Each run adds one section at the top of "Fixed, resolved, closed and declined" (see the audit skill, §9), and
 one line at the top of the run log.
 
 ## Run log

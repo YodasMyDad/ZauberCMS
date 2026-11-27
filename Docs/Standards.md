@@ -90,7 +90,7 @@ patterns into new code.
   fallback — still write the attribute, the fallback is a safety net). Controllers/endpoints authorise explicitly; state-changing endpoints are POST +
   antiforgery.
 - Output: never render user/content HTML via `MarkupString` without `IHtmlSanitizerService`.
-- Uploads: extension allow-list + content check (`UploadContentCheck`) + `MaxUploadSize`; never trust client paths.
+- Uploads: extension allow-list + content check (`UploadContentCheck`) + the size limit (`GlobalSettings.MaxUploadFileSizeInBytes`); never trust client paths.
   SVG is off by default; when allowed it is stored through `SvgSanitizer`. A new `IStorageProvider` must do both.
 - Grid filter/sort strings go through `GridQueryGuard`, never straight into `Where(string)` / `OrderBy(string)`.
 - Redirects: local URLs only (`returnUrl` validated); SEO redirect targets pass `RedirectTarget.IsValid`.
