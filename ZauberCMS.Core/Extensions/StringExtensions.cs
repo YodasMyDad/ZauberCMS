@@ -220,7 +220,7 @@ public static partial class StringExtensions
         {
             return source.Split(Convert.ToChar(separator))
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => Convert.ChangeType(x, typeof(T)))
+                .Select(x => Convert.ChangeType(x, typeof(T), CultureInfo.InvariantCulture))
                 .Cast<T>()
                 .Where(x => x != null)
                 .ToList();
@@ -285,7 +285,7 @@ public static partial class StringExtensions
     /// </returns>
     public static string EnsureNotEndsWith(this string input, char value)
     {
-        return !input.EndsWith(value.ToString(CultureInfo.InvariantCulture))
+        return !input.EndsWith(value)
             ? input
             : input.Remove(input.LastIndexOf(value), 1);
     }
@@ -304,7 +304,7 @@ public static partial class StringExtensions
     /// </returns>
     public static string EnsureNotStartsWith(this string input, char value)
     {
-        return !input.StartsWith(value.ToString(CultureInfo.InstalledUICulture)) ? input : input.Remove(0, 1);
+        return !input.StartsWith(value) ? input : input.Remove(0, 1);
     }
 
     /// <summary>
@@ -338,7 +338,7 @@ public static partial class StringExtensions
     {
         return string.Join(
             "/",
-            urlPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+            urlPath.Split('/', StringSplitOptions.RemoveEmptyEntries)
                 .Select(x =>
                 {
                     var urlEncode = HttpUtility.UrlEncode(x);
@@ -378,8 +378,9 @@ public static partial class StringExtensions
         if (bytes == null || bytes.Length == 0)
             return null;
 
-        using var md5 = MD5.Create();
-        return string.Join("", md5.ComputeHash(bytes).Select(x => x.ToString("X2")));
+#pragma warning disable CA5351 // only behind the obsolete public ToMd5 (ZA-031), kept until it is removed; not used for security
+        return Convert.ToHexString(MD5.HashData(bytes));
+#pragma warning restore CA5351
     }
 
     public static List<int> ToListInt(this string s)

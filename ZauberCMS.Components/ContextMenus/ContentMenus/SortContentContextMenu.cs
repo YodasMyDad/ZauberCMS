@@ -38,7 +38,7 @@ public class SortContentContextMenu(IContentService contentService, IMembershipS
         var content = (Content)args.Value!;
         var dbContent = await contentService.GetContentAsync(new GetContentParameters { Id = content.Id, IncludeChildren = true });
         var currentUser = await membershipService.GetCurrentUser();
-        if (!dbContent!.Children.Any())
+        if (dbContent!.Children.Count == 0)
         {
             // Show message if no children
             notificationService.Notify(new NotificationMessage

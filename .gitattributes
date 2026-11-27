@@ -1,0 +1,24 @@
+# Line endings: text files are stored with LF in the repository (every tracked text file already is) and checked
+# out with the platform's line ending. Binary files are never converted or diffed as text.
+* text=auto
+
+# Shell scripts run on the Linux CI runner and must keep LF.
+*.sh text eol=lf
+
+*.db binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.dll binary
+*.exe binary
+*.nupkg binary
+*.snupkg binary
+*.zip binary
+*.pdf binary

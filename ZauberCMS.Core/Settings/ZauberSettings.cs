@@ -154,7 +154,7 @@ public class ImageResizeSettings
     public bool AllowUpscale { get; set; }
     public int DefaultQuality { get; set; } = 99;
     public int PngCompressionLevel { get; set; } = 6;
-    public bool HashOriginalContent { get; set; } = false;
+    public bool HashOriginalContent { get; set; }
     public ImageCacheSettings Cache { get; set; } = new();
     public ImageResponseCacheSettings ResponseCache { get; set; } = new();
 }
@@ -162,7 +162,7 @@ public class ImageResizeSettings
 public class ImageCacheSettings
 {
     public int FolderSharding { get; set; } = 2;
-    public bool PruneOnStartup { get; set; } = false;
+    public bool PruneOnStartup { get; set; }
     /// <summary>
     /// The most disk space resized copies may take, in bytes; the oldest are removed when a new copy goes over it.
     /// 2 GB by default (ZA-104, Roadmap D36), so requests for many sizes cannot fill the disk. 0 is no limit.

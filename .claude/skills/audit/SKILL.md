@@ -90,9 +90,9 @@ One agent, K, runs these and writes the table to `<run>/K.md`. Keep the orchestr
 | --- | --- | --- |
 | Build + warnings | `dotnet build ZauberCMS.sln -c Release` → count by warning code | it fails (High); a warning the last report did not have (Low) |
 | Tests | `dotnet test --solution ZauberCMS.sln -c Release`; record whether Docker ran the PostgreSQL/Redis tests and whether `ZAUBER_TEST_SQLSERVER` was set | a test fails (re-run once; fails again → High, passes → flaky, Medium); a `Skip` names a closed finding or no finding |
-| Vulnerable packages | `dotnet list ZauberCMS.sln package --vulnerable --include-transitive` | any, at the advisory's severity |
+| Vulnerable packages | `dotnet package list --project ZauberCMS.sln --vulnerable --include-transitive` (CI fails on any) | any, at the advisory's severity |
 | Outdated packages | `dotnet list ZauberCMS.sln package --outdated`; majors separately (D4 holds the .NET 11 moves) | a patch or minor we're behind on fixes a bug or vulnerability that affects us |
-| Version alignment | shared packages at the same version in every csproj; the `ZauberCMS.*` PackageReferences match `<Version>` | they differ |
+| Version alignment | every solution `PackageReference` without a `Version` and listed in `Directory.Packages.props`; one `<Version>` (in `Directory.Build.props`) for the four packages; the template site's `ZauberCMS` reference and the template's `PackageVersion` match it (the `BuildBaselineTests` cover the first two) | they differ |
 | Migration parity | the same migrations in `Data/Migrations/{SqlServer,SqLite,PostgreSql}`, compared by the name after the timestamp (timestamps differ per provider); snapshots changed in the same commits; the "no pending model changes" tests pass | they differ |
 | Migration safety | every migration since the base: drops or renames a column (EF may emit drop + add, losing data), adds a NOT NULL column without a default, or forces an SQLite table rebuild on a large table | any, unless a data step or the commit explains it (Medium; High on Content, ContentVersion or Media) |
 | Config parity | keys in `ZauberCMS/appsettings.json`, `ZauberCMS.Web/appsettings.json` and the template site's agree (a parity test exists) | a key is missing from one; a real secret |

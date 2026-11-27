@@ -62,7 +62,7 @@ public partial class AiContentCheck : ISeoCheck
 
         // Pattern Analysis: Repeated Phrases Check
         var repeatedPhrases = _aiTriggers.Where(trigger =>
-            Regex.Matches(bodyText, $@"\b{Regex.Escape(trigger)}\b", RegexOptions.IgnoreCase).Count > 2).ToList();
+            Regex.Count(bodyText, $@"\b{Regex.Escape(trigger)}\b", RegexOptions.IgnoreCase) > 2).ToList();
 
         // Language Flow Analysis: Sentence Length Consistency Check
         var sentences = MyRegex().Split(bodyText).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
@@ -73,7 +73,7 @@ public partial class AiContentCheck : ISeoCheck
         // Context Coherence Check (Repetitive Transitions)
         var transitions = new List<string>
             { "however", "moreover", "therefore", "thus", "consequently", "furthermore" };
-        var transitionCount = transitions.Sum(t => Regex.Matches(bodyText, $@"\b{t}\b", RegexOptions.IgnoreCase).Count);
+        var transitionCount = transitions.Sum(t => Regex.Count(bodyText, $@"\b{t}\b", RegexOptions.IgnoreCase));
         var transitionDensity = transitionCount / (double)sentences.Count;
 
         if (repeatedPhrases.Count > 0)

@@ -1,3 +1,4 @@
+using System.Globalization;
 using HtmlAgilityPack;
 using Radzen;
 using ZauberCMS.Core.Media.Interfaces;
@@ -26,7 +27,7 @@ public class MediaValidationService(IMediaService mediaService, NotificationServ
 
         var elementsWithMediaId = doc.DocumentNode.SelectNodes("//*[@data-mediaid]");
         
-        if (elementsWithMediaId == null || !elementsWithMediaId.Any())
+        if (elementsWithMediaId == null || elementsWithMediaId.Count == 0)
         {
             return html;
         }
@@ -74,11 +75,11 @@ public class MediaValidationService(IMediaService mediaService, NotificationServ
                         // Also update width/height if they've changed
                         if (media.Width > 0)
                         {
-                            element.SetAttributeValue("width", media.Width.ToString());
+                            element.SetAttributeValue("width", media.Width.ToString(CultureInfo.InvariantCulture));
                         }
                         if (media.Height > 0)
                         {
-                            element.SetAttributeValue("height", media.Height.ToString());
+                            element.SetAttributeValue("height", media.Height.ToString(CultureInfo.InvariantCulture));
                         }
                         
                         // Update alt tag if available
@@ -99,7 +100,7 @@ public class MediaValidationService(IMediaService mediaService, NotificationServ
         }
 
         // Show notifications if changes were made
-        if (updatedItems.Any())
+        if (updatedItems.Count != 0)
         {
             notificationService.Notify(new NotificationMessage
             {
@@ -110,7 +111,7 @@ public class MediaValidationService(IMediaService mediaService, NotificationServ
             });
         }
 
-        if (deletedItems.Any())
+        if (deletedItems.Count != 0)
         {
             notificationService.Notify(new NotificationMessage
             {

@@ -117,8 +117,7 @@ public class WeakEventManager<TEventArgs>
 
                 if (sub.Target is not null && sub.Target.TryGetTarget(out var target))
                 {
-                    var del = (Func<TEventArgs, string, Task>)sub.Method.CreateDelegate(
-                        typeof(Func<TEventArgs, string, Task>), target);
+                    var del = sub.Method.CreateDelegate<Func<TEventArgs, string, Task>>(target);
                     handlers.Add(del);
                 }
             }

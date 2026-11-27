@@ -508,7 +508,7 @@ public class InstallService(
         }
     }
 
-    private async Task<Language?> SaveLanguageAsync(IServiceProvider services, CultureInfo culture,
+    private static async Task<Language?> SaveLanguageAsync(IServiceProvider services, CultureInfo culture,
         InstallResult result, CancellationToken cancellationToken)
     {
         var languageService = services.GetRequiredService<ILanguageService>();

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
@@ -205,7 +206,7 @@ internal static class InstallerDatabase
             parameter.ParameterName = "@name";
             parameter.Value = database;
             command.Parameters.Add(parameter);
-            var exists = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken)) > 0;
+            var exists = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) > 0;
             if (!exists)
             {
                 return new DatabaseTestResult(true, false,

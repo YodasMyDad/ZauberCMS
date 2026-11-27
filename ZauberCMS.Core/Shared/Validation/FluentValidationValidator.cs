@@ -8,6 +8,9 @@ namespace ZauberCMS.Core.Shared.Validation;
 
 public class FluentValidationValidator : ComponentBase, IDisposable
 {
+    private const string MissingEditContextMessage =
+        "FluentValidationValidator needs a cascading EditContext: put it inside an EditForm.";
+
     [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
 
     [CascadingParameter] private EditContext? CurrentEditContext { get; set; }
@@ -20,7 +23,7 @@ public class FluentValidationValidator : ComponentBase, IDisposable
     {
         if (CurrentEditContext is null)
         {
-            throw new NullReferenceException(nameof(CurrentEditContext));
+            throw new InvalidOperationException(MissingEditContextMessage);
         }
 
         ValidateOptions = options;
@@ -43,7 +46,7 @@ public class FluentValidationValidator : ComponentBase, IDisposable
     {
         if (CurrentEditContext is null)
         {
-            throw new NullReferenceException(nameof(CurrentEditContext));
+            throw new InvalidOperationException(MissingEditContextMessage);
         }
         
         ValidateOptions = options;

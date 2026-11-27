@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -172,7 +173,7 @@ public class ZauberSignInManager(
             var nounIndex = BitConverter.ToUInt16(hashBytes, 2) % nouns.Count;
             var number = BitConverter.ToUInt16(hashBytes, 4) % 100;
 
-            var username = adjectives[adjectiveIndex] + nouns[nounIndex] + number.ToString("D2");
+            var username = adjectives[adjectiveIndex] + nouns[nounIndex] + number.ToString("D2", CultureInfo.InvariantCulture);
 
             // Optionally check for uniqueness and adjust if necessary. Includes deleted
             // users — the underlying UserName unique index does not filter on Deleted, so
@@ -181,7 +182,7 @@ public class ZauberSignInManager(
             while (_userManager.Users.Any(u => u.UserName == username))
             {
                 number = (number + attempt) % 100;
-                username = adjectives[adjectiveIndex] + nouns[nounIndex] + number.ToString("D2");
+                username = adjectives[adjectiveIndex] + nouns[nounIndex] + number.ToString("D2", CultureInfo.InvariantCulture);
                 attempt++;
             }
 

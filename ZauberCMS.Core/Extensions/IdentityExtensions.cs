@@ -63,7 +63,7 @@ public static class IdentityExtensions
     {
         foreach (var identityResultError in identityResult.Errors)
         {
-            logger.LogError(identityResultError.Description);
+            logger.LogError("Identity error {Code}: {Description}", identityResultError.Code, identityResultError.Description);
         }
     }
 

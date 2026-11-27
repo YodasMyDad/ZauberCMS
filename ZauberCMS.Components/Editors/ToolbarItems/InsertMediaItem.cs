@@ -62,7 +62,7 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
         }
     }
 
-    private async Task InsertMedia(IEditorApi api, Media media)
+    private static async Task InsertMedia(IEditorApi api, Media media)
     {
         var html = media.MediaType == MediaType.Image
             ? BuildImageHtml(media)

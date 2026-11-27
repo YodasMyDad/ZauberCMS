@@ -1,15 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
         <PreserveCompilationContext>true</PreserveCompilationContext>
     </PropertyGroup>
     
     <ItemGroup>
       <ProjectReference Include="..\ZauberCMS\ZauberCMS.csproj" />
-      <!--<PackageReference Include="ZauberCMS" Version="4.1.0" />-->
     </ItemGroup>
 
     <!-- Add this Target to ensure wwwroot exists before build -->

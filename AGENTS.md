@@ -56,6 +56,10 @@ in every phase of the rework, against this:
 | `ZauberCMS.Web` | **Local dev runner + sample site only** (SQLite `app.db`, tracked: sample content, **no accounts** — a clone runs the installer to create its administrator; don't commit dev changes to it) | no |
 | `tests/ZauberCMS.Core.Tests`, `tests/ZauberCMS.Components.Tests` | xUnit tests (services on in-memory SQLite through the real bootstrap; component models) | no |
 
+Shared build settings and the four packages' one `<Version>` are in `Directory.Build.props`; every package version
+is in `Directory.Packages.props` (a csproj `PackageReference` has no `Version`). `ZauberCMS.Template/` is outside
+both: the template site keeps explicit versions, because `dotnet new` copies it to consumers.
+
 Core folders are by feature: `<Feature>/{Interfaces,Services,Parameters,Models,Mapping}` (Content, Media, Membership,
 Languages, Tags, Seo, Audit, Data, Email, …). Copy the nearest existing feature rather than inventing a layout.
 
@@ -176,7 +180,8 @@ and how it was verified: [.audit/history.md](.audit/history.md).
 
 ## Definition of Done (every change)
 
-1. `dotnet build ZauberCMS.sln -c Release` succeeds with **no new warnings**.
+1. `dotnet build ZauberCMS.sln -c Release` succeeds with **0 warnings** (warnings are errors, analysers included;
+   [Docs/Standards.md](Docs/Standards.md) §10 says how to handle a rule that doesn't fit).
 2. Schema touched → three migrations via `migrations.ps1`. Public API touched → no unannounced break (rule 2).
 3. `dotnet test --solution ZauberCMS.sln -c Release` passes. Tests added/updated for changed behaviour: a bug fix
    comes with a regression test (or un-skips the one waiting for it); UI behaviour with no test yet → state how it

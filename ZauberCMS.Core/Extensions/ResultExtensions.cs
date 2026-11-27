@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
@@ -76,7 +77,7 @@ public static class ResultExtensions
             var messagesToUse = messages.SuccessMessages();
             foreach (var rm in messagesToUse)
             {
-                sb.AppendLine($"{rm.Message}.");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"{rm.Message}.");
             }
 
             return sb.ToString();

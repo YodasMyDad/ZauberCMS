@@ -27,8 +27,8 @@ public static class RenderExtensions
             {
                 // Ensure the view is either in the root "/Views/" or a subfolder matching "/Views/{contentType}/"
                 var normalizedContentTypePath = $"/Views/{contentType}/";
-                var isInRoot = viewDetails.Path.Equals($"/Views/{viewDetails.Name}.cshtml", StringComparison.CurrentCultureIgnoreCase);
-                var isInContentTypeFolder = viewDetails.Path.StartsWith(normalizedContentTypePath, StringComparison.CurrentCultureIgnoreCase);
+                var isInRoot = viewDetails.Path.Equals($"/Views/{viewDetails.Name}.cshtml", StringComparison.OrdinalIgnoreCase);
+                var isInContentTypeFolder = viewDetails.Path.StartsWith(normalizedContentTypePath, StringComparison.OrdinalIgnoreCase);
             
                 // Skip if not in the allowed locations
                 if (!isInRoot && !isInContentTypeFolder)
@@ -59,7 +59,7 @@ public static class RenderExtensions
     
     public static (string Name, string Path) GetViewDetails(this string compiledViewName)
     {
-        if (string.IsNullOrWhiteSpace(compiledViewName) || !compiledViewName.StartsWith("Views_"))
+        if (string.IsNullOrWhiteSpace(compiledViewName) || !compiledViewName.StartsWith("Views_", StringComparison.Ordinal))
             throw new ArgumentException("Invalid compiled view name", nameof(compiledViewName));
 
         // Remove "Views_" prefix

@@ -115,10 +115,7 @@ namespace ZauberCMS.Core.Extensions;
         /// <param name="extendedData"></param>
         public static void RemoveTempUiMessages(this Dictionary<string, object> extendedData)
         {
-            if (extendedData.ContainsKey(Constants.ExtendedDataKeys.TempUiMessages))
-            {
-                extendedData.Remove(Constants.ExtendedDataKeys.TempUiMessages);
-            }
+            extendedData.Remove(Constants.ExtendedDataKeys.TempUiMessages);
         }
 
         /// <summary>
@@ -157,7 +154,7 @@ namespace ZauberCMS.Core.Extensions;
             if (currentMessages != null)
             {
                 var resultMessages = currentMessages as ResultMessage[] ?? currentMessages.ToArray();
-                if (resultMessages.Any())
+                if (resultMessages.Length != 0)
                 {
                     list.AddRange(resultMessages);
                 }

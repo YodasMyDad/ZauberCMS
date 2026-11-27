@@ -144,7 +144,7 @@ public class FormProtectionTests
         clock.Now += TimeSpan.FromSeconds(10);
         Assert.True(service.TryUseToken(token));
 
-        var padded = string.Format(shape, token);
+        var padded = string.Format(System.Globalization.CultureInfo.InvariantCulture, shape, token);
 
         Assert.False(service.TryUseToken(padded));
         Assert.NotEqual(FormProtectionResult.Passed, service.Validate(padded, ""));

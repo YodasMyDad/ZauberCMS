@@ -1,0 +1,8 @@
+<Project>
+    <!-- Stops the repository's central package management from applying here: the template site keeps its own
+         explicit PackageReference versions, because consumers get it through `dotnet new`. Not packed (it sits
+         beside template/). -->
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+</Project>

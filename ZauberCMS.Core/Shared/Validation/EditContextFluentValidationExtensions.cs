@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentValidation;
 using FluentValidation.Internal;
 using FluentValidation.Results;
@@ -245,7 +246,7 @@ public static class EditContextFluentValidationExtensions
                 {
                     // we've got an Item property
                     var indexerType = prop.GetIndexParameters()[0].ParameterType;
-                    var indexerValue = Convert.ChangeType(nextToken.ToString(), indexerType);
+                    var indexerValue = Convert.ChangeType(nextToken.ToString(), indexerType, CultureInfo.InvariantCulture);
                         
                     newObj = prop.GetValue(obj, new [] { indexerValue });
                 }
@@ -255,7 +256,7 @@ public static class EditContextFluentValidationExtensions
                     // Try to cast the object to array
                     if (obj is object[] array)
                     {
-                        var indexerValue = int.Parse(nextToken);
+                        var indexerValue = int.Parse(nextToken, CultureInfo.InvariantCulture);
                         newObj = array[indexerValue];
                     }
                     else

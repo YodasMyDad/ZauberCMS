@@ -1193,7 +1193,9 @@ public partial class ContentService(
                 // LOWER() in SQL on the column, the term lowered here without the server's culture: a culture
                 // such as Turkish lowers "I" to "ı" and the search then finds nothing (ZA-017)
                 var searchTerm = parameters.SearchTerm.ToLowerInvariant();
+#pragma warning disable CA1304, CA1311, CA1862 // EF translates ToLower() on the column to SQL LOWER(); the culture overloads are not translatable
                 query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(searchTerm));
+#pragma warning restore CA1304, CA1311, CA1862
             }
 
             if (parameters.OnlyElementTypes)
@@ -1882,7 +1884,7 @@ public partial class ContentService(
         };
 
         // Map CompositionIds to aliases
-        if (contentType.CompositionIds.Any())
+        if (contentType.CompositionIds.Count != 0)
         {
             exportType.CompositionAliases = await dbContext.ContentTypes
                 .Where(ct => contentType.CompositionIds.Contains(ct.Id))
@@ -1891,7 +1893,7 @@ public partial class ContentService(
         }
 
         // Map AllowedChildContentTypes to aliases
-        if (contentType.AllowedChildContentTypes.Any())
+        if (contentType.AllowedChildContentTypes.Count != 0)
         {
             exportType.AllowedChildContentTypeAliases = await dbContext.ContentTypes
                 .Where(ct => contentType.AllowedChildContentTypes.Contains(ct.Id))
@@ -1918,10 +1920,12 @@ public partial class ContentService(
             package.RootContents = await BuildContentExportTree(rootContents, dbContext, contentType);
         }
 
-        return JsonSerializer.Serialize(package, new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(package, ExportJsonOptions);
     }
 
-    private async Task<List<ContentExport>> BuildContentExportTree(List<Models.Content> contents,
+    private static readonly JsonSerializerOptions ExportJsonOptions = new() { WriteIndented = true };
+
+    private static async Task<List<ContentExport>> BuildContentExportTree(List<Models.Content> contents,
         IZauberDbContext dbContext, ContentType contentType)
     {
         var exports = new List<ContentExport>();
@@ -2094,7 +2098,7 @@ public partial class ContentService(
         }
 
         // If no content, done
-        if (!package.RootContents.Any())
+        if (package.RootContents.Count == 0)
         {
             return typeResult;
         }
@@ -2191,7 +2195,7 @@ public partial class ContentService(
     }
 
 
-    private IQueryable<Models.Content> BuildQuery(GetContentParameters request, IZauberDbContext dbContext)
+    private static IQueryable<Models.Content> BuildQuery(GetContentParameters request, IZauberDbContext dbContext)
     {
         var query = dbContext.Contents
             .Include(x => x.ContentType)
@@ -2252,7 +2256,7 @@ public partial class ContentService(
         return query;
     }
 
-    private IQueryable<Models.Content> BuildQuery(QueryContentParameters request, IZauberDbContext dbContext)
+    private static IQueryable<Models.Content> BuildQuery(QueryContentParameters request, IZauberDbContext dbContext)
     {
         var query = dbContext.Contents.Include(x => x.ContentType)
             .Include(x => x.PropertyData).AsSplitQuery().AsQueryable();
@@ -2319,7 +2323,9 @@ public partial class ContentService(
                 // LOWER() in SQL on the column, the term lowered here without the server's culture: a culture
                 // such as Turkish lowers "I" to "ı" and the search then finds nothing (ZA-017)
                 var searchTerm = request.SearchTerm.ToLowerInvariant();
+#pragma warning disable CA1304, CA1311, CA1862 // EF translates ToLower() on the column to SQL LOWER(); the culture overloads are not translatable
                 query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(searchTerm));
+#pragma warning restore CA1304, CA1311, CA1862
             }
 
             if (!string.IsNullOrWhiteSpace(request.ContentTypeAlias))
@@ -2374,7 +2380,7 @@ public partial class ContentService(
         return await query.ToPaginatedListAsync(request.PageIndex, request.AmountPerPage, cancellationToken);
     }
 
-    private async Task<Models.Content?> FetchContentAsync(IQueryable<Models.Content> query,
+    private static async Task<Models.Content?> FetchContentAsync(IQueryable<Models.Content> query,
         CancellationToken cancellationToken)
     {
         return await query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
@@ -2487,7 +2493,7 @@ public partial class ContentService(
     /// handed out earlier in the same operation and not saved yet.
     /// </summary>
     private static async Task<string> GenerateUniqueUrlAsync(IZauberDbContext dbContext, string baseSlug,
-        CancellationToken cancellationToken, Guid? ownId = null, ISet<string>? reserved = null)
+        CancellationToken cancellationToken, Guid? ownId = null, HashSet<string>? reserved = null)
     {
         // One query for the URL and its numbered forms: this asked the database once for every number (ZA-115)
         var taken = await TakenUrlsAsync(dbContext, baseSlug, ownId, cancellationToken);
@@ -2624,7 +2630,7 @@ public partial class ContentService(
         }
     }
 
-    private async Task<int> GetNextSortOrderAsync(IZauberDbContext dbContext, Guid? parentId, bool isRootContent, CancellationToken cancellationToken)
+    private static async Task<int> GetNextSortOrderAsync(IZauberDbContext dbContext, Guid? parentId, bool isRootContent, CancellationToken cancellationToken)
     {
         var query = parentId == null
             ? dbContext.Contents.Where(c => c.ParentId == null && c.IsRootContent && !c.Deleted)
@@ -2733,7 +2739,7 @@ public partial class ContentService(
         return handlerResult;
     }
 
-    private IQueryable<Models.Content> ApplyNestedFilter(IQueryable<Models.Content> query,
+    private static IQueryable<Models.Content> ApplyNestedFilter(IQueryable<Models.Content> query,
         BaseQueryContentParameters.NestedContentFilter filter)
     {
         return filter switch

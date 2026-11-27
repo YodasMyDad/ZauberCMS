@@ -239,7 +239,7 @@ public class TagService(
         if (parameters.ItemId != null)
         {
             var tagItems = await dbContext.TagItems.Where(l => l.ItemId == parameters.ItemId).ToListAsync(cancellationToken);
-            if (tagItems.Any())
+            if (tagItems.Count != 0)
             {
                 foreach (var ti in tagItems)
                 {

@@ -3,7 +3,7 @@
 Last full run: 5668365 (2026-11-25, full) · Last changed run: b001147+wt (2026-11-27, Roadmap Phase 10e) · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
 Next free IDs: ZA-167 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
-After Roadmap Phase 11a (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1016 (1015 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review. ZA-164, ZA-165 fixed; ZA-166 found and fixed. Next free ID: ZA-167. Earlier after-phase lines: [history.md](history.md) run log
+After Roadmap Phase 11b (2026-11-27): Build PASS · Warnings: 0 (warnings are now errors; analysers at D43) · Vulnerable packages: 0 (CI now scans) · Tests: 1026 (1025 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-089, ZA-109, ZA-131 fixed. Next free ID: ZA-167. Earlier after-phase lines: [history.md](history.md) run log
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
 > browser or against PostgreSQL/Redis**, so items marked as needing a repro are reasoned, not observed. Critical and
@@ -16,8 +16,8 @@ After Roadmap Phase 11a (2026-11-27): Build PASS · Warnings: 0 · Vulnerable pa
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 6 | 68 | 1 |
-| Low | 14 | 40 | 6 |
+| Medium | 5 | 68 | 1 |
+| Low | 12 | 40 | 6 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
 a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11: the rest); there is no Backlog (owner, 2026-11-27).
@@ -31,12 +31,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Where: `ZauberCMS.Components/ZauberCMS.Components.csproj:73-76` · Category: F · Since: 2026-11-25
 - Issue / Trigger: `package.json` and `package-lock.json` ship as content files; the existing exclusion uses a stale machine-specific path.
 - Fix: `Content Remove="package*.json"` + `Pack="false"`. · Blocked by: nothing.
-
-### ZA-089 [Medium/High] CI can publish one version built from two commits
-
-- Where: `.github/workflows/ci.yml:162-188` · Category: F · Since: 2026-11-25
-- Issue / Trigger: Packages are pushed in arbitrary order with `--skip-duplicate` and the tag is created afterwards; a partial failure followed by a new commit reuses the version.
-- Fix: push in dependency order; reserve the tag first. · Blocked by: nothing (CI only).
 
 ### ZA-090 [Medium/High] Unwired MVC rendering path ships as public API
 
@@ -62,11 +56,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/ZauberCMSTemplate.Site.csproj:11-14` · Category: F · Since: 2026-11-25
 - Issue / Trigger: `Microsoft.AspNetCore.App.Internal.Assets` is hard-pinned and never stamped by CI, so new sites serve a stale `blazor.web.js`.
 - Fix: `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>`; template smoke test. · Blocked by: nothing.
-
-### ZA-109 [Low/High] CI and release script hardening
-
-- Where: `.github/workflows/ci.yml:3-7,10-27,83-84,155`, `release.ps1:58` · Category: D/F · Since: 2026-11-25
-- Issue / Fix: No explicit `permissions` on the build job, actions pinned by tag, docs-only commits publish (no `paths-ignore`), prerelease versions break the patch parse, `Set-Content` adds a blank line per run.
 
 ### ZA-118 [Low/High] Packaged `appsettings.json` has no `Zauber:ImageResize` section
 
@@ -119,12 +108,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Where: `ZauberCMS.Components/` (166 razor files) · Category: E · Since: 2026-11-25
 - Issue / Fix: 0 localiser uses, ~370 literal strings; `AdminDefaultLanguage` only affects formatting.
 
-### ZA-131 [Low/High] Engineering baseline still absent (roll-up)
-
-- Where: repo root · Category: F · Since: 2026-11-25
-- Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
-- Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
-
 ### ZA-155 [Low/High] Resized copies of a deleted image stay in `_mediacache`
 - Where: `ZauberCMS.Core/Media/Services/MediaService.cs` (`PurgeAsync`), ImageResize cache root (`ZauberSetup.cs`, `_mediacache`) · Category: D · Since: 2026-11-26 (Phase 8 audit)
 - Issue / Trigger: a permanent media delete removes the original file, not the resized copies ImageResize made of
@@ -162,7 +145,7 @@ history.md keeps every run.
 | Migration parity | OK — 3 migrations per provider, same names, snapshots aligned (52 entities / 53 indexes / 30 FKs). Content defect: ZA-050 |
 | Config parity | Packaged `ZauberCMS/appsettings.json` lacks `Zauber:ImageResize` (12 keys) → ZA-118 |
 | Docs drift | Paths all resolve; ~55 claims spot-checked, 5 wrong, corrected this run |
-| Repo hygiene | Only `ZauberCMS.Web/app.db` tracked (exempt); no `.gitattributes` → ZA-131 |
+| Repo hygiene | Only `ZauberCMS.Web/app.db` tracked (exempt); `.gitattributes`, `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and an SDK pin since Phase 11b (ZA-131 fixed) |
 | Tests | Not part of the first run. After Phase 10d: 912 (911 pass, 1 skipped for ZA-118), SQL Server (LocalDB), PostgreSQL and Redis |
 | Pattern counts | Not counted yet (added to the audit 2026-11-27); the next run records the first counts |
 | Hot-path budget | First run, by reading: about 10 round-trips cold; 0 within 5 s of the same URL; 4–5 after 5 s idle; 2 per 404; +3 per block list, +1 per single media picker. Phase 10 changed front-end caching since: re-measure |

@@ -28,7 +28,7 @@ public class QueryContentVersionsParameters
     public string? VersionName { get; set; }
     public DateTime? DateFrom { get; set; }
     public DateTime? DateTo { get; set; }
-    public bool IncludeAutoSaves { get; set; } = false;
+    public bool IncludeAutoSaves { get; set; }
     public ContentVersionOrderBy OrderBy { get; set; } = ContentVersionOrderBy.VersionNumber;
     public int PageIndex { get; set; } = 1;
     public int AmountPerPage { get; set; } = 10;

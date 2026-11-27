@@ -156,7 +156,7 @@ public class ExtensionManager(IServiceProvider serviceProvider)
             var implementation = kvp.Value;
             if (!implementation.IsAbstract)
             {
-                var instance = args.Any()
+                var instance = args.Length != 0
                     ? (T)Activator.CreateInstance(implementation, args)!
                     : (T)ActivatorUtilities.CreateInstance(serviceProvider, implementation);
                 instances[kvp.Key] = instance;

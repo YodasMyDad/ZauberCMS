@@ -38,7 +38,7 @@ public class SortMediaContextMenu(IMembershipService membershipService, IMediaSe
         var content = (Media)args.Value!;
         var dbContent = await mediaService.GetMediaAsync(new GetMediaParameters { Id = content.Id, IncludeChildren = true });
         var currentUser = await membershipService.GetCurrentUser();
-        if (!dbContent!.Children.Any())
+        if (dbContent!.Children.Count == 0)
         {
             // Show message if no children
             notificationService.Notify(new NotificationMessage

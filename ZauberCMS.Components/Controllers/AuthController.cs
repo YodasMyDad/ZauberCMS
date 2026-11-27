@@ -101,7 +101,7 @@ public class AuthController(
     }
 
     // Defence against open-redirect: only honour same-site redirect targets, fall back to "/" otherwise.
-    private IActionResult LocalRedirectOrHome(string? redirectUrl)
+    private RedirectResult LocalRedirectOrHome(string? redirectUrl)
     {
         if (!string.IsNullOrEmpty(redirectUrl) && Url.IsLocalUrl(redirectUrl))
         {

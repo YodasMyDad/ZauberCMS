@@ -91,7 +91,7 @@ public static class TreeExtensions
                 var iconColor = content.ContentType?.Icon != null ? "dimgray" : "inherit";
 
                 // Check if content has roles; if true, set icon color to red
-                if (content.ContentRoles.Any())
+                if (content.ContentRoles.Count != 0)
                 {
                     iconColor = "#AA0000";
                 }

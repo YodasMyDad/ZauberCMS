@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11b (2026-11-27): Build PASS · Warnings: 0 (now errors; analysers D43) · Vulnerable packages: 0 (CI scans) · Tests: 1026 (1025 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part; CI not run (GitHub only; checked with actionlint/shellcheck and a scratch-repository run of its steps). ZA-089, ZA-109, ZA-131 fixed. Next free ID: ZA-167
 After Roadmap Phase 11a (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1016 (1015 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-164, ZA-165 fixed; ZA-166 found and fixed. Next free ID: ZA-167
 After Roadmap Phase 10e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 993 (992 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their three Highs — password guessing on unconfirmed accounts, the single-load cache scoped per request, the 404 that counted as the error page — their Mediums and Lows fixed; slow regex redirects, per-server throttles and users deleted before v5 noted). ZA-030, ZA-031, ZA-032, ZA-033, ZA-095, ZA-098, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114, ZA-115, ZA-116, ZA-149, ZA-150 fixed; ZA-164 and ZA-165 new (Phase 11). Next free ID: ZA-166
 After Roadmap Phase 10d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 912 (911 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers, nothing High: the Medium — Radzen dialogs outside every error boundary — and the Lows fixed; the bins reloading on any save noted). ZA-025, ZA-085, ZA-096, ZA-097, ZA-101, ZA-108, ZA-156, ZA-161 fixed; ZA-026 and ZA-160 resolved. Next free ID: ZA-164
@@ -28,6 +29,36 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed, resolved, closed and declined
 
+- **Phase 11b (2026-11-27): engineering baseline, CI and release hardening (Roadmap D43–D44).** Details in the
+  Roadmap's Phase 11b notes.
+  - **ZA-131 [Low] Engineering baseline still absent — fixed (D43).** Root `Directory.Build.props` (framework,
+    nullable, analysers at `AnalysisLevel` 10.0 with Recommended Globalization/Performance/Reliability/Security/Usage
+    rules, warnings as errors except NU1901–NU1904, NuGet audit, the four packages' one version and metadata, the
+    `CopyNuGetPackage` target), `Directory.Packages.props` (central package management), `.editorconfig`,
+    `.gitattributes` (`* text=auto`: renormalising changes no tracked file), `global.json` SDK pin (10.0.400,
+    `latestFeature`), and a CI scan that fails on vulnerable packages, direct or transitive. `ZauberCMS.Template/`
+    has its own stop files, so the template package and site are untouched. About 100 analyser hits fixed (culture
+    in keys, attributes and parsing, ordinal comparisons, `Count`/`Length`, statics, `Regex.Count`, exception
+    types), a few suppressed at the site with the reason. Verified: Release build 0 warnings (also
+    `--no-incremental`); the four packages and the template packed before and after have the same nuspecs and
+    file lists (sizes equal except the assemblies); `dotnet msbuild -getProperty` shows the template site outside
+    the root settings; `Packaging/BuildBaselineTests` and `Shared/CultureInvariantTests` (the two culture tests
+    failed on the old code: "1.5" read as 15 under de-DE, a soft hyphen dropped the first letter).
+  - **ZA-089 [Medium] CI can publish one version built from two commits — fixed (D44).** The publish job pushes
+    the version's tag before it builds; a tag on another commit, or one pushed meanwhile, stops the run. Packages
+    are checked and pushed in dependency order; `--skip-duplicate` only on a rerun of the tagged commit. Verified:
+    the version, stamp and commit-back steps run as written against a scratch repository and bare origin (first
+    release, rerun, partial failure then a new commit gets the next version, tag pushed between fetch and push
+    rejected, among 13 cases); actionlint 1.7.12 with shellcheck 0.11.0 clean; `BuildBaselineTests` (tag before
+    build and pushes, dependency order). CI itself not run: it runs on GitHub only, and nothing was pushed to
+    `main-static`.
+  - **ZA-109 [Low] CI and release script hardening — fixed.** Workflow `permissions: contents: read`, `contents:
+    write` only for publishing; actions pinned by commit (checkout v7.0.1, setup-dotnet v6.1.0) with the build
+    job's checkout keeping no credentials; `paths-ignore` for documentation; prerelease-safe parsing (`X.Y.Z-label`
+    published once, a non-semver version fails); `release.ps1` stamps `Directory.Build.props` and the template's
+    csprojs keeping each file's bytes and encoding (no blank line per run; the 40 it had added removed). Verified:
+    the scratch-repository runs above (prerelease, second push of a prerelease, non-semver), actionlint, and
+    `release.ps1`'s functions against copies of its three files (round trip byte for byte).
 - **Phase 11a (2026-11-27): the not-found page and redirect domains (Roadmap D41–D42).** Details in the Roadmap's
   Phase 11a notes.
   - **ZA-164 [Medium] The front end's "not found" page is sent with an empty body — fixed.** Reproduced with curl

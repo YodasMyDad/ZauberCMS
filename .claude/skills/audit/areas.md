@@ -170,8 +170,9 @@ Paths are relative to the repo root. `Core` = `ZauberCMS.Core`, `Components` = `
 
 ### U16 Packaging, CI, template project, tests
 
-- **Paths**: every `*.csproj`, `global.json`, `tests/Directory.Build.props`, `.github/workflows/`, `migrations.ps1`,
-  `ZauberCMS.Template/` (csproj and `template.json`), `ZauberCMS.Web/Program.cs` (the dev site's bootstrap: compare it
+- **Paths**: every `*.csproj`, `Directory.Build.props` and `Directory.Packages.props` (root, `tests/`,
+  `ZauberCMS.Template/`), `.editorconfig`, `.gitattributes`, `global.json`, `.github/workflows/`, `release.ps1`,
+  `migrations.ps1`, `ZauberCMS.Template/` (csproj and `template.json`), `ZauberCMS.Web/Program.cs` (the dev site's bootstrap: compare it
   with the template's), `ReadMe.md`, `Docs/Releasing.md`, `tests/` (about 10k lines: read it for what is and isn't
   covered and for tests that cannot fail, not for style).
 - **Focus**: F4, F5; read K's results for the package, API-break and template rows (don't run them again); the test

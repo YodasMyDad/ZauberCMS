@@ -599,7 +599,9 @@ public class MembershipService(
             {
                 // Lowered without the server's culture (ZA-017); LOWER() in SQL on the column
                 var searchTermLower = parameters.SearchTerm.ToLowerInvariant();
+#pragma warning disable CA1304, CA1311, CA1862 // EF translates ToLower() on the column to SQL LOWER(); the culture overloads are not translatable
                 query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(searchTermLower));
+#pragma warning restore CA1304, CA1311, CA1862
             }
 
             if (parameters.Ids.Count != 0)
@@ -1180,7 +1182,9 @@ public class MembershipService(
             {
                 // Lowered without the server's culture (ZA-017); LOWER() in SQL on the column
                 var searchTermLower = parameters.SearchTerm.ToLowerInvariant();
+#pragma warning disable CA1304, CA1311, CA1862 // EF translates ToLower() on the column to SQL LOWER(); the culture overloads are not translatable
                 query = query.Where(x => x.UserName != null && x.UserName.ToLower().Contains(searchTermLower));
+#pragma warning restore CA1304, CA1311, CA1862
             }
 
             if (parameters.Roles.Count != 0)

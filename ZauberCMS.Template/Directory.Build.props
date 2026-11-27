@@ -1,0 +1,5 @@
+<Project>
+    <!-- Stops the repository's Directory.Build.props from applying here. The template site under template/ is copied
+         to consumers by `dotnet new`, so it and the template package's csproj stay self-contained: everything they
+         need is in their own files. This file sits beside template/, so it is not packed into the template. -->
+</Project>

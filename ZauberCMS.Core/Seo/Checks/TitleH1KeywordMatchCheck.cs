@@ -37,7 +37,7 @@ public partial class TitleH1KeywordMatchCheck : ISeoCheck
             // Find matching words
             var matchingWords = titleWords.Intersect(h1Words, StringComparer.OrdinalIgnoreCase).ToList();
 
-            if (!matchingWords.Any())
+            if (matchingWords.Count == 0)
             {
                 seoItem.Status = AlertType.Warning;
                 seoItem.DefaultMessage = "No keywords from the title appear in the <h1>. Consider aligning them for better SEO.";

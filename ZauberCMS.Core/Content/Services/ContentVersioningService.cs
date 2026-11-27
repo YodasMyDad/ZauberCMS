@@ -520,7 +520,7 @@ public class ContentVersioningService(
     /// Locks the page's row until the caller's transaction ends (an update that changes nothing), so two version
     /// writes for one page run one after the other on every database provider (ZA-146).
     /// </summary>
-    private static Task LockContentRowAsync(IZauberDbContext dbContext, Guid contentId,
+    private static Task<int> LockContentRowAsync(IZauberDbContext dbContext, Guid contentId,
         CancellationToken cancellationToken) =>
         dbContext.Contents.Where(c => c.Id == contentId)
             .ExecuteUpdateAsync(s => s.SetProperty(c => c.DateUpdated, c => c.DateUpdated), cancellationToken);
@@ -678,7 +678,7 @@ public class ContentVersioningService(
         return differences;
     }
 
-    private List<BlockListDifference> CompareBlockListSnapshots(ContentVersion version1, ContentVersion version2)
+    private static List<BlockListDifference> CompareBlockListSnapshots(ContentVersion version1, ContentVersion version2)
     {
         var differences = new List<BlockListDifference>();
 
@@ -705,7 +705,7 @@ public class ContentVersioningService(
                     prop1, prop2,
                     version1.BlockListSnapshots, version2.BlockListSnapshots);
 
-                if (contentChanges.Any())
+                if (contentChanges.Count != 0)
                 {
                     differences.Add(new BlockListDifference
                     {
@@ -720,14 +720,14 @@ public class ContentVersioningService(
         return differences;
     }
 
-    private bool IsBlockListProperty(string value)
+    private static bool IsBlockListProperty(string value)
     {
         return !string.IsNullOrWhiteSpace(value) &&
                value.TrimStart().StartsWith('[') &&
                value.TrimEnd().EndsWith(']');
     }
 
-    private List<BlockListContentChange> CompareBlockListProperty(
+    private static List<BlockListContentChange> CompareBlockListProperty(
         ContentPropertySnapshot prop1, ContentPropertySnapshot prop2,
         List<BlockListContentSnapshot> snapshots1, List<BlockListContentSnapshot> snapshots2)
     {
@@ -785,7 +785,7 @@ public class ContentVersioningService(
                     var contentDiffs = CompareSnapshots(snapshot1.ContentSnapshot, snapshot2.ContentSnapshot);
                     var propertyDiffs = ComparePropertySnapshots(snapshot1.PropertySnapshots, snapshot2.PropertySnapshots);
 
-                    if (contentDiffs.Any() || propertyDiffs.Any())
+                    if (contentDiffs.Count != 0 || propertyDiffs.Count != 0)
                     {
                         changes.Add(new BlockListContentChange
                         {
@@ -807,7 +807,7 @@ public class ContentVersioningService(
         return changes;
     }
 
-    private List<Guid> ParseContentIds(string jsonValue)
+    private static List<Guid> ParseContentIds(string jsonValue)
     {
         try
         {

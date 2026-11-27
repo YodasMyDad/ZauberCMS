@@ -9,5 +9,5 @@ public class ZauberCMSEditorSettingsModel
     public string ToolbarLayout { get; set; } = "Full";
     
     // Image constraints
-    public bool AllowBase64ImageUpload { get; set; } = false;
+    public bool AllowBase64ImageUpload { get; set; }
 }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Web;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -50,7 +51,7 @@ public static class HtmlHelperExtensions
             var isHomePage = httpContext.Request.Path == "/";
             
             // Basic meta tags
-            sb.AppendLine($"<title>{HttpUtility.HtmlEncode(metaData.PageTitle ?? name)}</title>");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"<title>{HttpUtility.HtmlEncode(metaData.PageTitle ?? name)}</title>");
             AddMetaTag(sb, "description", metaData.MetaDescription);
 
             if (metaData.OpenGraphImage != null)
@@ -80,7 +81,7 @@ public static class HtmlHelperExtensions
         else
         {
             // Basic meta tags
-            sb.AppendLine($"<title>{HttpUtility.HtmlEncode(model.GetValue<string>(titleAlias ?? "") ?? name)}</title>");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"<title>{HttpUtility.HtmlEncode(model.GetValue<string>(titleAlias ?? "") ?? name)}</title>");
             AddMetaTag(sb, "description", model.GetValue<string>(descriptionAlias ?? ""));
         }
     }
@@ -89,7 +90,7 @@ public static class HtmlHelperExtensions
     {
         if (!string.IsNullOrWhiteSpace(content))
         {
-            sb.AppendLine(
+            sb.AppendLine(CultureInfo.InvariantCulture,
                 $"<meta name=\"{HttpUtility.HtmlEncode(name)}\" content=\"{HttpUtility.HtmlEncode(content)}\">");
         }
     }
@@ -98,7 +99,7 @@ public static class HtmlHelperExtensions
     {
         if (!string.IsNullOrWhiteSpace(content))
         {
-            sb.AppendLine(
+            sb.AppendLine(CultureInfo.InvariantCulture,
                 $"<meta property=\"{HttpUtility.HtmlEncode(property)}\" content=\"{HttpUtility.HtmlEncode(content)}\">");
         }
     }
@@ -107,7 +108,7 @@ public static class HtmlHelperExtensions
     {
         if (!string.IsNullOrWhiteSpace(href))
         {
-            sb.AppendLine($"<link rel=\"{HttpUtility.HtmlEncode(rel)}\" href=\"{HttpUtility.HtmlEncode(href)}\">");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"<link rel=\"{HttpUtility.HtmlEncode(rel)}\" href=\"{HttpUtility.HtmlEncode(href)}\">");
         }
     }
 }

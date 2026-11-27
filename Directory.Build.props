@@ -1,0 +1,55 @@
+<Project>
+    <!-- Shared by every project in this repository except ZauberCMS.Template, whose own Directory.Build.props stops
+         this one: the template site is copied to consumers by `dotnet new` and must stay self-contained.
+         tests/Directory.Build.props imports this file and adds the test settings. -->
+
+    <PropertyGroup Label="Language and framework">
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <!-- LangVersion is left to the SDK: the C# version the target framework supports moves with the TFM
+             (Phase 12 retargets). "latest" would let a newer SDK use features net10.0 does not support. -->
+    </PropertyGroup>
+
+    <PropertyGroup Label="Analysers and warnings (Roadmap D43)">
+        <!-- The .NET analysers' rule set is pinned to the .NET 10 one, so a newer SDK does not add warnings by itself;
+             Phase 12 moves it to 11.0. The categories below run their "Recommended" rules as warnings; Design and
+             Naming stay at the default because their rules rename or reshape public API (ZA-092, ZA-124, Phase 11f).
+             Rule severities that differ are in .editorconfig, each with its reason. -->
+        <AnalysisLevel>10.0</AnalysisLevel>
+        <AnalysisModeGlobalization>Recommended</AnalysisModeGlobalization>
+        <AnalysisModePerformance>Recommended</AnalysisModePerformance>
+        <AnalysisModeReliability>Recommended</AnalysisModeReliability>
+        <AnalysisModeSecurity>Recommended</AnalysisModeSecurity>
+        <AnalysisModeUsage>Recommended</AnalysisModeUsage>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <!-- A vulnerability advisory published overnight is not caused by the change being built: locally it stays a
+             warning, and CI's vulnerability scan fails on it (direct and transitive packages). -->
+        <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+        <NuGetAudit>true</NuGetAudit>
+        <NuGetAuditMode>all</NuGetAuditMode>
+        <NuGetAuditLevel>low</NuGetAuditLevel>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Package version and metadata (the four packages)">
+        <!-- One version for ZauberCMS.Core, .Components, .Routing and ZauberCMS. CI (.github/workflows/ci.yml) and
+             release.ps1 stamp it here; the template's two csprojs carry their own copy. -->
+        <Version>4.1.3</Version>
+        <Authors>Lee Messenger</Authors>
+        <PackageTags>Web</PackageTags>
+        <PackageProjectUrl>https://github.com/YodasMyDad/ZauberCMS</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
+        <LocalNugetSource>$(MSBuildThisFileDirectory)NugetSource</LocalNugetSource>
+    </PropertyGroup>
+
+    <!-- A project that sets GeneratePackageOnBuild also gets its package copied to NugetSource/ (gitignored), a local
+         feed for testing unreleased packages. The condition is read when the target runs, after the csproj. -->
+    <Target Name="CopyNuGetPackage" AfterTargets="Pack" Condition="'$(GeneratePackageOnBuild)' == 'true'">
+        <PropertyGroup>
+            <PackageOutputDir>$(OutputPath)..\</PackageOutputDir>
+            <GeneratedPackage>$(PackageOutputDir)\$(PackageId).$(Version).nupkg</GeneratedPackage>
+        </PropertyGroup>
+        <Copy SourceFiles="$(GeneratedPackage)" DestinationFolder="$(LocalNugetSource)" />
+    </Target>
+</Project>

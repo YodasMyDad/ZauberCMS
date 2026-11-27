@@ -1,0 +1,51 @@
+<Project>
+    <!-- Central package management: every NuGet version used by the solution's projects is set here, once, so the
+         four packages ship the same dependency versions. A csproj lists a PackageReference without a Version.
+         Not used by ZauberCMS.Template: its Directory.Packages.props turns this off, because the template site is
+         copied to consumers by `dotnet new` and keeps its own explicit versions. The four packages depend on each
+         other through ProjectReference, so their own versions come from <Version> in Directory.Build.props. -->
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+
+    <ItemGroup Label="Microsoft (keep on one .NET version, D4)">
+        <PackageVersion Include="Microsoft.AspNetCore.Authentication.Facebook" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.Extensions.Localization" Version="10.0.15" />
+        <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
+        <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.4" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="10.7.4" />
+    </ItemGroup>
+
+    <ItemGroup Label="Third party">
+        <PackageVersion Include="BlazorMonaco" Version="3.5.0" />
+        <PackageVersion Include="FluentValidation" Version="12.2.0" />
+        <PackageVersion Include="HtmlAgilityPack" Version="1.13.1" />
+        <PackageVersion Include="HtmlSanitizer" Version="11.0.26" />
+        <PackageVersion Include="Humanizer" Version="3.0.10" />
+        <PackageVersion Include="ImageResize" Version="3.5.0" />
+        <PackageVersion Include="MailKit" Version="5.0.0" />
+        <PackageVersion Include="Radzen.Blazor" Version="13.3.0" />
+        <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+        <PackageVersion Include="Serilog.Sinks.Async" Version="2.1.0" />
+        <PackageVersion Include="TinyMCE.Blazor" Version="2.2.2" />
+        <PackageVersion Include="ZauberCMS.RTE" Version="4.0.0" />
+    </ItemGroup>
+
+    <ItemGroup Label="Tests only">
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+        <PackageVersion Include="Testcontainers.PostgreSql" Version="4.17.0" />
+        <PackageVersion Include="Testcontainers.Redis" Version="4.17.0" />
+        <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+        <PackageVersion Include="xunit.v3" Version="4.0.3" />
+    </ItemGroup>
+</Project>

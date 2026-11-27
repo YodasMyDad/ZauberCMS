@@ -46,7 +46,7 @@ public partial class WordCountCheck : ISeoCheck
     private static int CountWords(string text)
     {
         // Normalize whitespace and count words
-        return MyRegex().Matches(text).Count;
+        return MyRegex().Count(text);
     }
 
     [GeneratedRegex(@"\b\w{2,}\b")]

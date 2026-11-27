@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -124,7 +125,7 @@ public static class CacheExtensions
         // Add the identifier if provided
         if (!string.IsNullOrEmpty(identifier))
         {
-            keyBuilder.Append($"{identifier}-");
+            keyBuilder.Append(CultureInfo.InvariantCulture, $"{identifier}-");
         }
         
         // Add all public properties and their values
@@ -135,7 +136,7 @@ public static class CacheExtensions
             {
                 var value = prop.GetValue(parameters);
                 var stringValue = value?.ToString() ?? "null";
-                keyBuilder.Append($"{prop.Name}:{stringValue}-");
+                keyBuilder.Append(CultureInfo.InvariantCulture, $"{prop.Name}:{stringValue}-");
             }
         }
         
@@ -158,7 +159,7 @@ public static class CacheExtensions
         // Add the identifier if provided
         if (!string.IsNullOrEmpty(identifier))
         {
-            keyBuilder.Append($"{identifier}-");
+            keyBuilder.Append(CultureInfo.InvariantCulture, $"{identifier}-");
         }
         
         // Add all public properties and their values
@@ -169,7 +170,7 @@ public static class CacheExtensions
             {
                 var value = prop.GetValue(parameters);
                 var stringValue = value?.ToString() ?? "null";
-                keyBuilder.Append($"{prop.Name}:{stringValue}-");
+                keyBuilder.Append(CultureInfo.InvariantCulture, $"{prop.Name}:{stringValue}-");
             }
         }
         

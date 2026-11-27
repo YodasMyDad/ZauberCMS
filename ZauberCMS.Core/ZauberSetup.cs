@@ -155,7 +155,7 @@ public static class ZauberSetup
         if (!zauberSettings.DatabaseProvider.IsNullOrWhiteSpace() &&
             DatabaseProviders.Normalise(zauberSettings.DatabaseProvider) == null)
         {
-            throw new Exception("Unable to find database provider in appSettings");
+            throw new InvalidOperationException("Unable to find database provider in appSettings");
         }
 
         var installState = new InstallState(builder.Configuration);

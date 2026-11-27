@@ -360,6 +360,9 @@ public partial class BlazoredModalInstance : IDisposable
     private void StopListeningToBackgroundClick()
         => _listenToBackgroundClicks = false;
 
-    void IDisposable.Dispose() 
-        => Parent.OnModalClosed -= AttemptFocus;
+    void IDisposable.Dispose()
+    {
+        Parent.OnModalClosed -= AttemptFocus;
+        GC.SuppressFinalize(this);
+    }
 }

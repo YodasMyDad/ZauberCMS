@@ -20,10 +20,11 @@
   **Phase 10d done** (admin UI robustness and the resizable tree panel, D32, 2026-11-27).
   **Phase 10e done** (front end, security and identity hardening, D33–D36, 2026-11-27).
   **Phase 11a done** (the not-found page and redirect domains, D41–D42, 2026-11-27).
-  **20 open findings** (0 Critical, 0 High, 6 Medium, 14 Low), each one assigned below to a phase (10f–10i or 11),
+  **Phase 11b done** (engineering baseline, CI and release hardening, D43–D44, 2026-11-27).
+  **17 open findings** (0 Critical, 0 High, 5 Medium, 12 Low), each one assigned below to a phase (10f–10i or 11),
   plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
   new finding goes into the phase whose theme fits. **In progress: Phase 11** (owner, 2026-11-27: before 10f–10i;
-  parts 11a–11g in its section; **next: 11b**), then 10f, 10g, 10h, 10i, then Phase 12 (design
+  parts 11a–11g in its section; **next: 11c**), then 10f, 10g, 10h, 10i, then Phase 12 (design
   questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -75,6 +76,8 @@
 | D40 | **The installer keeps writing the database settings to `appsettings.json` (D19 stands).** A separate file would be lost on deployments that delete extra files anyway; the docs keep telling people to put the settings in their deployed configuration or environment variables. (owner, 2026-11-27) | D19, D24 |
 | D41 | **An address with no page is answered by ZauberCMS with the site's `Zauber:NotFoundComponent`, in its layout, with status 404 set as the response starts.** .NET 10 sends a static render that ends at 404 without its HTML, so that status-code pages can re-execute the request; Blazor's own answer is a Router `NotFoundPage` (a routable component of a fixed type) or status-code re-execution to an address. Both were set aside: the not-found view is a site's setting chosen at run time with its own layout and the request's content and culture, and re-execution would route a second request. `EntryPage` sets the 404, so a site's view needs no code for it; `HttpContext.SetStatusCodeWhenResponseStarts` (Core, public) is for a site page that shows a not-found view of its own, and changes only a response still at 200, so a redirect or the error page (D33) keeps its status. Umbraco also renders its configured 404 page (the last-chance content finder / `Error404Collection`) with status 404 in the same request, without re-execution. (owner delegated to Umbraco parity, 2026-11-27, Phase 11a) | ZA-164 |
 | D42 | **A redirect with a domain applies only on that domain; one without applies on every host; for the same address the one for the request's domain wins.** The domain is matched by the rule content routing uses (same host; a domain's path, as in `example.com/fr`, on whole segments), and the From URL stays the whole path. Exact rules are still tried before regular expressions, and within each the ones for a domain come first. The loop check counts only rules that can fire on the same requests. Umbraco's redirect URL management keeps each redirect with a content item's culture and domain (its root), so a redirect is never global; ZauberCMS keeps "any domain" because a single-site install has no domains and its redirects must keep working. (owner delegated to Umbraco parity, 2026-11-27, Phase 11a) | ZA-165, ZA-166 |
+| D43 | **The .NET analysers run at the .NET 10 rule set with the Recommended rules of five categories as warnings, and warnings are errors.** `AnalysisLevel` is pinned to 10.0 (a newer SDK adds no warnings by itself; Phase 12 moves it to 11.0) and `AnalysisMode` is Recommended for Globalization, Performance, Reliability, Security and Usage; Design and Naming stay at the default, because their rules rename or reshape public API, which the v5 clean-up (11f) settles. Every project has `TreatWarningsAsErrors`, except for vulnerability advisories (NU1901–NU1904): a new advisory is not caused by the change being built, so it stays a warning locally and CI's scan fails on it. Rules turned down are in `.editorconfig`, each with its reason (logging-delegate rules CA1848/CA1873 are suggestions; two test-only rules are off; migrations count as generated code). The code-style analysers (`EnforceCodeStyleInBuild`) are not on: the style rules are IDE suggestions, so no file is reformatted for them. Recommended for every category gave about 740 hits, most of them test-method names (CA1707), log calls and public names. Umbraco's repository has the same pieces (`Directory.Build.props`, central package management, `.editorconfig`, an SDK pin that rolls forward to the latest feature band) and works down a list of warnings; ZauberCMS starts at zero, so it keeps zero by making them errors. (owner delegated, 2026-11-27, Phase 11b) | ZA-131 |
+| D44 | **One version is built from one commit, and its tag is pushed before any package.** The publish job reserves the version by pushing its tag `vX.Y.Z` first, then builds and pushes the five packages in dependency order (Core, Components, Routing, ZauberCMS, Template). A later failure never lets the next commit reuse the version: that commit finds the tag and gets the next one; a rerun of the same commit finds its tag at HEAD and publishes the same code again, skipping the packages already pushed (a first run fails on a package version that exists). The version: `<Version>` in `Directory.Build.props` is published as written when it is above the latest stable tag; at or below it, the patch of that tag is counted up (as before); a prerelease (`X.Y.Z-label`) is published once, as written, and must be bumped before the next push. Commits that change only documentation do not run CI, so they do not publish. Umbraco publishes from a release tag a release manager creates, its version from the repository (Nerdbank.GitVersioning); ZauberCMS keeps publishing on a push to `main-static`, with the tag taken first so that a tag always names the one commit its packages came from. (owner delegated, 2026-11-27, Phase 11b) | ZA-089, ZA-109 |
 
 ## Working rules for the rework
 
@@ -1027,7 +1030,7 @@ Done in parts, one commit each, in this order:
 | Part | Scope | Status |
 | --- | --- | --- |
 | 11a | ZA-164, ZA-165 (found in Phase 10e) | DONE 2026-11-27 (D41, D42; ZA-166 found and fixed) |
-| 11b | Baseline: ZA-131, CI and release hardening ZA-089, ZA-109 | |
+| 11b | Baseline: ZA-131, CI and release hardening ZA-089, ZA-109 | DONE 2026-11-27 (D43, D44) |
 | 11c | Packaging and template: ZA-087, ZA-094, ZA-118, ZA-119, ZA-123, template smoke test | |
 | 11d | Start-up and DI: ZA-120, ZA-121 | |
 | 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | |
@@ -1096,8 +1099,77 @@ Umbraco's way as delegated.
     of two domains that both match a request the longer one wins (it was the first in the list).
   - New public `HttpContextExtensions.SetStatusCodeWhenResponseStarts`. Breaking: none.
 
+#### Phase 11b — Engineering baseline, CI and release hardening — DONE (2026-11-27)
+ZA-089 (Medium); ZA-109, ZA-131 (Low) fixed. Decisions D43 (analysers and warnings) and D44 (one version from one
+commit), taken as delegated.
+- **Build baseline (ZA-131).** `Directory.Build.props` (repository root): target framework, nullable, implicit
+  usings, the analysers (D43), warnings as errors, NuGet audit of direct and transitive packages, and the four
+  packages' shared version and metadata (`Version`, authors, licence, URLs, tags), plus the `CopyNuGetPackage` target
+  the four csprojs repeated. `LangVersion` is left to the SDK (it follows the TFM). `tests/Directory.Build.props`
+  imports it and keeps the test settings. `Directory.Packages.props`: central package management, every version
+  once. The four packages no longer carry a `PackageReference` to each other next to the `ProjectReference`; the
+  packed dependency comes from the `ProjectReference` and its `Version`, so CI and `release.ps1` stamp one line.
+  `.editorconfig` (indentation as the files already are, the Standards' code style as IDE suggestions, the
+  analyser levels with reasons), `.gitattributes` (`* text=auto` and binary types: every tracked text file is
+  already LF in the repository, so `git add --renormalize` changes nothing), `global.json` pins the SDK to the 10.0
+  band (`10.0.400`, `rollForward: latestFeature`, no previews) and keeps the test runner. CI's build job takes its
+  SDK from `global.json` and ends with a scan that fails on any vulnerable package, direct or transitive
+  (`dotnet package list --vulnerable --include-transitive`; it exits 0 either way, so the step reads its JSON).
+- **The template stays self-contained.** `ZauberCMS.Template/Directory.Build.props` (empty) and
+  `Directory.Packages.props` (central management off) stop the repository's files for the template package and the
+  template site; they sit beside `template/`, so they are not packed. The template site keeps its explicit versions.
+- **Analyser hits fixed (D43).** About 100: culture-dependent formatting and parsing (cache keys, HTML attributes,
+  user names, the installer's row count, `SplitStringUsing`, the validator's property paths) now invariant;
+  `EnsureNotStartsWith`/`EnsureNotEndsWith` compare the character ordinally; view paths compared ordinally;
+  `Any()` on lists and arrays replaced by `Count`/`Length`; private members that use no instance data made static;
+  a shared `JsonSerializerOptions` for the content type export; `Regex.Count`; `MD5.HashData`; the generic
+  `CreateDelegate`; `GC.SuppressFinalize` in the modal's `Dispose`; a fixed log template for Identity errors;
+  `InvalidOperationException` instead of `NullReferenceException`/`Exception` (the validator without an `EditForm`,
+  an unknown database provider); Components declares English as its neutral resource language. Suppressed at the
+  site with the reason: the four EF search queries (`ToLower()` is translated to SQL `LOWER()`; the culture overloads
+  are not, ZA-017), the MD5 behind the obsolete `ToMd5` (ZA-031), the public mutable statics of `AssemblyManager`
+  (ZA-092, 11f).
+- **CI and release (ZA-089, ZA-109, D44).** `.github/workflows/ci.yml`: `permissions: contents: read` for the
+  workflow and `contents: write` only for the publish job; `actions/checkout` and `actions/setup-dotnet` pinned by
+  commit (tag in a comment) and moved to their latest majors; the build job's checkout keeps no credentials;
+  `paths-ignore` for Markdown, `Docs/`, `.audit/`, `.claude/`, IDE folders and `LICENSE`. The publish job reserves
+  the version first (pushes the tag; fails if it exists on another commit or was pushed meanwhile), checks that the
+  five packages were built, pushes them in dependency order (`--skip-duplicate` only on a rerun of the tagged
+  commit), then commits the stamped version back. Version parsing accepts `X.Y.Z-label`; a version that is not
+  semver fails the run. `release.ps1` reads and stamps `Directory.Build.props` and the template's two csprojs,
+  keeps each file's encoding and no longer adds a blank line per run (the 40 it had added are removed).
+- Tests: `Packaging/BuildBaselineTests` (no `Version` on a solution `PackageReference` and each one in
+  `Directory.Packages.props`; one `Version` for the four packages; the template's stop files; the template site's
+  explicit versions; the SDK pin; actions pinned by commit; read-only default permissions; tag pushed before the
+  build and the package pushes, in dependency order), `Shared/CultureInvariantTests` (`SplitStringUsing` under
+  de-DE read "1.5" as 15; a soft hyphen made `EnsureNotStartsWith` drop the first letter; both seen to fail before
+  the fix). Full suite 1026 (1025 pass, 1 skipped for ZA-118) on SQLite, PostgreSQL, SQL Server LocalDB and Redis;
+  Release build 0 warnings, also with `--no-incremental`. Dev site (`ZauberCMS.Web`, Release) smoke-run: `/` 200,
+  `/nope-page` 404 with the not-found view, `/admin` 302 to the login page, `/Account/Login` 200, nothing logged as
+  an error.
+- Packages: the four packages and the template were packed before and after; their nuspecs (dependencies and
+  versions, `exclude` flags, metadata) and file lists are the same, and every file except the assemblies has the
+  same size. `dotnet msbuild -getProperty` on the template site shows the template's stop files in use
+  (`ManagePackageVersionsCentrally` false, no warnings as errors, analysers at the SDK default).
+- **Not run: CI itself.** It runs only on GitHub, and nothing was pushed to `main-static`. Checked locally instead:
+  `actionlint` 1.7.12 with `shellcheck` 0.11.0 (clean); the version, stamp and commit-back steps run as written
+  against a scratch git repository with a bare origin (first release, rerun, partial failure, a set major, a stale
+  lower version, a prerelease and its second push, a prerelease below a release, a non-semver version, a tag only on
+  the remote, a tag pushed between fetch and push, two tags on HEAD); the scan step against the solution (passes)
+  and against a project with a vulnerable package (fails); `release.ps1`'s functions against copies of the three
+  files (round trip byte for byte). The first push to `main-static` after this is the first real run.
+- **Release notes (D18):**
+  - Build and contribution only; nothing a site sees changes, except: `StringExtensions.SplitStringUsing` parses
+    numbers with the invariant culture (it used the server's: "1.5" was 15 under de-DE), and
+    `EnsureNotStartsWith`/`EnsureNotEndsWith` compare the character exactly.
+  - `FluentValidationValidator` without a cascading `EditContext` throws `InvalidOperationException` (was
+    `NullReferenceException`); an unknown `Zauber:DatabaseProvider` throws `InvalidOperationException` (was
+    `Exception`, which still catches it).
+  - Identity errors are logged with a fixed template (`Identity error {Code}: {Description}`).
+  - Breaking: none.
+
 ### Phase 12 — .NET 11 (D4)
-Retarget to `net11.0`, move Microsoft/EF/Npgsql packages to 11.x, Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
+Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 
 Owner instructions for this phase (2026-11-25):

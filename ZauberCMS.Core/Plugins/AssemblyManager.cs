@@ -6,10 +6,10 @@ namespace ZauberCMS.Core.Plugins;
 public static class AssemblyManager
 {
     private static IEnumerable<Assembly?> _assemblies = null!;
-#pragma warning disable CA2211
+#pragma warning disable CA2211 // public mutable statics, frozen by the public API until the v5 clean-up makes them internal (ZA-092)
     public static ConcurrentDictionary<Type, IEnumerable<Type>> Types = null!;
-#pragma warning restore CA2211
     public static ConcurrentDictionary<string, Type> TypesByName = null!;
+#pragma warning restore CA2211
 
     /// <summary>
     /// Gets the cached assemblies that have been set by the SetAssemblies method.

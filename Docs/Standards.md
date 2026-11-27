@@ -26,7 +26,10 @@ patterns into new code.
 - Strings: `StringComparison.Ordinal`/`OrdinalIgnoreCase` explicitly; never `ToLower()` for comparisons. In queries,
   use `EF.Functions.Like`/collation-aware comparisons that work on all three providers.
 - Time: `DateTime.UtcNow` everywhere persisted; PostgreSQL rejects non-UTC `DateTimeKind`.
-- No new dependency without a reason in the PR; prefer the BCL and what's already referenced. No MediatR.
+- No new dependency without a reason in the PR; prefer the BCL and what's already referenced. No MediatR. Its version
+  goes in `Directory.Packages.props` (§10).
+- Culture: text ZauberCMS writes or parses for itself (keys, attributes, numbers in URLs or files) uses
+  `CultureInfo.InvariantCulture`; the analysers flag the overloads that would use the server's culture.
 
 ## 3. Async, lifetimes, DI
 
@@ -113,7 +116,8 @@ patterns into new code.
 ## 9. Testing
 
 Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it on every PR and before publishing.
-`global.json` selects the Microsoft.Testing.Platform runner, which xUnit v3 needs on the .NET 10 SDK.
+`global.json` pins the SDK band and selects the Microsoft.Testing.Platform runner, which xUnit v3 needs on the .NET
+10 SDK.
 
 - `tests/ZauberCMS.Core.Tests` — service tests. `Infrastructure/TestSite` builds the **real** DI graph with
   `AddZauberCms`, a private in-memory SQLite database created by the real migrations, the seeders, and a signed-in
@@ -122,7 +126,8 @@ Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it o
 - `tests/ZauberCMS.Components.Tests` — plain unit tests of component-side models (`BlockListState`) and the
   snapshot of shipped property-editor type names (`Discovery/Snapshots/PropertyEditors.txt`: adding an editor means
   adding a line; a line may never be removed or renamed — the names are stored in site databases).
-- Settings shared by both projects live in `tests/Directory.Build.props` (warnings are errors there).
+- Settings shared by both projects live in `tests/Directory.Build.props`, which imports the root one (warnings are
+  errors in every project).
 - **Every bug fix has a regression test.** A test that describes the correct behaviour of a bug that is still open
   is committed with `Skip = "ZA-NNN (open): …"` after it has been seen to fail; the fix removes the skip. Never
   write a test that asserts the buggy behaviour.
@@ -142,12 +147,25 @@ Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it o
 - Not built yet: bUnit component tests, and a template smoke test
   (`dotnet new zaubercms` → build). UI behaviour without a test still needs its manual verification written down.
 
-## 10. Repo hygiene (target)
+## 10. Repo hygiene
 
-Not in place yet; add in their own change, not mixed with features: `Directory.Build.props` (shared TFM, nullable,
-`AnalysisLevel=latest`, `TreatWarningsAsErrors` once the warning baseline is zero), `Directory.Packages.props` (central
-package management — keeps the 4 packages' dependency versions aligned), `.editorconfig`, `global.json` (pin SDK),
-CI running tests and `dotnet list package --vulnerable`.
+In place since Roadmap Phase 11b (D43):
+
+- `Directory.Build.props` (root): target framework, nullable, implicit usings, the analysers, warnings as errors,
+  NuGet audit, and the four packages' one `Version` and shared metadata. A setting every project shares goes here,
+  not in a csproj. `tests/Directory.Build.props` imports it.
+- `Directory.Packages.props`: central package management. A new or updated dependency gets its version there; a
+  csproj's `PackageReference` has no `Version`. The four packages depend on each other by `ProjectReference` only.
+- `ZauberCMS.Template/` has its own `Directory.Build.props` and `Directory.Packages.props` that stop the root ones:
+  the template site is copied to consumers by `dotnet new` and keeps explicit versions in its csproj.
+- Analysers: `AnalysisLevel` pinned to the .NET version, Recommended rules for Globalization, Performance,
+  Reliability, Security and Usage as warnings, and every warning an error (vulnerability advisories excepted: CI's
+  scan fails on them). Fix a hit; don't silence it. When a rule really doesn't fit, suppress it at the site with
+  `#pragma warning disable … // reason` (narrowest scope), or turn it down in `.editorconfig` with the reason
+  written above it.
+- `.editorconfig`: indentation as the files are, the §2 code style as IDE suggestions; `.gitattributes`: text
+  stored as LF, binary types marked; `global.json`: the SDK band (`rollForward: latestFeature`) and the test runner.
+- CI (`.github/workflows/ci.yml`): build, tests, and a vulnerability scan of direct and transitive packages.
 
 ## Known deviations (exist today — do not copy)
 

@@ -13,7 +13,7 @@ public class BlockListChanges
     public List<Content> AddedItems { get; set; } = [];
     public List<Content> UpdatedItems { get; set; } = [];
     public List<Content> DeletedItems { get; set; } = [];
-    public bool HasChanges => AddedItems.Any() || UpdatedItems.Any() || DeletedItems.Any();
+    public bool HasChanges => AddedItems.Count != 0 || UpdatedItems.Count != 0 || DeletedItems.Count != 0;
 
     /// <summary>
     /// Returns a new <see cref="BlockListChanges"/> with each list deduplicated by ContentId

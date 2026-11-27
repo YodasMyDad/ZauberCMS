@@ -120,7 +120,7 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
         return null;
     }
 
-    private async Task InsertContentLink(IEditorApi api, Content content, string linkText, string url)
+    private static async Task InsertContentLink(IEditorApi api, Content content, string linkText, string url)
     {
         var attributes = new List<string>
         {
@@ -132,7 +132,7 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
         await api.InsertHtmlAsync(html);
     }
 
-    private async Task InsertManualLink(IEditorApi api, string url, string text, string? title, string? target, string? rel, Guid? contentId = null)
+    private static async Task InsertManualLink(IEditorApi api, string url, string text, string? title, string? target, string? rel, Guid? contentId = null)
     {
         var attrs = new Dictionary<string, string>
         {

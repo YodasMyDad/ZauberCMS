@@ -4,57 +4,44 @@ param(
     [string]$NewVersion
 )
 
-# Function to get current version from a .csproj file
+# Function to get the current version: <Version> in Directory.Build.props (shared by the four packages)
 function Get-CurrentVersion {
-    param([string]$CsprojPath)
+    param([string]$PropsPath)
 
-    if (!(Test-Path $CsprojPath)) {
-        Write-Error "Project file not found: $CsprojPath"
+    if (!(Test-Path $PropsPath)) {
+        Write-Error "File not found: $PropsPath"
         exit 1
     }
 
-    $xml = [xml](Get-Content $CsprojPath)
-    $versionNode = $xml.Project.PropertyGroup.Version
+    $xml = [xml](Get-Content $PropsPath -Raw)
+    $versionNode = $xml.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ } | Select-Object -First 1
     if ($versionNode) {
         return $versionNode
     } else {
-        Write-Error "Version not found in $CsprojPath"
+        Write-Error "Version not found in $PropsPath"
         exit 1
     }
 }
 
-# Function to update version in a .csproj file
-function Update-VersionInCsproj {
-    param([string]$CsprojPath, [string]$NewVersion)
+# Function to set the version in one file. The file is written back byte for byte except for the replaced
+# versions: same encoding (with or without BOM) and no extra line at the end (Set-Content added one per run).
+function Update-VersionInFile {
+    param([string]$Path, [string]$Pattern, [string]$Replacement)
 
-    Write-Host "Updating version in $CsprojPath to $NewVersion..."
+    Write-Host "Updating version in $Path..."
 
-    $content = Get-Content $CsprojPath -Raw
+    $fullPath = (Resolve-Path $Path).Path
+    $bytes = [System.IO.File]::ReadAllBytes($fullPath)
+    $hasBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF
+    $content = [System.IO.File]::ReadAllText($fullPath)
 
-    # Update the Version or PackageVersion tag
-    $content = $content -replace '<Version>.*?</Version>', "<Version>$NewVersion</Version>"
-    $content = $content -replace '<PackageVersion>.*?</PackageVersion>', "<PackageVersion>$NewVersion</PackageVersion>"
-
-    # Update package references to internal packages
-    $projectName = [System.IO.Path]::GetFileNameWithoutExtension($CsprojPath)
-
-    switch ($projectName) {
-        "ZauberCMS.Components" {
-            $content = $content -replace 'PackageReference Include="ZauberCMS\.Core" Version="[^"]*"', "PackageReference Include=`"ZauberCMS.Core`" Version=`"$NewVersion`""
-        }
-        "ZauberCMS.Routing" {
-            $content = $content -replace 'PackageReference Include="ZauberCMS\.Components" Version="[^"]*"', "PackageReference Include=`"ZauberCMS.Components`" Version=`"$NewVersion`""
-        }
-        "ZauberCMS" {
-            $content = $content -replace 'PackageReference Include="ZauberCMS\.Components" Version="[^"]*"', "PackageReference Include=`"ZauberCMS.Components`" Version=`"$NewVersion`""
-            $content = $content -replace 'PackageReference Include="ZauberCMS\.Routing" Version="[^"]*"', "PackageReference Include=`"ZauberCMS.Routing`" Version=`"$NewVersion`""
-        }
-        "ZauberCMSTemplate.Site" {
-            $content = $content -replace 'PackageReference Include="ZauberCMS" Version="[^"]*"', "PackageReference Include=`"ZauberCMS`" Version=`"$NewVersion`""
-        }
+    $updated = [regex]::Replace($content, $Pattern, $Replacement)
+    if ($updated -eq $content -and -not ($content -match [regex]::Escape($Replacement))) {
+        Write-Error "No version found to update in $Path (pattern: $Pattern)"
+        exit 1
     }
 
-    Set-Content -Path $CsprojPath -Value $content -Encoding UTF8
+    [System.IO.File]::WriteAllText($fullPath, $updated, (New-Object System.Text.UTF8Encoding($hasBom)))
 }
 
 # Function to run dotnet build
@@ -117,8 +104,8 @@ function Invoke-TemplatePack {
 
 # Main script logic
 try {
-    # Get current version from ZauberCMS.Core.csproj
-    $currentVersion = Get-CurrentVersion -CsprojPath "ZauberCMS.Core\ZauberCMS.Core.csproj"
+    # Get the current version from Directory.Build.props
+    $currentVersion = Get-CurrentVersion -PropsPath "Directory.Build.props"
     Write-Host "Current version: $currentVersion"
 
     # Prompt for new version if not provided
@@ -143,20 +130,15 @@ try {
         exit 0
     }
 
-    # List of projects to update
-    $projectsToUpdate = @(
-        "ZauberCMS.Core\ZauberCMS.Core.csproj",
-        "ZauberCMS.Components\ZauberCMS.Components.csproj",
-        "ZauberCMS.Routing\ZauberCMS.Routing.csproj",
-        "ZauberCMS\ZauberCMS.csproj",
-        "ZauberCMS.Template\ZauberCMS.Template.csproj",
-        "ZauberCMS.Template\template\ZauberCMSTemplate.Site\ZauberCMSTemplate.Site.csproj"
-    )
-
-    # Update versions in all projects
-    foreach ($project in $projectsToUpdate) {
-        Update-VersionInCsproj -CsprojPath $project -NewVersion $NewVersion
-    }
+    # The four packages share <Version> in Directory.Build.props and depend on each other through ProjectReference
+    # (the packed dependencies get the same version). The template's two csprojs keep their own copies, because
+    # the template site is copied to consumers by `dotnet new`.
+    Update-VersionInFile -Path "Directory.Build.props" `
+        -Pattern '<Version>[^<]*</Version>' -Replacement "<Version>$NewVersion</Version>"
+    Update-VersionInFile -Path "ZauberCMS.Template\ZauberCMS.Template.csproj" `
+        -Pattern '<PackageVersion>[^<]*</PackageVersion>' -Replacement "<PackageVersion>$NewVersion</PackageVersion>"
+    Update-VersionInFile -Path "ZauberCMS.Template	emplate\ZauberCMSTemplate.Site\ZauberCMSTemplate.Site.csproj" `
+        -Pattern 'PackageReference Include="ZauberCMS" Version="[^"]*"' -Replacement "PackageReference Include=`"ZauberCMS`" Version=`"$NewVersion`""
 
     Write-Host "All project versions updated to $NewVersion"
 
