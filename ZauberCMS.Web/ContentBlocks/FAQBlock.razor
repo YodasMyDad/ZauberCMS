@@ -1,5 +1,4 @@
-﻿@using RenderMode = Microsoft.AspNetCore.Mvc.Rendering.RenderMode
-@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
 
 @if (Content != null && FaqItems.Any())
 {
@@ -36,7 +35,6 @@
 @code {
   [Parameter] public Content? Content { get; set; }
   public string ContentTypeAlias => "FAQ";
-  public RenderMode RenderMode => RenderMode.Static;
 
   private IEnumerable<Content> FaqItems { get; set; } = [];
 

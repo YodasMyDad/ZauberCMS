@@ -23,10 +23,11 @@
   **Phase 11b done** (engineering baseline, CI and release hardening, D43–D44, 2026-11-27).
   **Phase 11c done** (packaging and the template, smoke test in CI, D45–D47, 2026-11-27).
   **Phase 11d done** (start-up checks, settings binding and DI leftovers, D48–D50, 2026-11-27).
-  **10 open findings** (0 Critical, 0 High, 3 Medium, 7 Low), each one assigned below to a phase (10f–10i or 11),
+  **Phase 11e done** (the MVC path removed, UI contracts out of Core, D51–D52, 2026-11-27).
+  **8 open findings** (0 Critical, 0 High, 1 Medium, 7 Low), each one assigned below to a phase (10f–10i or 11),
   plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
   new finding goes into the phase whose theme fits. **In progress: Phase 11** (owner, 2026-11-27: before 10f–10i;
-  parts 11a–11g in its section; **next: 11e**), then 10f, 10g, 10h, 10i, then Phase 12 (design
+  parts 11a–11g in its section; **next: 11f**), then 10f, 10g, 10h, 10i, then Phase 12 (design
   questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -86,6 +87,8 @@
 | D48 | **A `Zauber` setting whose wrong value would fail at the first request that needs it stops the site at start-up, naming the setting, the value and what would be valid; one whose wrong value only does nothing is a warning at every start.** Failing: a `Zauber:Plugins:*` provider name that discovery does not find (it threw `KeyNotFoundException` when media or email was first used; a blank one is still "no provider") and an `AdminDefaultLanguage` that is not a culture (it already failed at start-up, without the setting's name). Warnings: a `SiteUrl` that is not an http(s) address (ignored, so email links come from the Host header), a `NotFoundComponent`/`StarterComponent`/`MissingView`/`Identity:AccountLayout` that is not found (nothing is shown); these do not fail because a site running today with one of them must still start after the update. `IValidateOptions<ZauberSettings>` with `ValidateOnStart`, and `AddZauberCms(app)` reads the settings first, so the error comes before anything is served; the shipped defaults, the three `appsettings.json` files and empty database settings (D24) pass with no warning. What the bootstrap finds before logging exists (types that cannot load, a bootstrap extension without a parameterless constructor, a non-public extension type) is collected and logged by `AddZauberCms(app)` (category `ZauberCMS.Startup`). Umbraco validates its settings the same way, with `IValidateOptions` validators for its settings classes, so a bad value stops the boot with an `OptionsValidationException`; its type finder logs the types it cannot load and goes on. (owner delegated, 2026-11-27, Phase 11d) | ZA-120, D24 |
 | D49 | **A list in configuration replaces the setting's default list; without the key the default stays.** The configuration binder adds what it reads to a list that already has items, so `ImageResize:ContentRoots` had each shipped root twice and a site could never drop a default. After binding, `ZauberSettingsBinding` sets every list the section names to the configured list (dictionaries stay merged, as their keys are meant to add up); a test fails for any list setting with a default that is not replaced. `new ZauberSettings()` keeps its defaults, so no code that reads them changes. An empty JSON list (`[]`) keeps the default (it reaches the binder as no list); to resize no images, set `ImageResize:EnableMiddleware` to false. ASP.NET's options pattern has no switch for this (the binder appending is by design); Umbraco's settings classes also start collections from defaults and bind over them, so there a site's values are added to its defaults. (owner delegated, 2026-11-27, Phase 11d) | ZA-167 |
 | D50 | **DI registrations nothing in ZauberCMS uses are removed; public types and members that are left over are `[Obsolete]` for removal in a later major.** Removed: the scoped `HttpClient` (its base address was the request's own, from the Host header, and it failed outside a request; an injected `HttpClient` is now the framework's default client from `AddHttpClient`), the `IUserEmailStore<User>` registration (`UserManager` uses the Entity Framework store, which is its email store) and the second `SignInManager<User>` registration (`AddSignInManager<ZauberSignInManager>()`). Obsolete: `IdentityUserAccessor` (still registered, so a site that injects it keeps working; `ICurrentUserAccessor` replaces it, D27), `UserEmailStore`, `ContentNavGroup.Actions` (never read). Umbraco registers no bare `HttpClient` for sites either; it uses `IHttpClientFactory`. (owner delegated, 2026-11-27, Phase 11d) | ZA-121, D18 |
+| D51 | **ZauberCMS.Core has no UI library: a contract that takes a Radzen or modal type lives in ZauberCMS.Components, under the namespace it had in Core.** Moved: `IContentProperty` (its `ModalService` is the modal's `IModalService`), `ISectionNavGroupAction` (Radzen's `MenuItemEventArgs`/`ContextMenuService`), the extensions `DialogExtensions`, `NotificationServiceExtensions`, `TreeExtensions` and `PropertyExtensions.GetPropertySettings(this IContentProperty)` (now `ContentPropertyExtensions`), the services `ValidateService<T>` and `MediaValidationService` (Radzen notifications), and the vendored Blazored.Modal source (`Blazored.Modal*` namespaces kept). The folders `ZauberCMS.Components/Core/` and `Modal/` hold them. Their services are registered by an internal start-up plugin in Components (`AdminUiStartup`), found by the bootstrap like any `IStartupPlugin`, so a site calls nothing new. Core drops its Radzen package; it keeps Razor component support for the installer's pages and ZauberCMS.RTE for rendering rich text. Keeping the namespaces means a site's or plugin's source keeps compiling once it references Components (the `ZauberCMS` package does); it is a binary break (the assembly changed), which v5 allows (D18). No implementation moved or was renamed, so no stored type name changes (rule 2). Umbraco does the same: Umbraco.Core holds no back-office UI types (property editor UIs and dashboards are in the back-office packages), and a package with back-office UI references those. Splitting `IContentProperty` into a Core half and a UI half was not done: Core has no use for an editor without its UI, and two interfaces would break every editor's source instead of none. (owner delegated, 2026-11-27, Phase 11e) | ZA-091, D18 |
+| D52 | **ZauberCMS renders pages only through Blazor (`EntryPage`); the never-mapped MVC rendering path is removed, not made obsolete.** Removed: `IContentFinder`, `ContentFinderPipeline`, `DefaultContentFinder`, `ZauberRouteValueTransformer`, `ZauberCMS.Core.Rendering` (`ZauberViewPage<T>`, `IZauberViewPage`, `ZauberPageViewModel`), `HtmlHelperExtensions`, `RenderExtensions`, Routing's `Views/` (the `ZauberRender` views, the `RenderBlocks` and `BootstrapPager` view components) and `IContentBlockView.RenderMode` (an MVC enum only that path read). Nothing ever ran them: the routes were commented out, `IContentFinder` was never in the discovery list or the docs as an extension point, so a site that implemented it had code that never ran. `[Obsolete]` would have kept MVC types in Core's public contracts for the whole v5 line for no working feature. `AddControllersWithViews` became `AddControllers` (only `AuthController` is MVC), so what the view services brought and live code uses is registered by itself: `IMemoryCache` and a memory `IDistributedCache` (Redis's stays when configured); the sign-out POST checks its antiforgery token itself (`[ValidateAntiForgeryToken]` needs the view services and failed with 500 without them). A site with its own MVC views calls `AddControllersWithViews()`. Umbraco finds pages with a content-finder pipeline (`IContentFinder`, `IContentLastChanceFinder`) that sites extend; ZauberCMS has none working, and adding one is a feature for the owner to decide (Phase 11e question). (owner delegated, 2026-11-27, Phase 11e) | ZA-090, D18 |
 
 ## Working rules for the rework
 
@@ -119,7 +122,7 @@
 - Held back on purpose: **Serilog.AspNetCore** stays on 10.0.0 (11.0.0 depends on Microsoft.Extensions 11.x) → Phase 12.
 - **ZauberCMS.RTE**: migrated to the 3.x API on 3.0.0 in this phase; now on 4.0.0 (see "After Phase 4").
 - **Blazored.Modal** (deprecated, repo archived) is now **vendored**: its source lives in `ZauberCMS.Core/Modal/`
-  (same namespaces), the NuGet package is gone, and it is ours to maintain (ZA-133). Radzen was ruled out because its
+  (same namespaces; moved to `ZauberCMS.Components/Modal/` in Phase 11e), the NuGet package is gone, and it is ours to maintain (ZA-133). Radzen was ruled out because its
   side dialogs cannot nest. Release notes must tell sites to drop any direct `Blazored.Modal` package reference.
 - Not done (optional, own commit): `Directory.Packages.props` + `global.json` — now part of Phase 11.
 - Still to smoke-test by hand when convenient: media insert in the editor (sample DB has no media), two editors on
@@ -1041,7 +1044,7 @@ Done in parts, one commit each, in this order:
 | 11b | Baseline: ZA-131, CI and release hardening ZA-089, ZA-109 | DONE 2026-11-27 (D43, D44) |
 | 11c | Packaging and template: ZA-087, ZA-094, ZA-118, ZA-119, ZA-123, template smoke test | DONE 2026-11-27 (D45–D47; ZA-168 found and fixed, ZA-167 found, to 11d) |
 | 11d | Start-up and DI: ZA-120, ZA-121, ZA-167 (found in 11c) | DONE 2026-11-27 (D48–D50; the 11c CI failure fixed) |
-| 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | |
+| 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | DONE 2026-11-27 (D51, D52) |
 | 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | |
 | 11g | Breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | |
 
@@ -1343,6 +1346,90 @@ first run.
     `SetEmailAsync`) or cast `IUserStore<User>`, which the Entity Framework store implements.
   - Obsolete, to be removed in a later major: `IdentityUserAccessor` (use `ICurrentUserAccessor.GetUserAsync`),
     `UserEmailStore`, `ContentNavGroup.Actions`.
+
+#### Phase 11e — The MVC path removed, UI contracts out of Core — DONE (2026-11-27)
+ZA-090, ZA-091 (Medium) fixed. Decisions D51 (UI contracts in Components) and D52 (the MVC path removed), taken
+Umbraco's way as delegated. The first part of the v5 breaking batch (D18).
+- **The MVC path (ZA-090, D52).** Callers grepped in Core, Components, Routing, ZauberCMS, Web, the template, the
+  tests and the docs: nothing live used `IContentFinder`, `ContentFinderPipeline`, `ZauberRouteValueTransformer`,
+  `ZauberCMS.Core.Rendering`, `HtmlHelperExtensions`, `RenderExtensions` (only a commented-out call in
+  `ContentTypeEditor`), Routing's views and view components, or `IContentBlockView.RenderMode`. `IContentFinder`
+  was not in the discovery list (`ExtensionManager.DiscoveryInterfaces`), AGENTS.md's extension table or the docs,
+  only in the "currently unwired" note. All removed, with the commented-out routes, their registrations and
+  Routing's `AddRazorSupportForMvc`. To find what the path provided implicitly, the bootstrap's service collection
+  was listed before and after: 53 registrations went, 51 of them MVC view, Razor view engine, tag helper and TempData
+  services plus the two removed ones. Of what live code uses, `IMemoryCache` (ServerCache, the confirmation
+  re-sends, the form tokens) and a memory `IDistributedCache` are now registered by `AddZauberCms` itself; the
+  memory one does not replace Redis's (`AddStackExchangeRedisCache` registers first). One live user of the view
+  services was found by a test: `AuthController`'s sign-out POST had `[ValidateAntiForgeryToken]`, whose filter
+  is a view service; with `AddControllers` alone it answered 500. It now calls `IAntiforgery.IsRequestValidAsync`
+  and answers 400 without a valid token, as the attribute did.
+- **UI contracts out of Core (ZA-091, D51).** Every Radzen and Blazored use in Core was listed by grep and the
+  build: `IContentProperty` and `ISectionNavGroupAction` (contracts), `DialogExtensions`,
+  `NotificationServiceExtensions`, `TreeExtensions`, `PropertyExtensions.GetPropertySettings(this
+  IContentProperty)`, `ValidateService<T>`, `MediaValidationService`, the vendored modal (`ZauberCMS.Core/Modal`),
+  and in `ZauberSetup` `AddRadzenComponents`, `AddBlazoredModal` and the two services' registrations (other hits
+  were comments). All moved to ZauberCMS.Components with their full names (`Core/` and `Modal/` folders);
+  `GetPropertySettings(this IContentProperty)` is `ContentPropertyExtensions` (same namespace). The registrations
+  are in `ZauberCMS.Components.Startup.AdminUiStartup` (internal `IStartupPlugin`). Radzen.Blazor moved from Core's
+  package references to Components'. Core keeps Microsoft.AspNetCore.Components.Web (the installer's pages) and
+  ZauberCMS.RTE (rich text rendering; it does not depend on Radzen). The modal's script is now
+  `_content/ZauberCMS.Components/Modal/BlazoredModal.razor.js` and its scoped CSS is in the Components bundle;
+  `App.razor` no longer links `ZauberCMS.Core.bundle.scp.css`, which Core no longer has.
+- Tests: `Bootstrap/CoreSurfaceTests` (21): ZA090 no removed type, no class deriving from `RazorPage`,
+  `ViewComponent` or `DynamicRouteValueTransformer` and no compiled MVC view in Core, Components or Routing, and
+  `IContentBlockView` has no members of its own; the caches are registered, the Razor view engine is not, Redis's
+  `IDistributedCache` stays; the sign-out POST over HTTP (Kestrel): 400 without the token, 302 with the token from
+  the GET page (with `[ValidateAntiForgeryToken]` back it answered 500). ZA091 Core references neither Radzen.Blazor
+  nor Components and has no `Blazored*` type; each moved type (16) is public in Components under its old full name
+  and not in Core; the bootstrap registers Radzen's notification, dialog and context-menu services, the modal,
+  `ValidateService<T>` and `MediaValidationService`, and discovery finds `TextProperty` (`IContentProperty`) and
+  `CreateContentNavMenu` (`ISectionNavGroupAction`). `PersistedTypeNameTests` passes unchanged (no editor name
+  changed). Full suite 1071 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release
+  build 0 warnings; the template smoke test passes.
+- Dev site (`ZauberCMS.Web`, Release, Production, on a copy of its `app.db`): `/`, `/about` (its blocks render),
+  `/contact-us`, `/blog` 200, `/nope-page` 404, `/Account/Login` 200, `/admin` 302 to the login page signed out, a
+  `/media` image with `?width=40` resized (3527 of 132637 bytes), `/api/auth/logout` 200. Signed in (Playwright):
+  the admin loads; editing a block on About opens the side panel, its script is served from
+  `_content/ZauberCMS.Components/Modal/` and its scoped CSS applies; the Content group's "…" menu shows its actions
+  and "Sort Content" shows a Radzen notification; opening `/api/auth/logout` signs out (then `/admin` goes to the
+  login page). Nothing logged as an error; the browser console shows only a missing favicon.
+- **Not verified:** a third-party plugin built against the 4.x packages (a binary break by design).
+- **Release notes (D18):**
+  - **Breaking:** the unwired MVC rendering path is removed (it never ran: its routes were not mapped):
+    `ZauberCMS.Core.Content.Interfaces.IContentFinder`, `ZauberCMS.Core.Content.ContentFinders.ContentFinderPipeline`
+    and `DefaultContentFinder`, `ZauberCMS.Core.Shared.ZauberRouteValueTransformer`, `ZauberCMS.Core.Rendering.*`
+    (`ZauberViewPage<T>`, `IZauberViewPage`, `ZauberPageViewModel`), `ZauberCMS.Core.Extensions.HtmlHelperExtensions`
+    (`GenerateMetaTags`) and `RenderExtensions` (`GetAllowedViews`, `GetViewIdentifier`, `GetViewDetails`), and the
+    ZauberCMS.Routing views (`Views/ZauberRender/*`, `_ZauberLayout`, the `RenderBlocks` and `BootstrapPager` view
+    components with `RenderBlocksModel`). A class that implemented `IContentFinder` no longer compiles; it was never
+    called.
+  - **Breaking:** `IContentBlockView.RenderMode` is removed (nothing read it). A block's own `RenderMode` property
+    still compiles; one that implements it explicitly (`IContentBlockView.RenderMode`) drops that.
+  - **Breaking:** ZauberCMS registers MVC controllers only (`AddControllers`), not views. A site with its own MVC
+    views, view components, TempData or tag helpers calls `builder.Services.AddControllersWithViews()`. `IMemoryCache`
+    and `IDistributedCache` (memory, unless Redis is configured) stay registered.
+  - **Breaking (binary):** these types moved from the ZauberCMS.Core assembly to ZauberCMS.Components, with the same
+    namespaces and names: `ZauberCMS.Core.Content.Interfaces.IContentProperty`,
+    `ZauberCMS.Core.Sections.Interfaces.ISectionNavGroupAction`, `ZauberCMS.Core.Extensions.DialogExtensions`,
+    `NotificationServiceExtensions`, `TreeExtensions`, `ZauberCMS.Core.Media.Services.MediaValidationService`,
+    `ZauberCMS.Core.Shared.Services.ValidateService<T>`, and the whole vendored modal: `Blazored.Modal`
+    (`BlazoredModal`, `BlazoredModalInstance`, `CascadingBlazoredModal`, `FocusTrap`, `IModalReference`,
+    `ModalReference`, `ModalOptions`, `ModalParameters`, `ModalPosition`, `ModalSize`, `ModalAnimationType`,
+    `ServiceCollectionExtensions.AddBlazoredModal`) and `Blazored.Modal.Services` (`IModalService`, `ModalService`,
+    `ModalResult`). Source that uses them compiles unchanged when the project references ZauberCMS.Components or the
+    `ZauberCMS` package; a library that referenced only ZauberCMS.Core adds that reference, and a plugin built
+    against 4.x is rebuilt.
+  - **Breaking:** `PropertyExtensions.GetPropertySettings<T>(this IContentProperty)` is now
+    `ContentPropertyExtensions.GetPropertySettings<T>` in ZauberCMS.Components (same namespace,
+    `ZauberCMS.Core.Extensions`); `cp.GetPropertySettings<T>()` compiles unchanged, a static call by class name
+    changes the class name. The `IContentPropertySettings<T>` overloads stay in Core.
+  - ZauberCMS.Core no longer depends on Radzen.Blazor (ZauberCMS.Components does) and has no scoped CSS bundle:
+    the modal's script is at `_content/ZauberCMS.Components/Modal/BlazoredModal.razor.js` and its CSS is in
+    `ZauberCMS.Components.bundle.scp.css`. A site's own layout that linked
+    `_content/ZauberCMS.Core/ZauberCMS.Core.bundle.scp.css` removes that link.
+  - The sign-out POST (`/api/auth/logout`) still answers 400 without a valid antiforgery token; it checks the token
+    itself now.
 
 ### Phase 12 — .NET 11 (D4)
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and

@@ -3,7 +3,7 @@
 Last full run: 5668365 (2026-11-25, full) · Last changed run: b001147+wt (2026-11-27, Roadmap Phase 10e) · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
 Next free IDs: ZA-169 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
-After Roadmap Phase 11d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1050 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part. ZA-120, ZA-121, ZA-167 fixed; the 11c CI failure (a Windows path separator in a test) fixed. Next free ID: ZA-169. Earlier after-phase lines: [history.md](history.md) run log
+After Roadmap Phase 11e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1071 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-090, ZA-091 fixed. Next free ID: ZA-169. Earlier after-phase lines: [history.md](history.md) run log
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
 > browser or against PostgreSQL/Redis**, so items marked as needing a repro are reasoned, not observed. Critical and
@@ -16,7 +16,7 @@ After Roadmap Phase 11d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable pa
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 3 | 68 | 1 |
+| Medium | 1 | 70 | 1 |
 | Low | 7 | 43 | 6 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
@@ -25,18 +25,6 @@ ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
 ## Open findings
-
-### ZA-090 [Medium/High] Unwired MVC rendering path ships as public API
-
-- Where: `ZauberCMS.Core/ZauberSetup.cs:135,295,372-377,554-564`, `ZauberCMS.Routing/ZauberCMS.Routing.csproj:17` · Category: F · Since: 2026-11-25
-- Issue / Trigger: `ZauberRouteValueTransformer`, `ContentFinderPipeline`, `Views/ZauberRender/*`, view components and `Rendering/*` are registered or shipped but never mapped.
-- Fix: `[Obsolete]` now, remove in the next major; register memory cache explicitly first. · Blocked by: public API.
-
-### ZA-091 [Medium/High] Core's public contracts depend on Radzen and Blazored.Modal types
-
-- Where: `ZauberCMS.Core/Content/Interfaces/IContentProperty.cs:18`, `ZauberCMS.Core/Sections/Interfaces/ISectionNavGroupAction.cs:14` · Category: F · Since: 2026-11-25
-- Issue / Trigger: A Radzen major upgrade is a binary break of Core's discovery interfaces (Radzen is three majors behind — ZA-130), and Core can't run headless.
-- Fix: for the next major, move UI-typed interfaces and extensions to Components. · Blocked by: public API (major only).
 
 ### ZA-092 [Medium/High] Core exposes 362 public types and no internal ones
 

@@ -39,7 +39,6 @@
         <PackageReference Include="Microsoft.Extensions.Localization" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-        <PackageReference Include="Radzen.Blazor" />
         <PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="ImageResize" />
         <PackageReference Include="ZauberCMS.RTE" />

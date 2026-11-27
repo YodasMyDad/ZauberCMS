@@ -278,5 +278,5 @@ Audit rows older than 90 days are removed by the daily job (`CleanupOldAuditsAsy
 ## Validation
 
 `ValidateService<T>` runs discovered `IValidate<T>` + FluentValidation validators; it is **UI-side** (Radzen
-notifications) and called by editors before saving. Services do not call it — put invariants that must hold for every
+notifications, so it is in ZauberCMS.Components with its Core namespace, Roadmap D51) and called by editors before saving. Services do not call it — put invariants that must hold for every
 caller in the service itself.

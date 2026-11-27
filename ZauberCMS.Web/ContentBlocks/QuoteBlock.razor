@@ -1,5 +1,4 @@
-﻿@using RenderMode = Microsoft.AspNetCore.Mvc.Rendering.RenderMode
-@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
+﻿@implements ZauberCMS.Core.Content.Interfaces.IContentBlockView
 @if (Content != null)
 {
     <figure class="text-end">
@@ -15,5 +14,4 @@
 @code{
     [Parameter] public Content? Content { get; set; }
     public string ContentTypeAlias => "Quote";
-    public RenderMode RenderMode => RenderMode.Static;
 }

@@ -4,6 +4,10 @@
 relative to it unless prefixed). Everything is discovered by interface (see AGENTS.md → Extension points); public
 non-abstract types only, keyed by `Type.FullName`. Metadata properties (names, aliases, sort orders) are read from
 instances created by `ActivatorUtilities` — `[Inject]` is **not** populated there, so keep metadata as plain values.
+Radzen, the modal and the contracts that take their types (`IContentProperty`, `ISectionNavGroupAction`, the
+notification, dialog and tree extensions, `ValidateService<T>`, `MediaValidationService`) are in this assembly under
+their `ZauberCMS.Core.*` / `Blazored.Modal*` namespaces (`Core/`, `Modal/`; Roadmap D51); their services are
+registered by `Startup/AdminUiStartup.cs`. A plugin with admin UI references `ZauberCMS.Components`.
 
 ## Page skeleton
 
@@ -111,10 +115,11 @@ if (result is { Confirmed: true, Data: MyType value }) { … }
 
 - Dialog: `[CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;` close with
   `BlazoredModal.CloseAsync(ModalResult.Ok(value))` / `BlazoredModal.CloseAsync(ModalResult.Cancel())`. Put dialogs in a `Dialogs/` folder.
-  The modal is the vendored Blazored.Modal source in `ZauberCMS.Core/Modal/` (not a NuGet package): panels nest, and fixes go there.
+  The modal is the vendored Blazored.Modal source in `ZauberCMS.Components/Modal/` (not a NuGet package; namespaces
+  `Blazored.Modal*`): panels nest, and fixes go there.
 - Yes/no: Radzen `DialogService.Confirm(...)`.
 - Notifications: `NotificationService.ShowSuccessNotification/ShowErrorNotification/ShowWarningNotification/
-  ShowNotifications(handlerResult.Messages)` (`ZauberCMS.Core/Extensions/NotificationServiceExtensions.cs`).
+  ShowNotifications(handlerResult.Messages)` (`ZauberCMS.Components/Core/Extensions/NotificationServiceExtensions.cs`).
 - Form layout: `<EditorRow>` with `<LeftColumn><PropertyInfo Name Alias Description/></LeftColumn><CentreColumn>…`
   (`Shared/EditorRow.razor`, `Shared/PropertyInfo.razor`).
 

@@ -412,7 +412,6 @@
         }
         
         await CompositionsInit();
-        //LoadViewFiles();
         InitializeTabs();
         InitializeContentViews();
         SortTabsInOrder();
@@ -508,11 +507,6 @@
         return contentType;
     }
     
-    /*private void LoadViewFiles()
-    {
-        ViewFiles = ExtensionManager.GetAllowedViews(ContentType.Alias);
-    }*/
-
     private async Task SelectIcon()
     {
         var dialog = ModalService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");

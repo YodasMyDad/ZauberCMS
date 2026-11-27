@@ -6,7 +6,7 @@ namespace ZauberCMS.Core.Data;
 
 /// <summary>
 /// Applies the filter and sort strings of an admin data grid to a query.
-/// The strings are text (built by the grid from what the user typed), parsed into an expression by Radzen's parser.
+/// The strings are text (built by the grid from what the user typed), parsed into an expression by Dynamic LINQ.
 /// Before the query runs, the parsed expression is checked: it may read the entity's public properties and use
 /// methods of simple value types (string, numbers, dates, Guid) and LINQ, nothing else, and it may never touch a
 /// secret column such as the password hash. Anything else is refused with an <see cref="ArgumentException"/>.

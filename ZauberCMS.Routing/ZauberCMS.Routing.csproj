@@ -4,7 +4,6 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Routing</PackageId>
         <Description>ZauberCMS routing package</Description>
-        <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
         <PreserveCompilationContext>true</PreserveCompilationContext>
     </PropertyGroup>
 

@@ -14,7 +14,7 @@ from this source ([ReadMe.md](ReadMe.md)).
 | Surface | Render mode | UI |
 | --- | --- | --- |
 | Front-end site (`IContentView`) | static SSR; per-component `@rendermode` opt-in | consumer's choice — **never Radzen** |
-| Admin `/admin` | `InteractiveServer`, not prerendered, always a full page load | Radzen.Blazor + Blazored.Modal (vendored source in `ZauberCMS.Core/Modal/`, not a package; nested side panels) (+ Tailwind for admin CSS) |
+| Admin `/admin` | `InteractiveServer`, not prerendered, always a full page load | Radzen.Blazor + Blazored.Modal (vendored source in `ZauberCMS.Components/Modal/`, not a package; nested side panels) (+ Tailwind for admin CSS) |
 | Account pages (`/Account/*`, in Components) | static SSR | layout via `IAccountLayout` |
 
 `ZauberCMS/Components/App.razor` picks the render mode: `/admin` (or no `HttpContext`) → InteractiveServer without
@@ -48,8 +48,8 @@ in every phase of the rework, against this:
 
 | Project | Role | Packed |
 | --- | --- | --- |
-| `ZauberCMS.Core` | Domain, services, EF Core (3 providers), plugins, providers, settings, seed data, `ZauberSetup.cs` | NuGet |
-| `ZauberCMS.Components` | Razor class lib: admin UI, property editors, dialogs, trees, context menus, account pages | NuGet |
+| `ZauberCMS.Core` | Domain, services, EF Core (3 providers), plugins, providers, settings, seed data, installer, `ZauberSetup.cs`; **no UI library** (no Radzen, no modal) | NuGet |
+| `ZauberCMS.Components` | Razor class lib: admin UI, property editors, dialogs, trees, context menus, account pages; Radzen, the vendored modal, and the UI-typed contracts that keep Core namespaces (`Core/` folder, D51) | NuGet |
 | `ZauberCMS.Routing` | Front-end catch-all `CatchAll.razor` (`@page "/{**slug}"`) — **must load last** | NuGet |
 | `ZauberCMS` | Umbrella: `App.razor`, `Routes.razor`, packaged `appsettings.json`, `ZauberCMS.targets` | NuGet |
 | `ZauberCMS.Template` | `dotnet new zaubercms` template (non-compiling csproj); ships the starter kit and its views | NuGet (template) |
@@ -126,8 +126,10 @@ don't reorder without a reason written in the commit.
 | `ITagReferenceProvider` | Which tags an editor's value holds (by editor alias), so the page save writes the tag links |
 | `IBeforeEntitySave<T>`, `IAfterEntitySave<T>` | Save hooks, per row written (before can veto the whole change) |
 
-`IContentFinder` / `ContentFinderPipeline` and the MVC `RenderBlocksViewComponent` path are currently unwired (routes
-commented out in `ZauberSetup.cs`) — don't build on them without discussing.
+`IContentProperty` and `ISectionNavGroupAction` take Radzen / modal types, so they live in ZauberCMS.Components under
+their `ZauberCMS.Core.*` namespaces (D51); a new contract that needs a UI type goes there too, never in Core.
+Pages are found by `EntryPage` (`ZauberCMS.Components/Pages`); there is no MVC rendering path, no content-finder
+pipeline and no MVC views (removed in Phase 11e, ZA-090). Only `AuthController` uses MVC (`AddControllers`).
 
 ## Configuration & cross-cutting
 

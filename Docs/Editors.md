@@ -4,11 +4,15 @@ Paths relative to `ZauberCMS.Components/` unless prefixed. Reference set to copy
 `Editors/Settings/NumericPropertySettings.razor` + `Editors/Models/NumericPropertySettingsModel.cs`. For an editor
 that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/EditorNotesDialog.razor`.
 
+`IContentProperty` takes the modal's `IModalService`, so it is in the ZauberCMS.Components assembly (namespace
+`ZauberCMS.Core.Content.Interfaces`, Roadmap D51): a class library with editors references `ZauberCMS.Components`
+(or the `ZauberCMS` package), not only `ZauberCMS.Core`. `IContentPropertySettings<T>` stays in Core.
+
 ## Files
 
 | File | Implements |
 | --- | --- |
-| `Editors/XProperty.razor` | `IContentProperty` (`ZauberCMS.Core/Content/Interfaces/IContentProperty.cs`) |
+| `Editors/XProperty.razor` | `IContentProperty` (`ZauberCMS.Components/Core/Content/Interfaces/IContentProperty.cs`; namespace `ZauberCMS.Core.Content.Interfaces`, assembly ZauberCMS.Components) |
 | `Editors/Models/XSettingsModel.cs` (optional) | plain class, public get/set, parameterless ctor |
 | `Editors/Settings/XSettings.razor` (optional) | `IContentPropertySettings<XSettingsModel>` |
 

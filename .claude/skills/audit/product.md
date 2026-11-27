@@ -242,7 +242,7 @@ wherever Umbraco offers one (AGENTS.md, core principle).
 | P4 | `IBeforeEntitySave<T>` / `IAfterEntitySave<T>` | Notifications (`ContentSavingNotification`… with `INotificationHandler<T>`; the "-ing" ones can cancel) | per row (D28) vs per operation; after the commit (ZA-163) |
 | P4 | `IContentView` + layouts | Templates (Razor views) and route hijacking (`RenderController`) | choosing a view per type and per page |
 | P4 | `GetValue<T>` and the value-conversion extensions | Property value converters (`IPropertyValueConverter`), Models Builder | typed models; a way for an editor's author to define its front-end type |
-| P4 | `IContentFinder` (unwired) | Content finders, `IContentLastChanceFinder` (404), URL providers | |
+| P4 | `EntryPage` + `GetContentFromRequestAsync` (no finder pipeline; the unwired `IContentFinder` went in Phase 11e) | Content finders, `IContentLastChanceFinder` (404), URL providers | a site cannot add its own way of finding the page for an address |
 | P4 | `IStorageProvider`, `IEmailProvider` | Media file system providers (Azure Blob), `IEmailSender` | |
 | P4 | `ISeedData` | Migration plans, package migrations | runs on every boot vs once per version |
 | R2 | Per-server memory cache + Redis invalidation (D13) | HybridCache since v15: in-memory per server, with an optional shared distributed layer; load-balanced back office | what an editor on server B sees after a save on A |

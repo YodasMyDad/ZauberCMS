@@ -18,6 +18,8 @@
         <!-- Only the packages Core does not bring: Core's own reach this project, and a site, through it (ZA-119) -->
         <PackageReference Include="BlazorMonaco" />
         <PackageReference Include="Humanizer" />
+        <!-- The admin's UI library: here, not in Core, so Core's contracts do not depend on it (ZA-091, D51) -->
+        <PackageReference Include="Radzen.Blazor" />
         <PackageReference Include="TinyMCE.Blazor" />
     </ItemGroup>
 

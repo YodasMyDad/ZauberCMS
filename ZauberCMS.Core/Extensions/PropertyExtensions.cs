@@ -21,16 +21,6 @@ public static class PropertyExtensions
         return new T();
     }
     
-    public static T GetPropertySettings<T>(this IContentProperty cp)
-        where T : class, new()
-    {
-        if (!cp.Settings.IsNullOrWhiteSpace())
-        {
-            return JsonSerializer.Deserialize<T>(cp.Settings) ?? new T();
-        }
-        return new T();
-    }
-    
     public static T FromJson<T>(this string? s)
         where T : class, new()
     {

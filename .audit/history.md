@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1071 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-090, ZA-091 fixed. Next free ID: ZA-169
 After Roadmap Phase 11d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1050 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-120, ZA-121, ZA-167 fixed; the failing CI test of 11c (a Windows path separator) fixed. Next free ID: ZA-169
 After Roadmap Phase 11c (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1034 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes (Windows PowerShell 5.1; PowerShell 7 in the Linux SDK container), now a CI step; `doublecheck` self-review on the part. ZA-087, ZA-094, ZA-118, ZA-119, ZA-123 fixed; ZA-168 found and fixed; ZA-167 new (Phase 11d). Next free ID: ZA-169
 After Roadmap Phase 11b (2026-11-27): Build PASS · Warnings: 0 (now errors; analysers D43) · Vulnerable packages: 0 (CI scans) · Tests: 1026 (1025 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part; CI not run (GitHub only; checked with actionlint/shellcheck and a scratch-repository run of its steps). ZA-089, ZA-109, ZA-131 fixed. Next free ID: ZA-167
@@ -31,6 +32,30 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed, resolved, closed and declined
 
+- **Phase 11e (2026-11-27): the MVC path removed, UI contracts out of Core (Roadmap D51–D52).** Details and the
+  release notes in the Roadmap's Phase 11e notes.
+  - **ZA-090 [Medium] Unwired MVC rendering path ships as public API — fixed.** Removed (not made obsolete, D52):
+    `IContentFinder`, `ContentFinderPipeline`, `DefaultContentFinder`, `ZauberRouteValueTransformer`,
+    `ZauberCMS.Core.Rendering`, `HtmlHelperExtensions`, `RenderExtensions`, Routing's `Views/` and view components,
+    `IContentBlockView.RenderMode`, the commented-out routes, their registrations and Routing's
+    `AddRazorSupportForMvc`. Nothing live used them (grep over every project, the template, tests and docs;
+    `IContentFinder` was never a listed extension point). `AddControllersWithViews` became `AddControllers`; a
+    before/after list of the bootstrap's registrations showed 51 MVC view services gone, so `IMemoryCache` and a
+    memory `IDistributedCache` are registered explicitly, and the sign-out POST checks its antiforgery token itself
+    (`[ValidateAntiForgeryToken]` needs the view services: it answered 500 without them, found by the new test).
+    Verified: `Bootstrap/CoreSurfaceTests` ZA090 (no MVC types or compiled views, the caches, Redis's cache kept,
+    the sign-out over HTTP: 400 without, 302 with the token; 500 with the attribute back), the full suite, the
+    template smoke test, and the dev site (front-end pages, blocks, 404, media resize, account pages, admin, sign-out).
+  - **ZA-091 [Medium] Core's public contracts depend on Radzen and Blazored.Modal types — fixed.** `IContentProperty`,
+    `ISectionNavGroupAction`, `DialogExtensions`, `NotificationServiceExtensions`, `TreeExtensions`,
+    `GetPropertySettings(this IContentProperty)` (now `ContentPropertyExtensions`), `ValidateService<T>`,
+    `MediaValidationService` and the vendored modal moved to ZauberCMS.Components under their old full names (D51);
+    their registrations moved to the Components start-up plugin `AdminUiStartup`; Radzen.Blazor moved from Core's
+    package references to Components'. Verified: `Bootstrap/CoreSurfaceTests` ZA091 (Core references neither Radzen
+    nor Components and has no `Blazored*` type, the 16 moved names in Components, the services registered, discovery
+    finds the editors and group actions), `PersistedTypeNameTests` unchanged, the full suite, the template smoke
+    test, and the dev site in a browser (a block's side panel with the modal's script and CSS from Components, the
+    group "…" actions, a Radzen notification).
 - **Phase 11d (2026-11-27): start-up and DI (Roadmap D48–D50).** Details in the Roadmap's Phase 11d notes. Also
   fixed: the CI run of 11c (2cd1fb6) failed on Linux, `PackageContentsTests.ZA119…` built the icon's path with the
   `\` of the MSBuild item, which on Linux is part of a file name; the test now turns it into the platform's separator.

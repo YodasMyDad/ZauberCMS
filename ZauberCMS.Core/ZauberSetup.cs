@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Threading.RateLimiting;
-using Blazored.Modal;
 using ImageResize.Core.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
@@ -20,9 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Radzen;
 using Serilog;
-using ZauberCMS.Core.Content.ContentFinders;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email;
@@ -142,13 +139,8 @@ public static class ZauberSetup
         builder.Services.AddScoped<ISeoService, SeoService>();
         builder.Services.AddScoped<IDataService, DataService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
-        
-        builder.Services.AddScoped<ZauberRouteValueTransformer>();
-        builder.Services.AddScoped<MediaValidationService>();
 
         builder.Services.AddHostedService<DailyJob>();
-        
-        builder.Services.AddRadzenComponents();
 
         if (!zauberSettings.RedisConnectionString.IsNullOrWhiteSpace())
         {
@@ -247,7 +239,6 @@ public static class ZauberSetup
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddAntiforgery();
-        builder.Services.AddBlazoredModal();
         
         // Add rate limiting for authentication endpoints
         builder.Services.AddRateLimiter(options =>
@@ -280,8 +271,12 @@ public static class ZauberSetup
 
         builder.Services.AddScoped<ExtensionManager>();
         builder.Services.AddScoped<ProviderService>();
-        builder.Services.AddScoped(typeof(ValidateService<>));
-        // Cache (Roadmap D13): values stay in each server's memory; with Redis configured, only clears travel
+        // Cache (Roadmap D13): values stay in each server's memory; with Redis configured, only clears travel.
+        // IMemoryCache (ServerCache, confirmation re-sends, form tokens) and a memory IDistributedCache (for a site's
+        // own session state) came with the MVC view services until ZA-090 removed those; they are registered here.
+        // With Redis configured, AddStackExchangeRedisCache above has already registered IDistributedCache.
+        builder.Services.AddMemoryCache();
+        builder.Services.AddDistributedMemoryCache();
         builder.Services.AddSingleton<ServerCache>();
         if (zauberSettings.RedisConnectionString.IsNullOrWhiteSpace())
         {
@@ -304,7 +299,6 @@ public static class ZauberSetup
             options.ValidationInterval = TimeSpan.FromMinutes(5));
         builder.Services.AddScoped<IEmailSender<User>, IdentityEmailSender>();
         builder.Services.AddScoped<TreeState>();
-        builder.Services.AddScoped<ContentFinderPipeline>();
 
         builder.Services.AddSingleton<LayoutResolverService>();
         builder.Services.AddSingleton<AppState>();
@@ -385,12 +379,9 @@ public static class ZauberSetup
                 .AddInteractiveServerComponents();
         }
 
-        builder.Services.AddControllersWithViews()
-            .AddRazorOptions(options =>
-            {
-                // This adds another search path that looks for views in the root Views folder.
-                options.ViewLocationFormats.Add("/Views/{0}.cshtml");
-            });
+        // Controllers only (the admin's AuthController); ZauberCMS has no MVC views (ZA-090). A site with its own
+        // views calls AddControllersWithViews itself.
+        builder.Services.AddControllers();
         
 
 
@@ -617,16 +608,5 @@ public static class ZauberSetup
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
         
-        //app.MapBlazorHub();
-        
-        //app.MapDynamicControllerRoute<ZauberRouteValueTransformer>("{**slug}");
-
-        /*app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=ZauberRender}/{action=Index}/{id?}")
-            .WithMetadata(new RouteOptions { LowercaseUrls = true }) // Lowercase URLs for better SEO
-            .WithStaticAssets(); // Ensures static files load before hitting controllers; */
-
-        //app.MapFallbackToController("Index", "ZauberRender");
     }
 }

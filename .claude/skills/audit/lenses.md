@@ -80,8 +80,6 @@ traced; **Low** = a suspicion. Low-confidence findings are verified or dropped b
 - Anything in `Docs/Standards.md` → Known deviations (one roll-up line, not one per occurrence).
 - Anything an owner decision (D-number in `Docs/Roadmap.md`) settled, unless the code differs from the decision.
 - A proposal the owner declined (product.md, "Different on purpose", and history.md "declined").
-- Unwired code that `AGENTS.md` already flags (`IContentFinder` / `ContentFinderPipeline`, the MVC rendering path):
-  covered by ZA-090 while open.
 
 ## A. Async, concurrency, lifetimes, memory
 

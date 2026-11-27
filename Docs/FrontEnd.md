@@ -101,7 +101,9 @@ Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the reques
 - Admin preview is a **separate** component implementing `IContentBlockPreview` (`ZauberCMS.Web/ContentBlockPreviews/`).
   It is rendered to static HTML (`HtmlRenderer`) and shown inert: no clicks, JS, `OnAfterRender` or `@rendermode`.
   To show nested blocks with their unsaved edits, call `GetBlocks(alias, ContentService, includePendingChanges: true)`.
-- `IContentBlockView.RenderMode` is ignored by `RenderBlock` (only the unwired MVC view-component path reads it).
+- A block that needs interactivity sets its own `@rendermode`; `IContentBlockView` has no render-mode member (its
+  MVC-typed `RenderMode` went with the MVC rendering path, Roadmap Phase 11e). ZauberCMS renders no MVC views; a site
+  that wants its own calls `AddControllersWithViews()` itself.
 - Rich text from content is HTML: render through `IHtmlSanitizerService` rather than a raw `MarkupString`
   (`@Sanitizer.SanitizeToMarkup(Content.GetValue<string>("Text"))`). The default sanitiser also turns the
   editor's video placeholders into players: `<figure class="zauber-embed" data-embed="youtube"><iframe …>`,

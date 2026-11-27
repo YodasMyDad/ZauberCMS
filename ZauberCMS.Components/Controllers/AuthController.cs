@@ -93,9 +93,15 @@ public class AuthController(
     }
 
     [HttpPost("logout")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout([FromForm] string? redirectUrl = null)
     {
+        // The antiforgery token is checked here, not with [ValidateAntiForgeryToken]: that attribute's filter comes
+        // with MVC's view services, which ZauberCMS does not register since the MVC rendering path went (ZA-090).
+        if (!await antiforgery.IsRequestValidAsync(HttpContext))
+        {
+            return BadRequest();
+        }
+
         await signInManager.SignOutAsync();
         return LocalRedirectOrHome(redirectUrl);
     }
