@@ -144,8 +144,12 @@ Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it o
   `Server=(localdb)\MSSQLLocalDB;Integrated Security=true;TrustServerCertificate=true`; the login needs CREATE DATABASE)
   and the `…OnSqlServer` classes run, each site on its own database, dropped afterwards. Unset (also on CI) they
   are skipped.
-- Not built yet: bUnit component tests, and a template smoke test
-  (`dotnet new zaubercms` → build). UI behaviour without a test still needs its manual verification written down.
+- Template smoke test: `tests/template-smoke.ps1` builds the packages, creates a site with `dotnet new zaubercms`,
+  publishes and runs it, goes through the installer and checks the pages and their scripts
+  ([Releasing.md](Releasing.md)). It needs nuget.org, so it is a script, not part of `dotnet test`; CI runs it on
+  every push. Run it after changing a csproj, the packaging, the template or start-up.
+- Not built yet: bUnit component tests. UI behaviour without a test still needs its manual verification written
+  down.
 
 ## 10. Repo hygiene
 
@@ -165,7 +169,11 @@ In place since Roadmap Phase 11b (D43):
   written above it.
 - `.editorconfig`: indentation as the files are, the §2 code style as IDE suggestions; `.gitattributes`: text
   stored as LF, binary types marked; `global.json`: the SDK band (`rollForward: latestFeature`) and the test runner.
-- CI (`.github/workflows/ci.yml`): build, tests, and a vulnerability scan of direct and transitive packages.
+- CI (`.github/workflows/ci.yml`): build, tests, a vulnerability scan of direct and transitive packages, and the
+  template smoke test.
+- Packages (Phase 11c): a csproj lists only the packages its project references do not already bring; no
+  project-wide `NoWarn` for a compiler warning (suppress at the site with the reason); the packages carry the
+  readme, icon, Source Link and a symbol package from `Directory.Build.props`.
 
 ## Known deviations (exist today — do not copy)
 

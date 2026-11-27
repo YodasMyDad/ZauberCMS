@@ -28,17 +28,49 @@ public class AppSettingsParityTests
         Assert.Empty(ZauberKeys(PackagedDefaults).Except(ZauberKeys(TemplateSite)));
     }
 
-    [Fact(Skip = "ZA-118 (open): the packaged appsettings.json has no Zauber:ImageResize section.")]
+    // ZA-118: the packaged file had no Zauber:ImageResize section
+    [Fact]
     public void Packaged_defaults_have_every_key_the_template_site_has()
     {
         Assert.Empty(ZauberKeys(TemplateSite).Except(ZauberKeys(PackagedDefaults)));
     }
 
+    [Fact]
+    public void ZA168_the_three_files_log_the_same_way_on_any_operating_system()
+    {
+        var packaged = SerilogSection(PackagedDefaults);
+        Assert.Equal(packaged, SerilogSection(TemplateSite));
+        Assert.Equal(packaged, SerilogSection(DevSite));
+
+        using var document = JsonDocument.Parse(packaged);
+        var serilog = document.RootElement;
+
+        // "Logs\log.txt" is a folder on Windows and a file name with a backslash in it on Linux
+        var filePaths = serilog.GetProperty("WriteTo").EnumerateArray()
+            .Where(sink => sink.GetProperty("Name").GetString() == "File")
+            .Select(sink => sink.GetProperty("Args").GetProperty("path").GetString()!)
+            .ToList();
+        Assert.NotEmpty(filePaths);
+        Assert.All(filePaths, path => Assert.DoesNotContain('\\', path));
+
+        // Enrichers other than FromLogContext come from packages ZauberCMS does not reference, and Serilog skips
+        // the ones it cannot find without a word
+        Assert.All(serilog.GetProperty("Enrich").EnumerateArray(), enricher => Assert.Equal("FromLogContext", enricher.GetString()));
+    }
+
+    private static string SerilogSection(string relativePath)
+    {
+        using var document = Parse(relativePath);
+        return document.RootElement.GetProperty("Serilog").GetRawText().ReplaceLineEndings("\n");
+    }
+
+    private static JsonDocument Parse(string relativePath) =>
+        JsonDocument.Parse(File.ReadAllText(Path.Combine(RepositoryRoot(), relativePath)),
+            new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+
     private static SortedSet<string> ZauberKeys(string relativePath)
     {
-        var path = Path.Combine(RepositoryRoot(), relativePath);
-        using var document = JsonDocument.Parse(File.ReadAllText(path),
-            new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+        using var document = Parse(relativePath);
 
         var keys = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         Collect(document.RootElement.GetProperty("Zauber"), string.Empty, keys);

@@ -8,30 +8,17 @@
         <NeutralLanguage>en</NeutralLanguage>
         <PreserveCompilationContext>true</PreserveCompilationContext>
         <StaticWebAssetBasePath>_content/$(PackageId)</StaticWebAssetBasePath>
-        <NoWarn>$(NoWarn);CS0618</NoWarn>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <SupportedPlatform Include="browser"/>
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Only the packages Core does not bring: Core's own reach this project, and a site, through it (ZA-119) -->
         <PackageReference Include="BlazorMonaco" />
         <PackageReference Include="Humanizer" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
-        <PackageReference Include="Microsoft.Extensions.Localization" />
-        <PackageReference Include="Radzen.Blazor" />
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="ImageResize" />
         <PackageReference Include="TinyMCE.Blazor" />
-        <PackageReference Include="ZauberCMS.RTE" />
     </ItemGroup>
 
     <ItemGroup>
@@ -58,16 +45,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Remove="..\..\..\Users\LeeMessenger\.nuget\packages\zaubercms.rte\1.0.0-beta9\contentFiles\any\net9.0\package-lock.json" />
-      <Content Remove="..\..\..\Users\LeeMessenger\.nuget\packages\zaubercms.rte\1.0.0-beta9\contentFiles\any\net9.0\package.json" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <UpToDateCheckInput Remove="Editors\Settings\RichTextEditor\InsertMedia.razor" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <AdditionalFiles Include="Editors\Dialogs\RichTextEditor\InsertMedia.razor" />
+        <!-- The npm manifests build the admin's Tailwind CSS in this repository (package.json "site-css"); a site has
+             no use for them (ZA-087). As None items they stay visible in the IDE and are neither packed nor copied. -->
+        <Content Remove="package.json;package-lock.json" />
+        <None Include="package.json;package-lock.json" />
     </ItemGroup>
 
 </Project>

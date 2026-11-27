@@ -72,6 +72,13 @@ jobs:
           fi
           echo "No vulnerable packages."
 
+      # Builds the five packages at a throw-away version into a local feed, creates a site with `dotnet new
+      # zaubercms`, publishes and starts it, goes through the installer and checks the pages and the scripts they
+      # load (Roadmap Phase 11c). A failure here also stops publishing.
+      - name: Template smoke test
+        shell: pwsh
+        run: ./tests/template-smoke.ps1
+
   publish-nuget:
     name: Publish NuGet
     if: github.event_name == 'push' && github.ref == 'refs/heads/main-static'
@@ -196,10 +203,15 @@ jobs:
           for id in ZauberCMS.Core ZauberCMS.Components ZauberCMS.Routing ZauberCMS ZauberCMS.Template; do
             test -f "NugetSource/${id}.${VERSION}.nupkg" || { echo "::error::NugetSource/${id}.${VERSION}.nupkg was not built."; exit 1; }
           done
+          # The four libraries also have a symbol package; `dotnet nuget push` sends it with its .nupkg
+          for id in ZauberCMS.Core ZauberCMS.Components ZauberCMS.Routing ZauberCMS; do
+            test -f "NugetSource/${id}.${VERSION}.snupkg" || { echo "::error::NugetSource/${id}.${VERSION}.snupkg was not built."; exit 1; }
+          done
           ls -la NugetSource/
 
       # Dependency order: a package is only on nuget.org once the packages it depends on are. A version that exists
-      # already fails the first run (it would be other code); on a rerun of this commit it is skipped.
+      # already fails the first run (it would be other code); on a rerun of this commit it is skipped. Each push
+      # also sends the package's symbol package (.snupkg) from the same folder.
       - name: Push packages to NuGet.org
         shell: bash
         env:

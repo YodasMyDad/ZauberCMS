@@ -185,7 +185,8 @@ and how it was verified: [.audit/history.md](.audit/history.md).
 2. Schema touched → three migrations via `migrations.ps1`. Public API touched → no unannounced break (rule 2).
 3. `dotnet test --solution ZauberCMS.sln -c Release` passes. Tests added/updated for changed behaviour: a bug fix
    comes with a regression test (or un-skips the one waiting for it); UI behaviour with no test yet → state how it
-   was verified. → [Docs/Standards.md](Docs/Standards.md) §9
+   was verified. → [Docs/Standards.md](Docs/Standards.md) §9. A csproj, packaging, the template or start-up touched →
+   `./tests/template-smoke.ps1` passes too (a site made from the template, run through the installer; CI runs it).
 4. **Docs updated in the same change** when behaviour, an extension point, a convention or a fact in this file changes.
    A doc that disagrees with code is a bug. Never write versions into docs — point at the csproj.
 5. Self-review with the `doublecheck` skill; larger changes or before a release run the `audit` skill.

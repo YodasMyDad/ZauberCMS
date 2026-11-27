@@ -14,30 +14,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Humanizer" />
-        <PackageReference Include="MailKit" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
-        <PackageReference Include="Microsoft.Extensions.Localization" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-        <PackageReference Include="Radzen.Blazor" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
-        <PackageReference Include="Serilog.AspNetCore" />
+        <!-- Only the packages Components, Routing and Core do not bring (ZA-119). The Async sink is not used by the
+             packed appsettings.json; it stays a dependency so a site's own Serilog configuration can keep using it. -->
         <PackageReference Include="Serilog.Sinks.Async" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <AdditionalFiles Include="Components\**"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -58,15 +37,6 @@
             <Pack>true</Pack>
             <PackagePath>build/ZauberCMS.targets</PackagePath>
         </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="..\ReadMe.md" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <UpToDateCheckInput Remove="Components\Pages\Index.razor" />
-      <UpToDateCheckInput Remove="Views\Cms\Index.cshtml" />
     </ItemGroup>
 
 </Project>

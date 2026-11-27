@@ -21,10 +21,11 @@
   **Phase 10e done** (front end, security and identity hardening, D33–D36, 2026-11-27).
   **Phase 11a done** (the not-found page and redirect domains, D41–D42, 2026-11-27).
   **Phase 11b done** (engineering baseline, CI and release hardening, D43–D44, 2026-11-27).
-  **17 open findings** (0 Critical, 0 High, 5 Medium, 12 Low), each one assigned below to a phase (10f–10i or 11),
+  **Phase 11c done** (packaging and the template, smoke test in CI, D45–D47, 2026-11-27).
+  **13 open findings** (0 Critical, 0 High, 3 Medium, 10 Low), each one assigned below to a phase (10f–10i or 11),
   plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
   new finding goes into the phase whose theme fits. **In progress: Phase 11** (owner, 2026-11-27: before 10f–10i;
-  parts 11a–11g in its section; **next: 11c**), then 10f, 10g, 10h, 10i, then Phase 12 (design
+  parts 11a–11g in its section; **next: 11d**), then 10f, 10g, 10h, 10i, then Phase 12 (design
   questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -78,6 +79,9 @@
 | D42 | **A redirect with a domain applies only on that domain; one without applies on every host; for the same address the one for the request's domain wins.** The domain is matched by the rule content routing uses (same host; a domain's path, as in `example.com/fr`, on whole segments), and the From URL stays the whole path. Exact rules are still tried before regular expressions, and within each the ones for a domain come first. The loop check counts only rules that can fire on the same requests. Umbraco's redirect URL management keeps each redirect with a content item's culture and domain (its root), so a redirect is never global; ZauberCMS keeps "any domain" because a single-site install has no domains and its redirects must keep working. (owner delegated to Umbraco parity, 2026-11-27, Phase 11a) | ZA-165, ZA-166 |
 | D43 | **The .NET analysers run at the .NET 10 rule set with the Recommended rules of five categories as warnings, and warnings are errors.** `AnalysisLevel` is pinned to 10.0 (a newer SDK adds no warnings by itself; Phase 12 moves it to 11.0) and `AnalysisMode` is Recommended for Globalization, Performance, Reliability, Security and Usage; Design and Naming stay at the default, because their rules rename or reshape public API, which the v5 clean-up (11f) settles. Every project has `TreatWarningsAsErrors`, except for vulnerability advisories (NU1901–NU1904): a new advisory is not caused by the change being built, so it stays a warning locally and CI's scan fails on it. Rules turned down are in `.editorconfig`, each with its reason (logging-delegate rules CA1848/CA1873 are suggestions; two test-only rules are off; migrations count as generated code). The code-style analysers (`EnforceCodeStyleInBuild`) are not on: the style rules are IDE suggestions, so no file is reformatted for them. Recommended for every category gave about 740 hits, most of them test-method names (CA1707), log calls and public names. Umbraco's repository has the same pieces (`Directory.Build.props`, central package management, `.editorconfig`, an SDK pin that rolls forward to the latest feature band) and works down a list of warnings; ZauberCMS starts at zero, so it keeps zero by making them errors. (owner delegated, 2026-11-27, Phase 11b) | ZA-131 |
 | D44 | **One version is built from one commit, and its tag is pushed before any package.** The publish job reserves the version by pushing its tag `vX.Y.Z` first, then builds and pushes the five packages in dependency order (Core, Components, Routing, ZauberCMS, Template). A later failure never lets the next commit reuse the version: that commit finds the tag and gets the next one; a rerun of the same commit finds its tag at HEAD and publishes the same code again, skipping the packages already pushed (a first run fails on a package version that exists). The version: `<Version>` in `Directory.Build.props` is published as written when it is above the latest stable tag; at or below it, the patch of that tag is counted up (as before); a prerelease (`X.Y.Z-label`) is published once, as written, and must be bumped before the next push. Commits that change only documentation do not run CI, so they do not publish. Umbraco publishes from a release tag a release manager creates, its version from the repository (Nerdbank.GitVersioning); ZauberCMS keeps publishing on a push to `main-static`, with the tag taken first so that a tag always names the one commit its packages came from. (owner delegated, 2026-11-27, Phase 11b) | ZA-089, ZA-109 |
+| D45 | **The packages carry the repository's `ReadMe.md` as their readme, the ZauberCMS logo as their icon, Source Link and a symbol package; each lists only the packages its project references do not bring.** One readme for all five packages (it already was the template's), so there is one text to keep right and it is the one GitHub shows; the icon is the logo the template package already had, no new artwork. A readme is fixed per package version on nuget.org, so a commit that changes only `ReadMe.md` still runs no CI and publishes nothing (`paths-ignore` keeps it): the next release carries the text, and no version is spent on something no site runs. The PDBs go into `.snupkg` symbol packages for nuget.org's symbol server, with Source Link (part of the .NET SDK) pointing at the commit on GitHub and untracked (generated) sources embedded; CI builds set `ContinuousIntegrationBuild` so the PDBs hold no build-machine paths, local builds keep local paths for the debugger. Dependencies: Components, Routing and ZauberCMS stop repeating what Core brings; a site resolves the same packages at the same versions (central package management), and a package comes into the graph in one place. Umbraco's `Directory.Build.props` sets the icon, Source Link (`PublishRepositoryUrl`) and `snupkg` symbol packages for all its packages the same way; ZauberCMS adds the readme, because its nuget.org pages had no description beyond one line. (owner delegated, 2026-11-27, Phase 11c) | ZA-119 |
+| D46 | **The template smoke test is a script in the repository (`tests/template-smoke.ps1`) that CI runs in the build job on every push, so a template or package that does not make a working site is never published.** It builds the packages at a throw-away version into a local feed, installs the template in a private template-engine hive, makes a site with `dotnet new zaubercms`, publishes and starts it, goes through the installer over HTTP and checks the pages, `blazor.web.js` and every admin script and style. It is not an xUnit test: it needs nuget.org and builds the packages, and the test suite has no network (Standards §9). PowerShell, like `release.ps1` and `migrations.ps1`, and written for Windows PowerShell 5.1 and PowerShell 7 (CI's runner). On CI it adds the time of a second package build and a site restore (the whole script took 54 seconds in a Linux SDK container with an empty NuGet cache). Umbraco's pipeline also makes a site from the template package it has just built and runs its acceptance tests against it. (owner delegated, 2026-11-27, Phase 11c) | ZA-094, ZA-123, Phase 2 |
+| D47 | **A site made from the template keeps out of git what it writes while it runs: the SQLite file, uploaded media, the resize cache and the logs, besides build output; its launch profiles are `https` and `http`.** The database and media of a live site are backed up with the server, not committed, and a cloned site starts at the installer; a site that wants its media in git removes the line. Profiles are named as in `dotnet new blazor` (they were "Umbraco.Web.UI"). Umbraco's template `.gitignore` leaves out the same: `umbraco/Data` (its SQLite database and temp files), `umbraco/Logs` and `wwwroot/media`. (owner delegated, 2026-11-27, Phase 11c) | ZA-123 |
 
 ## Working rules for the rework
 
@@ -1031,8 +1035,8 @@ Done in parts, one commit each, in this order:
 | --- | --- | --- |
 | 11a | ZA-164, ZA-165 (found in Phase 10e) | DONE 2026-11-27 (D41, D42; ZA-166 found and fixed) |
 | 11b | Baseline: ZA-131, CI and release hardening ZA-089, ZA-109 | DONE 2026-11-27 (D43, D44) |
-| 11c | Packaging and template: ZA-087, ZA-094, ZA-118, ZA-119, ZA-123, template smoke test | |
-| 11d | Start-up and DI: ZA-120, ZA-121 | |
+| 11c | Packaging and template: ZA-087, ZA-094, ZA-118, ZA-119, ZA-123, template smoke test | DONE 2026-11-27 (D45–D47; ZA-168 found and fixed, ZA-167 found, to 11d) |
+| 11d | Start-up and DI: ZA-120, ZA-121, ZA-167 (found in 11c) | |
 | 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | |
 | 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | |
 | 11g | Breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | |
@@ -1043,7 +1047,8 @@ Done in parts, one commit each, in this order:
   `.gitattributes`, an SDK pin, a vulnerability scan in CI); CI and release hardening ZA-089, ZA-109.
 - **Packaging and template:** ZA-087 (npm manifests in the Components package), ZA-094 (pinned asset package in the
   template), ZA-118 (un-skips its waiting test), ZA-119 (package metadata), ZA-123 (template rough edges).
-- **Start-up and DI:** ZA-120 (discovery and configuration fail silently), ZA-121 (DI leftovers, among them the
+- **Start-up and DI:** ZA-120 (discovery and configuration fail silently), ZA-167 (a list setting adds to its
+  defaults instead of replacing them: `ImageResize:ContentRoots`), ZA-121 (DI leftovers, among them the
   unused `IdentityUserAccessor` that `ICurrentUserAccessor` replaces).
 - **The deliberate breaking batch for v5:** internalise non-contract types (ZA-092), move Radzen-typed contracts
   out of Core (ZA-091), remove the unwired MVC path (ZA-090), naming conventions (ZA-124), split the very large
@@ -1166,6 +1171,98 @@ commit), taken as delegated.
     `NullReferenceException`); an unknown `Zauber:DatabaseProvider` throws `InvalidOperationException` (was
     `Exception`, which still catches it).
   - Identity errors are logged with a fixed template (`Identity error {Code}: {Description}`).
+  - Breaking: none.
+
+#### Phase 11c — Packaging and the template — DONE (2026-11-27)
+ZA-087, ZA-094 (Medium); ZA-118, ZA-119, ZA-123 (Low) fixed; ZA-168 (Low) found and fixed; ZA-167 (Low) found and
+assigned to 11d. The template smoke test Phase 2 left for here is built and runs in CI. Decisions D45 (package
+metadata and dependencies), D46 (the smoke test), D47 (the template's `.gitignore` and profiles), taken as
+delegated.
+- **npm manifests (ZA-087).** The Components package shipped `package.json` and `package-lock.json` as content and
+  contentFiles, so they appeared in every site's project (and its publish output); the exclusion pointed at a
+  path on one machine (`..\Users\…\zaubercms.rte\1.0.0-beta9`). They are now `None` items: in the IDE, not packed.
+- **Framework scripts (ZA-094).** The template site pinned `Microsoft.AspNetCore.App.Internal.Assets` 10.0.0, which
+  nothing ever moved, so new sites served the 10.0.0 `blazor.web.js`. It sets `RequiresAspNetWebAssets` instead:
+  the SDK adds the asset package of its own ASP.NET Core version (10.0.15 with SDK 10.0.404). The Web SDK sets it
+  by itself only when the site has `.razor` files of its own, which a site without the starter views has not.
+- **Packaged settings (ZA-118).** `ZauberCMS/appsettings.json` (copied into a site that has none) gets the
+  `Zauber:ImageResize` section the template and Web files have; the parity test waiting for it is un-skipped.
+- **Package metadata (ZA-119, D45).** `Directory.Build.props`: `PackageReadmeFile` (`ReadMe.md`), `PackageIcon`
+  (the template's existing logo, `ZauberCMS.Template/images/logo.png`), `RepositoryType`, Source Link
+  (`PublishRepositoryUrl`, `EmbedUntrackedSources`), symbol packages (`IncludeSymbols`, `snupkg`), `Deterministic`,
+  and `ContinuousIntegrationBuild` on GitHub Actions. `CopyNuGetPackage` copies each `.snupkg` to `NugetSource/`
+  with its package; CI checks the four symbol packages and `dotnet nuget push` sends them with the packages. The
+  project-wide `NoWarn CS0618` in Components is gone: its one obsolete use (the content editor's URL field bound
+  to `Content.Url`) goes through a private property with a local suppression and the reason (ZA-125 retires the
+  property in 11g). Components, Routing and ZauberCMS no longer repeat Core's packages (EF Core providers, Identity,
+  Radzen, ImageResize, ZauberCMS.RTE, the EF tools and more); Serilog.Sinks.Async stays on ZauberCMS. Cruft removed:
+  `UpToDateCheckInput`, `Compile Remove`, `Folder` and `AdditionalFiles` entries for files that do not exist or
+  that the Razor SDK adds by itself, and ZauberCMS's `wwwroot` content item (it has no `wwwroot`). Kept: Core's
+  `lib/…/ZauberCMS.Core.runtimeconfig.json`, which EF's design package asks for because `migrations.ps1` runs
+  `dotnet ef` with Core as the start-up project.
+- **Template rough edges (ZA-123, D47).** The launch profile "Umbraco.Web.UI" is now `https`, with an `http` one
+  beside it; `template/.gitignore` is new (the template csproj's `NoDefaultExcludes` packs it, and the smoke test
+  checks it reaches the site). The sample's `/Home/Error` was already gone (Phase 10e, D33). The starter `_Imports`,
+  layout and views came in Phase 7.
+- **Logging settings (ZA-168, new and fixed).** Found by the smoke test's log check: the three `appsettings.json`
+  files logged to `Logs\log.txt`, which on Linux is a file named `Logs\log<date>.txt` in the content root, not a
+  `Logs` folder; and they listed the `WithThreadId` and `WithMachineName` enrichers, whose packages ZauberCMS does
+  not reference, so Serilog skipped them. Now `Logs/log.txt` and `FromLogContext` only, the same in the three files.
+- **Found (ZA-167, to 11d).** `ImageResizeSettings.ContentRoots` starts as `["img", "images", "media"]` and the
+  configuration binder adds the configured list to it: with the shipped settings a site has each root twice, and a
+  site that sets its own roots cannot drop the defaults. Seen with the binder in a scratch program.
+- **Template smoke test (D46).** `tests/template-smoke.ps1`: builds the four packages and packs the template at
+  `<Version>-smoke.<UTC time>` into a local feed, installs the template in a private hive (`--debug:custom-hive`),
+  creates `SmokeSite`, checks its files, restores exactly that version, builds and publishes it, starts it in
+  Production on a free port, goes through the installer over HTTP (SQLite, the starter kit) and checks the home
+  page, `blazor.web.js` (fingerprinted and plain), a 404 with its page, the admin signed in and each of its 11
+  scripts and styles (Radzen, BlazorMonaco, the Components assets: the transitive static web assets after the
+  dependency change), and the site's log. It then removes the version from the NuGet cache and `bin`, and the work
+  folder. CI: a `pwsh` step at the end of the build job.
+- Tests: `Packaging/PackageContentsTests` (ZA087 the manifests are not content and no machine path is left; ZA119
+  readme, icon, Source Link and symbols set and their files exist, no project hides CS0618, no package repeats what
+  its project references bring; ZA094 `RequiresAspNetWebAssets` and no pinned asset package; ZA123 `.gitignore`,
+  `NoDefaultExcludes`, no "Umbraco" profile, no `/Home/Error`; CI runs the smoke test in the build job),
+  `AppSettingsParityTests` (ZA-118's test un-skipped; ZA168 the Serilog section is the same in the three files,
+  forward slashes, only `FromLogContext`). All nine were run against the previous commit and failed there. Full
+  suite 1034 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0
+  warnings, also with `--no-incremental`.
+- Smoke test runs: Windows PowerShell 5.1 on Windows (passes; the first run found the 303 after the installer's
+  posts and the expected "no database" error, and the script was corrected), and PowerShell 7.6 in the
+  `mcr.microsoft.com/dotnet/sdk:10.0` Linux container with `GITHUB_ACTIONS=true` on a copy of the working tree
+  (passes, all 44 checks, 54 seconds). Afterwards the NuGet cache, the repository's `bin` folders and the machine's installed
+  templates (ZauberCMS.Template 4.1.0 from a local feed) were as before. Dev site (`ZauberCMS.Web`, Release,
+  Production): `/` 200, `/nope-page` 404 with the not-found view, `/admin` 302 to the login page,
+  `/Account/Login` 200, `_framework/blazor.web.js` 200, logs in `Logs/`.
+- Packages before and after (all five packed from the previous commit and from this one, file lists and nuspecs
+  compared): Core, Components, Routing, ZauberCMS gain `ReadMe.md`, `logo.png`, `<readme>`, `<icon>` and the
+  branch in `<repository>`, and a `.snupkg` with the PDB (Source Link to the commit checked in it). Components
+  loses `content/` and `contentFiles/` `package.json` and `package-lock.json`, its `contentFiles` nuspec section,
+  its `runtimeconfig.json`, and 9 dependencies (ImageResize, Components.Web, Diagnostics.EF, Identity.EF, EF
+  SqlServer, EF Sqlite, Localization, Radzen, ZauberCMS.RTE); Routing loses 3 (Components.Web, EF Sqlite,
+  Localization); ZauberCMS loses its `runtimeconfig.json` and 11 (Humanizer, MailKit, Components.Web,
+  Diagnostics.EF, Identity.EF, EF SqlServer, EF Sqlite, Localization, Logging.Abstractions, Radzen,
+  Serilog.AspNetCore), all still reached through Core (or Components, for Humanizer) at the same versions. The
+  template gains `content/template/.gitignore`; its csproj and launch settings changed inside.
+- **Not verified:** CI itself (GitHub only; nothing pushed to `main-static`); a push of a `.snupkg` to nuget.org
+  (the first release is the first); how nuget.org renders `ReadMe.md` (its images are on gitbook.io, which
+  nuget.org may not show).
+- **Release notes (D18):**
+  - The packages now have a readme and the ZauberCMS icon on nuget.org, and symbol packages with Source Link:
+    a debugger can step into ZauberCMS from a site.
+  - The Components package no longer puts `package.json` and `package-lock.json` into a site's project and its
+    published output. A site that has them from an earlier version can delete them.
+  - Components, Routing and ZauberCMS declare fewer direct dependencies; the same packages reach a site through
+    ZauberCMS.Core at the same versions.
+  - New sites from the template take the framework scripts from the SDK (`RequiresAspNetWebAssets`). **A site made
+    from an earlier template** still pins `Microsoft.AspNetCore.App.Internal.Assets` 10.0.0 and serves the old
+    `blazor.web.js`: remove that `PackageReference` and add `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>`.
+  - New sites get a `.gitignore` (the SQLite file, media, the resize cache and logs are left out) and the launch
+    profiles `https` and `http`.
+  - The shipped settings log to `Logs/log.txt` (on Linux the old `Logs\log.txt` made a file with a backslash in its
+    name) and drop two enrichers that had no package. An existing site keeps its own `appsettings.json`; one on
+    Linux can change the path itself. The packaged settings now have the `Zauber:ImageResize` section (same values
+    as the code's defaults).
   - Breaking: none.
 
 ### Phase 12 — .NET 11 (D4)

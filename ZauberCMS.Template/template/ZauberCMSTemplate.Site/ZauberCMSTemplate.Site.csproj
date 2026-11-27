@@ -5,13 +5,13 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <PreserveCompilationContext>true</PreserveCompilationContext>
+        <!-- Serves the framework's scripts (_framework/blazor.web.js) of the ASP.NET Core version that comes with the
+             .NET SDK building the site. ZauberCMS's pages are in its packages, so without this the SDK would add them
+             only while the site has .razor files of its own. -->
+        <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.App.Internal.Assets" Version="10.0.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>build</IncludeAssets>
-        </PackageReference>
         <PackageReference Include="ZauberCMS" Version="4.1.3"/>
     </ItemGroup>
     

@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11c (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1034 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes (Windows PowerShell 5.1; PowerShell 7 in the Linux SDK container), now a CI step; `doublecheck` self-review on the part. ZA-087, ZA-094, ZA-118, ZA-119, ZA-123 fixed; ZA-168 found and fixed; ZA-167 new (Phase 11d). Next free ID: ZA-169
 After Roadmap Phase 11b (2026-11-27): Build PASS · Warnings: 0 (now errors; analysers D43) · Vulnerable packages: 0 (CI scans) · Tests: 1026 (1025 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part; CI not run (GitHub only; checked with actionlint/shellcheck and a scratch-repository run of its steps). ZA-089, ZA-109, ZA-131 fixed. Next free ID: ZA-167
 After Roadmap Phase 11a (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1016 (1015 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-164, ZA-165 fixed; ZA-166 found and fixed. Next free ID: ZA-167
 After Roadmap Phase 10e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 993 (992 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their three Highs — password guessing on unconfirmed accounts, the single-load cache scoped per request, the 404 that counted as the error page — their Mediums and Lows fixed; slow regex redirects, per-server throttles and users deleted before v5 noted). ZA-030, ZA-031, ZA-032, ZA-033, ZA-095, ZA-098, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114, ZA-115, ZA-116, ZA-149, ZA-150 fixed; ZA-164 and ZA-165 new (Phase 11). Next free ID: ZA-166
@@ -28,6 +29,42 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Phase 11c (2026-11-27): packaging and the template (Roadmap D45–D47).** Details in the Roadmap's Phase 11c
+  notes. Every package was packed from the previous commit and from this one and the contents compared.
+  - **ZA-087 [Medium] Components package leaks npm manifests — fixed.** `package.json` / `package-lock.json` are
+    `None` items (were content: packed as `content/` and `contentFiles/` into every site); the machine-specific
+    exclusion is gone. Verified: the package's file list and nuspec before and after (both files and the
+    `contentFiles` section gone); `PackageContentsTests.ZA087…` (failed on the previous commit).
+  - **ZA-094 [Medium] Template pins an SDK-internal asset package — fixed.** The template site sets
+    `RequiresAspNetWebAssets` instead of pinning `Microsoft.AspNetCore.App.Internal.Assets` 10.0.0; the SDK
+    restores the version it ships (10.0.15 with SDK 10.0.404, seen in the site's `project.assets.json`). Verified:
+    the template smoke test (the published site contains `_framework/blazor.web.js`, the fingerprinted and plain
+    addresses answer 200 with the 200 KB script); `PackageContentsTests.ZA094…`.
+  - **ZA-118 [Low] Packaged `appsettings.json` has no `Zauber:ImageResize` section — fixed.** Added, the same as the
+    template's. Verified: the parity test that waited for it is un-skipped and passes.
+  - **ZA-119 [Low] Package metadata gaps and csproj cruft — fixed (D45).** Readme (`ReadMe.md`), icon (the
+    template's existing logo), Source Link, `.snupkg` symbol packages, deterministic CI builds, all in
+    `Directory.Build.props`; `CopyNuGetPackage` and CI handle the `.snupkg`. `NoWarn CS0618` removed from Components
+    (one use, the content editor's URL field, suppressed locally with the reason). Components, Routing and
+    ZauberCMS no longer repeat Core's packages; dead csproj entries removed. Verified: nuspecs before and after
+    (`<readme>`, `<icon>`, fewer dependencies), the Core `.snupkg` PDB holds the Source Link map to the commit,
+    Release build 0 warnings, the smoke test loads every admin script and style (Radzen, BlazorMonaco, Components)
+    through the shorter dependency lists; `PackageContentsTests.ZA119…` (three tests).
+  - **ZA-123 [Low] Template and sample rough edges — fixed (D47).** Launch profiles `https` / `http` (was
+    "Umbraco.Web.UI"); `template/.gitignore` added and packed (`NoDefaultExcludes`); `/Home/Error` was already gone
+    (Phase 10e). Verified: the smoke test finds the `.gitignore` in a new site and no "Umbraco" profile;
+    `PackageContentsTests.ZA123…`.
+  - **ZA-168 [Low] Shipped logging settings broken on Linux — found and fixed.** `Logs\log.txt` made a file named
+    `Logs\log<date>.txt` in a Linux site's content root; the `WithThreadId` / `WithMachineName` enrichers had no
+    package and were skipped. Now `Logs/log.txt` and `FromLogContext`, the same in the three `appsettings.json`
+    files. Verified: `AppSettingsParityTests.ZA168…` (failed on the previous commit); the smoke test's log check
+    on Linux (PowerShell 7 in `mcr.microsoft.com/dotnet/sdk:10.0`) and Windows; the dev site writes `Logs/`.
+  - **Template smoke test (Phase 2, deferred here) — built (D46).** `tests/template-smoke.ps1`, a CI step in the
+    build job. Verified: passes on Windows PowerShell 5.1 and in the Linux SDK container with PowerShell 7.6
+    (44 checks, 54 s with an empty NuGet cache); afterwards the NuGet cache, the `bin` folders and the machine's
+    installed templates were as before. Not run on GitHub yet.
+  - **ZA-167 [Low] new, open (Phase 11d):** `ImageResize:ContentRoots` is appended to its defaults by the binder.
 
 - **Phase 11b (2026-11-27): engineering baseline, CI and release hardening (Roadmap D43–D44).** Details in the
   Roadmap's Phase 11b notes.

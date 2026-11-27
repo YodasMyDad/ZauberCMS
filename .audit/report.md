@@ -2,8 +2,8 @@
 
 Last full run: 5668365 (2026-11-25, full) · Last changed run: b001147+wt (2026-11-27, Roadmap Phase 10e) · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
-Next free IDs: ZA-167 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
-After Roadmap Phase 11b (2026-11-27): Build PASS · Warnings: 0 (warnings are now errors; analysers at D43) · Vulnerable packages: 0 (CI now scans) · Tests: 1026 (1025 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-089, ZA-109, ZA-131 fixed. Next free ID: ZA-167. Earlier after-phase lines: [history.md](history.md) run log
+Next free IDs: ZA-169 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+After Roadmap Phase 11c (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1034 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test: passes (Windows PowerShell 5.1; PowerShell 7 in a Linux SDK container); now in CI · `doublecheck` self-review on the part. ZA-087, ZA-094, ZA-118, ZA-119, ZA-123 fixed; ZA-168 found and fixed; ZA-167 new (11d). Next free ID: ZA-169. Earlier after-phase lines: [history.md](history.md) run log
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
 > browser or against PostgreSQL/Redis**, so items marked as needing a repro are reasoned, not observed. Critical and
@@ -16,21 +16,15 @@ After Roadmap Phase 11b (2026-11-27): Build PASS · Warnings: 0 (warnings are no
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 5 | 68 | 1 |
-| Low | 12 | 40 | 6 |
+| Medium | 3 | 68 | 1 |
+| Low | 10 | 40 | 6 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11: the rest); there is no Backlog (owner, 2026-11-27).
+a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11: the rest, ZA-167 in 11d); there is no Backlog (owner, 2026-11-27).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
 ## Open findings
-
-### ZA-087 [Medium/High] Components package leaks npm manifests into consumer projects
-
-- Where: `ZauberCMS.Components/ZauberCMS.Components.csproj:73-76` · Category: F · Since: 2026-11-25
-- Issue / Trigger: `package.json` and `package-lock.json` ship as content files; the existing exclusion uses a stale machine-specific path.
-- Fix: `Content Remove="package*.json"` + `Pack="false"`. · Blocked by: nothing.
 
 ### ZA-090 [Medium/High] Unwired MVC rendering path ships as public API
 
@@ -51,22 +45,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Fix: make non-contract types internal before the next major. · Blocked by: public API.
 - Reconciled 2026-11-26 (Phase 7): the installer and form protection added 28 more public types (`ZauberCMS.Core.Installer`, `ZauberCMS.Core.Security`: 22 in `.cs` files and six Razor components); "no internal ones" no longer holds — `InstallerDatabase` and `InstallerAssets` are internal.
 
-### ZA-094 [Medium/Medium] Template pins an SDK-internal asset package at 10.0.0
-
-- Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/ZauberCMSTemplate.Site.csproj:11-14` · Category: F · Since: 2026-11-25
-- Issue / Trigger: `Microsoft.AspNetCore.App.Internal.Assets` is hard-pinned and never stamped by CI, so new sites serve a stale `blazor.web.js`.
-- Fix: `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>`; template smoke test. · Blocked by: nothing.
-
-### ZA-118 [Low/High] Packaged `appsettings.json` has no `Zauber:ImageResize` section
-
-- Where: `ZauberCMS/appsettings.json:88` (end of `Plugins`; Web and template continue with `ImageResize` at `:89`) · Category: F · Since: 2026-11-25
-- Issue / Fix: Web and template have it; behaviour identical via code defaults. Add it and a key-parity test.
-
-### ZA-119 [Low/High] Package metadata gaps and csproj cruft
-
-- Where: `ZauberCMS/ZauberCMS.csproj:83`, `ZauberCMS.Components/ZauberCMS.Components.csproj:19,34-41` · Category: F · Since: 2026-11-25
-- Issue / Fix: No `PackageReadmeFile`, icon, SourceLink or symbols; project-wide `NoWarn CS0618` hides obsolete usage; duplicated transitive references.
-
 ### ZA-120 [Low/High] Discovery and configuration fail silently or late
 
 - Where: `ZauberCMS.Core/Plugins/ExtensionManager.cs:43,68,192,203`, `ZauberCMS.Core/ZauberSetup.cs:83-85` · Category: F · Since: 2026-11-25
@@ -76,12 +54,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 
 - Where: `ZauberCMS.Core/ZauberSetup.cs:109-116,223,226,287` · Category: F · Since: 2026-11-25
 - Issue / Fix: Unused scoped `HttpClient` and `IUserEmailStore`; `SignInManager` registered twice; unused `Actions` on `ContentNavGroup`.
-
-### ZA-123 [Low/High] Template and sample rough edges
-
-- Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/Properties/launchSettings.json:19`, `ZauberCMS.Web/Program.cs:13` · Category: F · Since: 2026-11-25
-- Issue / Fix: Launch profile named "Umbraco.Web.UI"; no template `.gitignore`; no starter `_Imports`, layout or view; sample points at a non-existent `/Home/Error`.
-- Reconciled 2026-11-26 (Phase 7): the starter kit added `_Imports.razor`, `Layouts/MainLayout.razor` and two views (`Views/HomeView.razor`, `Views/TextPageView.razor`) to the template, so that part is resolved. Still open: the "Umbraco.Web.UI" profile name, no template `.gitignore`, and `/Home/Error` (the sample's `ZauberCMS.Web/Program.cs:13` uses it and no such route exists; the template's `Program.cs:13` has the same line commented out).
 
 ### ZA-124 [Low/High] API convention drift to settle before the next major
 
@@ -124,6 +96,16 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   completes.
 - Fix: an after-commit point in the hook API. · Blocked by: nothing (Roadmap Phase 10f).
 
+### ZA-167 [Low/High] A list setting adds to its defaults instead of replacing them
+- Where: `ZauberCMS.Core/Settings/ZauberSettings.cs` (`ImageResizeSettings.ContentRoots`), `ZauberCMS.Core/ZauberSetup.cs` (`Bind`) · Category: F · Since: 2026-11-27 (Phase 11c)
+- Issue / Trigger: `ContentRoots` starts as `["img", "images", "media"]` and the configuration binder appends the
+  configured list to an existing list. The three shipped `appsettings.json` files set the same three roots, so every
+  site has each one twice; a site that sets its own roots (`["uploads"]`) gets the three defaults as well and cannot
+  remove them. Seen with `ConfigurationBinder.Bind` in a scratch program (`img,images,media,img,images,media`).
+- Fix: bind lists over an empty default and fall back to the defaults when the section has none (or replace the
+  list when the key is present); a test that a configured list replaces the default. · Blocked by: nothing
+  (Roadmap Phase 11d, with ZA-120).
+
 ## Improvement proposals
 
 None recorded yet: lenses G (editor UX) and H (Umbraco alignment) were added to the audit on 2026-11-27 and have
@@ -143,14 +125,14 @@ history.md keeps every run.
 | Outdated packages | Microsoft.* 10.0.7 → 10.0.15; Npgsql EF 10.0.1 → 10.0.4; majors: Radzen 13.3.0, MailKit 5.0.0, HtmlSanitizer 11.0.26, ZauberCMS.RTE 3.0.0, Serilog.AspNetCore 11.0.0 (and .NET 11); Blazored.Modal "Not found at the sources" → ZA-130 |
 | Version alignment | OK — five packages at 4.1.3, chain consistent, shared dependency versions aligned |
 | Migration parity | OK — 3 migrations per provider, same names, snapshots aligned (52 entities / 53 indexes / 30 FKs). Content defect: ZA-050 |
-| Config parity | Packaged `ZauberCMS/appsettings.json` lacks `Zauber:ImageResize` (12 keys) → ZA-118 |
+| Config parity | Since Phase 11c the three `appsettings.json` files have the same `Zauber` keys and `Serilog` section (ZA-118, ZA-168; `AppSettingsParityTests`) |
 | Docs drift | Paths all resolve; ~55 claims spot-checked, 5 wrong, corrected this run |
 | Repo hygiene | Only `ZauberCMS.Web/app.db` tracked (exempt); `.gitattributes`, `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and an SDK pin since Phase 11b (ZA-131 fixed) |
-| Tests | Not part of the first run. After Phase 10d: 912 (911 pass, 1 skipped for ZA-118), SQL Server (LocalDB), PostgreSQL and Redis |
+| Tests | Not part of the first run. After Phase 11c: 1034 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis |
 | Pattern counts | Not counted yet (added to the audit 2026-11-27); the next run records the first counts |
 | Hot-path budget | First run, by reading: about 10 round-trips cold; 0 within 5 s of the same URL; 4–5 after 5 s idle; 2 per 404; +3 per block list, +1 per single media picker. Phase 10 changed front-end caching since: re-measure |
-| Package contents | Not checked yet (ZA-087 came from reading the csproj) |
-| Template smoke test | Not run yet (Standards §9: not built) |
+| Package contents | Phase 11c: all five packed before and after and compared (file lists, nuspecs); see the Roadmap's 11c notes |
+| Template smoke test | `tests/template-smoke.ps1` since Phase 11c, in CI's build job; passes |
 
 ## Coverage
 

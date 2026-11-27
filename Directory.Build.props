@@ -40,16 +40,43 @@
         <PackageProjectUrl>https://github.com/YodasMyDad/ZauberCMS</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/YodasMyDad/ZauberCMS</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <!-- The package page on nuget.org shows the repository's ReadMe.md and the ZauberCMS logo, as the template
+             package does (ZA-119). -->
+        <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
+        <PackageIcon>logo.png</PackageIcon>
         <LocalNugetSource>$(MSBuildThisFileDirectory)NugetSource</LocalNugetSource>
     </PropertyGroup>
 
-    <!-- A project that sets GeneratePackageOnBuild also gets its package copied to NugetSource/ (gitignored), a local
-         feed for testing unreleased packages. The condition is read when the target runs, after the csproj. -->
+    <PropertyGroup Label="Source Link, symbols and reproducible builds (ZA-119)">
+        <!-- Source Link comes with the .NET SDK: the PDB points at the commit's files on GitHub, so a debugger can step
+             into ZauberCMS from a site. The PDBs ship in a symbol package (.snupkg) beside each .nupkg; nuget.org
+             serves them to debuggers, and `dotnet nuget push` sends it with the package. -->
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <Deterministic>true</Deterministic>
+        <!-- On CI the paths in the PDBs are made independent of the build machine, so a package can be rebuilt from its
+             commit with the same result. Not locally: a debugger then finds the local files. -->
+        <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    </PropertyGroup>
+
+    <ItemGroup Label="Package readme and icon">
+        <None Include="$(MSBuildThisFileDirectory)ReadMe.md" Pack="true" PackagePath="\" Visible="false" />
+        <None Include="$(MSBuildThisFileDirectory)ZauberCMS.Template\images\logo.png" Pack="true" PackagePath="\" Visible="false" />
+    </ItemGroup>
+
+    <!-- A project that sets GeneratePackageOnBuild also gets its package, and its symbol package, copied to
+         NugetSource/ (gitignored), a local feed for testing unreleased packages; CI pushes both from there. The
+         condition is read when the target runs, after the csproj. -->
     <Target Name="CopyNuGetPackage" AfterTargets="Pack" Condition="'$(GeneratePackageOnBuild)' == 'true'">
         <PropertyGroup>
             <PackageOutputDir>$(OutputPath)..\</PackageOutputDir>
             <GeneratedPackage>$(PackageOutputDir)\$(PackageId).$(Version).nupkg</GeneratedPackage>
+            <GeneratedSymbolPackage>$(PackageOutputDir)\$(PackageId).$(Version).snupkg</GeneratedSymbolPackage>
         </PropertyGroup>
         <Copy SourceFiles="$(GeneratedPackage)" DestinationFolder="$(LocalNugetSource)" />
+        <Copy SourceFiles="$(GeneratedSymbolPackage)" DestinationFolder="$(LocalNugetSource)" Condition="'$(IncludeSymbols)' == 'true'" />
     </Target>
 </Project>

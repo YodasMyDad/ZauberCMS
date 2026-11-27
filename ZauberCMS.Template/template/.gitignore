@@ -1,0 +1,27 @@
+# A ZauberCMS site. What the site writes while it runs stays out of source control: the SQLite database file,
+# uploaded media, the resized-image cache and the logs. Back these up with the server; a server's database
+# settings belong in its own configuration or environment variables.
+
+# Build output and IDE files
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+
+# SQLite database (the installer's default is app.db next to the project)
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Uploaded media and resized copies (Zauber:UploadFolderName, the ImageResize cache)
+**/wwwroot/media/
+**/wwwroot/_mediacache/
+
+# Logs (Serilog, appsettings.json)
+**/Logs/
+
+# Front-end tooling a site may add
+node_modules/

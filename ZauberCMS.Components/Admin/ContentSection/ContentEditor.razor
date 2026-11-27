@@ -132,9 +132,7 @@ else
                                                   Description="The url in the browser bar to show this page"/>
                                 </LeftColumn>
                                 <CentreColumn>
-                                    @* ReSharper disable CSharpWarnings::CS0618 *@
-                                    <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@WorkingCopy.Url"/>
-                                    @* ReSharper restore CSharpWarnings::CS0618 *@
+                                    <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@WorkingCopyUrl"/>
                                 </CentreColumn>
                             </EditorRow>
 
@@ -323,6 +321,22 @@ else
     private User? LastUpdatedBy { get; set; }
     private bool Loading { get; set; } = true;
     private Content? WorkingCopy { get; set; }
+
+    // The Url field sets the page's stored URL. Content.Url is obsolete for code that reads a page's URL, which
+    // calls the Url() extension; this field is where the stored value is edited (ZA-125 retires the property).
+#pragma warning disable CS0618 // Type or member is obsolete
+    private string? WorkingCopyUrl
+    {
+        get => WorkingCopy?.Url;
+        set
+        {
+            if (WorkingCopy != null)
+            {
+                WorkingCopy.Url = value;
+            }
+        }
+    }
+#pragma warning restore CS0618
 
     // A page editor's unsaved block edits; replaced with an empty one whenever the content is (re)loaded
     private ContentEditScope RootScope { get; set; } = ContentEditScope.CreateRoot();
