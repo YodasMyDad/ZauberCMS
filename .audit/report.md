@@ -17,10 +17,11 @@ After Roadmap Phase 10e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable pa
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
 | Medium | 7 | 67 | 1 |
-| Low | 16 | 38 | 5 |
+| Low | 15 | 38 | 6 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155, ZA-163). What each phase fixed and how it was
+a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11: the rest); there is no Backlog (owner, 2026-11-27).
+ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
 ## Open findings
@@ -124,21 +125,13 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
 - Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
-### ZA-151 [Low/Medium] The installer's pages cannot be restyled or extended from a site
-- Where: `ZauberCMS.Core/Installer/Middleware/InstallerMiddleware.cs` (renders `InstallerPage` directly), `ZauberCMS.Core/Installer/Components/` · Category: F · Since: 2026-11-26 (Phase 7 audit)
-- Issue / Trigger: `IInstallService` can be replaced and `InstallService`'s methods are virtual, but the pages,
-  their steps and their styling are fixed. An agency cannot brand the installer or add a question, which sits
-  badly with "replaceable defaults".
-- Fix: a replaceable page component or a discovered "installer step" interface. · Blocked by: owner decision
-  (Roadmap, open questions).
-
 ### ZA-155 [Low/High] Resized copies of a deleted image stay in `_mediacache`
 - Where: `ZauberCMS.Core/Media/Services/MediaService.cs` (`PurgeAsync`), ImageResize cache root (`ZauberSetup.cs`, `_mediacache`) · Category: D · Since: 2026-11-26 (Phase 8 audit)
 - Issue / Trigger: a permanent media delete removes the original file, not the resized copies ImageResize made of
   it. Their names are hashes of path, options and file date, so they are hard to guess, but a "delete it for
   good" request (GDPR) is not fully met. Documented in `Docs/Services.md`.
 - Fix: remove the cache entries for the file on purge (needs an ImageResize API for it) or prune the cache. ·
-  Blocked by: the ImageResize package.
+  Blocked by: nothing (Roadmap Phase 10f).
 
 ### ZA-163 [Low/High] After-save hooks run before the commit
 - Where: `ZauberCMS.Core/Extensions/DbContextExtensions.cs` (`SaveChangesAndLog`), `MediaService.PurgeAsync` · Category: F · Since: 2026-11-26 (Phase 10b)
@@ -146,7 +139,7 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   rolled back after that (a media purge whose file can't be removed) was already reported to the hooks as done; a
   plugin mirroring media elsewhere removes a file that is back. Umbraco raises its "-ed" notifications when the scope
   completes.
-- Fix: an after-commit point in the hook API. · Blocked by: public API (owner decision; Roadmap Backlog).
+- Fix: an after-commit point in the hook API. · Blocked by: nothing (Roadmap Phase 10f).
 
 ### ZA-164 [Medium/High] The front end's "not found" page is sent with an empty body
 

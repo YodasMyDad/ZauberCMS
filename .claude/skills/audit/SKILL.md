@@ -62,7 +62,7 @@ without asking. A Roadmap phase ends with `/audit changed`; a release, or a quar
 3. **The report.** Read `.audit/report.md` in full. Note the header's *Last full run* and *Last changed run* (an old
    header with only *Audited commit* counts as the last full run), the next free `ZA`/`ZP` IDs, the open findings and
    proposals, and Coverage → "Not covered".
-4. **The Roadmap.** Read `Docs/Roadmap.md`: Status, Owner decisions, Backlog, Open questions. Each brief carries the
+4. **The Roadmap.** Read `Docs/Roadmap.md`: Status, Owner decisions, phases, Open questions. Each brief carries the
    D-numbers that bind its area. A D-decision is not a finding, unless the code does something other than it says.
 5. **Scope.** For `changed`, the base is the newer of the last full run and the last changed run. If that value ends
    in `+wt`, or there is no last changed run, take the commit that recorded it instead: the first commit after it
@@ -237,7 +237,7 @@ Proposals: N open (N high value) · Trend: <pattern counts and hot-path budget, 
 ## Open findings
 <by severity, then ID>
 ### ZA-NNN [Severity/Confidence] Title
-- Where: `path:line` · Category: A–H · Unit: Un · Since: <date> · Roadmap: <phase | Backlog>
+- Where: `path:line` · Category: A–H · Unit: Un · Since: <date> · Roadmap: <phase>
 - Issue / Trigger: …
 - Fix: … · Test: … · Blocked by: <public API | schema | owner decision | …>
 
@@ -269,7 +269,8 @@ Proposals: N open (N high value) · Trend: <pattern counts and hot-path budget, 
    or resolved, with how each was verified; proposals built or declined, with the owner's reason), and a line at the
    top of the run log. Never rewrite older entries.
 2. **`Docs/Roadmap.md`**: run `git diff Docs/Roadmap.md` first (the owner and other sessions edit it too). Update the
-   Status line's open counts. Put each new finding in the phase whose theme fits, or in the Backlog with the reason.
+   Status line's open counts. Put each new finding in the phase whose theme fits (there is no Backlog: owner, 2026-11-27; a finding that needs
+   an owner decision goes in a phase and in "Open questions for the owner").
    Add the high-value proposals to "Open questions for the owner", one line each with a recommendation; the full
    list stays in the report. Don't start fixing (except in `fix` mode).
 3. **Declined proposals**: when the owner declines one, add a row to product.md "Different on purpose" so later runs

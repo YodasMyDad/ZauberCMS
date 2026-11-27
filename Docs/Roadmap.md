@@ -19,9 +19,10 @@
   **Phase 10c done** (property editors and stored values, D30–D31, 2026-11-26).
   **Phase 10d done** (admin UI robustness and the resizable tree panel, D32, 2026-11-27).
   **Phase 10e done** (front end, security and identity hardening, D33–D36, 2026-11-27).
-  **23 open findings** (0 Critical, 0 High, 7 Medium, 16 Low), each one assigned below to Phase 11 or the
-  [Backlog](#backlog-no-phase-yet). **Next: Phase 11** (engineering baseline, API clean-up, v5; design questions
-  inside a phase are decided Umbraco's way and recorded, as the owner delegated).
+  **22 open findings** (0 Critical, 0 High, 7 Medium, 15 Low), each one assigned below to a phase (10f–10i or 11),
+  plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
+  new finding goes into the phase whose theme fits. **Next: Phase 10f**, then 10g, 10h, 10i, then Phase 11 (design
+  questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -56,7 +57,7 @@
 | D24 | **No switch to turn the installer off.** Empty database settings always mean "show the installer", as decided in D20. That a live site which loses its database settings (a publish overwriting `appsettings.json`, a missing environment variable) then shows the installer is accepted: it is logged as an error at start-up and documented, with the instruction to put the settings into the project or the environment after installing on a server. (owner, 2026-11-26, asked during Phase 7 after the audit raised it) | ZA-004, [Installer.md](Installer.md) |
 | D25 | **Content versions are pruned: the newest N per page are kept** (plus its published version and latest draft), by the daily job; a new setting `Zauber:ContentVersionsToKeep`, on by default (50) — existing sites start pruning on upgrade (release notes). (owner, 2026-11-26, Phase 10) | ZA-069 |
 | D26 | **Admin trees page their children with a "Show more" row**: the first 100 of a node, then a row at the bottom that loads the next 100. (owner, 2026-11-26, Phase 10) | ZA-068 |
-| D27 | **Services do no authorisation; access is checked where a call comes in** (the page, component or endpoint), as in Umbraco and WordPress. Replaces D10: the opt-in permission hook was weighed in Phase 10a and dropped (no shipped path needs it, it does nothing against plugin code, and it would put a rule on every write method). What Phase 10a does instead: `ICurrentUserAccessor`, so services can be called outside a circuit (ZA-093). Back-office roles other than Admin go to the Backlog; that is where service checks would be looked at again. (owner, 2026-11-26) | ZA-140, ZA-093 |
+| D27 | **Services do no authorisation; access is checked where a call comes in** (the page, component or endpoint), as in Umbraco and WordPress. Replaces D10: the opt-in permission hook was weighed in Phase 10a and dropped (no shipped path needs it, it does nothing against plugin code, and it would put a rule on every write method). What Phase 10a does instead: `ICurrentUserAccessor`, so services can be called outside a circuit (ZA-093). Back-office roles other than Admin: Phase 10g (D38, section access per role); service checks would be looked at again after that. (owner, 2026-11-26) | ZA-140, ZA-093 |
 | D28 | **Save hooks see every row a change writes, and one veto stops the whole change.** `SaveChangesAndLog` runs `IBeforeEntitySave<T>` for every row the save writes, of every entity type (the change tracker), each with its own state, then saves once, then runs `IAfterEntitySave<T>` for the same rows. A move, recycle, restore, permanent delete or emptied bin is one change: any `false` from a before-save hook and nothing of it is written (the transaction rolls back). Umbraco does the same: cancelling `Moving`, `Deleting` or `EmptyingRecycleBin` cancels the whole operation, and the "-ed" notifications list every item moved or deleted. Our hooks are per row rather than per operation, so they also see the items below (Umbraco's "-ing" notifications list only the item named). Not hooked: bulk maintenance that runs straight against the database (audit and version retention, orphan clean-up). (owner delegated to Umbraco parity, 2026-11-26, Phase 10b) | ZA-012, ZA-157, ZA-159, ZA-018 |
 | D29 | **A "Save only" draft runs the hooks of the rows it writes, like any save: the draft rows, not the live page.** It writes `UnpublishedContent` (the page's and its blocks' drafts), so `IBeforeEntitySave<UnpublishedContent>` runs; the live `Content` row only gets its link to the draft (Modified), and a new block's row, which only the draft reaches, is Added. A plugin that mirrors the live site (a search index) watches `Content`; one that wants drafts too watches `UnpublishedContent`. Umbraco separates the same way: Save raises `Saving`/`Saved` and Publish raises `Publishing`/`Published` as well; its external index holds published content only. Tag links follow the live values, as Umbraco's tags do: a draft leaves them, a publish, version restore or copy writes them, a permanent delete removes them. (owner delegated to Umbraco parity, 2026-11-26, Phase 10b) | ZA-159, ZA-099 |
 | D30 | **A picker stores one shape for any count: a JSON array of ids in the order the editor chose, even for one item; older values are read, not rewritten.** The content and media pickers wrote one item as a bare id and several as a JSON array. They now always write `["id", …]`, and everything that reads a picker value (`ToPickerIds`, `GetContentItems`, `GetMediaItems`, `GetUsers`, `GetValue<Guid>` and `GetValue<List<Guid>>`, the admin's single-id fields) takes both shapes. There is no data migration: values live in pages, drafts, versions and block snapshots across three providers, and a value becomes the new shape the next time its page is saved. Umbraco does the same: Media Picker 3 stores a JSON array whatever the maximum, and its value converters return one item or a list from the property's settings, not from the stored shape; when a stored format changed, its converters kept reading the old one. The read side returns the stored order, as Umbraco's converters do. (owner delegated to Umbraco parity, 2026-11-26, Phase 10c) | ZA-029, ZA-078 |
@@ -66,6 +67,10 @@
 | D34 | **A redirect says whether its From URL is a regular expression (`IsRegex`, a nullable column); otherwise it matches exactly.** Rows saved before the column existed are null and keep the old guess (regex characters mean regex) until they are saved again, so no site changes behaviour on upgrade. A save is refused when the redirect would send an address to itself or close a circle with the saved ones, and the middleware never redirects an address to itself. (owner, 2026-11-27, Phase 10e) | ZA-116 |
 | D35 | **Deleting a user erases the person; there is no user recycle bin.** The row stays, marked deleted, so pages and versions still point at an author, but its user name becomes `deleted-<id>` and its email, phone, password, profile values, logins, claims and roles go; the address and the old name can register again. Audit rows keep their text until the daily job removes them, as the record of who did what. Umbraco also deletes members for good. Users deleted before v5 are left as they are, with no erase on upgrade. (owner, 2026-11-27, Phase 10e) | ZA-033 |
 | D36 | **Image resizing does not upscale, and the resize cache is capped at 2 GB, by default.** `Zauber:ImageResize:AllowUpscale` false (a bigger size than the original returns the original size) and `Cache:MaxCacheBytes` 2147483648 (the oldest copies are removed as new ones are written). Both can be set back; existing sites notice, so it is in the release notes. (owner, 2026-11-27, Phase 10e) | ZA-104 |
+| D37 | **The admin's text is localisable; ZauberCMS ships English.** Every string the admin shows goes through .NET localisation (`IStringLocalizer`) with English resource files, so a site or a translator adds a language with resource files of its own, without forking. The admin's language stays `Zauber:AdminDefaultLanguage`. Front-end views are the site's own and are not part of it. Umbraco ships language files the same way. (owner, 2026-11-27) | ZA-129 |
+| D38 | **Back-office access is set per section and per role.** An admin screen sets which roles may open each section (Content, Media, Users, Settings, and plugin sections, which take part through `ISection`); Admin always sees everything, and a seeded "Editor" role gets Content and Media. The navigation, the pages under `/admin` and the endpoints the admin calls are all gated. Start nodes and per-action permissions (publish, delete, move) are not part of it; this is the first step of Umbraco's user groups. Services still do no authorisation (D27). (owner, 2026-11-27) | D27 |
+| D39 | **The installer's pages stay fixed; a site cannot restyle them or add steps.** `IInstallService` stays replaceable. ZA-151 is declined. (owner, 2026-11-27) | ZA-151 |
+| D40 | **The installer keeps writing the database settings to `appsettings.json` (D19 stands).** A separate file would be lost on deployments that delete extra files anyway; the docs keep telling people to put the settings in their deployed configuration or environment variables. (owner, 2026-11-27) | D19, D24 |
 
 ## Working rules for the rework
 
@@ -672,7 +677,7 @@ enterprise CMS; decide as Umbraco does"): D28 and D29.
   - Importing a content type over an existing alias keeps its property and tab ids (before, the values were lost).
   - The tags editor component no longer injects `NotificationService`.
 - After-save hooks still run inside the change's transaction, before the commit (Umbraco raises its "-ed"
-  notifications after the scope completes); see the Backlog.
+  notifications after the scope completes); see Phase 10f (ZA-163).
 
 ### Phase 10c — Property editors and stored values — DONE (2026-11-26)
 ZA-015, ZA-078, ZA-100 (Medium); ZA-027, ZA-028, ZA-029, ZA-112, ZA-127 (Low). The design questions were decided
@@ -980,6 +985,34 @@ domain is ignored).
   - Content queries and data grids add `ThenBy(Id)` to their order; of two pages with the same URL (only possible in
     old data) the first in tree order is served.
 
+### Phase 10f — Hooks after the commit, resized copies of deleted images
+ZA-163, ZA-155 (Low). Both were in the Backlog, which the owner removed (2026-11-27).
+- **ZA-163:** `IAfterEntitySave<T>` runs inside the change's transaction, before the commit, so a change rolled back
+  after it (a media purge whose file can't be removed) was already reported as done. Umbraco raises its "-ed"
+  notifications when the scope completes. Add the after-commit point the Umbraco way, keep `IAfterEntitySave<T>`'s
+  current contract working (it can ask for a re-save inside the transaction), and record the design as a D-decision.
+- **ZA-155:** a permanent media delete leaves the image's resized copies in `_mediacache`. Remove them, or prune the
+  cache, whichever the ImageResize package allows; decide it the Umbraco way and record it.
+
+### Phase 10g — Back-office roles: section access per role (D38)
+The feature the owner chose (2026-11-27); it replaces the Backlog row "Back-office roles other than Admin".
+- Which roles may open each section, set on an admin screen and stored as data; Admin always all; a seeded "Editor"
+  role with Content and Media; plugin sections (`ISection`) take part with no extra registration.
+- Gate the section navigation, the pages under `/admin` (`AdminAccessMiddleware` and `Routes.razor`, today
+  Admin-only through `Components/Admin/_Imports.razor`) and the endpoints the admin calls. Services stay
+  unchecked (D27).
+- Docs: what a plugin section or page has to do (AGENTS.md "Core principle"), Installer.md, AdminUI.md.
+
+### Phase 10h — Admin localisation, English resources (D37)
+ZA-129 (Low). Every admin string through `IStringLocalizer` with English resource files; a site adds a language
+with its own resources. Settle how a site supplies them (resource assembly or files) and record it. Done after 10g so
+its new screens are covered.
+
+### Phase 10i — Accessibility pass
+ZA-128 (Low). Labels on icon buttons and inputs, keyboard access and roles for the clickable divs (every tree
+button), `label for` matching real ids, focus in side panels. Last of the Phase 10 parts, so it covers 10g's screens
+and uses 10h's localised text.
+
 ### Phase 11 — Engineering baseline, API clean-up, v5
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,
 ZA-124, ZA-125, ZA-126, ZA-131, ZA-165 (Low).
@@ -1013,33 +1046,13 @@ Owner instructions for this phase (2026-11-25):
 - **Hot reload.** Check that hot reload works well for ZauberCMS in the dev site and in a template-built site
   (Razor, C# and CSS edits, admin and front-end), and fix what stops it.
 
-## Backlog (no phase yet)
-
-Open findings that are not in a phase: each needs an owner decision, outside work, or is a feature in its own
-right. Move one into a phase when that is settled.
-
-| Finding | Why it has no phase |
-| --- | --- |
-| ZA-128 [Low] Accessibility roll-up (unlabelled icon buttons, clickable divs, inputs without labels) | A pass over every admin screen. Best done once, after Phase 10d's admin changes; the owner decides when. |
-| ZA-129 [Low] The admin UI is not localised | A feature: which languages, resource files, who translates. Owner decision. |
-| ZA-151 [Low] The installer's pages cannot be restyled or extended from a site | Open question for the owner (below). |
-| — Back-office roles other than Admin (an "Editor" who may edit content but not users) | A feature (D27). Hiding screens and actions per role is the start; whether services then check access too is decided then. |
-| ZA-163 [Low] After-save hooks run before the commit, so a change that is rolled back after them (a media file that can't be removed) has already been reported to them | Needs an after-commit point in the hook API (Umbraco raises its "-ed" notifications when the scope completes). A new interface or a change to `IAfterEntitySave<T>`'s contract (it can ask for a re-save inside the transaction): owner decision. |
-| ZA-155 [Low] Resized copies of a deleted image stay in `_mediacache` | Needs a way to remove one file's entries from the ImageResize package, or a decision to prune that cache on a schedule. |
-
 ## Open questions for the owner
 
 - Answered: SVG uploads (D6), sanitiser policy (D7), Phase 6 design (D13–D16), ZA-044 hotfix (D17), v5 (D18), installer (D19–D23).
-- From Phase 7, for the owner to confirm or change:
-  - The installer does not restart the site (see Phase 7). Say so if a restart is wanted anyway.
-  - An Admin Email Address is promoted by a social login or by setting the password from an emailed link, not by
-    an opened confirmation link (see Phase 7, "Different from D22"). The alternative is to promote social logins
-    only.
-  - Starter content ships in the template only. A built-in kit inside the packages would need views that sites
-    cannot edit.
-  - Should `IMembershipService.RegisterUserAsync` itself refuse when registration is off? Today only the built-in
-    page and the external sign-in paths do, so a site's own registration form keeps working.
-  - Should the installer write the database settings to a file of its own (for example `appsettings.Zauber.json`)
-    that a publish does not overwrite? It would close the common case behind D24; it changes D19's "into
-    `appsettings.json`" and does not survive deployments that delete extra files.
-  - The installer's pages cannot be restyled or given extra steps from a site (ZA-151). Wanted?
+- Closed 2026-11-27 (the owner asked for nothing to be left parked):
+  - From Phase 7, kept as built unless the owner says otherwise: the installer does not restart the site; an Admin
+    Email Address is promoted by a social login or by setting the password from an emailed link, not by an opened
+    confirmation link; starter content ships in the template only; `IMembershipService.RegisterUserAsync` does not
+    check `AllowRegistration` (the built-in page and the external sign-in do, so a site's own form keeps working, as
+    Umbraco's member service does not check either).
+  - Answered: the installer keeps writing `appsettings.json` (D40); its pages stay fixed (D39, ZA-151 declined).

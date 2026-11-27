@@ -27,6 +27,12 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed, resolved, closed and declined
 
+- **Owner decisions (2026-11-27): no Backlog.** Its items moved to Roadmap Phases 10f (ZA-155, ZA-163), 10g
+  (back-office roles, D38), 10h (ZA-129, D37) and 10i (ZA-128).
+  - **ZA-151 [Low] The installer's pages cannot be restyled or extended — declined (D39).** The owner does not want
+    it; `IInstallService` stays replaceable.
+  - Phase 7's open questions closed as built; the installer keeps writing `appsettings.json` (D40).
+
 - **Phase 10e (2026-11-27): front end, security and identity hardening (Roadmap D33–D36).** Checked in a browser on
   a scratch copy of the sample site in Production mode unless a line says tests only; details in the Roadmap's
   Phase 10e notes.
