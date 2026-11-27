@@ -235,7 +235,12 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   (`RedirectRules.FindLoop`). `SeoRedirect.IsRegex` null (rows from before the flag) keeps the old guess
   (`RedirectRules.LooksLikeRegex`). `RedirectMiddleware` keeps its compiled list in `ICacheService` under the
   `SeoRedirect` prefix, so a save clears it on every server; exact matches ignore letter case, and no rule sends an
-  address to that same address.
+  address to that same address. A redirect with a domain (`SeoRedirect.DomainId`, D42) applies only to requests on
+  that domain, by the rule content routing uses (`DomainMatching`: same host, and the domain's path on whole
+  segments); one without applies on every host; for the same From URL the one for the request's domain wins, and
+  exact rules are still tried before regular expressions. The From URL is the whole path, also for a domain with a
+  path (`example.com/fr` → From URL `/fr/old`). The loop check counts only rules that can apply on the same requests.
+  Deleting a domain deletes its redirects.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).
   That includes the admin editor that opens an item from the bin (`EditContent`, `ContentEditor`).

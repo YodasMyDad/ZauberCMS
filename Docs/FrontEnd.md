@@ -24,6 +24,14 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
 4. The view is looked up by `Content.ViewComponent` == **view type `FullName`** (namespace + class) among
    `IContentView` implementations, then rendered inside `<LayoutView>` using the view's `@layout`.
    Fallbacks: `Zauber:NotFoundComponent`, `Zauber:StarterComponent`, `Zauber:MissingView` (also full type names).
+5. No page at the address (and the site has content): `EntryPage` renders `Zauber:NotFoundComponent` in its layout
+   with status 404 (D41). The status is set by ZauberCMS, so a site's own not-found view does not set it. It is set
+   as the response starts (`HttpContext.SetStatusCodeWhenResponseStarts`), because .NET 10 sends a static render
+   that ends at 404 **without its HTML**, leaving the body to status-code pages: a view or page that sets
+   `HttpContext.Response.StatusCode = 404` itself is sent empty. A site page that shows a not-found view of its own
+   calls `SetStatusCodeWhenResponseStarts(404)` instead. Only a response still at 200 is changed, so a redirect or
+   the error page that comes later keeps its status. The registration page, when it is off, answers the same way.
+   Inside an admin circuit there is no response; the view is shown.
 
 ## Errors (Roadmap D33)
 

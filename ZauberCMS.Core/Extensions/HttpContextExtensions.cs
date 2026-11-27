@@ -41,4 +41,32 @@ public static class HttpContextExtensions
 
         return url;
     }
+
+    /// <summary>
+    /// Sends the response with <paramref name="statusCode"/>, set as the response starts rather than now. For a
+    /// Blazor page rendered statically that shows HTML with an error status, such as a not-found view (ZA-164,
+    /// Roadmap D41): .NET 10 sends a static render that ends with status 404 without its HTML, leaving the body to
+    /// status-code pages, so a view that sets <c>Response.StatusCode = 404</c> itself is sent empty. Only a
+    /// response still at 200 when it starts is changed: a redirect or an error page that came later keeps its status.
+    /// </summary>
+    /// <returns>False when the response has already started, so its status can no longer be changed.</returns>
+    public static bool SetStatusCodeWhenResponseStarts(this HttpContext context, int statusCode)
+    {
+        var response = context.Response;
+        if (response.HasStarted)
+        {
+            return false;
+        }
+
+        response.OnStarting(() =>
+        {
+            if (response.StatusCode == StatusCodes.Status200OK)
+            {
+                response.StatusCode = statusCode;
+            }
+
+            return Task.CompletedTask;
+        });
+        return true;
+    }
 }

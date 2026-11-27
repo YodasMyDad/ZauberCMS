@@ -2,8 +2,8 @@
 
 Last full run: 5668365 (2026-11-25, full) · Last changed run: b001147+wt (2026-11-27, Roadmap Phase 10e) · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
-Next free IDs: ZA-166 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
-After Roadmap Phase 10e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 993 (992 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their three Highs — password guessing on unconfirmed accounts, the single-load cache scoped per request, the 404 that counted as the error page — their Mediums and Lows fixed; slow regex redirects, per-server throttles and users deleted before v5 noted). ZA-030, ZA-031, ZA-032, ZA-033, ZA-095, ZA-098, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114, ZA-115, ZA-116, ZA-149, ZA-150 fixed; ZA-164 and ZA-165 new (Phase 11). Next free ID: ZA-166
+Next free IDs: ZA-167 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+After Roadmap Phase 11a (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1016 (1015 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review. ZA-164, ZA-165 fixed; ZA-166 found and fixed. Next free ID: ZA-167. Earlier after-phase lines: [history.md](history.md) run log
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
 > browser or against PostgreSQL/Redis**, so items marked as needing a repro are reasoned, not observed. Critical and
@@ -16,8 +16,8 @@ After Roadmap Phase 10e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable pa
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 7 | 67 | 1 |
-| Low | 15 | 38 | 6 |
+| Medium | 6 | 68 | 1 |
+| Low | 14 | 40 | 6 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
 a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11: the rest); there is no Backlog (owner, 2026-11-27).
@@ -140,18 +140,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   plugin mirroring media elsewhere removes a file that is back. Umbraco raises its "-ed" notifications when the scope
   completes.
 - Fix: an after-commit point in the hook API. · Blocked by: nothing (Roadmap Phase 10f).
-
-### ZA-164 [Medium/High] The front end's "not found" page is sent with an empty body
-
-- Where: `ZauberCMS.Components/Pages/EntryPage.razor` → `NotFound404.razor` (sets 404 during static SSR) · Category: E · Since: 2026-11-27 (Phase 10e browser check)
-- Issue / Trigger: any address with no page (`/nope-page`) answers 404 with no HTML at all, in Development and Production, on the commit before Phase 10e too. Inside an admin circuit the same view renders. Likely .NET 10's handling of a 404 set during static rendering (Blazor's not-found support) rather than our code; not investigated yet.
-- Fix: find what empties the response (Router `NotFoundPage`, `NavigationManager.NotFound()`, status-code re-execution) and render the site's `Zauber:NotFoundComponent`. · Blocked by: nothing (needs a repro in a bare .NET 10 app first).
-
-### ZA-165 [Low/High] A redirect's domain is ignored
-
-- Where: `ZauberCMS.Core/Middleware/RedirectMiddleware.cs` (compiled list), `ZauberCMS.Components/Seo/Dialogs/AddEditRedirect.razor` (Domain dropdown) · Category: C · Since: 2026-11-27 (Phase 10e)
-- Issue / Trigger: the dialog stores `SeoRedirect.DomainId`, but the middleware matches every redirect on every host, so a redirect meant for one site of a multi-site install fires on all of them.
-- Fix: match `DomainId` against the request's domain (`MatchDomainWithContent`'s rules), or hide the field. · Blocked by: nothing.
 
 ## Improvement proposals
 

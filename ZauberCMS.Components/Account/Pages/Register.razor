@@ -5,6 +5,7 @@
 @using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core
+@using ZauberCMS.Core.Extensions
 @using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Plugins
@@ -104,10 +105,8 @@
         RegistrationOpen = (await DataService.GetGlobalSettings()).AllowRegistration;
         if (!RegistrationOpen)
         {
-            if (HttpContext is { Response.HasStarted: false })
-            {
-                HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            }
+            // Set as the response starts: a 404 set now would be sent without the not-found view's HTML (ZA-164)
+            HttpContext?.SetStatusCodeWhenResponseStarts(StatusCodes.Status404NotFound);
 
             var notFound = Settings.Value.NotFoundComponent;
             if (notFound != null && ExtensionManager.GetImplementations<IContentView>(true).TryGetValue(notFound, out var view))

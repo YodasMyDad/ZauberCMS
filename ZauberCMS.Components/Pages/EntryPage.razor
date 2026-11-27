@@ -5,6 +5,7 @@
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Extensions
 @using ZauberCMS.Core.Middleware
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Settings
@@ -96,7 +97,12 @@
             var hasContent = await ContentService.AnyContentAsync();
             if (hasContent)
             {
-                if (AllContentViews.TryGetValue(Settings.Value.NotFoundComponent!, out var notFound))
+                // No page at this address: 404 with the site's not-found view, whichever view that is. The status
+                // is set as the response starts: .NET 10 sends a static render that ends at 404 without its HTML
+                // (ZA-164, Roadmap D41). Inside a circuit there is no response and the view is simply shown.
+                HttpContext?.SetStatusCodeWhenResponseStarts(StatusCodes.Status404NotFound);
+                if (Settings.Value.NotFoundComponent is { } notFoundName &&
+                    AllContentViews.TryGetValue(notFoundName, out var notFound))
                 {
                     ComponentView = notFound;
                     LayoutType = LayoutResolver.GetLayoutType(ComponentView);

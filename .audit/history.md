@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11a (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1016 (1015 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-164, ZA-165 fixed; ZA-166 found and fixed. Next free ID: ZA-167
 After Roadmap Phase 10e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 993 (992 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their three Highs — password guessing on unconfirmed accounts, the single-load cache scoped per request, the 404 that counted as the error page — their Mediums and Lows fixed; slow regex redirects, per-server throttles and users deleted before v5 noted). ZA-030, ZA-031, ZA-032, ZA-033, ZA-095, ZA-098, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114, ZA-115, ZA-116, ZA-149, ZA-150 fixed; ZA-164 and ZA-165 new (Phase 11). Next free ID: ZA-166
 After Roadmap Phase 10d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 912 (911 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers, nothing High: the Medium — Radzen dialogs outside every error boundary — and the Lows fixed; the bins reloading on any save noted). ZA-025, ZA-085, ZA-096, ZA-097, ZA-101, ZA-108, ZA-156, ZA-161 fixed; ZA-026 and ZA-160 resolved. Next free ID: ZA-164
 After Roadmap Phase 10c (2026-11-26): Build PASS · Warnings: 0 · Tests: 897 (896 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (one reviewer, nothing High; its two Mediums — a second pick during staging could end the circuit, a new validator instance per render cleared the errors — and its Lows fixed). ZA-015, ZA-027, ZA-028, ZA-029, ZA-078, ZA-100, ZA-112, ZA-127 fixed. Next free ID: ZA-164
@@ -26,6 +27,25 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Phase 11a (2026-11-27): the not-found page and redirect domains (Roadmap D41–D42).** Details in the Roadmap's
+  Phase 11a notes.
+  - **ZA-164 [Medium] The front end's "not found" page is sent with an empty body — fixed.** Reproduced with curl
+    on the dev site (`/nope-page`: 404, `Content-Length: 0`) and in a bare .NET 10 Blazor app: .NET 10's
+    `RazorComponentEndpointInvoker` drops the HTML of a static render that ends at 404 (not re-executed, no
+    `NotFoundPage`), for status-code pages. New `HttpContext.SetStatusCodeWhenResponseStarts` sets the status from
+    `Response.OnStarting`, and only on a response still at 200; `EntryPage` sets 404 for any not-found view, and
+    `NotFound404` and the closed registration page use it. Verified: `Bootstrap/NotFoundStatusTests` over real HTTP
+    (Kestrel), and curl on the dev site in Development and Production (`/nope-page` 404 with the view's HTML).
+  - **ZA-165 [Low] A redirect's domain is ignored — fixed (D42).** `RedirectMiddleware` applies a redirect with a
+    domain only on requests on that domain (the domains read from the cached list, only when a redirect has one);
+    for the same address the domain's redirect wins over one for all; `RedirectRules.FindLoop` follows the same
+    rules. Verified: `Seo/RedirectDomainTests` (middleware on the real bootstrap, domains saved through
+    `SaveDomainAsync`).
+  - **ZA-166 [Low] A domain's path matched characters, and the first of two matching domains won — found and
+    fixed.** `example.com/en` matched `/english`; with `example.com` and `example.com/fr`, the list order decided.
+    New internal `DomainMatching` (whole segments, longest domain) is used by content routing and redirects.
+    Verified: `Seo/RedirectDomainTests` ZA166 cases.
 
 - **Owner decisions (2026-11-27): no Backlog.** Its items moved to Roadmap Phases 10f (ZA-155, ZA-163), 10g
   (back-office roles, D38), 10h (ZA-129, D37) and 10i (ZA-128).

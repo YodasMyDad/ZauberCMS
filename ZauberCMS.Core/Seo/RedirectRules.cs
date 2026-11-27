@@ -46,15 +46,18 @@ public static class RedirectRules
     /// </summary>
     public static string? FindLoop(SeoRedirect redirect, IEnumerable<SeoRedirect> others)
     {
-        // In the order the middleware tries them: exact rules before regular expressions, and within each the newest
-        // first (the one being saved is the newest), then by id
+        // In the order the middleware tries them: exact rules before regular expressions, within each the ones for a
+        // domain before the ones for all, and then the newest first (the one being saved is the newest), then by id.
+        // Only rules that can apply on the same requests count: a redirect for another domain never follows this one
+        // (ZA-165, D42).
         var rules = others
             .Where(r => r.Id != redirect.Id && !string.IsNullOrWhiteSpace(r.FromUrl))
+            .Where(r => r.DomainId == null || redirect.DomainId == null || r.DomainId == redirect.DomainId)
             .OrderByDescending(r => r.DateUpdated).ThenBy(r => r.Id)
             .Prepend(redirect)
             .Select(r => new Rule(r, IsRegex(r) ? TryCreateRegex(r.FromUrl!) : null, IsRegex(r)))
             .Where(r => !r.IsRegex || r.Regex != null)
-            .OrderBy(r => r.IsRegex)
+            .OrderBy(r => r.IsRegex).ThenBy(r => r.Redirect.DomainId == null)
             .ToList();
 
         if (!IsRegex(redirect) && SameAddress(redirect.FromUrl, redirect.ToUrl))

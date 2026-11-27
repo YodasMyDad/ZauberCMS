@@ -19,9 +19,11 @@
   **Phase 10c done** (property editors and stored values, D30–D31, 2026-11-26).
   **Phase 10d done** (admin UI robustness and the resizable tree panel, D32, 2026-11-27).
   **Phase 10e done** (front end, security and identity hardening, D33–D36, 2026-11-27).
-  **22 open findings** (0 Critical, 0 High, 7 Medium, 15 Low), each one assigned below to a phase (10f–10i or 11),
+  **Phase 11a done** (the not-found page and redirect domains, D41–D42, 2026-11-27).
+  **20 open findings** (0 Critical, 0 High, 6 Medium, 14 Low), each one assigned below to a phase (10f–10i or 11),
   plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
-  new finding goes into the phase whose theme fits. **Next: Phase 10f**, then 10g, 10h, 10i, then Phase 11 (design
+  new finding goes into the phase whose theme fits. **In progress: Phase 11** (owner, 2026-11-27: before 10f–10i;
+  parts 11a–11g in its section; **next: 11b**), then 10f, 10g, 10h, 10i, then Phase 12 (design
   questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -71,6 +73,8 @@
 | D38 | **Back-office access is set per section and per role.** An admin screen sets which roles may open each section (Content, Media, Users, Settings, and plugin sections, which take part through `ISection`); Admin always sees everything, and a seeded "Editor" role gets Content and Media. The navigation, the pages under `/admin` and the endpoints the admin calls are all gated. Start nodes and per-action permissions (publish, delete, move) are not part of it; this is the first step of Umbraco's user groups. Services still do no authorisation (D27). (owner, 2026-11-27) | D27 |
 | D39 | **The installer's pages stay fixed; a site cannot restyle them or add steps.** `IInstallService` stays replaceable. ZA-151 is declined. (owner, 2026-11-27) | ZA-151 |
 | D40 | **The installer keeps writing the database settings to `appsettings.json` (D19 stands).** A separate file would be lost on deployments that delete extra files anyway; the docs keep telling people to put the settings in their deployed configuration or environment variables. (owner, 2026-11-27) | D19, D24 |
+| D41 | **An address with no page is answered by ZauberCMS with the site's `Zauber:NotFoundComponent`, in its layout, with status 404 set as the response starts.** .NET 10 sends a static render that ends at 404 without its HTML, so that status-code pages can re-execute the request; Blazor's own answer is a Router `NotFoundPage` (a routable component of a fixed type) or status-code re-execution to an address. Both were set aside: the not-found view is a site's setting chosen at run time with its own layout and the request's content and culture, and re-execution would route a second request. `EntryPage` sets the 404, so a site's view needs no code for it; `HttpContext.SetStatusCodeWhenResponseStarts` (Core, public) is for a site page that shows a not-found view of its own, and changes only a response still at 200, so a redirect or the error page (D33) keeps its status. Umbraco also renders its configured 404 page (the last-chance content finder / `Error404Collection`) with status 404 in the same request, without re-execution. (owner delegated to Umbraco parity, 2026-11-27, Phase 11a) | ZA-164 |
+| D42 | **A redirect with a domain applies only on that domain; one without applies on every host; for the same address the one for the request's domain wins.** The domain is matched by the rule content routing uses (same host; a domain's path, as in `example.com/fr`, on whole segments), and the From URL stays the whole path. Exact rules are still tried before regular expressions, and within each the ones for a domain come first. The loop check counts only rules that can fire on the same requests. Umbraco's redirect URL management keeps each redirect with a content item's culture and domain (its root), so a redirect is never global; ZauberCMS keeps "any domain" because a single-site install has no domains and its redirects must keep working. (owner delegated to Umbraco parity, 2026-11-27, Phase 11a) | ZA-165, ZA-166 |
 
 ## Working rules for the rework
 
@@ -1016,7 +1020,21 @@ and uses 10h's localised text.
 ### Phase 11 — Engineering baseline, API clean-up, v5
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,
 ZA-124, ZA-125, ZA-126, ZA-131, ZA-165 (Low).
-- **Found in Phase 10e, do first:** ZA-164 (the front end's 404 page is sent with an empty body; reproduce in a bare
+
+The owner asked for Phase 11 before 10f–10i (2026-11-27); 10f–10i follow it and work to the conventions it sets.
+Done in parts, one commit each, in this order:
+
+| Part | Scope | Status |
+| --- | --- | --- |
+| 11a | ZA-164, ZA-165 (found in Phase 10e) | DONE 2026-11-27 (D41, D42; ZA-166 found and fixed) |
+| 11b | Baseline: ZA-131, CI and release hardening ZA-089, ZA-109 | |
+| 11c | Packaging and template: ZA-087, ZA-094, ZA-118, ZA-119, ZA-123, template smoke test | |
+| 11d | Start-up and DI: ZA-120, ZA-121 | |
+| 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | |
+| 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | |
+| 11g | Breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | |
+
+- **Found in Phase 10e, do first (done in 11a, below):** ZA-164 (the front end's 404 page is sent with an empty body; reproduce in a bare
   .NET 10 app, then render `Zauber:NotFoundComponent`), ZA-165 (a redirect's domain is ignored).
 - **Baseline:** ZA-131 (`Directory.Build.props`, analyzers, central package management, `.editorconfig`,
   `.gitattributes`, an SDK pin, a vulnerability scan in CI); CI and release hardening ZA-089, ZA-109.
@@ -1030,6 +1048,53 @@ ZA-124, ZA-125, ZA-126, ZA-131, ZA-165 (Low).
   `Content` (ZA-126).
 - The method-scoped DbContexts → `IDbContextFactory` (a known deviation in [Standards.md](Standards.md); no finding
   needs it since ZA-011 was fixed in Phase 10). Do it here or drop it from the deviations list.
+
+#### Phase 11a — The not-found page and redirect domains — DONE (2026-11-27)
+ZA-164 (Medium); ZA-165, ZA-166 (Low) fixed. Decisions D41 (not-found answer) and D42 (redirect domains), taken
+Umbraco's way as delegated.
+- **The not-found page (ZA-164, D41).** Reproduced on the dev site: `/nope-page` answered 404 with
+  `Content-Length: 0`. The same in a bare .NET 10 Blazor app (`dotnet new blazor`, no `NotFoundPage`, no status-code
+  pages, a catch-all page that sets `Response.StatusCode = 404`): 404 and no body. It is the framework:
+  `RazorComponentEndpointInvoker` (.NET 10) skips writing the rendered HTML when the status is 404, the request is not
+  a re-execution and no `NotFoundPage` path was set, so that `UseStatusCodePages` can re-execute. In the bare app a
+  404 set from `Response.OnStarting` kept the HTML. New `HttpContext.SetStatusCodeWhenResponseStarts(int)` (Core,
+  `ZauberCMS.Core.Extensions`) does that and changes only a response still at 200 when it starts, so a redirect
+  (302) or the error page (500) that comes later keeps its status. `EntryPage` sets 404 itself whenever it has no
+  page for the address (any `NotFoundComponent`, also one that is not found), so a site's view needs no code;
+  `NotFound404` and the registration page when it is off use the helper too. A null `NotFoundComponent` no longer
+  throws.
+- **Redirect domains (ZA-165, D42).** `RedirectMiddleware` keeps each redirect's `DomainId` in its compiled list
+  (redirects for a domain before the ones for all, each newest first) and, only when some redirect has a domain,
+  reads the request's domains from the cached domain list (`GetCachedDomainsAsync`, cleared when a domain is saved)
+  on each request, so an edited domain is matched by its new address. `InvokeAsync`'s signature is unchanged
+  (`IContentService` comes from the request's services when needed). `RedirectRules.FindLoop` skips rules for another
+  domain and orders like the middleware.
+- **Domain matching (ZA-166, new and fixed).** The rule is now one internal helper, `DomainMatching` (Core,
+  `ZauberCMS.Core.Content`), used by content routing (`MatchDomainWithContent`) and redirects. Found while extracting
+  it: a domain's path matched as a prefix of characters (`example.com/en` matched `/english`), and of two domains that
+  both matched (`example.com` and `example.com/fr`) the first in the list won. Now the path matches whole segments
+  (and a trailing `/` on the domain is ignored), and the longest matching domain is the request's.
+- Tests: `Bootstrap/NotFoundStatusTests` (over HTTP: a Blazor app on Kestrel at a free port; the helper keeps the
+  HTML at 404; a 404 set during the render is sent empty, which tells us if .NET changes it; a redirect and the error
+  page after the helper keep 302 and 500; a found page stays 200), `Seo/RedirectDomainTests` (ZA165 domain only,
+  every host, domain wins for the same address, regex, a domain with a path, an edited domain, loops across
+  domains; ZA166 segment matching and the longest domain). Full suite 1016 (1015 pass, 1 skipped for ZA-118) on
+  SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings.
+- Verified on the dev site (`ZauberCMS.Web`), Development and Production: `/nope-page` and `/nope/deeper` answer 404
+  with the not-found view's HTML (title "404 Missing Page"); `/` 200; `/media/nope.jpg` 404 from the static files
+  (no view, as before); `/admin` 302 to the login page; `/Account/Register` 200 (registration on). Not checked in a
+  browser: the registration page with registration off (the same helper; covered by the HTTP tests' mechanism) and a
+  redirect with a domain on a running site (no account in the tracked `app.db`; the middleware tests cover it).
+- **Release notes (D18):**
+  - Addresses with no page now get the site's not-found view with status 404; since the move to .NET 10 they were
+    sent as an empty 404. ZauberCMS sets the status: a site's own `NotFoundComponent` that sets
+    `Response.StatusCode = 404` itself should drop that line (the line makes .NET send the page empty). A site page
+    that shows a not-found view of its own calls `HttpContext.SetStatusCodeWhenResponseStarts(404)`.
+  - Redirects with a domain now apply only on that domain (they applied on every host); for the same From URL the
+    one for the request's domain wins over one for all domains. Redirects without a domain are unchanged.
+  - A domain with a path (`example.com/en`) now matches only `/en` and the addresses below it (not `/english`), and
+    of two domains that both match a request the longer one wins (it was the first in the list).
+  - New public `HttpContextExtensions.SetStatusCodeWhenResponseStarts`. Breaking: none.
 
 ### Phase 12 — .NET 11 (D4)
 Retarget to `net11.0`, move Microsoft/EF/Npgsql packages to 11.x, Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and

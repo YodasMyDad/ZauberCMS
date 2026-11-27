@@ -2477,21 +2477,8 @@ public partial class ContentService(
             return null;
         }
 
-        var requestHost = uri.Host.ToLowerInvariant();
-        var requestPath = uri.AbsolutePath.TrimStart('/').ToLowerInvariant();
-        return domains.FirstOrDefault(domain =>
-        {
-            var domainUrl = domain.Url?.ToLowerInvariant();
-            if (domainUrl != null && domainUrl.Contains('/'))
-            {
-                var parts = domainUrl.Split('/', 2);
-                var domainHost = parts[0];
-                var domainPath = parts.Length > 1 ? parts[1] : string.Empty;
-                return requestHost == domainHost && requestPath.StartsWith(domainPath, StringComparison.Ordinal);
-            }
-
-            return requestHost == domainUrl;
-        });
+        // The same rule the redirect middleware uses for a redirect's domain (ZA-165)
+        return DomainMatching.FindDomain(domains, uri.Host, uri.AbsolutePath);
     }
 
     /// <summary>
