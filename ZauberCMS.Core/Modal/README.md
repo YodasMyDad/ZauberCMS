@@ -8,4 +8,6 @@ here and is maintained as part of ZauberCMS.
 - Do **not** also reference the `Blazored.Modal` NuGet package in a site that uses ZauberCMS: the types would clash.
 - Static assets are served from `_content/ZauberCMS.Core/` (the scoped CSS bundle `ZauberCMS.Core.bundle.scp.css`
   and `Modal/BlazoredModal.razor.js`).
-- Changes from upstream: `@namespace` in `_Imports.razor`, the JS import path in `BlazoredModal.razor`.
+- Changes from upstream: `@namespace` in `_Imports.razor`, the JS import path in `BlazoredModal.razor`, and an
+  `ErrorBoundary` round each modal's content in `BlazoredModalInstance.razor` (ZA-097: a panel that throws shows the
+  error with "Try again" and "Close" instead of ending the circuit).

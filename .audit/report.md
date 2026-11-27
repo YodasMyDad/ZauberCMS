@@ -2,6 +2,7 @@
 
 Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
+After Roadmap Phase 10d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 912 (911 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers, nothing High: the Medium — Radzen dialogs outside every error boundary — and the Lows fixed; the bins reloading on any save noted). ZA-025, ZA-085, ZA-096, ZA-097, ZA-101, ZA-108, ZA-156, ZA-161 fixed; ZA-026 and ZA-160 resolved. Next free ID: ZA-164
 After Roadmap Phase 10c (2026-11-26): Build PASS · Warnings: 0 · Tests: 897 (896 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (one reviewer, nothing High; its two Mediums — a second pick during staging could end the circuit, a new validator instance per render cleared the errors — and its Lows fixed). ZA-015, ZA-027, ZA-028, ZA-029, ZA-078, ZA-100, ZA-112, ZA-127 fixed. Next free ID: ZA-164
 After Roadmap Phase 10b (2026-11-26): Build PASS · Warnings: 0 · Tests: 876 (875 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase. ZA-012, ZA-018, ZA-077, ZA-099, ZA-117, ZA-144, ZA-145, ZA-146, ZA-157, ZA-159 fixed; ZA-162 found and fixed; ZA-163 new (Backlog). Next free ID: ZA-164
 After Roadmap Phase 10a (2026-11-26): Build PASS · Warnings: 0 · Tests: 837 (836 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (one reviewer: its two Mediums — a request id that is not ours threw, `RunAs` reached other circuits' event handlers — and its Lows fixed). ZA-093 fixed, ZA-140 closed (D27), ZA-152 resolved. Next free ID: ZA-162
@@ -27,11 +28,11 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 11 | 62 | 1 |
-| Low | 37 | 18 | 3 |
+| Medium | 8 | 65 | 1 |
+| Low | 30 | 23 | 5 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086, ZA-011 and ZA-113 (Phase 10), ZA-093, with ZA-140 closed by D27 and ZA-152 resolved (Phase 10a), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-162.
+a phase (10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixed so far: ZA-044 (Phase 0), ZA-102, ZA-130 and ZA-133 (Phase 1), ZA-001, ZA-045, ZA-058, ZA-076, ZA-081, ZA-088, ZA-103 and ZA-137 (Phase 3), ZA-002, ZA-003, ZA-005, ZA-019, ZA-020, ZA-021, ZA-022, ZA-052, ZA-053, ZA-059, ZA-060, ZA-132, ZA-138 and ZA-139 (Phase 4), ZA-134, ZA-136, ZA-141 and ZA-142 (Phase 4 follow-ups), ZA-004, ZA-023, ZA-024 and ZA-148 (Phase 7), ZA-006, ZA-013, ZA-153 and ZA-154 (Phase 8), ZA-008, ZA-009, ZA-010, ZA-034 … ZA-043 and ZA-158 (Phase 9), ZA-056, ZA-057, ZA-061 … ZA-064, ZA-069, ZA-071, ZA-073, ZA-083, ZA-084, ZA-054, ZA-068, ZA-082, ZA-080, ZA-086, ZA-011 and ZA-113 (Phase 10), ZA-093, with ZA-140 closed by D27 and ZA-152 resolved (Phase 10a), ZA-096, ZA-097, ZA-101, ZA-025, ZA-085, ZA-108, ZA-156 and ZA-161, with ZA-026 (already fixed by ZA-138) and ZA-160 (not reproduced) resolved (Phase 10d), ZA-016, ZA-046, ZA-047, ZA-048, ZA-049, ZA-065, ZA-066, ZA-067, ZA-070, ZA-074, ZA-075, ZA-079 and ZA-135 (Phase 5), ZA-007, ZA-014, ZA-017, ZA-050, ZA-051, ZA-055, ZA-072, ZA-122 and ZA-143 (Phase 6), committed on `rework-2026`. Next free ID: ZA-162.
 
 ## Open findings
 
@@ -78,37 +79,11 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Issue / Trigger: A page at `/administration` renders as admin (interactive circuit, Radzen assets) for visitors; `/accounting` or `/api-docs` skip culture and redirect handling.
 - Fix: match on a segment boundary via one shared helper. · Blocked by: nothing.
 
-### ZA-096 [Medium/Medium] Admin scripts don't load when arriving by enhanced navigation
-
-- Where: `ZauberCMS/Components/App.razor:32-41`, `ZauberCMS.Components/Pages/NewSite.razor:8` · Category: E · Since: 2026-11-25
-- Issue / Trigger: Scripts inserted by enhanced navigation don't execute, so Radzen interop throws. Needs a browser check.
-- Fix: `data-enhance-nav="false"` on links into admin. · Blocked by: nothing.
-
-### ZA-097 [Medium/High] No `ErrorBoundary` anywhere
-
-- Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:40-42`, `ZauberCMS.Components/Admin/DynamicContentProperty.razor:5`, `ZauberCMS.Components/ContentComponents/RenderBlock.razor:13` · Category: E · Since: 2026-11-25
-- Issue / Trigger: One exception in any property editor, dashboard or consumer block preview ends the circuit and all unsaved work.
-- Fix: boundaries around `@Body`, each property editor and each preview. · Blocked by: UX.
-
 ### ZA-098 [Medium/High] No working front-end error page
 
 - Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/Program.cs:13`, `ZauberCMS.Web/Program.cs:13` · Category: E · Since: 2026-11-25
 - Issue / Trigger: The template ships the exception handler commented out and setup adds none: production errors return an empty 500.
 - Fix: ship an error route and wire the handler in setup. · Blocked by: pipeline order; new setting.
-
-### ZA-101 [Medium/High] Admin prerenders, so every page initialises twice
-
-- Where: `ZauberCMS/Components/App.razor:29,79-90` · Category: E · Since: 2026-11-25
-- Issue / Trigger: Double loads and flicker; before ZA-058 was fixed (Roadmap Phase 3) some pages loaded four times.
-- Fix: `InteractiveServerRenderMode(prerender: false)` for admin. · Blocked by: nothing now (the IP allow-list moved to middleware in Phase 4, ZA-060).
-
-### ZA-025 [Low/High] Duplicate tree alias constant
-
-- Where: `ZauberCMS.Core/Constants.cs:89` (`StructureElementTypeTree == "StructureContentTypeTree"`) · Category: C
-
-### ZA-026 [Low/High] `<RadzenComponents/>` rendered twice
-
-- Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:10,16` · Category: E
 
 ### ZA-030 [Low/Medium] Logout via top-level GET navigation still possible
 
@@ -127,11 +102,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 
 - Where: `MembershipService.cs:371-376` · Category: C/D · Issue: same email may be unable to re-register; GDPR erase path absent.
 - Reconciled 2026-11-25: reachable from the admin UI since user delete was fixed (ZA-045, Roadmap Phase 3); no restore or purge UI exists.
-
-### ZA-085 [Low/High] SEO checker blocks the circuit: sync HTTP, no timeout or cancellation
-
-- Where: `ZauberCMS.Components/Seo/SeoChecker.razor:53-56`, `ZauberCMS.Core/Seo/Checks/BrokenLinksCheck.cs:54-70` · Category: A · Since: 2026-11-25
-- Issue / Fix: Same lines as ZA-019; async load with timeout and a disposed `CancellationTokenSource`.
 
 ### ZA-104 [Low/High] Image-resize cache is unbounded and upscaling is on
 
@@ -154,11 +124,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:664,685,795,1001,1086`, `ZauberCMS.Core/Installer/Services/InstallService.cs` (`RecoverAdminAsync`) · Category: D · Since: 2026-11-25
 - Issue / Fix: Log the user id instead.
 - Reconciled 2026-11-26 (Phase 7): `InstallService.RecoverAdminAsync` logs the user name of the account named by `Zauber:Identity:RecoverAdminUser` (not the configured value). The `ZauberSignInManager.cs:76` log cited before (unverified email) was removed in Phase 4.
-
-### ZA-108 [Low/High] Admin loads Sortable.js from a CDN without SRI; package scripts not fingerprinted
-
-- Where: `ZauberCMS/Components/App.razor:21-22,36-43` · Category: D/E · Since: 2026-11-25
-- Issue / Fix: Vendor locally or add `integrity`; use `@Assets[...]`.
 
 ### ZA-109 [Low/High] CI and release script hardening
 
@@ -278,27 +243,6 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Fix: remove the cache entries for the file on purge (needs an ImageResize API for it) or prune the cache. ·
   Blocked by: the ImageResize package.
 
-### ZA-156 [Low/High] The media recycle bin lists 500 items and does not open a binned folder
-- Where: `ZauberCMS.Components/Admin/MediaSection/Navigation/MediaRecycleBinTree.razor` · Category: E · Since: 2026-11-26 (Phase 8 audit)
-- Issue / Trigger: the tree shows the 500 most recently binned top-level items, and a binned folder cannot be
-  expanded to see what went to the bin with it (restore or delete the folder as a whole). The content bin has the
-  same limits (300).
-- Fix: page the bin, and let a binned folder expand. · Blocked by: nothing (UX).
-- Reconciled 2026-11-26 (after Phase 10): the content bin now pages 100 at a time with a "Show more" row
-  (`RecycleBinTree.razor`); the media bin still loads 500 (`MediaRecycleBinTree.razor:60`) and no binned folder opens.
-
-### ZA-160 [Low/Medium] A component on the media folder page calls JavaScript while its circuit is torn down
-
-- Where: `ZauberCMS.Components/Admin/MediaSection/Folder.razor` page (component not identified) · Category: E · Since: 2026-11-26
-- Issue / Trigger: A full reload of a media folder page logged `JSDisconnectedException` from `Renderer.Dispose` ("Unhandled exception rendering component", then "Unhandled exception in circuit") in the old circuit. Harmless for the user (the circuit is already gone), but it is an error in the log on every such reload. `MultipleMediaUpload` already catches it, so it is another component on the page (Radzen or ours).
-- Fix: find the component whose `DisposeAsync` calls JS without catching `JSDisconnectedException`. · Blocked by: nothing.
-
-### ZA-161 [Low/Medium] Choosing a tree's "Show more" row drops the highlight on the selected node
-
-- Where: `ZauberCMS.Components/Trees/ContentTree.razor`, `ZauberCMS.Components/Trees/MediaTree.razor` (`OnChangeHandler`) · Category: E · Since: 2026-11-26
-- Issue / Trigger: Radzen moves its selection to the row when it is clicked; the tree puts its `Value` back, but Radzen re-syncs the highlight only from a null value, so the open page is no longer highlighted (the selection itself is kept).
-- Fix: render the row as a button inside the template with `@onclick:stopPropagation`, so the tree item is never selected. · Blocked by: nothing.
-
 ### ZA-163 [Low/High] After-save hooks run before the commit
 - Where: `ZauberCMS.Core/Extensions/DbContextExtensions.cs` (`SaveChangesAndLog`), `MediaService.PurgeAsync` · Category: F · Since: 2026-11-26 (Phase 10b)
 - Issue / Trigger: `IAfterEntitySave<T>` runs once the rows are written, inside the caller's transaction. A change
@@ -308,6 +252,30 @@ a phase (10a–10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155). Fixe
 - Fix: an after-commit point in the hook API. · Blocked by: public API (owner decision; Roadmap Backlog).
 
 ## Fixed this run / Resolved since last run
+
+- **Phase 10d (2026-11-27): admin UI robustness (Roadmap D32), and the owner's resizable tree panel.**
+  - **ZA-097 [Medium] No `ErrorBoundary` anywhere — fixed (D32).** `AdminErrorBoundary` round each property editor,
+    dashboard tab, the navigation and the page body; a plain boundary round each side panel's content. "Try again",
+    the message only with detailed errors on, the exception logged.
+  - **ZA-101 [Medium] The admin prerendered — fixed.** `InteractiveServerRenderMode(prerender: false)` for `/admin`.
+  - **ZA-096 [Medium] Admin scripts after enhanced navigation — fixed.** `AdminAccessMiddleware` drops the
+    `blazor-enhanced-nav` response header on `/admin`, so blazor.web.js loads the admin as a full page (checked in a
+    browser: Radzen and Sortable present after a link from the home page).
+  - **ZA-108 [Low] Sortable.js from a CDN without SRI; scripts not fingerprinted — fixed.** Sortable.js 1.15.7 ships
+    in the Components package; every admin script and editor asset goes through `@Assets`.
+  - **ZA-085 [Low] SEO checker blocked the circuit — fixed.** The sync HTTP had gone with ZA-019; a run is now
+    cancelled on leaving, re-running, Stop or after 3 minutes, and a check that throws is shown as failed.
+    `ISeoCheck` has a cancellable default method.
+  - **ZA-156 [Low] Media bin stopped at 500; a binned folder did not open — fixed.** Both bins page through
+    `InRecycleBin` tree levels and open a binned page or folder.
+  - **ZA-161 [Low] "Show more" dropped the highlight — fixed.** The row is a button that never selects the node.
+  - **ZA-025 [Low] Duplicate tree alias constant — fixed.** `StructureElementTypeTree` has its own value
+    (release note: a menu for one structure tree no longer shows on the other).
+  - **ZA-026 [Low] `<RadzenComponents/>` twice — resolved:** already fixed by ZA-138 (Phase 4); `SectionLayout` has
+    one.
+  - **ZA-160 [Low] `JSDisconnectedException` on a media folder reload — resolved (not reproduced).** Four full reloads
+    of a 105-item folder page logged nothing; our only component there that calls JavaScript on dispose catches the
+    disconnect. Reopen with a stack trace if seen again.
 
 - **Phase 10c (2026-11-26): property editors and stored values (Roadmap D30, D31).**
   - **ZA-078 [Medium] Pickers lost the editor's order — fixed.** Front-end helpers and the editors put items back in

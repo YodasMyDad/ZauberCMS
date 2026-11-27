@@ -17,4 +17,11 @@ public class ContentTreeLevelParameters
 
     /// <summary>Include unpublished pages (the admin trees do).</summary>
     public bool IncludeUnpublished { get; set; } = true;
+
+    /// <summary>
+    /// The recycle bin instead of the live pages. With no <see cref="ParentId"/>, the items at the top of the bin
+    /// (whose parent is not in it), most recently binned first; with one, what is in the bin below that item.
+    /// <see cref="IncludeUnpublished"/> is ignored.
+    /// </summary>
+    public bool InRecycleBin { get; set; }
 }

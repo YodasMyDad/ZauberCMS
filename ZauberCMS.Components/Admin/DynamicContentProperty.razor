@@ -1,8 +1,12 @@
 ﻿@using ZauberCMS.Core.Content.Models
 
-<CascadingValue Value="this">
-    <DynamicComponent Type="@ComponentType" Parameters="@GetParameters()"/>
-</CascadingValue>
+@* One editor that throws shows its error here instead of ending the circuit; the page's other editors and its
+   unsaved values stay (ZA-097, D32). Its own value is kept as last reported, so saving does not lose it. *@
+<AdminErrorBoundary Name="@(string.IsNullOrWhiteSpace(PropertyAlias) ? "This editor" : $"The {PropertyAlias} editor")">
+    <CascadingValue Value="this">
+        <DynamicComponent Type="@ComponentType" Parameters="@GetParameters()"/>
+    </CascadingValue>
+</AdminErrorBoundary>
 
 @code {
     [Parameter] public Type? ComponentType { get; set; }

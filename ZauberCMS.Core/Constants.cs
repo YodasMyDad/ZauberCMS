@@ -88,7 +88,8 @@ public static class Constants
             public const string ContentTypeTree = "ContentTypeTree";
             
             public const string StructureContentTypeTree = "StructureContentTypeTree";
-            public const string StructureElementTypeTree = "StructureContentTypeTree";
+            // Its own value (ZA-025): it was "StructureContentTypeTree", so a menu for either tree showed on both
+            public const string StructureElementTypeTree = "StructureElementTypeTree";
             public const string StructureCompositionsTree = "StructureCompositionsTree";
         }
         

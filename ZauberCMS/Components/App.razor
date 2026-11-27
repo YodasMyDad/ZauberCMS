@@ -10,14 +10,16 @@
     @if (IsAdmin)
     {
         <RadzenTheme Theme="material" @rendermode="InteractiveServer" />
-        
+        @* In the head, not deferred: it applies the saved navigation width before the admin first paints *@
+        <script src="@Assets["_content/ZauberCMS.Components/js/admin-sidebar.js"]"></script>
+
         <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/ZauberCMS.Components.bundle.scp.css"]">
         <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Components/css/admin.css"]">
         <link rel="stylesheet" href="@Assets["_content/ZauberCMS.Core/ZauberCMS.Core.bundle.scp.css"]">
         @foreach (var style in PageStyles)
         {
-            <link rel="stylesheet" href="@style">
-        }   
+            <link rel="stylesheet" href="@Assets[style]">
+        }
     }
 </head>
 
@@ -27,17 +29,20 @@
     <Routes @rendermode="RenderModeForPage"/>
 </CascadingValue>
 
-<script src="_framework/blazor.web.js"></script>
+<script src="@Assets["_framework/blazor.web.js"]"></script>
 
 @if (IsAdmin)
 {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.4/Sortable.min.js"></script>
-    <script src="_content/ZauberCMS.Components/js/block-preview.js"></script>
+    @* Served by the site with fingerprinted names (ZA-108): Sortable.js is shipped in the Components package
+       (wwwroot/lib/sortablejs, MIT) instead of loaded from a CDN. An editor's own script that is not a static web
+       asset keeps its address. *@
+    <script src="@Assets["_content/ZauberCMS.Components/lib/sortablejs/Sortable.min.js"]"></script>
+    <script src="@Assets["_content/ZauberCMS.Components/js/block-preview.js"]"></script>
     @foreach (var script in PageScripts)
     {
-        <script src="@script"></script>
+        <script src="@Assets[script]"></script>
     }
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>   
+    <script src="@Assets["_content/Radzen.Blazor/Radzen.Blazor.js"]"></script>
 }
 
 </body>
@@ -91,12 +96,16 @@
         {
             if (HttpContext == null)
             {
-                return InteractiveServer;
+                return AdminRenderMode;
             }
 
-            return IsAdmin ? InteractiveServer : null;
+            return IsAdmin ? AdminRenderMode : null;
         }
     }
+
+    // The admin is not prerendered (ZA-101): a prerender ran every page's initialisation twice, once for the HTML
+    // and again in the circuit, and showed data that the circuit then loaded again
+    private static readonly IComponentRenderMode AdminRenderMode = new InteractiveServerRenderMode(prerender: false);
 
     private static string CurrentLanguage => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 }

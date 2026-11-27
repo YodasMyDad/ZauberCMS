@@ -14,10 +14,11 @@ from this source ([ReadMe.md](ReadMe.md)).
 | Surface | Render mode | UI |
 | --- | --- | --- |
 | Front-end site (`IContentView`) | static SSR; per-component `@rendermode` opt-in | consumer's choice — **never Radzen** |
-| Admin `/admin` | `InteractiveServer` | Radzen.Blazor + Blazored.Modal (vendored source in `ZauberCMS.Core/Modal/`, not a package; nested side panels) (+ Tailwind for admin CSS) |
+| Admin `/admin` | `InteractiveServer`, not prerendered, always a full page load | Radzen.Blazor + Blazored.Modal (vendored source in `ZauberCMS.Core/Modal/`, not a package; nested side panels) (+ Tailwind for admin CSS) |
 | Account pages (`/Account/*`, in Components) | static SSR | layout via `IAccountLayout` |
 
-`ZauberCMS/Components/App.razor` picks the render mode: `/admin` (or no `HttpContext`) → InteractiveServer, else SSR.
+`ZauberCMS/Components/App.razor` picks the render mode: `/admin` (or no `HttpContext`) → InteractiveServer without
+prerendering, else SSR. Admin parts that run code they do not own sit in an `AdminErrorBoundary` (Roadmap D32).
 Adding interactive code to an SSR view silently does nothing.
 
 ## Core principle: pluggable and updatable (owner, 2026-11-25)

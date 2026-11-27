@@ -1,10 +1,12 @@
 ﻿@using ZauberCMS.Core.Content.Parameters
-@using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Models
 @implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 @implements IDisposable
 
+@* The content recycle bin. Its nodes are TreeBranch items (the RecycleBinTree context menus read them): the top of
+   the bin a page at a time, most recently binned first, and below a binned page what went to the bin with it
+   (ZA-156). A "Show more" row ends a level that has more. *@
 <div>
     <BaseTree
         TreeAlias="@Constants.Sections.Trees.RecycleBinTree"
@@ -16,29 +18,37 @@
         HasChildren="@(e => HasChildren(e))"
         ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
         DisableSectionOnlyContextMenu="@(true)"
-        Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
+        Template="@(TreeExtensions.CreateStandardTreeTemplate<object>(this, LoadMoreAsync))">
     </BaseTree>
 </div>
 
 @code {
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
-    
+
     public int SortOrder => 100;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
 
     private object? Selection { get; set; }
+    // What a keyboard "Show more" puts back (the row is selected, not the item)
+    private object? _lastSelection;
     private IEnumerable<TreeStub> TreeItems { get; set; } = [];
-    private User? CurrentUser { get; set; }
+
+    // The top of the bin and each opened item's level: TreeBranch nodes, then a TreeLoadMore row while there are more
+    private List<object> _top = [];
+    private readonly Dictionary<Guid, List<object>> _children = new();
+    private readonly HashSet<Guid> _withChildren = [];
+
+    // Bumped by every refresh: a page that finishes loading after a newer refresh is dropped
+    private int _version;
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentUser = await MembershipService.GetCurrentUser();
         await DataRefresh();
         TreeState.OnTreeValueChanged += TreeStateOnOnTreeValueChanged;
         AppState.OnContentChanged += HandleContentChanged;
     }
-    
+
     /// <summary>
     /// Remove the selected state
     /// </summary>
@@ -48,158 +58,168 @@
         if (obj != Selection)
         {
             Selection = null;
+            _lastSelection = null;
             StateHasChanged();
         }
     }
-    
-    private TreeStub? _bin;
-    private int _binPagesLoaded;
-    // Bumped by every refresh: a page load that finishes after a newer refresh is dropped
-    private int _binVersion;
 
     private async Task DataRefresh()
     {
-        var version = ++_binVersion;
-        var bin = new TreeStub
-        {
-            Id = Constants.Guids.RecycleBinRootId,
-            Name = "Recycle Bin",
-            Icon = "delete",
-            SortOrder = 1,
-            StubType = typeof(TreeStub)
-        };
-        await LoadBinPageAsync(bin, 0, version);
-    }
-
-    /// <summary>Page <paramref name="pagesLoaded"/> + 1 of the bin's top-level items into <paramref name="bin"/>,
-    /// then a "Show more" branch while there are more (Roadmap D26; the bin used to stop at 300 items).</summary>
-    private async Task LoadBinPageAsync(TreeStub bin, int pagesLoaded, int version)
-    {
-        // Items that went to the bin with their parent are listed (and restored, deleted) through that parent
-        var page = await ContentService.QueryContentAsync(new QueryContentParameters
-        {
-            OrderBy = GetContentsOrderBy.DateUpdated,
-            IsDeleted = true, // Only get deleted items
-            IncludeUnpublished = true,
-            WhereClause = x => x.ParentId == null || !x.Parent!.Deleted,
-            PageIndex = pagesLoaded + 1,
-            AmountPerPage = TreeLoadMore.PageSize
-        });
-        if (version != _binVersion)
+        var version = ++_version;
+        var top = await LoadLevelAsync(null, 0, version);
+        if (top == null)
         {
             return;
         }
 
-        var branches = bin.Branches.Where(x => x.BranchType != typeof(TreeLoadMore)).ToList();
-        branches.AddRange(page.Items.Select(content => new TreeBranch
+        _children.Clear();
+        _top = top;
+        // A new root each time, so the tree builds its levels again (expanded items load their level again)
+        TreeItems =
+        [
+            new TreeStub
+            {
+                Id = Constants.Guids.RecycleBinRootId,
+                Name = "Recycle Bin",
+                Icon = "delete",
+                SortOrder = 1,
+                StubType = typeof(TreeStub)
+            }
+        ];
+    }
+
+    /// <summary>A page of the bin's top (<paramref name="parentId"/> null) or of what is below a binned item, with a
+    /// "Show more" row after it when there are more; null when a newer refresh started meanwhile.</summary>
+    private async Task<List<object>?> LoadLevelAsync(Guid? parentId, int skip, int version)
+    {
+        var level = await ContentService.GetContentTreeLevelAsync(new ContentTreeLevelParameters
+        {
+            InRecycleBin = true,
+            ParentId = parentId,
+            Skip = skip
+        });
+        if (version != _version)
+        {
+            return null;
+        }
+
+        foreach (var item in level.Items)
+        {
+            _withChildren.Remove(item.Id);
+        }
+
+        _withChildren.UnionWith(level.IdsWithChildren);
+        var items = level.Items.Select(content => (object)new TreeBranch
         {
             Icon = content.ContentType?.Icon,
             Id = content.Id,
             Name = content.Name,
             Url = $"{Urls.AdminUpdateContent}/{content.Id}",
             BranchType = typeof(Content)
-        }));
-        if (page.HasNextPage)
+        }).ToList();
+        if (TreeLoadMore.After(level, parentId) is { } more)
         {
-            branches.Add(new TreeBranch
-            {
-                Icon = "expand_more",
-                Name = new TreeLoadMore { Skip = branches.Count, TotalItems = page.TotalItems }.Name,
-                BranchType = typeof(TreeLoadMore)
-            });
+            items.Add(more);
         }
 
-        // Set in one step, so a render never sees half a page
-        bin.Branches = branches;
-        _bin = bin;
-        _binPagesLoaded = pagesLoaded + 1;
-        TreeItems = [bin];
+        return items;
     }
 
-    private Task HandleContentChanged(Content? media, string username)
+    private Task HandleContentChanged(Content? content, string username)
         => InvokeAsync(async () =>
         {
             await DataRefresh();
             StateHasChanged();
         });
 
-    private void OnExpandHandler(TreeExpandEventArgs args)
+    private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
+        List<object>? children;
+        Guid id;
         switch (args.Value)
         {
-            case TreeStub treeStub:
-                args.Children!.Data = treeStub.Branches;
-                args.Children.TextProperty = "Name";
-                args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
-                args.Children.HasChildren = HasChildren;
-                TreeState.NodeExpanded(treeStub.Id);
+            case TreeStub stub:
+                id = stub.Id;
+                children = _top;
                 break;
             case TreeBranch branch:
-                args.Children!.Data = branch.Branches;
-                args.Children.TextProperty = "Name";
-                args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>();
-                args.Children.HasChildren = HasChildren;
-                TreeState.NodeExpanded(branch.Id);
+                id = branch.Id;
+                children = await LoadLevelAsync(branch.Id, 0, _version);
+                if (children == null)
+                {
+                    return;
+                }
+
+                _children[branch.Id] = children;
                 break;
+            default:
+                return;
         }
+
+        args.Children!.Data = children;
+        args.Children.Text = TreeExtensions.TreeNodeText;
+        args.Children.Template = TreeExtensions.CreateStandardTreeTemplate<RadzenTreeItem>(this, LoadMoreAsync);
+        args.Children.HasChildren = HasChildren;
+        // Items that were open stay open when the bin reloads
+        args.Children.Expanded = ShouldBeExpanded;
+        TreeState.NodeExpanded(id);
     }
 
     private async Task OnChangeHandler()
     {
-        if (Selection is TreeBranch { BranchType: var branchType } && branchType == typeof(TreeLoadMore))
+        if (Selection is TreeLoadMore more)
         {
-            // Not a selection (and not one other trees should clear theirs for): the next page of the bin
-            Selection = null;
-            if (_bin != null)
-            {
-                await LoadBinPageAsync(_bin, _binPagesLoaded, _binVersion);
-            }
-
-            StateHasChanged();
+            // Chosen with the keyboard (a click on the row's button never selects it): the next page, not a selection
+            Selection = _lastSelection;
+            await LoadMoreAsync(more);
             return;
         }
 
+        _lastSelection = Selection;
         TreeState.TreeValue = Selection;
-        switch (Selection)
+        if (Selection is TreeBranch branch && !branch.Url.IsNullOrWhiteSpace())
         {
-            case TreeBranch treeStub:
-            {
-                if (!treeStub.Url.IsNullOrWhiteSpace())
-                {
-                    NavigationManager.NavigateTo(treeStub.Url);
-                    StateHasChanged();
-                }
-
-                break;
-            }
+            NavigationManager.NavigateTo(branch.Url);
+            StateHasChanged();
         }
     }
 
-    private bool HasChildren(object data)
+    private async Task LoadMoreAsync(TreeLoadMore more)
     {
-        return data switch
+        var list = more.ParentId == null ? _top : _children.GetValueOrDefault(more.ParentId.Value);
+        if (list == null)
         {
-            TreeStub tree => tree.Branches.Any(),
-            TreeBranch branch => branch.Branches.Any(),
-            _ => false
-        };
+            return;
+        }
+
+        var next = await LoadLevelAsync(more.ParentId, more.Skip, _version);
+        if (next == null || !list.Remove(more))
+        {
+            // The bin was reloaded meanwhile, or this page is already loaded (chosen twice)
+            return;
+        }
+
+        list.AddRange(next);
+        StateHasChanged();
     }
 
-    private bool ShouldBeExpanded(object data)
+    private bool HasChildren(object data) => data switch
     {
-        return data switch
-        {
-            TreeStub tree => TreeState.IsNodeExpanded(tree.Id) || tree.Branches.Any(),
-            TreeBranch branch => TreeState.IsNodeExpanded(branch.Id),
-            _ => false
-        };
-    }
+        TreeStub => _top.Count > 0,
+        TreeBranch branch => _withChildren.Contains(branch.Id),
+        _ => false
+    };
 
+    private bool ShouldBeExpanded(object data) => data switch
+    {
+        TreeStub stub => TreeState.IsNodeExpanded(stub.Id) || _top.Count > 0,
+        TreeBranch branch => TreeState.IsNodeExpanded(branch.Id) && _withChildren.Contains(branch.Id),
+        _ => false
+    };
 
     public void Dispose()
     {
         AppState.OnContentChanged -= HandleContentChanged;
         TreeState.OnTreeValueChanged -= TreeStateOnOnTreeValueChanged;
     }
-
 }

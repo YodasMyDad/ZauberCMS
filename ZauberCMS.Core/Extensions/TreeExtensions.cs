@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Radzen.Blazor;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Media.Models;
@@ -20,13 +21,28 @@ public static class TreeExtensions
         _ => item.GetType().GetProperty("Name")?.GetValue(item)?.ToString() ?? string.Empty
     };
 
-    public static RenderFragment<T> CreateStandardTreeTemplate<T>() where T : class
+    public static RenderFragment<T> CreateStandardTreeTemplate<T>() where T : class => StandardTreeTemplate<T>(null);
+
+    /// <summary>
+    /// As <see cref="CreateStandardTreeTemplate{T}()"/>, with a <see cref="TreeLoadMore"/> row shown as a button that
+    /// calls <paramref name="loadMore"/>: choosing it does not select the row, so the selected node keeps its
+    /// highlight (ZA-161).
+    /// </summary>
+    /// <param name="receiver">The tree component (it re-renders after the click).</param>
+    /// <param name="loadMore">Loads the next page in the row's place.</param>
+    public static RenderFragment<T> CreateStandardTreeTemplate<T>(object receiver, Func<TreeLoadMore, Task> loadMore)
+        where T : class => StandardTreeTemplate<T>(new LoadMoreHandler(receiver, loadMore));
+
+    private static RenderFragment<T> StandardTreeTemplate<T>(LoadMoreHandler? loadMore) where T : class
     {
         return context => builder =>
         {
             var treeItem = context as RadzenTreeItem;
             switch (treeItem?.Value)
             {
+                case TreeLoadMore more:
+                    AddLoadMore(builder, more, loadMore);
+                    break;
                 case TreeStub treeStub:
                     builder.OpenComponent<RadzenIcon>(0);
                     builder.AddAttribute(1, "Icon", treeStub.Icon);
@@ -45,14 +61,25 @@ public static class TreeExtensions
         };
     }
 
-    public static RenderFragment<T> CreateContentTreeTemplate<T>() where T : class
+    public static RenderFragment<T> CreateContentTreeTemplate<T>() where T : class => ContentTreeTemplate<T>(null);
+
+    /// <summary>
+    /// As <see cref="CreateContentTreeTemplate{T}()"/>, with the "Show more" row as a button that calls
+    /// <paramref name="loadMore"/> without selecting the row (ZA-161).
+    /// </summary>
+    /// <param name="receiver">The tree component (it re-renders after the click).</param>
+    /// <param name="loadMore">Loads the next page in the row's place.</param>
+    public static RenderFragment<T> CreateContentTreeTemplate<T>(object receiver, Func<TreeLoadMore, Task> loadMore)
+        where T : class => ContentTreeTemplate<T>(new LoadMoreHandler(receiver, loadMore));
+
+    private static RenderFragment<T> ContentTreeTemplate<T>(LoadMoreHandler? loadMore) where T : class
     {
         return context => builder =>
         {
             var treeItem = context as RadzenTreeItem;
             if (treeItem?.Value is TreeLoadMore more)
             {
-                AddLoadMore(builder, more);
+                AddLoadMore(builder, more, loadMore);
             }
             else if (treeItem?.Value is Content.Models.Content content)
             {
@@ -86,17 +113,48 @@ public static class TreeExtensions
         };
     }
 
-    /// <summary>The "Show more" row of a node shown a page at a time (Roadmap D26).</summary>
-    private static void AddLoadMore(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder, TreeLoadMore more)
+    /// <summary>What a "Show more" button calls, and the component that re-renders after it.</summary>
+    private sealed record LoadMoreHandler(object Receiver, Func<TreeLoadMore, Task> LoadMore);
+
+    /// <summary>
+    /// The "Show more" row of a node shown a page at a time (Roadmap D26). With a handler it is a button whose click
+    /// stops at the button, so the tree never selects the row (ZA-161). Without one, the tree's change handler loads
+    /// the page when the row is selected; the keyboard still selects it, so trees handle both.
+    /// </summary>
+    private static void AddLoadMore(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        TreeLoadMore more, LoadMoreHandler? loadMore)
     {
-        builder.OpenComponent<RadzenIcon>(0);
-        builder.AddAttribute(1, "Icon", "expand_more");
-        builder.AddAttribute(2, "style", "font-weight: 300; color: var(--rz-primary);");
+        if (loadMore != null)
+        {
+            builder.OpenElement(0, "button");
+            builder.AddAttribute(1, "type", "button");
+            // Not a Tab stop inside the tree: the arrow keys reach the row and Enter selects it, which loads too
+            builder.AddAttribute(2, "tabindex", "-1");
+            builder.AddAttribute(3, "class", "zauber-tree-load-more");
+            builder.AddAttribute(4, "style",
+                "display: inline-flex; align-items: center; gap: 0.25rem; padding: 0; border: 0; background: none; " +
+                "font: inherit; color: var(--rz-primary); white-space: nowrap; cursor: pointer;");
+            builder.AddAttribute(5, "onclick",
+                EventCallback.Factory.Create<MouseEventArgs>(loadMore.Receiver,
+                    () => loadMore.LoadMore(more)));
+            builder.AddEventStopPropagationAttribute(6, "onclick", true);
+            builder.OpenComponent<RadzenIcon>(7);
+            builder.AddAttribute(8, "Icon", "expand_more");
+            builder.AddAttribute(9, "style", "font-weight: 300;");
+            builder.CloseComponent();
+            builder.AddContent(10, more.Name);
+            builder.CloseElement();
+            return;
+        }
+
+        builder.OpenComponent<RadzenIcon>(11);
+        builder.AddAttribute(12, "Icon", "expand_more");
+        builder.AddAttribute(13, "style", "font-weight: 300; color: var(--rz-primary);");
         builder.CloseComponent();
-        builder.OpenElement(3, "span");
-        builder.AddAttribute(4, "class", "zauber-tree-load-more");
-        builder.AddAttribute(5, "style", "color: var(--rz-primary); white-space: nowrap;");
-        builder.AddContent(6, more.Name);
+        builder.OpenElement(14, "span");
+        builder.AddAttribute(15, "class", "zauber-tree-load-more");
+        builder.AddAttribute(16, "style", "color: var(--rz-primary); white-space: nowrap;");
+        builder.AddContent(17, more.Name);
         builder.CloseElement();
     }
 
@@ -131,14 +189,25 @@ public static class TreeExtensions
         };
     }
     
-    public static RenderFragment<T> CreateMediaTreeTemplate<T>() where T : class
+    public static RenderFragment<T> CreateMediaTreeTemplate<T>() where T : class => MediaTreeTemplate<T>(null);
+
+    /// <summary>
+    /// As <see cref="CreateMediaTreeTemplate{T}()"/>, with the "Show more" row as a button that calls
+    /// <paramref name="loadMore"/> without selecting the row (ZA-161).
+    /// </summary>
+    /// <param name="receiver">The tree component (it re-renders after the click).</param>
+    /// <param name="loadMore">Loads the next page in the row's place.</param>
+    public static RenderFragment<T> CreateMediaTreeTemplate<T>(object receiver, Func<TreeLoadMore, Task> loadMore)
+        where T : class => MediaTreeTemplate<T>(new LoadMoreHandler(receiver, loadMore));
+
+    private static RenderFragment<T> MediaTreeTemplate<T>(LoadMoreHandler? loadMore) where T : class
     {
         return context => builder =>
         {
             var treeItem = context as RadzenTreeItem;
             if (treeItem?.Value is TreeLoadMore more)
             {
-                AddLoadMore(builder, more);
+                AddLoadMore(builder, more, loadMore);
             }
             else if (treeItem?.Value is Media.Models.Media media)
             {

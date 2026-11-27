@@ -8,7 +8,11 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
 {
     public string Name => "Broken Links Checker";
 
-    public async Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
+    public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content) =>
+        Check(url, document, content, CancellationToken.None);
+
+    public async Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content,
+        CancellationToken cancellationToken)
     {
         var result = new SeoCheckResult(Name);
         var seoItems = new List<SeoCheckResultItem>();
@@ -65,7 +69,8 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
                     continue;
                 }
 
-                using var response = await httpClient.GetAsync(target, HttpCompletionOption.ResponseHeadersRead);
+                using var response = await httpClient.GetAsync(target, HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -74,8 +79,13 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
                     seoItems.Add(seoItem);
                 }
                 // Add 500ms delay between requests
-                await Task.Delay(500);
+                await Task.Delay(500, cancellationToken);
 
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // The run was stopped: not a broken link
+                throw;
             }
             catch
             {

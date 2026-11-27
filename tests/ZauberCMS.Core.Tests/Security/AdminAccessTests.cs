@@ -191,6 +191,62 @@ public class AdminAccessTests : IAsyncLifetime
         Assert.True(saved.Success, TestSite.Describe(saved.Messages));
     }
 
+    [Fact]
+    public async Task ZA096_An_admin_response_refuses_enhanced_navigation_so_the_browser_loads_a_full_page()
+    {
+        var (adminHeader, adminPassedOn) = await EnhancedNavigationHeaderAsync("/admin/content");
+        var (siteHeader, _) = await EnhancedNavigationHeaderAsync("/blog/post");
+
+        // blazor.web.js retries an enhanced navigation as a full page load when "allow" is missing
+        Assert.True(adminPassedOn);
+        Assert.Null(adminHeader);
+        Assert.Equal("allow", siteHeader);
+    }
+
+    /// <summary>The <c>blazor-enhanced-nav</c> response header once the response starts, after an endpoint that
+    /// accepted the enhanced navigation (as Blazor's does).</summary>
+    private async Task<(string? Header, bool PassedOn)> EnhancedNavigationHeaderAsync(string path)
+    {
+        using var scope = _site.CreateScope();
+        var passedOn = false;
+        var middleware = new AdminAccessMiddleware(context =>
+        {
+            passedOn = true;
+            context.Response.Headers[AdminAccess.EnhancedNavigationHeader] = "allow";
+            return Task.CompletedTask;
+        }, NullLogger<AdminAccessMiddleware>.Instance);
+
+        var response = new StartableResponseFeature();
+        var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        context.Features.Set<Microsoft.AspNetCore.Http.Features.IHttpResponseFeature>(response);
+        context.Request.Path = path;
+        context.User = User(Constants.Roles.AdminRoleName);
+        context.SetEndpoint(new Endpoint(_ => Task.CompletedTask, new EndpointMetadataCollection(), "test page"));
+
+        await middleware.InvokeAsync(context, scope.ServiceProvider.GetRequiredService<IDataService>());
+        await response.StartAsync();
+        string? header = context.Response.Headers[AdminAccess.EnhancedNavigationHeader];
+        return (header, passedOn);
+    }
+
+    /// <summary>A response feature that runs its <c>OnStarting</c> callbacks when told to, as a server does when the
+    /// response starts (the default feature drops them).</summary>
+    private sealed class StartableResponseFeature : Microsoft.AspNetCore.Http.Features.HttpResponseFeature
+    {
+        private readonly List<(Func<object, Task> Callback, object State)> _starting = [];
+
+        public override void OnStarting(Func<object, Task> callback, object state) => _starting.Add((callback, state));
+
+        public async Task StartAsync()
+        {
+            // Last registered first, as Kestrel does
+            for (var i = _starting.Count - 1; i >= 0; i--)
+            {
+                await _starting[i].Callback(_starting[i].State);
+            }
+        }
+    }
+
     private static ClaimsPrincipal User(string role) => new(new ClaimsIdentity(
         [new Claim(ClaimTypes.Name, "someone"), new Claim(ClaimTypes.Role, role)], "Test"));
 

@@ -17,3 +17,58 @@
     top: 0.5rem;
 }
 
+
+/* The navigation scrolls inside the sidebar, so the resize divider on its edge stays put */
+.zauber-sidebar-scroll {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: auto;
+}
+
+/* The draggable divider between the navigation and the page (wwwroot/js/admin-sidebar.js) */
+.zauber-sidebar-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    touch-action: none;
+    z-index: 2;
+}
+
+.zauber-sidebar-resizer:hover,
+.zauber-sidebar-resizer.is-dragging {
+    background-color: var(--rz-primary);
+    opacity: 0.4;
+}
+
+.zauber-sidebar-resizer:focus-visible {
+    outline: 2px solid var(--rz-primary);
+    outline-offset: -2px;
+}
+
+/* Below Radzen's responsive width the sidebar is shown over the page or hidden: no divider */
+@media (max-width: 768px) {
+    .zauber-sidebar-resizer {
+        display: none;
+    }
+}
+
+/* A collapsed sidebar has no width: its divider is out of reach and out of the tab order */
+.rz-sidebar-collapsed .zauber-sidebar-resizer {
+    display: none;
+}
+
+/* The error shown when a Radzen dialog throws: over the page, so the layout keeps its grid */
+.zauber-dialog-error {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1100;
+    max-width: 28rem;
+    background: var(--rz-base-background-color);
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+}

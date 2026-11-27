@@ -462,6 +462,106 @@ public class QueryAndCacheTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ZA156_The_content_bin_pages_its_top_newest_first_and_opens_a_binned_page()
+    {
+        var live = await _site.CreateContentAsync(_pageType, "Live");
+        var binnedBelowLive = await _site.CreateContentAsync(_pageType, "Binned below live", live.Id);
+        var binnedPage = await _site.CreateContentAsync(_pageType, "Binned page");
+        var child = await _site.CreateContentAsync(_pageType, "Child", binnedPage.Id);
+        var grandchild = await _site.CreateContentAsync(_pageType, "Grandchild", child.Id);
+        var alone = await _site.CreateContentAsync(_pageType, "Alone");
+        // A block of the binned page, and one whose page is gone: blocks are never listed in a tree
+        var block = await _site.CreateContentAsync(_pageType, "Block", binnedPage.Id);
+        var orphanBlock = await _site.CreateContentAsync(_pageType, "Orphan block");
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            foreach (var row in await db.Contents.Where(x => x.Id == block.Id || x.Id == orphanBlock.Id).ToListAsync(Ct))
+            {
+                row.IsNestedContent = true;
+                row.IsRootContent = false;
+            }
+
+            return await db.SaveChangesAsync(Ct);
+        });
+        var now = DateTime.UtcNow;
+        await BinAsync(binnedBelowLive.Id, now.AddMinutes(-3));
+        await BinAsync(binnedPage.Id, now.AddMinutes(-2));
+        await BinAsync(child.Id, now.AddMinutes(-2));
+        await BinAsync(grandchild.Id, now.AddMinutes(-2));
+        await BinAsync(block.Id, now.AddMinutes(-2));
+        await BinAsync(orphanBlock.Id, now);
+        await BinAsync(alone.Id, now.AddMinutes(-1));
+
+        var top = await TreeLevelAsync(new ContentTreeLevelParameters { InRecycleBin = true });
+        var firstTwo = await TreeLevelAsync(new ContentTreeLevelParameters { InRecycleBin = true, Take = 2 });
+        var below = await TreeLevelAsync(new ContentTreeLevelParameters { InRecycleBin = true, ParentId = binnedPage.Id });
+        var liveRoots = await TreeLevelAsync(new ContentTreeLevelParameters());
+        var liveChildren = await TreeLevelAsync(new ContentTreeLevelParameters { ParentId = live.Id });
+
+        // What went in with its parent is below that parent, not at the top; a page binned from a live parent is
+        Assert.Equal([alone.Id, binnedPage.Id, binnedBelowLive.Id], top.Items.Select(x => x.Id));
+        Assert.Equal([binnedPage.Id], top.IdsWithChildren);
+        Assert.Equal((3, true), (firstTwo.TotalItems, firstTwo.HasMore));
+        Assert.Equal([child.Id], below.Items.Select(x => x.Id));
+        Assert.Equal([child.Id], below.IdsWithChildren);
+        // The live tree is unchanged: no binned page, and a live page whose only child is binned has no arrow
+        Assert.Equal([live.Id], liveRoots.Items.Select(x => x.Id));
+        Assert.DoesNotContain(live.Id, liveRoots.IdsWithChildren);
+        Assert.Empty(liveChildren.Items);
+    }
+
+    [Fact]
+    public async Task ZA156_The_media_bin_pages_its_top_newest_first_and_opens_a_binned_folder()
+    {
+        var now = DateTime.UtcNow;
+        var liveFolder = new MediaItem { Name = "Live folder", MediaType = MediaType.Folder };
+        var binnedFolder = new MediaItem
+        {
+            Name = "Binned folder", MediaType = MediaType.Folder, Deleted = true, DateUpdated = now.AddMinutes(-2)
+        };
+        var inBinnedFolder = new MediaItem
+        {
+            Name = "Inside", MediaType = MediaType.Image, ParentId = binnedFolder.Id, Deleted = true,
+            DateUpdated = now.AddMinutes(-2)
+        };
+        var fromLiveFolder = new MediaItem
+        {
+            Name = "From live folder", MediaType = MediaType.Image, ParentId = liveFolder.Id, Deleted = true,
+            DateUpdated = now.AddMinutes(-3)
+        };
+        var alone = new MediaItem
+        {
+            Name = "Alone", MediaType = MediaType.Document, Deleted = true, DateUpdated = now.AddMinutes(-1)
+        };
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            db.Medias.AddRange(liveFolder, binnedFolder, inBinnedFolder, fromLiveFolder, alone);
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var top = await MediaLevelAsync(new MediaTreeLevelParameters { InRecycleBin = true });
+        var firstTwo = await MediaLevelAsync(new MediaTreeLevelParameters { InRecycleBin = true, Take = 2 });
+        var inside = await MediaLevelAsync(new MediaTreeLevelParameters { InRecycleBin = true, ParentId = binnedFolder.Id });
+        var liveTop = await MediaLevelAsync(new MediaTreeLevelParameters());
+
+        Assert.Equal([alone.Id, binnedFolder.Id, fromLiveFolder.Id], top.Items.Select(x => x.Id));
+        Assert.Equal([binnedFolder.Id], top.IdsWithChildren);
+        Assert.Equal((3, true), (firstTwo.TotalItems, firstTwo.HasMore));
+        Assert.Equal([inBinnedFolder.Id], inside.Items.Select(x => x.Id));
+        Assert.Equal([liveFolder.Id], liveTop.Items.Select(x => x.Id));
+        Assert.Empty(liveTop.IdsWithChildren);
+    }
+
+    private Task BinAsync(Guid id, DateTime binnedAt) =>
+        _site.QueryDatabaseAsync(async db =>
+        {
+            var row = await db.Contents.SingleAsync(x => x.Id == id, Ct);
+            row.Deleted = true;
+            row.DateUpdated = binnedAt;
+            return await db.SaveChangesAsync(Ct);
+        });
+
+    [Fact]
     public async Task ZA082_Async_paging_pages_an_in_memory_query_too()
     {
         var page = await Enumerable.Range(1, 5).AsQueryable().ToPaginatedListAsync(2, 2, Ct);

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,8 +25,8 @@ public interface IMediaService
     Task<bool> HasChildMediaAsync(HasChildMediaParameters parameters, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// A page of an admin media tree node (a folder's children, or the top level), not in the recycle bin, by name,
-    /// with which folders have children (Roadmap D26).
+    /// A page of an admin media tree node (a folder's children, or the top level), by name, with which folders have
+    /// children (Roadmap D26). The live media, or the recycle bin with <c>InRecycleBin</c>.
     /// </summary>
     Task<TreeLevel<Models.Media>> GetMediaTreeLevelAsync(MediaTreeLevelParameters parameters, CancellationToken cancellationToken = default);
     Task<Dictionary<string, Guid>> GetRestrictedMediaUrlsAsync(GetRestrictedMediaUrlsParameters parameters, CancellationToken cancellationToken = default);

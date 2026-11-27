@@ -6,8 +6,9 @@
 @implements IDisposable
 
 @* The media recycle bin (Roadmap D3). Its actions are the ITreeContextMenu items for MediaRecycleBinTree:
-   Restore and Delete on an item, Empty on the root. An item that went to the bin with its folder is listed,
-   restored and deleted through that folder. *@
+   Restore and Delete on an item, Empty on the root. The top of the bin is listed a page at a time, most recently
+   binned first, and a binned folder opens to show what went to the bin with it (ZA-156); an item inside one is
+   restored with its folder (restoring it alone is refused while the folder is in the bin). *@
 <div>
     <BaseTree
         TreeAlias="@Constants.Sections.Trees.MediaRecycleBinTree"
@@ -19,7 +20,7 @@
         HasChildren="@(e => HasChildren(e))"
         ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
         DisableSectionOnlyContextMenu="@(true)"
-        Template="@(TreeExtensions.CreateStandardTreeTemplate<object>())">
+        Template="@(TreeExtensions.CreateStandardTreeTemplate<object>(this, LoadMoreAsync))">
     </BaseTree>
 </div>
 
@@ -31,8 +32,17 @@
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.MediaNavGroup;
 
     private object? Selection { get; set; }
+    // What a keyboard "Show more" puts back (the row is selected, not the item)
+    private object? _lastSelection;
     private IEnumerable<TreeStub> TreeItems { get; set; } = [];
-    private List<Media> BinnedItems { get; set; } = [];
+
+    // The top of the bin and each opened folder's level: Media, then a TreeLoadMore row while there are more
+    private List<object> _top = [];
+    private readonly Dictionary<Guid, List<object>> _children = new();
+    private readonly HashSet<Guid> _withChildren = [];
+
+    // Bumped by every refresh: a page that finishes loading after a newer refresh is dropped
+    private int _version;
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,25 +56,23 @@
         if (obj != Selection)
         {
             Selection = null;
+            _lastSelection = null;
             StateHasChanged();
         }
     }
 
     private async Task DataRefresh()
     {
-        var binned = await MediaService.QueryMediaAsync(new QueryMediaParameters
+        var version = ++_version;
+        var top = await LoadLevelAsync(null, 0, version);
+        if (top == null)
         {
-            WhereClause = x => x.Deleted,
-            IncludeDeleted = true,
-            OrderBy = GetMediaOrderBy.DateUpdatedDescending,
-            AmountPerPage = 500
-        });
+            return;
+        }
 
-        var binnedIds = binned.Items.Select(x => x.Id).ToHashSet();
-        BinnedItems = binned.Items
-            .Where(x => x.ParentId == null || !binnedIds.Contains(x.ParentId.Value))
-            .ToList();
-
+        _children.Clear();
+        _top = top;
+        // A new root each time, so the tree builds its levels again (open folders load their level again)
         TreeItems =
         [
             new TreeStub
@@ -78,6 +86,36 @@
         ];
     }
 
+    /// <summary>A page of the bin's top (<paramref name="parentId"/> null) or of a binned folder, with a "Show more"
+    /// row after it when there are more; null when a newer refresh started meanwhile.</summary>
+    private async Task<List<object>?> LoadLevelAsync(Guid? parentId, int skip, int version)
+    {
+        var level = await MediaService.GetMediaTreeLevelAsync(new MediaTreeLevelParameters
+        {
+            InRecycleBin = true,
+            ParentId = parentId,
+            Skip = skip
+        });
+        if (version != _version)
+        {
+            return null;
+        }
+
+        foreach (var item in level.Items)
+        {
+            _withChildren.Remove(item.Id);
+        }
+
+        _withChildren.UnionWith(level.IdsWithChildren);
+        var items = level.Items.Cast<object>().ToList();
+        if (TreeLoadMore.After(level, parentId) is { } more)
+        {
+            items.Add(more);
+        }
+
+        return items;
+    }
+
     private Task HandleMediaChanged(Media? media, string username)
         => InvokeAsync(async () =>
         {
@@ -86,25 +124,86 @@
             StateHasChanged();
         });
 
-    private void OnExpandHandler(TreeExpandEventArgs args)
+    private async Task OnExpandHandler(TreeExpandEventArgs args)
     {
-        if (args.Value is TreeStub treeStub)
+        List<object>? children;
+        Guid id;
+        switch (args.Value)
         {
-            args.Children!.Data = BinnedItems;
-            args.Children.TextProperty = "Name";
-            args.Children.Template = TreeExtensions.CreateMediaTreeTemplate<RadzenTreeItem>();
-            args.Children.HasChildren = HasChildren;
-            TreeState.NodeExpanded(treeStub.Id);
+            case TreeStub stub:
+                id = stub.Id;
+                children = _top;
+                break;
+            case Media folder:
+                id = folder.Id;
+                children = await LoadLevelAsync(folder.Id, 0, _version);
+                if (children == null)
+                {
+                    return;
+                }
+
+                _children[folder.Id] = children;
+                break;
+            default:
+                return;
         }
+
+        args.Children!.Data = children;
+        args.Children.Text = TreeExtensions.TreeNodeText;
+        args.Children.Template = TreeExtensions.CreateMediaTreeTemplate<RadzenTreeItem>(this, LoadMoreAsync);
+        args.Children.HasChildren = HasChildren;
+        // Folders that were open stay open when the bin reloads
+        args.Children.Expanded = ShouldBeExpanded;
+        TreeState.NodeExpanded(id);
     }
 
     // Nothing to open: the editor is for live media. Restore or delete from the item's menu.
-    private void OnChangeHandler() => TreeState.TreeValue = Selection;
+    private async Task OnChangeHandler()
+    {
+        if (Selection is TreeLoadMore more)
+        {
+            // Chosen with the keyboard (a click on the row's button never selects it): the next page, not a selection
+            Selection = _lastSelection;
+            await LoadMoreAsync(more);
+            return;
+        }
 
-    private bool HasChildren(object data) => data is TreeStub && BinnedItems.Count > 0;
+        _lastSelection = Selection;
+        TreeState.TreeValue = Selection;
+    }
 
-    private bool ShouldBeExpanded(object data) =>
-        data is TreeStub tree && (TreeState.IsNodeExpanded(tree.Id) || BinnedItems.Count > 0);
+    private async Task LoadMoreAsync(TreeLoadMore more)
+    {
+        var list = more.ParentId == null ? _top : _children.GetValueOrDefault(more.ParentId.Value);
+        if (list == null)
+        {
+            return;
+        }
+
+        var next = await LoadLevelAsync(more.ParentId, more.Skip, _version);
+        if (next == null || !list.Remove(more))
+        {
+            // The bin was reloaded meanwhile, or this page is already loaded (chosen twice)
+            return;
+        }
+
+        list.AddRange(next);
+        StateHasChanged();
+    }
+
+    private bool HasChildren(object data) => data switch
+    {
+        TreeStub => _top.Count > 0,
+        Media { MediaType: MediaType.Folder } folder => _withChildren.Contains(folder.Id),
+        _ => false
+    };
+
+    private bool ShouldBeExpanded(object data) => data switch
+    {
+        TreeStub stub => TreeState.IsNodeExpanded(stub.Id) || _top.Count > 0,
+        Media { MediaType: MediaType.Folder } folder => TreeState.IsNodeExpanded(folder.Id) && _withChildren.Contains(folder.Id),
+        _ => false
+    };
 
     public void Dispose()
     {

@@ -2,10 +2,17 @@
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Seo
 @using ZauberCMS.Core.Seo.Models
+@using Microsoft.Extensions.Logging
+@implements IDisposable
 
 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
     <RadzenTextBox Style="width:26rem;" Placeholder="@(FullUrl)" @bind-Value="@_url" />
-    <RadzenButton Variant="Variant.Filled" Size="ButtonSize.Small" Text="Run SEO Checks" Click="@(() => RunSeoChecks())"/>
+    <RadzenButton Variant="Variant.Filled" Size="ButtonSize.Small" Text="Run SEO Checks" Disabled="@ShowLoader"
+                  Click="@(() => RunSeoChecks())"/>
+    @if (ShowLoader)
+    {
+        <RadzenButton Variant="Variant.Outlined" Size="ButtonSize.Small" Text="Stop" Click="@StopSeoChecks"/>
+    }
     <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" Visible="@ShowLoader">
         <Template>Wait</Template>
     </RadzenProgressBarCircular>
@@ -36,7 +43,14 @@
     
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public IHttpClientFactory HttpClientFactory { get; set; } = null!;
-    
+    [Inject] public ILogger<SeoChecker> Logger { get; set; } = null!;
+
+    /// <summary>How long a run may take before it is stopped: the broken-links check alone can make 50 requests.</summary>
+    private static readonly TimeSpan RunTimeLimit = TimeSpan.FromMinutes(3);
+
+    // The current run: cancelled when the editor leaves, runs the checks again, presses Stop or the time is up (ZA-085)
+    private CancellationTokenSource? _run;
+
     private List<SeoCheckResult> SeoCheckResults { get; set; } = [];
     private bool ShowLoader { get; set; }
     private string? ErrorMessage { get; set; }
@@ -68,7 +82,8 @@
 
     private async Task RunSeoChecks()
     {
-        SeoCheckResults = [];
+        var results = new List<SeoCheckResult>();
+        SeoCheckResults = results;
         ErrorMessage = null;
 
         if (!SeoHttp.IsHttpUrl(_url, out var pageUri))
@@ -77,31 +92,100 @@
             return;
         }
 
+        _run?.Cancel();
+        _run?.Dispose();
+        var run = new CancellationTokenSource(RunTimeLimit);
+        _run = run;
+        _stopped = false;
+        var token = run.Token;
+
         ShowLoader = true;
         try
         {
             // The SEO client refuses private addresses, follows a few redirects only and has a timeout (SeoHttp).
             var httpClient = HttpClientFactory.CreateClient(SeoHttp.ClientName);
             var doc = new HtmlDocument();
-            doc.LoadHtml(await httpClient.GetStringAsync(pageUri));
+            doc.LoadHtml(await httpClient.GetStringAsync(pageUri, token));
 
             var seoChecks = ExtensionManager.GetInstances<ISeoCheck>(true);
             foreach (var seoCheck in seoChecks.OrderBy(x => x.Value.SortOrder).ThenBy(x => x.Value.Name))
             {
-                SeoCheckResults.Add(await seoCheck.Value.Check(pageUri!.ToString(), doc, Content!));
+                token.ThrowIfCancellationRequested();
+                results.Add(await RunCheckAsync(seoCheck.Value, pageUri!.ToString(), doc, token));
+                // Each result shows as it arrives
+                StateHasChanged();
             }
         }
-        catch (HttpRequestException e)
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            if (ReferenceEquals(_run, run))
+            {
+                ErrorMessage = _stopped
+                    ? "The checks were stopped."
+                    : $"The checks took longer than {RunTimeLimit.TotalMinutes:0} minutes and were stopped.";
+            }
+        }
+        catch (HttpRequestException e) when (ReferenceEquals(_run, run))
         {
             ErrorMessage = $"The page could not be loaded: {e.Message}";
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException) when (ReferenceEquals(_run, run))
         {
             ErrorMessage = "The page did not answer in time.";
         }
+        catch (Exception) when (!ReferenceEquals(_run, run))
+        {
+            // A run that a newer one replaced: its error is not shown
+        }
         finally
         {
-            ShowLoader = false;
+            if (ReferenceEquals(_run, run))
+            {
+                // Not a newer run's state
+                ShowLoader = false;
+                _stopped = false;
+            }
         }
+    }
+
+    // One check that throws is shown as a failed check; the others still run (a site's own ISeoCheck included)
+    private async Task<SeoCheckResult> RunCheckAsync(ISeoCheck seoCheck, string url, HtmlDocument doc,
+        CancellationToken token)
+    {
+        try
+        {
+            // WaitAsync: a check that only implements the method without a token still stops being waited for
+            return await seoCheck.Check(url, doc, Content!, token).WaitAsync(token);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "The SEO check {SeoCheck} failed on {Url}", seoCheck.GetType().FullName, url);
+            var result = new SeoCheckResult(seoCheck.Name);
+            result.Items.Add(new SeoCheckResultItem
+            {
+                Status = ZauberCMS.Core.Shared.Models.AlertType.Error,
+                DefaultMessage = "This check could not be run. The details are in the site's log."
+            });
+            return result;
+        }
+    }
+
+    private bool _stopped;
+
+    private void StopSeoChecks()
+    {
+        _stopped = true;
+        _run?.Cancel();
+    }
+
+    public void Dispose()
+    {
+        _run?.Cancel();
+        _run?.Dispose();
+        _run = null;
     }
 }

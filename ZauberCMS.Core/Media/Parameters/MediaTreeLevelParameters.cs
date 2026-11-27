@@ -19,4 +19,10 @@ public class MediaTreeLevelParameters
 
     /// <summary>Only these types (folders are always included); empty for all.</summary>
     public List<MediaType> MediaTypes { get; set; } = [];
+
+    /// <summary>
+    /// The recycle bin instead of the live media. With no <see cref="ParentId"/>, the items at the top of the bin
+    /// (whose folder is not in it), most recently binned first; with one, what is in the bin inside that folder.
+    /// </summary>
+    public bool InRecycleBin { get; set; }
 }

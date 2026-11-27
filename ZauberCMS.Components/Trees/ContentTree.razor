@@ -15,7 +15,7 @@
     DisableContextMenu="DisableContextMenu"
     DisableSectionOnlyContextMenu="DisableSectionOnlyContextMenu"
     ShouldBeExpanded="@(e => ShouldBeExpanded(e))"
-    Template="@(TreeExtensions.CreateContentTreeTemplate<object>())">
+    Template="@(TreeExtensions.CreateContentTreeTemplate<object>(this, LoadMoreAsync))">
 </BaseTree>
 
 @code {
@@ -147,7 +147,7 @@
             _children[content.Id] = children;
             args.Children!.Data = children;
             args.Children.Text = TreeExtensions.TreeNodeText;
-            args.Children.Template = TreeExtensions.CreateContentTreeTemplate<RadzenTreeItem>();
+            args.Children.Template = TreeExtensions.CreateContentTreeTemplate<RadzenTreeItem>(this, LoadMoreAsync);
             args.Children.HasChildren = HasChildren;
             // Nodes that were open stay open when the tree reloads
             args.Children.Expanded = ShouldBeExpanded;

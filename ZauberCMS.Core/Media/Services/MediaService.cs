@@ -682,7 +682,9 @@ public class MediaService(
         var types = parameters.MediaTypes.Count == 0
             ? null
             : parameters.MediaTypes.Append(Models.MediaType.Folder).Distinct().ToList();
-        var live = dbContext.Medias.AsNoTracking().Where(m => !m.Deleted);
+        // The live media or the recycle bin, never both
+        var inBin = parameters.InRecycleBin;
+        var live = dbContext.Medias.AsNoTracking().Where(m => m.Deleted == inBin);
         if (types != null)
         {
             live = live.Where(m => types.Contains(m.MediaType));
@@ -694,13 +696,22 @@ public class MediaService(
             var ids = parameters.Ids;
             query = live.Where(m => ids.Contains(m.Id));
         }
+        else if (inBin && parameters.ParentId == null)
+        {
+            // The top of the bin: what went in on its own or from a folder that is still live. The rest is listed,
+            // restored and deleted inside the folder it went in with (ZA-156).
+            query = live.Where(m => m.ParentId == null || !dbContext.Medias.Any(p => p.Id == m.ParentId && p.Deleted));
+        }
         else
         {
             query = live.Where(m => m.ParentId == parameters.ParentId);
         }
 
-        var items = await query
-            .OrderBy(m => m.Name).ThenBy(m => m.Id)
+        // The top of the bin shows the most recently binned first; a folder's level is in name order
+        var ordered = inBin && parameters.ParentId == null && parameters.Ids == null
+            ? query.OrderByDescending(m => m.DateUpdated).ThenBy(m => m.Id)
+            : query.OrderBy(m => m.Name).ThenBy(m => m.Id);
+        var items = await ordered
             .Skip(parameters.Skip).Take(parameters.Take)
             .ToListAsync(cancellationToken);
         var total = parameters.Skip == 0 && items.Count < parameters.Take

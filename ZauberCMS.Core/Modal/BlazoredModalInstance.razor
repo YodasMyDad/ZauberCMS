@@ -1,7 +1,7 @@
 ﻿@if (UseCustomLayout)
 {
     <CascadingValue Value="this" IsFixed="true">
-        @Content
+        @GuardedContent
     </CascadingValue>
 }
 else
@@ -31,11 +31,36 @@ else
                 }
                 <div class="bm-content">
                     <CascadingValue Value="this" IsFixed="true">
-                        @Content
+                        @GuardedContent
                     </CascadingValue>
                 </div>
             </div>
         </FocusTrap>
         
     </div>
+}
+
+@code {
+    // ZauberCMS (ZA-097, Roadmap D32): a panel whose content throws shows the error inside the panel, which can be
+    // tried again or closed, instead of ending the circuit and every unsaved change in the panels below it. The
+    // exception is logged by ErrorBoundary; its message shows only with Blazor's detailed errors on.
+    [Inject] private Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Components.Server.CircuitOptions> CircuitOptions { get; set; } = default!;
+
+    private ErrorBoundary? _contentBoundary;
+
+    private RenderFragment GuardedContent => @<ErrorBoundary @ref="_contentBoundary">
+        <ChildContent>@Content</ChildContent>
+        <ErrorContent Context="exception">
+            <div class="bm-error" role="alert">
+                <p class="bm-error-title">This panel could not be shown.</p>
+                <p>@(CircuitOptions.Value.DetailedErrors ? $"{exception.GetType().Name}: {exception.Message}" : "The details are in the site's log.")</p>
+                <div class="bm-error-actions">
+                    <button type="button" class="rz-button rz-button-sm rz-variant-outlined rz-primary"
+                            @onclick="() => _contentBoundary?.Recover()">Try again</button>
+                    <button type="button" class="rz-button rz-button-sm rz-variant-text rz-base"
+                            @onclick="() => CancelAsync()">Close</button>
+                </div>
+            </div>
+        </ErrorContent>
+    </ErrorBoundary>;
 }

@@ -3,7 +3,7 @@
 **Start here when resuming the rework.** Read order: [AGENTS.md](../AGENTS.md) → this file →
 [.audit/report.md](../.audit/report.md) (findings by ID) → the Docs file for the area you're touching.
 
-## Status (2026-11-26)
+## Status (2026-11-27)
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
@@ -17,9 +17,10 @@
   **Phase 10a done** (callers outside a circuit, D27, 2026-11-26).
   **Phase 10b done** (save hooks and content data, D28–D29, 2026-11-26).
   **Phase 10c done** (property editors and stored values, D30–D31, 2026-11-26).
-  **48 open findings** (0 Critical, 0 High, 11 Medium, 37 Low), each one assigned below to Phase 10d–10e, Phase 11
-  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10d** (admin UI robustness; design questions inside a phase
-  are decided Umbraco's way and recorded, as the owner delegated).
+  **Phase 10d done** (admin UI robustness and the resizable tree panel, D32, 2026-11-27).
+  **38 open findings** (0 Critical, 0 High, 8 Medium, 30 Low), each one assigned below to Phase 10e, Phase 11
+  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10e** (front end, security and identity hardening; design
+  questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -59,6 +60,7 @@
 | D29 | **A "Save only" draft runs the hooks of the rows it writes, like any save: the draft rows, not the live page.** It writes `UnpublishedContent` (the page's and its blocks' drafts), so `IBeforeEntitySave<UnpublishedContent>` runs; the live `Content` row only gets its link to the draft (Modified), and a new block's row, which only the draft reaches, is Added. A plugin that mirrors the live site (a search index) watches `Content`; one that wants drafts too watches `UnpublishedContent`. Umbraco separates the same way: Save raises `Saving`/`Saved` and Publish raises `Publishing`/`Published` as well; its external index holds published content only. Tag links follow the live values, as Umbraco's tags do: a draft leaves them, a publish, version restore or copy writes them, a permanent delete removes them. (owner delegated to Umbraco parity, 2026-11-26, Phase 10b) | ZA-159, ZA-099 |
 | D30 | **A picker stores one shape for any count: a JSON array of ids in the order the editor chose, even for one item; older values are read, not rewritten.** The content and media pickers wrote one item as a bare id and several as a JSON array. They now always write `["id", …]`, and everything that reads a picker value (`ToPickerIds`, `GetContentItems`, `GetMediaItems`, `GetUsers`, `GetValue<Guid>` and `GetValue<List<Guid>>`, the admin's single-id fields) takes both shapes. There is no data migration: values live in pages, drafts, versions and block snapshots across three providers, and a value becomes the new shape the next time its page is saved. Umbraco does the same: Media Picker 3 stores a JSON array whatever the maximum, and its value converters return one item or a list from the property's settings, not from the stored shape; when a stored format changed, its converters kept reading the old one. The read side returns the stored order, as Umbraco's converters do. (owner delegated to Umbraco parity, 2026-11-26, Phase 10c) | ZA-029, ZA-078 |
 | D31 | **Stored values do not depend on the culture: numbers and dates are written in the invariant culture, and property aliases are unique on a page.** The numeric editor writes `1.5` and the date editor `2026-11-26T14:30:00` (with the time, which the long-date text dropped); values written in the admin's culture before this still read, the invariant form first. A content type is refused when two of its properties share an alias, ignoring case, on the type itself or through a composition (from either side); values that already repeat an alias read the first instead of throwing. Umbraco stores decimals and dates invariant, and refuses a document type or composition whose aliases clash. (owner delegated to Umbraco parity, 2026-11-26, Phase 10c) | ZA-027, ZA-028 |
+| D32 | **An error in one part of the admin is shown in that part, with "Try again"; the circuit and the rest of the page stay.** `AdminErrorBoundary` sits round each property editor, each dashboard tab, the sidebar navigation and the page body (cleared on navigation); each side panel's content has one too, with "Close", and so do Radzen's dialogs (round `<RadzenComponents />`). It says what could not be shown, logs the exception, and shows the exception's message only when Blazor's detailed errors are on (`CircuitOptions.DetailedErrors`), otherwise "The details are in the site's log". An editor that failed keeps its last value, so a save does not lose it. Umbraco does the same: a property editor or extension that fails shows an error in its place and the rest of the document stays editable, and server errors show their details to the back office only in debug mode. Retry is offered because a failure is often passing (a timeout, a missing service a reload brings back); Umbraco's answer is a reload, which here would lose unsaved work. (owner delegated to Umbraco parity, 2026-11-27, Phase 10d) | ZA-097 |
 
 ## Working rules for the rework
 
@@ -735,17 +737,100 @@ Release notes (Phase 10c):
   `Task`. New public helpers: `PickerValueExtensions`, `EnumerableExtensions.ToValuesByAlias`, `StagedBrowserFile`.
 - Uploads are staged in the system temp folder; a host whose temp folder isn't writable can't upload from the admin.
 
-### Phase 10d — Admin UI robustness
-ZA-096, ZA-097, ZA-101 (Medium); ZA-025, ZA-026, ZA-085, ZA-108, ZA-156, ZA-160, ZA-161 (Low).
-- ZA-097: no `ErrorBoundary`, so one exception in a property editor, dashboard or block preview ends the circuit and
-  all unsaved work. Boundaries round the section body, each editor and each preview.
-- ZA-101: the admin prerenders, so every page initialises twice. Turn prerendering off for `/admin`.
-- ZA-096: admin scripts don't run after enhanced navigation into `/admin` (browser check first).
-- ZA-085 (SEO checker: sync HTTP, no timeout), ZA-108 (Sortable.js from a CDN without SRI, package scripts not
-  fingerprinted), ZA-156 (media bin stops at 500 and a binned folder can't be opened; the content bin pages since
-  Phase 10), ZA-160 (`JSDisconnectedException` on a media folder reload), ZA-161 (highlight lost after "Show more"),
-  ZA-025 (duplicate tree alias constant), ZA-026 (`<RadzenComponents/>` twice).
-- **Ask the owner first:** what the error boundary shows, and whether it offers a retry (ZA-097).
+### Phase 10d — Admin UI robustness — DONE (2026-11-27)
+ZA-096, ZA-097, ZA-101 (Medium); ZA-025, ZA-085, ZA-108, ZA-156, ZA-161 (Low) fixed; ZA-026 was already fixed
+by ZA-138 (Phase 4); ZA-160 not reproduced. The error-boundary question was decided the Umbraco way (owner
+delegated): D32. The owner added the resizable tree panel during the phase.
+- **Errors (ZA-097, D32).** New public `AdminErrorBoundary` (`ZauberCMS.Components.Shared`): "*Name* could not be
+  shown", the exception's message only with Blazor's detailed errors on, and "Try again". Round each property editor
+  (`DynamicContentProperty`, so the content, block and user editors), each dashboard tab, the sidebar navigation and
+  the page body (`SectionLayout`, cleared on navigation). The vendored modal puts a plain `ErrorBoundary` round each
+  panel's content, with "Try again" and "Close" (`Core/Modal/README.md` lists the change); one round
+  `<RadzenComponents />` catches Radzen dialogs and side panels (an error closes them; a box over the page says so).
+  Block previews already
+  render apart and catch their own errors. Front-end views have no boundary (Phase 10e, ZA-098).
+- **No prerender (ZA-101).** The admin's `Routes` and `HeadOutlet` use `InteractiveServerRenderMode(prerender: false)`;
+  `RadzenTheme` still prerenders its stylesheet link.
+- **Full page loads into the admin (ZA-096).** Reproduced the mechanism, not the original failure: blazor.web.js
+  (10.0.15) retries an enhanced navigation as a full page load when a successful response lacks
+  `blazor-enhanced-nav: allow`, so `AdminAccessMiddleware` removes that header from every `/admin` response. That
+  covers any link, redirect or form from a static page (a site's own views included); `NewSite.razor`'s link also has
+  `data-enhance-nav="false"`.
+- **Scripts (ZA-108).** Sortable.js 1.15.7 (npm tarball, integrity checked against the registry) ships in
+  `ZauberCMS.Components/wwwroot/lib/sortablejs` with its MIT licence; it was 1.15.4 from cdnjs without `integrity`.
+  `blazor.web.js`, Radzen, `block-preview.js` and the editors' `Scripts`/`Styles` go through `@Assets[...]`
+  (fingerprinted; a path that is not a static web asset is unchanged).
+- **SEO checker (ZA-085).** The synchronous HTTP was already gone (`SeoHttp` has timeouts). A run is now cancelled
+  when the editor leaves, runs again, presses the new Stop button, or after 3 minutes; a check that throws shows as a
+  failed check (logged) instead of ending the circuit; results show as each check finishes. `ISeoCheck` gets a
+  `Check(…, CancellationToken)` default method (existing checks keep working); `BrokenLinksCheck` and
+  `ResponseStatusCheck` implement it.
+- **Recycle bins (ZA-156).** `ContentTreeLevelParameters.InRecycleBin` / `MediaTreeLevelParameters.InRecycleBin`:
+  the top of the bin (items whose parent is not binned) a page at a time, most recently binned first, with child
+  flags; with `ParentId`, what is in the bin below that item. Both bins use them: 100 at a time with "Show more" (the
+  media bin stopped at 500), and a binned page or folder opens. Restoring an item inside a binned parent is refused
+  by the services, as before; a permanent delete takes it and what is below it.
+- **"Show more" (ZA-161).** The row is a button inside the node template (`TreeExtensions` template overloads taking
+  the tree and its load method) with `onclick:stopPropagation`: Radzen never selects it, so the selected node keeps
+  its highlight. The selection path stays for the keyboard.
+- **ZA-025.** `Constants.Sections.Trees.StructureElementTypeTree` is `"StructureElementTypeTree"` (it was
+  `"StructureContentTypeTree"`, the content type tree's alias).
+- **ZA-160.** Not reproduced: four full reloads of a media folder page with 105 items, after this phase's changes,
+  logged nothing. Our only component on that page that calls JavaScript on dispose (`MultipleMediaUpload`) catches
+  the disconnect; the rest are Radzen's. Reopen with a stack trace if it shows again.
+- **Resizable tree panel (owner request, 2026-11-27).** A divider on the sidebar's edge (`role="separator"`,
+  focusable) sets Radzen's `--rz-sidebar-width` on `<html>`: drag, or arrow keys (Shift for steps of 64px), Home,
+  End; Enter or a double-click goes back to the theme's 300px. 200px to 60% of the window, at most 720px; kept per
+  browser in `localStorage` and applied by a head script before the admin paints, so there is no jump. Hidden below
+  768px and when the sidebar is collapsed. The trees now scroll inside the sidebar (`.zauber-sidebar-scroll`), so the
+  divider stays in place. Script: `ZauberCMS.Components/wwwroot/js/admin-sidebar.js`. As in Umbraco, the width is
+  kept per browser, not per user.
+- Checked in a browser on a scratch copy of the sample site (a known password set on the copy, 106 binned media, a
+  binned folder with a subfolder, a binned page with two pages below, a live folder of 105 files): a link from the
+  home page into `/admin/media` loads as a full page with Radzen and Sortable present and every script fingerprinted;
+  `/admin` HTML has no prerendered layout; the media bin's "Show 6 more" and binned folder, the content bin's binned
+  page and the refused restore of a child; "Show 5 more" in the live folder keeps the selected file highlighted; a
+  dashboard that throws shows the boundary with the message (Development), "Try again" brings it back and the
+  circuit carries on; the divider's drag, clamp, reload, keyboard, reset and collapse. Not tried in a browser: a
+  side panel that throws (same `ErrorBoundary`, tested only through `AdminErrorBoundary`), the SEO Stop button
+  (`SeoHttp` refuses the local site, so a run cannot be started on it).
+- Review (`/audit changed`, two reviewers; nothing High). Fixed: Radzen dialogs had no boundary (Medium); content
+  "Delete All" stopped at 1000 rows and counted blocks (it now pages the top of the bin through the tree level);
+  a site's `ISeoCheck` without the token overload could not be stopped (`WaitAsync`); a Stop after the run ended
+  stuck; the "Show more" button was a Tab stop inside the tree (`tabindex=-1`, the arrow keys reach the row); a
+  drag of the divider could outlive its pointer; a keyboard "Show more" in a bin cleared the selection; the docs
+  left out that `Zauber:ShowDetailedErrors` is ignored in Production. Noted, not changed: any content or media save
+  (any circuit) reloads the bins and drops pages loaded with "Show more", as the bins did before.
+- Tests: `Shared/AdminErrorBoundaryTests` (Components: the error replaces the child and is logged, the message only
+  with detailed errors), `Shared/QueryAndCacheTests` ZA156 (both bins, all three databases), `Security/AdminAccessTests`
+  ZA096, `Seo/SeoCheckTests` (stopped broken-links and response-status checks stop, a running one still reports, old
+  checks run through the new method), `Shared/ConstantsTests` (tree aliases distinct). The bin tests also show that
+  binned blocks are never listed (the content bin listed them before).
+  Full suite 912 (911 pass, 1 skipped for ZA-118) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build
+  0 warnings; no vulnerable packages.
+- **Release notes (D18):**
+  - The admin is not prerendered: an admin page initialises once, in the circuit, with no `HttpContext`. A plugin
+    admin page that read `HttpContext` during prerender gets null.
+  - Every `/admin` response refuses enhanced navigation (no `blazor-enhanced-nav` header): links into the admin
+    from static pages load a full page; the browser logs a warning when it falls back.
+  - An exception in a property editor, dashboard, the navigation, a page or a side panel shows an error with "Try
+    again" instead of ending the circuit. New public component `AdminErrorBoundary`.
+  - Sortable.js is served from the Components package (1.15.7), not cdnjs. Admin scripts and editor assets are
+    fingerprinted through `@Assets`.
+  - `ISeoCheck` has a new `Check(url, document, content, CancellationToken)` default method; implement it in a check
+    that makes requests so it can be stopped. The SEO checker stops a run after 3 minutes.
+  - New `InRecycleBin` on `ContentTreeLevelParameters` and `MediaTreeLevelParameters`. Both bins page by 100,
+    newest binned first (the content bin listed oldest first), and binned folders open. The content bin no longer
+    lists binned blocks; "Delete All" deletes everything in the bin (it stopped at 1000 rows). The content bin's "Show
+    more" row is a `TreeLoadMore`, no longer a `TreeBranch` (a bin context menu that matched every `TreeBranch` no
+    longer shows on it).
+  - **Breaking:** `Constants.Sections.Trees.StructureElementTypeTree` is now `"StructureElementTypeTree"`. A context
+    menu or tree that used only `StructureContentTypeTree` no longer shows on the element types tree; add
+    `StructureElementTypeTree` to its `TreeAlias`.
+  - New `TreeExtensions.CreateStandardTreeTemplate/CreateContentTreeTemplate/CreateMediaTreeTemplate(receiver,
+    loadMore)` overloads (the parameterless ones are unchanged).
+  - The admin sidebar can be resized (per browser). The sidebar's content scrolls inside `.zauber-sidebar-scroll`; CSS
+    that styled `.rz-sidebar` as the scroll container may need the new element.
 
 ### Phase 10e — Front end, security and identity hardening
 ZA-095, ZA-098 (Medium); ZA-030, ZA-031, ZA-032, ZA-033, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114,

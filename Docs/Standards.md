@@ -59,7 +59,11 @@ patterns into new code.
   (`@rendermode InteractiveServer`). No Radzen, Blazored.Modal or admin JS on the front-end.
 - SSR forms: `[SupplyParameterFromForm]`, `<AntiforgeryToken />`/`EditForm` with `FormName`, enhanced navigation aware.
 - Components that prerender run `OnInitializedAsync` twice — make it idempotent and cheap, or persist state
-  (`[PersistentState]` in .NET 10).
+  (`[PersistentState]` in .NET 10). The admin is not prerendered (ZA-101); a front-end component with
+  `@rendermode InteractiveServer` is.
+- A part of an admin page that runs code it does not own (an editor, a dashboard, a plugin's component) goes inside an
+  `AdminErrorBoundary` ([AdminUI.md](AdminUI.md) "Errors in the admin").
+- Scripts and stylesheets are served by the site through `@Assets[...]` (fingerprinted); no CDN without `integrity`.
 - Subscriptions (`AppState`, `TreeState`, `NavigationManager.LocationChanged`) are made in `OnInitialized` and
   removed in `Dispose`/`DisposeAsync`. Event callbacks from other threads → `InvokeAsync(StateHasChanged)`.
 - JS interop only in `OnAfterRenderAsync(firstRender)`; dispose `IJSObjectReference` / `DotNetObjectReference`;

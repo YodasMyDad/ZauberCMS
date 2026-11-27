@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ZauberCMS.Core.Content.Models;
@@ -53,7 +53,8 @@ public interface IContentService
 
     /// <summary>
     /// A page of an admin content tree node (a page's children, or the root pages), in sort order, without property
-    /// values or children, with which of them have children (Roadmap D26). Blocks and recycled pages are left out.
+    /// values or children, with which of them have children (Roadmap D26). Blocks are left out; recycled pages are
+    /// listed only with <c>InRecycleBin</c>, and then only they are.
     /// </summary>
     Task<TreeLevel<Models.Content>> GetContentTreeLevelAsync(ContentTreeLevelParameters parameters, CancellationToken cancellationToken = default);
     Task<DataGridResult<Models.Content>> GetDataGridContentAsync(DataGridContentParameters parameters, CancellationToken cancellationToken = default);

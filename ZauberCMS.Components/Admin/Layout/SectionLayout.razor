@@ -12,8 +12,22 @@
     <SectionOutlet SectionId="@Sections.PageHeadContent"/>
 </HeadContent>
 
-@* The one host for Radzen dialogs, notifications, context menus and tooltips. A second one doubles them (ZA-138). *@
-<RadzenComponents />
+@* The one host for Radzen dialogs, notifications, context menus and tooltips. A second one doubles them (ZA-138).
+   A dialog or side panel opened with DialogService that throws shows its error here instead of ending the circuit
+   (ZA-097, D32); its dialogs close, the page stays. *@
+<AdminErrorBoundary @ref="_dialogsBoundary" Name="The dialog">
+    <ChildContent>
+        <RadzenComponents />
+    </ChildContent>
+    <ErrorContent>
+        <div class="zauber-dialog-error" role="alert">
+            <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Error" Title="The dialog could not be shown"
+                           DefaultMessage="@_dialogsBoundary?.Describe(context)"/>
+            <RadzenButton Variant="Variant.Outlined" Size="ButtonSize.Small" Icon="close" Text="Close" class="mt-2"
+                          Click="@(() => _dialogsBoundary?.Recover())"/>
+        </div>
+    </ErrorContent>
+</AdminErrorBoundary>
 <CascadingBlazoredModal>
     <RadzenLayout>
         @* IsFixed: consumers only call SetSection. Without it every layout re-render (sidebar toggle,
@@ -35,12 +49,27 @@
             </RadzenHeader>
             @if (!SectionAlias.IsNullOrWhiteSpace())
             {
-                <RadzenSidebar @bind-Expanded="@Expanded">
-                    <SectionTrees SectionAlias="@(SectionAlias)"/>
+                @* The navigation's width can be dragged (wwwroot/js/admin-sidebar.js, loaded by App.razor): the trees
+                   scroll inside the sidebar, so the divider on its edge stays in place. *@
+                <RadzenSidebar @bind-Expanded="@Expanded" Style="position: relative; overflow: hidden; display: flex;">
+                    <div class="zauber-sidebar-scroll">
+                        @* The trees, nav groups and nav items, plugins' included: one that throws leaves the page open *@
+                        <AdminErrorBoundary @ref="_treesBoundary" Name="The navigation">
+                            <SectionTrees SectionAlias="@(SectionAlias)"/>
+                        </AdminErrorBoundary>
+                    </div>
+                    <div class="zauber-sidebar-resizer" role="separator" aria-orientation="vertical" tabindex="0"
+                         aria-label="Navigation width"
+                         title="Drag to change the width. Double-click, or press Enter, for the default."></div>
                 </RadzenSidebar>
             }
             <RadzenBody>
-                @Body
+                @* The last line of defence for the page (ZA-097, D32): an error the page's own boundaries don't
+                   catch shows here, and the header and navigation stay, so the user can move on. Going to
+                   another page clears it. *@
+                <AdminErrorBoundary @ref="_bodyBoundary" Name="This page">
+                    @Body
+                </AdminErrorBoundary>
             </RadzenBody>
         </CascadingValue>
     </RadzenLayout>
@@ -67,6 +96,18 @@
         ZauberCMS.Core.Languages.AdminCulture.Apply(Settings.Value);
     }
     
+    private AdminErrorBoundary? _bodyBoundary;
+    private AdminErrorBoundary? _treesBoundary;
+    private AdminErrorBoundary? _dialogsBoundary;
+
+    protected override void OnParametersSet()
+    {
+        // The router sets the layout's parameters on every navigation: the new page starts without the old error
+        _bodyBoundary?.Recover();
+        _treesBoundary?.Recover();
+        _dialogsBoundary?.Recover();
+    }
+
     private string? SectionAlias { get; set; }
 
     public void SetSection(string value)

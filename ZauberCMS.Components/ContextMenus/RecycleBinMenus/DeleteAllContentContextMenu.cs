@@ -37,21 +37,22 @@ public class DeleteAllContentContextMenu(
     {
         contextMenuService.Close();
         
-        // Get all deleted content
-        var deletedContent = await contentService.QueryContentAsync(new QueryContentParameters
+        // Every item at the top of the bin, collected before deleting anything (it stopped at 1000 rows before).
+        // Deleting an item also deletes the recycled items and blocks below it, so only these are deleted here.
+        var topLevelItems = new List<Guid>();
+        TreeLevel<Core.Content.Models.Content> level;
+        do
         {
-            IsDeleted = true,
-            IncludeUnpublished = true,
-            AmountPerPage = 1000
-        });
+            level = await contentService.GetContentTreeLevelAsync(new ContentTreeLevelParameters
+            {
+                InRecycleBin = true,
+                Skip = topLevelItems.Count,
+                Take = 500
+            });
+            topLevelItems.AddRange(level.Items.Select(x => x.Id));
+        } while (level.HasMore && level.Items.Count > 0);
 
-        // Deleting an item also deletes the recycled items below it, so only the top-most ones are deleted here
-        var deletedIds = deletedContent.Items.Select(x => x.Id).ToHashSet();
-        var topLevelItems = deletedContent.Items
-            .Where(x => x.ParentId == null || !deletedIds.Contains(x.ParentId.Value))
-            .ToList();
-
-        if (!deletedContent.Items.Any())
+        if (topLevelItems.Count == 0)
         {
             notificationService.Notify(new NotificationMessage
             {
@@ -64,7 +65,7 @@ public class DeleteAllContentContextMenu(
         }
 
         // Confirm deletion
-        var confirmMessage = $"Permanently delete all {deletedContent.Items.Count()} items in the recycle bin? This action cannot be undone.";
+        var confirmMessage = $"Permanently delete the {topLevelItems.Count} items in the recycle bin, and everything below them? This action cannot be undone.";
         var confirmed = await dialogService.Confirm(confirmMessage, "Delete All", 
             new ConfirmOptions { OkButtonText = "Delete All", CancelButtonText = "Cancel" });
         
@@ -76,11 +77,11 @@ public class DeleteAllContentContextMenu(
         var errorCount = 0;
 
         // Delete all items
-        foreach (var content in topLevelItems)
+        foreach (var contentId in topLevelItems)
         {
-            var result = await contentService.DeleteContentAsync(new DeleteContentParameters 
-            { 
-                ContentId = content.Id 
+            var result = await contentService.DeleteContentAsync(new DeleteContentParameters
+            {
+                ContentId = contentId
             });
             
             if (result.Success)

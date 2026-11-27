@@ -167,3 +167,19 @@
         transform: scale(0%);
     }
 }
+
+/* ZauberCMS: the error shown in place of a panel's content (ZA-097) */
+.bm-error {
+    padding: 1rem;
+}
+
+.bm-error-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.bm-error-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}

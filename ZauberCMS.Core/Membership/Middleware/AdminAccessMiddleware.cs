@@ -29,6 +29,15 @@ public class AdminAccessMiddleware(RequestDelegate next, ILogger<AdminAccessMidd
             return;
         }
 
+        // Arriving from a static page by enhanced navigation would patch the admin into that page, and the
+        // admin's scripts (Radzen, Sortable) would not run (ZA-096). Without this header blazor.web.js loads the
+        // address as a full page instead, whichever link, redirect or form led here.
+        context.Response.OnStarting(static state =>
+        {
+            ((HttpResponse)state).Headers.Remove(AdminAccess.EnhancedNavigationHeader);
+            return Task.CompletedTask;
+        }, context.Response);
+
         var globalSettings = await dataService.GetGlobalSettings();
         if (!AdminAccess.IsAllowedAddress(context.Connection.RemoteIpAddress, globalSettings.AllowedAdminIpAddress))
         {
@@ -61,6 +70,12 @@ public class AdminAccessMiddleware(RequestDelegate next, ILogger<AdminAccessMidd
 /// <summary>The rules <see cref="AdminAccessMiddleware"/> and the admin router apply.</summary>
 public static class AdminAccess
 {
+    /// <summary>
+    /// The response header with which a Blazor endpoint accepts an enhanced navigation (<c>allow</c>). Admin responses
+    /// go without it, so the browser loads the admin as a full page (ZA-096).
+    /// </summary>
+    public const string EnhancedNavigationHeader = "blazor-enhanced-nav";
+
     /// <summary>True for <c>/admin</c> and everything below it (any letter case).</summary>
     public static bool IsAdminPath(PathString path) =>
         path.StartsWithSegments(Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);

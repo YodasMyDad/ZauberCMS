@@ -8,7 +8,11 @@ public class ResponseStatusCheck(IHttpClientFactory httpClientFactory) : ISeoChe
 {
     public string Name => "Response Status Code Checker";
 
-    public async Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
+    public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content) =>
+        Check(url, document, content, CancellationToken.None);
+
+    public async Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content,
+        CancellationToken cancellationToken)
     {
         var result = new SeoCheckResult(Name);
         var seoItem = new SeoCheckResultItem();
@@ -20,7 +24,8 @@ public class ResponseStatusCheck(IHttpClientFactory httpClientFactory) : ISeoChe
             // We grab a random user agent so we are not using the same one each time
             httpClient.DefaultRequestHeaders.Add("User-Agent", Constants.UserAgents.OrderBy(x => Guid.NewGuid()).FirstOrDefault());
             // Perform the HTTP GET request
-            using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
             var statusCode = (int)response.StatusCode;
 
             // Handle status codes
@@ -45,6 +50,11 @@ public class ResponseStatusCheck(IHttpClientFactory httpClientFactory) : ISeoChe
             // Handle network or HTTP request-specific errors
             seoItem.Status = AlertType.Error;
             seoItem.DefaultMessage = $"A network error occurred while checking the response: {ex.Message}";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The run was stopped
+            throw;
         }
         catch (TaskCanceledException)
         {

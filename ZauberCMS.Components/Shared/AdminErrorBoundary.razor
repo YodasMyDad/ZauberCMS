@@ -1,0 +1,42 @@
+@using Microsoft.AspNetCore.Components.Server
+@using Microsoft.Extensions.Options
+@using ZauberCMS.Core.Shared.Models
+@inherits ErrorBoundary
+
+@* An admin error boundary (Roadmap D32, ZA-097). When something inside it throws while rendering, in a lifecycle
+   method or in an event handler, the circuit stays up: this part shows what failed and a "Try again" button, and
+   the rest of the page, its unsaved changes included, carries on. The exception is logged by ErrorBoundary; its
+   message is shown only when Blazor's detailed errors are on (CircuitOptions.DetailedErrors, which
+   Zauber:ShowDetailedErrors outside Production or the DetailedErrors setting turn on). A plugin page can use it round its own parts. *@
+
+@if (CurrentException is null)
+{
+    @ChildContent
+}
+else if (ErrorContent is not null)
+{
+    @ErrorContent(CurrentException)
+}
+else
+{
+    <div class="zauber-error-boundary" role="alert">
+        <TailwindAlert Type="AlertType.Error" Title="@($"{Name ?? "This part of the page"} could not be shown")"
+                       DefaultMessage="@Describe(CurrentException)"/>
+        <RadzenButton Variant="Variant.Outlined" Size="ButtonSize.Small" Icon="refresh" Text="Try again"
+                      class="mt-2" Click="@Recover"/>
+    </div>
+}
+
+@code {
+    /// <summary>What this boundary holds, as the error names it: "The Title editor", "The Latest Users dashboard".
+    /// Without it: "This part of the page".</summary>
+    [Parameter] public string? Name { get; set; }
+
+    [Inject] public IOptions<CircuitOptions> CircuitOptions { get; set; } = null!;
+
+    /// <summary>What the error shows about <paramref name="exception"/>: its type and message with Blazor's detailed
+    /// errors on, otherwise a pointer to the log. For an <c>ErrorContent</c> of your own.</summary>
+    public string Describe(Exception exception) => CircuitOptions.Value.DetailedErrors
+        ? $"{exception.GetType().Name}: {exception.Message}"
+        : "The details are in the site's log.";
+}

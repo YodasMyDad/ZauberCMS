@@ -8,7 +8,10 @@
                 @foreach (var sectionDashboard in Dashboards.OrderBy(x => x.Value.SortOrder))
                 {
                     <RadzenTabsItem Text="@(sectionDashboard.Value.TabName)">
-                        <DynamicComponent Type="@sectionDashboard.Value.GetType()"/>
+                        @* A dashboard that throws shows its error in its tab (ZA-097, D32) *@
+                        <AdminErrorBoundary Name="@($"The {sectionDashboard.Value.TabName} dashboard")">
+                            <DynamicComponent Type="@sectionDashboard.Value.GetType()"/>
+                        </AdminErrorBoundary>
                     </RadzenTabsItem>
                 }
             </Tabs>
