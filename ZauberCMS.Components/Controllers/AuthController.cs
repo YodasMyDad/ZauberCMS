@@ -95,8 +95,8 @@ public class AuthController(
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromForm] string? redirectUrl = null)
     {
-        // The antiforgery token is checked here, not with [ValidateAntiForgeryToken]: that attribute's filter comes
-        // with MVC's view services, which ZauberCMS does not register since the MVC rendering path went (ZA-090).
+        // The antiforgery token is checked here, 400 without a valid one. [ValidateAntiForgeryToken] would do the same
+        // (MVC's view features are registered, ZA-185); this check does not depend on them.
         if (!await antiforgery.IsRequestValidAsync(HttpContext))
         {
             return BadRequest();

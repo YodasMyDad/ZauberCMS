@@ -279,6 +279,22 @@ Both name the caller from `ICurrentUserAccessor`; with nobody signed in no audit
 
 Audit rows older than 90 days are removed by the daily job (`CleanupOldAuditsAsync`, one `DELETE` in the database).
 
+## Background jobs (Roadmap D61)
+
+ZauberCMS runs two hosted jobs, each with a switch under `Zauber:Jobs` (on by default; read when the site starts,
+`IOptions<ZauberSettings>`, so `Configure<ZauberSettings>` in code works too). A job that is off logs one line at
+start-up and does nothing else.
+
+| Key | Job | What it does |
+| --- | --- | --- |
+| `Zauber:Jobs:DailyCleanup` | `DailyJob` (Core) | First run five minutes after start-up, then daily: audit rows older than 90 days, orphaned related-content links, page versions beyond `ContentVersionsToKeep`. Writes to the shared database. |
+| `Zauber:Jobs:SitemapGenerator` | `SitemapGeneratorService` (Components) | At start-up, then every six hours: writes each sitemap set up in the admin to an XML file in this server's web root. |
+
+Several servers on one database: keep `DailyCleanup` on one server and turn it off on the others (like Umbraco's
+scheduled jobs, which run on its "scheduling publisher" server only). Keep `SitemapGenerator` on wherever the
+sitemap file is served from: on each server, or on one when the web root is shared. The Redis cache-clear listener
+(`ICacheInvalidationBus`) is not a job and runs on every server. Both jobs do nothing while the site has no database.
+
 ## AppState events
 
 - Services raise: content deletes, media saves/deletes/restores (after the save succeeded, once — ZA-013).

@@ -213,10 +213,10 @@ Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the reques
   To show nested blocks with their unsaved edits, call `GetBlocks(alias, ContentService, includePendingChanges: true)`.
 - A block that needs interactivity sets its own `@rendermode`; `IContentBlockView` has no render-mode member (its
   MVC-typed `RenderMode` went with the MVC rendering path, Roadmap Phase 11e). ZauberCMS renders no MVC views and
-  registers controllers only (`AddControllers`); a site that wants views calls `AddControllersWithViews()` itself.
-  So does a site or plugin whose controllers use `[ValidateAntiForgeryToken]` or `[AutoValidateAntiforgeryToken]`:
-  their filters are view services, and without them such an action answers 500. The alternative is to check the
-  token in the action with `IAntiforgery.IsRequestValidAsync`, as ZauberCMS's `AuthController` does.
+  registers controllers with MVC's view features but no Razor view engine (`AddControllers` and
+  `AddMvcCore().AddViews()`); a site that wants Razor views (`.cshtml`) calls `AddControllersWithViews()` itself.
+  A site's or plugin's controller can use `[ValidateAntiForgeryToken]`, `[AutoValidateAntiforgeryToken]` and
+  `[IgnoreAntiforgeryToken]` (D60): an action that checks answers 400 without a valid token.
 - Rich text from content is HTML: render through `IHtmlSanitizerService` rather than a raw `MarkupString`
   (`@Sanitizer.SanitizeToMarkup(Content.GetValue<string>("Text"))`). The default sanitiser also turns the
   editor's video placeholders into players: `<figure class="zauber-embed" data-embed="youtube"><iframe …>`,

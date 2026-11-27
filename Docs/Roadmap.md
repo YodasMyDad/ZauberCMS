@@ -28,7 +28,9 @@
   **Phase 11g done** (content finders at the owner's request, D55; the service split, `Content.Url` and the custom
   components' page id, D56–D58; the DbContext pattern kept, D59; 2026-11-27). **Phase 11 is done** (parts 11a–11g)
   **and audited** (`/audit changed`, 2026-11-27: ZA-169…ZA-186 fixed, ZA-187…ZA-198 recorded; see "Phase 11 audit").
-  **16 open findings** (0 Critical, 0 High, 1 Medium, 15 Low), each one assigned below to a phase (10f, 10g, 10i,
+  **Phase 11 audit follow-ups done** (the owner's answers: antiforgery attributes on site controllers, D60, ZA-185;
+  `Zauber:Jobs` switches, D61, ZA-198; 2026-11-27).
+  **15 open findings** (0 Critical, 0 High, 1 Medium, 14 Low), each one assigned below to a phase (10f, 10g, 10i,
   12), plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
   new finding goes into the phase whose theme fits. **Next: Phase 10f**, then 10g,
   10h, 10i, then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner
@@ -100,6 +102,8 @@
 | D57 | **`Content.Url` is the page's stored URL and is no longer obsolete; the `Url()` extension, which only returned it, is the obsolete one, and the column stays.** The property was `[Obsolete]` (pointing at `Url()`) and hidden from IntelliSense, yet it is the value EF maps, the front-end lookup compares, the save makes unique and the drafts, versions and exports carry, so every writer needed a pragma (16) and there was no exit: removing it would need a settable replacement under another name (every importer and starter kit changes, and the drafts' and versions' JSON would need its old name mapped) for no gain. Now readers and writers use `Content.Url` (`blog/my-post`, lower case, no slashes round it), a link is `ContentUrl.SiteRelative(content)` (`/blog/my-post`), and `Url()` is `[Obsolete]` with that message, for removal in a later major. No schema change and no migration: the column's name, meaning and data are unchanged. Umbraco keeps the stored segment (`UrlSegment`) apart from the computed link (`Url()` through `IPublishedUrlProvider`); ZauberCMS stores the whole relative URL, so its stored value and its link differ only by the leading slash, which `ContentUrl.SiteRelative` adds. (owner delegated, 2026-11-27, Phase 11g) | ZA-125, D18 |
 | D58 | **A custom content component is given the id of its page (`ICustomContentComponent.ContentId`), not the page.** `RenderCustomContent` passed the whole `Content` (values, type, parent, roles) as a parameter, which Blazor serialises into the HTML for a component with `@rendermode` (the sample contact form: 7046 characters of protected descriptor, 777 with the id) and sends back with the circuit. A small DTO was weighed: the useful fields differ per component and any copy goes stale, while the id is enough to load the page through `IContentService.GetContentAsync(new GetContentParameters { Id = ContentId, Cached = true })` (published and not recycled by default, and cached). The admin has no custom components (the picker only lists their names), so nothing in ZauberCMS needed the page. Breaking (D18): the interface's `Content` property is replaced by `Guid ContentId`; no `[Obsolete]` path, because the renderer can pass only parameters a component declares and keeping `Content` would keep the serialisation it exists to stop. Umbraco renders view components on the server and passes `IPublishedContent` in memory; for Blazor's interactive components Microsoft's guidance is small serialisable parameters. (owner delegated, 2026-11-27, Phase 11g) | ZA-126, D18 |
 | D59 | **Services keep a scope per operation for their DbContext; `IDbContextFactory<T>` is not adopted, and the pattern is no longer listed as a deviation.** The scope's `IZauberDbContext` is the context of the provider the site uses now, picked when the scope first asks (`ZauberSetup.ActiveContextType`): the installer writes the database settings and the next scope uses them without a restart, and a site with no database (D24) starts without one. `IDbContextFactory<T>` is typed to one context class fixed at registration, so it would need a factory of ZauberCMS's own that picks the provider, which is what the scope does. Identity's stores (`UserManager`, `RoleManager`) resolved from the same scope share its context, so one transaction covers a user and its content (ZA-011); contexts made by a factory would not be shared. Umbraco works the same way: a unit of work is a scope (`ICoreScopeProvider.CreateCoreScope()`) that owns the database connection, and services do not hold a context. Standards.md §3 states it as the pattern; the deviation row is gone. (owner delegated, 2026-11-27, Phase 11g) | Standards.md, ZA-011, D24 |
+| D60 | **MVC's view features are registered for controllers, without a Razor view engine** (owner, 2026-11-27: "Register them"). `AddZauberCms` calls `AddMvcCore().AddViews()` after `AddControllers()`, so `[ValidateAntiForgeryToken]`, `[AutoValidateAntiforgeryToken]` and `[IgnoreAntiforgeryToken]` on a site's or plugin's controller work as in 4.x (since 11e they answered 500: their filters are view services); TempData, view components and HTML helpers come with them. The Razor view engine, tag helpers and the removed MVC rendering path (D52) stay out; a site with `.cshtml` views calls `AddControllersWithViews()`. `AuthController` keeps its own `IAntiforgery` check. Umbraco registers full MVC with views; ZauberCMS renders through Blazor, so it adds only what controllers need. | ZA-185 |
+| D61 | **Each background job has an on/off switch under `Zauber:Jobs`, on by default** (owner, 2026-11-27: "Zauber:Jobs setting"). `Zauber:Jobs:DailyCleanup` (the daily job: audit rows, orphaned related-content links, page versions) and `Zauber:Jobs:SitemapGenerator` (the sitemap files); those are the only hosted jobs (the Redis cache-clear listener is plumbing every server needs, and the admin culture handler is a circuit handler, not a job). The job reads the switch from `IOptions<ZauberSettings>` when it starts (so code-set options work too) and, when off, logs one line and returns; it is still registered and stays internal. A web farm keeps `DailyCleanup` on one server; `SitemapGenerator` stays on wherever the sitemap file is served. Umbraco runs scheduled work only on its "scheduling publisher" server (server role, detected or set in config); ZauberCMS has no server roles, so the switch is per job and set by config. A new hosted job gets its own switch (a test lists them). | ZA-198 |
 
 ## Working rules for the rework
 
@@ -1074,6 +1078,7 @@ Done in parts, one commit each, in this order:
 | 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | DONE 2026-11-27 (D53, D54) |
 | 11g | Content finders (owner request, 2026-11-27: D55); breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | DONE 2026-11-27 (D55–D59) |
 | audit | `/audit changed` over 2f4dc41..773505c | DONE 2026-11-27 (ZA-169…ZA-186 fixed; ZA-187…ZA-198 to 10f, 10g, 10i, 12) |
+| audit follow-ups | The owner's answers to the audit's questions: ZA-185, ZA-198 | DONE 2026-11-27 (D60, D61) |
 
 - **Found in Phase 10e, do first (done in 11a, below):** ZA-164 (the front end's 404 page is sent with an empty body; reproduce in a bare
   .NET 10 app, then render `Zauber:NotFoundComponent`), ZA-165 (a redirect's domain is ignored).
@@ -1436,12 +1441,12 @@ Umbraco's way as delegated. The first part of the v5 breaking batch (D18).
     called.
   - **Breaking:** `IContentBlockView.RenderMode` is removed (nothing read it). A block's own `RenderMode` property
     still compiles; one that implements it explicitly (`IContentBlockView.RenderMode`) drops that.
-  - **Breaking:** ZauberCMS registers MVC controllers only (`AddControllers`), not views. A site with its own MVC
-    views, view components, TempData or tag helpers calls `builder.Services.AddControllersWithViews()`. `IMemoryCache`
-    and `IDistributedCache` (memory, unless Redis is configured) stay registered. So does a site or plugin whose
-    controllers use `[ValidateAntiForgeryToken]` or `[AutoValidateAntiforgeryToken]`: their filters are view services,
-    and without them the action answers 500 (or it checks the token itself with `IAntiforgery.IsRequestValidAsync`;
-    added by the Phase 11 audit, ZA-185).
+  - **Breaking:** ZauberCMS registers MVC controllers and MVC's view features (`AddMvcCore().AddViews()`: the
+    antiforgery filters, TempData, view components, HTML helpers), but no Razor view engine. A site with its own
+    Razor views (`.cshtml`), Razor Pages or tag helpers calls `builder.Services.AddControllersWithViews()`.
+    `IMemoryCache` and `IDistributedCache` (memory, unless Redis is configured) stay registered. Controllers with
+    `[ValidateAntiForgeryToken]`, `[AutoValidateAntiforgeryToken]` or `[IgnoreAntiforgeryToken]` work as in 4.x (the
+    view features were dropped in 11e and registered again by the Phase 11 audit follow-ups, ZA-185, D60).
   - **Breaking (binary):** these types moved from the ZauberCMS.Core assembly to ZauberCMS.Components, with the same
     namespaces and names: `ZauberCMS.Core.Content.Interfaces.IContentProperty`,
     `ZauberCMS.Core.Sections.Interfaces.ISectionNavGroupAction`, `ZauberCMS.Core.Extensions.DialogExtensions`,
@@ -1647,7 +1652,7 @@ moved or removed was already in its release notes.
   stamped. ZA-178 a rerun of an older CI run after a newer release would publish older code under a newer version;
   the publish job now requires the newest version tag in HEAD's history (a rerun of the tagged commit is unchanged;
   checked in a scratch repository with a bare origin, 9 cases). ZA-185 the antiforgery attributes answer 500 without
-  view services (11e): documented (release notes, FrontEnd.md); restoring them is an owner question.
+  view services (11e): documented by the audit, then fixed in "Phase 11 audit follow-ups" (D60).
 - **Fixed (Low):** ZA-172 content finders that implement `IDisposable`/`IAsyncDisposable` are disposed after the
   lookup; ZA-173 a lookup made from inside a finder does not start the finders again (it recursed without end), and
   `EntryPage` passes the request's token; ZA-174 a finder language that is not a culture is ignored with one warning
@@ -1663,7 +1668,8 @@ moved or removed was already in its release notes.
   release notes missed the list layering, the blank provider, the antiforgery attributes and the replacement for
   `AssemblyManager.Assemblies` (corrected in place above).
 - **Recorded, older than Phase 11:** ZA-187, ZA-189, ZA-190, ZA-193 (10f); ZA-188 (10g); ZA-194, ZA-197 (10i);
-  ZA-191, ZA-192, ZA-195, ZA-196, ZA-198 (12). Owner questions: ZA-185, ZA-198 ("Open questions").
+  ZA-191, ZA-192, ZA-195, ZA-196, ZA-198 (12). Owner questions: ZA-185, ZA-198, answered and built in "Phase 11
+  audit follow-ups" (D60, D61).
 - Tests (43 new cases): `Seo/RedirectDomainTests` (ZA169, ZA170), `Seo/SeoTagsTests` (ZA171: `RenderSeoTags`
   rendered with a finder's `EntryModel` and without), `Content/ContentFinderTests` (ZA172–ZA175),
   `Bootstrap/StartupDiagnosticsTests` (ZA176 with a plugin assembly built at run time against a missing contract,
@@ -1696,15 +1702,48 @@ moved or removed was already in its release notes.
   - `NoCacheInvalidationBus` and `RedisCacheInvalidationBus` are public (sealed), so a site can wrap the default.
   - Breaking: none.
 
+#### Phase 11 audit follow-ups — DONE (2026-11-27)
+The owner answered the audit's two questions (2026-11-27): ZA-185 "Register them", ZA-198 "Zauber:Jobs setting".
+- **Antiforgery attributes on site controllers (ZA-185, D60).** `AddZauberCms` calls `AddMvcCore().AddViews()` after
+  `AddControllers()`: registrations only (the antiforgery filters, TempData, view components, HTML helpers); no Razor
+  view engine, and nothing of the MVC rendering path (D52) comes back. `AuthController` keeps its own `IAntiforgery`
+  check (its comment no longer says the attribute cannot work). The "documented only" wording the audit wrote (11e
+  release notes, FrontEnd.md, AGENTS.md) is replaced by what is registered now.
+- **`Zauber:Jobs` (ZA-198, D61).** `ZauberSettings.Jobs` (`JobsSettings`): `DailyCleanup` and `SitemapGenerator`,
+  both `true` by default, in the three shipped appsettings files. Checked for other hosted work: the only other
+  `IHostedService` is the Redis cache-clear listener (`CacheInvalidationStartup`, needed on every server), and
+  `AdminCultureCircuitHandler` is a circuit handler, so neither has a switch. `DailyJob` and
+  `SitemapGeneratorService` read the switch from `IOptions<ZauberSettings>` when they start and, when off, log one
+  line and return. Documented in [Services.md](Services.md) "Background jobs", AGENTS.md "Configuration",
+  Installer.md.
+- Tests (10 new cases): `Bootstrap/SiteControllerAntiforgeryTests` (ZA185 ×2, over HTTP on Kestrel with a test
+  controller as a site writes one: `[ValidateAntiForgeryToken]` 400 without a token and 200 with one from
+  `IAntiforgery`; `[AutoValidateAntiforgeryToken]` 400/200 on a POST, a GET unchecked, `[IgnoreAntiforgeryToken]`
+  200 without a token); `Bootstrap/BackgroundJobsTests` (ZA198 ×8: defaults on; the hosted services ZauberCMS
+  registers are exactly the two jobs; each job off finishes at once on start; each job on by default or `true`
+  keeps running until stopped). Each was seen failing with its fix reverted (500 for the antiforgery cases; the
+  daily job kept running with the switch off). The key-parity test passes with the new keys.
+  `JobsSettings` is added to the public types snapshot. Full suite 1175 (all pass, none skipped) on SQLite,
+  PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings. Dev site (`ZauberCMS.Web`): with both
+  switches off it logged the two "off on this server" lines and did not start the sitemap generator, by default the
+  generator started; a POST to `/api/auth/logout` without a token answered 400 and the home page 200.
+- **Not verified:** a real web farm (two servers on one database); the template smoke test locally (CI runs it).
+- **Release notes (D18):**
+  - Controllers with `[ValidateAntiForgeryToken]`, `[AutoValidateAntiforgeryToken]` or `[IgnoreAntiforgeryToken]`
+    work again (since 11e they answered 500); ZauberCMS registers MVC's view features (TempData, view components,
+    HTML helpers), not the Razor view engine.
+  - New settings `Zauber:Jobs:DailyCleanup` and `Zauber:Jobs:SitemapGenerator` (default `true`, as before): set one
+    to `false` on a server that should not run that job, for example every server of a web farm but one for the
+    daily clean-up.
+  - Breaking: none.
+
 ### Phase 12 — .NET 11 (D4)
 From the Phase 11 audit, to do with the release planning: **ZA-191** (`GetContentFromRequestParameters.IgnoreInternalRedirect`
 is public and never read: honour or obsolete it), **ZA-192** (settings set in code with `Configure<ZauberSettings>` do
 not reach the bootstrap's copy, which configures ImageResize, Identity, rate limits and Redis: document or read the
 options), **ZA-195** (CI's commit-back of the stamped version conflicts when two pushes to `main-static` are in flight;
 it heals on the next push), **ZA-196** (a blank storage or email provider passes start-up and the first upload or
-email throws `NullReferenceException` without naming the setting), **ZA-198** (owner question below: the daily
-clean-up job, the sitemap generator and the admin culture handler are internal, so a site cannot remove one by type
-and there is no setting to run them on one server only).
+email throws `NullReferenceException` without naming the setting).
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 
@@ -1721,21 +1760,9 @@ Owner instructions for this phase (2026-11-25):
 
 ## Open questions for the owner
 
-- From the Phase 11 audit (2026-11-27):
-  - **ZA-185, antiforgery attributes.** Since Phase 11e (D52) ZauberCMS calls `AddControllers()`, so a site's or
-    plugin's controller with `[ValidateAntiForgeryToken]` or `[AutoValidateAntiforgeryToken]` answers 500 after the
-    update (the filters are view services). Documented now (release notes, FrontEnd.md). Options: (a) keep it
-    documented only; (b) also register the view features (`services.AddMvcCore().AddViews()`: the antiforgery
-    filters, TempData, view components and HTML helpers, about 40 registrations, no Razor view engine). Recommended:
-    (b), because a plugin's 4.x controller then keeps working without a code change, which the "updatable" principle
-    asks for, at the cost of registrations only.
-  - **ZA-198, built-in background work per server.** `DailyJob`, the sitemap generator and
-    `AdminCultureCircuitHandler` are internal since 11f, so a site can no longer remove one by type, and no setting
-    turns them off. Options: (a) leave it; (b) a `Zauber:Jobs` setting (`DailyJobEnabled`, `SitemapEnabled`, default
-    on) so a multi-server site runs them on one node; (c) make the two hosted services public again. Recommended: (b),
-    the Umbraco way (its scheduled publishing and clean-up run on the "scheduling publisher" server only).
-
-- Answered: SVG uploads (D6), sanitiser policy (D7), Phase 6 design (D13–D16), ZA-044 hotfix (D17), v5 (D18), installer (D19–D23).
+- Answered: SVG uploads (D6), sanitiser policy (D7), Phase 6 design (D13–D16), ZA-044 hotfix (D17), v5 (D18), installer (D19–D23),
+  the Phase 11 audit's two (2026-11-27): antiforgery attributes, register the view features (D60); background
+  jobs, a `Zauber:Jobs` setting (D61).
 - Closed 2026-11-27 (the owner asked for nothing to be left parked):
   - From Phase 7, kept as built unless the owner says otherwise: the installer does not restart the site; an Admin
     Email Address is promoted by a social login or by setting the password from an emailed link, not by an opened

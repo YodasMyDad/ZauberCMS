@@ -133,8 +133,8 @@ don't reorder without a reason written in the commit.
 their `ZauberCMS.Core.*` namespaces (D51); a new contract that needs a UI type goes there too, never in Core.
 Pages are found by `EntryPage` (`ZauberCMS.Components/Pages`), and an address no page has goes to the content finders
 (`IContentFinder`, D55, in `GetContentFromRequestAsync`); there is no MVC rendering path and no MVC views (removed in
-Phase 11e, ZA-090). Only `AuthController` uses MVC (`AddControllers`, no view services: `[ValidateAntiForgeryToken]`
-needs them, so it checks `IAntiforgery` itself).
+Phase 11e, ZA-090). MVC is registered for controllers (`AddControllers` plus MVC's view features, no Razor view
+engine), so a site's or plugin's controller can use the antiforgery attributes (D60).
 
 ## Configuration & cross-cutting
 
@@ -146,6 +146,9 @@ needs them, so it checks `IAntiforgery` itself).
 - Cache: `ICacheService` keeps values in each server's memory (`ServerCache`); keys `TypeName-<hash of SQL + includes>`;
   invalidation by prefix (`StartsWith`). With `RedisConnectionString` set, Redis carries only the clears to the other
   servers (`ICacheInvalidationBus`); nothing cached goes to Redis. → [Docs/Services.md](Docs/Services.md) "Cache"
+- Background jobs: the daily clean-up and the sitemap generator, each switched by `Zauber:Jobs:DailyCleanup` /
+  `SitemapGenerator` (on by default; a web farm runs the clean-up on one server, D61). A new hosted job gets a
+  switch there. → [Docs/Services.md](Docs/Services.md) "Background jobs"
 - Events: singleton `AppState` with `WeakEventManager` (`OnXChanged/Saved/Deleted` for Content, ContentType, User,
   Media). Handlers fire on the publisher's thread in every circuit → marshal with `InvokeAsync`.
 - Identity tables are `Zauber*`-prefixed; migrations history table `ZauberMigrations`. Keys are sequential GUIDs.

@@ -13,9 +13,11 @@ namespace ZauberCMS.Core.Jobs;
 
 /// <summary>
 /// The daily clean-up: old audit rows, orphaned related-content links and old page versions. The first run is a few
-/// minutes after start-up, then once a day. A shutdown stops a run that is under way (ZA-111).
+/// minutes after start-up, then once a day. A shutdown stops a run that is under way (ZA-111). It does not start on
+/// a server where <c>Zauber:Jobs:DailyCleanup</c> is false (Roadmap D61).
 /// </summary>
-internal class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger) : BackgroundService
+internal class DailyJob(IServiceProvider serviceProvider, IOptions<ZauberSettings> settings, ILogger<DailyJob> logger)
+    : BackgroundService
 {
     /// <summary>How long after start-up the first run waits.</summary>
     internal static readonly TimeSpan FirstRunDelay = TimeSpan.FromMinutes(5);
@@ -24,6 +26,12 @@ internal class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logg
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (!settings.Value.Jobs.DailyCleanup)
+        {
+            logger.LogInformation("The daily clean-up job is off on this server (Zauber:Jobs:DailyCleanup)");
+            return;
+        }
+
         try
         {
             // First run a few minutes after start-up, not during it (ZA-083), then once a day
@@ -63,8 +71,7 @@ internal class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logg
                 cancellationToken);
 
             // Keep the newest versions of each page (Zauber:ContentVersionsToKeep, Roadmap D25)
-            var versionsToKeep = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>().Value
-                .ContentVersionsToKeep;
+            var versionsToKeep = settings.Value.ContentVersionsToKeep;
             await scope.ServiceProvider.GetRequiredService<IContentVersioningService>()
                 .PruneVersionsAsync(new PruneContentVersionsParameters { VersionsToKeep = versionsToKeep },
                     cancellationToken);

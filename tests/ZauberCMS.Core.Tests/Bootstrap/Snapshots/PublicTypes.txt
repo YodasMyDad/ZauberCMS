@@ -597,6 +597,7 @@ ZauberCMS.Core: ZauberCMS.Core.Settings.Identity
 ZauberCMS.Core: ZauberCMS.Core.Settings.ImageCacheSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.ImageResizeSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.ImageResponseCacheSettings
+ZauberCMS.Core: ZauberCMS.Core.Settings.JobsSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.PluginSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.RateLimitSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.SmtpSettings

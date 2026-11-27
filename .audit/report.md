@@ -3,6 +3,7 @@
 Last full run: 5668365 (2026-11-25, full) · Last changed run: 773505c (2026-11-27, Roadmap Phase 11, 2f4dc41..773505c) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
 Next free IDs: ZA-199 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+After the Phase 11 audit follow-ups (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1175 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · the owner's answers built: ZA-185 (antiforgery attributes on site controllers, D60) and ZA-198 (`Zauber:Jobs` switches, D61) fixed. Next free ID: ZA-199
 After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1165 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `/audit changed` over the whole phase (three unit reviewers, two independent diff reviewers, two verifiers): nothing Critical or High from Phase 11; ZA-169…ZA-186 found and fixed (7 Medium, 11 Low), ZA-187…ZA-198 recorded (1 Medium, 11 Low, older than Phase 11). Next free ID: ZA-199. Earlier after-phase lines: [history.md](history.md) run log
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
@@ -17,7 +18,7 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 (ZA-187 was High, downgraded to Medium on verification) | 0 |
 | Medium | 1 | 8 | 7 |
-| Low | 15 | 22 | 11 |
+| Low | 14 | 22 | 12 |
 
 Trend (first pattern counts, 2026-11-27, Phase 11 run): sync-over-async 48 · async-void 2 · fire-and-forget 7 ·
 empty-catch 15 · unsanitised-markup 15 · raw-sql 1 · new-httpclient 0 · culture-unsafe-compare 6 (the suppressed EF
@@ -27,8 +28,8 @@ suppressed warnings 35 → 18; every hit on an added line is moved code or a sup
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
 a phase (10f: ZA-155, ZA-163, ZA-187, ZA-189, ZA-190, ZA-193; 10g: ZA-188; 10h: ZA-129; 10i: ZA-128, ZA-194,
-ZA-197; 12: ZA-191, ZA-192, ZA-195, ZA-196, ZA-198); there is no Backlog (owner, 2026-11-27). Owner questions from
-this run: ZA-185 (restore the antiforgery filters) and ZA-198 (built-in background work per server).
+ZA-197; 12: ZA-191, ZA-192, ZA-195, ZA-196); there is no Backlog (owner, 2026-11-27). The run's two owner questions
+were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
@@ -116,11 +117,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Issue / Fix: `OnModalInstanceAdded`, `OnModalCloseRequested` and `LocationChanged` are never removed; harmless
   while the modal lives as long as the circuit, a leak if a layout re-creates it. Unsubscribe in `DisposeAsync`.
 
-### ZA-198 [Low/High] Built-in background work cannot be switched off per server
-- Where: `ZauberCMS.Core/Jobs/DailyJob.cs`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs`, `AdminCultureCircuitHandler` · Category: F · Since: 2026-11-27 (internal since 11f) · Roadmap: 12
-- Issue: a site can no longer remove one by type, and there is no setting, so a multi-server site runs the daily
-  clean-up on every node. · Blocked by: owner decision (a `Zauber:Jobs` setting is recommended; Roadmap "Open questions").
-
 ## Improvement proposals
 
 None recorded yet: lenses G (editor UX) and H (Umbraco alignment) were added to the audit on 2026-11-27 and have
@@ -132,10 +128,11 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 - Medium: ZA-169 nested-domain redirects; ZA-170 domains with a scheme, port or trailing dot; ZA-171 canonical on
   content-finder pages; ZA-176 start-up failures lost from the log, unloadable plugin types unnamed; ZA-177
   `release.ps1` TAB; ZA-178 CI rerun of an older commit; ZA-185 antiforgery attributes without view services
-  (documented; restoring them is an owner question).
+  (documented by the run; the view features registered again in the follow-ups, D60).
 - Low: ZA-172 finder disposal; ZA-173 finder re-entrancy; ZA-174 finder language; ZA-175 domain list cache hit;
   ZA-179 invariant-globalization message; ZA-180 NU1900; ZA-181 smoke test output; ZA-182 `IValidator<T>` in the
-  discovery list; ZA-183 cache buses public; ZA-184 import comment; ZA-186 docs drift.
+  discovery list; ZA-183 cache buses public; ZA-184 import comment; ZA-186 docs drift; ZA-198 background jobs per
+  server (follow-ups, `Zauber:Jobs`, D61).
 
 ## Deterministic checks
 

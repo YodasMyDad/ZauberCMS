@@ -27,6 +27,12 @@ public class ZauberSettings
     public int ContentVersionsToKeep { get; set; } = 50;
 
     /// <summary>
+    /// The background jobs this server runs (Roadmap D61). Each is on by default; on a site with several servers,
+    /// each job's summary says which servers should keep it on.
+    /// </summary>
+    public JobsSettings Jobs { get; set; } = new();
+
+    /// <summary>
     /// The public address of the site, for example <c>https://www.example.com</c>. Links in emails (password
     /// reset, email confirmation) are built from it. When it is empty they are built from the Host header of the
     /// request, which the sender of the request controls, so set this (or restrict <c>AllowedHosts</c>) on any
@@ -80,6 +86,27 @@ public class Identity
 
     /// <summary>Registration forms each visitor address may send in the window (looking at the form is free).</summary>
     public RateLimitSettings RegisterRateLimit { get; set; } = new() { PermitLimit = 5, WindowMinutes = 10 };
+}
+
+/// <summary>
+/// The background jobs ZauberCMS runs on this server (Roadmap D61). A job that is off does not start; the setting is
+/// read when the site starts.
+/// </summary>
+public class JobsSettings
+{
+    /// <summary>
+    /// The daily clean-up: audit rows older than 90 days, orphaned related-content links, and page
+    /// versions beyond <see cref="ZauberSettings.ContentVersionsToKeep"/>. It writes to the shared database, so one
+    /// server of a web farm is enough.
+    /// </summary>
+    public bool DailyCleanup { get; set; } = true;
+
+    /// <summary>
+    /// The sitemap generator: every six hours it writes each sitemap set up in the admin (SEO, Sitemaps) to an XML
+    /// file in this server's web root. Turn it off only where another server's files are served (shared web root or
+    /// copied files), since a server that does not run it serves no sitemap or an old one.
+    /// </summary>
+    public bool SitemapGenerator { get; set; } = true;
 }
 
 /// <summary>A sliding-window limit per visitor address (ZA-149).</summary>

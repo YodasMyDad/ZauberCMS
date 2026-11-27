@@ -387,9 +387,13 @@ public static class ZauberSetup
                 .AddInteractiveServerComponents();
         }
 
-        // Controllers only (the admin's AuthController); ZauberCMS has no MVC views (ZA-090). A site with its own
-        // views calls AddControllersWithViews itself.
+        // Controllers (the admin's AuthController, and a site's or plugin's own). ZauberCMS renders no MVC views
+        // (ZA-090), but MVC's view features are registered (no Razor view engine): the antiforgery attributes
+        // ([ValidateAntiForgeryToken], [AutoValidateAntiforgeryToken], [IgnoreAntiforgeryToken]) are filters that
+        // come with them, and without them such an action answers 500 (ZA-185, Roadmap D60). A site with its own
+        // Razor views calls AddControllersWithViews itself.
         builder.Services.AddControllers();
+        builder.Services.AddMvcCore().AddViews();
         
 
 

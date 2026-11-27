@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ZauberCMS.Components.Seo.Models;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
@@ -14,15 +15,27 @@ using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Installer;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Components.Seo.Startup;
 
-internal sealed class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IWebHostEnvironment env, IServiceProvider serviceProvider)
+/// <summary>
+/// Writes each sitemap set up in the admin to the web root at start-up and every six hours. It does not start on a
+/// server where <c>Zauber:Jobs:SitemapGenerator</c> is false (Roadmap D61).
+/// </summary>
+internal sealed class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IWebHostEnvironment env,
+    IServiceProvider serviceProvider, IOptions<ZauberSettings> options)
     : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (!options.Value.Jobs.SitemapGenerator)
+        {
+            logger.LogInformation("The sitemap generator is off on this server (Zauber:Jobs:SitemapGenerator)");
+            return;
+        }
+
         logger.LogInformation("Sitemap Generator Hosted Service is starting.");
 
         using PeriodicTimer timer = new(TimeSpan.FromHours(6));

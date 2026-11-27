@@ -168,8 +168,9 @@ one process is then wrong on the others:
   semaphores, static caches outside `ICacheService`.
 - Per-server disk: media on `DiskStorageProvider`, `_mediacache`, sitemap files, temp uploads. Which need shared
   storage, and do the docs say so?
-- Hosted services run on every server: `DailyJob` pruning twice at once, sitemaps written twice. Umbraco runs
-  once-only jobs through a database-tracked distributed job; what stops two of ours overlapping?
+- Hosted services run on every server unless `Zauber:Jobs` turns one off (D61): `DailyJob` pruning twice at once,
+  sitemaps written twice. Does every hosted job have a switch, and do the docs say which server keeps it? Umbraco
+  runs once-only jobs through a database-tracked distributed job; what stops two of ours overlapping?
 - Data-protection keys (Standards §7), sticky sessions for circuits, and forwarded headers per node.
 
 ## B. Data access and performance

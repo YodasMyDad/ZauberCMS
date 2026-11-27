@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After the Phase 11 audit follow-ups (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1175 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review. ZA-185 (behaviour, D60) and ZA-198 (D61) fixed. Next free ID: ZA-199
 After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1165 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `/audit changed` over 2f4dc41..773505c (deterministic checks; unit reviewers for the front-end path, bootstrap and the public surface; two independent diff reviewers given only the code; two verifiers). Nothing Critical or High from Phase 11. ZA-169…ZA-186 found and fixed (7 Medium, 11 Low); ZA-187…ZA-198 recorded (1 Medium, 11 Low, all older than Phase 11) and assigned to 10f, 10g, 10i and 12; owner questions ZA-185, ZA-198
 After Roadmap Phase 11g (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1122 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-125, ZA-126 fixed; content finders added at the owner's request (D55). Phase 11 done. Next free ID: ZA-169
 After Roadmap Phase 11f (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1109 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-092, ZA-124 fixed. Next free ID: ZA-169
@@ -34,6 +35,23 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Phase 11 audit follow-ups (2026-11-27, the owner's answers to the audit's two questions).** Release notes in the
+  Roadmap's "Phase 11 audit follow-ups". Each test was seen failing with its fix reverted. Full suite 1175 (all
+  pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings; checked on the
+  dev site (the jobs' "off" log lines, the sign-out POST 400 without a token).
+  - **ZA-185 (Medium) — behaviour fixed (D60; the audit had documented it).** `AddZauberCms` registers MVC's view
+    features (`AddMvcCore().AddViews()`, no Razor view engine), so a site's or plugin's controller with
+    `[ValidateAntiForgeryToken]`/`[AutoValidateAntiforgeryToken]` answers 400 without a token instead of 500, and
+    `[IgnoreAntiforgeryToken]` opts an action out. The "documented only" wording in the 11e release notes,
+    FrontEnd.md and AGENTS.md is replaced. Test: `Bootstrap/SiteControllerAntiforgeryTests` ZA185 ×2, over HTTP on
+    Kestrel with a test controller (400 without a token, 200 with one; 500 with the registration reverted).
+  - **ZA-198 (Low) — fixed (D61).** `Zauber:Jobs:DailyCleanup` and `Zauber:Jobs:SitemapGenerator` (default `true`, in
+    the three shipped appsettings files): a job that is off logs one line when the site starts and returns, so one
+    server of a web farm can run the daily clean-up. The other hosted service (the Redis cache-clear listener) and
+    the admin culture circuit handler are not jobs and have no switch. Test: `Bootstrap/BackgroundJobsTests` ZA198
+    ×8 (defaults, the registered hosted services are exactly the two jobs, off finishes at once, on keeps running;
+    the daily job kept running with its check reverted); `AppSettingsParityTests` pass with the new keys.
 
 - **Phase 11 audit (2026-11-27, `/audit changed` over 2f4dc41..773505c, mode fix).** Release notes in the Roadmap's
   "Phase 11 audit" notes. Every fix has a regression test that was seen failing with the fix reverted (the two
