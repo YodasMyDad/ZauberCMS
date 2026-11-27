@@ -64,7 +64,7 @@
 | D32 | **An error in one part of the admin is shown in that part, with "Try again"; the circuit and the rest of the page stay.** `AdminErrorBoundary` sits round each property editor, each dashboard tab, the sidebar navigation and the page body (cleared on navigation); each side panel's content has one too, with "Close", and so do Radzen's dialogs (round `<RadzenComponents />`). It says what could not be shown, logs the exception, and shows the exception's message only when Blazor's detailed errors are on (`CircuitOptions.DetailedErrors`), otherwise "The details are in the site's log". An editor that failed keeps its last value, so a save does not lose it. Umbraco does the same: a property editor or extension that fails shows an error in its place and the rest of the document stays editable, and server errors show their details to the back office only in debug mode. Retry is offered because a failure is often passing (a timeout, a missing service a reload brings back); Umbraco's answer is a reload, which here would lose unsaved work. (owner delegated to Umbraco parity, 2026-11-27, Phase 10d) | ZA-097 |
 | D33 | **Front-end errors get an error page outside Development: the site's own page at `Zauber:ErrorPagePath` (default `/error`), else a plain built-in page.** Setup adds ASP.NET's exception handler for that address, so editors can make the error page a content page at `/error`, or a site can point the setting at a page of its own; when there is no page there, or it fails as well, a built-in page (no database, no layout, the request id) is sent with status 500. Empty turns it off for a site that sets up its own handler. Umbraco also relies on ASP.NET's exception handler and lets the site provide the page. (owner, 2026-11-27, Phase 10e) | ZA-098 |
 | D34 | **A redirect says whether its From URL is a regular expression (`IsRegex`, a nullable column); otherwise it matches exactly.** Rows saved before the column existed are null and keep the old guess (regex characters mean regex) until they are saved again, so no site changes behaviour on upgrade. A save is refused when the redirect would send an address to itself or close a circle with the saved ones, and the middleware never redirects an address to itself. (owner, 2026-11-27, Phase 10e) | ZA-116 |
-| D35 | **Deleting a user erases the person; there is no user recycle bin.** The row stays, marked deleted, so pages and versions still point at an author, but its user name becomes `deleted-<id>` and its email, phone, password, profile values, logins, claims and roles go; the address and the old name can register again. Audit rows keep their text until the daily job removes them, as the record of who did what. Umbraco also deletes members for good. Users deleted before v5 keep their data (see Open questions). (owner, 2026-11-27, Phase 10e) | ZA-033 |
+| D35 | **Deleting a user erases the person; there is no user recycle bin.** The row stays, marked deleted, so pages and versions still point at an author, but its user name becomes `deleted-<id>` and its email, phone, password, profile values, logins, claims and roles go; the address and the old name can register again. Audit rows keep their text until the daily job removes them, as the record of who did what. Umbraco also deletes members for good. Users deleted before v5 are left as they are, with no erase on upgrade. (owner, 2026-11-27, Phase 10e) | ZA-033 |
 | D36 | **Image resizing does not upscale, and the resize cache is capped at 2 GB, by default.** `Zauber:ImageResize:AllowUpscale` false (a bigger size than the original returns the original size) and `Cache:MaxCacheBytes` 2147483648 (the oldest copies are removed as new ones are written). Both can be set back; existing sites notice, so it is in the release notes. (owner, 2026-11-27, Phase 10e) | ZA-104 |
 
 ## Working rules for the rework
@@ -913,7 +913,7 @@ domain is ignored).
   name first, a random part is added). The address and the name can register again. Refused: deleting your own
   account and the last administrator; the dialog says it cannot be undone. The audit row is written after the save.
   `RecoverAdminUser` refuses an erased user (it still restores one deleted before this). Users deleted before this
-  keep their data: see Open questions.
+  keep their data; the owner chose not to erase them on upgrade (D35).
 - Checked in a browser on a scratch copy of the sample site, in Production mode: a page that throws gets the
   built-in page (500) for a GET and for a form post, and once the copy has a content page at `/error`, that page
   with 500 for both, and the page's own exception in the log; `/administration` is an ordinary 404; the sign-out page
@@ -934,7 +934,7 @@ domain is ignored).
   confirmation resend counted a send that failed; the sign-out fallback accepted requests with no Referer, and its
   page could be framed; `/_blazor` was not a system path. Noted, not changed: each regex redirect may take up to
   100 ms on every request when its pattern backtracks (`NonBacktracking` would refuse some patterns); the resend
-  throttle and used tokens are per server; users deleted before this keep their data (Open questions).
+  throttle and used tokens are per server; users deleted before this keep their data (D35).
 - Tests: `Seo/RedirectAndCultureTests` (ZA116 exact and regex matching, old rows, refused loops in the middleware's
   order and refused From URLs; ZA095 segment matching and redirects on `/administration`; ZA098 a throwing page runs
   once and its exception reaches the handler, and the error page is never redirected), `Bootstrap/ErrorPageTests`
@@ -1043,8 +1043,3 @@ right. Move one into a phase when that is settled.
     that a publish does not overwrite? It would close the common case behind D24; it changes D19's "into
     `appsettings.json`" and does not survive deployments that delete extra files.
   - The installer's pages cannot be restyled or given extra steps from a site (ZA-151). Wanted?
-- From Phase 10e:
-  - Users deleted before v5 still hold their personal data (email, phone, password hash), keep their address from
-    being registered again, and can still be brought back with `RecoverAdminUser`. Erase them on upgrade (a one-off
-    step at start-up: GDPR-clean, but it cannot be undone), or leave them as they are? The phase left them alone
-    because the erase is a one-way change to existing data.

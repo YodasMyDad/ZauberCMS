@@ -43,7 +43,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
   - **ZA-033 [Low] Deleted users kept their personal data — fixed (D35).** Deleting erases the person
     (`UserAnonymiser`); refused for your own account and the last administrator. Seen: an admin delete left
     `deleted-<id>` with no email or password and an audit row without personal data. Users deleted before v5 are
-    left as they are (Roadmap open question).
+    left as they are (owner: no erase on upgrade).
   - **ZA-104 [Low] Image resizing upscaled; cache unbounded — fixed (D36).** `AllowUpscale` false, `MaxCacheBytes`
     2 GB (tests only).
   - **ZA-150 [Low] A form-protection token could be reused for 12 hours — fixed.** `TryUseToken` and
