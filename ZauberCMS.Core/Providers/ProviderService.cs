@@ -12,38 +12,35 @@ public class ProviderService(IOptions<ZauberSettings> settings, ExtensionManager
 
     private IStorageProvider? _storageProvider;
 
-    public IStorageProvider? StorageProvider
-    {
-        get
-        {
-            if (_storageProvider == null)
-            {
-                var storageProviders = extensionManager.GetInstances<IStorageProvider>(true);
-                if (_settings.Plugins.StorageProvider != null)
-                {
-                    _storageProvider = storageProviders[_settings.Plugins.StorageProvider];
-                }
-            }
-            return _storageProvider;
-        }
-    }
+    /// <summary>
+    /// The media storage chosen by <c>Zauber:Plugins:StorageProvider</c>, or <c>null</c> when that is blank.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The setting names no discovered provider (start-up already
+    /// refuses that, ZA-120).</exception>
+    public IStorageProvider? StorageProvider =>
+        _storageProvider ??= Configured<IStorageProvider>(nameof(PluginSettings.StorageProvider),
+            _settings.Plugins.StorageProvider);
 
     private IEmailProvider? _emailProvider;
-    
-    public IEmailProvider? EmailProvider
+
+    /// <summary>The email backend chosen by <c>Zauber:Plugins:EmailProvider</c>, or <c>null</c> when that is blank.</summary>
+    /// <exception cref="InvalidOperationException">The setting names no discovered provider.</exception>
+    public IEmailProvider? EmailProvider =>
+        _emailProvider ??= Configured<IEmailProvider>(nameof(PluginSettings.EmailProvider),
+            _settings.Plugins.EmailProvider);
+
+    private T? Configured<T>(string setting, string? configured) where T : class
     {
-        get
+        if (string.IsNullOrWhiteSpace(configured))
         {
-            if (_emailProvider == null)
-            {
-                var emailProviders = extensionManager.GetInstances<IEmailProvider>(true);
-                if (_settings.Plugins.EmailProvider != null)
-                {
-                    _emailProvider = emailProviders[_settings.Plugins.EmailProvider];
-                }
-            }
-            return _emailProvider;
+            return null;
         }
+
+        var providers = extensionManager.GetInstances<T>(true);
+        return providers.TryGetValue(configured.Trim(), out var provider)
+            ? provider
+            : throw new InvalidOperationException(
+                ZauberSettingsValidator.UnknownProviderMessage<T>(setting, configured, providers.Keys));
     }
 
     private ICaptchaProvider? _captchaProvider;
@@ -70,9 +67,8 @@ public class ProviderService(IOptions<ZauberSettings> settings, ExtensionManager
             {
                 if (!captchaProviders.TryGetValue(configured.Trim(), out _captchaProvider))
                 {
-                    throw new InvalidOperationException(
-                        $"Zauber:Plugins:CaptchaProvider names '{configured}', which is not a public ICaptchaProvider " +
-                        "in the scanned assemblies.");
+                    throw new InvalidOperationException(ZauberSettingsValidator.UnknownProviderMessage<ICaptchaProvider>(
+                        nameof(PluginSettings.CaptchaProvider), configured, captchaProviders.Keys));
                 }
             }
             else

@@ -5,6 +5,12 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Membership.Stores
 {
+    /// <summary>
+    /// Not used: <c>UserManager&lt;User&gt;</c> works through the Entity Framework user store, which is also its email
+    /// store, and since v5 this class is no longer registered for <see cref="IUserEmailStore{TUser}"/> (ZA-121).
+    /// </summary>
+    [Obsolete("Not used by ZauberCMS and no longer registered. Use UserManager<User> (FindByEmailAsync, " +
+              "SetEmailAsync), or cast IUserStore<User> to IUserEmailStore<User>. Will be removed in a later major version.")]
     public class UserEmailStore(IZauberDbContext db, IUserStore<User> userStore) : IUserEmailStore<User>
     {
         private bool disposedValue;

@@ -85,6 +85,13 @@ patterns into new code.
   interpolation in log calls, no PII/secrets in logs. Use `[LoggerMessage]` source-gen on hot paths. Don't add new
   static `Serilog.Log.*` calls.
 - Don't swallow exceptions: every `catch` logs or rethrows.
+- Settings (D48): a `Zauber` setting whose wrong value would only fail at the first request that needs it is checked
+  in `ZauberSettingsValidator.Validate` (the start fails, naming the setting and what would be valid); one whose wrong
+  value only does nothing (a view name, a URL that is ignored) is a warning in `FindWarnings`. The shipped defaults and
+  the three `appsettings.json` files must pass with no warning (`StartupDiagnosticsTests`). A list setting with a
+  default is replaced, not lengthened, by configuration (`ZauberSettingsBinding`, ZA-167); a test checks every one.
+- Code that runs in `AddZauberCms(builder)` has no logger yet: add to `StartupMessages`, which `AddZauberCms(app)`
+  writes to the log (category `ZauberCMS.Startup`).
 
 ## 7. Security baseline
 

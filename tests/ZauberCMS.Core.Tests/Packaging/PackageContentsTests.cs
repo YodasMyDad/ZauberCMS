@@ -60,7 +60,9 @@ public class PackageContentsTests
         foreach (var file in new[] { "ReadMe.md", "logo.png" })
         {
             var item = Assert.Single(packed, n => ((string)n.Attribute("Include")!).EndsWith(file, StringComparison.Ordinal));
-            var path = ((string)item.Attribute("Include")!).Replace("$(MSBuildThisFileDirectory)", string.Empty, StringComparison.Ordinal);
+            // MSBuild paths use '\', which on Linux (CI) is part of a file name, not a separator
+            var path = ((string)item.Attribute("Include")!).Replace("$(MSBuildThisFileDirectory)", string.Empty, StringComparison.Ordinal)
+                .Replace('\\', Path.DirectorySeparatorChar);
             Assert.True(File.Exists(Path.Combine(RepositoryRoot(), path)), $"{path} does not exist");
         }
     }

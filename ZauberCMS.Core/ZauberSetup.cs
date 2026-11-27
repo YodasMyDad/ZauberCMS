@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Radzen;
 using Serilog;
@@ -56,7 +58,6 @@ using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Middleware;
 using ZauberCMS.Core.Membership.Claims;
 using ZauberCMS.Core.Membership.Models;
-using ZauberCMS.Core.Membership.Stores;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Providers;
@@ -80,16 +81,27 @@ public static class ZauberSetup
         // Enable static web assets from NuGet RCL packages for Kestrel
         builder.WebHost.UseStaticWebAssets();
 
-        // Bind configuration to ZauberSettings instance
-        var zauberSettings = new ZauberSettings();
-        builder.Configuration.GetSection(Constants.SettingsConfigName).Bind(zauberSettings);
-        builder.Services.Configure<ZauberSettings>(builder.Configuration.GetSection(Constants.SettingsConfigName));
+        // What the bootstrap finds before logging exists; AddZauberCms(app) writes it to the log (ZA-120)
+        var startupMessages = new StartupMessages();
+        builder.Services.AddSingleton(startupMessages);
+
+        // The Zauber section, read the same way here and for IOptions<ZauberSettings>: a list the configuration sets
+        // replaces its default instead of being added to it (ZA-167). Settings that would fail at the first request
+        // that needs them fail at start-up instead (ZA-120, D48).
+        var zauberSection = builder.Configuration.GetSection(Constants.SettingsConfigName);
+        var zauberSettings = ZauberSettingsBinding.Read(zauberSection);
+        builder.Services.AddOptions<ZauberSettings>()
+            .Bind(zauberSection)
+            .Configure(settings => ZauberSettingsBinding.ReplaceConfiguredLists(settings, zauberSection))
+            .ValidateOnStart();
+        builder.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IValidateOptions<ZauberSettings>, ZauberSettingsValidator>());
 
         // Configure ImageResize with settings from ZauberSettings
         builder.Services.AddImageResize(o =>
         {
             o.EnableMiddleware = zauberSettings.ImageResize.EnableMiddleware;
-            o.ContentRoots = zauberSettings.ImageResize.ContentRoots;
+            o.ContentRoots = [.. zauberSettings.ImageResize.ContentRoots];
             o.WebRoot = zauberSettings.ImageResize.WebRoot ?? builder.Environment.WebRootPath;
             o.CacheRoot = zauberSettings.ImageResize.CacheRoot ?? Path.Combine(builder.Environment.WebRootPath, "_mediacache");
             o.AllowUpscale = zauberSettings.ImageResize.AllowUpscale;
@@ -104,20 +116,16 @@ public static class ZauberSetup
             o.ResponseCache.SendLastModified = zauberSettings.ImageResize.ResponseCache.SendLastModified;
         });
 
+        // IHttpClientFactory for sites and plugins; an injected HttpClient is the factory's default client. ZauberCMS's
+        // own scoped HttpClient is gone (ZA-121): its base address was the request's (from the Host header the sender
+        // controls) and it failed outside a request.
         builder.Services.AddHttpClient();
         builder.Services.AddSeoHttpClient();
 
-        builder.Services.AddScoped(sp =>
-        {
-            var factory = sp.GetRequiredService<IHttpClientFactory>();
-            var navigationManager = sp.GetRequiredService<NavigationManager>();
-            var client = factory.CreateClient();
-            client.BaseAddress = new Uri(navigationManager.BaseUri);
-            return client;
-        });
-
         builder.Services.AddCascadingAuthenticationState();
+#pragma warning disable CS0618 // obsolete, replaced by ICurrentUserAccessor; registered until it is removed (ZA-121)
         builder.Services.AddScoped<IdentityUserAccessor>();
+#pragma warning restore CS0618
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
         // Who a service call runs for, in a circuit, a static page, a controller or a job (ZA-093); replaceable
@@ -155,7 +163,10 @@ public static class ZauberSetup
         if (!zauberSettings.DatabaseProvider.IsNullOrWhiteSpace() &&
             DatabaseProviders.Normalise(zauberSettings.DatabaseProvider) == null)
         {
-            throw new InvalidOperationException("Unable to find database provider in appSettings");
+            throw new InvalidOperationException(
+                $"Zauber:DatabaseProvider is '{zauberSettings.DatabaseProvider}', which is not a database provider " +
+                $"ZauberCMS knows. Use one of: {string.Join(", ", DatabaseProviders.All)}; or leave it and " +
+                "Zauber:ConnectionString empty to set the database up in the installer.");
         }
 
         var installState = new InstallState(builder.Configuration);
@@ -230,10 +241,9 @@ public static class ZauberSetup
 
         identityBuilder
             .AddClaimsPrincipalFactory<ZauberUserClaimsPrincipalFactory>()
-            .AddSignInManager()
+            // SignInManager<User> is ZauberSignInManager (also resolvable as itself); registered once (ZA-121)
+            .AddSignInManager<ZauberSignInManager>()
             .AddDefaultTokenProviders();
-
-        builder.Services.AddScoped<IUserEmailStore<User>, UserEmailStore>();
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddAntiforgery();
@@ -287,7 +297,6 @@ public static class ZauberSetup
         builder.Services.AddSingleton<IRichTextEmbedService, DefaultRichTextEmbedService>();
         builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Languages.AdminCultureCircuitHandler>();
         builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Languages.ContentCultureCircuitHandler>();
-        builder.Services.AddScoped<SignInManager<User>, ZauberSignInManager>();
         builder.Services.AddSingleton<RefreshSignInTicketService>();
         // How long a cookie is trusted before its security stamp is compared with the database again. The
         // framework default is 30 minutes; a removed user or a reset password should end a session sooner.
@@ -343,6 +352,10 @@ public static class ZauberSetup
         var discoverAssemblies = assembliesToScan.ToArray();
         AssemblyManager.SetAssemblies(discoverAssemblies);
 
+        // An extension type in the site or a plugin that is not public is never discovered: say so (ZA-120)
+        var zauberAssemblies = new[] { typeof(ZauberSetup).Assembly, assembliesToScan[1], zauberRouting };
+        ExtensionManager.ReportHiddenExtensionTypes(discoverAssemblies.Except(zauberAssemblies), startupMessages);
+
         // Add Zauber RTE services
         // RTE 3.x no longer scans assemblies by itself: register every IToolbarItem found in the
         // discovery assemblies so the CMS items and plugin items keep appearing.
@@ -384,13 +397,13 @@ public static class ZauberSetup
         // Start up items - bootstrap interfaces are discovered without DI so we don't have
         // to BuildServiceProvider() before the host container is built (avoids ASP0000 and
         // a parallel singleton container).
-        foreach (var startUpItem in ExtensionManager.GetBootstrapInstances<IStartupPlugin>())
+        foreach (var startUpItem in ExtensionManager.GetBootstrapInstances<IStartupPlugin>(startupMessages))
         {
             startUpItem.Register(builder.Services, builder.Configuration);
         }
 
         // Add external authentication providers
-        foreach (var provider in ExtensionManager.GetBootstrapInstances<IExternalAuthenticationProvider>())
+        foreach (var provider in ExtensionManager.GetBootstrapInstances<IExternalAuthenticationProvider>(startupMessages))
         {
             provider.Add(builder.Services, authBuilder, builder.Configuration);
         }
@@ -447,9 +460,30 @@ public static class ZauberSetup
         return options;
     }
 
+    /// <summary>
+    /// Logs, as warnings of category <c>ZauberCMS.Startup</c>, what the bootstrap skipped before logging existed and
+    /// the settings that do nothing as written (ZA-120).
+    /// </summary>
+    internal static void WriteStartupWarnings(IServiceProvider services, ZauberSettings zauberSettings)
+    {
+        var startupMessages = services.GetRequiredService<StartupMessages>();
+        using (var scope = services.CreateScope())
+        {
+            var extensionManager = scope.ServiceProvider.GetRequiredService<ExtensionManager>();
+            foreach (var warning in ZauberSettingsValidator.FindWarnings(zauberSettings, extensionManager))
+            {
+                startupMessages.Warning(warning);
+            }
+        }
+
+        startupMessages.WriteTo(services.GetRequiredService<ILoggerFactory>().CreateLogger("ZauberCMS.Startup"));
+    }
+
     public static void AddZauberCms<T>(this WebApplication app)
     {
+        // Validated here (ZauberSettingsValidator): a setting that cannot work stops the site before it serves anything
         var zauberSettings = app.Services.GetRequiredService<IOptions<ZauberSettings>>().Value;
+        WriteStartupWarnings(app.Services, zauberSettings);
 
         // First in the pipeline: everything after it (HTTPS redirect, rate limiter, admin IP allow-list, links)
         // must see the visitor's address and scheme, not the proxy's. Off unless Zauber:ForwardedHeaders:Enabled.

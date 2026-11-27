@@ -3,7 +3,7 @@
 Last full run: 5668365 (2026-11-25, full) · Last changed run: b001147+wt (2026-11-27, Roadmap Phase 10e) · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
 Next free IDs: ZA-169 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
-After Roadmap Phase 11c (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1034 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test: passes (Windows PowerShell 5.1; PowerShell 7 in a Linux SDK container); now in CI · `doublecheck` self-review on the part. ZA-087, ZA-094, ZA-118, ZA-119, ZA-123 fixed; ZA-168 found and fixed; ZA-167 new (11d). Next free ID: ZA-169. Earlier after-phase lines: [history.md](history.md) run log
+After Roadmap Phase 11d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1050 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part. ZA-120, ZA-121, ZA-167 fixed; the 11c CI failure (a Windows path separator in a test) fixed. Next free ID: ZA-169. Earlier after-phase lines: [history.md](history.md) run log
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
 > browser or against PostgreSQL/Redis**, so items marked as needing a repro are reasoned, not observed. Critical and
@@ -17,10 +17,10 @@ After Roadmap Phase 11c (2026-11-27): Build PASS · Warnings: 0 · Vulnerable pa
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
 | Medium | 3 | 68 | 1 |
-| Low | 10 | 40 | 6 |
+| Low | 7 | 43 | 6 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11: the rest, ZA-167 in 11d); there is no Backlog (owner, 2026-11-27).
+a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11: the rest); there is no Backlog (owner, 2026-11-27).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
@@ -44,16 +44,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Issue / Trigger: Implementations, mappings, factories, middleware and unused public mutable statics are all frozen by the compatibility rule.
 - Fix: make non-contract types internal before the next major. · Blocked by: public API.
 - Reconciled 2026-11-26 (Phase 7): the installer and form protection added 28 more public types (`ZauberCMS.Core.Installer`, `ZauberCMS.Core.Security`: 22 in `.cs` files and six Razor components); "no internal ones" no longer holds — `InstallerDatabase` and `InstallerAssets` are internal.
-
-### ZA-120 [Low/High] Discovery and configuration fail silently or late
-
-- Where: `ZauberCMS.Core/Plugins/ExtensionManager.cs:43,68,192,203`, `ZauberCMS.Core/ZauberSetup.cs:83-85` · Category: F · Since: 2026-11-25
-- Issue / Fix: Bootstrap skips are not logged; type cache keyed by `T` alone; mistyped `Zauber:Plugins:*` throws `KeyNotFoundException`; no options validation.
-
-### ZA-121 [Low/High] DI leftovers
-
-- Where: `ZauberCMS.Core/ZauberSetup.cs:109-116,223,226,287` · Category: F · Since: 2026-11-25
-- Issue / Fix: Unused scoped `HttpClient` and `IUserEmailStore`; `SignInManager` registered twice; unused `Actions` on `ContentNavGroup`.
 
 ### ZA-124 [Low/High] API convention drift to settle before the next major
 
@@ -95,16 +85,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   plugin mirroring media elsewhere removes a file that is back. Umbraco raises its "-ed" notifications when the scope
   completes.
 - Fix: an after-commit point in the hook API. · Blocked by: nothing (Roadmap Phase 10f).
-
-### ZA-167 [Low/High] A list setting adds to its defaults instead of replacing them
-- Where: `ZauberCMS.Core/Settings/ZauberSettings.cs` (`ImageResizeSettings.ContentRoots`), `ZauberCMS.Core/ZauberSetup.cs` (`Bind`) · Category: F · Since: 2026-11-27 (Phase 11c)
-- Issue / Trigger: `ContentRoots` starts as `["img", "images", "media"]` and the configuration binder appends the
-  configured list to an existing list. The three shipped `appsettings.json` files set the same three roots, so every
-  site has each one twice; a site that sets its own roots (`["uploads"]`) gets the three defaults as well and cannot
-  remove them. Seen with `ConfigurationBinder.Bind` in a scratch program (`img,images,media,img,images,media`).
-- Fix: bind lists over an empty default and fall back to the defaults when the section has none (or replace the
-  list when the key is present); a test that a configured list replaces the default. · Blocked by: nothing
-  (Roadmap Phase 11d, with ZA-120).
 
 ## Improvement proposals
 

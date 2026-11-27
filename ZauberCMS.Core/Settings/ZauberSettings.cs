@@ -144,6 +144,10 @@ public class HtmlSanitizerSettings
 public class ImageResizeSettings
 {
     public bool EnableMiddleware { get; set; } = true;
+    /// <summary>
+    /// The first path segments of the image addresses that may be resized. A list in configuration replaces this
+    /// default (ZA-167); without the key the default stays.
+    /// </summary>
     public List<string> ContentRoots { get; set; } = ["img", "images", "media"];
     public string? WebRoot { get; set; }
     public string? CacheRoot { get; set; }
@@ -180,9 +184,17 @@ public class ImageResponseCacheSettings
     public bool SendLastModified { get; set; } = true;
 }
 
+/// <summary>
+/// The providers in use, each by the full type name of a public implementation in the scanned assemblies. A name
+/// discovery does not find stops the site at start-up (ZA-120). A blank storage or email provider means none; a blank
+/// CAPTCHA provider, see <see cref="CaptchaProvider"/>.
+/// </summary>
 public class PluginSettings
 {
+    /// <summary>Full type name of the <c>IStorageProvider</c> for media.</summary>
     public string? StorageProvider { get; set; }
+
+    /// <summary>Full type name of the <c>IEmailProvider</c>.</summary>
     public string? EmailProvider { get; set; }
 
     /// <summary>

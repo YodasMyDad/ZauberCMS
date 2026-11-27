@@ -22,10 +22,11 @@
   **Phase 11a done** (the not-found page and redirect domains, D41–D42, 2026-11-27).
   **Phase 11b done** (engineering baseline, CI and release hardening, D43–D44, 2026-11-27).
   **Phase 11c done** (packaging and the template, smoke test in CI, D45–D47, 2026-11-27).
-  **13 open findings** (0 Critical, 0 High, 3 Medium, 10 Low), each one assigned below to a phase (10f–10i or 11),
+  **Phase 11d done** (start-up checks, settings binding and DI leftovers, D48–D50, 2026-11-27).
+  **10 open findings** (0 Critical, 0 High, 3 Medium, 7 Low), each one assigned below to a phase (10f–10i or 11),
   plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
   new finding goes into the phase whose theme fits. **In progress: Phase 11** (owner, 2026-11-27: before 10f–10i;
-  parts 11a–11g in its section; **next: 11d**), then 10f, 10g, 10h, 10i, then Phase 12 (design
+  parts 11a–11g in its section; **next: 11e**), then 10f, 10g, 10h, 10i, then Phase 12 (design
   questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -82,6 +83,9 @@
 | D45 | **The packages carry the repository's `ReadMe.md` as their readme, the ZauberCMS logo as their icon, Source Link and a symbol package; each lists only the packages its project references do not bring.** One readme for all five packages (it already was the template's), so there is one text to keep right and it is the one GitHub shows; the icon is the logo the template package already had, no new artwork. A readme is fixed per package version on nuget.org, so a commit that changes only `ReadMe.md` still runs no CI and publishes nothing (`paths-ignore` keeps it): the next release carries the text, and no version is spent on something no site runs. The PDBs go into `.snupkg` symbol packages for nuget.org's symbol server, with Source Link (part of the .NET SDK) pointing at the commit on GitHub and untracked (generated) sources embedded; CI builds set `ContinuousIntegrationBuild` so the PDBs hold no build-machine paths, local builds keep local paths for the debugger. Dependencies: Components, Routing and ZauberCMS stop repeating what Core brings; a site resolves the same packages at the same versions (central package management), and a package comes into the graph in one place. Umbraco's `Directory.Build.props` sets the icon, Source Link (`PublishRepositoryUrl`) and `snupkg` symbol packages for all its packages the same way; ZauberCMS adds the readme, because its nuget.org pages had no description beyond one line. (owner delegated, 2026-11-27, Phase 11c) | ZA-119 |
 | D46 | **The template smoke test is a script in the repository (`tests/template-smoke.ps1`) that CI runs in the build job on every push, so a template or package that does not make a working site is never published.** It builds the packages at a throw-away version into a local feed, installs the template in a private template-engine hive, makes a site with `dotnet new zaubercms`, publishes and starts it, goes through the installer over HTTP and checks the pages, `blazor.web.js` and every admin script and style. It is not an xUnit test: it needs nuget.org and builds the packages, and the test suite has no network (Standards §9). PowerShell, like `release.ps1` and `migrations.ps1`, and written for Windows PowerShell 5.1 and PowerShell 7 (CI's runner). On CI it adds the time of a second package build and a site restore (the whole script took 54 seconds in a Linux SDK container with an empty NuGet cache). Umbraco's pipeline also makes a site from the template package it has just built and runs its acceptance tests against it. (owner delegated, 2026-11-27, Phase 11c) | ZA-094, ZA-123, Phase 2 |
 | D47 | **A site made from the template keeps out of git what it writes while it runs: the SQLite file, uploaded media, the resize cache and the logs, besides build output; its launch profiles are `https` and `http`.** The database and media of a live site are backed up with the server, not committed, and a cloned site starts at the installer; a site that wants its media in git removes the line. Profiles are named as in `dotnet new blazor` (they were "Umbraco.Web.UI"). Umbraco's template `.gitignore` leaves out the same: `umbraco/Data` (its SQLite database and temp files), `umbraco/Logs` and `wwwroot/media`. (owner delegated, 2026-11-27, Phase 11c) | ZA-123 |
+| D48 | **A `Zauber` setting whose wrong value would fail at the first request that needs it stops the site at start-up, naming the setting, the value and what would be valid; one whose wrong value only does nothing is a warning at every start.** Failing: a `Zauber:Plugins:*` provider name that discovery does not find (it threw `KeyNotFoundException` when media or email was first used; a blank one is still "no provider") and an `AdminDefaultLanguage` that is not a culture (it already failed at start-up, without the setting's name). Warnings: a `SiteUrl` that is not an http(s) address (ignored, so email links come from the Host header), a `NotFoundComponent`/`StarterComponent`/`MissingView`/`Identity:AccountLayout` that is not found (nothing is shown); these do not fail because a site running today with one of them must still start after the update. `IValidateOptions<ZauberSettings>` with `ValidateOnStart`, and `AddZauberCms(app)` reads the settings first, so the error comes before anything is served; the shipped defaults, the three `appsettings.json` files and empty database settings (D24) pass with no warning. What the bootstrap finds before logging exists (types that cannot load, a bootstrap extension without a parameterless constructor, a non-public extension type) is collected and logged by `AddZauberCms(app)` (category `ZauberCMS.Startup`). Umbraco validates its settings the same way, with `IValidateOptions` validators for its settings classes, so a bad value stops the boot with an `OptionsValidationException`; its type finder logs the types it cannot load and goes on. (owner delegated, 2026-11-27, Phase 11d) | ZA-120, D24 |
+| D49 | **A list in configuration replaces the setting's default list; without the key the default stays.** The configuration binder adds what it reads to a list that already has items, so `ImageResize:ContentRoots` had each shipped root twice and a site could never drop a default. After binding, `ZauberSettingsBinding` sets every list the section names to the configured list (dictionaries stay merged, as their keys are meant to add up); a test fails for any list setting with a default that is not replaced. `new ZauberSettings()` keeps its defaults, so no code that reads them changes. An empty JSON list (`[]`) keeps the default (it reaches the binder as no list); to resize no images, set `ImageResize:EnableMiddleware` to false. ASP.NET's options pattern has no switch for this (the binder appending is by design); Umbraco's settings classes also start collections from defaults and bind over them, so there a site's values are added to its defaults. (owner delegated, 2026-11-27, Phase 11d) | ZA-167 |
+| D50 | **DI registrations nothing in ZauberCMS uses are removed; public types and members that are left over are `[Obsolete]` for removal in a later major.** Removed: the scoped `HttpClient` (its base address was the request's own, from the Host header, and it failed outside a request; an injected `HttpClient` is now the framework's default client from `AddHttpClient`), the `IUserEmailStore<User>` registration (`UserManager` uses the Entity Framework store, which is its email store) and the second `SignInManager<User>` registration (`AddSignInManager<ZauberSignInManager>()`). Obsolete: `IdentityUserAccessor` (still registered, so a site that injects it keeps working; `ICurrentUserAccessor` replaces it, D27), `UserEmailStore`, `ContentNavGroup.Actions` (never read). Umbraco registers no bare `HttpClient` for sites either; it uses `IHttpClientFactory`. (owner delegated, 2026-11-27, Phase 11d) | ZA-121, D18 |
 
 ## Working rules for the rework
 
@@ -1036,7 +1040,7 @@ Done in parts, one commit each, in this order:
 | 11a | ZA-164, ZA-165 (found in Phase 10e) | DONE 2026-11-27 (D41, D42; ZA-166 found and fixed) |
 | 11b | Baseline: ZA-131, CI and release hardening ZA-089, ZA-109 | DONE 2026-11-27 (D43, D44) |
 | 11c | Packaging and template: ZA-087, ZA-094, ZA-118, ZA-119, ZA-123, template smoke test | DONE 2026-11-27 (D45–D47; ZA-168 found and fixed, ZA-167 found, to 11d) |
-| 11d | Start-up and DI: ZA-120, ZA-121, ZA-167 (found in 11c) | |
+| 11d | Start-up and DI: ZA-120, ZA-121, ZA-167 (found in 11c) | DONE 2026-11-27 (D48–D50; the 11c CI failure fixed) |
 | 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | |
 | 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | |
 | 11g | Breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | |
@@ -1264,6 +1268,81 @@ delegated.
     Linux can change the path itself. The packaged settings now have the `Zauber:ImageResize` section (same values
     as the code's defaults).
   - Breaking: none.
+
+#### Phase 11d — Start-up and DI — DONE (2026-11-27)
+ZA-120, ZA-121, ZA-167 (Low) fixed. Decisions D48 (start-up checks), D49 (a configured list replaces the default) and
+D50 (DI leftovers), taken as delegated. Also fixed first: the CI run of 11c (2cd1fb6) failed on GitHub's Linux runner
+in `PackageContentsTests.ZA119…`, which joined the icon's MSBuild path (`ZauberCMS.Template\images\logo.png`) with
+its `\`; on Linux that is part of a file name. The test turns it into the platform's separator (the packing itself
+was not affected). That run stopped at the tests, so CI had not yet run the template smoke test; this push is its
+first run.
+- **Start-up checks (ZA-120, D48).** `ZauberSettingsValidator` (internal, `IValidateOptions<ZauberSettings>`,
+  `ValidateOnStart`): a `Zauber:Plugins:StorageProvider`/`EmailProvider`/`CaptchaProvider` that names no discovered
+  provider, and an `AdminDefaultLanguage` that is not a culture, stop the start; the message names the setting, the
+  value and the providers found. `AddZauberCms(app)` reads the settings first, so it fails before anything is
+  mapped. `ProviderService` gives the same message if a wrong name gets past start-up; a blank storage or email
+  provider is no provider (it threw `KeyNotFoundException` for an empty string). `FindWarnings`: a `SiteUrl` that is
+  not an http(s) address, and a `NotFoundComponent`, `StarterComponent`, `MissingView` or `Identity:AccountLayout`
+  that is not found, are warnings at every start. An unknown `Zauber:DatabaseProvider` names the setting and the
+  three providers.
+- **What the bootstrap skips is logged (ZA-120).** `AddZauberCms(builder)` runs before logging exists, so it
+  collects warnings in `StartupMessages` (internal singleton) and `AddZauberCms(app)` writes them through
+  `ILoggerFactory` (category `ZauberCMS.Startup`): an assembly whose types cannot all be loaded (the loader errors,
+  once per assembly), an `IStartupPlugin`/`IExternalAuthenticationProvider` without a parameterless constructor, and
+  a non-public class in the site's or a plugin's assembly that implements a discovery interface (the list is
+  `ExtensionManager.DiscoveryInterfaces`; a test checks every name is a public interface). A bootstrap
+  constructor that throws now fails with `InvalidOperationException` naming the type (was
+  `TargetInvocationException`). The public `GetBootstrapInstances<T>()` is unchanged.
+- **Discovery cache (ZA-120).** It was keyed by `T` alone, so `GetImplementations<T>` with a predicate, or with
+  `onlyExportedTypes: false`, returned the dictionary of an earlier call, and `AssemblyManager.SetAssemblies` did not
+  clear it: a second host in the same process (tests, or a site that builds two hosts) with other assemblies saw the
+  first one's types. Now keyed by (type, exported only), a search with a predicate is not cached, `SetAssemblies`
+  clears both caches, and a cached result is handed out as a copy (a caller that changed it changed every later
+  caller's). `AssemblyManager.Assemblies` is empty, not null, before `SetAssemblies`.
+- **Lists in settings (ZA-167, D49).** `ZauberSettingsBinding` reads the `Zauber` section for the bootstrap's copy
+  and, as a `Configure` step right after `Bind`, for `IOptions<ZauberSettings>`: every list the configuration sets
+  replaces the property's list. ImageResize gets `ContentRoots` once each (`img`, `images`, `media` were there twice
+  with the shipped settings) and a site's own list (`["uploads"]`) alone.
+- **DI leftovers (ZA-121, D50).** Callers grepped in Core, Components, Routing, ZauberCMS, Web, the template and the
+  tests: nothing used them. Removed the scoped `HttpClient`, the `IUserEmailStore<User>` registration and the
+  second `SignInManager<User>` registration (`AddSignInManager<ZauberSignInManager>()` registers it once and
+  `ZauberSignInManager` as the same instance). `[Obsolete]`: `IdentityUserAccessor` (still registered),
+  `UserEmailStore`, `ContentNavGroup.Actions`.
+- Tests: `Bootstrap/StartupDiagnosticsTests` (16): ZA120 a mistyped storage and email provider (the options and
+  `IStartupValidator` both fail, the message lists the real provider), a mistyped culture, the defaults, a site
+  without a database and a blank provider pass, the three shipped `appsettings.json` files pass with no warning, the
+  warnings, the runtime message, the bootstrap warnings collected before logging and logged after (a test-assembly
+  start-up plugin without a parameterless constructor and an internal `ISeedData`), the interface list, the cache;
+  ZA121 the registrations; ZA167 a configured list replaces the default in both options, the shipped list once, a
+  guard over every list setting with a default. `FormProtectionTests` changed: a wrong CAPTCHA name now fails at
+  start-up (and still throws from `ProviderService`). With the fixes reverted, the cache, `SignInManager` and three
+  ZA167 tests failed. Full suite 1050 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis;
+  Release build 0 warnings.
+- Dev site (`ZauberCMS.Web`, Release, Production): with the shipped settings `/` 200, `/nope-page` 404,
+  `/admin` 302 to the login page, `/Account/Login` 200, a `/media` image with `?width=40` resized (2694 of 8622
+  bytes), nothing logged as a warning or error; with `Zauber__Plugins__StorageProvider` mistyped the process stops at
+  start-up with the `OptionsValidationException` message; with `Zauber__SiteUrl=www.example.com` the warning is logged.
+- **Not verified:** the warning for an assembly whose types cannot load (no such assembly in the tests; the code
+  path is the one the bootstrap already took, now with a message); a bootstrap constructor that throws.
+- **Release notes (D18):**
+  - A `Zauber:Plugins:*` provider name that is not found now stops the site at start-up with a message that names
+    the setting and lists the providers found (it failed when media or email was first used). An
+    `AdminDefaultLanguage` that is not a culture fails with the setting's name. An empty `StorageProvider` or
+    `EmailProvider` means none (it threw when used).
+  - New start-up warnings (category `ZauberCMS.Startup`): a non-public extension type, a start-up plugin or external
+    login provider without a parameterless constructor, types that cannot be loaded, a `SiteUrl` that is not an
+    http(s) address, a fallback view or account layout that is not found.
+  - `Zauber:ImageResize:ContentRoots` in a site's settings now replaces the default roots instead of being added to
+    them. A site that lists the three defaults (every shipped `appsettings.json`) is unchanged; one that listed
+    others now resizes only those, as written.
+  - A bootstrap extension whose constructor throws fails the start with `InvalidOperationException` naming the type.
+  - **Breaking:** `HttpClient` from DI is the framework's default client (no base address); it was ZauberCMS's own
+    with the request's address as base. A site that injects `HttpClient` and uses relative URLs gives them a base
+    itself, or registers a named client (`AddHttpClient("site", c => c.BaseAddress = …)`).
+  - **Breaking:** `IUserEmailStore<User>` is no longer registered. Use `UserManager<User>` (`FindByEmailAsync`,
+    `SetEmailAsync`) or cast `IUserStore<User>`, which the Entity Framework store implements.
+  - Obsolete, to be removed in a later major: `IdentityUserAccessor` (use `ICurrentUserAccessor.GetUserAsync`),
+    `UserEmailStore`, `ContentNavGroup.Actions`.
 
 ### Phase 12 — .NET 11 (D4)
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and

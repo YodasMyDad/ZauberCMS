@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1050 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-120, ZA-121, ZA-167 fixed; the failing CI test of 11c (a Windows path separator) fixed. Next free ID: ZA-169
 After Roadmap Phase 11c (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1034 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes (Windows PowerShell 5.1; PowerShell 7 in the Linux SDK container), now a CI step; `doublecheck` self-review on the part. ZA-087, ZA-094, ZA-118, ZA-119, ZA-123 fixed; ZA-168 found and fixed; ZA-167 new (Phase 11d). Next free ID: ZA-169
 After Roadmap Phase 11b (2026-11-27): Build PASS · Warnings: 0 (now errors; analysers D43) · Vulnerable packages: 0 (CI scans) · Tests: 1026 (1025 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part; CI not run (GitHub only; checked with actionlint/shellcheck and a scratch-repository run of its steps). ZA-089, ZA-109, ZA-131 fixed. Next free ID: ZA-167
 After Roadmap Phase 11a (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1016 (1015 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-164, ZA-165 fixed; ZA-166 found and fixed. Next free ID: ZA-167
@@ -29,6 +30,41 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Phase 11d (2026-11-27): start-up and DI (Roadmap D48–D50).** Details in the Roadmap's Phase 11d notes. Also
+  fixed: the CI run of 11c (2cd1fb6) failed on Linux, `PackageContentsTests.ZA119…` built the icon's path with the
+  `\` of the MSBuild item, which on Linux is part of a file name; the test now turns it into the platform's separator.
+  - **ZA-120 [Low] Discovery and configuration fail silently or late — fixed.** Settings are validated at start-up
+    (`ZauberSettingsValidator`, `ValidateOnStart`, and read first in `AddZauberCms(app)`): a `Zauber:Plugins:*`
+    name that no discovered provider has (it threw `KeyNotFoundException` at first use) or an
+    `AdminDefaultLanguage` that is not a culture stops the start with the setting, the value and the providers
+    found; `ProviderService` gives the same message. Settings that do nothing as written (a `SiteUrl` that is not
+    an http(s) address, a fallback view or account layout that is not found) are start-up warnings. The bootstrap
+    collects what it skips (types that cannot load, an `IStartupPlugin`/`IExternalAuthenticationProvider` without
+    a parameterless ctor, a non-public extension type in a site or plugin assembly) in `StartupMessages`, which
+    `AddZauberCms(app)` logs (category `ZauberCMS.Startup`); a bootstrap ctor that throws names its type. The type
+    cache was keyed by `T` alone: a call with a predicate, or for non-public types, got the dictionary of an
+    earlier call, and `SetAssemblies` never cleared it (a second host in one process with other assemblies saw the
+    first one's types); now keyed by (type, exported only), only searches without a predicate are cached, the
+    caches are cleared by `SetAssemblies`, and callers get a copy. Verified: `StartupDiagnosticsTests` (ZA120:
+    mistyped storage and email provider, culture, defaults/installer/blank provider pass, the three shipped
+    `appsettings.json` files pass with no warning, the warnings, the runtime message, the collected and logged
+    warnings, the interface list, the cache); the cache test failed with the old cache key. Dev site: a mistyped
+    `Zauber__Plugins__StorageProvider` stops the start with the message; `Zauber__SiteUrl=www.example.com` logs
+    the warning; the shipped settings log no warning.
+  - **ZA-121 [Low] DI leftovers — fixed.** Removed the scoped `HttpClient` (base address from the request's Host
+    header; an injected `HttpClient` is now the framework's default client from `AddHttpClient`), the
+    `IUserEmailStore<User>` registration (`UserEmailStore` `[Obsolete]`), and the second `SignInManager`
+    registration (`AddSignInManager<ZauberSignInManager>()`). `IdentityUserAccessor` and `ContentNavGroup.Actions`
+    are `[Obsolete]`; the accessor stays registered. Every caller was grepped (Core, Components, Routing, ZauberCMS,
+    Web, Template, tests): none. Verified: `StartupDiagnosticsTests.ZA121…` (one `SignInManager<User>`, the same
+    instance as `ZauberSignInManager`; failed with the old double registration).
+  - **ZA-167 [Low] A list setting adds to its defaults — fixed.** `ZauberSettingsBinding` reads the section for the
+    bootstrap and for `IOptions<ZauberSettings>`: after binding, every list the configuration sets replaces the
+    property (the binder appends to a pre-filled list); a list it does not set keeps its default; dictionaries are
+    left merged. Verified: `StartupDiagnosticsTests.ZA167…` (`["uploads"]` replaces the default in `ZauberSettings`
+    and in ImageResize's options; the shipped three roots once each; a guard over every list setting with a
+    default), all three failed without the replacement; dev site resizes a `/media` image.
 
 - **Phase 11c (2026-11-27): packaging and the template (Roadmap D45–D47).** Details in the Roadmap's Phase 11c
   notes. Every package was packed from the previous commit and from this one and the contents compared.

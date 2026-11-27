@@ -180,7 +180,8 @@ installer asks and suggests off.
 ### CAPTCHA providers (`ICaptchaProvider`)
 
 ZauberCMS ships none (no new dependency, D23). A site adds a public class; with several,
-`Zauber:Plugins:CaptchaProvider` names the one to use (a wrong name is an error, not "no CAPTCHA").
+`Zauber:Plugins:CaptchaProvider` names the one to use (a wrong name stops the site at start-up, naming the
+setting and the providers found; it never means "no CAPTCHA").
 
 ```csharp
 public class TurnstileCaptcha(IHttpClientFactory http, IConfiguration config) : ICaptchaProvider

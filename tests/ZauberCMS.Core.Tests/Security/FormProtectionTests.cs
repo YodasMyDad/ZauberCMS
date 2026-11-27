@@ -249,13 +249,21 @@ public class FormProtectionTests
             Assert.False(await provider!.VerifyAsync(new DefaultHttpContext(), TestContext.Current.CancellationToken));
         }
 
-        await using var misconfigured = await TestSite.CreateAsync(new Dictionary<string, string?>
-        {
-            ["Zauber:Plugins:CaptchaProvider"] = "Some.Missing.Captcha"
-        });
-        using var badScope = misconfigured.CreateScope();
-        Assert.Throws<InvalidOperationException>(() =>
-            badScope.ServiceProvider.GetRequiredService<ProviderService>().CaptchaProvider);
+        // A wrong name stops the site at start-up, naming the setting (ZA-120) ...
+        await using var misconfigured = TestSite.BuildApp(TestSite.SqliteProvider, "DataSource=:memory:",
+            TestSite.CreateContentRoot(), validateContainer: false,
+            new Dictionary<string, string?> { ["Zauber:Plugins:CaptchaProvider"] = "Some.Missing.Captcha" });
+        var error = Assert.Throws<OptionsValidationException>(() =>
+            misconfigured.Services.GetRequiredService<IOptions<ZauberSettings>>().Value);
+        Assert.Contains("Zauber:Plugins:CaptchaProvider is 'Some.Missing.Captcha'", error.Message, StringComparison.Ordinal);
+        Assert.Contains(typeof(AlwaysPassCaptcha).FullName!, error.Message, StringComparison.Ordinal);
+
+        // ... and is still an error, not "no CAPTCHA", if it gets past start-up
+        using var badScope = misconfigured.Services.CreateScope();
+        var providers = new ProviderService(
+            Options.Create(new ZauberSettings { Plugins = { CaptchaProvider = "Some.Missing.Captcha" } }),
+            badScope.ServiceProvider.GetRequiredService<ExtensionManager>());
+        Assert.Throws<InvalidOperationException>(() => providers.CaptchaProvider);
     }
 }
 

@@ -14,9 +14,18 @@ namespace ZauberCMS.Core.Plugins;
 
 public class ExtensionManager(IServiceProvider serviceProvider)
 {
-    // Cache the implementations for a given type as a Dictionary keyed by the type's full name.
-    private static readonly ConcurrentDictionary<Type, Dictionary<string, Type>> TypeCache = new();
-    private static readonly ConcurrentDictionary<string, Type?> NameCache = new();
+    // The implementations of a type, keyed by the type's full name, for each (type, exported types only) pair. Only
+    // a search of every scanned assembly is cached: a predicate's result depends on the predicate, which cannot be
+    // a key (ZA-120). Both caches are emptied when AssemblyManager.SetAssemblies changes the assemblies.
+    private static readonly ConcurrentDictionary<(Type Type, bool OnlyExportedTypes), Dictionary<string, Type>> TypeCache = new();
+    private static readonly ConcurrentDictionary<string, Type> NameCache = new();
+
+    /// <summary>Empties the discovery caches; called when the scanned assemblies change.</summary>
+    internal static void ClearCaches()
+    {
+        TypeCache.Clear();
+        NameCache.Clear();
+    }
 
     // Returns the first implementation for type T (if any).
     public Type? GetImplementation<T>(bool useCaching = false)
@@ -39,9 +48,12 @@ public class ExtensionManager(IServiceProvider serviceProvider)
     public Dictionary<string, Type> GetImplementations<T>(Func<Assembly?, bool>? predicate, bool useCaching = false, bool onlyExportedTypes = true)
     {
         var targetType = typeof(T);
+        var cacheKey = (targetType, onlyExportedTypes);
+        var cacheable = useCaching && predicate == null;
 
-        if (useCaching && TypeCache.TryGetValue(targetType, out var cachedTypes))
-            return cachedTypes;
+        // A copy, so a caller that changes the dictionary does not change what the next caller gets
+        if (cacheable && TypeCache.TryGetValue(cacheKey, out var cachedTypes))
+            return new Dictionary<string, Type>(cachedTypes);
 
         var implementations = new Dictionary<string, Type>();
 
@@ -63,9 +75,9 @@ public class ExtensionManager(IServiceProvider serviceProvider)
             }
         }
 
-        if (useCaching)
+        if (cacheable)
         {
-            TypeCache[targetType] = implementations;
+            TypeCache[cacheKey] = new Dictionary<string, Type>(implementations);
         }
 
         return implementations;
@@ -73,7 +85,8 @@ public class ExtensionManager(IServiceProvider serviceProvider)
 
     public Type? GetTypeFromName(Func<Assembly?, bool>? predicate, string fullyQualifiedName, bool useCaching = false)
     {
-        if (useCaching && NameCache.TryGetValue(fullyQualifiedName, out var cachedType))
+        var cacheable = useCaching && predicate == null;
+        if (cacheable && NameCache.TryGetValue(fullyQualifiedName, out var cachedType))
         {
             return cachedType;
         }
@@ -89,7 +102,7 @@ public class ExtensionManager(IServiceProvider serviceProvider)
             }
         }
 
-        if (useCaching && type != null)
+        if (cacheable && type != null)
         {
             NameCache[fullyQualifiedName] = type;
         }
@@ -169,9 +182,8 @@ public class ExtensionManager(IServiceProvider serviceProvider)
     // Returns assemblies to check based on an optional predicate.
     public static IEnumerable<Assembly?> GetAssemblies(Func<Assembly?, bool>? predicate)
     {
-        return predicate == null
-            ? AssemblyManager.Assemblies
-            : AssemblyManager.Assemblies.Where(predicate);
+        var assemblies = AssemblyManager.Assemblies;
+        return predicate == null ? assemblies : assemblies.Where(predicate);
     }
 
     /// <summary>
@@ -180,30 +192,133 @@ public class ExtensionManager(IServiceProvider serviceProvider)
     /// <c>IStartupPlugin</c> and <c>IExternalAuthenticationProvider</c>) that must run before
     /// the service provider is built. Implementers must have a parameterless constructor.
     /// </summary>
-    public static IEnumerable<T> GetBootstrapInstances<T>()
+    /// <exception cref="InvalidOperationException">An implementation's constructor threw.</exception>
+    public static IEnumerable<T> GetBootstrapInstances<T>() => GetBootstrapInstances<T>(null);
+
+    /// <summary>
+    /// <see cref="GetBootstrapInstances{T}()"/>, telling <paramref name="messages"/> what it skips: types of an
+    /// assembly that could not be loaded, and implementations without a parameterless constructor (ZA-120). The
+    /// bootstrap runs before logging exists, so <c>AddZauberCms(app)</c> writes them to the log later.
+    /// </summary>
+    internal static IEnumerable<T> GetBootstrapInstances<T>(StartupMessages? messages)
     {
         foreach (var assembly in AssemblyManager.Assemblies)
         {
             if (assembly is null) continue;
 
-            Type[] types;
-            try
-            {
-                types = assembly.GetTypes();
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                types = ex.Types.Where(t => t is not null).Cast<Type>().ToArray();
-            }
-
-            foreach (var type in types)
+            foreach (var type in LoadableTypes(assembly, messages))
             {
                 if (type.IsAbstract || type.IsInterface) continue;
                 if (!typeof(T).IsAssignableFrom(type)) continue;
-                if (type.GetConstructor(Type.EmptyTypes) is null) continue;
+                if (type.GetConstructor(Type.EmptyTypes) is null)
+                {
+                    messages?.Warning($"{type.FullName} implements {typeof(T).Name} but has no parameterless " +
+                                      "constructor, so it is skipped: it is created before dependency injection exists.");
+                    continue;
+                }
 
-                yield return (T)Activator.CreateInstance(type)!;
+                T instance;
+                try
+                {
+                    instance = (T)Activator.CreateInstance(type)!;
+                }
+                catch (TargetInvocationException ex) when (ex.InnerException != null)
+                {
+                    throw new InvalidOperationException(
+                        $"{type.FullName} ({typeof(T).Name}) threw in its constructor: {ex.InnerException.Message}",
+                        ex.InnerException);
+                }
+
+                yield return instance;
             }
+        }
+    }
+
+    /// <summary>
+    /// The discovery interfaces whose implementations are found among exported (public) types only, by full name of
+    /// the interface or of its generic definition (Components' are not visible to Core by type).
+    /// <c>IStartupPlugin</c> and <c>IExternalAuthenticationProvider</c> are not here: the bootstrap also finds
+    /// non-public ones.
+    /// </summary>
+    internal static readonly IReadOnlySet<string> DiscoveryInterfaces = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "ZauberCMS.Core.Content.Interfaces.IContentView",
+        "ZauberCMS.Core.Content.Interfaces.IContentBlockView",
+        "ZauberCMS.Core.Content.Interfaces.IContentBlockPreview",
+        "ZauberCMS.Core.Content.Interfaces.IContentProperty",
+        "ZauberCMS.Core.Content.Interfaces.IContentPropertySettings`1",
+        "ZauberCMS.Core.Content.Interfaces.INestedContentReferenceProvider",
+        "ZauberCMS.Core.Content.Interfaces.ICustomContentComponent",
+        "ZauberCMS.Core.Content.Interfaces.IDataListSource",
+        "ZauberCMS.Core.Sections.Interfaces.ISection",
+        "ZauberCMS.Core.Sections.Interfaces.ISectionNavGroup",
+        "ZauberCMS.Core.Sections.Interfaces.ISectionNav",
+        "ZauberCMS.Core.Sections.Interfaces.ISectionNavGroupAction",
+        "ZauberCMS.Core.Sections.Interfaces.ISectionDashboard",
+        "ZauberCMS.Components.ContextMenus.ITreeContextMenu",
+        "ZauberCMS.Core.Seo.Models.ISeoCheck",
+        "ZauberCMS.Core.Membership.Interfaces.IAccountLayout",
+        "ZauberCMS.Core.Providers.IStorageProvider",
+        "ZauberCMS.Core.Plugins.Interfaces.IEmailProvider",
+        "ZauberCMS.Core.Security.Interfaces.ICaptchaProvider",
+        "ZauberCMS.Core.Installer.Interfaces.IStarterKit",
+        "ZauberCMS.Core.Data.Interfaces.ISeedData",
+        "ZauberCMS.Core.Shared.Validation.Interfaces.IValidate`1",
+        "ZauberCMS.Core.Tags.Interfaces.ITagReferenceProvider",
+        "ZauberCMS.Core.Shared.Interfaces.IBeforeEntitySave`1",
+        "ZauberCMS.Core.Shared.Interfaces.IAfterEntitySave`1"
+    };
+
+    /// <summary>
+    /// Tells <paramref name="messages"/> about each class in <paramref name="assemblies"/> that implements a discovery
+    /// interface but is not public (or is nested in a type that is not), so discovery never sees it (ZA-120). Meant
+    /// for a site's and its plugins' assemblies, not ZauberCMS's own.
+    /// </summary>
+    internal static void ReportHiddenExtensionTypes(IEnumerable<Assembly> assemblies, StartupMessages messages)
+    {
+        foreach (var assembly in assemblies)
+        {
+            foreach (var type in LoadableTypes(assembly, messages))
+            {
+                if (type.IsVisible || !type.IsClass || type.IsAbstract ||
+                    type.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), false))
+                {
+                    continue;
+                }
+
+                var extensionPoint = type.GetInterfaces()
+                    .Select(i => i.IsGenericType ? i.GetGenericTypeDefinition() : i)
+                    .FirstOrDefault(i => i.FullName != null && DiscoveryInterfaces.Contains(i.FullName));
+                if (extensionPoint != null)
+                {
+                    messages.Warning($"{type.FullName} implements {extensionPoint.Name} but is not public, so " +
+                                     "ZauberCMS does not find it. Make it public (and any type it is nested in).");
+                }
+            }
+        }
+    }
+
+    // Every type of the assembly that could be loaded; the ones that could not are reported and skipped
+    private static Type[] LoadableTypes(Assembly assembly, StartupMessages? messages)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            if (messages != null)
+            {
+                var reasons = ex.LoaderExceptions
+                    .Where(e => e != null)
+                    .Select(e => e!.Message)
+                    .Distinct(StringComparer.Ordinal)
+                    .Take(5);
+                messages.Warning($"{ex.Types.Count(t => t is null)} types of {assembly.GetName().Name} could not be " +
+                                 $"loaded, so discovery skips them: {string.Join(" | ", reasons)}");
+            }
+
+            return ex.Types.Where(t => t is not null).Cast<Type>().ToArray();
         }
     }
 

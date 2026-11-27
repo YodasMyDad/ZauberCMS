@@ -87,7 +87,9 @@ don't reorder without a reason written in the commit.
 3. **Extensions are discovered, not registered.** `ExtensionManager` reflects over public, non-abstract types (make
    extension types public — only the bootstrap path also sees non-public ones) in the
    scanned assemblies (Core, Components, host entry assembly, `AddZauberCms(extra)` assemblies, Routing last).
-   Wrong interface or unscanned assembly = silently invisible; check those before touching DI. Instances are built with
+   Wrong interface or unscanned assembly = silently invisible; check those before touching DI. A non-public extension
+   type in a site or plugin assembly, and what the bootstrap skips (types that cannot load, no parameterless ctor),
+   are logged as start-up warnings (category `ZauberCMS.Startup`). Instances are built with
    `ActivatorUtilities` (ctor DI works), except `IStartupPlugin`/`IExternalAuthenticationProvider` which are created
    before DI exists and **need a parameterless ctor**.
 4. **Soft delete is partial.** Only `Content`, `Media`, `User` have `Deleted`. There are **no global query filters** —
@@ -129,7 +131,10 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
 
 ## Configuration & cross-cutting
 
-- Config section `"Zauber"` → `ZauberSettings` (`ZauberCMS.Core/Settings/ZauberSettings.cs`). Admin-editable runtime
+- Config section `"Zauber"` → `ZauberSettings` (`ZauberCMS.Core/Settings/ZauberSettings.cs`), read by
+  `ZauberSettingsBinding` (a list the configuration sets replaces its default, ZA-167) and checked at start-up by
+  `ZauberSettingsValidator` (D48): a setting that would fail at first use stops the start naming the setting; one
+  that only does nothing as written is a start-up warning. A new setting must keep the defaults passing. Admin-editable runtime
   settings → `GlobalSettings`, stored as `GlobalData` alias `"GlobalSettings"`, read via `dataService.GetGlobalSettings()`.
 - Cache: `ICacheService` keeps values in each server's memory (`ServerCache`); keys `TypeName-<hash of SQL + includes>`;
   invalidation by prefix (`StartsWith`). With `RedisConnectionString` set, Redis carries only the clears to the other
