@@ -171,7 +171,8 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
   is open to the first visitor until it finishes. → [Docs/Installer.md](Docs/Installer.md)
 - **Migrations** — three providers, silent drift.
 
-Open findings with IDs: [.audit/report.md](.audit/report.md).
+Open findings (`ZA-NNN`) and improvement proposals (`ZP-NNN`): [.audit/report.md](.audit/report.md); what was fixed
+and how it was verified: [.audit/history.md](.audit/history.md).
 
 ## Definition of Done (every change)
 
@@ -198,7 +199,7 @@ Open findings with IDs: [.audit/report.md](.audit/report.md).
 | Property editors and their settings | [Docs/Editors.md](Docs/Editors.md) |
 | Block list editor (nesting, previews, persistence, versions) | [Docs/BlockListEditor.md](Docs/BlockListEditor.md) |
 | CI, releases, NuGet packaging, the template | [Docs/Releasing.md](Docs/Releasing.md) |
-| Full codebase audit (runbook) / latest findings | [.claude/skills/audit/SKILL.md](.claude/skills/audit/SKILL.md) / [.audit/report.md](.audit/report.md) |
+| Full codebase audit (runbook) / open findings and proposals / fix history | [.claude/skills/audit/SKILL.md](.claude/skills/audit/SKILL.md) / [.audit/report.md](.audit/report.md) / [.audit/history.md](.audit/history.md) |
 
 ## Working agreements
 

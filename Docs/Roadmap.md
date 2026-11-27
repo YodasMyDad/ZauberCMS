@@ -69,8 +69,9 @@
    `ZauberCMS.Web/app.db`.
 2. Every fix: follow [Standards.md](Standards.md), grep all callers of anything whose signature/default changes,
    `dotnet build ZauberCMS.sln -c Release` clean, and state how it was verified (run the app for UI behaviour).
-3. After fixing, update `.audit/report.md` (move the finding to "Fixed", keep the ID) and any doc the change makes
-   stale. Re-run `/audit changed` at the end of each phase.
+3. After fixing, take the finding out of the open list in `.audit/report.md` and add it, with how it was verified, to
+   the phase's section at the top of `.audit/history.md` (keep the ID); update any doc the change makes stale.
+   Re-run `/audit changed` at the end of each phase.
 4. Schema changes: three migrations via `migrations.ps1` — and from Phase 6 on, verify on PostgreSQL too.
 5. Public API (D18): everything ships as v5. Prefer additive changes and `[Obsolete]` where cheap; a break is allowed
    when it buys something, and goes in the phase's release notes ("Breaking:"). The big deliberate batch stays in
@@ -82,14 +83,14 @@
 
 ### Phase 0 — Critical hotfix — DONE 2026-11-25
 - **ZA-044** fixed: `[Authorize(Roles = Admin)]` added to the three `/admin/seo/*` pages. Verified by running the
-  app (anonymous requests redirect to login); details in the audit report.
+  app (anonymous requests redirect to login); details in [.audit/history.md](../.audit/history.md).
   ⚠ The hole is still in the **published 4.1.3 packages**: the fix is only on `rework-2026`. Owner decision D17:
   no hotfix; the fix ships with the v5 release.
 
 ### Phase 1 — Dependencies to latest on .NET 10 (D4) — DONE 2026-11-25
 - Everything is on its latest version that runs on .NET 10 (Radzen 13, MailKit 5, HtmlSanitizer 11, ZauberCMS.RTE
   3.0.0, Microsoft.* 10.0.15, …). Build has 0 warnings; the vulnerability scan is clean. What was and was not
-  tested is listed under ZA-130 in the audit report's "Fixed" section — read it before relying on an untested path.
+  tested is listed under ZA-130 in [.audit/history.md](../.audit/history.md) — read it before relying on an untested path.
 - Held back on purpose: **Serilog.AspNetCore** stays on 10.0.0 (11.0.0 depends on Microsoft.Extensions 11.x) → Phase 12.
 - **ZauberCMS.RTE**: migrated to the 3.x API on 3.0.0 in this phase; now on 4.0.0 (see "After Phase 4").
 - **Blazored.Modal** (deprecated, repo archived) is now **vendored**: its source lives in `ZauberCMS.Core/Modal/`
@@ -115,7 +116,7 @@
 - Fixed: ZA-001 (recycle-bin restore / final delete / open), ZA-045 + ZA-088 (delete user), ZA-076 (Culture &
   Domains false error), ZA-103 (email confirmation, incl. change of email), ZA-058 (layout re-render reloaded
   editors), ZA-081 (silent context-menu failures), and ZA-137 (new: dashboard grids listed soft-deleted rows).
-  Details and how each was verified: "Fixed" section of the audit report.
+  Details and how each was verified: [.audit/history.md](../.audit/history.md).
 - Public API additions (no breaks): `DeleteUserParameters.UserId` is `[Obsolete]` (use `Id`; still honoured);
   new `ConfirmEmailParameters.NewEmailAddress` and `DataGridParameters.IncludeDeleted`. Behaviour change for
   the release notes: `GetDataGridAsync` no longer returns soft-deleted Content/Media/User rows by default.
@@ -126,7 +127,7 @@
 ### Phase 4 — Access control & identity — DONE 2026-11-25
 - Fixed: ZA-053, ZA-052, ZA-059, ZA-002, ZA-020, ZA-019, ZA-003, ZA-060, ZA-132 (route half), ZA-021, ZA-022,
   ZA-005, ZA-138, and ZA-139 (new: content grids refused every filter). What each fix does and how it was
-  verified: "Fixed" section of the audit report.
+  verified: [.audit/history.md](../.audit/history.md).
 - New open finding: ZA-140 — services do no authorisation of their own (the other half of ZA-132). Not done on
   purpose: a role check inside the services would break sites and plugins that save from the front end. It needs
   a permission design and the owner's decision.
@@ -196,8 +197,8 @@
 ### Phase 5 — Content integrity — DONE 2026-11-25
 - Fixed: ZA-046 (duplicate URL breaks front-end), ZA-047 (drafts discarded), ZA-048 (recycle parent/children),
   ZA-049 (copy shares draft), ZA-065, ZA-066, ZA-067 (publish/slug/nested-URL leaks), ZA-070, ZA-074, ZA-075,
-  ZA-079, ZA-016, ZA-135 (rich-text content links). What each fix does and how it was verified: "Fixed" section of
-  the audit report. Build 0 warnings; 315 tests (312 pass, 3 skipped as before). `/audit changed` found six more
+  ZA-079, ZA-016, ZA-135 (rich-text content links). What each fix does and how it was verified:
+  [.audit/history.md](../.audit/history.md). Build 0 warnings; 315 tests (312 pass, 3 skipped as before). `/audit changed` found six more
   problems in the change: four fixed, two logged as new Low findings ZA-144, ZA-145.
 - No schema change. Public API additions (no breaks): `ContentUrl` (Core, `ZauberCMS.Core.Content`),
   `ContentMappingExtensions.MapDraftTo`, `InsertContentLinkItem.FindContentId`, `ContentLinkDialog.ExistingContentId`;
@@ -226,12 +227,12 @@
 - Fixed: ZA-050 (PostgreSQL install failed; unique version indexes missing everywhere), ZA-007 (raw SQL on
   PostgreSQL), ZA-017 (search under a Turkish server culture), ZA-122 (design-time factory file name), ZA-051,
   ZA-014, ZA-055, ZA-072 (cache redesign, D13) and ZA-143 (non-page requests looked up as the home page; front-end
-  circuits in the root's language). Details: "Fixed" section of the audit report.
+  circuits in the root's language). Details: [.audit/history.md](../.audit/history.md).
   `/audit changed` (two independent reviewers) found 14 more problems in the change: 12 fixed (cache index races,
   Redis resync and counter reset, failed publishes, PostgreSQL test connections, the upgrade keeping the wrong
   version, the remaining culture-dependent `ToLower` calls, path base, filtered-include keys, clears after commit),
   two logged as ZA-146 and ZA-147 (Low). ZA-147 was then checked in the browser with the sample site and is not a
-  bug (see the audit report).
+  bug (see [.audit/history.md](../.audit/history.md)).
 - Test infrastructure (D15): Testcontainers PostgreSQL + Redis, shared by the run; the content, data-grid, media,
   user-delete and provider-query test classes also run on PostgreSQL; Redis tests use two sites as two servers.
   CI builds and tests on every push; on CI the container tests fail instead of skipping. Build 0 warnings; 428
@@ -271,7 +272,7 @@
 ### Phase 7 — Installer (D2, D19–D24) — DONE 2026-11-26
 - Fixed: ZA-004 (first registered user became admin), ZA-023 (admin-list promotion without proof of the address),
   ZA-024 (registration flooding), and ZA-148, found while testing this phase (the home page `/` did not run in its
-  content language since the ZA-143 fix). Details: "Fixed" section of the audit report; how it works:
+  content language since the ZA-143 fix). Details: [.audit/history.md](../.audit/history.md); how it works:
   [Installer.md](Installer.md).
 - What was built:
   - A site with empty `Zauber:DatabaseProvider` / `ConnectionString` starts without a database. `InstallerMiddleware`
@@ -379,7 +380,7 @@
 - Fixed: ZA-006 (no media recycle bin), ZA-013 (media events before the save, or twice), and two found on the way:
   ZA-154 (restricted media could be fetched with a doubled slash in the address — older than this phase, found by
   its audit) and ZA-153 (the installer's SQL Server connection test, found by running the SQL Server tests for the
-  first time). Details: "Fixed" section of the audit report; how it works: [Services.md](Services.md) "Deletes".
+  first time). Details: [.audit/history.md](../.audit/history.md); how it works: [Services.md](Services.md) "Deletes".
 - What was built:
   - Media section → **Recycle Bin** under the media tree. Delete moves an item, a folder with everything in it, to
     the bin. On a binned item: Restore, Delete permanently; on the bin: Empty recycle bin. The bin's menus are
@@ -425,7 +426,7 @@
   on the server); a shared file matched only by exact URL; the release-notes list. Logged as new Low findings:
   ZA-155 (resized copies stay in `_mediacache`), ZA-156 (bin lists 500 items, a binned folder can't be opened),
   ZA-157 (save hooks don't see the items below or an emptied bin).
-- Tests: see the audit report header for the count. New: `tests/ZauberCMS.Core.Tests/Media/MediaRecycleBinTests.cs`;
+- Tests: see the run log in [.audit/history.md](../.audit/history.md) for the count. New: `tests/ZauberCMS.Core.Tests/Media/MediaRecycleBinTests.cs`;
   additions to `RestrictedMediaTests`. **The SQL Server variants of every test now ran for the first time**, on
   LocalDB (`ZAUBER_TEST_SQLSERVER=Server=(localdb)\MSSQLLocalDB;Integrated Security=true;TrustServerCertificate=true`),
   which found ZA-153. Build 0 warnings.
