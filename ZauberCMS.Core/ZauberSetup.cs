@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Blazored.Modal;
 using ImageResize.Core.Extensions;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -243,34 +244,27 @@ public static class ZauberSetup
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             
-            // Sliding window rate limiter for login attempts
+            // The limits come from Zauber:Identity:LoginRateLimit / RegisterRateLimit (ZA-149); the defaults are
+            // the values that were fixed here before. A PermitLimit of 0 turns that limit off.
+            var loginLimit = zauberSettings.Identity.LoginRateLimit;
+            var registerLimit = zauberSettings.Identity.RegisterRateLimit;
+
+            // Sliding window rate limiter for login attempts (10 per address in 5 minutes by default)
             options.AddPolicy("login", httpContext =>
-                RateLimitPartition.GetSlidingWindowLimiter(
-                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    factory: _ => new SlidingWindowRateLimiterOptions
-                    {
-                        PermitLimit = 10, // 10 attempts
-                        Window = TimeSpan.FromMinutes(5), // per 5 minutes
-                        SegmentsPerWindow = 5,
-                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                        QueueLimit = 0 // No queueing
-                    }));
+                loginLimit.PermitLimit > 0
+                    ? RateLimitPartition.GetSlidingWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => loginLimit.ToLimiterOptions())
+                    : RateLimitPartition.GetNoLimiter("login-off"));
 
             // Registration has a limit of its own, so a flood of sign-ups neither uses up the login allowance
             // of the people behind the same address nor hides inside it. Only the posts count: looking at the
-            // form is free, sending it is not (5 per address in 10 minutes).
+            // form is free, sending it is not (5 per address in 10 minutes by default).
             options.AddPolicy(RegisterRateLimitPolicy, httpContext =>
-                HttpMethods.IsPost(httpContext.Request.Method)
+                HttpMethods.IsPost(httpContext.Request.Method) && registerLimit.PermitLimit > 0
                     ? RateLimitPartition.GetSlidingWindowLimiter(
                         partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                        factory: _ => new SlidingWindowRateLimiterOptions
-                        {
-                            PermitLimit = 5,
-                            Window = TimeSpan.FromMinutes(10),
-                            SegmentsPerWindow = 5,
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        })
+                        factory: _ => registerLimit.ToLimiterOptions())
                     : RateLimitPartition.GetNoLimiter("register-view"));
         });
 
@@ -462,6 +456,31 @@ public static class ZauberSetup
         if (zauberSettings.ForwardedHeaders.Enabled)
         {
             app.UseForwardedHeaders(BuildForwardedHeadersOptions(zauberSettings.ForwardedHeaders));
+        }
+
+        // The error page (ZA-098, D33), in front of everything else so it catches what they throw. Development
+        // keeps the developer exception page. The built-in page answers when the site's own page cannot.
+        if (!app.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(zauberSettings.ErrorPagePath))
+        {
+            app.UseMiddleware<ErrorPageMiddleware>();
+            app.UseExceptionHandler(new ExceptionHandlerOptions
+            {
+                ExceptionHandlingPath = "/" + zauberSettings.ErrorPagePath.Trim().TrimStart('/'),
+                CreateScopeForErrors = true
+            });
+
+            // The error page is shown as a GET: a form post that failed must not be handed to the error page as a
+            // form (Blazor would look for the form there and answer 400)
+            app.Use((context, next) =>
+            {
+                if (context.Features.Get<IExceptionHandlerFeature>() != null &&
+                    !HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
+                {
+                    context.Request.Method = HttpMethods.Get;
+                }
+
+                return next(context);
+            });
         }
 
         if (!app.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(zauberSettings.SiteUrl) &&

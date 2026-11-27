@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -31,17 +31,18 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
         {
             do
             {
-                await GenerateSitemapAsync();
+                await GenerateSitemapAsync(stoppingToken);
             }
             while (await timer.WaitForNextTickAsync(stoppingToken));
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
             logger.LogInformation("Sitemap Generator Hosted Service is stopping.");
         }
     }
 
-    private async Task GenerateSitemapAsync()
+    // A shutdown stops a run that is under way (ZA-111): the file being written is left as it was
+    private async Task GenerateSitemapAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -59,6 +60,7 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
             var sitemapGlobalData = await dataService.GetGlobalData<List<SeoSitemap>>(SeoConstants.SeoSitemapName) ?? [];
             foreach (var seoSitemap in sitemapGlobalData)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 // Define your namespace for sitemap
                 XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
 
@@ -71,9 +73,11 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                 var rootPage = await contentService.GetContent(seoSitemap.RootContentId);
                 if (rootPage == null) continue;
                 
-                if (rootPage.InternalRedirectId != null)
+                // A root that sends visitors to another page is listed as that page. Guid.Empty means no redirect:
+                // looking it up found nothing and the home page was left out (ZA-114).
+                if (rootPage.InternalRedirectId is { } redirectId && redirectId != Guid.Empty)
                 {
-                    rootPage = await contentService.GetContent(rootPage.InternalRedirectId);
+                    rootPage = await contentService.GetContent(redirectId) ?? rootPage;
                 }
 
                 var seoProperties = new Dictionary<Guid, PropertyType?>();
@@ -89,7 +93,7 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                         AmountPerPage = QueryPageSize,
                         OrderBy = GetContentsOrderBy.DateCreated,
                         WhereClause = content => seoSitemap.ContentTypeIds.Contains(content.ContentTypeId)
-                    });
+                    }, cancellationToken);
 
                     foreach (var content in contentItems.Items)
                     {
@@ -130,9 +134,27 @@ public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IW
                 };
 
                 // Write the sitemap to the file with XML declaration
-                await using var writer = XmlWriter.Create(sitemapPath, settings);
-                sitemap.Save(writer);
+                // Written to a file of its own and then moved over the sitemap: a run that is stopped, or fails,
+                // half-way leaves the previous sitemap as it was
+                var temporaryPath = sitemapPath + ".tmp";
+                try
+                {
+                    await using (var writer = XmlWriter.Create(temporaryPath, settings))
+                    {
+                        await sitemap.SaveAsync(writer, cancellationToken);
+                    }
+
+                    File.Move(temporaryPath, sitemapPath, overwrite: true);
+                }
+                finally
+                {
+                    File.Delete(temporaryPath);
+                }
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

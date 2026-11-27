@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -6,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -40,6 +40,12 @@ public class MembershipService(
     ILogger<MembershipService> logger)
     : IMembershipService
 {
+    /// <summary>
+    /// How often signing in to an unconfirmed account sends the confirmation email again (ZA-106): at most once in
+    /// this time for each account, so the sign-in page cannot be used to flood someone's inbox.
+    /// </summary>
+    public static readonly TimeSpan ConfirmationResendInterval = TimeSpan.FromMinutes(10);
+
     /// <summary>
     /// Retrieves a single user with roles and property data, optionally from cache.
     /// </summary>
@@ -351,7 +357,7 @@ public class MembershipService(
     }
 
     /// <summary>
-    /// Deletes a user account.
+    /// Deletes a user account and erases the person: see <see cref="IMembershipService.DeleteUserAsync"/>.
     /// </summary>
     /// <param name="parameters">Parameters containing the user id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -359,45 +365,55 @@ public class MembershipService(
     public async Task<HandlerResult<User>> DeleteUserAsync(DeleteUserParameters parameters, CancellationToken cancellationToken = default)
     {
         using var scope = serviceScopeFactory.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
         var handlerResult = new HandlerResult<User>();
 
 #pragma warning disable CS0618 // UserId is the obsolete name of Id; callers that still set it must keep working
         var userId = parameters.Id != Guid.Empty ? parameters.Id : parameters.UserId;
 #pragma warning restore CS0618
 
-        var user = userId == Guid.Empty ? null : await userManager.FindByIdAsync(userId.ToString());
-        if (user != null)
-        {
-            logger.LogInformation("Audit logging for user {UserName} Delete", user.Name);
-
-            user.Deleted = true;
-            user.DateUpdated = DateTime.UtcNow;
-
-            // One write through the UserManager's own DbContext: stores the flag and replaces the security stamp,
-            // which ends the deleted user's active sessions.
-            var updateResult = await userManager.UpdateSecurityStampAsync(user);
-            if (!updateResult.Succeeded)
-            {
-                foreach (var error in updateResult.Errors)
-                {
-                    handlerResult.Messages.Add(new ResultMessage(error.Description, ResultMessageType.Error));
-                }
-
-                return handlerResult;
-            }
-
-            cacheService.ClearCachedItemsWithPrefix(nameof(User));
-
-            handlerResult.Entity = user;
-            handlerResult.Success = true;
-        }
-        else
+        var user = userId == Guid.Empty
+            ? null
+            : await dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId && !x.Deleted, cancellationToken);
+        if (user == null)
         {
             handlerResult.Messages.Add(new ResultMessage("User not found", ResultMessageType.Error));
+            return handlerResult;
         }
 
-        return handlerResult;
+        // Deleting cannot be undone (D35), so it must not lock everybody out: not your own account, and not the last
+        // administrator (the installer never reopens, and an erased user cannot be recovered)
+        var deletedBy = await currentUserAccessor.GetUserAsync(cancellationToken);
+        if (deletedBy?.Id == user.Id)
+        {
+            handlerResult.Messages.Add(new ResultMessage("You cannot delete your own account", ResultMessageType.Error));
+            return handlerResult;
+        }
+
+        var adminUserIds = dbContext.UserRoles
+            .Where(ur => ur.Role.Name == Constants.Roles.AdminRoleName && !ur.User.Deleted)
+            .Select(ur => ur.UserId);
+        if (await adminUserIds.ContainsAsync(user.Id, cancellationToken) &&
+            !await adminUserIds.AnyAsync(id => id != user.Id, cancellationToken))
+        {
+            handlerResult.Messages.Add(new ResultMessage(
+                "This is the last administrator. Make another user an administrator first", ResultMessageType.Error));
+            return handlerResult;
+        }
+
+        // Deleting erases the person (ZA-033, Roadmap D35): the row stays, marked deleted, with nothing about them
+        // in it, and the new security stamp ends their sessions. One save, through the save hooks.
+        await UserAnonymiser.StageAsync(dbContext, user, cancellationToken);
+        var saved = await dbContext.SaveChangesAndLog(user, handlerResult, cacheService, extensionManager, cancellationToken);
+        if (saved.Success)
+        {
+            // Only once the erasure is stored: a refused save must not leave a "Deleted" audit row behind
+            await deletedBy.AddAudit(user, user.UserName, AuditExtensions.AuditAction.Delete,
+                scope.ServiceProvider.GetRequiredService<Audit.Interfaces.IAuditService>(), cancellationToken);
+            logger.LogInformation("User {UserId} deleted and erased", user.Id);
+        }
+
+        return saved;
     }
 
     /// <summary>
@@ -646,22 +662,36 @@ public class MembershipService(
                 {
                     if (signInResult.IsNotAllowed)
                     {
-                        if (!await userManager.IsEmailConfirmedAsync(user))
+                        // Identity refuses an unconfirmed account before it looks at the password, so only someone
+                        // who knows the password learns that the account is waiting for confirmation (ZA-106).
+                        // A wrong password counts towards the lockout, as it does for any other account. Identity
+                        // reports "not allowed" before it looks at the lockout, so the lockout is checked here: a
+                        // locked account is not tried at all, or this would be a way round it.
+                        if (await userManager.IsLockedOutAsync(user))
                         {
+                            logger.LogWarning("User {UserId} account is locked out", user.Id);
+                            loginResult.AddMessage("Too many failed sign-in attempts. Please wait a few minutes and try again.", ResultMessageType.Error);
+                        }
+                        else if (!await userManager.CheckPasswordAsync(user, parameters.Password))
+                        {
+                            await userManager.AccessFailedAsync(user);
+                            loginResult.AddMessage("Invalid login credentials", ResultMessageType.Error);
+                        }
+                        else if (!await userManager.IsEmailConfirmedAsync(user))
+                        {
+                            await userManager.ResetAccessFailedCountAsync(user);
                             loginResult.AddMessage("Email isn't confirmed. Check your inbox for a confirmation email", ResultMessageType.Warning);
-
-                            // Resend confirmation email
-                            var sendConfirmationEmailCommand = new SendEmailConfirmationParameters
-                            {
-                                ReturnUrl = parameters.ReturnUrl,
-                                User = user
-                            };
-                            await emailService.SendEmailConfirmationAsync(sendConfirmationEmailCommand, cancellationToken);
+                            await ResendConfirmationAsync(scope.ServiceProvider, user, parameters.ReturnUrl, cancellationToken);
+                        }
+                        else
+                        {
+                            loginResult.AddMessage("Invalid login credentials", ResultMessageType.Error);
                         }
                     }
                     else if (signInResult.IsLockedOut)
                     {
-                        logger.LogWarning("User {RequestEmail} account is locked out", parameters.Email);
+                        // The user id, not the address typed in: no email addresses in the log (ZA-107)
+                        logger.LogWarning("User {UserId} account is locked out", user.Id);
                         loginResult.AddMessage("Too many failed sign-in attempts. Please wait a few minutes and try again.", ResultMessageType.Error);
                     }
                     else if (signInResult.RequiresTwoFactor)
@@ -682,13 +712,49 @@ public class MembershipService(
         }
         catch (Exception e)
         {
-           logger.LogError(e, "Error during login for {Email}", parameters.Email);
+           logger.LogError(e, "Error during login");
            loginResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
            loginResult.Success = false;
            return loginResult;
         }
 
         return loginResult;
+    }
+
+    private static readonly Lock ResendLock = new();
+
+    /// <summary>
+    /// Sends the confirmation email again, at most once per <see cref="ConfirmationResendInterval"/> for each account
+    /// on this server. A send that fails is logged and does not count, so the next sign-in tries again.
+    /// </summary>
+    private async Task ResendConfirmationAsync(IServiceProvider services, User user, string? returnUrl,
+        CancellationToken cancellationToken)
+    {
+        var memoryCache = services.GetRequiredService<IMemoryCache>();
+        var resendKey = $"ZauberCMS.ConfirmationResent.{user.Id}";
+        lock (ResendLock)
+        {
+            if (memoryCache.TryGetValue(resendKey, out _))
+            {
+                return;
+            }
+
+            memoryCache.Set(resendKey, true, ConfirmationResendInterval);
+        }
+
+        try
+        {
+            await emailService.SendEmailConfirmationAsync(new SendEmailConfirmationParameters
+            {
+                ReturnUrl = returnUrl,
+                User = user
+            }, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            memoryCache.Remove(resendKey);
+            logger.LogError(ex, "Could not send the confirmation email again to user {UserId}", user.Id);
+        }
     }
 
     /// <summary>
@@ -792,7 +858,7 @@ public class MembershipService(
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Error during registration for {Email}", parameters.Email);
+            logger.LogError(e, "Error during registration");
             registrationResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
             registrationResult.Success = false;
         }
@@ -832,42 +898,18 @@ public class MembershipService(
             {
                 loginResult.AddMessage("Account is locked out", ResultMessageType.Error);
             }
-            else if (!(await dataService.GetGlobalSettings()).AllowRegistration)
+            else if (signInResult.IsNotAllowed)
             {
-                // A first sign-in through a provider is a registration, and registration is turned off
-                loginResult.AddMessage("This site is not accepting new accounts", ResultMessageType.Error);
+                // The account exists but may not sign in (deleted, or its email address is not confirmed)
+                loginResult.AddMessage("This account cannot sign in", ResultMessageType.Error);
             }
             else
             {
-                // User doesn't have an account, create one
-                var user = new User
-                {
-                    UserName = info.Principal.FindFirstValue(ClaimTypes.Email),
-                    Email = info.Principal.FindFirstValue(ClaimTypes.Email),
-                    Name = info.Principal.FindFirstValue(ClaimTypes.Name),
-                    DateCreated = DateTime.UtcNow,
-                    DateUpdated = DateTime.UtcNow
-                };
-
-                var result = await userManager.CreateAsync(user);
-                if (result.Succeeded)
-                {
-                    result = await userManager.AddLoginAsync(user, info);
-                    if (result.Succeeded)
-                    {
-                        await signInManager.SignInAsync(user, isPersistent: false);
-                        loginResult.Success = true;
-                        loginResult.NavigateToUrl = parameters.ReturnUrl;
-                    }
-                    else
-                    {
-                        loginResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
-                    }
-                }
-                else
-                {
-                    loginResult.Messages.AddRange(result.Errors.Select(e => new ResultMessage(e.Description, ResultMessageType.Error)));
-                }
+                // ZauberSignInManager creates the account for a first sign-in, with its checks: registration on,
+                // an email address the provider says is verified (ZA-105). A failure here means it refused; this
+                // used to create the account anyway, without those checks.
+                loginResult.AddMessage("Signing in with this provider did not work. Sign in another way, or " +
+                                       "ask the site's administrator", ResultMessageType.Error);
             }
         }
         catch (Exception e)
@@ -998,7 +1040,7 @@ public class MembershipService(
         catch (Exception e)
         {
             // Log but do not surface — varying the response on error is itself an enumeration channel.
-            logger.LogError(e, "ForgotPasswordAsync failed for {Email}", parameters.Email);
+            logger.LogError(e, "ForgotPasswordAsync failed");
         }
 
         forgotPasswordResult.Success = true;
@@ -1083,7 +1125,7 @@ public class MembershipService(
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Error resetting password for {Email}", parameters.Email);
+            logger.LogError(e, "Error resetting password");
             resetPasswordResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
             resetPasswordResult.Success = false;
         }

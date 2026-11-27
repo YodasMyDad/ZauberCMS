@@ -11,21 +11,37 @@ using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Jobs;
 
-public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger) : IHostedService, IDisposable
+/// <summary>
+/// The daily clean-up: old audit rows, orphaned related-content links and old page versions. The first run is a few
+/// minutes after start-up, then once a day. A shutdown stops a run that is under way (ZA-111).
+/// </summary>
+public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger) : BackgroundService
 {
-    private Timer? _timer;
-
     /// <summary>How long after start-up the first run waits.</summary>
     internal static readonly TimeSpan FirstRunDelay = TimeSpan.FromMinutes(5);
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    internal static readonly TimeSpan Interval = TimeSpan.FromHours(24);
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // First run a few minutes after start-up, not during it (ZA-083), then once a day
-        _timer = new Timer(DoWork, null, FirstRunDelay, TimeSpan.FromHours(24));
-        return Task.CompletedTask;
+        try
+        {
+            // First run a few minutes after start-up, not during it (ZA-083), then once a day
+            await Task.Delay(FirstRunDelay, stoppingToken);
+            using var timer = new PeriodicTimer(Interval);
+            do
+            {
+                await RunAsync(stoppingToken);
+            }
+            while (await timer.WaitForNextTickAsync(stoppingToken));
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // The site is stopping
+        }
     }
 
-    private async void DoWork(object? state)
+    private async Task RunAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -40,32 +56,26 @@ public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger
             var contentService = scope.ServiceProvider.GetRequiredService<IContentService>();
 
             // Cleanup old audit records
-            await auditService.CleanupOldAuditsAsync(new CleanupOldAuditsParameters());
+            await auditService.CleanupOldAuditsAsync(new CleanupOldAuditsParameters(), cancellationToken);
 
             // Cleanup orphaned RelatedContentId references
-            await contentService.CleanupOrphanedRelatedContentAsync(new CleanupOrphanedRelatedContentParameters());
+            await contentService.CleanupOrphanedRelatedContentAsync(new CleanupOrphanedRelatedContentParameters(),
+                cancellationToken);
 
             // Keep the newest versions of each page (Zauber:ContentVersionsToKeep, Roadmap D25)
             var versionsToKeep = scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>().Value
                 .ContentVersionsToKeep;
             await scope.ServiceProvider.GetRequiredService<IContentVersioningService>()
-                .PruneVersionsAsync(new PruneContentVersionsParameters { VersionsToKeep = versionsToKeep });
+                .PruneVersionsAsync(new PruneContentVersionsParameters { VersionsToKeep = versionsToKeep },
+                    cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception e)
         {
             logger.LogError(e, "An error occurred while executing the daily cleanup job");
         }
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        _timer?.Change(Timeout.Infinite, 0);
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    {
-        _timer?.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

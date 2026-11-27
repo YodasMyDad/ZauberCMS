@@ -65,7 +65,7 @@ every `ISeedData`, works out whether the site is installed, and makes two intent
 initialise and the culture query).
 A site whose `Zauber:DatabaseProvider` / `ConnectionString` are empty starts **without a database** and serves only
 the installer (→ [Docs/Installer.md](Docs/Installer.md)). Middleware order there is deliberate
-(forwarded headers when enabled → installer → authentication → media security headers → restricted-media →
+(forwarded headers when enabled → error page outside Development (D33) → installer → authentication → media security headers → restricted-media →
 image-resize → static files → routing → redirect → culture → admin access → rate limiter → authz → antiforgery);
 don't reorder without a reason written in the commit.
 
@@ -134,7 +134,7 @@ commented out in `ZauberSetup.cs`) — don't build on them without discussing.
   Media). Handlers fire on the publisher's thread in every circuit → marshal with `InvokeAsync`.
 - Identity tables are `Zauber*`-prefixed; migrations history table `ZauberMigrations`. Keys are sequential GUIDs.
 - Login-like pages use rate-limit policy `"login"` (per-IP 10 / 5 min); the registration page has its own,
-  `"register"` (per-IP 5 POSTs / 10 min). Identity lockout is active: six wrong passwords lock the account for
+  `"register"` (per-IP 5 POSTs / 10 min). Both from `Zauber:Identity:LoginRateLimit` / `RegisterRateLimit`. Identity lockout is active: six wrong passwords lock the account for
   five minutes.
 - The first administrator comes from the installer, never from registering first. "Installed" is a `GlobalData`
   flag that is never unset; `Zauber:Identity:RecoverAdminUser` is the way back in for a site with no administrator.

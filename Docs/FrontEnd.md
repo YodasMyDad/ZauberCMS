@@ -20,10 +20,27 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
    A page's language is its domain's, its own, or its nearest ancestor's; with none of those it is
    `GlobalSettings.DefaultLanguage` (set by the installer), and only then `Zauber:AdminDefaultLanguage`.
 3. Role-restricted content (`ContentRoles`) redirects to `Zauber:Identity:DefaultLoginRedirectUrl` unless the user has
-   a role (admins always pass).
+   a role (admins always pass); the page's view is not rendered (ZA-110).
 4. The view is looked up by `Content.ViewComponent` == **view type `FullName`** (namespace + class) among
    `IContentView` implementations, then rendered inside `<LayoutView>` using the view's `@layout`.
    Fallbacks: `Zauber:NotFoundComponent`, `Zauber:StarterComponent`, `Zauber:MissingView` (also full type names).
+
+## Errors (Roadmap D33)
+
+Outside Development, a request that throws is shown `Zauber:ErrorPagePath` (default `/error`) with status 500,
+through ASP.NET's exception handler, which `AddZauberCms` adds first in the pipeline. Make a content page at
+`/error` to give the site its own error page (a published page with that URL; it renders with its view and layout),
+or point the setting at a page or endpoint of the site. When there is nothing at that address, or it fails as well,
+`ErrorPageMiddleware` sends a plain built-in page ("Something went wrong" and the request id, which is in the log
+next to the exception). Keep the error page simple: if it fails for the same reason as the page (the database is
+down), the built-in page is what visitors see. Empty `ErrorPagePath` adds no handler, for a site that calls
+`UseExceptionHandler` itself. Development keeps the developer exception page.
+The error page is requested as a GET whatever the failed request was (a failed form post is not posted to it), and
+neither the installer nor a redirect rule can replace it. With no published page at the address, `EntryPage` throws
+rather than render a 404, so the built-in page is sent; that shows in the log as a second error.
+
+`/admin`, `/account`, `/api` and `/_blazor` are ZauberCMS's own, matched on whole path segments (`SitePaths.IsSystemPath`):
+`/administration`, `/accounting` or `/api-docs` are ordinary pages of the site, with redirects and culture (ZA-095).
 
 ## Writing a view
 

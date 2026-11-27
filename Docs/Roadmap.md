@@ -18,9 +18,10 @@
   **Phase 10b done** (save hooks and content data, D28–D29, 2026-11-26).
   **Phase 10c done** (property editors and stored values, D30–D31, 2026-11-26).
   **Phase 10d done** (admin UI robustness and the resizable tree panel, D32, 2026-11-27).
-  **38 open findings** (0 Critical, 0 High, 8 Medium, 30 Low), each one assigned below to Phase 10e, Phase 11
-  or the [Backlog](#backlog-no-phase-yet). **Next: Phase 10e** (front end, security and identity hardening; design
-  questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
+  **Phase 10e done** (front end, security and identity hardening, D33–D36, 2026-11-27).
+  **23 open findings** (0 Critical, 0 High, 7 Medium, 16 Low), each one assigned below to Phase 11 or the
+  [Backlog](#backlog-no-phase-yet). **Next: Phase 11** (engineering baseline, API clean-up, v5; design questions
+  inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -61,6 +62,10 @@
 | D30 | **A picker stores one shape for any count: a JSON array of ids in the order the editor chose, even for one item; older values are read, not rewritten.** The content and media pickers wrote one item as a bare id and several as a JSON array. They now always write `["id", …]`, and everything that reads a picker value (`ToPickerIds`, `GetContentItems`, `GetMediaItems`, `GetUsers`, `GetValue<Guid>` and `GetValue<List<Guid>>`, the admin's single-id fields) takes both shapes. There is no data migration: values live in pages, drafts, versions and block snapshots across three providers, and a value becomes the new shape the next time its page is saved. Umbraco does the same: Media Picker 3 stores a JSON array whatever the maximum, and its value converters return one item or a list from the property's settings, not from the stored shape; when a stored format changed, its converters kept reading the old one. The read side returns the stored order, as Umbraco's converters do. (owner delegated to Umbraco parity, 2026-11-26, Phase 10c) | ZA-029, ZA-078 |
 | D31 | **Stored values do not depend on the culture: numbers and dates are written in the invariant culture, and property aliases are unique on a page.** The numeric editor writes `1.5` and the date editor `2026-11-26T14:30:00` (with the time, which the long-date text dropped); values written in the admin's culture before this still read, the invariant form first. A content type is refused when two of its properties share an alias, ignoring case, on the type itself or through a composition (from either side); values that already repeat an alias read the first instead of throwing. Umbraco stores decimals and dates invariant, and refuses a document type or composition whose aliases clash. (owner delegated to Umbraco parity, 2026-11-26, Phase 10c) | ZA-027, ZA-028 |
 | D32 | **An error in one part of the admin is shown in that part, with "Try again"; the circuit and the rest of the page stay.** `AdminErrorBoundary` sits round each property editor, each dashboard tab, the sidebar navigation and the page body (cleared on navigation); each side panel's content has one too, with "Close", and so do Radzen's dialogs (round `<RadzenComponents />`). It says what could not be shown, logs the exception, and shows the exception's message only when Blazor's detailed errors are on (`CircuitOptions.DetailedErrors`), otherwise "The details are in the site's log". An editor that failed keeps its last value, so a save does not lose it. Umbraco does the same: a property editor or extension that fails shows an error in its place and the rest of the document stays editable, and server errors show their details to the back office only in debug mode. Retry is offered because a failure is often passing (a timeout, a missing service a reload brings back); Umbraco's answer is a reload, which here would lose unsaved work. (owner delegated to Umbraco parity, 2026-11-27, Phase 10d) | ZA-097 |
+| D33 | **Front-end errors get an error page outside Development: the site's own page at `Zauber:ErrorPagePath` (default `/error`), else a plain built-in page.** Setup adds ASP.NET's exception handler for that address, so editors can make the error page a content page at `/error`, or a site can point the setting at a page of its own; when there is no page there, or it fails as well, a built-in page (no database, no layout, the request id) is sent with status 500. Empty turns it off for a site that sets up its own handler. Umbraco also relies on ASP.NET's exception handler and lets the site provide the page. (owner, 2026-11-27, Phase 10e) | ZA-098 |
+| D34 | **A redirect says whether its From URL is a regular expression (`IsRegex`, a nullable column); otherwise it matches exactly.** Rows saved before the column existed are null and keep the old guess (regex characters mean regex) until they are saved again, so no site changes behaviour on upgrade. A save is refused when the redirect would send an address to itself or close a circle with the saved ones, and the middleware never redirects an address to itself. (owner, 2026-11-27, Phase 10e) | ZA-116 |
+| D35 | **Deleting a user erases the person; there is no user recycle bin.** The row stays, marked deleted, so pages and versions still point at an author, but its user name becomes `deleted-<id>` and its email, phone, password, profile values, logins, claims and roles go; the address and the old name can register again. Audit rows keep their text until the daily job removes them, as the record of who did what. Umbraco also deletes members for good. Users deleted before v5 keep their data (see Open questions). (owner, 2026-11-27, Phase 10e) | ZA-033 |
+| D36 | **Image resizing does not upscale, and the resize cache is capped at 2 GB, by default.** `Zauber:ImageResize:AllowUpscale` false (a bigger size than the original returns the original size) and `Cache:MaxCacheBytes` 2147483648 (the oldest copies are removed as new ones are written). Both can be set back; existing sites notice, so it is in the release notes. (owner, 2026-11-27, Phase 10e) | ZA-104 |
 
 ## Working rules for the rework
 
@@ -833,28 +838,153 @@ delegated): D32. The owner added the resizable tree panel during the phase.
   - The admin sidebar can be resized (per browser). The sidebar's content scrolls inside `.zauber-sidebar-scroll`; CSS
     that styled `.rz-sidebar` as the scroll container may need the new element.
 
-### Phase 10e — Front end, security and identity hardening
+### Phase 10e — Front end, security and identity hardening — DONE (2026-11-27)
 ZA-095, ZA-098 (Medium); ZA-030, ZA-031, ZA-032, ZA-033, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114,
-ZA-115, ZA-116, ZA-149, ZA-150 (Low).
-- **Front end and routing.** ZA-095: `/administration` renders as admin and `/accounting` or `/api-docs` skip
-  culture and redirects (prefix match; match on a path segment, one shared helper). ZA-098: no working front-end
-  error page (the template has the handler commented out). ZA-110 (restricted-content gate relies on `NavigateTo`
-  throwing), ZA-114 (layouts set the process-wide culture; sitemap culture and home page), ZA-115 (smaller
-  performance items: redirect cache not cleared on save, regex built per call, unstable ordering), ZA-116 (redirect
-  rules with "?" are treated as regex; no loop guard), ZA-111 (hosted services and middleware ignore cancellation).
-- **Security and identity.** ZA-104 (image-resize cache unbounded, upscaling on), ZA-105 (public
-  `ExternalLoginAsync` skips the verified-email and `CanSignIn` checks), ZA-106 (login reveals unconfirmed accounts,
-  resends without a limit), ZA-107 (email addresses in logs), ZA-030 (logout by GET), ZA-031 (MD5 hashing), ZA-032
-  (placeholder secrets in packaged settings), ZA-149 (rate limits fixed in code → settings with today's values),
-  ZA-150 (form-protection token reusable for 12 hours; `IFormProtectionService` is public from v5, decide before
-  release), ZA-033 (deleted users keep their username, email and personal data).
-- **Ask the owner first:** ZA-098 (which error page ships, and a setting for its address), ZA-116 (an "is regex"
-  flag is a schema change: three migrations), ZA-033 (a user recycle bin with purge, as content and media have, or
-  anonymise on delete), ZA-104 (new defaults existing sites would notice → release notes).
+ZA-115, ZA-116, ZA-149, ZA-150 (Low) fixed. The owner answered the four "ask first" items with the recommended
+option (2026-11-27): D33 (error page), D34 (redirect regex flag), D35 (deleting a user erases them), D36 (image
+defaults). New: ZA-164 (the front end's 404 page has an empty body; there before this phase), ZA-165 (a redirect's
+domain is ignored).
+- **Paths (ZA-095).** `SitePaths.IsSystemPath` (Core, `ZauberCMS.Core.Middleware`) matches `/admin`, `/account`,
+  `/api` and `/_blazor` on whole segments; the culture and redirect middleware use it, and `App.razor` uses
+  `AdminAccess.IsAdminPath`. Before, `/administration` rendered as the admin (checked: 200 with the admin on the
+  commit before, a 404 now) and `/accounting` or `/api-docs` skipped redirects and culture.
+- **Error page (ZA-098, D33).** Outside Development, `AddZauberCms` puts `ErrorPageMiddleware` and ASP.NET's
+  exception handler (`Zauber:ErrorPagePath`, default `/error`) right after the forwarded headers. A content page at
+  `/error` is the site's error page; with none, or one that fails too, the built-in page (no database, no layout,
+  the request id, `no-store`) is sent with 500. During that re-execution `EntryPage` throws when there is no page
+  (rendering even a 404 would write the layout and count as the error page), the error page is requested as a GET
+  (a failed form post is not posted to it), and the installer and redirect rules let it through. The two
+  `Program.cs` files lose their dead `/Home/Error` handler. Found on the way: `CultureMiddleware` and
+  `RedirectMiddleware` called `next` inside their own `try`, so a page that threw was caught, logged as their error,
+  and **run a second time** (its side effects twice; the second run then failed on a duplicate header and hid the
+  real exception). Both now do only their own work inside the `try`.
+- **Restricted pages (ZA-110).** `EntryPage` decides access before choosing the view and returns after the redirect,
+  so nothing of the page renders even where `NavigateTo` does not end the render.
+- **Culture (ZA-114).** `BlankLayout` uses `AdminCulture.Apply` (this render's culture only); the process-wide
+  defaults were already gone. The sitemap keeps the root when its internal redirect is `Guid.Empty` or points at a
+  missing page (the home page was left out).
+- **Cancellation (ZA-111).** `DailyJob` is a `BackgroundService` with a `PeriodicTimer` and passes the token to its
+  three services; the sitemap generator passes it through and writes a temporary file that replaces the sitemap
+  when complete; the culture and redirect middleware pass `RequestAborted` and stop quietly when the visitor has gone.
+- **Performance (ZA-115).** Generated regexes in `StringExtensions` (one was compiled on every call); grid paging
+  (`GetDataGridAsync`) and content queries end with `ThenBy(Id)`, the root and slug lookups are ordered; a unique URL
+  takes one query instead of one per `-1`, `-2`…; the redirect list lives in `ICacheService` under `SeoRedirect`, so
+  a save clears it on every server (it was per process); `DefaultCacheService` shares one load between requests that
+  miss the same key together (the loads under way are kept on the singleton `ServerCache`; a request after a clear
+  never joins a load started before it).
+- **Redirects (ZA-116, D34).** `SeoRedirect.IsRegex` (`bool?`, migrations `RedirectIsRegex` ×3): null for old rows,
+  which keep the old guess (`RedirectRules.LooksLikeRegex`) until saved. The dialog has a "Regular expression?"
+  switch (set from what a row is matched as today) and checks the From URL; the list shows Exact/Regex. A save is
+  refused for a From URL that cannot match, a redirect to itself, or one that closes a circle with the saved ones
+  (`RedirectRules.FindLoop`, up to 20 steps, trying rules in the middleware's order: exact before regex, newest
+  first); the middleware never redirects an address to itself. Exact matches ignore letter case; of two with the
+  same From URL the newest wins. Also fixed in the dialog: editing showed "Any" as the domain, and the panel title
+  said "Add Redirect" when editing.
+- **Image defaults (ZA-104, D36).** `AllowUpscale` false and `Cache:MaxCacheBytes` 2 GB (the package enforces the
+  cap as it writes); the Web and template settings files have the new values.
+- **External sign-in (ZA-105).** `IMembershipService.ExternalLoginAsync` no longer creates an account itself: a first
+  sign-in goes through `ZauberSignInManager.CreateExternalUserAsync` and its checks; when that refuses, the call
+  fails. A refused existing account (`IsNotAllowed`) gets its own message.
+- **Unconfirmed accounts (ZA-106).** Identity refuses an unconfirmed account before it checks the password, so the
+  login now checks the lockout and then the password: a locked account is refused as locked, a wrong password is
+  "Invalid login credentials" and counts towards lockout, only the right one hears "Email isn't confirmed". The
+  confirmation email goes again at most every 10 minutes per account (`MembershipService.ConfirmationResendInterval`,
+  per server); a send that fails is logged and does not count.
+- **Logs (ZA-107).** No email address in any log line: the lockout warning logs the user id, the error lines none.
+- **Sign-out (ZA-030).** `GET /api/auth/logout` submits itself only when the browser says the navigation came from
+  this site or was typed in (`Sec-Fetch-Site` same-origin/none; without it, a Referer on this host); anything else
+  shows a "Sign out" button, and the page cannot be framed (`X-Frame-Options`, `frame-ancestors`). The POST and its
+  antiforgery check are unchanged.
+- **MD5 (ZA-031).** The generated user name for an external sign-in hashes with SHA-256 (new names differ from
+  before; existing ones stay). `StringExtensions.ToMd5` and `ClaimsPrincipalExtensions.GetMd5` are `[Obsolete]`; the
+  `Md5Hash` claim is still issued until the next major version.
+- **Settings (ZA-032, ZA-149).** The shipped settings have empty email values (they had `mail_username`,
+  `mail_password` and a SendGrid host); `SmtpEmailProvider` says which key is missing and signs in to the SMTP server
+  only when a user name is set. `Zauber:Identity:LoginRateLimit` / `RegisterRateLimit` (`PermitLimit`,
+  `WindowMinutes`; 0 turns a limit off) replace the numbers fixed in code, with the same defaults.
+- **Form tokens (ZA-150).** A token carries a random id; `IFormProtectionService.TryUseToken` (a default interface
+  method, so replacements keep compiling) marks it used once a form passes, and `Validate` then returns the new
+  `FormProtectionResult.AlreadyUsed`. The registration page uses it and hands out a new token after a refused post.
+  Used tokens are kept in each server's memory until they expire (12 hours), by what they decrypt to (the same token
+  with spaces added is the same token).
+- **Deleting a user (ZA-033, D35).** `DeleteUserAsync` erases the person in one `SaveChangesAndLog` (`UserAnonymiser`):
+  user name `deleted-<id>`, no email, phone or password, profile values, logins, tokens, claims and roles removed, a
+  new security stamp; the row stays, marked deleted, for the pages and versions it wrote (if someone registered that
+  name first, a random part is added). The address and the name can register again. Refused: deleting your own
+  account and the last administrator; the dialog says it cannot be undone. The audit row is written after the save.
+  `RecoverAdminUser` refuses an erased user (it still restores one deleted before this). Users deleted before this
+  keep their data: see Open questions.
+- Checked in a browser on a scratch copy of the sample site, in Production mode: a page that throws gets the
+  built-in page (500) for a GET and for a form post, and once the copy has a content page at `/error`, that page
+  with 500 for both, and the page's own exception in the log; `/administration` is an ordinary 404; the sign-out page
+  with `Sec-Fetch-Site: cross-site` shows the button and with `same-origin` submits itself; the redirect dialog's new
+  switch, an exact `/old-search?q=1` redirect (301 to `/blog`, also in capitals; `/old-searc?q=1` not redirected) and
+  the refused loop with its message; registering, then a second visitor sending the used token ("This form was sent
+  already", a new token, the next send works); deleting a user in the admin (the row erased, the audit row without
+  personal data). The empty 404 body was compared on the commit before (same, so ZA-164 is older than this phase).
+  Not tried in a browser: a first external sign-in, the 10-minute resend and the lockout of an unconfirmed account
+  (tests only), the daily job.
+- Review (`/audit changed`, two reviewers). Fixed: an unconfirmed account could be password-guessed without lockout
+  (High: Identity reports "not allowed" before the lockout, and the new password check ignored it); the single-load
+  cache only shared loads within one request (High: it lived on the scoped service); with no page at `/error` the 404
+  rendered and counted as the error page (High); a used form token with spaces added counted as new; deleting
+  yourself or the last administrator was allowed, and taking the name `deleted-<id>` first stopped an erasure; the
+  loop check tried rules in another order than the middleware; the installer or a broad regex redirect could replace
+  the error page; a failed form post was posted to the error page; a stopped sitemap run left a cut-off file; the
+  confirmation resend counted a send that failed; the sign-out fallback accepted requests with no Referer, and its
+  page could be framed; `/_blazor` was not a system path. Noted, not changed: each regex redirect may take up to
+  100 ms on every request when its pattern backtracks (`NonBacktracking` would refuse some patterns); the resend
+  throttle and used tokens are per server; users deleted before this keep their data (Open questions).
+- Tests: `Seo/RedirectAndCultureTests` (ZA116 exact and regex matching, old rows, refused loops in the middleware's
+  order and refused From URLs; ZA095 segment matching and redirects on `/administration`; ZA098 a throwing page runs
+  once and its exception reaches the handler, and the error page is never redirected), `Bootstrap/ErrorPageTests`
+  (the site's page, the built-in page when there is none or it fails, settings), `Bootstrap/HardeningDefaultsTests`
+  (image and rate-limit defaults and binding, no made-up email values in the three settings files),
+  `Security/FormProtectionTests` ZA150 (one use, padded tokens, old tokens), `Membership/DeleteUserTests` ZA033 (the
+  erasure, your own account, the last administrator, a taken name; all three databases), `Membership/RecoverAdminTests`
+  (an erased user is not recovered), `Membership/UnconfirmedSignInTests` (wrong and right password, the resend once,
+  lockout), `Shared/CacheSingleLoadTests` (one load, also across two requests' services), Components
+  `Shared/LogoutTests`. `Shared/CacheTests`' ZA055 race test now drives `ServerCache` directly (two loads of one key
+  no longer overlap). Full suite 993 (992 pass, 1 skipped for ZA-118) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build
+  0 warnings; no vulnerable packages.
+- **Release notes (D18):**
+  - Outside Development an unhandled exception now shows an error page: `Zauber:ErrorPagePath` (default `/error`; a
+    content page there is used), else a built-in page. A site that calls `UseExceptionHandler` itself sets the key to
+    "" to keep its own. A page that throws is no longer run a second time by the culture and redirect middleware.
+  - `/administration`, `/accounting`, `/api-docs` and similar are pages of the site (they were treated as admin,
+    account or API paths). `/_blazor` is a system path: redirect rules and content culture leave it alone.
+  - Redirects: new `SeoRedirect.IsRegex` (schema: one nullable column, three migrations). A redirect saved from now on
+    is exact unless marked as a regular expression (also one created in code); old ones keep matching as before until
+    saved. Loops and From URLs that cannot match are refused on save. The compiled list is cleared on every server
+    when a redirect changes. The middleware's constructor no longer takes `IMemoryCache` and `InvokeAsync` takes
+    `ICacheService`.
+  - Image resizing: `AllowUpscale` now defaults to false and `Cache:MaxCacheBytes` to 2 GB. Set them back in
+    `Zauber:ImageResize` to keep the old behaviour.
+  - Deleting a user erases them (user name, email, phone, password, profile values, logins, claims, roles); there is
+    no restore, and `RecoverAdminUser` cannot bring them back. Deleting your own account or the last administrator
+    is refused. Deleting is not a ban; lock the account to keep someone out.
+  - `ExternalLoginAsync` no longer creates an account when the sign-in manager refused to.
+  - Signing in to an unconfirmed account: a locked one is refused as locked, a wrong password says "Invalid login
+    credentials" and counts towards lockout; the confirmation email is re-sent at most every 10 minutes.
+  - `GET /api/auth/logout` from another site (or without `Sec-Fetch-Site` and a Referer on the site) shows a button
+    instead of signing out; a single sign-on portal that links to it from another domain gets the button.
+  - Rate limits: `Zauber:Identity:LoginRateLimit` and `RegisterRateLimit`, same defaults.
+  - Form protection: tokens are single-use. New `IFormProtectionService.TryUseToken` (default: remembers nothing),
+    `FormProtectionResult.AlreadyUsed` (code that accepted a form when the result was not `Expired` must check for
+    `Passed`), and a fourth optional `FormProtectionService` constructor parameter (`IMemoryCache`). A site's own form
+    that uses the service should call `TryUseToken` once the form is accepted.
+  - The shipped `appsettings.json` files have empty email settings. `SmtpEmailProvider` no longer takes
+    `IServiceProvider`, and skips the SMTP sign-in when `Zauber:Email:Smtp:Username` is empty.
+  - `ToMd5` and `GetMd5` are obsolete; generated user names for new external sign-ins use SHA-256.
+  - `DailyJob` is a `BackgroundService` (still registered by `AddZauberCms`).
+  - Content queries and data grids add `ThenBy(Id)` to their order; of two pages with the same URL (only possible in
+    old data) the first in tree order is served.
 
 ### Phase 11 — Engineering baseline, API clean-up, v5
-ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123, ZA-124,
-ZA-125, ZA-126, ZA-131 (Low).
+ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,
+ZA-124, ZA-125, ZA-126, ZA-131, ZA-165 (Low).
+- **Found in Phase 10e, do first:** ZA-164 (the front end's 404 page is sent with an empty body; reproduce in a bare
+  .NET 10 app, then render `Zauber:NotFoundComponent`), ZA-165 (a redirect's domain is ignored).
 - **Baseline:** ZA-131 (`Directory.Build.props`, analyzers, central package management, `.editorconfig`,
   `.gitattributes`, an SDK pin, a vulnerability scan in CI); CI and release hardening ZA-089, ZA-109.
 - **Packaging and template:** ZA-087 (npm manifests in the Components package), ZA-094 (pinned asset package in the
@@ -913,3 +1043,8 @@ right. Move one into a phase when that is settled.
     that a publish does not overwrite? It would close the common case behind D24; it changes D19's "into
     `appsettings.json`" and does not survive deployments that delete extra files.
   - The installer's pages cannot be restyled or given extra steps from a site (ZA-151). Wanted?
+- From Phase 10e:
+  - Users deleted before v5 still hold their personal data (email, phone, password hash), keep their address from
+    being registered again, and can still be brought back with `RecoverAdminUser`. Erase them on upgrade (a one-off
+    step at start-up: GDPR-clean, but it cannot be undone), or leave them as they are? The phase left them alone
+    because the erase is a one-way change to existing data.

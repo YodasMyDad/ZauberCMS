@@ -23,6 +23,7 @@ public static class SeoRedirectMappingExtensions
         target.FromUrl = source.FromUrl;
         target.ToUrl = source.ToUrl;
         target.IsPermanent = source.IsPermanent;
+        target.IsRegex = source.IsRegex;
         target.DateCreated = source.DateCreated;
         target.DateUpdated = source.DateUpdated;
 

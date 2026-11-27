@@ -114,8 +114,9 @@ No unattended install (D19).
 ## Recovery: no administrator left
 
 Set `Zauber:Identity:RecoverAdminUser` to the email address or the user name of an **existing** user and restart
-(a value with an `@` is matched as an email address only). That user is restored if deleted, unlocked, marked as
-confirmed, and added to `Admin`. Remove the key afterwards: while it is set, every start logs a warning and
+(a value with an `@` is matched as an email address only). That user is unlocked, marked as confirmed, and added
+to `Admin`; one deleted before v5 is restored. A user deleted since then cannot be: deleting erases the account
+(Roadmap D35), and the key logs an error instead. Remove the key afterwards: while it is set, every start logs a warning and
 re-applies it, and if it names nobody, whoever later creates an account with that name is promoted at the next
 start. It does not create accounts.
 
@@ -160,14 +161,20 @@ installer asks and suggests off.
   `IMembershipService.RegisterUserAsync` itself does not check the switch: a site's own registration form
   decides for itself (open question in the roadmap).
 - On, the registration page applies, in this order:
-  1. Rate limit policy `ZauberSetup.RegisterRateLimitPolicy` (`"register"`): 5 POSTs per address per 10 minutes;
-     GETs are free. (It no longer shares `"login"`.) The numbers are fixed in code.
+  1. Rate limit policy `ZauberSetup.RegisterRateLimitPolicy` (`"register"`): 5 POSTs per address per 10 minutes
+     by default; GETs are free. (It no longer shares `"login"`.) Set in `Zauber:Identity:RegisterRateLimit`
+     (`PermitLimit`, `WindowMinutes`; a `PermitLimit` of 0 turns it off); the login pages' `"login"` policy is
+     `Zauber:Identity:LoginRateLimit` (10 per 5 minutes). Both count per visitor address, so behind a proxy set
+     `Zauber:ForwardedHeaders`.
   2. `IFormProtectionService` (replaceable singleton): a honeypot field and a signed timestamp. A filled
      honeypot, a form back in under `Zauber:FormProtection:MinimumFillSeconds` (default 3, 0 = off) or a token
      older than 12 hours is refused. `<FormProtectionFields />` (`ZauberCMS.Components.Shared`) renders the two
      fields; a site can use both on its own static forms. These checks stop scripts that post blindly. A token
-     can be used again for 12 hours, so a script written for the site passes after waiting once: the rate limit
-     and a CAPTCHA are what stop that.
+     sends one form (ZA-150): once the checks pass, the page calls `TryUseToken`, and the token is refused
+     (`AlreadyUsed`) for the rest of its 12 hours; `Validate` alone does not use it up, so a form shown again after
+     a refused post keeps its timing. Used tokens are remembered in each server's memory: behind a load balancer a
+     token could be used once per server. A site's own form calls `TryUseToken` the same way; a replacement
+     service that does not implement it (the default interface method) remembers nothing.
   3. `ICaptchaProvider`, when the site has one.
 
 ### CAPTCHA providers (`ICaptchaProvider`)

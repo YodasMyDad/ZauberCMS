@@ -2364,7 +2364,8 @@ public partial class ContentService(
             _ => query.OrderByDescending(p => p.DateUpdated)
         };
 
-        return query;
+        // Pages with the same date or sort order keep their place from one page of results to the next (ZA-115)
+        return ((IOrderedQueryable<Models.Content>)query).ThenBy(p => p.Id);
     }
 
     private static async Task<PaginatedList<Models.Content>> FetchContentAsync(IQueryable<Models.Content> query,
@@ -2398,12 +2399,15 @@ public partial class ContentService(
                 ? await liveContent.Select(c => new
                         { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(x => x.Id == matchedDomain.ContentId, cancellationToken)
+                // The first root page in tree order, the same one every time (ZA-115)
                 : await liveContent.Where(c => c.IsRootContent)
+                    .OrderBy(c => c.SortOrder).ThenBy(c => c.Id)
                     .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                     .FirstOrDefaultAsync(cancellationToken)
 #pragma warning disable CS0618 // Type or member is obsolete
             : await liveContent.Where(c => c.Url == request.Slug)
 #pragma warning restore CS0618 // Type or member is obsolete
+                .OrderBy(c => c.SortOrder).ThenBy(c => c.Id)
                 .Select(c => new { c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -2498,9 +2502,11 @@ public partial class ContentService(
     private static async Task<string> GenerateUniqueUrlAsync(IZauberDbContext dbContext, string baseSlug,
         CancellationToken cancellationToken, Guid? ownId = null, ISet<string>? reserved = null)
     {
+        // One query for the URL and its numbered forms: this asked the database once for every number (ZA-115)
+        var taken = await TakenUrlsAsync(dbContext, baseSlug, ownId, cancellationToken);
         var url = baseSlug;
         var counter = 1;
-        while ((reserved?.Contains(url) ?? false) || await IsUrlTakenAsync(dbContext, url, ownId, cancellationToken))
+        while ((reserved?.Contains(url) ?? false) || taken.Contains(url))
         {
             url = $"{baseSlug}-{counter}";
             counter++;
@@ -2519,6 +2525,27 @@ public partial class ContentService(
         return await dbContext.Contents.AsNoTracking()
             .AnyAsync(c => c.Url == url && !c.Deleted && !c.IsNestedContent && c.Id != id, cancellationToken);
 #pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    /// <summary>
+    /// The URLs <paramref name="baseSlug"/> and <c>baseSlug-…</c> used by pages other than <paramref name="ownId"/>
+    /// that are not in the recycle bin.
+    /// </summary>
+    private static async Task<HashSet<string>> TakenUrlsAsync(IZauberDbContext dbContext, string baseSlug,
+        Guid? ownId, CancellationToken cancellationToken)
+    {
+        var id = ownId ?? Guid.Empty;
+        var numbered = baseSlug + "-";
+#pragma warning disable CS0618 // Type or member is obsolete
+        var urls = await dbContext.Contents.AsNoTracking()
+            .Where(c => (c.Url == baseSlug || c.Url!.StartsWith(numbered)) && !c.Deleted && !c.IsNestedContent &&
+                        c.Id != id)
+            .Select(c => c.Url!)
+            .ToListAsync(cancellationToken);
+#pragma warning restore CS0618 // Type or member is obsolete
+        // Stored URLs are lower case (ContentUrl.Normalize), so letter case only matters for rows from before that;
+        // ignoring it here never hands out a URL that differs from another page's by case alone
+        return urls.ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>

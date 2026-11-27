@@ -13,6 +13,14 @@ public class ZauberSettings
     public string? Default404Url { get; set; }
 
     /// <summary>
+    /// Outside Development, a request that throws is shown this page with status 500 (ZA-098, Roadmap D33): a
+    /// content page at that address (create one at <c>/error</c> to give the site its own error page) or a page of
+    /// the site's own. When there is none, or it fails as well, a plain built-in page is sent. Empty adds no
+    /// handler, for a site that sets up its own <c>UseExceptionHandler</c>.
+    /// </summary>
+    public string? ErrorPagePath { get; set; } = "/error";
+
+    /// <summary>
     /// How many versions of each page are kept. The daily job removes older ones, never the published version or
     /// the latest draft. 0 keeps every version (the table then grows with every save).
     /// </summary>
@@ -54,13 +62,44 @@ public class Identity
 
     /// <summary>
     /// Recovery for a site that has no administrator left: the email address or user name of an existing user
-    /// who is made an administrator the next time the site starts (a deleted user is restored and a locked one
-    /// unlocked). Remove the key once it has done its job; while it is set, every start logs a warning.
+    /// who is made an administrator the next time the site starts (a locked one is unlocked; one deleted before
+    /// deleting erased users is restored, an erased one cannot be). Remove the key once it has done its job; while
+    /// it is set, every start logs a warning.
     /// </summary>
     public string? RecoverAdminUser { get; set; }
     public string? AccountLayout { get; set; } = "ZauberCMS.Components.Pages.BlankLayout";
     
     public string DefaultLoginRedirectUrl { get; set; } = "/account/login";
+
+    /// <summary>
+    /// Requests each visitor address may make to the sign-in pages (login, forgot password, external sign-in) in the
+    /// window, refused ones included (ZA-149). Behind a proxy, set <c>Zauber:ForwardedHeaders</c> or every visitor
+    /// shares one allowance.
+    /// </summary>
+    public RateLimitSettings LoginRateLimit { get; set; } = new() { PermitLimit = 10, WindowMinutes = 5 };
+
+    /// <summary>Registration forms each visitor address may send in the window (looking at the form is free).</summary>
+    public RateLimitSettings RegisterRateLimit { get; set; } = new() { PermitLimit = 5, WindowMinutes = 10 };
+}
+
+/// <summary>A sliding-window limit per visitor address (ZA-149).</summary>
+public class RateLimitSettings
+{
+    /// <summary>How many requests the window allows. 0 turns the limit off (not for a public site).</summary>
+    public int PermitLimit { get; set; }
+
+    /// <summary>The length of the window in minutes.</summary>
+    public int WindowMinutes { get; set; }
+
+    /// <summary>The limiter options: the window in five segments, no queueing.</summary>
+    public System.Threading.RateLimiting.SlidingWindowRateLimiterOptions ToLimiterOptions() => new()
+    {
+        PermitLimit = PermitLimit,
+        Window = TimeSpan.FromMinutes(Math.Max(1, WindowMinutes)),
+        SegmentsPerWindow = 5,
+        QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
+        QueueLimit = 0
+    };
 }
 
 /// <summary>
@@ -108,7 +147,11 @@ public class ImageResizeSettings
     public List<string> ContentRoots { get; set; } = ["img", "images", "media"];
     public string? WebRoot { get; set; }
     public string? CacheRoot { get; set; }
-    public bool AllowUpscale { get; set; } = true;
+    /// <summary>
+    /// Whether a resize may make an image bigger than its original. Off by default (ZA-104, Roadmap D36): a request
+    /// for a larger size returns the original size, so visitors cannot make the site build huge copies.
+    /// </summary>
+    public bool AllowUpscale { get; set; }
     public int DefaultQuality { get; set; } = 99;
     public int PngCompressionLevel { get; set; } = 6;
     public bool HashOriginalContent { get; set; } = false;
@@ -120,7 +163,14 @@ public class ImageCacheSettings
 {
     public int FolderSharding { get; set; } = 2;
     public bool PruneOnStartup { get; set; } = false;
-    public long MaxCacheBytes { get; set; } = 0;
+    /// <summary>
+    /// The most disk space resized copies may take, in bytes; the oldest are removed when a new copy goes over it.
+    /// 2 GB by default (ZA-104, Roadmap D36), so requests for many sizes cannot fill the disk. 0 is no limit.
+    /// </summary>
+    public long MaxCacheBytes { get; set; } = DefaultMaxCacheBytes;
+
+    /// <summary>The default for <see cref="MaxCacheBytes"/>: 2 GB.</summary>
+    public const long DefaultMaxCacheBytes = 2L * 1024 * 1024 * 1024;
 }
 
 public class ImageResponseCacheSettings

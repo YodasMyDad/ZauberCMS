@@ -1,4 +1,4 @@
-﻿@using ZauberCMS.Core.Content.Parameters
+@using ZauberCMS.Core.Content.Parameters
 @using ZauberCMS.Core.Seo.Models
 
 <EditorRow>
@@ -12,13 +12,25 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="From Url" Description="Url you want to redirect from (Regex allowed)" />
+        <PropertyInfo Name="From Url" Description="The address to redirect from, starting with / (the query string too, if it has one)" />
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox @bind-Value="@Redirect.FromUrl" Style="width: 100%" />
-        <div class="rz-mt-2">
-            If you are using regex, double check it works on the <a href="https://regex101.com/" target="_blank">regex101.com</a> website.
-        </div>
+    </CentreColumn>
+</EditorRow>
+
+<EditorRow>
+    <LeftColumn>
+        <PropertyInfo Name="Regular expression?" Description="On: the From Url is a regular expression matched against the address (path and query string). Off: the address must be exactly the From Url." />
+    </LeftColumn>
+    <CentreColumn>
+        <RadzenSwitch @bind-Value="@IsRegex" />
+        @if (IsRegex)
+        {
+            <div class="rz-mt-2">
+                Letter case is ignored. Test the expression on <a href="https://regex101.com/" target="_blank" rel="noopener noreferrer">regex101.com</a> (.NET flavour) first.
+            </div>
+        }
     </CentreColumn>
 </EditorRow>
 
@@ -52,8 +64,14 @@
 
     private List<DomainChoice> Domains { get; set; } = [];
     private Guid SelectedDomainId { get; set; }
+
+    // A redirect saved before the flag existed shows what it is matched as today (ZA-116); saving makes it explicit
+    private bool IsRegex { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        IsRegex = ZauberCMS.Core.Seo.RedirectRules.IsRegex(Redirect);
+        SelectedDomainId = Redirect.DomainId ?? Guid.Empty;
         var domains = await ContentService.QueryDomainAsync(new QueryDomainParameters 
         {
             AmountPerPage = 1000
@@ -72,10 +90,11 @@
         
     private async Task Save()
     {
-        // Validate regex
-        if (ValidateFromUrlRegex() == false)
+        Redirect.FromUrl = Redirect.FromUrl?.Trim();
+        Redirect.IsRegex = IsRegex;
+        if (ValidateFromUrl() is { } problem)
         {
-            NotificationService.ShowErrorNotification("Unable to validate from url, if using regex, double check it - urls must start with /");
+            NotificationService.ShowErrorNotification(problem);
             return;
         }
         
@@ -106,35 +125,29 @@
         await BlazoredModal.CloseAsync(ModalResult.Ok(Redirect));
     }
 
-    private bool ValidateFromUrlRegex()
+    private string? ValidateFromUrl()
     {
         if (string.IsNullOrWhiteSpace(Redirect.FromUrl))
         {
-            return false; // Empty or whitespace is invalid
+            return "From url must not be empty";
         }
 
-        // Check if the input is likely a regex pattern
-        var looksLikeRegex = Redirect.FromUrl.IndexOfAny(['*', '.', '$', '^', '[', '(', '?']) >= 0;
-
-        if (looksLikeRegex)
+        if (!IsRegex)
         {
-            // Try to validate as a regex
-            try
-            {
-                _ = new System.Text.RegularExpressions.Regex(Redirect.FromUrl);
-                return true; // Valid regex
-            }
-            catch (System.Text.RegularExpressions.RegexParseException)
-            {
-                return false; // Invalid regex
-            }
+            return Redirect.FromUrl.StartsWith('/') ? null : "From url must start with /";
         }
 
-        // Validate standard URL - must start with a '/'
-        return Redirect.FromUrl.StartsWith("/");
+        try
+        {
+            ZauberCMS.Core.Seo.RedirectRules.CreateRegex(Redirect.FromUrl);
+            return null;
+        }
+        catch (ArgumentException)
+        {
+            return "From url is not a valid regular expression";
+        }
     }
-    
-    public class DomainChoice
+        public class DomainChoice
     {
         public string Text { get; set; } = string.Empty;
         public Guid Id { get; set; }

@@ -947,6 +947,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqLite
                     b.Property<bool>("IsPermanent")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool?>("IsRegex")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ToUrl")
                         .IsRequired()
                         .HasMaxLength(500)

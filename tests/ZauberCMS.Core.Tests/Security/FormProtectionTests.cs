@@ -102,6 +102,99 @@ public class FormProtectionTests
         Assert.Equal(FormProtectionResult.Expired, service.Validate(token, ""));
     }
 
+    private static (FormProtectionService Service, Clock Clock) CreateRemembering()
+    {
+        var clock = new Clock();
+        var settings = new ZauberSettings { FormProtection = { MinimumFillSeconds = 3 } };
+        var cache = new Microsoft.Extensions.Caching.Memory.MemoryCache(
+            new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions());
+        return (new FormProtectionService(new EphemeralDataProtectionProvider(), Options.Create(settings), clock, cache),
+            clock);
+    }
+
+    [Fact]
+    public void ZA150_a_token_sends_one_form_and_is_refused_after_that()
+    {
+        var (service, clock) = CreateRemembering();
+        var token = service.CreateToken();
+        clock.Now += TimeSpan.FromSeconds(10);
+
+        // Checking does not use it up: the page checks it before the form handler runs
+        Assert.Equal(FormProtectionResult.Passed, service.Validate(token, ""));
+        Assert.Equal(FormProtectionResult.Passed, service.Validate(token, ""));
+
+        Assert.True(service.TryUseToken(token));
+        Assert.False(service.TryUseToken(token));
+        Assert.Equal(FormProtectionResult.AlreadyUsed, service.Validate(token, ""));
+
+        // Another token is not affected
+        var next = service.CreateToken();
+        clock.Now += TimeSpan.FromSeconds(10);
+        Assert.Equal(FormProtectionResult.Passed, service.Validate(next, ""));
+    }
+
+    [Theory]
+    [InlineData("    {0}")]
+    [InlineData("{0}    ")]
+    [InlineData("{0}\t")]
+    public void ZA150_a_used_token_with_spaces_added_is_still_used(string shape)
+    {
+        var (service, clock) = CreateRemembering();
+        var token = service.CreateToken();
+        clock.Now += TimeSpan.FromSeconds(10);
+        Assert.True(service.TryUseToken(token));
+
+        var padded = string.Format(shape, token);
+
+        Assert.False(service.TryUseToken(padded));
+        Assert.NotEqual(FormProtectionResult.Passed, service.Validate(padded, ""));
+    }
+
+    [Fact]
+    public void ZA150_two_tokens_made_at_the_same_moment_are_different()
+    {
+        var (service, _) = CreateRemembering();
+
+        Assert.NotEqual(service.CreateToken(), service.CreateToken());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("not-a-token")]
+    public void ZA150_a_token_that_is_not_ours_cannot_be_used(string? token)
+    {
+        var (service, _) = CreateRemembering();
+
+        Assert.False(service.TryUseToken(token));
+    }
+
+    [Fact]
+    public void ZA150_a_token_issued_before_the_id_was_added_still_works_once()
+    {
+        var provider = new EphemeralDataProtectionProvider();
+        var clock = new Clock();
+        var service = new FormProtectionService(provider, Options.Create(new ZauberSettings()), clock,
+            new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()));
+        var oldToken = provider.CreateProtector("ZauberCMS.FormProtection.v1")
+            .Protect(clock.Now.UtcTicks.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        clock.Now += TimeSpan.FromSeconds(10);
+
+        Assert.Equal(FormProtectionResult.Passed, service.Validate(oldToken, ""));
+        Assert.True(service.TryUseToken(oldToken));
+        Assert.Equal(FormProtectionResult.AlreadyUsed, service.Validate(oldToken, ""));
+    }
+
+    [Fact]
+    public async Task ZA150_the_site_service_remembers_used_tokens()
+    {
+        await using var site = await TestSite.CreateAsync();
+        var service = site.Services.GetRequiredService<IFormProtectionService>();
+        var token = service.CreateToken();
+
+        Assert.True(service.TryUseToken(token));
+        Assert.False(service.TryUseToken(token));
+    }
+
     [Fact]
     public void The_posted_form_is_read_by_field_name()
     {

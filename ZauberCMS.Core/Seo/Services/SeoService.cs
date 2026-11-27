@@ -45,9 +45,27 @@ public class SeoService(
                 return handlerResult;
             }
 
+            var fromUrlProblem = CheckFromUrl(parameters.Redirect);
+            if (fromUrlProblem != null)
+            {
+                handlerResult.AddMessage(fromUrlProblem, ResultMessageType.Error);
+                return handlerResult;
+            }
+
+            // A redirect that sends visitors round in circles is refused (ZA-116)
+            var others = await dbContext.Redirects.AsNoTracking()
+                .Where(x => x.Id != parameters.Redirect.Id)
+                .ToListAsync(cancellationToken);
+            var loop = RedirectRules.FindLoop(parameters.Redirect, others);
+            if (loop != null)
+            {
+                handlerResult.AddMessage(loop, ResultMessageType.Error);
+                return handlerResult;
+            }
+
             // Get the DB version
-            var redirect = dbContext.Redirects
-                .FirstOrDefault(x => x.Id == parameters.Redirect.Id);
+            var redirect = await dbContext.Redirects
+                .FirstOrDefaultAsync(x => x.Id == parameters.Redirect.Id, cancellationToken);
 
             if (redirect == null)
             {
@@ -63,9 +81,8 @@ public class SeoService(
             
             var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
             await user.AddAudit(redirect, redirect.FromUrl, isUpdate ? AuditExtensions.AuditAction.Update : AuditExtensions.AuditAction.Create, auditService, cancellationToken);
-            var saved = await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken);
-            ClearCompiledRedirects();
-            return saved;
+            // Clears the SeoRedirect cache prefix on every server, the redirect middleware's compiled list with it
+            return await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
         handlerResult.AddMessage("Redirect is null", ResultMessageType.Error);
@@ -121,19 +138,30 @@ public class SeoService(
             }
         }
 
-        HandlerResult<SeoRedirect?> deleted = (await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken))!;
-        ClearCompiledRedirects();
-        return deleted;
+        return (await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken))!;
     }
 
-    /// <summary>The redirect middleware keeps its own compiled copy of the redirects; a change must drop it.</summary>
-    private void ClearCompiledRedirects()
+    /// <summary>Why the From URL cannot be saved, or null: an exact one is a path, a regular expression must parse.</summary>
+    private static string? CheckFromUrl(SeoRedirect redirect)
     {
-        using var scope = serviceScopeFactory.CreateScope();
-        var memoryCache = scope.ServiceProvider.GetService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
-        if (memoryCache != null)
+        if (string.IsNullOrWhiteSpace(redirect.FromUrl))
         {
-            Middleware.RedirectMiddleware.ClearCache(memoryCache);
+            return "The address to redirect from is empty";
+        }
+
+        if (!RedirectRules.IsRegex(redirect))
+        {
+            return redirect.FromUrl.StartsWith('/') ? null : "The address to redirect from must start with /";
+        }
+
+        try
+        {
+            RedirectRules.CreateRegex(redirect.FromUrl);
+            return null;
+        }
+        catch (ArgumentException ex)
+        {
+            return $"The address to redirect from is not a valid regular expression: {ex.Message}";
         }
     }
 
@@ -165,6 +193,9 @@ public class SeoService(
             GetSeoRedirectOrderBy.DateUpdatedDescending => query.OrderByDescending(p => p.DateUpdated),
             _ => query.OrderByDescending(p => p.FromUrl)
         };
+
+        // The same order every time: the first regular expression that matches wins (ZA-115)
+        query = ((IOrderedQueryable<SeoRedirect>)query).ThenBy(p => p.Id);
 
         return query.Take(parameters.Amount);
     }

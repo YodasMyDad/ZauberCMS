@@ -30,6 +30,8 @@ public static class ClaimsPrincipalExtensions
         return principal.FindFirstValue(Constants.Claims.ProfileImage);
     }
     
+    /// <summary>The MD5 hash of the user's email address, from the sign-in cookie.</summary>
+    [Obsolete("MD5 (ZA-031): the claim goes in the next major version. Hash the email address yourself (Gravatar takes SHA-256).")]
     public static string? GetMd5(this ClaimsPrincipal principal)
     {
         return principal.FindFirstValue(Constants.Claims.Md5Hash);

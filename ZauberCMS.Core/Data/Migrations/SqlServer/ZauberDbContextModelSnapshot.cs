@@ -958,6 +958,9 @@ namespace ZauberCMS.Core.Data.Migrations.SqlServer
                     b.Property<bool>("IsPermanent")
                         .HasColumnType("bit");
 
+                    b.Property<bool?>("IsRegex")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ToUrl")
                         .IsRequired()
                         .HasMaxLength(500)

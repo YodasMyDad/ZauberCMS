@@ -302,6 +302,33 @@ public class RecoverAdminTests
     }
 
     [Fact]
+    public async Task ZA033_a_user_erased_by_deleting_is_not_recovered()
+    {
+        await using var site = await SiteAsync("placeholder");
+        var deleter = await site.CreateUserAsync("deleter");
+        site.SignIn(deleter);
+        var lost = await site.CreateUserAsync("lost");
+        using (var setup = site.CreateScope())
+        {
+            var deleted = await setup.ServiceProvider.GetRequiredService<ZauberCMS.Core.Membership.Interfaces.IMembershipService>()
+                .DeleteUserAsync(new ZauberCMS.Core.Membership.Parameters.DeleteUserParameters { Id = lost.Id },
+                    TestContext.Current.CancellationToken);
+            Assert.True(deleted.Success, TestSite.Describe(deleted.Messages));
+        }
+
+        // The key names what is left of the account
+        site.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ZauberCMS.Core.Settings.ZauberSettings>>()
+            .Value.Identity.RecoverAdminUser = $"deleted-{lost.Id:N}";
+        await InitialiseAsync(site);
+
+        using var scope = site.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var erased = (await userManager.FindByIdAsync(lost.Id.ToString()))!;
+        Assert.True(erased.Deleted);
+        Assert.Empty(await userManager.GetRolesAsync(erased));
+    }
+
+    [Fact]
     public async Task A_name_nobody_has_creates_no_account()
     {
         await using var site = await SiteAsync("nobody@example.test");

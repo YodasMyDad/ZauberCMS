@@ -23,66 +23,25 @@ public class CultureMiddleware(
     
     public async Task InvokeAsync(HttpContext context, IContentService contentService)
     {
+        // The error page runs the pipeline again for the same request (ZA-098): the failed page's model must not
+        // be shown in its place
+        context.Items.Remove(EntryModelKey);
+
+        // Only this middleware's own work is inside the try: the rest of the request runs once, after it. A page
+        // that threw used to be caught here, logged as this middleware's error and run a second time (ZA-098).
         try
         {
-            // Only process if this looks like a CMS route (not admin, not static files, etc.)
-            var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
-
-            // The admin has its own language, whatever the browser asks for and whatever the content is in
-            if (AdminAccess.IsAdminPath(context.Request.Path))
+            // Set here, not in the method: a culture set inside an async method does not reach its caller
+            if (await ResolveCultureAsync(context, contentService) is { } culture)
             {
-                var adminCulture = AdminCulture.Apply(settings.Value);
-                context.Features.Set<IRequestCultureFeature>(
-                    new RequestCultureFeature(new RequestCulture(adminCulture, adminCulture), null));
+                CultureInfo.CurrentCulture = culture;
+                CultureInfo.CurrentUICulture = culture;
             }
-            
-            // Only requests for the home page and the content catch-all page are content. Anything else
-            // (/_blazor, a site's own endpoints, files) used to be looked up as the root page and got its
-            // language (ZA-143).
-            if (path.StartsWith("/admin") ||
-                path.StartsWith("/api") ||
-                path.StartsWith("/account") ||
-                path.Contains('.') ||
-                !IsContentEndpoint(context.GetEndpoint()))
-            {
-                await next(context);
-                return;
-            }
-            
-            // Get the slug from route data
-            var slug = context.Request.RouteValues["slug"]?.ToString();
-            
-            // Get content from database (this is cached for 5 minutes)
-            var entryModel = await contentService.GetContentFromRequestAsync(new GetContentFromRequestParameters 
-            { 
-                Slug = slug, 
-                IsRootContent = slug == null, 
-                Url = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}"
-            });
-
-            // Store in HttpContext.Items so EntryPage can reuse it without another query
-            context.Items[EntryModelKey] = entryModel;
-
-            if (entryModel.Content != null)
-            {
-                var languageIso = entryModel.LanguageIsoCode ?? settings.Value.AdminDefaultLanguage;
-                var cultureInfo = new CultureInfo(languageIso);
-                
-                // Set the culture on the HttpContext using the proper localization feature
-                var requestCulture = new RequestCulture(cultureInfo, cultureInfo);
-                context.Features.Set<IRequestCultureFeature>(new RequestCultureFeature(requestCulture, null));
-                
-                // Also set thread culture for good measure
-                CultureInfo.CurrentCulture = cultureInfo;
-                CultureInfo.CurrentUICulture = cultureInfo;
-                
-                logger.LogDebug("Culture set to {Culture} for path {Path}", languageIso, path);
-            }
-            else
-            {
-                // No content found - will use default culture from UseRequestLocalization
-                logger.LogDebug("No content found for path {Path}, using default culture", path);
-            }
+        }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        {
+            // The visitor went away (ZA-111): nobody is waiting for the page
+            return;
         }
         catch (Exception ex)
         {
@@ -92,6 +51,72 @@ public class CultureMiddleware(
         }
 
         await next(context);
+    }
+
+    /// <summary>
+    /// The admin's culture for the admin; for a content page, the page (kept for EntryPage) and its culture; null
+    /// for anything else. Also sets the request's culture feature.
+    /// </summary>
+    private async Task<CultureInfo?> ResolveCultureAsync(HttpContext context, IContentService contentService)
+    {
+        CultureInfo? culture = null;
+        // Only process if this looks like a CMS route (not admin, not static files, etc.)
+        var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
+
+        // The admin has its own language, whatever the browser asks for and whatever the content is in
+        if (AdminAccess.IsAdminPath(context.Request.Path))
+        {
+            var adminCulture = AdminCulture.Get(settings.Value);
+            context.Features.Set<IRequestCultureFeature>(
+                new RequestCultureFeature(new RequestCulture(adminCulture, adminCulture), null));
+            culture = adminCulture;
+        }
+        
+        // Only requests for the home page and the content catch-all page are content. Anything else
+        // (/_blazor, a site's own endpoints, files) used to be looked up as the root page and got its
+        // language (ZA-143).
+        if (SitePaths.IsSystemPath(context.Request.Path) ||
+            path.Contains('.') ||
+            !IsContentEndpoint(context.GetEndpoint()))
+        {
+            return culture;
+        }
+        
+        // Get the slug from route data
+        var slug = context.Request.RouteValues["slug"]?.ToString();
+        
+        // Get content from database (this is cached for 5 minutes)
+        var entryModel = await contentService.GetContentFromRequestAsync(new GetContentFromRequestParameters 
+        { 
+            Slug = slug, 
+            IsRootContent = slug == null, 
+            Url = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}"
+        }, context.RequestAborted);
+
+        // Store in HttpContext.Items so EntryPage can reuse it without another query
+        context.Items[EntryModelKey] = entryModel;
+
+        if (entryModel.Content != null)
+        {
+            var languageIso = entryModel.LanguageIsoCode ?? settings.Value.AdminDefaultLanguage;
+            var cultureInfo = new CultureInfo(languageIso);
+            
+            // Set the culture on the HttpContext using the proper localization feature
+            var requestCulture = new RequestCulture(cultureInfo, cultureInfo);
+            context.Features.Set<IRequestCultureFeature>(new RequestCultureFeature(requestCulture, null));
+            
+            // And the thread culture, for the rest of the request (set by the caller)
+            culture = cultureInfo;
+            
+            logger.LogDebug("Culture set to {Culture} for path {Path}", languageIso, path);
+        }
+        else
+        {
+            // No content found - will use default culture from UseRequestLocalization
+            logger.LogDebug("No content found for path {Path}, using default culture", path);
+        }
+
+        return culture;
     }
     
     /// <summary>

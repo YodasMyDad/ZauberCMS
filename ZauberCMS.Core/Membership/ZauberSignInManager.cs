@@ -165,9 +165,8 @@ public class ZauberSignInManager(
             var adjectives = new List<string> { "Brave", "Calm", "Eager", "Fancy", "Jolly", "Kind", "Lucky", "Silly", "Witty", "Zany" };
             var nouns = new List<string> { "Lion", "Tiger", "Bear", "Wolf", "Fox", "Hawk", "Shark", "Whale", "Eagle", "Frog" };
 
-            using var md5 = MD5.Create();
-            var emailBytes = Encoding.UTF8.GetBytes(email);
-            var hashBytes = md5.ComputeHash(emailBytes);
+            // SHA-256, not MD5 (ZA-031): the hash only picks the words, but MD5 should not be used for anything new
+            var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(email));
 
             var adjectiveIndex = BitConverter.ToUInt16(hashBytes, 0) % adjectives.Count;
             var nounIndex = BitConverter.ToUInt16(hashBytes, 2) % nouns.Count;

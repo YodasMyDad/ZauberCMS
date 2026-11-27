@@ -56,15 +56,17 @@ public class CacheTests : IAsyncLifetime
     public async Task ZA055_An_entry_cached_by_two_requests_at_once_is_still_cleared_by_its_prefix()
     {
         var cache = Cache();
+        var server = _site.Services.GetRequiredService<ZauberCMS.Core.Shared.Services.ServerCache>();
         var key = $"Race-{Guid.NewGuid():N}";
-        var gate = new TaskCompletionSource<int>();
 
-        // Two misses at once: the slower one replaces the faster one's entry. The replaced entry's eviction
-        // callback used to take the key out of the registry, so prefix clears no longer saw it.
-        var slow = cache.GetSetCachedItemAsync(key, () => gate.Task);
-        Assert.Equal(2, await cache.GetSetCachedItemAsync(key, () => Task.FromResult(2)));
-        gate.SetResult(1);
-        Assert.Equal(1, await slow);
+        // Two loads that both write the key: the later write replaces the earlier entry. The replaced entry's
+        // eviction callback used to take the key out of the registry, so prefix clears no longer saw it.
+        // (Requests that miss together now share one load (ZA-115); writes from separate loads, one started before
+        // a clear and one after, still overlap like this.)
+        var generation = server.Generation;
+        server.Set(key, 2, TimeSpan.FromMinutes(5), generation);
+        server.Set(key, 1, TimeSpan.FromMinutes(5), generation);
+        Assert.Equal(1, await cache.GetSetCachedItemAsync(key, () => Task.FromResult(-1)));
         await Task.Delay(200, Ct); // eviction callbacks run on the thread pool
 
         cache.ClearCachedItemsWithPrefix("Race-");

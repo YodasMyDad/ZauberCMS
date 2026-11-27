@@ -5,6 +5,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -67,7 +68,9 @@ public class InstallerMiddleware(
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (installState.IsInstalled)
+        // The error page for a request that failed (ZA-098) goes through: turning it into a redirect to the installer
+        // would hide the failure
+        if (installState.IsInstalled || context.Features.Get<IExceptionHandlerFeature>() != null)
         {
             await next(context);
             return;

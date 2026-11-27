@@ -35,6 +35,14 @@ public class SeoRedirect : ITreeItem
     public string? ToUrl { get; set; }
 
     /// <summary>
+    /// True when <see cref="FromUrl"/> is a regular expression; false when it must match the address exactly
+    /// (letter case aside), "?" and all (ZA-116, Roadmap D34). Null for a redirect saved before this existed: it is
+    /// matched as before, as a regular expression when the From URL has regex characters
+    /// (<see cref="Seo.RedirectRules.LooksLikeRegex"/>), until it is saved again.
+    /// </summary>
+    public bool? IsRegex { get; set; } = false;
+
+    /// <summary>
     /// Determines whether the SEO redirect is permanent or temporary.
     /// </summary>
     public bool IsPermanent { get; set; } = true;

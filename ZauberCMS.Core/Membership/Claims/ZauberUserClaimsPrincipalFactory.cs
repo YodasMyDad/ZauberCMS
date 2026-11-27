@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Extensions;
@@ -21,7 +21,10 @@ public class ZauberUserClaimsPrincipalFactory(
         var principal = await base.CreateAsync(user);
         var roles = await _userManager.GetRolesAsync(user);
 
+        // Kept for sites that read it (GetMd5, obsolete: ZA-031) until the next major version
+#pragma warning disable CS0618
         var claimsToAdd = new List<Claim> {new(Constants.Claims.Md5Hash, user.Email?.ToMd5() ?? string.Empty)};
+#pragma warning restore CS0618
 
         /*if (user.ProfileImage?.Url.IsNullOrWhiteSpace() == false)
         {

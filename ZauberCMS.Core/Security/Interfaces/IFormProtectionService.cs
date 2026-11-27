@@ -27,4 +27,12 @@ public interface IFormProtectionService
 
     /// <summary>Checks a token and a honeypot value taken from a form by other means.</summary>
     FormProtectionResult Validate(string? token, string? honeypotValue);
+
+    /// <summary>
+    /// Marks the token as used once the form it came with has been accepted, so the same token cannot send another
+    /// form (ZA-150); <see cref="Validate(string?, string?)"/> then returns
+    /// <see cref="FormProtectionResult.AlreadyUsed"/> for it. False when it was used already. Validating does not use
+    /// a token up: a form shown again after a refused post keeps its token. The default remembers nothing.
+    /// </summary>
+    bool TryUseToken(string? token) => true;
 }

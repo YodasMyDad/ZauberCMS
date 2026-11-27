@@ -8,7 +8,7 @@ using ZauberCMS.Core.Tests.Infrastructure;
 
 namespace ZauberCMS.Core.Tests.Membership;
 
-/// <summary>Deleting a user is a soft delete that must really be stored (ZA-045, ZA-088).</summary>
+/// <summary>Deleting a user is stored (ZA-045, ZA-088) and erases the person (ZA-033, D35).</summary>
 public class DeleteUserTests : IAsyncLifetime
 {
     /// <summary>Overridden by the PostgreSQL copy of this class at the end of the file.</summary>
@@ -54,6 +54,133 @@ public class DeleteUserTests : IAsyncLifetime
 
         Assert.True(result.Success, TestSite.Describe(result.Messages));
         Assert.True(await IsDeletedAsync(user.Id));
+    }
+
+    [Fact]
+    public async Task ZA033_delete_erases_the_person_and_keeps_the_row()
+    {
+        var user = await _site.CreateUserAsync("leaver");
+        using (var scope = _site.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<User>>();
+            var stored = (await userManager.FindByIdAsync(user.Id.ToString()))!;
+            await userManager.SetPhoneNumberAsync(stored, "+44 1234 567890");
+            await userManager.AddLoginAsync(stored, new Microsoft.AspNetCore.Identity.UserLoginInfo("Google", "g-1", "Google"));
+            await userManager.AddClaimAsync(stored, new System.Security.Claims.Claim("nickname", "Lee"));
+        }
+
+        var result = await DeleteAsync(new DeleteUserParameters { Id = user.Id });
+        Assert.True(result.Success, TestSite.Describe(result.Messages));
+
+        var erased = await _site.QueryDatabaseAsync(db => db.Users.AsNoTracking().SingleAsync(x => x.Id == user.Id));
+        Assert.True(erased.Deleted);
+        Assert.Equal($"deleted-{user.Id:N}", erased.UserName);
+        Assert.Null(erased.Email);
+        Assert.Null(erased.NormalizedEmail);
+        Assert.Null(erased.PhoneNumber);
+        Assert.Null(erased.PasswordHash);
+        Assert.Equal(0, await _site.QueryDatabaseAsync(db => db.UserLogins.CountAsync(x => x.UserId == user.Id)));
+        Assert.Equal(0, await _site.QueryDatabaseAsync(db => db.UserClaims.CountAsync(x => x.UserId == user.Id)));
+        Assert.Equal(0, await _site.QueryDatabaseAsync(db => db.UserRoles.CountAsync(x => x.UserId == user.Id)));
+    }
+
+    [Fact]
+    public async Task ZA033_the_address_and_name_of_a_deleted_user_can_register_again()
+    {
+        var user = await _site.CreateUserAsync("leaver");
+        await DeleteAsync(new DeleteUserParameters { Id = user.Id });
+
+        var again = await _site.CreateUserAsync("leaver");
+
+        Assert.NotEqual(user.Id, again.Id);
+        Assert.Equal("leaver@example.test", again.Email);
+    }
+
+    [Fact]
+    public async Task ZA033_a_deleted_user_cannot_be_deleted_again()
+    {
+        var user = await _site.CreateUserAsync("leaver");
+        await DeleteAsync(new DeleteUserParameters { Id = user.Id });
+
+        Assert.False((await DeleteAsync(new DeleteUserParameters { Id = user.Id })).Success);
+    }
+
+    [Fact]
+    public async Task ZA033_you_cannot_delete_your_own_account()
+    {
+        var result = await DeleteAsync(new DeleteUserParameters { Id = _site.CurrentUser.Id });
+
+        Assert.False(result.Success);
+        Assert.False(await IsDeletedAsync(_site.CurrentUser.Id));
+    }
+
+    [Fact]
+    public async Task ZA033_the_last_administrator_cannot_be_deleted_until_there_is_another()
+    {
+        var boss = await _site.CreateUserAsync("boss");
+        var deputy = await _site.CreateUserAsync("deputy");
+        await AddToAdminAsync(boss);
+
+        var refused = await DeleteAsync(new DeleteUserParameters { Id = boss.Id });
+        Assert.False(refused.Success);
+        Assert.False(await IsDeletedAsync(boss.Id));
+
+        await AddToAdminAsync(deputy);
+        var deleted = await DeleteAsync(new DeleteUserParameters { Id = boss.Id });
+        Assert.True(deleted.Success, TestSite.Describe(deleted.Messages));
+    }
+
+    [Fact]
+    public async Task ZA033_delete_removes_profile_values_and_tokens_too()
+    {
+        var user = await _site.CreateUserAsync("leaver");
+        using (var scope = _site.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<User>>();
+            var stored = (await userManager.FindByIdAsync(user.Id.ToString()))!;
+            await userManager.SetAuthenticationTokenAsync(stored, "Google", "refresh", "secret-token");
+        }
+
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            db.UserPropertyValues.Add(new UserPropertyValue
+            {
+                UserId = user.Id, Alias = "bio", Value = "Likes long walks", ContentTypePropertyId = Guid.NewGuid()
+            });
+            return await db.SaveChangesAsync();
+        });
+
+        Assert.True((await DeleteAsync(new DeleteUserParameters { Id = user.Id })).Success);
+
+        Assert.Equal(0, await _site.QueryDatabaseAsync(db => db.UserPropertyValues.CountAsync(x => x.UserId == user.Id)));
+        Assert.Equal(0, await _site.QueryDatabaseAsync(db => db.UserTokens.CountAsync(x => x.UserId == user.Id)));
+    }
+
+    [Fact]
+    public async Task ZA033_somebody_who_took_the_erased_name_first_does_not_stop_the_erasure()
+    {
+        var user = await _site.CreateUserAsync("leaver");
+        await _site.CreateUserAsync($"deleted-{user.Id:N}");
+
+        var result = await DeleteAsync(new DeleteUserParameters { Id = user.Id });
+
+        Assert.True(result.Success, TestSite.Describe(result.Messages));
+        Assert.True(await IsDeletedAsync(user.Id));
+    }
+
+    private async Task AddToAdminAsync(User user)
+    {
+        using var scope = _site.CreateScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.RoleManager<Role>>();
+        if (!await roleManager.RoleExistsAsync(ZauberCMS.Core.Constants.Roles.AdminRoleName))
+        {
+            await roleManager.CreateAsync(new Role { Name = ZauberCMS.Core.Constants.Roles.AdminRoleName });
+        }
+
+        var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<User>>();
+        var added = await userManager.AddToRoleAsync((await userManager.FindByIdAsync(user.Id.ToString()))!,
+            ZauberCMS.Core.Constants.Roles.AdminRoleName);
+        Assert.True(added.Succeeded, string.Join("; ", added.Errors.Select(e => e.Description)));
     }
 
     [Fact]

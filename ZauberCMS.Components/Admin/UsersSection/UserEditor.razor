@@ -1,4 +1,4 @@
-﻿@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.DependencyInjection
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
 @using ZauberCMS.Components.Admin.UsersSection.Dialogs
@@ -248,7 +248,7 @@
 
     private async Task DeleteUser()
     {
-        var delete = await DialogService.Confirm("Do you really want to delete this user?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        var delete = await DialogService.Confirm("Delete this user for good? Their name, email address, password and profile are erased; this cannot be undone. To stop someone signing in but keep the account, lock it instead.", "Delete user", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
         if (delete == true)
         {
             var deleteResult = await MembershipService.DeleteUserAsync(new DeleteUserParameters { Id = User!.Id });

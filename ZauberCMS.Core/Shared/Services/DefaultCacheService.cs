@@ -22,10 +22,13 @@ public class DefaultCacheService(ServerCache serverCache, ICacheInvalidationBus 
             return cached;
         }
 
-        var generation = serverCache.Generation;
-        var value = await getCacheItemAsync();
-        serverCache.Set(cacheKey, value, Expiration(cacheTimeInMinutes, cacheTimeInSeconds), generation);
-        return value;
+        return await LoadOnceAsync(cacheKey, async () =>
+        {
+            var generation = serverCache.Generation;
+            var value = await getCacheItemAsync();
+            serverCache.Set(cacheKey, value, Expiration(cacheTimeInMinutes, cacheTimeInSeconds), generation);
+            return value;
+        });
     }
 
     public async Task<T?> GetSetCachedItemAsync<T>(string cacheKey, Func<Task<T>> getCacheItemAsync,
@@ -36,14 +39,69 @@ public class DefaultCacheService(ServerCache serverCache, ICacheInvalidationBus 
             return cached;
         }
 
-        var generation = serverCache.Generation;
-        var value = await getCacheItemAsync();
-        if (shouldCache(value))
+        return await LoadOnceAsync(cacheKey, async () =>
         {
-            serverCache.Set(cacheKey, value, Expiration(cacheTimeInMinutes, 0), generation);
+            var generation = serverCache.Generation;
+            var value = await getCacheItemAsync();
+            if (shouldCache(value))
+            {
+                serverCache.Set(cacheKey, value, Expiration(cacheTimeInMinutes, 0), generation);
+            }
+
+            return value;
+        });
+    }
+
+    // Loads under way (ServerCache.Loading, shared by every request on the server). Requests that miss the same key
+    // at the same moment wait for one load instead of each sending the same query to the database (ZA-115). A load
+    // only serves requests that arrive before the next clear: one that started before a save is not handed to a
+    // request made after it.
+    private sealed record Loading(Task Task, long Generation);
+
+    private async Task<T> LoadOnceAsync<T>(string cacheKey, Func<Task<T>> load)
+    {
+        var mine = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var entry = new Loading(mine.Task, serverCache.Generation);
+        var running = (Loading)serverCache.Loading.GetOrAdd(cacheKey, entry);
+        if (running != entry)
+        {
+            if (running.Task is Task<T> shared && running.Generation == serverCache.Generation)
+            {
+                try
+                {
+                    return await shared;
+                }
+                catch (OperationCanceledException)
+                {
+                    // The request that started the load went away; this one still wants the value
+                }
+            }
+
+            return await load();
         }
 
-        return value;
+        try
+        {
+            var value = await load();
+            mine.SetResult(value);
+            return value;
+        }
+        catch (OperationCanceledException)
+        {
+            mine.SetCanceled();
+            throw;
+        }
+        catch (Exception ex)
+        {
+            mine.SetException(ex);
+            // Seen here, so a load nobody else waited for is not reported as an unobserved exception
+            _ = mine.Task.Exception;
+            throw;
+        }
+        finally
+        {
+            serverCache.Loading.TryRemove(new KeyValuePair<string, object>(cacheKey, entry));
+        }
     }
 
     public T? GetSetCachedItem<T>(string cacheKey, Func<T> getCacheItem,

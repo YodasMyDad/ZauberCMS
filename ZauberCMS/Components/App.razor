@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using System.Globalization
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Membership.Middleware
 <!DOCTYPE html>
 <html lang="@CurrentLanguage">
 <head>
@@ -79,16 +80,8 @@
             contentProperties.SelectMany(x => x.Styles).Distinct().ToList());
     }
 
-    private bool IsAdmin
-    {
-        get
-        {
-            // Get the relative path from the NavigationManager's URI
-            var absoluteUri = new Uri(NavigationManager.Uri);
-            var requestPathSpan = absoluteUri.LocalPath.AsSpan();
-            return requestPathSpan.StartsWith(Urls.AdminBaseUrl, StringComparison.OrdinalIgnoreCase);
-        }
-    }
+    // /admin and below, on whole segments: a site page at /administration is not the admin (ZA-095)
+    private bool IsAdmin => AdminAccess.IsAdminPath(NavigationManager.Uri);
 
     private IComponentRenderMode? RenderModeForPage
     {

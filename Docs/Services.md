@@ -106,6 +106,9 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   only the first statement of a split query). Build keys with `GenerateCacheKey`, not by hand.
 - Prefix clears use an index of the keys this server cached (removed again on eviction). A value loaded while any
   clear ran is returned but not kept, so a save during a slow read can't leave the old value cached.
+- Requests that miss the same key at the same moment share one load (`GetSetCachedItemAsync`; ZA-115), unless a
+  clear ran since that load started: a request made after a save never gets a value read before it. A load whose
+  request was cancelled is run again by the requests waiting for it. Don't ask for a key from inside its own load.
 - Several servers: set `Zauber:RedisConnectionString`. Redis carries **only invalidations**
   (`ICacheInvalidationBus` → `RedisCacheInvalidationBus`): each clear increments
   `zauber:<ApplicationName>:cache:counter` and publishes on `zauber:<ApplicationName>:cache` in one script. A server
@@ -221,7 +224,18 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
 - Public access: `SetContentRolesAsync` sets a page's roles on it and every page below it in one transaction (one
   audit row, the `ContentRole` save hooks, no versions) and is refused under an ancestor that already restricts
   access. Role queries (`GetRoleAsync`, `QueryRolesAsync`) load the role's members only with `IncludeUsers`.
-- User: always soft delete + security-stamp reset.
+- User (D35): `DeleteUserAsync` keeps the row, marked deleted, and erases the person in one `SaveChangesAndLog`:
+  user name `deleted-<id>`, email, phone and password cleared, profile values, logins, tokens, claims and roles
+  removed, a new security stamp (sessions end). The address and the old name can register again; there is no
+  restore. Audit rows keep the text they were written with (the audit row of the delete is written after the save).
+  Refused: deleting your own account, and the last administrator. Deleting is not a ban: the person can register or
+  sign in through a provider again; to keep someone out, lock the account.
+- Redirects (D34): `SaveRedirectAsync` refuses a From URL that is empty, an exact one that does not start with `/`,
+  a regex that does not parse, and a redirect that sends an address to itself or closes a circle with the saved ones
+  (`RedirectRules.FindLoop`). `SeoRedirect.IsRegex` null (rows from before the flag) keeps the old guess
+  (`RedirectRules.LooksLikeRegex`). `RedirectMiddleware` keeps its compiled list in `ICacheService` under the
+  `SeoRedirect` prefix, so a save clears it on every server; exact matches ignore letter case, and no rule sends an
+  address to that same address.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).
   That includes the admin editor that opens an item from the bin (`EditContent`, `ContentEditor`).

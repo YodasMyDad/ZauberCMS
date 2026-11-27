@@ -1,5 +1,4 @@
 ﻿@inherits LayoutComponentBase
-@using System.Globalization
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core.Settings
 @implements ZauberCMS.Core.Membership.Interfaces.IAccountLayout
@@ -26,8 +25,8 @@
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     protected override void OnInitialized()
     {
-        var cultureInfo = new CultureInfo(Settings.Value.AdminDefaultLanguage);
-        CultureInfo.CurrentCulture = cultureInfo;
-        CultureInfo.CurrentUICulture = cultureInfo;
+        // The account pages are in the admin's language. Only this render's culture: the process-wide default is
+        // never set (ZA-114)
+        ZauberCMS.Core.Languages.AdminCulture.Apply(Settings.Value);
     }
 }

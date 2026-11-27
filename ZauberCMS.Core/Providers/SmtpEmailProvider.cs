@@ -1,6 +1,5 @@
 using System.Text;
 using MailKit.Security;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Settings;
@@ -10,64 +9,45 @@ using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace ZauberCMS.Core.Providers;
 
-public class SmtpEmailProvider(
-    IOptions<ZauberSettings> settings,
-    IServiceProvider serviceProvider)
-    : IEmailProvider
+public class SmtpEmailProvider(IOptions<ZauberSettings> settings) : IEmailProvider
 {
         private readonly ZauberSettings _gabSettings = settings.Value;
-        
-        public async Task SendEmailWithTemplateAsync(string toEmail, string subject, List<string> paragraphs)
-        {
-            using var scope = serviceProvider.CreateScope();
 
-            // send email
-            using var smtp = new SmtpClient();
+        public Task SendEmailWithTemplateAsync(string toEmail, string subject, List<string> paragraphs) =>
+            SendAsync(toEmail, subject, HtmlBody(paragraphs, Template, string.Empty));
+
+        public Task SendEmailAsync(string toEmail, string subject, string message) =>
+            SendAsync(toEmail, subject, message);
+
+        // The packaged settings ship these empty (ZA-032): a site that has not set up email gets a clear error,
+        // not a sign-in attempt with made-up credentials. A relay that needs no sign-in leaves the user name empty.
+        private async Task SendAsync(string toEmail, string subject, string html)
+        {
+            var email = _gabSettings.Email;
+            var sender = Required(email.SenderEmail, "Zauber:Email:SenderEmail");
+            var host = Required(email.Smtp.Host, "Zauber:Email:Smtp:Host");
 
             var emailMessage = new MimeMessage();
-            emailMessage.From.Add(MailboxAddress.Parse(_gabSettings.Email.SenderEmail ?? throw new InvalidOperationException("Email.SenderEmail is not configured")));
+            emailMessage.From.Add(MailboxAddress.Parse(sender));
             emailMessage.To.Add(MailboxAddress.Parse(toEmail));
             emailMessage.Subject = subject;
-            emailMessage.Body = new TextPart(TextFormat.Html)
-            {
-                Text = HtmlBody(paragraphs, Template, string.Empty)
-            };
+            emailMessage.Body = new TextPart(TextFormat.Html) { Text = html };
 
-            await smtp.ConnectAsync(
-                _gabSettings.Email.Smtp.Host ?? throw new InvalidOperationException("Email.Smtp.Host is not configured"),
-                _gabSettings.Email.Smtp.Port,
-                SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(
-                _gabSettings.Email.Smtp.Username ?? throw new InvalidOperationException("Email.Smtp.Username is not configured"),
-                _gabSettings.Email.Smtp.Password ?? throw new InvalidOperationException("Email.Smtp.Password is not configured"));
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(host, email.Smtp.Port, SecureSocketOptions.StartTls);
+            if (!string.IsNullOrWhiteSpace(email.Smtp.Username))
+            {
+                await smtp.AuthenticateAsync(email.Smtp.Username, email.Smtp.Password ?? string.Empty);
+            }
+
             await smtp.SendAsync(new MailKit.SendRequest(emailMessage));
             await smtp.DisconnectAsync(true);
         }
 
-        public async Task SendEmailAsync(string toEmail, string subject, string message)
-        {
-            // send email
-            using var smtp = new SmtpClient();
-
-            var emailMessage = new MimeMessage();
-            emailMessage.From.Add(MailboxAddress.Parse(_gabSettings.Email.SenderEmail ?? throw new InvalidOperationException("Email.SenderEmail is not configured")));
-            emailMessage.To.Add(MailboxAddress.Parse(toEmail));
-            emailMessage.Subject = subject;
-            emailMessage.Body = new TextPart(TextFormat.Html)
-            {
-                Text = message
-            };
-
-            await smtp.ConnectAsync(
-                _gabSettings.Email.Smtp.Host ?? throw new InvalidOperationException("Email.Smtp.Host is not configured"),
-                _gabSettings.Email.Smtp.Port,
-                SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(
-                _gabSettings.Email.Smtp.Username ?? throw new InvalidOperationException("Email.Smtp.Username is not configured"),
-                _gabSettings.Email.Smtp.Password ?? throw new InvalidOperationException("Email.Smtp.Password is not configured"));
-            await smtp.SendAsync(new MailKit.SendRequest(emailMessage));
-            await smtp.DisconnectAsync(true);
-        }
+        private static string Required(string? value, string key) =>
+            string.IsNullOrWhiteSpace(value)
+                ? throw new InvalidOperationException($"Email is not set up: {key} is empty")
+                : value;
 
         private static string FormatParagraphs(string text)
         {

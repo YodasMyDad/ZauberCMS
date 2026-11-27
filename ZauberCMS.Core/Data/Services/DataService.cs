@@ -148,6 +148,12 @@ public class DataService(
         query = GridQueryGuard.Filter(query, parameters.Filter);
         query = GridQueryGuard.OrderBy(query, parameters.OrderBy);
 
+        // Paging needs one order every time: rows with the same sort value (or no sort at all) could move from one
+        // page to the next between requests (ZA-115)
+        query = string.IsNullOrWhiteSpace(parameters.OrderBy)
+            ? query.OrderBy(x => x.Id)
+            : ((IOrderedQueryable<T>)query).ThenBy(x => x.Id);
+
         // Important!!! Make sure the Count property of RadzenDataGrid is set.
         result.Count = await query.CountAsync(cancellationToken);
 

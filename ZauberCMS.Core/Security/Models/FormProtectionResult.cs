@@ -13,5 +13,10 @@ public enum FormProtectionResult
     TooFast,
 
     /// <summary>The token is missing, was not issued by this site, or is too old. Show the form again.</summary>
-    Expired
+    Expired,
+
+    /// <summary>
+    /// The token was used to send a form before (ZA-150): one token, one post. Show the form again with a new token.
+    /// </summary>
+    AlreadyUsed
 }

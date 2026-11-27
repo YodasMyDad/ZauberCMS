@@ -1,4 +1,4 @@
-﻿@attribute [Route(Urls.AdminSeoRedirects)]
+@attribute [Route(Urls.AdminSeoRedirects)]
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = ZauberCMS.Core.Constants.Roles.AdminRoleName)]
 @using ZauberCMS.Components.Seo.Dialogs
 @using ZauberCMS.Core.Seo.Models
@@ -49,6 +49,11 @@
             <RadzenDataGridColumn Property="FromUrl" Title="From Url">
                 <Template Context="data">
                     @data.FromUrl
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="IsRegex" Title="Match" Sortable="false" Filterable="false">
+                <Template Context="data">
+                    @(ZauberCMS.Core.Seo.RedirectRules.IsRegex(data) ? "Regex" : "Exact")
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn Property="ToUrl" Title="To Url">
@@ -147,7 +152,7 @@
             parameters.Add(nameof(AddEditRedirect.Redirect), seoRedirect);
         }
 
-        var modal = ModalService.OpenSidePanel<AddEditRedirect>(seoRedirect == null ? "Create" : "Add" + " Redirect", parameters);
+        var modal = ModalService.OpenSidePanel<AddEditRedirect>((seoRedirect == null ? "Create" : "Edit") + " Redirect", parameters);
         var result = await modal.Result;
         if (result is { Confirmed: true, Data: SeoRedirect redirect })
         {

@@ -29,6 +29,12 @@ public sealed class ServerCache(IMemoryCache memoryCache)
 
     internal int Count => _keys.Count;
 
+    /// <summary>
+    /// Loads under way, by key, for <see cref="DefaultCacheService"/>: kept here, on the singleton, so requests (each
+    /// with its own scoped cache service) that miss the same key together share one load (ZA-115).
+    /// </summary>
+    internal ConcurrentDictionary<string, object> Loading { get; } = new(StringComparer.Ordinal);
+
     internal bool TryGet<T>(string key, out T? value) => memoryCache.TryGetValue(key, out value);
 
     internal void Set<T>(string key, T value, TimeSpan slidingExpiration, long generationAtLoad)

@@ -1,9 +1,9 @@
 # ZauberCMS Audit Report
 
-Audited commit: 5668365 · Date: 2026-11-25 · Scope: full · Mode: report
+Last full run: 5668365 (2026-11-25, full) · Last changed run: b001147+wt (2026-11-27, Roadmap Phase 10e) · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
-Next free IDs: ZA-164 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
-After Roadmap Phase 10d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 912 (911 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers, nothing High: the Medium — Radzen dialogs outside every error boundary — and the Lows fixed; the bins reloading on any save noted). ZA-025, ZA-085, ZA-096, ZA-097, ZA-101, ZA-108, ZA-156, ZA-161 fixed; ZA-026 and ZA-160 resolved. Next free ID: ZA-164
+Next free IDs: ZA-166 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+After Roadmap Phase 10e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 993 (992 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their three Highs — password guessing on unconfirmed accounts, the single-load cache scoped per request, the 404 that counted as the error page — their Mediums and Lows fixed; slow regex redirects, per-server throttles and users deleted before v5 noted). ZA-030, ZA-031, ZA-032, ZA-033, ZA-095, ZA-098, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114, ZA-115, ZA-116, ZA-149, ZA-150 fixed; ZA-164 and ZA-165 new (Phase 11). Next free ID: ZA-166
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
 > browser or against PostgreSQL/Redis**, so items marked as needing a repro are reasoned, not observed. Critical and
@@ -16,11 +16,11 @@ After Roadmap Phase 10d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable pa
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 8 | 65 | 1 |
-| Low | 30 | 23 | 5 |
+| Medium | 7 | 67 | 1 |
+| Low | 16 | 38 | 5 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10e, 11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155, ZA-163). What each phase fixed and how it was
+a phase (11) or to its Backlog (ZA-128, ZA-129, ZA-151, ZA-155, ZA-163). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
 ## Open findings
@@ -62,87 +62,10 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Issue / Trigger: `Microsoft.AspNetCore.App.Internal.Assets` is hard-pinned and never stamped by CI, so new sites serve a stale `blazor.web.js`.
 - Fix: `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>`; template smoke test. · Blocked by: nothing.
 
-### ZA-095 [Medium/High] Admin and reserved-path detection is a bare prefix match
-
-- Where: `ZauberCMS/Components/App.razor:64-73`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:42-44`, `ZauberCMS.Core/Middleware/RedirectMiddleware.cs:34-36` · Category: E · Since: 2026-11-25
-- Issue / Trigger: A page at `/administration` renders as admin (interactive circuit, Radzen assets) for visitors; `/accounting` or `/api-docs` skip culture and redirect handling.
-- Fix: match on a segment boundary via one shared helper. · Blocked by: nothing.
-
-### ZA-098 [Medium/High] No working front-end error page
-
-- Where: `ZauberCMS.Template/template/ZauberCMSTemplate.Site/Program.cs:13`, `ZauberCMS.Web/Program.cs:13` · Category: E · Since: 2026-11-25
-- Issue / Trigger: The template ships the exception handler commented out and setup adds none: production errors return an empty 500.
-- Fix: ship an error route and wire the handler in setup. · Blocked by: pipeline order; new setting.
-
-### ZA-030 [Low/Medium] Logout via top-level GET navigation still possible
-
-- Where: `ZauberCMS.Components/Controllers/AuthController.cs` · Category: D
-
-### ZA-031 [Low/High] MD5 for username/gravatar hashing
-
-- Where: `ZauberCMS.Core/Extensions/StringExtensions.cs:315`, `Membership/ZauberSignInManager.cs:168` · Category: D
-
-### ZA-032 [Low/High] Placeholder secrets in packaged appsettings
-
-- Where: `ZauberCMS/appsettings.json:61,70,81` · Category: D
-- Reconciled 2026-11-25: placeholders are now at lines 68-69 in all three appsettings files.
-
-### ZA-033 [Low/Medium] Soft-deleted users keep username/email unique-index slots and PII
-
-- Where: `MembershipService.cs:371-376` · Category: C/D · Issue: same email may be unable to re-register; GDPR erase path absent.
-- Reconciled 2026-11-25: reachable from the admin UI since user delete was fixed (ZA-045, Roadmap Phase 3); no restore or purge UI exists.
-
-### ZA-104 [Low/High] Image-resize cache is unbounded and upscaling is on
-
-- Where: `ZauberCMS.Core/Settings/ZauberSettings.cs:100,112` · Category: D · Since: 2026-11-25
-- Issue / Fix: Anonymous size/quality variations can fill the disk; default `AllowUpscale=false` and a finite `MaxCacheBytes`.
-
-### ZA-105 [Low/High] Public `ExternalLoginAsync` skips the verified-email and `CanSignIn` gates
-
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:841-860` · Category: D · Since: 2026-11-25
-- Issue / Fix: Unused by shipped pages; remove the fallback or mark `[Obsolete]`.
-- Reconciled 2026-11-26 (Phase 7): the fallback now refuses when `GlobalSettings.AllowRegistration` is off (`:835-839`); the rest of the finding stands.
-
-### ZA-106 [Low/Medium] Login reveals unconfirmed accounts and re-sends confirmation emails
-
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:626-640` · Category: D · Since: 2026-11-25
-- Issue / Fix: Generic message; throttle resends.
-
-### ZA-107 [Low/High] Email addresses written to logs
-
-- Where: `ZauberCMS.Core/Membership/Services/MembershipService.cs:664,685,795,1001,1086`, `ZauberCMS.Core/Installer/Services/InstallService.cs` (`RecoverAdminAsync`) · Category: D · Since: 2026-11-25
-- Issue / Fix: Log the user id instead.
-- Reconciled 2026-11-26 (Phase 7): `InstallService.RecoverAdminAsync` logs the user name of the account named by `Zauber:Identity:RecoverAdminUser` (not the configured value). The `ZauberSignInManager.cs:76` log cited before (unverified email) was removed in Phase 4.
-
 ### ZA-109 [Low/High] CI and release script hardening
 
 - Where: `.github/workflows/ci.yml:3-7,10-27,83-84,155`, `release.ps1:58` · Category: D/F · Since: 2026-11-25
 - Issue / Fix: No explicit `permissions` on the build job, actions pinned by tag, docs-only commits publish (no `paths-ignore`), prerelease versions break the patch parse, `Set-Content` adds a blank line per run.
-
-### ZA-110 [Low/Low] Restricted-content gate relies on `NavigateTo` throwing
-
-- Where: `ZauberCMS.Components/Pages/EntryPage.razor:90,97` · Category: D · Since: 2026-11-25
-- Issue / Fix: Clear the view and return after redirecting.
-
-### ZA-111 [Low/High] Hosted services and middleware ignore cancellation
-
-- Where: `ZauberCMS.Core/Jobs/DailyJob.cs:22-52`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:34,44,115`, `ZauberCMS.Core/Middleware/CultureMiddleware.cs:56` · Category: A · Since: 2026-11-25
-- Issue / Fix: `BackgroundService` + `PeriodicTimer`; forward `RequestAborted`.
-
-### ZA-114 [Low/High] Layouts set process-wide culture; sitemap formats with current culture and drops the home page
-
-- Where: `ZauberCMS.Components/Admin/Layout/SectionLayout.razor:81-85`, `ZauberCMS.Components/Pages/BlankLayout.razor:29-33`, `ZauberCMS.Components/Seo/Startup/SitemapGeneratorService.cs:74-77,180-181` · Category: A/C · Since: 2026-11-25
-- Issue / Fix: Remove `DefaultThreadCurrentCulture` writes; invariant culture; treat `Guid.Empty` redirect as null.
-
-### ZA-115 [Low/High] Smaller performance items
-
-- Where: `ZauberCMS.Core/Middleware/RedirectMiddleware.cs:16-17,88-92`, `ZauberCMS.Core/Extensions/StringExtensions.cs:300,374,390,405`, `ZauberCMS.Core/Data/Services/DataService.cs:140-150`, `ZauberCMS.Core/Content/Services/ContentService.cs:2157-2159,2261-2269` · Category: B · Since: 2026-11-25
-- Issue / Fix: Redirect cache not invalidated on save (5 min, 5000 cap); regex built per call; paging without a stable order; `First` without `OrderBy`; a query per slug candidate; no cache stampede guard.
-
-### ZA-116 [Low/High] Redirect rules containing "?" are treated as regex; no loop guard
-
-- Where: `ZauberCMS.Core/Middleware/RedirectMiddleware.cs:140-150` · Category: C · Since: 2026-11-25
-- Issue / Fix: Explicit "is regex" flag (schema).
 
 ### ZA-118 [Low/High] Packaged `appsettings.json` has no `Zauber:ImageResize` section
 
@@ -201,21 +124,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Issue / Fix: No `Directory.Build.props` for the product projects, central package management, `.editorconfig`, SDK pin in `global.json` or `.gitattributes`; CI runs no vulnerability scan.
 - Progress 2026-11-25 (Roadmap Phase 2): test projects `tests/ZauberCMS.Core.Tests` and `tests/ZauberCMS.Components.Tests` exist and CI runs them (54 tests, 4 skipped for open findings ZA-011, ZA-036, ZA-045, ZA-118). `global.json` exists but only selects the test runner. Known deviations in `Docs/Standards.md` all still present (≈76 scope-per-method sites, 11 sync paging methods, sync seeding).
 
-### ZA-149 [Low/High] The login and registration rate limits are fixed in code
-- Where: `ZauberCMS.Core/ZauberSetup.cs` (`AddRateLimiter`: policies `"login"` and `"register"`) · Category: F · Since: 2026-11-26 (Phase 7 audit)
-- Issue / Trigger: 10 requests per address in 5 minutes for login-like pages, 5 POSTs in 10 minutes for
-  registration, counting refused attempts. A site cannot change them (a second `AddPolicy` with the same name
-  throws), and behind a proxy without `Zauber:ForwardedHeaders` every visitor shares one allowance.
-- Fix: bind the limits to `Zauber:Identity` settings with today's values as defaults. · Blocked by: nothing.
-
-### ZA-150 [Low/High] A form-protection token can be used again for 12 hours
-- Where: `ZauberCMS.Core/Security/Services/FormProtectionService.cs` · Category: D · Since: 2026-11-26 (Phase 7 audit)
-- Issue / Trigger: the token is a signed timestamp, not single-use and not tied to a visitor. A script written
-  for the site fetches one token, waits out the minimum fill time once and reuses it; only the rate limit and a
-  CAPTCHA stop it. Documented in `Docs/Installer.md` as the limit of these checks.
-- Fix: add a random id to the token and remember used ids until they expire (per server unless stored in shared
-  state). · Blocked by: `IFormProtectionService` is public API from v5 on; decide before release.
-
 ### ZA-151 [Low/Medium] The installer's pages cannot be restyled or extended from a site
 - Where: `ZauberCMS.Core/Installer/Middleware/InstallerMiddleware.cs` (renders `InstallerPage` directly), `ZauberCMS.Core/Installer/Components/` · Category: F · Since: 2026-11-26 (Phase 7 audit)
 - Issue / Trigger: `IInstallService` can be replaced and `InstallService`'s methods are virtual, but the pages,
@@ -239,6 +147,18 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   plugin mirroring media elsewhere removes a file that is back. Umbraco raises its "-ed" notifications when the scope
   completes.
 - Fix: an after-commit point in the hook API. · Blocked by: public API (owner decision; Roadmap Backlog).
+
+### ZA-164 [Medium/High] The front end's "not found" page is sent with an empty body
+
+- Where: `ZauberCMS.Components/Pages/EntryPage.razor` → `NotFound404.razor` (sets 404 during static SSR) · Category: E · Since: 2026-11-27 (Phase 10e browser check)
+- Issue / Trigger: any address with no page (`/nope-page`) answers 404 with no HTML at all, in Development and Production, on the commit before Phase 10e too. Inside an admin circuit the same view renders. Likely .NET 10's handling of a 404 set during static rendering (Blazor's not-found support) rather than our code; not investigated yet.
+- Fix: find what empties the response (Router `NotFoundPage`, `NavigationManager.NotFound()`, status-code re-execution) and render the site's `Zauber:NotFoundComponent`. · Blocked by: nothing (needs a repro in a bare .NET 10 app first).
+
+### ZA-165 [Low/High] A redirect's domain is ignored
+
+- Where: `ZauberCMS.Core/Middleware/RedirectMiddleware.cs` (compiled list), `ZauberCMS.Components/Seo/Dialogs/AddEditRedirect.razor` (Domain dropdown) · Category: C · Since: 2026-11-27 (Phase 10e)
+- Issue / Trigger: the dialog stores `SeoRedirect.DomainId`, but the middleware matches every redirect on every host, so a redirect meant for one site of a multi-site install fires on all of them.
+- Fix: match `DomainId` against the request's domain (`MatchDomainWithContent`'s rules), or hide the field. · Blocked by: nothing.
 
 ## Improvement proposals
 

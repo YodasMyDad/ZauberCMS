@@ -956,6 +956,9 @@ namespace ZauberCMS.Core.Data.Migrations.PostgreSql
                     b.Property<bool>("IsPermanent")
                         .HasColumnType("boolean");
 
+                    b.Property<bool?>("IsRegex")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("ToUrl")
                         .IsRequired()
                         .HasMaxLength(500)

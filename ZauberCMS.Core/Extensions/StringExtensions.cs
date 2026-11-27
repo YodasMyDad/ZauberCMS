@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -362,11 +362,12 @@ public static partial class StringExtensions
     /// </returns>
     internal static string RemoveSpecialCharacters(string input)
     {
-        var regex = new Regex("(?:[^a-z0-9 ]|(?<=['\"])s)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        return regex.Replace(input, string.Empty);
+        // Built once at compile time: this compiled a new Regex on every call (ZA-115)
+        return SpecialCharactersRegex().Replace(input, string.Empty);
     }
 
+    /// <summary>The MD5 hash of the text in upper-case hex. Only for Gravatar-style lookups that still need MD5.</summary>
+    [Obsolete("MD5 is broken for security use (ZA-031). Use SHA256.HashData for anything new; this goes in the next major version.")]
     public static string? ToMd5(this string str)
     {
         return string.IsNullOrEmpty(str) ? null : Encoding.ASCII.GetBytes(str).ToMd5();
@@ -393,7 +394,7 @@ public static partial class StringExtensions
             if (source.Length > length)
             {
                 source = source[..length];
-                source = Regex.Replace(source, @"\t|\n|\r", "");
+                source = LineBreaksRegex().Replace(source, "");
             }
         }
 
@@ -431,13 +432,10 @@ public static partial class StringExtensions
         if (str.IndexOf("youtube.com", StringComparison.CurrentCultureIgnoreCase) > 0 ||
             str.IndexOf("youtu.be", StringComparison.CurrentCultureIgnoreCase) > 0)
         {
-            const string pattern =
-                @"(?:https?:\/\/)?(?:www\.)?(?:(?:(?:youtube.com\/watch\?[^?]*v=|youtu.be\/)([\w\-]+))(?:[^\s?]+)?)";
             const string replacement =
                 "<iframe class='w-full aspect-video' src='https://www.youtube.com/embed/$1?rel=0' loading='lazy' frameborder='0' allow='accelerometer; autoplay; gyroscope' allowfullscreen></iframe>";
 
-            var rgx = new Regex(pattern);
-            str = rgx.Replace(str, replacement);
+            str = YouTubeLinkRegex().Replace(str, replacement);
             return str;
         }
 
@@ -476,5 +474,11 @@ public static partial class StringExtensions
 
     [GeneratedRegex(
         "(?:https?:\\/\\/)?(?:www\\.)?(?:(?:(?:youtube.com\\/watch\\?[^?]*v=|youtu.be\\/)([\\w\\-]+))(?:[^\\s?]+)?)")]
-    private static partial Regex MyRegex();
+    private static partial Regex YouTubeLinkRegex();
+
+    [GeneratedRegex("(?:[^a-z0-9 ]|(?<=['\"])s)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex SpecialCharactersRegex();
+
+    [GeneratedRegex(@"\t|\n|\r")]
+    private static partial Regex LineBreaksRegex();
 }

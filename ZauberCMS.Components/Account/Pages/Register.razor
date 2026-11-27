@@ -1,4 +1,4 @@
-﻿@page "/Account/Register"
+@page "/Account/Register"
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
 @using Microsoft.AspNetCore.RateLimiting
@@ -125,7 +125,7 @@
         if (HttpContext != null && HttpMethods.IsPost(HttpContext.Request.Method) && HttpContext.Request.HasFormContentType)
         {
             var posted = HttpContext.Request.Form[FormProtection.TokenFieldName].ToString();
-            if (FormProtection.Validate(posted, null) != FormProtectionResult.Expired)
+            if (FormProtection.Validate(posted, null) is FormProtectionResult.Passed or FormProtectionResult.TooFast)
             {
                 FormToken = posted;
             }
@@ -161,9 +161,20 @@
                 {
                     FormProtectionResult.TooFast => "That was quick. Please send the form again.",
                     FormProtectionResult.Expired => "The form was open for too long. Please send it again.",
+                    FormProtectionResult.AlreadyUsed => "This form was sent already. Please send it again.",
                     _ => "We could not create your account. Please try again."
                 }, ResultMessageType.Error)
             ];
+            return;
+        }
+
+        // One token, one post (ZA-150): a script cannot fetch a token once and send it again and again. If this
+        // post is refused further on, the form comes back with a new token.
+        var token = HttpContext.Request.Form[FormProtection.TokenFieldName].ToString();
+        FormToken = null;
+        if (!FormProtection.TryUseToken(token))
+        {
+            ResultMessages = [new ResultMessage("This form was sent already. Please send it again.", ResultMessageType.Error)];
             return;
         }
 

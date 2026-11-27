@@ -111,3 +111,94 @@ public class SignInHardeningTests : IAsyncLifetime
             new LoginUserParameters { Email = email, Password = password }, TestContext.Current.CancellationToken);
     }
 }
+
+/// <summary>
+/// ZA-106: only someone who knows the password learns that an account is waiting for email confirmation, and
+/// signing in does not send the confirmation email again and again.
+/// </summary>
+public class UnconfirmedSignInTests : IAsyncLifetime
+{
+    private TestSite _site = null!;
+
+    public async ValueTask InitializeAsync() => _site = await TestSite.CreateAsync(new Dictionary<string, string?>
+    {
+        ["Zauber:Identity:SignInRequireConfirmedAccount"] = "true",
+        ["Zauber:Plugins:EmailProvider"] = typeof(RecordingEmailProvider).FullName,
+        ["Zauber:SiteUrl"] = "https://site.test"
+    });
+
+    public async ValueTask DisposeAsync() => await _site.DisposeAsync();
+
+    [Fact]
+    public async Task A_wrong_password_on_an_unconfirmed_account_says_nothing_about_it_and_sends_nothing()
+    {
+        var user = await _site.CreateUserAsync($"unconfirmed-{Guid.NewGuid():N}");
+
+        var result = await LoginAsync(user.Email!, "wrong-password");
+
+        Assert.False(result.Success);
+        Assert.Contains(result.Messages, m => m.Message == "Invalid login credentials");
+        Assert.DoesNotContain(result.Messages, m => m.Message!.Contains("confirmed"));
+        Assert.DoesNotContain(RecordingEmailProvider.Sent, s => s.To == user.Email);
+        using var scope = _site.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        Assert.Equal(1, await userManager.GetAccessFailedCountAsync((await userManager.FindByIdAsync(user.Id.ToString()))!));
+    }
+
+    [Fact]
+    public async Task The_right_password_on_an_unconfirmed_account_explains_and_sends_the_email_once()
+    {
+        var user = await _site.CreateUserAsync($"unconfirmed-{Guid.NewGuid():N}");
+
+        var first = await LoginAsync(user.Email!, "Passw0rd-For-Tests");
+        var second = await LoginAsync(user.Email!, "Passw0rd-For-Tests");
+
+        Assert.False(first.Success);
+        Assert.Contains(first.Messages, m => m.Message!.Contains("isn't confirmed"));
+        Assert.Contains(second.Messages, m => m.Message!.Contains("isn't confirmed"));
+        Assert.Single(RecordingEmailProvider.Sent, s => s.To == user.Email);
+    }
+
+    [Fact]
+    public async Task A_locked_unconfirmed_account_is_not_tried_so_its_password_cannot_be_guessed()
+    {
+        var user = await _site.CreateUserAsync($"unconfirmed-{Guid.NewGuid():N}");
+        using (var scope = _site.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            await userManager.SetLockoutEndDateAsync((await userManager.FindByIdAsync(user.Id.ToString()))!,
+                DateTimeOffset.UtcNow.AddMinutes(5));
+        }
+
+        var result = await LoginAsync(user.Email!, "Passw0rd-For-Tests");
+
+        Assert.False(result.Success);
+        Assert.Contains(result.Messages, m => m.Message!.Contains("Too many failed sign-in attempts"));
+        Assert.DoesNotContain(result.Messages, m => m.Message!.Contains("confirmed"));
+    }
+
+    [Fact]
+    public async Task Wrong_passwords_lock_an_unconfirmed_account_like_any_other()
+    {
+        var user = await _site.CreateUserAsync($"unconfirmed-{Guid.NewGuid():N}");
+        var maxAttempts = _site.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<IdentityOptions>>()
+            .Value.Lockout.MaxFailedAccessAttempts;
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            await LoginAsync(user.Email!, "wrong-password");
+        }
+
+        var result = await LoginAsync(user.Email!, "Passw0rd-For-Tests");
+
+        Assert.Contains(result.Messages, m => m.Message!.Contains("Too many failed sign-in attempts"));
+    }
+
+    private async Task<AuthenticationResult> LoginAsync(string email, string password)
+    {
+        using var scope = _site.CreateScope();
+        scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext =
+            new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        return await scope.ServiceProvider.GetRequiredService<IMembershipService>().LoginUserAsync(
+            new LoginUserParameters { Email = email, Password = password }, TestContext.Current.CancellationToken);
+    }
+}

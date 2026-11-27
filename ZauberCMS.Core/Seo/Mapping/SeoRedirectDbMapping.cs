@@ -13,6 +13,8 @@ public class SeoRedirectDbMapping : IEntityTypeConfiguration<SeoRedirect>
         builder.Property(x => x.Id).IsRequired();
         builder.Property(x => x.FromUrl).IsRequired().HasMaxLength(500);
         builder.Property(x => x.ToUrl).IsRequired().HasMaxLength(500);
+        // Nullable: rows from before the column existed stay null and keep the old regex guess (ZA-116)
+        builder.Property(x => x.IsRegex);
         builder.Property(x => x.DateCreated).IsRequired();
         builder.Property(x => x.DateUpdated).IsRequired();
 

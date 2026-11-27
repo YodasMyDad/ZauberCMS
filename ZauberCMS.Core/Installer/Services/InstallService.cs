@@ -603,6 +603,14 @@ public class InstallService(
                 return;
             }
 
+            // Deleting a user erases them (D35): an account with nothing left to sign in with is not restored
+            if (user.Deleted && user.UserName?.StartsWith(Membership.UserAnonymiser.DeletedUserName(user.Id), StringComparison.Ordinal) == true)
+            {
+                logger.LogError("{Key} names a user who was deleted, and deleting erased the account. Nobody was " +
+                                "made an administrator. Name an existing user instead", key);
+                return;
+            }
+
             if (!await roleManager.RoleExistsAsync(Constants.Roles.AdminRoleName))
             {
                 await roleManager.CreateAsync(new Role { Name = Constants.Roles.AdminRoleName });

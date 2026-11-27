@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 993 (992 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers: their three Highs — password guessing on unconfirmed accounts, the single-load cache scoped per request, the 404 that counted as the error page — their Mediums and Lows fixed; slow regex redirects, per-server throttles and users deleted before v5 noted). ZA-030, ZA-031, ZA-032, ZA-033, ZA-095, ZA-098, ZA-104, ZA-105, ZA-106, ZA-107, ZA-110, ZA-111, ZA-114, ZA-115, ZA-116, ZA-149, ZA-150 fixed; ZA-164 and ZA-165 new (Phase 11). Next free ID: ZA-166
 After Roadmap Phase 10d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 912 (911 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (two reviewers, nothing High: the Medium — Radzen dialogs outside every error boundary — and the Lows fixed; the bins reloading on any save noted). ZA-025, ZA-085, ZA-096, ZA-097, ZA-101, ZA-108, ZA-156, ZA-161 fixed; ZA-026 and ZA-160 resolved. Next free ID: ZA-164
 After Roadmap Phase 10c (2026-11-26): Build PASS · Warnings: 0 · Tests: 897 (896 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase (one reviewer, nothing High; its two Mediums — a second pick during staging could end the circuit, a new validator instance per render cleared the errors — and its Lows fixed). ZA-015, ZA-027, ZA-028, ZA-029, ZA-078, ZA-100, ZA-112, ZA-127 fixed. Next free ID: ZA-164
 After Roadmap Phase 10b (2026-11-26): Build PASS · Warnings: 0 · Tests: 876 (875 pass, 1 skipped for open finding ZA-118), SQL Server (LocalDB), PostgreSQL and Redis; `/audit changed` run on the phase. ZA-012, ZA-018, ZA-077, ZA-099, ZA-117, ZA-144, ZA-145, ZA-146, ZA-157, ZA-159 fixed; ZA-162 found and fixed; ZA-163 new (Backlog). Next free ID: ZA-164
@@ -26,6 +27,51 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed, resolved, closed and declined
 
+- **Phase 10e (2026-11-27): front end, security and identity hardening (Roadmap D33–D36).** Checked in a browser on
+  a scratch copy of the sample site in Production mode unless a line says tests only; details in the Roadmap's
+  Phase 10e notes.
+  - **ZA-095 [Medium] Admin and reserved paths matched as a bare prefix — fixed.** `SitePaths.IsSystemPath`
+    (whole segments; `/_blazor` added). `/administration` rendered the admin before (200, seen on the previous
+    commit) and is an ordinary page now.
+  - **ZA-098 [Medium] No working front-end error page — fixed (D33).** Outside Development: the content page at
+    `Zauber:ErrorPagePath` (default `/error`), else the built-in page, both with 500; seen for a throwing GET and a
+    throwing form post, with and without an `/error` page. Found on the way and fixed: the culture and redirect
+    middleware caught a page's exception and ran the page a second time.
+  - **ZA-116 [Low] "?" made a redirect a regex; no loop guard — fixed (D34).** Nullable `IsRegex` column (three
+    migrations; old rows keep the old guess), a switch in the dialog, loops refused on save in the middleware's
+    order, no redirect of an address to itself. Seen: an exact `/old-search?q=1` redirect and a refused loop.
+  - **ZA-033 [Low] Deleted users kept their personal data — fixed (D35).** Deleting erases the person
+    (`UserAnonymiser`); refused for your own account and the last administrator. Seen: an admin delete left
+    `deleted-<id>` with no email or password and an audit row without personal data. Users deleted before v5 are
+    left as they are (Roadmap open question).
+  - **ZA-104 [Low] Image resizing upscaled; cache unbounded — fixed (D36).** `AllowUpscale` false, `MaxCacheBytes`
+    2 GB (tests only).
+  - **ZA-150 [Low] A form-protection token could be reused for 12 hours — fixed.** `TryUseToken` and
+    `FormProtectionResult.AlreadyUsed`, remembered by the decrypted value. Seen: a second visitor sending a used
+    token was refused and given a new one.
+  - **ZA-106 [Low] Login revealed unconfirmed accounts and resent without limit — fixed.** Lockout, then password,
+    before "isn't confirmed"; resend at most every 10 minutes (tests only).
+  - **ZA-030 [Low] Logout by GET from another site — fixed.** Auto-submit only for `Sec-Fetch-Site`
+    same-origin/none or a same-host Referer; the page cannot be framed. Seen over HTTP for both headers.
+  - **ZA-105 [Low] `ExternalLoginAsync` created accounts without the checks — fixed.** It no longer creates
+    accounts (code read; no shipped caller).
+  - **ZA-107 [Low] Email addresses in logs — fixed.** User ids instead (grep of every log call).
+  - **ZA-031 [Low] MD5 — fixed.** SHA-256 for generated user names; `ToMd5`/`GetMd5` obsolete.
+  - **ZA-032 [Low] Placeholder email credentials in the shipped settings — fixed.** Empty values; the SMTP
+    provider names the missing key (test reads the three files).
+  - **ZA-149 [Low] Rate limits fixed in code — fixed.** `Zauber:Identity:LoginRateLimit` / `RegisterRateLimit`.
+  - **ZA-110 [Low] Restricted-page gate relied on `NavigateTo` throwing — fixed.** Access decided before the view.
+  - **ZA-111 [Low] Hosted services and middleware ignored cancellation — fixed.** `DailyJob` as a
+    `BackgroundService`, the sitemap's token and atomic write, `RequestAborted` in the middleware.
+  - **ZA-114 [Low] Layout culture; sitemap dropped the home page — fixed.** `AdminCulture.Apply` in `BlankLayout`;
+    a `Guid.Empty` redirect on the sitemap root is ignored.
+  - **ZA-115 [Low] Smaller performance items — fixed.** Generated regexes, stable paging orders, one query for a
+    unique URL, the redirect list cleared on every server, one shared load per cache key across requests.
+  - Review (`/audit changed`, two reviewers): three Highs found in the phase's own changes (password guessing on
+    unconfirmed accounts, the single-load cache scoped per request, a 404 that counted as the error page) and their
+    Mediums and Lows, all fixed before the commit; noted: slow regex redirects, per-server throttles.
+  - New: **ZA-164** (the front end's 404 page has an empty body; there on the previous commit too) and **ZA-165** (a
+    redirect's domain is ignored), both in Phase 11.
 - **Phase 10d (2026-11-27): admin UI robustness (Roadmap D32), and the owner's resizable tree panel.**
   - **ZA-097 [Medium] No `ErrorBoundary` anywhere — fixed (D32).** `AdminErrorBoundary` round each property editor,
     dashboard tab, the navigation and the page body; a plain boundary round each side panel's content. "Try again",

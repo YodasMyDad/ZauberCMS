@@ -11,6 +11,12 @@ public interface IMembershipService
     Task<User?> GetUserAsync(GetUserParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<User>> SaveUserAsync(SaveUserParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<User>> CreateUpdateUserAsync(CreateUpdateUserParameters parameters, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Deletes a user and erases the person (ZA-033, Roadmap D35). The row stays, marked deleted, so pages and versions
+    /// still point at an author, but its user name becomes <c>deleted-&lt;id&gt;</c>, and its email, phone, password,
+    /// profile values, logins, claims and roles are removed. The address and the old user name can register again.
+    /// There is no restore. Audit rows keep the text they were written with until the daily job removes them.
+    /// </summary>
     Task<HandlerResult<User>> DeleteUserAsync(DeleteUserParameters parameters, CancellationToken cancellationToken = default);
     Task<PaginatedList<User>> QueryUsersAsync(QueryUsersParameters parameters, CancellationToken cancellationToken = default);
 

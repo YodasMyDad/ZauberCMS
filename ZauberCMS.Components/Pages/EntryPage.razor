@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Diagnostics
 @using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
@@ -59,45 +60,20 @@
         {
             if (AllContentViews.TryGetValue(Content.ViewComponent, out var contentView))
             {
+                // Role-based content restriction: a visitor who may not see the page is sent to the login page and
+                // the page is not rendered. The view is only chosen once access is settled, so nothing of the page
+                // can be rendered even where NavigateTo does not end the render (ZA-110).
+                if (!MayView(Content))
+                {
+                    ComponentView = null;
+                    NavigationManager.NavigateTo(Settings.Value.Identity.DefaultLoginRedirectUrl);
+                    return;
+                }
+
                 ComponentView = contentView;
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView);
                 Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };
-                
                 // Note: Culture is now set by CultureMiddleware before this component renders
-                
-                // Role-based content restriction
-                if (Content.ContentRoles.Count != 0)
-                {
-                    // Check if the user is authenticated and in a specific role
-                    if (AuthState.User.Identity?.IsAuthenticated == true)
-                    {
-                        // Always allow admins regardless
-                        if (!AuthState.User.IsInRole(Constants.Roles.AdminRoleName))
-                        {
-                            var userIsInRole = false;
-                            
-                            foreach (var contentRole in Content.ContentRoles)
-                            {
-                                if (contentRole.Role.Name != null && AuthState.User.IsInRole(contentRole.Role.Name))
-                                {
-                                    userIsInRole = true;
-                                    break;
-                                }
-                            }   
-                            
-                            if (!userIsInRole)
-                            {
-                                // Redirect if the user is not in the role
-                                NavigationManager.NavigateTo(Settings.Value.Identity.DefaultLoginRedirectUrl);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Handle unauthenticated users (redirect to login)
-                        NavigationManager.NavigateTo(Settings.Value.Identity.DefaultLoginRedirectUrl);
-                    }
-                }
             }
             else if (AllContentViews.TryGetValue(Settings.Value.MissingView!, out var missing))
             {
@@ -105,6 +81,15 @@
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView);
                 Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };
             }
+        }
+        else if (HttpContext?.Features.Get<IExceptionHandlerFeature>() != null)
+        {
+            // Showing the error page (ZA-098) and the site has no page at that address. Rendering anything here
+            // (even a 404) would write the layout and count as the error page, so this fails instead, before
+            // anything is written: the exception handler gives up and ErrorPageMiddleware sends the built-in page.
+            throw new InvalidOperationException(
+                $"There is no published page at the error page address ({HttpContext.Request.Path}); " +
+                "the built-in error page is shown instead. Create one, or change Zauber:ErrorPagePath");
         }
         else
         {
@@ -123,5 +108,26 @@
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView);
             }
         }
+    }
+
+    /// <summary>
+    /// True when the page has no roles, or the visitor is an administrator or in one of the page's roles.
+    /// </summary>
+    private bool MayView(Content content)
+    {
+        if (content.ContentRoles.Count == 0)
+        {
+            return true;
+        }
+
+        var user = AuthState.User;
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        return user.IsInRole(Constants.Roles.AdminRoleName) ||
+               content.ContentRoles.Any(contentRole =>
+                   contentRole.Role.Name != null && user.IsInRole(contentRole.Role.Name));
     }
 }
