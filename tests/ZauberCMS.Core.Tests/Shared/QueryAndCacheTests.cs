@@ -126,9 +126,7 @@ public class QueryAndCacheTests : IAsyncLifetime
             db.Contents.Add(new ContentItemModel
             {
                 Name = "Late", ContentTypeId = _pageType.Id, ContentTypeAlias = _pageType.Alias, Published = true,
-#pragma warning disable CS0618
                 Url = "late"
-#pragma warning restore CS0618
             });
             return await db.SaveChangesAsync(Ct);
         });

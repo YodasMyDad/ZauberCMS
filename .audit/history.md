@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11g (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1122 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-125, ZA-126 fixed; content finders added at the owner's request (D55). Phase 11 done. Next free ID: ZA-169
 After Roadmap Phase 11f (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1109 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-092, ZA-124 fixed. Next free ID: ZA-169
 After Roadmap Phase 11e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1071 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-090, ZA-091 fixed. Next free ID: ZA-169
 After Roadmap Phase 11d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1050 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-120, ZA-121, ZA-167 fixed; the failing CI test of 11c (a Windows path separator) fixed. Next free ID: ZA-169
@@ -33,6 +34,25 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed, resolved, closed and declined
 
+- **Phase 11g (2026-11-27): content finders, the service split, custom components, the DbContext pattern
+  (Roadmap D55–D59).** Details and the release notes in the Roadmap's Phase 11g notes.
+  - **Content finders (owner request, D55) — added.** `IContentFinder`, discovered, run in
+    `IContentService.GetContentFromRequestAsync` after the URL lookup finds no live page; the page is loaded again
+    under the live rule. Verified by `Content/ContentFinderTests` (9: hit, miss, order, a throwing finder and
+    constructor, unpublished / recycled / unknown pages, cache, language, home page) and on the dev site with a
+    scratch finder (200 with the route values in the view, a throwing finder logged and the address 404).
+  - **ZA-125 [Low] Very large classes; `Content.Url` obsolete with no exit — fixed.** `ContentService` and
+    `MembershipService` split into partial-class files by concern (D56; same types, constructors and members,
+    pinned by `CoreSurfaceTests`). `Content.Url` is the stored URL and not obsolete; the `Url()` extension is
+    obsolete with the exit in its message (D57); callers migrated, the pragmas for it removed, no schema change.
+    Verified by the build (no CS0618 suppressions left for it), `CoreSurfaceTests` and the full suite.
+  - **ZA-126 [Low] Interactive custom components receive the whole `Content` graph — fixed.**
+    `ICustomContentComponent.ContentId` replaces `Content`; `RenderCustomContent` passes only the id (D58). Verified
+    by `Content/CustomContentComponentTests` (HtmlRenderer on a real site) and on the dev site: the contact form's
+    prerender descriptor 7046 → 777 characters, the form filled in and sent in a browser.
+  - **`IDbContextFactory` (known deviation in Standards.md) — closed, not adopted (D59).** The scope per operation
+    picks the provider per scope (installer, no-database start) and shares its context with Identity's stores;
+    the deviation row is gone and the pattern is written down in Standards.md §3 and Services.md.
 - **Phase 11f (2026-11-27): public surface and API conventions (Roadmap D53–D54).** Details and the release notes
   in the Roadmap's Phase 11f notes.
   - **ZA-092 [Medium] Core exposes hundreds of public types — fixed.** The rule for what is public is written down

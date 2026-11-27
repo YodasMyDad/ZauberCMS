@@ -175,7 +175,7 @@
                     // Only rewrite when the link really points somewhere else now (ZA-135): both sides are
                     // compared in the same form, and the new href is site-relative (/blog), never relative (blog).
                     var currentHref = node.GetAttributeValue("href", string.Empty);
-                    var updatedHref = ZauberCMS.Core.Content.ContentUrl.UpdatedHref(currentHref, content.Url());
+                    var updatedHref = ZauberCMS.Core.Content.ContentUrl.UpdatedHref(currentHref, content.Url);
                     
                     if (updatedHref != null)
                     {

@@ -33,7 +33,7 @@ public class ContentSaveTests : IAsyncLifetime
         var page = await _site.CreateContentAsync(_pageType, "About Us");
 
         var stored = await _site.QueryDatabaseAsync(db => db.Contents.AsNoTracking().SingleAsync(x => x.Id == page.Id));
-        Assert.Equal("about-us", stored.Url());
+        Assert.Equal("about-us", stored.Url);
         Assert.Equal("page", stored.ContentTypeAlias);
         Assert.Equal(_site.CurrentUser.Id, stored.LastUpdatedById);
     }
@@ -47,7 +47,7 @@ public class ContentSaveTests : IAsyncLifetime
         var stored = await _site.QueryDatabaseAsync(db => db.Contents.AsNoTracking()
             .Where(x => x.Id == first.Id || x.Id == second.Id).ToListAsync());
 
-        Assert.Equal(2, stored.Select(x => x.Url()).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(2, stored.Select(x => x.Url).Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     // A loaded copy may be saved once. This is why a dialog and the menu that opened it must not both save the

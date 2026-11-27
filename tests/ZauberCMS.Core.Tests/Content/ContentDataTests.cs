@@ -257,12 +257,10 @@ public class ContentDataTests : IAsyncLifetime
 
         Assert.True(restored.Success, TestSite.Describe(restored.Messages));
         var stored = await StoredAsync(offers.Id);
-        Assert.Equal("offers-1", stored.Url());
+        Assert.Equal("offers-1", stored.Url);
         var draft = await _site.QueryDatabaseAsync(db => db.UnpublishedContent.AsNoTracking()
             .SingleAsync(x => x.Id == stored.UnpublishedContentId, Ct));
-#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Equal("offers-1", draft.JsonContent.Url);
-#pragma warning restore CS0618
         // So the draft can be published
         var editorCopy = draft.JsonContent.MapDraftTo(stored);
         editorCopy.UnpublishedContentId = stored.UnpublishedContentId;

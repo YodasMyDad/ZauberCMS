@@ -154,7 +154,7 @@
         }
 
         var currentUri = new Uri(NavigationManager.BaseUri);
-        FullUrl = $"{currentUri}{Content?.Url()}";
+        FullUrl = $"{currentUri}{Content?.Url}";
 
         //SettingsModel = Settings.FromJson<MediaPickerSettings>();
     }

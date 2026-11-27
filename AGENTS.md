@@ -119,7 +119,7 @@ don't reorder without a reason written in the commit.
 | `INestedContentReferenceProvider` | Which blocks an editor's value owns (by editor alias), so they are saved, deleted, versioned and copied with the page |
 | `ISection`, `ISectionNavGroup`, `ISectionNav`, `ISectionNavGroupAction`, `ISectionDashboard` | Admin sections, nav groups, nav items, group "…" actions, dashboard tabs |
 | `ITreeContextMenu` | Admin tree right-click menu items |
-| `ICustomContentComponent`, `IDataListSource`, `ISeoCheck`, `IAccountLayout` | Custom content tabs, list-editor data sources, SEO checks, account-page layout |
+| `ICustomContentComponent`, `IDataListSource`, `ISeoCheck`, `IAccountLayout` | Components an editor picks for a page (given its `ContentId`, not the page), list-editor data sources, SEO checks, account-page layout |
 | `IStorageProvider`, `IEmailProvider` | Media storage / email backend (selected by `Zauber:Plugins:*`) |
 | `ICaptchaProvider` | CAPTCHA on the registration page (none shipped; `Zauber:Plugins:CaptchaProvider` when there are several) |
 | `IStarterKit` | Starter content offered by the installer (the template ships one) |
@@ -174,7 +174,7 @@ pipeline and no MVC views (removed in Phase 11e, ZA-090). Only `AuthController` 
 ## High-risk areas — read the doc before editing
 
 - **Block List editor & nested content** (`Editors/BlockList*`, `ContentEditScope`, `BlockPreview`, `ContentEditor.razor`
-  block mode and save, `SaveContentAsync` (`ContentService.Tree.cs`) / `NestedContentTree`, block snapshots). Block edits live in a
+  block mode and save, `SaveContentAsync` (`ContentService.Save.cs` / `.Tree.cs`) / `NestedContentTree`, block snapshots). Block edits live in a
   `ContentEditScope` (child scope per side panel: commit on save, rollback on cancel) and the page is saved with its
   blocks in one transaction; Core finds blocks only through `INestedContentReferenceProvider`. Never save a block on its
   own from the editor, and don't revive the obsolete callback types. → [Docs/BlockListEditor.md](Docs/BlockListEditor.md)

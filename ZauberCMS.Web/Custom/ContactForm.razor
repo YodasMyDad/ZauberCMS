@@ -41,7 +41,9 @@ else
 @code {
     public string Name => "Contact Form";
     
-    [Parameter] public Content? Content { get; set; }
+    // The page the form is on (only its id crosses into the interactive render); load it with
+    // ContentService.GetContentAsync(new GetContentParameters { Id = ContentId, Cached = true }) when needed
+    [Parameter] public Guid ContentId { get; set; }
     
     private ContactFormModel? ContactModel { get; set; }
     

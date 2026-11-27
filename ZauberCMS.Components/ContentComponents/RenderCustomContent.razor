@@ -16,17 +16,11 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
 
     [Parameter] public List<string>? CustomComponents { get; set; }
+
+    /// <summary>The page the components are on. Only its id is passed on (ZA-126, Roadmap D58).</summary>
     [Parameter] public Content? Content { get; set; }
 
     Dictionary<string, ICustomContentComponent> CustomContentComponents { get; set; } = new();
-
-    private Dictionary<string, object> GetParameters()
-    {
-        return new Dictionary<string, object>
-        {
-            [nameof(ICustomContentComponent.Content)] = Content!
-        };
-    }
 
     protected override void OnInitialized()
     {
@@ -37,10 +31,8 @@
     {
         var customComponentType = customContentComponent.GetType();
         builder.OpenComponent(0, customComponentType);
-        foreach (var parameter in GetParameters())
-        {
-            builder.AddAttribute(1, parameter.Key, parameter.Value);
-        }
+        // An id, not the page: an interactive component's parameters are serialised into the page (ZA-126)
+        builder.AddAttribute(1, nameof(ICustomContentComponent.ContentId), Content?.Id ?? Guid.Empty);
         builder.CloseComponent();
     };
 }

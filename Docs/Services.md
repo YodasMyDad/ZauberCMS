@@ -13,8 +13,9 @@ How Core services are built. Paths relative to `ZauberCMS.Core/`. Standards: [St
 ```
 
 - Register `AddScoped<IXService, XService>()` in `ZauberSetup.cs` next to the others.
-- Copy from `Data/Services/DataService.cs` (small) or `Seo/Services/SeoService.cs`. `Content/Services/ContentService.cs`
-  is the full reference (queries, versioning, block lists, transactions).
+- Copy from `Data/Services/DataService.cs` (small) or `Seo/Services/SeoService.cs`. `Content/Services/ContentService*.cs`
+  (one partial class, a file per concern: queries, save, delete, copy, routing, content types, domains,
+  import/export, blocks) is the full reference (queries, versioning, block lists, transactions).
 - Primary-constructor DI: `IServiceScopeFactory`, `ICacheService`, `ExtensionManager`, `ILogger<T>`, and as needed
   `AppState`, `IOptions<ZauberSettings>`, `ICurrentUserAccessor` (when it records who made a change), sibling
   services.
@@ -78,7 +79,10 @@ using var scope = serviceScopeFactory.CreateScope();
 var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 ```
 
-Don't hold a context beyond the method. Within one scope, `IZauberDbContext` and Identity's stores
+Don't hold a context beyond the method. A scope, not `IDbContextFactory<T>` (Roadmap D59): the scope's
+`IZauberDbContext` is the context of the provider the site uses now, chosen when the scope first asks (so the
+database the installer has just set up is used without a restart, and a site with no database starts at all), which
+a factory typed to one context class cannot do. Within one scope, `IZauberDbContext` and Identity's stores
 (`UserManager`/`RoleManager` resolved from that scope) share one context (Phase 10, ZA-011), so a transaction
 covers both. Resolve `UserManager` from the operation's scope, not by constructor injection into a service: a
 circuit's one lives as long as the circuit and returns users as first loaded (ZA-086).

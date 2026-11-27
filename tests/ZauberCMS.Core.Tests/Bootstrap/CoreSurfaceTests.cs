@@ -37,6 +37,39 @@ public class CoreSurfaceTests
     private static readonly Assembly Components = typeof(TextProperty).Assembly;
     private static readonly Assembly Routing = Assembly.Load(new AssemblyName("ZauberCMS.Routing"));
 
+    // ---- ZA-125 ----
+
+    [Fact]
+    public void ZA125_Content_Url_is_the_stored_url_and_the_Url_extension_is_the_obsolete_one()
+    {
+        var property = typeof(ZauberCMS.Core.Content.Models.Content).GetProperty("Url")!;
+        Assert.Null(property.GetCustomAttribute<ObsoleteAttribute>());
+        Assert.NotNull(property.SetMethod);
+
+        var extension = typeof(ZauberCMS.Core.Extensions.ContentExtensions).GetMethod("Url")!;
+        Assert.Contains("Content.Url", extension.GetCustomAttribute<ObsoleteAttribute>()?.Message);
+    }
+
+    [Fact]
+    public void ZA125_the_split_services_keep_their_public_shape()
+    {
+        // Partial classes: a site that subclasses or decorates them sees the same type, constructor and members
+        foreach (var (service, contract) in new[]
+                 {
+                     (typeof(ZauberCMS.Core.Content.Services.ContentService), typeof(IContentService)),
+                     (typeof(ZauberCMS.Core.Membership.Services.MembershipService),
+                         typeof(ZauberCMS.Core.Membership.Interfaces.IMembershipService))
+                 })
+        {
+            Assert.True(service.IsPublic && !service.IsSealed);
+            Assert.Single(service.GetConstructors());
+            foreach (var method in contract.GetMethods())
+            {
+                Assert.NotNull(service.GetMethod(method.Name, method.GetParameters().Select(p => p.ParameterType).ToArray()));
+            }
+        }
+    }
+
     // ---- ZA-090 ----
 
     [Fact]

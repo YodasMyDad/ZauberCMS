@@ -2,7 +2,7 @@
 
 **High-risk area.** Read this before touching `ZauberCMS.Components/Editors/BlockList*`, `ContentEditScope`,
 `BlockPreview`, `ContentEditor.razor` (block mode and its save), `IContentService.SaveContentAsync`
-(`ContentService.Tree.cs`), `NestedContentTree`, `ContentExtensions.GetBlocks`, or block snapshots in
+(`ContentService.Save.cs`; with its blocks `ContentService.Tree.cs`), `NestedContentTree`, `ContentExtensions.GetBlocks`, or block snapshots in
 `ContentVersioningService`.
 
 Redesigned in the 2026 rework (Roadmap Phase 9, D5): edits live in an edit session, the page and its blocks are saved

@@ -184,7 +184,7 @@ rather than render a 404, so the built-in page is sent; that shows in the log as
 | `GetMediaItems` / `GetMedia` | Media picker values |
 | `GetContentItems` / `GetContent` | Content picker values |
 | `GetUsers` / `GetUser` | User picker values |
-| `NavigationItems`, `Url()` | Menus and links (`Url()` is the stored form, `blog`; `ContentUrl.SiteRelative(content)` gives the link, `/blog`) |
+| `NavigationItems`, `Content.Url` | Menus and links (`Content.Url` is the stored form, `blog`; `ContentUrl.SiteRelative(content)` gives the link, `/blog`; the `Url()` extension is obsolete, D57) |
 
 Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the request path.
 
@@ -215,6 +215,15 @@ With enhanced navigation, a component that is on both pages is kept, not started
 re-render it: it still shows what it rendered on the previous page until it next updates (then in the new page's
 language). A per-page `@key` (for example `@key="Content?.Id"`) should make it start fresh on each page (Blazor matches kept components by type and key; not tried here).
 SSR forms use `EditForm` + `FormName` + `[SupplyParameterFromForm]`. Never Radzen on the front-end.
+
+**Custom components** (`ICustomContentComponent`): components an editor puts on a page with the "Custom Component
+Picker" property editor; the view renders the chosen ones with
+`<RenderCustomContent Content="@Content" CustomComponents="@Content.GetValue<List<string>>("alias")" />`
+(`ZauberCMS.Web/Pages/ContactView.razor`, `ZauberCMS.Web/Custom/ContactForm.razor`). A component is given
+`[Parameter] public Guid ContentId`, the id of the page it is on, not the page: the parameters of a component with
+`@rendermode` are serialised into the HTML, and the whole page graph does not belong there (ZA-126, D58). One that
+needs the page loads it: `await ContentService.GetContentAsync(new GetContentParameters { Id = ContentId, Cached = true })`
+(only a published page that is not in the recycle bin is returned by default).
 
 ## Discovery of site code
 

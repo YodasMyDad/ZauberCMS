@@ -74,8 +74,10 @@ removed line is a breaking change for the release notes.
 - No fire-and-forget on request/circuit paths; background work belongs in a hosted service / `Channel`.
 - Lifetimes: services Scoped (per request / per circuit), `AppState` Singleton, `TreeState` Scoped. Never capture a
   scoped service in a singleton. `HttpClient` only via `IHttpClientFactory`.
-- DbContext: obtained per operation (current pattern: `using var scope = serviceScopeFactory.CreateScope()` →
-  `IZauberDbContext`). Never inject a DbContext into a component; never share one across `Task.WhenAll`.
+- DbContext: obtained per operation from a scope of its own (`using var scope = serviceScopeFactory.CreateScope()` →
+  `IZauberDbContext`; [Services.md](Services.md) "DbContext per operation"). This is the pattern, not a stop-gap
+  for `IDbContextFactory<T>` (Roadmap D59). Never inject a DbContext into a component; never share one across
+  `Task.WhenAll`.
 
 ## 4. Data access (EF Core, three providers)
 
@@ -251,7 +253,6 @@ In place since Roadmap Phase 11b (D43):
 
 | Pattern in code | Target | Example |
 | --- | --- | --- |
-| `IServiceScopeFactory` scope per method + `GetRequiredService` inside services | `IDbContextFactory<T>` / constructor injection (planned refactor) | `Content/Services/ContentService.cs` |
 | `SaveChangesAndLog` swallows exceptions into UI message text | log + generic message | `Extensions/DbContextExtensions.cs` |
 | Static `Serilog.Log.*` alongside `ILogger<T>` | `ILogger<T>` only | `DbContextExtensions.cs`, `ZauberSetup.cs` |
 | `ToLower()` search comparisons | provider-safe comparisons | `ContentService`, `MembershipService` |

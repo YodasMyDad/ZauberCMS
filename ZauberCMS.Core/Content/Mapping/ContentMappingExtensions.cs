@@ -17,9 +17,7 @@ public static class ContentMappingExtensions
         // Map all simple properties
         target.Id = source.Id;
         target.Name = source.Name;
-#pragma warning disable CS0618 // Type or member is obsolete
         target.Url = source.Url;
-#pragma warning restore CS0618 // Type or member is obsolete
         target.ContentTypeId = source.ContentTypeId;
         target.ContentTypeAlias = source.ContentTypeAlias;
         target.LastUpdatedById = source.LastUpdatedById;
@@ -67,9 +65,7 @@ public static class ContentMappingExtensions
     public static Models.Content MapDraftTo(this Models.Content draft, Models.Content target)
     {
         target.Name = draft.Name;
-#pragma warning disable CS0618 // Type or member is obsolete
         target.Url = draft.Url;
-#pragma warning restore CS0618 // Type or member is obsolete
         target.ViewComponent = draft.ViewComponent;
         target.HideFromNavigation = draft.HideFromNavigation;
         target.InternalRedirectId = draft.InternalRedirectId;

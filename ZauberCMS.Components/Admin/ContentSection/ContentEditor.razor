@@ -322,9 +322,7 @@ else
     private bool Loading { get; set; } = true;
     private Content? WorkingCopy { get; set; }
 
-    // The Url field sets the page's stored URL. Content.Url is obsolete for code that reads a page's URL, which
-    // calls the Url() extension; this field is where the stored value is edited (ZA-125 retires the property).
-#pragma warning disable CS0618 // Type or member is obsolete
+    // The Url field edits the page's stored URL (Content.Url); the save normalises it and makes it unique
     private string? WorkingCopyUrl
     {
         get => WorkingCopy?.Url;
@@ -336,7 +334,6 @@ else
             }
         }
     }
-#pragma warning restore CS0618
 
     // A page editor's unsaved block edits; replaced with an empty one whenever the content is (re)loaded
     private ContentEditScope RootScope { get; set; } = ContentEditScope.CreateRoot();

@@ -14,21 +14,11 @@ public static class ContentExtensions
 {
     
     /// <summary>
-    /// Gets the URL for the content with additional processing/validation
+    /// The page's stored URL: the same as <see cref="Content.Models.Content.Url"/>, which it only returns.
     /// </summary>
-    /// <param name="content">The content instance</param>
-    /// <returns>The processed URL</returns>
-    public static string? Url(this Content.Models.Content content)
-    {
-        // Add your custom logic here
-        // For example: URL validation, formatting, etc.
-#pragma warning disable CS0618 // Type or member is obsolete
-        var url = content.Url; // Direct property access within extension
-#pragma warning restore CS0618 // Type or member is obsolete
-            
-        // Custom processing...
-        return url;
-    }
+    [Obsolete("Read the Content.Url property, which this returns unchanged, or ContentUrl.SiteRelative(content) for " +
+              "the link (/blog). Url() will be removed in a later major version (Roadmap D57).")]
+    public static string? Url(this Content.Models.Content content) => content.Url;
 
 
     /// <summary>
@@ -70,7 +60,7 @@ public static class ContentExtensions
                 {
                     if (dictContentItems.TryGetValue(navigationItem.ContentId.Value, out var newContent))
                     {
-                        navigationItem.Url = newContent.Url();
+                        navigationItem.Url = newContent.Url;
                     }
                 }
             

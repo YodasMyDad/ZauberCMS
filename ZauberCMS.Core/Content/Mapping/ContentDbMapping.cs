@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ZauberCMS.Core.Extensions;
-#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace ZauberCMS.Core.Content.Mapping;
 

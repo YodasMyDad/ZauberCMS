@@ -17,11 +17,11 @@ public class Content : IContent<ContentPropertyValue>, IHasPropertyValues
     public string? Name { get; set; }
 
     /// <summary>
-    /// The Url for the content
+    /// The page's URL as stored: lower case, without slashes around it (<c>blog/my-post</c>); empty for a block,
+    /// which has no URL. The front-end lookup compares the address with it. A link to the page on the site is
+    /// <c>ContentUrl.SiteRelative(content)</c> (<c>/blog/my-post</c>). Set it to change the page's address; the save
+    /// makes it unique (Roadmap D57).
     /// </summary>
-    [Obsolete("Use the Url() extension method instead of accessing this property directly.")]
-    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-
     public string? Url { get; set; }
 
     /// <summary>

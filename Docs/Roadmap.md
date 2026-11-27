@@ -25,11 +25,13 @@
   **Phase 11d done** (start-up checks, settings binding and DI leftovers, D48–D50, 2026-11-27).
   **Phase 11e done** (the MVC path removed, UI contracts out of Core, D51–D52, 2026-11-27).
   **Phase 11f done** (public surface and API conventions, D53–D54, 2026-11-27).
-  **6 open findings** (0 Critical, 0 High, 0 Medium, 6 Low), each one assigned below to a phase (10f–10i or 11),
+  **Phase 11g done** (content finders at the owner's request, D55; the service split, `Content.Url` and the custom
+  components' page id, D56–D58; the DbContext pattern kept, D59; 2026-11-27). **Phase 11 is done** (parts 11a–11g).
+  **4 open findings** (0 Critical, 0 High, 0 Medium, 4 Low), each one assigned below to a phase (10f–10i),
   plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
-  new finding goes into the phase whose theme fits. **In progress: Phase 11** (owner, 2026-11-27: before 10f–10i;
-  parts 11a–11g in its section; **next: 11g**), then 10f, 10g, 10h, 10i, then Phase 12 (design
-  questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
+  new finding goes into the phase whose theme fits. **Next: `/audit changed` over Phase 11, then 10f**, then 10g,
+  10h, 10i, then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner
+  delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -93,6 +95,10 @@
 | D53 | **A type is public only when a site or plugin needs it; what is public is pinned by a test.** Public: discovery interfaces and every type discovery finds (the built-in ones too: discovery sees exported types only), every type a database or setting stores by full name, service interfaces with their default implementations and the types `AddZauberCms` registers for a site to resolve, replace or decorate, parameters, models, results, enums, settings, the DbContexts, extension methods (the `MapTo` copiers included: the admin's `ContentEditor` uses one), Razor components, anything in a public signature, and any type another ZauberCMS package uses. Internal: EF entity mappings, migrations (`migrations.ps1` rewrites EF's `public` on a new one) and the design-time factories, the middleware `AddZauberCms` wires, hosted services, circuit handlers and start-up plugins ZauberCMS adds for itself, endpoint mapping the bootstrap calls, and plumbing (`AssemblyManager`, its unused public mutable caches removed). Leftover public types nobody uses are `[Obsolete]` (D50), not removed. `InternalsVisibleTo` only for the test projects: the packages use each other through public API, so a site that updates one package never meets a missing internal of another (so `CultureMiddleware` stays public, EntryPage calls its `GetEntryModel`). `PublicApiTests` pins the public types in `Snapshots/PublicTypes.txt`; the rule is in [Standards.md](Standards.md) §1. Umbraco keeps its service implementations, notification handlers and composers public so sites subclass, decorate and replace them, and keeps infrastructure (EF/NPoco mappings, migrations plumbing, middleware internals) out of its supported API; ZauberCMS does the same: extending and updating win over a smaller surface (core principle). Core went from 429 to 375 public types, Components from 278 to 274 (most of what is left is parameters, models and Razor components, which are API by nature). (owner delegated, 2026-11-27, Phase 11f) | ZA-092, D18, D50 |
 | D54 | **API conventions settled for v5 and checked by a test** ([Standards.md](Standards.md) §11). Recycle-bin flags are `IncludeDeleted` (also recycled) and `OnlyDeleted` (only recycled), `bool`, `false` by default, the shape `IncludeUnpublished`/`OnlyUnpublished` already had; `QueryContentParameters.IsDeleted` (`bool?`, the only tri-state) stays as an `[Obsolete]` alias that maps onto them, so what a query returns by default and for every old value is unchanged. `Cached` defaults are kept as they are (changing one changes what callers get) under a written rule: `false` on entity Get/Query parameters, `true` only on the small per-request lookups that are cleared on every write of their type; a test pins each. A public method takes its token last as `CancellationToken cancellationToken = default`, never `CancellationToken?` (`AuditExtensions.AddAudit` changed); `IContentService.ExportContentTypeAsync`/`ImportContentTypeAsync` gained one; `SaveChangesAndLog` and `IQueryModel.ExecuteQuery` got the default; exceptions: framework-fixed signatures, `ICacheService` (its load closes over the caller's token), and the token overload of `ISeoCheck.Check`, which keeps a token-less one. Discovery interfaces are not moved: Umbraco keeps its by feature, and moving `ISeoCheck` (in `Seo.Models`), `IStorageProvider` or `ITreeContextMenu` would break every plugin's `using` to buy neatness; the convention for new ones is `ZauberCMS.Core.<Feature>.Interfaces`. (owner delegated, 2026-11-27, Phase 11f) | ZA-124, D18 |
 | D55 | **A site decides which page an address shows when no page has its URL, with content finders** (owner, 2026-11-27: build it; the design delegated, Umbraco's way). `IContentFinder` (`ZauberCMS.Core.Content.Interfaces`) is a discovery interface: finders are found like the other extension points (no registration), built for each lookup with constructor injection, and run by `SortOrder` (then type name) inside `IContentService.GetContentFromRequestAsync`, after the URL lookup finds no live page (the home page too) and before the not-found page (D41). The first result wins; null asks the next. A result names the page by id (or a `Content`) with an optional `LanguageIsoCode` and `RouteValues`; ZauberCMS loads the page again under the live rule (published, not recycled, not a block; internal redirect followed; the usual includes), so a finder can never serve an unpublished or recycled page: the next finder is asked instead. The route values reach the view through `EntryModel.RouteValues`, and `EntryPage` cascades the `EntryModel` to the view and layout. A finder that throws, or whose constructor throws, is logged as an error and passed over. The finder's answer is not cached (it caches its own search); the page it names is, under the Content prefix, as for a URL. The name is the one D52 removed: it is Umbraco's, and the old interface never ran, so a class written for it fails to compile instead of starting to run. Umbraco has `IContentFinder.TryFindContent(IPublishedRequestBuilder)` in an ordered `ContentFinderCollection` that composers edit (append, insert before), and `IContentLastChanceFinder` for 404s. ZauberCMS orders by a property because it discovers instead of composing (core principle: no manual registration; it ships no finder a site would need to remove); its last chance is `Zauber:NotFoundComponent`; and a finder names a page instead of setting one on the request, so the live rule is applied once by ZauberCMS, not by every finder. In the service, not a middleware: the request's culture (`CultureMiddleware`), `EntryPage`'s fallback and the language of interactive components (`ContentCultureCircuitHandler`) all ask the service, so they agree. (owner, 2026-11-27, Phase 11g) | Phase 11g, D41, D52 |
+| D56 | **The very large services are split by concern into partial-class files; their types, constructors and members stay as they are.** `ContentService` (2877 lines in one file) is one `public partial class` in eleven files: the main file (constructor, get and query, 420 lines) and `.Save` (staging, drafts, versions, URLs, roles, values), `.Tree` (a page with its blocks), `.Delete` (recycle, restore, delete, orphans), `.Copy`, `.Routing` (the URL lookup and content finders, D55), `.ContentTypes`, `.Domains` (domains and page languages), `.ImportExport`, `.Access`, `.Trees`; none is over 760 lines. `MembershipService` (1248) became `public partial class` in three: users (552), `.Roles` (224), `.Account` (sign-in, registration, external sign-in, confirmation and passwords, 537). Separate internal services were set aside: they would change the constructors (a site that subclasses `ContentService` or builds it in a decorator calls them), move code that shares the private helpers into new types, and buy only a smaller class, which the files already give. Umbraco splits its `ContentService` by concern into several public services (`IContentService`, `IContentTypeService`, `IDomainService`, `IEntityService`, …); splitting `IContentService` the same way would break every site that injects it, for v5 with no gain the files do not already give. A test pins the shape (public, not sealed, one constructor, every interface method). (owner delegated, 2026-11-27, Phase 11g) | ZA-125, D18 |
+| D57 | **`Content.Url` is the page's stored URL and is no longer obsolete; the `Url()` extension, which only returned it, is the obsolete one, and the column stays.** The property was `[Obsolete]` (pointing at `Url()`) and hidden from IntelliSense, yet it is the value EF maps, the front-end lookup compares, the save makes unique and the drafts, versions and exports carry, so every writer needed a pragma (16) and there was no exit: removing it would need a settable replacement under another name (every importer and starter kit changes, and the drafts' and versions' JSON would need its old name mapped) for no gain. Now readers and writers use `Content.Url` (`blog/my-post`, lower case, no slashes round it), a link is `ContentUrl.SiteRelative(content)` (`/blog/my-post`), and `Url()` is `[Obsolete]` with that message, for removal in a later major. No schema change and no migration: the column's name, meaning and data are unchanged. Umbraco keeps the stored segment (`UrlSegment`) apart from the computed link (`Url()` through `IPublishedUrlProvider`); ZauberCMS stores the whole relative URL, so its stored value and its link differ only by the leading slash, which `ContentUrl.SiteRelative` adds. (owner delegated, 2026-11-27, Phase 11g) | ZA-125, D18 |
+| D58 | **A custom content component is given the id of its page (`ICustomContentComponent.ContentId`), not the page.** `RenderCustomContent` passed the whole `Content` (values, type, parent, roles) as a parameter, which Blazor serialises into the HTML for a component with `@rendermode` (the sample contact form: 7046 characters of protected descriptor, 777 with the id) and sends back with the circuit. A small DTO was weighed: the useful fields differ per component and any copy goes stale, while the id is enough to load the page through `IContentService.GetContentAsync(new GetContentParameters { Id = ContentId, Cached = true })` (published and not recycled by default, and cached). The admin has no custom components (the picker only lists their names), so nothing in ZauberCMS needed the page. Breaking (D18): the interface's `Content` property is replaced by `Guid ContentId`; no `[Obsolete]` path, because the renderer can pass only parameters a component declares and keeping `Content` would keep the serialisation it exists to stop. Umbraco renders view components on the server and passes `IPublishedContent` in memory; for Blazor's interactive components Microsoft's guidance is small serialisable parameters. (owner delegated, 2026-11-27, Phase 11g) | ZA-126, D18 |
+| D59 | **Services keep a scope per operation for their DbContext; `IDbContextFactory<T>` is not adopted, and the pattern is no longer listed as a deviation.** The scope's `IZauberDbContext` is the context of the provider the site uses now, picked when the scope first asks (`ZauberSetup.ActiveContextType`): the installer writes the database settings and the next scope uses them without a restart, and a site with no database (D24) starts without one. `IDbContextFactory<T>` is typed to one context class fixed at registration, so it would need a factory of ZauberCMS's own that picks the provider, which is what the scope does. Identity's stores (`UserManager`, `RoleManager`) resolved from the same scope share its context, so one transaction covers a user and its content (ZA-011); contexts made by a factory would not be shared. Umbraco works the same way: a unit of work is a scope (`ICoreScopeProvider.CreateCoreScope()`) that owns the database connection, and services do not hold a context. Standards.md §3 states it as the pattern; the deviation row is gone. (owner delegated, 2026-11-27, Phase 11g) | Standards.md, ZA-011, D24 |
 
 ## Working rules for the rework
 
@@ -1035,7 +1041,7 @@ ZA-128 (Low). Labels on icon buttons and inputs, keyboard access and roles for t
 button), `label for` matching real ids, focus in side panels. Last of the Phase 10 parts, so it covers 10g's screens
 and uses 10h's localised text.
 
-### Phase 11 — Engineering baseline, API clean-up, v5
+### Phase 11 — Engineering baseline, API clean-up, v5 — DONE 2026-11-27
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,
 ZA-124, ZA-125, ZA-126, ZA-131, ZA-165 (Low).
 
@@ -1050,7 +1056,7 @@ Done in parts, one commit each, in this order:
 | 11d | Start-up and DI: ZA-120, ZA-121, ZA-167 (found in 11c) | DONE 2026-11-27 (D48–D50; the 11c CI failure fixed) |
 | 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | DONE 2026-11-27 (D51, D52) |
 | 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | DONE 2026-11-27 (D53, D54) |
-| 11g | Content finders (owner request, 2026-11-27: D55); breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | content finders done 2026-11-27 (D55); the rest in progress |
+| 11g | Content finders (owner request, 2026-11-27: D55); breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | DONE 2026-11-27 (D55–D59) |
 
 - **Found in Phase 10e, do first (done in 11a, below):** ZA-164 (the front end's 404 page is sent with an empty body; reproduce in a bare
   .NET 10 app, then render `Zauber:NotFoundComponent`), ZA-165 (a redirect's domain is ignored).
@@ -1527,6 +1533,70 @@ way as delegated. The second part of the v5 breaking batch (D18).
     `ISqLiteMigration` are unused and obsolete.
   - `SaveChangesAndLog` and `IQueryModel.ExecuteQuery` give their token a default (compiles unchanged).
   - No behaviour change: what every query returns by default, and every `Cached` default, is as in 4.x.
+
+#### Phase 11g — Content finders, the service split, custom components, the DbContext pattern — DONE (2026-11-27)
+ZA-125 and ZA-126 (Low) fixed, the owner's request for content finders built (D55), the `IDbContextFactory`
+question decided (D59). Decisions D55 (owner, design delegated) and D56–D59 (delegated), Umbraco's way. Two
+commits: content finders (6166a62), then the rest. Phase 11 is done with this part.
+- **Content finders (owner, 2026-11-27, D55).** `IContentFinder` (`ZauberCMS.Core.Content.Interfaces`, discovered,
+  constructor DI, `SortOrder` then type name) with `ContentFinderContext` (`Url`, `Slug`, `Path`, `Segments`,
+  `Domain`, `IsRootContent`) and `ContentFinderResult` (page id, `LanguageIsoCode`, `RouteValues`). They run in
+  `IContentService.GetContentFromRequestAsync` (`ContentService.Routing.cs`) after the URL lookup finds no live
+  page, before the not-found page; the first result wins. The page is loaded again under the live rule with the
+  usual includes (shared with the URL lookup, `LoadEntryAsync`), cached under the Content prefix; a finder that
+  names a page that is not live, throws, or cannot be built is logged and passed over. `EntryModel` has
+  `ContentFinder` and `RouteValues`; `EntryPage` cascades the `EntryModel`. `ExtensionManager.CreateInstance`
+  (internal) builds one extension, so one constructor that throws does not stop the others. AGENTS.md lists the
+  extension point; Docs/FrontEnd.md has the request-flow step and a worked `/products/{sku}` example.
+- **The split (ZA-125, D56).** `ContentService` 2877 lines in one file → eleven partial files, the largest 760
+  (`.Save`); `MembershipService` 1248 → three (552, 224, 537). Moved by a script that cuts whole members, checked
+  line by line (every line of the old file is in exactly one new file); usings the compiler reported unused in the
+  moved files were removed. Nothing else changed in them.
+- **`Content.Url` (ZA-125, D57).** No longer `[Obsolete]`; `ContentExtensions.Url()` is, with the exit in its
+  message. Every caller moved to the property (Core, Components, the sample site, the tests) and the pragma
+  suppressions that were only for it are gone (10 remain, for other obsolete members). No migration.
+- **Custom components (ZA-126, D58).** `ICustomContentComponent.Content` → `Guid ContentId`; `RenderCustomContent`
+  passes only the id; the sample `ContactForm` takes it. Docs/FrontEnd.md "Interactivity" describes custom
+  components and how to load the page; AGENTS.md's row said "custom content tabs", which they are not.
+- **DbContext pattern (D59).** Kept; Standards.md §3 states it as the pattern and its "Known deviations" row is
+  gone; Services.md gives the reason.
+- Tests: `Content/ContentFinderTests` (9): a hit with route values, the context (`Slug`, `Path`, `Url` with its
+  query string), a miss, not asked when a page has the URL, order and the first winner, a throwing finder and a
+  constructor that throws, unpublished / recycled / unknown pages passed over, a page recycled after it was served
+  through a finder not served again (cache cleared), the finder's language, the home page.
+  `Content/CustomContentComponentTests` (2): the contract carries no `Content`; `RenderCustomContent`, rendered with
+  `HtmlRenderer` on a real site, gives a component that declares only `ContentId` the page's id.
+  `Bootstrap/CoreSurfaceTests`: `Content.Url` is not obsolete and `Url()` is; the split services are public, not
+  sealed, with one constructor and every interface method; the D52 check now allows the new `IContentFinder`
+  (without MVC route values). `PublicApiTests` snapshot: three types added (`IContentFinder`,
+  `ContentFinderContext`, `ContentFinderResult`). Full suite 1122 (all pass, none skipped) on SQLite, PostgreSQL,
+  SQL Server LocalDB and Redis; Release build 0 warnings; the template smoke test passes.
+- Dev site (`ZauberCMS.Web`, Release, Production, on a copy of its `app.db`): with a scratch finder (removed
+  afterwards) `/finder-test/ABC-123` and `/finder-test/xyz?x=1` showed the About page with status 200 and the
+  finder's name and SKU read in the view from the cascaded `EntryModel`; a finder that threw was logged as an error
+  and the address answered 404 with the not-found page; `/finder-test` and `/nope-page` 404. After the rest: `/`,
+  `/about`, `/contact-us`, `/blog`, `/Account/Login` 200, `/nope-page` 404, `/admin` 302 signed out, the navigation
+  links (`Content.Url`) as before; the contact form (an interactive custom component) filled in and sent in a
+  browser (Playwright), no console errors; its prerender descriptor went from 7046 to 777 characters and the page
+  from 39953 to 33684 bytes. Nothing logged as an error.
+- **Not verified:** the admin was not opened in a browser for this part (its changes are a comment in
+  `ContentEditor` and `.Url()` → `.Url` in editors, covered by the build); a site's custom component built for 4.x
+  (a compile break by design).
+- **Release notes (D18):**
+  - New: content finders. Implement `IContentFinder` to decide which page an address shows when no page has its
+    URL (Docs/FrontEnd.md "Content finders"). `EntryPage` cascades the `EntryModel` (now with `ContentFinder` and
+    `RouteValues`) to views and layouts.
+  - **Breaking:** `ICustomContentComponent.Content` is replaced by `Guid ContentId`. A custom component declares
+    `[Parameter] public Guid ContentId { get; set; }` instead of `Content` and loads the page when it needs it with
+    `IContentService.GetContentAsync(new GetContentParameters { Id = ContentId, Cached = true })`.
+  - **Breaking:** a class that implemented the 4.x `IContentFinder` (`TryFindContent(HttpContext)`, which never
+    ran, D52) does not compile against the new interface of the same name.
+  - Obsolete: `ContentExtensions.Url(this Content)` → read `Content.Url` (the stored form, `blog`) or
+    `ContentUrl.SiteRelative(content)` for the link (`/blog`). `Content.Url` is no longer obsolete or hidden from
+    IntelliSense; code that suppressed CS0618 for it can drop the pragma.
+  - `ContentService` and `MembershipService` are partial classes in several files; their constructors and members
+    are unchanged (a subclass or decorator compiles as before).
+  - No schema change.
 
 ### Phase 12 — .NET 11 (D4)
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and

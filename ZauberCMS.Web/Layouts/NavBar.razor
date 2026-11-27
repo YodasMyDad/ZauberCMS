@@ -4,7 +4,7 @@
     {
         @foreach (var p in Website.Children.Where(x => !x.HideFromNavigation).OrderBy(x => x.SortOrder))
         {
-            var pageUrl = p.Url();
+            var pageUrl = p.Url;
             // If this is the home page (URL is "home"), use root path "/"
             var hrefUrl = pageUrl?.ToLower() == "home" ? "/" : $"/{pageUrl}";
             // For IsPageActive, use the effective URL (empty string for home page root)

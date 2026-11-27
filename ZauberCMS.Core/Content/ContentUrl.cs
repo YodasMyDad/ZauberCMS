@@ -28,7 +28,7 @@ public static class ContentUrl
     /// <summary>
     /// The link to <paramref name="content"/> on this site (<c>/blog</c>), or null when it has no URL.
     /// </summary>
-    public static string? SiteRelative(Models.Content content) => SiteRelative(content.Url());
+    public static string? SiteRelative(Models.Content content) => SiteRelative(content.Url);
 
     /// <summary>
     /// A stored content URL as a link on this site (<c>blog</c> becomes <c>/blog</c>), or null when empty.

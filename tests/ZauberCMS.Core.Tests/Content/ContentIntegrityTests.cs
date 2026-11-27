@@ -47,9 +47,7 @@ public class ContentIntegrityTests : IAsyncLifetime
         {
             foreach (var page in await db.Contents.Where(x => x.Id == first.Id || x.Id == second.Id).ToListAsync(Ct))
             {
-#pragma warning disable CS0618
                 page.Url = "same";
-#pragma warning restore CS0618
                 page.LanguageId = languageId;
             }
 
@@ -68,9 +66,7 @@ public class ContentIntegrityTests : IAsyncLifetime
     {
         await _site.CreateContentAsync(_pageType, "About");
         var other = await LoadAsync((await _site.CreateContentAsync(_pageType, "Contact")).Id);
-#pragma warning disable CS0618
         other.Url = "About";
-#pragma warning restore CS0618
 
         var result = await SaveAsync(new SaveContentParameters { Content = other });
 
@@ -87,7 +83,7 @@ public class ContentIntegrityTests : IAsyncLifetime
         await CopyAsync(page.Id);
 
         var urls = await _site.QueryDatabaseAsync(db => db.Contents.AsNoTracking()
-            .Select(x => x.Url()).ToListAsync(Ct));
+            .Select(x => x.Url).ToListAsync(Ct));
         Assert.Equal(3, urls.Count);
         Assert.Equal(3, urls.Distinct().Count());
     }
@@ -276,7 +272,7 @@ public class ContentIntegrityTests : IAsyncLifetime
         Assert.DoesNotContain(all, x => x.Name == "Binned (Copy)");
         Assert.Equal(parentCopy.Id, childCopy.ParentId);
         Assert.Equal([parentCopy.Id, childCopy.Id], childCopy.Path);
-        Assert.NotEqual(child.Url(), childCopy.Url());
+        Assert.NotEqual(child.Url, childCopy.Url);
     }
 
     // ---- ZA-065 / ZA-066 / ZA-067: what the front end serves ----
@@ -546,7 +542,7 @@ public class ContentIntegrityTests : IAsyncLifetime
         _site.QueryDatabaseAsync(db => db.Contents.AsNoTracking().SingleAsync(x => x.Id == id, Ct));
 
     private Task<string?> UrlOfAsync(Guid id) =>
-        _site.QueryDatabaseAsync(async db => (await db.Contents.AsNoTracking().SingleAsync(x => x.Id == id, Ct)).Url());
+        _site.QueryDatabaseAsync(async db => (await db.Contents.AsNoTracking().SingleAsync(x => x.Id == id, Ct)).Url);
 
     private async Task SaveDraftAsync(Guid id, string name)
     {

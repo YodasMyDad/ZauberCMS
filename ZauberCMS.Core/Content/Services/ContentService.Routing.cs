@@ -167,9 +167,7 @@ public partial class ContentService
                 var liveContent = LiveContent(dbContext);
                 var page = await liveContent.Where(c => c.Id == contentId)
                     .Select(c => new LivePage(c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path,
-#pragma warning disable CS0618 // Type or member is obsolete
                         c.Url))
-#pragma warning restore CS0618 // Type or member is obsolete
                     .FirstOrDefaultAsync(cancellationToken);
                 // The page's own URL picks its language, as if it had been asked for by it
                 return await LoadEntryAsync(dbContext, page, request, matchedDomain, page?.Url, cancellationToken);
@@ -213,7 +211,6 @@ public partial class ContentService
         var matchedDomain = MatchDomainWithContent(request.Url ?? string.Empty, domains);
 
         var liveContent = LiveContent(dbContext);
-#pragma warning disable CS0618 // Type or member is obsolete
         var content = request.IsRootContent
             ? matchedDomain != null
                 ? await liveContent.Where(c => c.Id == matchedDomain.ContentId)
@@ -228,7 +225,6 @@ public partial class ContentService
                 .OrderBy(c => c.SortOrder).ThenBy(c => c.Id)
                 .Select(c => new LivePage(c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path, c.Url))
                 .FirstOrDefaultAsync(cancellationToken);
-#pragma warning restore CS0618 // Type or member is obsolete
 
         return await LoadEntryAsync(dbContext, content, request, matchedDomain, request.Slug, cancellationToken);
     }
@@ -247,11 +243,9 @@ public partial class ContentService
         if (content?.InternalRedirectId != null && content.InternalRedirectId != Guid.Empty)
         {
             var internalRedirectIdValue = content.InternalRedirectId.Value;
-#pragma warning disable CS0618 // Type or member is obsolete
             content = await LiveContent(dbContext).Where(c => c.Id == internalRedirectIdValue)
                 .Select(c => new LivePage(c.Id, c.InternalRedirectId, c.ContentType!.IncludeChildren, c.Path, c.Url))
                 .FirstOrDefaultAsync(cancellationToken);
-#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         if (content == null)

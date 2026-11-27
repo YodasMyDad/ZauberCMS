@@ -598,7 +598,7 @@ public class ContentVersioningService(
         return new ContentSnapshot
         {
             Name = content.Name,
-            Url = content.Url(),
+            Url = content.Url,
             ContentTypeId = content.ContentTypeId,
             ContentTypeAlias = content.ContentTypeAlias,
             DateUpdated = DateTime.UtcNow,
@@ -908,9 +908,7 @@ public class ContentVersioningService(
                 {
                     Id = blockListSnapshot.ContentId,
                     Name = blockListSnapshot.ContentSnapshot.Name,
-#pragma warning disable CS0618 // Type or member is obsolete
                     Url = blockListSnapshot.ContentSnapshot.Url, // Restore URL from snapshot
-#pragma warning restore CS0618 // Type or member is obsolete
                     ContentTypeId = blockListSnapshot.ContentSnapshot.ContentTypeId,
                     ContentTypeAlias = blockListSnapshot.ContentSnapshot.ContentTypeAlias,
                     DateUpdated = blockListSnapshot.ContentSnapshot.DateUpdated,
@@ -949,9 +947,7 @@ public class ContentVersioningService(
                 // Update existing content from snapshot — also un-soft-deletes if it was previously
                 // soft-deleted, so restored blocks become visible to QueryContentAsync again.
                 existingContent.Name = blockListSnapshot.ContentSnapshot.Name;
-#pragma warning disable CS0618 // Type or member is obsolete
                 existingContent.Url = blockListSnapshot.ContentSnapshot.Url; // Restore URL from snapshot
-#pragma warning restore CS0618 // Type or member is obsolete
                 existingContent.ContentTypeId = blockListSnapshot.ContentSnapshot.ContentTypeId;
                 existingContent.ContentTypeAlias = blockListSnapshot.ContentSnapshot.ContentTypeAlias;
                 existingContent.DateUpdated = blockListSnapshot.ContentSnapshot.DateUpdated;
