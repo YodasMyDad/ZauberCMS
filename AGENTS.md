@@ -113,6 +113,7 @@ don't reorder without a reason written in the commit.
 | Interface | Purpose |
 | --- | --- |
 | `IContentView` | Front-end page view (needs `@layout`) |
+| `IContentFinder` | Which page an address shows when no page has its URL (`/products/{sku}`); ordered by `SortOrder`, first found wins |
 | `IContentBlockView` / `IContentBlockPreview` | Block render on site / preview in admin (matched by `ContentTypeAlias`) |
 | `IContentProperty` (+ `IContentPropertySettings<T>`) | Property editor (+ its settings UI) |
 | `INestedContentReferenceProvider` | Which blocks an editor's value owns (by editor alias), so they are saved, deleted, versioned and copied with the page |

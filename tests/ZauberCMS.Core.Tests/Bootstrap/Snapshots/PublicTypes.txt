@@ -298,6 +298,7 @@ ZauberCMS.Core: ZauberCMS.Core.Content.ContentUrl
 ZauberCMS.Core: ZauberCMS.Core.Content.Interfaces.IContentBlock
 ZauberCMS.Core: ZauberCMS.Core.Content.Interfaces.IContentBlockPreview
 ZauberCMS.Core: ZauberCMS.Core.Content.Interfaces.IContentBlockView
+ZauberCMS.Core: ZauberCMS.Core.Content.Interfaces.IContentFinder
 ZauberCMS.Core: ZauberCMS.Core.Content.Interfaces.IContentPropertySettings`1
 ZauberCMS.Core: ZauberCMS.Core.Content.Interfaces.IContentService
 ZauberCMS.Core: ZauberCMS.Core.Content.Interfaces.IContentVersioningService
@@ -316,6 +317,8 @@ ZauberCMS.Core: ZauberCMS.Core.Content.Models.BlockListChanges
 ZauberCMS.Core: ZauberCMS.Core.Content.Models.BlockListContentSnapshot
 ZauberCMS.Core: ZauberCMS.Core.Content.Models.Content
 ZauberCMS.Core: ZauberCMS.Core.Content.Models.ContentExport
+ZauberCMS.Core: ZauberCMS.Core.Content.Models.ContentFinderContext
+ZauberCMS.Core: ZauberCMS.Core.Content.Models.ContentFinderResult
 ZauberCMS.Core: ZauberCMS.Core.Content.Models.ContentPropertySnapshot
 ZauberCMS.Core: ZauberCMS.Core.Content.Models.ContentPropertyValue
 ZauberCMS.Core: ZauberCMS.Core.Content.Models.ContentSnapshot

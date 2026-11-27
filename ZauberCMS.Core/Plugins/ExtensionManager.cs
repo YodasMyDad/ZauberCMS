@@ -179,6 +179,13 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         return instances;
     }
 
+    /// <summary>
+    /// One instance of a discovered <paramref name="implementation"/>, built with constructor injection from this
+    /// scope; for callers that must survive one extension's constructor throwing.
+    /// </summary>
+    internal object CreateInstance(Type implementation) =>
+        ActivatorUtilities.CreateInstance(serviceProvider, implementation);
+
     // Returns assemblies to check based on an optional predicate.
     public static IEnumerable<Assembly?> GetAssemblies(Func<Assembly?, bool>? predicate)
     {
@@ -249,6 +256,7 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         "ZauberCMS.Core.Content.Interfaces.IContentPropertySettings`1",
         "ZauberCMS.Core.Content.Interfaces.INestedContentReferenceProvider",
         "ZauberCMS.Core.Content.Interfaces.ICustomContentComponent",
+        "ZauberCMS.Core.Content.Interfaces.IContentFinder",
         "ZauberCMS.Core.Content.Interfaces.IDataListSource",
         "ZauberCMS.Core.Sections.Interfaces.ISection",
         "ZauberCMS.Core.Sections.Interfaces.ISectionNavGroup",

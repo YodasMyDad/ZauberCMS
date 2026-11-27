@@ -47,7 +47,6 @@ public class CoreSurfaceTests
             "ZauberCMS.Core.Shared.ZauberRouteValueTransformer",
             "ZauberCMS.Core.Content.ContentFinders.ContentFinderPipeline",
             "ZauberCMS.Core.Content.ContentFinders.DefaultContentFinder",
-            "ZauberCMS.Core.Content.Interfaces.IContentFinder",
             "ZauberCMS.Core.Rendering.IZauberViewPage",
             "ZauberCMS.Core.Rendering.ZauberPageViewModel",
             "ZauberCMS.Core.Rendering.ZauberViewPage`1",
@@ -55,6 +54,9 @@ public class CoreSurfaceTests
             "ZauberCMS.Core.Extensions.RenderExtensions",
         ];
         Assert.DoesNotContain(removed, name => Core.GetType(name) != null);
+        // The name IContentFinder is used again for the content finders of Roadmap D55, without the MVC route values
+        Assert.DoesNotContain(typeof(ZauberCMS.Core.Content.Interfaces.IContentFinder).GetMethods(),
+            m => m.ReturnType.ToString().Contains("RouteValueDictionary", StringComparison.Ordinal));
 
         string[] mvcBaseTypes =
         [

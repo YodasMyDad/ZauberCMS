@@ -13,9 +13,13 @@
 
 @if (ComponentView != null)
 {
-    <LayoutView Layout="LayoutType">
-        <DynamicComponent Type="@ComponentView" Parameters="@Parameters" />
-    </LayoutView>
+    @* The view (and its layout) can read the page's EntryModel: [CascadingParameter] public EntryModel? Entry,
+       for example the RouteValues a content finder gave it (Roadmap D55) *@
+    <CascadingValue Value="Entry">
+        <LayoutView Layout="LayoutType">
+            <DynamicComponent Type="@ComponentView" Parameters="@Parameters" />
+        </LayoutView>
+    </CascadingValue>
 }
 
 @code {
@@ -30,6 +34,7 @@
     
     [Parameter] public string? Slug { get; set; }
 
+    private EntryModel Entry { get; set; } = new();
     private Content? Content { get; set; }
     private Dictionary<string, string> LanguageKeys { get; set; } = [];
     private string? LanguageIso { get; set; }
@@ -53,6 +58,7 @@
             entryModel = await ContentService.GetContentFromRequestAsync(new GetContentFromRequestParameters { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
         }
         
+        Entry = entryModel;
         Content = entryModel.Content;
         LanguageKeys = entryModel.LanguageKeys;
         LanguageIso = entryModel.LanguageIsoCode ?? Settings.Value.AdminDefaultLanguage;

@@ -24,7 +24,9 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
 4. The view is looked up by `Content.ViewComponent` == **view type `FullName`** (namespace + class) among
    `IContentView` implementations, then rendered inside `<LayoutView>` using the view's `@layout`.
    Fallbacks: `Zauber:NotFoundComponent`, `Zauber:StarterComponent`, `Zauber:MissingView` (also full type names).
-5. No page at the address (and the site has content): `EntryPage` renders `Zauber:NotFoundComponent` in its layout
+5. No live page has the URL: the site's content finders (`IContentFinder`, below) are asked, in order, which page
+   the address shows. The first that names a live page wins; it is served like a page found by its URL.
+6. No page at the address (and the site has content): `EntryPage` renders `Zauber:NotFoundComponent` in its layout
    with status 404 (D41). The status is set by ZauberCMS, so a site's own not-found view does not set it. It is set
    as the response starts (`HttpContext.SetStatusCodeWhenResponseStarts`), because .NET 10 sends a static render
    that ends at 404 **without its HTML**, leaving the body to status-code pages: a view or page that sets
@@ -32,6 +34,98 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
    calls `SetStatusCodeWhenResponseStarts(404)` instead. Only a response still at 200 is changed, so a redirect or
    the error page that comes later keeps its status. The registration page, when it is off, answers the same way.
    Inside an admin circuit there is no response; the view is shown.
+
+## Content finders (Roadmap D55)
+
+A content finder decides which page an address shows when no page has its URL: `/products/{sku}` showing one
+product page for every SKU, an old URL scheme served without redirects, a page found by a code in the address.
+It is ZauberCMS's form of Umbraco's `IContentFinder`; Umbraco's last-chance finder is `Zauber:NotFoundComponent`.
+
+- Implement `IContentFinder` (`ZauberCMS.Core.Content.Interfaces`) in a public class in a scanned assembly. It is
+  discovered (no registration) and built for each lookup with constructor injection.
+- Finders run in `SortOrder` order, lowest first (the same value: by type full name), only after the URL lookup has
+  found no live page, for the home page too. The first one that returns a result wins; returning null asks the
+  next, and in the end the not-found page answers with 404. They run inside `IContentService.GetContentFromRequestAsync`,
+  so the page request, `EntryPage`, the page's language for interactive components and a site's own calls all get
+  the same answer.
+- A result names the page by id (`new ContentFinderResult(page)` or `(page.Id)`). ZauberCMS loads that page again
+  as the URL lookup would, and serves it only when it is published, not in the recycle bin and not a block (its
+  internal redirect is followed, role restrictions apply as usual); otherwise the next finder is asked. So a finder
+  cannot show an unpublished page, and unpublishing the page takes every address it served off the site.
+- `RouteValues` go to the view through `EntryModel.RouteValues`; `EntryPage` cascades the `EntryModel` to the view
+  and its layout. `LanguageIsoCode` sets the language the page is shown in (else the page's own, as for its URL).
+- A finder that throws, or whose constructor throws, is logged as an error and the next one is asked: one broken
+  plugin does not take the site's not-found page down.
+- ZauberCMS caches the page it loads for a finder (cleared by content saves, like a page found by its URL) but not
+  the finder's own answer: a finder runs on every request for an address no page has, bots' 404s included. Keep
+  it cheap, return null fast for addresses it does not handle, and cache an expensive search itself
+  (`ICacheService`).
+- `ContentFinderContext` gives the address as asked for (`Url`, with its query string; null when code looked a slug
+  up), `Slug` in the stored URL form (lower case, no slashes around it, empty for the home page) and its
+  `Segments`, `Path` in the case it was asked for (for a value whose case matters), and the culture `Domain` it
+  matched. A finder that needs the request itself injects `IHttpContextAccessor` (there
+  is no request inside a circuit).
+
+```csharp
+using ZauberCMS.Core.Content.Interfaces;
+using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Content.Parameters;
+
+namespace MySite.Routing;
+
+/// <summary>/products/{sku} shows the site's product page for every SKU the catalogue has.</summary>
+public class ProductContentFinder(IContentService contentService, IProductCatalogue catalogue) : IContentFinder
+{
+    public int SortOrder => 100;
+
+    public async Task<ContentFinderResult?> FindAsync(ContentFinderContext context,
+        CancellationToken cancellationToken = default)
+    {
+        // Only addresses of this shape; anything else is left to the next finder at once
+        if (context.Segments is not ["products", var sku] || !await catalogue.ExistsAsync(sku, cancellationToken))
+        {
+            return null; // an unknown SKU is a 404, like any address no page has
+        }
+
+        var page = await contentService.GetContentAsync(
+            new GetContentParameters { ContentTypeAlias = "productPage", Cached = true }, cancellationToken);
+        return page == null
+            ? null
+            : new ContentFinderResult(page) { RouteValues = new Dictionary<string, object?> { ["sku"] = sku } };
+    }
+}
+```
+
+The product page's view reads the SKU from the cascaded `EntryModel`:
+
+```razor
+@implements IContentView
+@layout MainLayout
+
+<h1>@Product?.Name</h1>
+
+@code {
+    [Parameter] public Content? Content { get; set; }
+    [Parameter] public Dictionary<string, string>? LanguageKeys { get; set; }
+    [CascadingParameter] public EntryModel? Entry { get; set; }
+
+    [Inject] public IProductCatalogue Catalogue { get; set; } = null!;
+    private Product? Product { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Entry?.RouteValues.GetValueOrDefault("sku") is string sku)
+        {
+            Product = await Catalogue.GetAsync(sku);
+        }
+    }
+}
+```
+
+The product page keeps its own URL too (`/product-page`, say), where the view is shown without a SKU: the view can
+see that from `Entry?.ContentFinder` (null there) and answer 404 itself
+(`HttpContext.SetStatusCodeWhenResponseStarts(404)`), and the page can be hidden from navigation and the sitemap.
+`IProductCatalogue` stands for the site's own service.
 
 ## Errors (Roadmap D33)
 
