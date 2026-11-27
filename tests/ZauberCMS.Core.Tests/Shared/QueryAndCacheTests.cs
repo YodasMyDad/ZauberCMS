@@ -6,6 +6,7 @@ using ZauberCMS.Core.Audit.Parameters;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
+using ZauberCMS.Core.Content.Services;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Interfaces;
@@ -58,6 +59,54 @@ public class QueryAndCacheTests : IAsyncLifetime
 
         Assert.Equal(page.Id, plain.Content?.Id);
         Assert.Equal(page.Id, tracked.Content?.Id);
+    }
+
+    [Fact]
+    public async Task ZA187_Every_host_port_and_spelling_of_a_page_on_no_domain_shares_one_cache_entry()
+    {
+        var page = await _site.CreateContentAsync(_pageType, "About");
+
+        // Host header values a visitor can make up, ports, and spellings of the path
+        foreach (var (slug, url) in new[]
+                 {
+                     ("about", "http://example.test/about"),
+                     ("about/", "http://other.test/about/"),
+                     ("About", "https://EXAMPLE.test:8443/About"),
+                     ("/about//", "http://made-up-1.test/about//"),
+                     ("about", "http://made-up-2.test:1234/about?utm_source=mail")
+                 })
+        {
+            Assert.Equal(page.Id, (await GetEntryAsync(slug, url)).Content?.Id);
+        }
+
+        Assert.Single(EntryCacheKeys());
+    }
+
+    [Fact]
+    public async Task ZA187_A_domain_has_one_cache_entry_for_its_ports_and_host_spellings()
+    {
+        var first = await _site.CreateContentAsync(_pageType, "First");
+        var second = await _site.CreateContentAsync(_pageType, "Second");
+        var languageId = await AddLanguageAsync("de-DE");
+        var saved = await WithService<IContentService, HandlerResult<Domain>>(s =>
+            s.SaveDomainAsync(new SaveDomainParameters
+            {
+                Domain = new Domain { Url = "example.test", ContentId = second.Id, LanguageId = languageId }
+            }, Ct));
+        Assert.True(saved.Success, TestSite.Describe(saved.Messages));
+
+        foreach (var url in new[] { "http://example.test/", "http://EXAMPLE.test:8080/", "https://example.test./" })
+        {
+            Assert.Equal(second.Id, (await GetRootAsync(url)).Content?.Id);
+        }
+
+        foreach (var url in new[] { "http://other.test/", "http://made-up.test:81/" })
+        {
+            Assert.Equal(first.Id, (await GetRootAsync(url)).Content?.Id);
+        }
+
+        // One for the domain, one for every host on no domain
+        Assert.Equal(2, EntryCacheKeys().Count);
     }
 
     [Fact]
@@ -617,6 +666,20 @@ public class QueryAndCacheTests : IAsyncLifetime
     private Task<EntryModel> GetEntryAsync(string slug, string? url) =>
         WithService<IContentService, EntryModel>(s => s.GetContentFromRequestAsync(
             new GetContentFromRequestParameters { Slug = slug, Url = url }, Ct));
+
+    /// <summary>
+    /// The URL lookups cached now (ZA-187), without their 5-minute window, so a test that runs across the change of
+    /// window does not count one lookup twice.
+    /// </summary>
+    private List<string> EntryCacheKeys()
+    {
+        var prefix = ContentService.EntryCacheKeyPrefix.GenerateCacheKey<ContentItemModel>();
+        return _site.Services.GetRequiredService<ServerCache>().Keys
+            .Where(k => k.StartsWith(prefix, StringComparison.Ordinal))
+            .Select(k => string.Concat(k[prefix.Length..].SkipWhile(char.IsDigit)))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
 
     private Task<EntryModel> GetRootAsync(string url) =>
         WithService<IContentService, EntryModel>(s => s.GetContentFromRequestAsync(

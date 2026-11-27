@@ -130,9 +130,11 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
 - Writes inside a transaction: `SaveChangesAndLog` clears before the commit, so clear the prefix again after
   `CommitAsync` (a read in between may have cached the old rows) — see `ContentService` save, recycle and purge.
 - `IDistributedCache` is still Redis when configured, for site code; ZauberCMS itself does not use it.
-- Front-end hot path (Phase 10): the URL → page lookup (`GetContentFromRequestAsync`) is cached on slug, host and
-  path — not the query string — under the Content prefix, at most 5 minutes (the key carries a 5-minute time
-  window); a lookup that finds no page is not cached (`GetSetCachedItemAsync` with `shouldCache`). Domain, content
+- Front-end hot path (Phase 10): the URL → page lookup (`GetContentFromRequestAsync`) is cached on what decides the
+  answer: the domain the address is on (from the cached domain list), the normalised slug and the flags — not the
+  host, port, query string or spelling of the path (ZA-187, D64), so every host on no domain shares one entry and a
+  visitor cannot grow the cache by making addresses up. Under the Content prefix, at most 5 minutes (the key carries
+  a 5-minute time window); a lookup that finds no page is not cached (`GetSetCachedItemAsync` with `shouldCache`). Domain, content
   type, role and language saves clear the Content prefix too: the cached page holds its type, roles and language. Its language keys and the default-language fallback are applied outside that cache, so dictionary
   and settings changes show at once. `GetBlocks` (without pending changes), `GetMedia`/`GetMediaItems` and
   `AnyContentAsync` (the 404 check; recycled content doesn't count) are cached as well; the items are shared, so
@@ -262,7 +264,8 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   a regex that does not parse, and a redirect that sends an address to itself or closes a circle with the saved ones
   (`RedirectRules.FindLoop`). `SeoRedirect.IsRegex` null (rows from before the flag) keeps the old guess
   (`RedirectRules.LooksLikeRegex`). `RedirectMiddleware` keeps its compiled list in `ICacheService` under the
-  `SeoRedirect` prefix, so a save clears it on every server; exact matches ignore letter case, and no rule sends an
+  `SeoRedirect` prefix, so a save clears it on every server. The list holds every saved redirect, however many
+  (ZA-189, D65; `QueryRedirectsParameters.Amount` defaults to 5000 for other callers); exact matches ignore letter case, and no rule sends an
   address to that same address. A redirect with a domain (`SeoRedirect.DomainId`, D42) applies only to requests on
   that domain, by the rule content routing uses (`DomainMatching`: same host, the domain's path on whole segments;
   scheme, trailing dot and slashes ignored; a domain with a port matches only that port). A request is on one domain

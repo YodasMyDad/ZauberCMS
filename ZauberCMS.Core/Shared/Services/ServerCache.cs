@@ -29,6 +29,9 @@ public sealed class ServerCache(IMemoryCache memoryCache)
 
     internal int Count => _keys.Count;
 
+    /// <summary>The keys stored now (for tests).</summary>
+    internal IEnumerable<string> Keys => _keys.Keys;
+
     /// <summary>
     /// Loads under way, by key, for <see cref="DefaultCacheService"/>: kept here, on the singleton, so requests (each
     /// with its own scoped cache service) that miss the same key together share one load (ZA-115).

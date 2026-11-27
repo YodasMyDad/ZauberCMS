@@ -4,8 +4,9 @@ namespace ZauberCMS.Core.Content.Models;
 public sealed class ContentFinderContext
 {
     /// <summary>
-    /// The address as the caller gave it, with its query string: the full request URL for a page request, or null
-    /// when code looked a slug up without one.
+    /// The address as the caller gave it, with its query string: the full request URL for a page request (without
+    /// the site's <c>PathBase</c>, as <c>HttpRequest.Path</c>, ZA-190), or null when code looked a slug up without
+    /// one.
     /// </summary>
     public string? Url { get; init; }
 

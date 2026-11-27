@@ -32,10 +32,12 @@
   `Zauber:Jobs` switches, D61, ZA-198; 2026-11-27).
   **Phase 10f-1 done** (after-commit hook `IAfterEntityCommit<T>`, D62, ZA-163; resized copies removed with their
   image, D63, ZA-155; a domain's redirects deleted through the change, ZA-193; 2026-11-27).
-  **12 open findings** (0 Critical, 0 High, 1 Medium, 11 Low), each one assigned below to a phase (10f-2, 10g, 10h,
-  10i, 12), plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase,
-  and a new finding goes into the phase whose theme fits. **Next: Phase 10f-2** (ZA-187, ZA-189, ZA-190), then 10g,
-  10h, 10i, then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner
+  **Phase 10f-2 done** (the URL lookup cached per domain and slug, and domains matched below the path base on both
+  sides, D64, ZA-187, ZA-190; every redirect honoured, D65, ZA-189; 2026-11-27). **Phase 10f is done.**
+  **9 open findings** (0 Critical, 0 High, 0 Medium, 9 Low), each one assigned below to a phase (10g, 10h, 10i, 12),
+  plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase,
+  and a new finding goes into the phase whose theme fits. **Next: Phase 10g** (back-office roles, D38, with ZA-188),
+  then 10h, 10i, then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner
   delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -108,6 +110,8 @@
 | D61 | **Each background job has an on/off switch under `Zauber:Jobs`, on by default** (owner, 2026-11-27: "Zauber:Jobs setting"). `Zauber:Jobs:DailyCleanup` (the daily job: audit rows, orphaned related-content links, page versions) and `Zauber:Jobs:SitemapGenerator` (the sitemap files); those are the only hosted jobs (the Redis cache-clear listener is plumbing every server needs, and the admin culture handler is a circuit handler, not a job). The job reads the switch from `IOptions<ZauberSettings>` when it starts (so code-set options work too) and, when off, logs one line and returns; it is still registered and stays internal. A web farm keeps `DailyCleanup` on one server; `SitemapGenerator` stays on wherever the sitemap file is served. Umbraco runs scheduled work only on its "scheduling publisher" server (server role, detected or set in config); ZauberCMS has no server roles, so the switch is per job and set by config. A new hosted job gets its own switch (a test lists them). | ZA-198 |
 | D62 | **Work that must only follow a stored change runs in a new after-commit hook, `IAfterEntityCommit<T>`; `IAfterEntitySave<T>` keeps running inside the transaction.** `IAfterEntityCommit<T>` (`ZauberCMS.Core.Shared.Interfaces`, discovered like the other save hooks, constructor DI, `SortOrder`) has `Task AfterCommitAsync(entity, state, cancellationToken)` and gets every row the change wrote, each with the state it was saved in. It runs right after the save when no transaction is open, and when the caller's EF transaction commits otherwise; a rollback, a failed commit or a transaction disposed without a commit drops it. The commit is seen by an EF Core transaction interceptor the three ZauberCMS DbContexts add (a site's own context without it gets the hooks at the save, with a warning; an ambient `TransactionScope` is not seen). It cannot veto; an exception is logged and the other hooks still run, since the change is stored. Umbraco does the same: its "-ed" notifications (`ContentSavedNotification`, `MediaDeletedNotification`) are raised when the scope completes, and its file deletes run there. Why a new interface and not a changed one: `IAfterEntitySave<T>`'s contract (inside the transaction, can ask for a second save) is relied on by sites, and the two moments are both real needs (write more in the change / act once it is stored); a flag on the old interface would be a breaking change for every implementation. Async, because after-commit work is I/O. (owner delegated to Umbraco parity, Phase 10f-1) | ZA-163 |
 | D63 | **The resized copies of an image are kept in a folder per image, and a permanent delete removes them.** ImageResize names a copy by a hash of the image's path, the size and the original's date and length, which can't be traced back, and offers no way to remove one image's copies; it does let the cache be replaced. ZauberCMS gives the resizer (`IImageResizerService`) a cache (`ResizedImageCache`, internal) that wraps the registered `IImageCache` and puts each copy in `{CacheRoot}/{shards}/{hash of the image's path}/`; reading, writing, the size limit and the start-up prune stay ImageResize's (the registered `IImageCache` is unchanged, so its prune still runs). `DiskStorageProvider.DeleteFile` removes that folder after the file, and `SaveFile` over a file of the same name removes the old copies. Rejected: clearing the whole cache on every purge (every image on the site would be resized again after each emptied bin), and changing the ImageResize package (another product's release). Umbraco keeps its ImageSharp cache outside the web root and leaves crops of deleted media until `CacheMaxAge` (a year); a delete for good (GDPR) asks for more, so ZauberCMS removes them. Copies on other servers of a web farm with a cache per server stay (they are never served through a resize URL again, the original being gone). (owner delegated, Phase 10f-1) | ZA-155 |
+| D64 | **A front-end address is matched to a domain on its path below the site's path base, the same way everywhere, and the URL → page lookup is cached on that domain, the normalised slug and the flags.** The middlewares, `EntryPage` and a front-end circuit all match `example.com/fr` against the path without `PathBase` (components build the address with `NavigationManager.GetContentRequestUrl()`, public in `ZauberCMS.Core.Extensions`), so under `/site` the address `/site/fr/about` is on `example.com/fr` on every side; the stored domain needs no path base in it and keeps working when the site moves to another one. The lookup's cache key is what decides the answer: the matched domain's id (none: every host on no domain, which all share one entry), the slug in the stored form and `IsRootContent`/`IncludeChildren`/`IgnoreInternalRedirect`; the host, port, query string and spelling of the path are not in it, so an arbitrary Host header or a new spelling never makes a new entry, and only found pages are kept. Umbraco does the same: `UriUtility.UriToUmbraco` takes the application's virtual path off the request address before routing, its domains are matched on that address, and its published-content route cache is keyed on the domain's root and the path (`{root id}/{path}`), not the host. (owner delegated, Phase 10f-2) | ZA-187, ZA-190, D42 |
+| D65 | **Every saved redirect is honoured: the compiled list holds all of them.** `RedirectMiddleware` loaded the newest 5000 (`QueryRedirectsParameters.Amount`'s default) and ignored the rest without a word. It now loads every row once into its compiled list (cleared by any redirect save, as before). Umbraco honours every redirect by looking the address up in its redirect table on each request (`IRedirectUrlService.GetMostRecentRedirectUrl`, by a hash of the route); ZauberCMS keeps the compiled list, because regex redirects and the domain rule (D42) need the whole list, and a query per request would cost every page a round trip and need a case-insensitive index on three providers (a migration). The list is what editors saved, not what visitors send, so its size is the site's own. Rejected: logging when the cap is hit (the redirects would still be ignored). The default of `Amount` (5000) stays for other callers. (owner delegated, Phase 10f-2) | ZA-189 |
 
 ## Working rules for the rework
 
@@ -1022,9 +1026,9 @@ domain is ignored).
   - Content queries and data grids add `ThenBy(Id)` to their order; of two pages with the same URL (only possible in
     old data) the first in tree order is served.
 
-### Phase 10f — Hooks after the commit, resized copies of deleted images
+### Phase 10f — Hooks after the commit, resized copies of deleted images — DONE 2026-11-27
 ZA-163, ZA-155 (Low). Both were in the Backlog, which the owner removed (2026-11-27). Two parts: 10f-1 (hooks and
-deletes: ZA-163, ZA-155, ZA-193, done below) and 10f-2 (front-end cache and domains: ZA-187, ZA-189, ZA-190).
+deletes: ZA-163, ZA-155, ZA-193) and 10f-2 (front-end cache and domains: ZA-187, ZA-189, ZA-190), both done below.
 - **ZA-163:** `IAfterEntitySave<T>` runs inside the change's transaction, before the commit, so a change rolled back
   after it (a media purge whose file can't be removed) was already reported as done. Umbraco raises its "-ed"
   notifications when the scope completes. Add the after-commit point the Umbraco way, keep `IAfterEntitySave<T>`'s
@@ -1094,6 +1098,51 @@ part 10f-2.
     the domain; the redirects stop applying at once (before, the compiled redirects stayed cached).
   - `DiskStorageProvider` has a new optional constructor parameter (`IOptions<ImageResizeOptions>`, last); a subclass
     compiles unchanged, and without it the copies are not removed.
+  - Breaking: none.
+
+#### Phase 10f-2 — The URL lookup cache, domains under a path base, every redirect — DONE (2026-11-27)
+ZA-187 (Medium), ZA-189, ZA-190 (Low) fixed. Decisions D64 and D65 (delegated, Umbraco's way). This closes Phase 10f.
+- **URL lookup cache (ZA-187, D64).** `GetContentFromRequestAsync` works out the domain first (the cached domain
+  list, no database on a hit) and keys the lookup on the time window, that domain's id (none for a host on no
+  domain), the normalised slug and the flags (`ContentService.EntryCacheKey`); before, the key hashed the whole
+  parameters, the scheme, host, port and path of the address among them. Every Host header value, port and spelling
+  of one page now shares one entry per domain, and every host on no domain shares one, so a visitor cannot grow the
+  cache by making addresses up; misses are still not kept. The matched domain is passed to the lookup and the
+  content finders instead of being matched again.
+- **Domains under a path base (ZA-190, D64).** The middlewares matched a domain's path against `HttpRequest.Path`
+  (without `PathBase`), the circuit's culture handler and `EntryPage`'s fallback against `NavigationManager.Uri`
+  (with it), so under `/site` a domain `example.com/fr` was matched by the page request and not by the circuit. New
+  public extension `NavigationManager.GetContentRequestUrl(uri = null)` (`ZauberCMS.Core.Extensions`): scheme, host
+  and port, the path below the base address, the query string. `ContentCultureCircuitHandler` and `EntryPage` use
+  it; `GetContentFromRequestParameters.Url` and `ContentFinderContext.Url` are documented as the address without
+  the path base.
+- **Every redirect (ZA-189, D65).** `RedirectMiddleware` asks for every redirect (`Amount = int.MaxValue`); the
+  query's default page of 5000 (newest first) had left older ones out without a word. `QueryRedirectsParameters`
+  keeps its default for other callers.
+- Tests (10 new cases): `QueryAndCacheTests` ZA187 ×2 (five hosts, ports and spellings of a page on no domain: one
+  entry; a domain's ports and host spellings one entry, the hosts on no domain another), on SQLite, PostgreSQL and
+  SQL Server; `ContentCultureTests` ZA190 (a domain with a path under the path base `/site`: the page request and the
+  circuit both get the domain's language) and the helper ×5; `RedirectDomainTests` ZA189 (5002 redirects: the oldest
+  exact one and the oldest regex both fire); `ProviderQueryTests` ZA189 (the uncapped query on each provider).
+  `ServerCache.Keys` (internal) lets a test count entries. The ZA187, ZA189 (middleware) and ZA190 (circuit) tests
+  were seen failing with their fix reverted; the helper and provider tests are controls. Full suite 1221 (all pass,
+  none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings; no start-up or
+  packaging change, so the template smoke test was not run. Dev site (`ZauberCMS.Web`, Release, Production): `/` 200
+  with the Host headers `localhost:5099`, `made-up.test`, `evil.test:1234` and `LOCALHOST`; `/about`, `/about/`,
+  `/About`, `/about//` and `/about?utm=1` 200 on made-up hosts; `/no-such-page-xyz` 404.
+- **Not verified:** a site really run under a path base (`UsePathBase`) with a domain that has a path, in a browser
+  (the circuit handler and the middleware are covered by the tests, `EntryPage`'s fallback only by reading: it
+  calls the same helper and runs only when `CultureMiddleware` did not look the page up); memory with tens of
+  thousands of redirects (not measured).
+- **Release notes (D18):**
+  - The URL → page cache holds one entry per page and domain, whatever host, port or spelling of the address a
+    visitor uses. Nothing to do.
+  - Under a path base, interactive components and `EntryPage` match a domain with a path as the page request does
+    (before, a circuit never matched one and ran in the page's own language). `GetContentFromRequestParameters.Url`
+    is the address without the path base: site code that passed `NavigationManager.Uri` should pass the new
+    `NavigationManager.GetContentRequestUrl()`. Sites without a path base see no change.
+  - Every saved redirect applies. A site with more than 5000 redirects will find its oldest ones working again
+    after the upgrade; delete the ones that should not.
   - Breaking: none.
 
 ### Phase 10g — Back-office roles: section access per role (D38)

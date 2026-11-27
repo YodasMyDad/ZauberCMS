@@ -8,6 +8,23 @@ namespace ZauberCMS.Core.Extensions;
 /// </summary>
 public static class NavigationManagerExtensions
 {
+    /// <summary>
+    /// The current address as the page request's middlewares see it, for
+    /// <c>IContentService.GetContentFromRequestAsync</c>: scheme, host and port, then the path below the site's base
+    /// address (the request's <c>PathBase</c> is left out, as in <c>HttpRequest.Path</c>), then the query string.
+    /// A site under <c>/site</c> at <c>https://example.com/site/fr/about</c> gives <c>https://example.com/fr/about</c>,
+    /// so a domain with a path (<c>example.com/fr</c>) is matched the same in a circuit, in <c>EntryPage</c> and in
+    /// the middlewares (ZA-190).
+    /// </summary>
+    /// <param name="navigation">The circuit's or page's navigation manager.</param>
+    /// <param name="uri">An absolute address under the base address; null for the current one.</param>
+    public static string GetContentRequestUrl(this NavigationManager navigation, string? uri = null)
+    {
+        ArgumentNullException.ThrowIfNull(navigation);
+        var authority = new Uri(navigation.BaseUri).GetLeftPart(UriPartial.Authority);
+        return authority + "/" + navigation.ToBaseRelativePath(uri ?? navigation.Uri);
+    }
+
     public static bool TryGetQueryString<T>(this NavigationManager navManager, string key, out T value)
     {
         var uri = navManager.ToAbsoluteUri(navManager.Uri);

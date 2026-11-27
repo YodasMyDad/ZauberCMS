@@ -54,8 +54,9 @@
         var entryModel = CultureMiddleware.GetEntryModel(HttpContext);
         if (entryModel == null)
         {
-            // Fallback: query if middleware didn't process this route (e.g., admin pages)
-            entryModel = await ContentService.GetContentFromRequestAsync(new GetContentFromRequestParameters { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri },
+            // Fallback: query if middleware didn't process this route (e.g., admin pages). The address without the
+            // path base, as CultureMiddleware gives it, so both match the same domain (ZA-190)
+            entryModel = await ContentService.GetContentFromRequestAsync(new GetContentFromRequestParameters { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.GetContentRequestUrl() },
                 HttpContext?.RequestAborted ?? CancellationToken.None);
         }
         

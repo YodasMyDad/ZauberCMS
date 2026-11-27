@@ -3,6 +3,7 @@
 Last full run: 5668365 (2026-11-25, full) · Last changed run: 773505c (2026-11-27, Roadmap Phase 11, 2f4dc41..773505c) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
 Next free IDs: ZA-199 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+After Roadmap Phase 10f-2 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1221 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · ZA-187 (the URL lookup cached per domain and slug, D64), ZA-190 (domains matched below the path base everywhere, D64), ZA-189 (every redirect honoured, D65) fixed; Phase 10f done. Next free ID: ZA-199
 After Roadmap Phase 10f-1 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1205 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · ZA-163 (after-commit hook `IAfterEntityCommit<T>`, D62), ZA-155 (resized copies removed with their image, D63), ZA-193 (a domain's redirects deleted through the change) fixed. Next free ID: ZA-199
 After the Phase 11 audit follow-ups (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1175 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · the owner's answers built: ZA-185 (antiforgery attributes on site controllers, D60) and ZA-198 (`Zauber:Jobs` switches, D61) fixed. Next free ID: ZA-199
 After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1165 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `/audit changed` over the whole phase (three unit reviewers, two independent diff reviewers, two verifiers): nothing Critical or High from Phase 11; ZA-169…ZA-186 found and fixed (7 Medium, 11 Low), ZA-187…ZA-198 recorded (1 Medium, 11 Low, older than Phase 11). Next free ID: ZA-199. Earlier after-phase lines: [history.md](history.md) run log
@@ -18,8 +19,8 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 | --- | --- | --- | --- |
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 (ZA-187 was High, downgraded to Medium on verification) | 0 |
-| Medium | 1 | 8 | 7 |
-| Low | 11 | 22 | 12 |
+| Medium | 0 | 8 | 7 |
+| Low | 9 | 22 | 12 |
 
 Trend (first pattern counts, 2026-11-27, Phase 11 run): sync-over-async 48 · async-void 2 · fire-and-forget 7 ·
 empty-catch 15 · unsanitised-markup 15 · raw-sql 1 · new-httpclient 0 · culture-unsafe-compare 6 (the suppressed EF
@@ -28,22 +29,13 @@ event-unsubscribe 22 · httpcontext-accessor 5 · exception-text 11. Flat agains
 suppressed warnings 35 → 18; every hit on an added line is moved code or a suppression with its reason.
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10f-2: ZA-187, ZA-189, ZA-190; 10g: ZA-188; 10h: ZA-129; 10i: ZA-128, ZA-194,
+a phase (10g: ZA-188; 10h: ZA-129; 10i: ZA-128, ZA-194,
 ZA-197; 12: ZA-191, ZA-192, ZA-195, ZA-196); there is no Backlog (owner, 2026-11-27). The run's two owner questions
 were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
 ## Open findings
-
-### ZA-187 [Medium/High] The URL-to-page cache key holds the raw scheme, host, port and path
-- Where: `ZauberCMS.Core/Content/Services/ContentService.Routing.cs` (`GetContentFromRequestAsync`, `RequestUrlForLookup`) · Category: A4/B2 · Since: 2026-11-27 (Phase 11 audit; code from Phase 10) · Roadmap: 10f
-- Issue / Trigger: every Host header value (`AllowedHosts` is `*` in the shipped settings; host filtering ignores the
-  port), port or spelling of a path (`/about/`, `/about//`) is a cache miss that loads the page whole and then a new
-  entry holding its own copy of the page for up to about ten minutes. Only found pages are kept. Verified with a
-  throwaway test (two hosts, one page: two entries). Was High; downgraded because entries expire and only hits stay.
-- Fix: key on the matched domain id, the normalised slug and the flags (as the finder path does). · Test: same page,
-  two hosts on no domain and two ports of one domain: one entry.
 
 ### ZA-128 [Low/High] Accessibility roll-up
 
@@ -59,15 +51,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Where: `ZauberCMS.Components/Pages/EntryPage.razor` (`OnParametersSetAsync`, the `MissingView` branch) · Category: D · Since: 2026-11-27 (code from Phase 10e) · Roadmap: 10g
 - Issue / Fix: the shipped `MissingView` shows only the page's name, but a site's own gets the whole page. Run the
   role check before choosing the view.
-
-### ZA-189 [Low/High] Only the newest 5000 redirects are compiled
-- Where: `ZauberCMS.Core/Middleware/RedirectMiddleware.cs` (`GetOrCreateCompiledRedirectsAsync`) · Category: C · Since: 2026-11-27 (older) · Roadmap: 10f
-- Issue / Fix: older redirects are ignored silently. Page through all of them, or log when the cap is hit.
-
-### ZA-190 [Low/Medium] Domains are matched with `PathBase` on one side and without it on the other
-- Where: `ZauberCMS.Core/Languages/ContentCultureCircuitHandler.cs` (`PageCultureAsync`), `EntryPage` vs `CultureMiddleware`/`RedirectMiddleware` · Category: C · Since: 2026-11-27 (older) · Roadmap: 10f
-- Issue / Fix: a site under a path base gets different domains in a circuit and in the middlewares. Match on the
-  path without `PathBase` everywhere.
 
 ### ZA-191 [Low/High] `GetContentFromRequestParameters.IgnoreInternalRedirect` is never read
 - Where: `ZauberCMS.Core/Content/Parameters/GetContentFromRequestParameters.cs` · Category: F · Since: 2026-11-27 (older) · Roadmap: 12

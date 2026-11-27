@@ -23,6 +23,10 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
    it matches, the one with the longest path, so `example.com/fr/…` is on `example.com/fr`, not `example.com`.
    A domain's scheme, trailing dot and slashes are ignored; one with a port (`example.com:8080`) matches only that
    port, one without matches any port. SEO redirects use the same rule for a redirect's domain.
+   A domain's path is matched against the path below the site's path base (`HttpRequest.Path`, not `PathBase`), in
+   the middlewares, in `EntryPage` and in a circuit alike (ZA-190, D64): under `/site`, `example.com/fr` covers
+   `/site/fr/…`. Code that looks a page up from a component passes `NavigationManager.GetContentRequestUrl()` as
+   `GetContentFromRequestParameters.Url`, which leaves the path base out.
 3. Role-restricted content (`ContentRoles`) redirects to `Zauber:Identity:DefaultLoginRedirectUrl` unless the user has
    a role (admins always pass); the page's view is not rendered (ZA-110).
 4. The view is looked up by `Content.ViewComponent` == **view type `FullName`** (namespace + class) among

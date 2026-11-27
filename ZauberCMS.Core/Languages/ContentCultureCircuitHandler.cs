@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Middleware;
 using ZauberCMS.Core.Settings;
 
@@ -76,7 +77,8 @@ internal sealed class ContentCultureCircuitHandler(
             {
                 Slug = slug.Length == 0 ? null : slug,
                 IsRootContent = slug.Length == 0,
-                Url = uri
+                // Without the path base, as the page request's middlewares match domains (ZA-190)
+                Url = navigation.GetContentRequestUrl(uri)
             });
             if (entry.Content != null)
             {

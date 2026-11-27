@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10f-2 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1221 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part. ZA-187, ZA-189, ZA-190 fixed (D64, D65); Phase 10f done. Next free ID: ZA-199
 After Roadmap Phase 10f-1 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1205 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-155, ZA-163, ZA-193 fixed (D62, D63). Next free ID: ZA-199
 After the Phase 11 audit follow-ups (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1175 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review. ZA-185 (behaviour, D60) and ZA-198 (D61) fixed. Next free ID: ZA-199
 After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1165 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `/audit changed` over 2f4dc41..773505c (deterministic checks; unit reviewers for the front-end path, bootstrap and the public surface; two independent diff reviewers given only the code; two verifiers). Nothing Critical or High from Phase 11. ZA-169…ZA-186 found and fixed (7 Medium, 11 Low); ZA-187…ZA-198 recorded (1 Medium, 11 Low, all older than Phase 11) and assigned to 10f, 10g, 10i and 12; owner questions ZA-185, ZA-198
@@ -36,6 +37,22 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 10f-2 (2026-11-27, front-end cache and domains).** Release notes in the Roadmap's "Phase 10f-2".
+  The fix-dependent tests were seen failing with their fix reverted (the helper and provider tests are controls).
+  Full suite 1221 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0
+  warnings; checked on the dev site (made-up Host headers and spellings of `/about` all 200, a missing page 404).
+  - **ZA-187 (Medium) — fixed (D64).** `GetContentFromRequestAsync` matches the domain first and keys the lookup on
+    the time window, the domain's id, the normalised slug and the flags (`ContentService.EntryCacheKey`), not the
+    whole address. Tests: `Shared/QueryAndCacheTests` ZA187 ×2 on three databases (five hosts, ports and spellings of
+    a page on no domain: one entry; a domain's ports and host spellings: one, the hosts on no domain: one more).
+  - **ZA-190 (Low) — fixed (D64).** New `NavigationManager.GetContentRequestUrl()` gives the address without the path
+    base; `ContentCultureCircuitHandler` and `EntryPage` pass it, as the middlewares pass `HttpRequest.Path`. Tests:
+    `Seo/ContentCultureTests` ZA190 (a domain with a path under `/site`: request and circuit get its language) and
+    the helper ×5.
+  - **ZA-189 (Low) — fixed (D65).** `RedirectMiddleware` loads every redirect (`Amount = int.MaxValue`), not the
+    newest 5000. Tests: `Seo/RedirectDomainTests` ZA189 (5002 redirects: the oldest exact and regex ones fire),
+    `Data/ProviderQueryTests` ZA189 (the uncapped query on each provider).
 
 - **Roadmap Phase 10f-1 (2026-11-27, hooks and deletes).** Release notes in the Roadmap's "Phase 10f-1". Each test
   was seen failing with its fix reverted (controls pass both ways). Full suite 1205 (all pass, none skipped) on

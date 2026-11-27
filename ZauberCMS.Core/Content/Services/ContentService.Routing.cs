@@ -38,19 +38,27 @@ public partial class ContentService
             Url = RequestUrlForLookup(parameters.Url)
         };
 
+        // The domain the address is on, from the cached domain list (no database on a hit). With the slug and the
+        // flags it is all that decides the page, so it is what the cache is keyed on (ZA-187): the host, port and
+        // spelling of the address are not. Any number of Host header values, ports and spellings (/about/,
+        // /About) of one page share one entry per domain, and a host that is on no domain shares the entry of
+        // every other such host, so a visitor cannot grow the cache by inventing addresses.
+        var domains = await GetCachedDomainsAsync(new CachedDomainsParameters(), cancellationToken);
+        var matchedDomain = MatchDomainWithContent(request.Url ?? string.Empty, domains);
+
         // Cached for up to 5 minutes (it was 5 seconds by mistake, ZA-061). Content, domain, content type, role and
         // language saves clear the Content prefix; the language keys and the default-language fallback are applied below, outside the cache, because
         // they change without a content save.
         // The key changes every EntryCacheMinutes, so an entry lives at most that long even on a page that is hit
         // all the time (the expiry is sliding), and changes the cache isn't told about show within it. A miss (no
-        // page) is not kept: its key comes from the visitor's host and path.
+        // page) is not kept, so only addresses of live pages make entries.
         var bucket = DateTime.UtcNow.Ticks / TimeSpan.FromMinutes(EntryCacheMinutes).Ticks;
-        var cacheKey = request.GenerateCacheKey<Models.Content>($"GetContentFromRequest-{bucket}");
+        var cacheKey = EntryCacheKey(bucket, matchedDomain?.Id, request);
         var cached = (await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
         {
             using var scope = serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-            return await FetchEntryModelAsync(request, dbContext, cancellationToken);
+            return await FetchEntryModelAsync(request, matchedDomain, dbContext, cancellationToken);
         }, EntryCacheMinutes, entry => entry.Content != null))!;
 
         var entryModel = new EntryModel { Content = cached.Content, LanguageIsoCode = cached.LanguageIsoCode };
@@ -58,7 +66,8 @@ public partial class ContentService
         {
             // No page has this URL: the site's content finders may know which page the address shows (D55). Their
             // answer is not cached here (a finder caches its own search); the page they name is.
-            var found = await FindWithContentFindersAsync(request, parameters, bucket, cancellationToken);
+            var found = await FindWithContentFindersAsync(request, parameters, matchedDomain, bucket,
+                cancellationToken);
             if (found == null)
             {
                 return entryModel;
@@ -97,6 +106,20 @@ public partial class ContentService
         Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Path).ToLowerInvariant() : url;
 
     /// <summary>
+    /// The cache key of a URL lookup: the time window, the matched domain (none: every host on no domain), the
+    /// normalised slug and the flags, which are everything <see cref="FetchEntryModelAsync"/> reads (ZA-187).
+    /// Under the Content prefix, so the saves that clear pages clear it.
+    /// </summary>
+    internal static string EntryCacheKey(long bucket, Guid? domainId, GetContentFromRequestParameters request) =>
+        string.Create(CultureInfo.InvariantCulture,
+                $"{EntryCacheKeyPrefix}{bucket}-{domainId}-{request.IsRootContent}-{request.IncludeChildren}-" +
+                $"{request.IgnoreInternalRedirect}-{request.Slug}")
+            .GenerateCacheKey<Models.Content>();
+
+    /// <summary>What every URL lookup's cache key starts with, after the Content prefix.</summary>
+    internal const string EntryCacheKeyPrefix = "GetContentFromRequest-";
+
+    /// <summary>
     /// True while the content finders of this async flow run: a lookup a finder makes (directly or through code it
     /// calls) does the URL lookup only, so a finder that looks an address up cannot start the finders again
     /// (ZA-173).
@@ -113,7 +136,7 @@ public partial class ContentService
     /// The finders are built for this lookup and disposed after it (ZA-172).
     /// </summary>
     private async Task<EntryModel?> FindWithContentFindersAsync(GetContentFromRequestParameters request,
-        GetContentFromRequestParameters asked, long bucket, CancellationToken cancellationToken)
+        GetContentFromRequestParameters asked, Domain? matchedDomain, long bucket, CancellationToken cancellationToken)
     {
         var originalUrl = asked.Url;
         if (RunningContentFinders.Value)
@@ -134,7 +157,8 @@ public partial class ContentService
         RunningContentFinders.Value = true;
         try
         {
-            return await RunContentFindersAsync(finderTypes, finders, request, asked, bucket, cancellationToken);
+            return await RunContentFindersAsync(finderTypes, finders, request, asked, matchedDomain, bucket,
+                cancellationToken);
         }
         finally
         {
@@ -145,7 +169,8 @@ public partial class ContentService
 
     private async Task<EntryModel?> RunContentFindersAsync(Dictionary<string, Type> finderTypes,
         List<(string Name, IContentFinder Finder)> finders, GetContentFromRequestParameters request,
-        GetContentFromRequestParameters asked, long bucket, CancellationToken cancellationToken)
+        GetContentFromRequestParameters asked, Domain? matchedDomain, long bucket,
+        CancellationToken cancellationToken)
     {
         var originalUrl = asked.Url;
         foreach (var (name, type) in finderTypes)
@@ -160,8 +185,6 @@ public partial class ContentService
             }
         }
 
-        var domains = await GetCachedDomainsAsync(new CachedDomainsParameters(), cancellationToken);
-        var matchedDomain = MatchDomainWithContent(request.Url ?? string.Empty, domains);
         var context = new ContentFinderContext
         {
             Url = originalUrl,
@@ -303,11 +326,8 @@ public partial class ContentService
             .Where(c => c.Published && !c.Deleted && !c.IsNestedContent);
 
     private async Task<EntryModel> FetchEntryModelAsync(GetContentFromRequestParameters request,
-        IZauberDbContext dbContext, CancellationToken cancellationToken)
+        Domain? matchedDomain, IZauberDbContext dbContext, CancellationToken cancellationToken)
     {
-        var domains = await GetCachedDomainsAsync(new CachedDomainsParameters(), cancellationToken);
-        var matchedDomain = MatchDomainWithContent(request.Url ?? string.Empty, domains);
-
         var liveContent = LiveContent(dbContext);
         var content = request.IsRootContent
             ? matchedDomain != null

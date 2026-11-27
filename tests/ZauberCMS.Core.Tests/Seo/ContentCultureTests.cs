@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Middleware;
@@ -196,6 +197,63 @@ public class ContentCultureTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ZA190_Under_a_path_base_a_circuit_and_the_page_request_are_on_the_same_domain()
+    {
+        // A domain with a path (site.test/about, Italian): its path is matched below the site's path base on both
+        // sides. The circuit used to match /site/about, on no domain, and ran in the page's own French.
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            var italian = new Language { LanguageIsoCode = "it-IT", LanguageCultureName = "Italian" };
+            db.Languages.Add(italian);
+            var about = await db.Contents.SingleAsync(c => c.Name == "About", Ct);
+            db.Domains.Add(new Domain { Url = "site.test/about", ContentId = about.Id, Language = italian });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var (entry, requestCulture) = await RunMiddlewareAsync("/about", Endpoint("/{**slug}"), pathBase: "/site");
+        var previous = (CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+        string? circuitCulture = null;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("es-ES");
+            using var scope = _site.CreateScope();
+            var handler = new ContentCultureCircuitHandler(
+                new TestNavigation("https://site.test/site/about", "https://site.test/site/"),
+                scope.ServiceProvider.GetRequiredService<IContentService>(),
+                scope.ServiceProvider.GetRequiredService<IOptions<ZauberSettings>>(),
+                NullLogger<ContentCultureCircuitHandler>.Instance);
+            await handler.CreateInboundActivityHandler(_ =>
+            {
+                circuitCulture = CultureInfo.CurrentUICulture.Name;
+                return Task.CompletedTask;
+            })(null!);
+        }
+        finally
+        {
+            (CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture) = previous;
+        }
+
+        Assert.NotNull(entry?.Content);
+        Assert.Equal("it-IT", requestCulture);
+        Assert.Equal("it-IT", circuitCulture);
+    }
+
+    [Theory]
+    [InlineData("https://site.test/site/", "https://site.test/site/fr/about?tab=2", "https://site.test/fr/about?tab=2")]
+    [InlineData("https://site.test/site/", "https://site.test/site/", "https://site.test/")]
+    [InlineData("https://site.test/site/", "https://site.test/site", "https://site.test/")]
+    [InlineData("http://site.test:8080/", "http://site.test:8080/about", "http://site.test:8080/about")]
+    [InlineData("https://site.test/", "https://site.test/about", "https://site.test/about")]
+    public void ZA190_The_content_request_url_leaves_the_path_base_out(string baseAddress, string address,
+        string expected)
+    {
+        var navigation = new TestNavigation(address, baseAddress);
+
+        Assert.Equal(expected, navigation.GetContentRequestUrl());
+        Assert.Equal(expected, new TestNavigation(baseAddress, baseAddress).GetContentRequestUrl(address));
+    }
+
+    [Fact]
     public async Task ZA147_A_circuit_that_moves_to_another_page_runs_the_next_activity_in_that_pages_language()
     {
         var previous = (CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
@@ -237,7 +295,8 @@ public class ContentCultureTests : IAsyncLifetime
         Assert.Contains(scope.ServiceProvider.GetServices<CircuitHandler>(), h => h is ContentCultureCircuitHandler);
     }
 
-    private async Task<(EntryModel? Entry, string Culture)> RunMiddlewareAsync(string path, Endpoint endpoint)
+    private async Task<(EntryModel? Entry, string Culture)> RunMiddlewareAsync(string path, Endpoint endpoint,
+        string pathBase = "")
     {
         var previous = (CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
         try
@@ -256,6 +315,7 @@ public class ContentCultureTests : IAsyncLifetime
             var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
             context.Request.Scheme = "https";
             context.Request.Host = new HostString("site.test");
+            context.Request.PathBase = pathBase;
             context.Request.Path = path;
             context.SetEndpoint(endpoint);
             if (endpoint is RouteEndpoint { RoutePattern.Parameters.Count: > 0 } && path.Trim('/').Length > 0)

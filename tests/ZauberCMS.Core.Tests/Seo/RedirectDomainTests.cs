@@ -377,6 +377,38 @@ public class RedirectDomainTests : IAsyncLifetime
         Assert.Equal(0, recorder.CommittedCount);
     }
 
+    [Fact]
+    public async Task ZA189_every_redirect_is_honoured_however_many_there_are()
+    {
+        // More than a query's default page (the newest 5000): the oldest one used to be left out without a word
+        var now = DateTime.UtcNow;
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            db.Redirects.Add(new SeoRedirect
+            {
+                FromUrl = "/the-oldest", ToUrl = "/found", DateCreated = now.AddYears(-1), DateUpdated = now.AddYears(-1)
+            });
+            db.Redirects.Add(new SeoRedirect
+            {
+                FromUrl = "/old-pattern/.*", ToUrl = "/pattern-found", IsRegex = true,
+                DateCreated = now.AddYears(-1), DateUpdated = now.AddYears(-1)
+            });
+            for (var i = 0; i < 5000; i++)
+            {
+                db.Redirects.Add(new SeoRedirect
+                {
+                    FromUrl = $"/newer-{i}", ToUrl = "/somewhere", DateCreated = now, DateUpdated = now.AddSeconds(i)
+                });
+            }
+
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        Assert.Equal("/found", await RedirectLocationAsync("example.test", "/the-oldest"));
+        Assert.Equal("/pattern-found", await RedirectLocationAsync("example.test", "/old-pattern/page"));
+        Assert.Equal("/somewhere", await RedirectLocationAsync("example.test", "/newer-4999"));
+    }
+
     private async Task<EntryModel> GetRootAsync(string url)
     {
         using var scope = _site.CreateScope();

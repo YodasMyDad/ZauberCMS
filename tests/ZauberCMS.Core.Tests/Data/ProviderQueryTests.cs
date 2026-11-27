@@ -9,6 +9,9 @@ using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Parameters;
+using ZauberCMS.Core.Seo.Interfaces;
+using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Seo.Parameters;
 using ZauberCMS.Core.Tests.Infrastructure;
 
 namespace ZauberCMS.Core.Tests.Data;
@@ -29,6 +32,26 @@ public class ProviderQueryTests : IAsyncLifetime
     public async ValueTask DisposeAsync() => await _site.DisposeAsync();
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task ZA189_the_redirect_middlewares_query_for_every_redirect_runs_on_the_provider()
+    {
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            db.Redirects.AddRange(
+                new SeoRedirect { FromUrl = "/a", ToUrl = "/b" },
+                new SeoRedirect { FromUrl = "/c", ToUrl = "/d" },
+                new SeoRedirect { FromUrl = "/e", ToUrl = "/f" });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        using var scope = _site.CreateScope();
+        // What RedirectMiddleware asks for: no cap (ZA-189)
+        var all = await scope.ServiceProvider.GetRequiredService<ISeoService>().QueryRedirectsAsync(
+            new QueryRedirectsParameters { Cached = false, Amount = int.MaxValue }, Ct);
+
+        Assert.Equal(3, all.Count);
+    }
 
     [Fact]
     public async Task ZA007_WherePathLike_finds_the_page_and_everything_below_it()

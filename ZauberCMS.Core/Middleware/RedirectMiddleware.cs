@@ -18,7 +18,7 @@ namespace ZauberCMS.Core.Middleware;
 /// Sends visitors on from the SEO redirects saved in the admin. An exact From URL is looked up directly; one marked
 /// as a regular expression (<see cref="SeoRedirect.IsRegex"/>) is tried in turn after that (ZA-116). The compiled
 /// list is kept in <see cref="ICacheService"/> under the <c>SeoRedirect</c> prefix, so saving or deleting a redirect
-/// clears it on every server (ZA-115).
+/// clears it on every server (ZA-115). Every saved redirect is in it, however many there are (ZA-189, Roadmap D65).
 /// A redirect with a domain (<see cref="SeoRedirect.DomainId"/>) applies only to requests on that domain; one without
 /// applies on every host. A request is on one domain at most, the one content routing gives it
 /// (<see cref="DomainMatching.FindDomain"/>: the longest that matches), so a redirect for <c>example.com</c> does not
@@ -141,8 +141,11 @@ internal class RedirectMiddleware(RequestDelegate next, ILogger<RedirectMiddlewa
     {
         return await cacheService.GetSetCachedItemAsync(CacheKey, async () =>
         {
-            var allRedirects = await seoService.QueryRedirectsAsync(new QueryRedirectsParameters { Cached = false },
-                cancellationToken);
+            // Every redirect, however many: a query's default is the newest 5000, and the ones past it were ignored
+            // without a word (ZA-189). The list is what editors saved, not what visitors send, so it is kept whole
+            // (Roadmap D65).
+            var allRedirects = await seoService.QueryRedirectsAsync(
+                new QueryRedirectsParameters { Cached = false, Amount = int.MaxValue }, cancellationToken);
 
             var directMatches = new Dictionary<string, List<RedirectInfo>>(StringComparer.OrdinalIgnoreCase);
             var regexMatches = new List<RegexRedirectInfo>();
