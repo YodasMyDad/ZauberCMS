@@ -14,7 +14,7 @@ namespace ZauberCMS.Core.Shared.Services;
 /// arrived on two checks in a row, the counter went backwards (Redis was reset), or it (re)connects to Redis.
 /// Clears that could not be sent are followed by one "clear everything" once Redis is reachable again.
 /// </summary>
-internal sealed class RedisCacheInvalidationBus : ICacheInvalidationBus, IDisposable
+public sealed class RedisCacheInvalidationBus : ICacheInvalidationBus, IDisposable
 {
     private const string PublishScript = """
                                          local v = redis.call('INCR', KEYS[1])

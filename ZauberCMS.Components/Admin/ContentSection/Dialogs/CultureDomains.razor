@@ -22,7 +22,7 @@
 {
     <EditorRow>
         <CentreColumn>
-            <RadzenText TextStyle="TextStyle.Caption">Valid domain names are: "example.com", "www.example.com", "example.com:8080". One-level paths in domains are supported, eg. "example.com/en" but it is recommended to just set the culture on the content</RadzenText>
+            <RadzenText TextStyle="TextStyle.Caption">Valid domain names are: "example.com", "www.example.com", "example.com:8080" (only that port; without a port, any port matches). "https://", a trailing dot and a trailing slash are ignored. Paths in domains are supported, eg. "example.com/en" (the longest matching domain wins), but it is recommended to just set the culture on the content</RadzenText>
             <RadzenDataGrid @ref="Grid" AllowFiltering="false"
                             AllowPaging="false"
                             PageSize="@(500)"

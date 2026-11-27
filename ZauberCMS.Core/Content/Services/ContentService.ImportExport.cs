@@ -275,8 +275,10 @@ public partial class ContentService
             await ImportContentRecursive(rootExp, null, contentType, dbContext, user, propMap, handlerResult);
         }
 
-        // One save for the imported content and its tag links, with the save hooks. The content type is saved by
-        // now, so its content is saved even when the caller has gone: an import is not left half done
+        // One save for the imported content and its tag links, with the save hooks. It is a second save: the content
+        // type was saved above on its own, so a content save that fails (a veto by an IBeforeEntitySave hook, a
+        // database error) leaves the type imported without its content, and the result says it failed (ZA-184).
+        // The token is not passed: once the type is saved, a caller that has gone does not stop its content.
         await ContentTagLinks.StageAsync(dbContext, extensionManager, dbContext.Contents.Local.ToList(),
             CancellationToken.None);
         var contentResult = await dbContext.SaveChangesAndLog(Array.Empty<Models.Content>(), null,

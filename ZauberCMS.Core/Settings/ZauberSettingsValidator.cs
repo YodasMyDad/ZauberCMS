@@ -34,13 +34,43 @@ internal sealed class ZauberSettingsValidator(IServiceProvider services) : IVali
         {
             _ = CultureInfo.GetCultureInfo(options.AdminDefaultLanguage ?? string.Empty);
         }
-        catch (CultureNotFoundException)
+        catch (CultureNotFoundException ex)
         {
-            failures.Add($"Zauber:AdminDefaultLanguage is '{options.AdminDefaultLanguage}', which is not a culture " +
-                         "name such as en-US.");
+            failures.Add(AdminDefaultLanguageFailure(options.AdminDefaultLanguage, ex, IsGlobalizationInvariant()));
         }
 
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+    }
+
+    /// <summary>
+    /// The error for an <c>AdminDefaultLanguage</c> the runtime cannot load, with the runtime's reason: in
+    /// globalization-invariant mode a valid name fails too, as there are no cultures (ZA-179).
+    /// </summary>
+    internal static string AdminDefaultLanguageFailure(string? configured, CultureNotFoundException reason,
+        bool globalizationInvariant)
+    {
+        var runtimeReason = string.Join(' ', reason.Message.Split(['\r', '\n'],
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        return $"Zauber:AdminDefaultLanguage is '{configured}', which the runtime cannot load as a culture: " +
+               $"{runtimeReason} " + (globalizationInvariant
+                   ? "The site runs in globalization-invariant mode (InvariantGlobalization in the project, or " +
+                     "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT, as some container images set), which has no cultures: " +
+                     "turn it off (ZauberCMS needs ICU)."
+                   : "Use a culture name such as en-US.");
+    }
+
+    // In invariant mode only the invariant culture exists, so even en-US cannot be loaded
+    private static bool IsGlobalizationInvariant()
+    {
+        try
+        {
+            _ = CultureInfo.GetCultureInfo("en-US");
+            return false;
+        }
+        catch (CultureNotFoundException)
+        {
+            return true;
+        }
     }
 
     /// <summary>

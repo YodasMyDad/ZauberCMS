@@ -344,10 +344,18 @@ public static class ZauberSetup
         }
 
         var discoverAssemblies = assembliesToScan.ToArray();
+        var zauberAssemblies = new[] { typeof(ZauberSetup).Assembly, assembliesToScan[1], zauberRouting };
+
+        // A site or plugin assembly whose public types cannot load (built against another ZauberCMS version) would
+        // make discovery and Blazor's router throw at every use: stop here, naming it (ZA-176, D48)
+        foreach (var assembly in discoverAssemblies.Except(zauberAssemblies))
+        {
+            ExtensionManager.EnsurePublicTypesLoad(assembly);
+        }
+
         AssemblyManager.SetAssemblies(discoverAssemblies);
 
         // An extension type in the site or a plugin that is not public is never discovered: say so (ZA-120)
-        var zauberAssemblies = new[] { typeof(ZauberSetup).Assembly, assembliesToScan[1], zauberRouting };
         ExtensionManager.ReportHiddenExtensionTypes(discoverAssemblies.Except(zauberAssemblies), startupMessages);
 
         // Add Zauber RTE services
@@ -470,11 +478,36 @@ public static class ZauberSetup
         startupMessages.WriteTo(services.GetRequiredService<ILoggerFactory>().CreateLogger("ZauberCMS.Startup"));
     }
 
+    /// <summary>
+    /// Writes what the bootstrap collected, then reads (and so validates) the settings and writes their warnings. A
+    /// setting that cannot work is logged as critical (category <c>ZauberCMS.Startup</c>) and rethrown, so the
+    /// reason reaches the site's log and not only the console (ZA-176).
+    /// </summary>
+    internal static ZauberSettings ReadSettingsAndWriteStartupWarnings(IServiceProvider services)
+    {
+        // First: what the bootstrap skipped often explains a failing setting (a provider that is not public)
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("ZauberCMS.Startup");
+        services.GetRequiredService<StartupMessages>().WriteTo(logger);
+
+        ZauberSettings zauberSettings;
+        try
+        {
+            zauberSettings = services.GetRequiredService<IOptions<ZauberSettings>>().Value;
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "ZauberCMS cannot start: {Reason}", ex.Message);
+            throw;
+        }
+
+        WriteStartupWarnings(services, zauberSettings);
+        return zauberSettings;
+    }
+
     public static void AddZauberCms<T>(this WebApplication app)
     {
         // Validated here (ZauberSettingsValidator): a setting that cannot work stops the site before it serves anything
-        var zauberSettings = app.Services.GetRequiredService<IOptions<ZauberSettings>>().Value;
-        WriteStartupWarnings(app.Services, zauberSettings);
+        var zauberSettings = ReadSettingsAndWriteStartupWarnings(app.Services);
 
         // First in the pipeline: everything after it (HTTPS redirect, rate limiter, admin IP allow-list, links)
         // must see the visitor's address and scheme, not the proxy's. Off unless Zauber:ForwardedHeaders:Enabled.

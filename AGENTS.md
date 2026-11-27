@@ -131,8 +131,10 @@ don't reorder without a reason written in the commit.
 
 `IContentProperty` and `ISectionNavGroupAction` take Radzen / modal types, so they live in ZauberCMS.Components under
 their `ZauberCMS.Core.*` namespaces (D51); a new contract that needs a UI type goes there too, never in Core.
-Pages are found by `EntryPage` (`ZauberCMS.Components/Pages`); there is no MVC rendering path, no content-finder
-pipeline and no MVC views (removed in Phase 11e, ZA-090). Only `AuthController` uses MVC (`AddControllers`).
+Pages are found by `EntryPage` (`ZauberCMS.Components/Pages`), and an address no page has goes to the content finders
+(`IContentFinder`, D55, in `GetContentFromRequestAsync`); there is no MVC rendering path and no MVC views (removed in
+Phase 11e, ZA-090). Only `AuthController` uses MVC (`AddControllers`, no view services: `[ValidateAntiForgeryToken]`
+needs them, so it checks `IAntiforgery` itself).
 
 ## Configuration & cross-cutting
 

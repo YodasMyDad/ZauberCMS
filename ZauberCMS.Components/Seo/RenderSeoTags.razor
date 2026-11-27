@@ -17,18 +17,21 @@
     [Parameter] public string? DescriptionAlias { get; set; }
     [Parameter] public Media? ImageFallback { get; set; }
 
+    // Cascaded by EntryPage: a page served through a content finder is at the address asked for, not its own URL
+    [CascadingParameter] private EntryModel? Entry { get; set; }
+
     private string _generatedTags = string.Empty;
 
-    private (Content? Content, string SeoAlias, string? TitleAlias, string? DescriptionAlias, Media? ImageFallback)? _renderedFor;
+    private (Content? Content, string SeoAlias, string? TitleAlias, string? DescriptionAlias, Media? ImageFallback, EntryModel? Entry)? _renderedFor;
 
     protected override async Task OnParametersSetAsync()
     {
         // Once per set of inputs (the front end renders this statically; an interactive parent re-sets it on every
         // render), and no page means no tags rather than the last page's (ZA-127)
-        var inputs = (Content, SeoAlias, TitleAlias, DescriptionAlias, ImageFallback);
+        var inputs = (Content, SeoAlias, TitleAlias, DescriptionAlias, ImageFallback, Entry);
         if (_renderedFor is { } last && ReferenceEquals(last.Content, Content) && last.SeoAlias == SeoAlias &&
             last.TitleAlias == TitleAlias && last.DescriptionAlias == DescriptionAlias &&
-            ReferenceEquals(last.ImageFallback, ImageFallback))
+            ReferenceEquals(last.ImageFallback, ImageFallback) && ReferenceEquals(last.Entry, Entry))
         {
             return;
         }
@@ -54,6 +57,13 @@
         {
             var currentUri = NavigationManager.Uri;
             var isHomePage = currentUri == NavigationManager.BaseUri || currentUri == baseUri + "/";
+            // A page a content finder served is shown at the address asked for (/products/abc showing the product
+            // page), so that address, without its query string, is the canonical one (ZA-171)
+            var pageUri = isHomePage
+                ? baseUri
+                : Entry?.ContentFinder != null
+                    ? new Uri(currentUri).GetLeftPart(UriPartial.Path)
+                    : $"{baseUri}/{url}";
 
             // Basic meta tags
             sb.AppendLine($"<title>{HttpUtility.HtmlEncode(metaData.PageTitle ?? name)}</title>");
@@ -83,10 +93,10 @@
             AddOpenGraphTag(sb, "og:locale", CultureInfo.CurrentCulture.Name);
             AddOpenGraphTag(sb, "og:title", metaData.PageTitle ?? name);
             AddOpenGraphTag(sb, "og:description", metaData.MetaDescription);
-            AddOpenGraphTag(sb, "og:url", isHomePage ? baseUri : $"{baseUri}/{url}");
+            AddOpenGraphTag(sb, "og:url", pageUri);
 
             AddMetaTag(sb, "robots", metaData.HideFromSearchEngines ? "noindex" : "index, follow, max-image-preview:large");
-            AddLinkTag(sb, "canonical", isHomePage ? baseUri : $"{baseUri}/{url}");
+            AddLinkTag(sb, "canonical", pageUri);
         }
         else
         {

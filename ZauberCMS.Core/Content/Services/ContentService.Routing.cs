@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -95,14 +97,33 @@ public partial class ContentService
         Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Path).ToLowerInvariant() : url;
 
     /// <summary>
+    /// True while the content finders of this async flow run: a lookup a finder makes (directly or through code it
+    /// calls) does the URL lookup only, so a finder that looks an address up cannot start the finders again
+    /// (ZA-173).
+    /// </summary>
+    private static readonly AsyncLocal<bool> RunningContentFinders = new();
+
+    /// <summary>The finder language codes already warned about (finder type and code), so each is logged once.</summary>
+    private static readonly ConcurrentDictionary<(string Finder, string Code), byte> WarnedFinderLanguages = new();
+
+    /// <summary>
     /// The page the first content finder (by <see cref="IContentFinder.SortOrder"/>, then type name) names for the
     /// address, loaded as the URL lookup loads a page; null when none names a live page. A finder that cannot be
     /// created or throws is logged and passed over: one broken plugin does not take the not-found page down.
+    /// The finders are built for this lookup and disposed after it (ZA-172).
     /// </summary>
     private async Task<EntryModel?> FindWithContentFindersAsync(GetContentFromRequestParameters request,
         GetContentFromRequestParameters asked, long bucket, CancellationToken cancellationToken)
     {
         var originalUrl = asked.Url;
+        if (RunningContentFinders.Value)
+        {
+            // A finder's own lookup: the finders are already running for this request (ZA-173)
+            logger.LogDebug("{Address} was looked up from inside a content finder, so the finders are not asked",
+                originalUrl ?? asked.Slug);
+            return null;
+        }
+
         var finderTypes = extensionManager.GetImplementations<IContentFinder>(true);
         if (finderTypes.Count == 0)
         {
@@ -110,6 +131,23 @@ public partial class ContentService
         }
 
         var finders = new List<(string Name, IContentFinder Finder)>(finderTypes.Count);
+        RunningContentFinders.Value = true;
+        try
+        {
+            return await RunContentFindersAsync(finderTypes, finders, request, asked, bucket, cancellationToken);
+        }
+        finally
+        {
+            await DisposeContentFindersAsync(finders);
+            RunningContentFinders.Value = false;
+        }
+    }
+
+    private async Task<EntryModel?> RunContentFindersAsync(Dictionary<string, Type> finderTypes,
+        List<(string Name, IContentFinder Finder)> finders, GetContentFromRequestParameters request,
+        GetContentFromRequestParameters asked, long bucket, CancellationToken cancellationToken)
+    {
+        var originalUrl = asked.Url;
         foreach (var (name, type) in finderTypes)
         {
             try
@@ -185,15 +223,75 @@ public partial class ContentService
             return new EntryModel
             {
                 Content = entry.Content,
-                LanguageIsoCode = result.LanguageIsoCode.IsNullOrWhiteSpace()
-                    ? entry.LanguageIsoCode
-                    : result.LanguageIsoCode,
+                // The finder's language wins over the domain's and the page's own, when it is a culture
+                LanguageIsoCode = IsFinderLanguage(name, result.LanguageIsoCode)
+                    ? result.LanguageIsoCode
+                    : entry.LanguageIsoCode,
                 ContentFinder = name,
                 RouteValues = result.RouteValues ?? new Dictionary<string, object?>()
             };
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// True when a finder's <see cref="ContentFinderResult.LanguageIsoCode"/> is set and a culture name. One that is
+    /// not is ignored (the page's language is used), with a warning once per finder and code rather than an error on
+    /// every request (ZA-174).
+    /// </summary>
+    private bool IsFinderLanguage(string finder, string? languageIsoCode)
+    {
+        if (languageIsoCode.IsNullOrWhiteSpace())
+        {
+            return false;
+        }
+
+        try
+        {
+            CultureInfo.GetCultureInfo(languageIsoCode!);
+            return true;
+        }
+        catch (CultureNotFoundException)
+        {
+            // Bounded: a finder that makes a new code per request is not remembered past this many
+            if (WarnedFinderLanguages.Count < 256 && WarnedFinderLanguages.TryAdd((finder, languageIsoCode!), 0))
+            {
+                logger.LogWarning(
+                    "The content finder {ContentFinder} gave the language {LanguageIsoCode}, which is not a culture; " +
+                    "the page's own language is used", finder, languageIsoCode);
+            }
+            else
+            {
+                logger.LogDebug("The content finder {ContentFinder} gave the language {LanguageIsoCode}, which is " +
+                                "not a culture", finder, languageIsoCode);
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>Disposes the finders a lookup built (ZauberCMS made them, so nothing else will).</summary>
+    private async Task DisposeContentFindersAsync(List<(string Name, IContentFinder Finder)> finders)
+    {
+        foreach (var (name, finder) in finders)
+        {
+            try
+            {
+                if (finder is IAsyncDisposable asyncDisposable)
+                {
+                    await asyncDisposable.DisposeAsync();
+                }
+                else if (finder is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "The content finder {ContentFinder} threw when it was disposed", name);
+            }
+        }
     }
 
     /// <summary>What the lookup needs of a page before it loads it whole.</summary>
@@ -310,6 +408,6 @@ public partial class ContentService
         }
 
         // The same rule the redirect middleware uses for a redirect's domain (ZA-165)
-        return DomainMatching.FindDomain(domains, uri.Host, uri.AbsolutePath);
+        return DomainMatching.FindDomain(domains, uri.Host, uri.AbsolutePath, uri.Port < 0 ? null : uri.Port);
     }
 }

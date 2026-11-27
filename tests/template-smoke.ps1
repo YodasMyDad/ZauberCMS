@@ -216,6 +216,8 @@ try {
     } finally {
         $env:ASPNETCORE_ENVIRONMENT = $previousEnvironment
     }
+    # Windows PowerShell gives no ExitCode for a Start-Process process unless its handle was read while it ran
+    $null = $siteProcess.Handle
 
     Add-Type -AssemblyName System.Net.Http
     $handler = New-Object System.Net.Http.HttpClientHandler
@@ -229,7 +231,7 @@ try {
     $deadline = (Get-Date).AddSeconds($StartTimeoutSeconds)
     $started = $false
     while (-not $started -and (Get-Date) -lt $deadline) {
-        if ($siteProcess.HasExited) { throw "The site stopped with exit code $($siteProcess.ExitCode); see $WorkFolder\site-stdout.log" }
+        if ($siteProcess.HasExited) { throw "The site stopped with exit code $($siteProcess.ExitCode) (its output and log follow)" }
         try { $null = Get-Page '/'; $started = $true } catch { Start-Sleep -Milliseconds 500 }
     }
     if (-not $started) { throw "The site did not answer within $StartTimeoutSeconds seconds" }
@@ -300,9 +302,22 @@ finally {
         Stop-Process -Id $siteProcess.Id -Force -ErrorAction SilentlyContinue
         $siteProcess.WaitForExit(10000) | Out-Null
     }
-    if ($failures.Count -gt 0 -and (Test-Path (Join-Path $WorkFolder 'site-stdout.log'))) {
-        Write-Host '--- site output (last 40 lines) ---'
-        Get-Content (Join-Path $WorkFolder 'site-stdout.log') -Tail 40 | ForEach-Object { Write-Host $_ }
+    # The work folder is deleted below: print what explains the failure first (ZA-181). An unhandled start-up
+    # exception goes to stderr; what the site logged goes to its Logs folder.
+    if ($failures.Count -gt 0) {
+        foreach ($output in @(@('site-stdout.log', 'site output'), @('site-stderr.log', 'site error output'))) {
+            $outputFile = Join-Path $WorkFolder $output[0]
+            if ((Test-Path $outputFile) -and (Get-Item $outputFile).Length -gt 0) {
+                Write-Host "--- $($output[1]) (last 40 lines) ---"
+                Get-Content $outputFile -Tail 40 | ForEach-Object { Write-Host $_ }
+            }
+        }
+        $siteLog = Get-ChildItem (Join-Path $publishFolder 'Logs') -Filter '*.txt' -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime | Select-Object -Last 1
+        if ($siteLog) {
+            Write-Host "--- site log $($siteLog.Name) (last 60 lines) ---"
+            Get-Content $siteLog.FullName -Tail 60 | ForEach-Object { Write-Host $_ }
+        }
     }
     Remove-SmokeVersion
     if ($KeepWorkFolder) {

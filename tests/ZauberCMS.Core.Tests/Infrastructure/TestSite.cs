@@ -112,8 +112,10 @@ public sealed class TestSite : IAsyncDisposable
     /// </summary>
     /// <param name="readSettingsFile">Also read <c>appsettings.json</c> in the content root (it wins over the
     /// test defaults), as a real site does. For tests of the installer, which writes that file.</param>
+    /// <param name="additionalAssemblies">Passed to <c>AddZauberCms(builder)</c>, as a site passes its plugins'.</param>
     public static WebApplication BuildApp(string databaseProvider, string connectionString, string contentRoot,
-        bool validateContainer, IDictionary<string, string?>? extraSettings = null, bool readSettingsFile = false)
+        bool validateContainer, IDictionary<string, string?>? extraSettings = null, bool readSettingsFile = false,
+        System.Reflection.Assembly[]? additionalAssemblies = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
@@ -145,7 +147,7 @@ public sealed class TestSite : IAsyncDisposable
                 reloadOnChange: false);
         }
 
-        builder.AddZauberCms();
+        builder.AddZauberCms(additionalAssemblies ?? []);
 
         // ICurrentUserAccessor asks AuthenticationStateProvider first; the real one has a state only inside a Blazor render.
         builder.Services.AddSingleton<TestSignIn>();

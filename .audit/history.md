@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1165 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `/audit changed` over 2f4dc41..773505c (deterministic checks; unit reviewers for the front-end path, bootstrap and the public surface; two independent diff reviewers given only the code; two verifiers). Nothing Critical or High from Phase 11. ZA-169…ZA-186 found and fixed (7 Medium, 11 Low); ZA-187…ZA-198 recorded (1 Medium, 11 Low, all older than Phase 11) and assigned to 10f, 10g, 10i and 12; owner questions ZA-185, ZA-198
 After Roadmap Phase 11g (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1122 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-125, ZA-126 fixed; content finders added at the owner's request (D55). Phase 11 done. Next free ID: ZA-169
 After Roadmap Phase 11f (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1109 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-092, ZA-124 fixed. Next free ID: ZA-169
 After Roadmap Phase 11e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1071 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-090, ZA-091 fixed. Next free ID: ZA-169
@@ -33,6 +34,63 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Phase 11 audit (2026-11-27, `/audit changed` over 2f4dc41..773505c, mode fix).** Release notes in the Roadmap's
+  "Phase 11 audit" notes. Every fix has a regression test that was seen failing with the fix reverted (the two
+  ZA-176 controls pass both ways, as they should). Full suite 1165 (all pass, none skipped) on SQLite, PostgreSQL,
+  SQL Server LocalDB and Redis; Release build 0 warnings.
+  - **ZA-169 (Medium) — fixed.** Under nested domains (`example.com`, `example.com/fr`) `RedirectMiddleware` took a
+    request to be on both, so the shorter domain's redirect won on `/fr/…` and a loop across the two was saved and
+    bounced visitors (reproduced). The request is now on the longest matching domain (`DomainMatching.FindDomain`,
+    as content routing); `RedirectRules.FindLoop(redirect, others, domains)` follows the chain per host and works out
+    the domain at each step, and `SeoService.SaveRedirectAsync` passes the domains (the old overload stays). Tests:
+    `Seo/RedirectDomainTests` ZA169 ×5.
+  - **ZA-170 (Medium) — fixed.** A domain saved as `https://example.com`, `example.com.`, `example.com/` or
+    `example.com:8080` (the dialog's own example) matched nothing; since 11a its redirects never fired (reproduced).
+    `DomainMatching.Normalize` (internal) at match time; stored rows unchanged; a domain with a port matches only that
+    port. The dialog's help text says so. Tests: ZA170 ×4.
+  - **ZA-171 (Medium) — fixed.** `RenderSeoTags` declared a content-finder page's stored URL as canonical and
+    `og:url` (in FrontEnd.md's own example a 404). It reads the cascaded `EntryModel` and uses the address asked for
+    without its query string. Tests: `Seo/SeoTagsTests` (rendered with `HtmlRenderer` on a real site).
+  - **ZA-176 (Medium) — fixed.** `AddZauberCms(app)` read the options (validation) before writing the bootstrap's
+    warnings, so a failing setting lost them and reached only stderr; and a plugin built against 4.x whose public type
+    implements a contract moved in 11e made `GetExportedTypes` (discovery, Blazor's router) throw a `TypeLoadException`
+    naming neither (reproduced with a run-time-built assembly). Now the warnings are written first, a failing setting
+    is logged as critical (`ZauberCMS.Startup`) and rethrown, and `ExtensionManager.EnsurePublicTypesLoad` stops the
+    start naming the assembly and the type; non-public unloadable types still only warn. Tests:
+    `Bootstrap/StartupDiagnosticsTests` ZA176 ×4; a template site with a bad culture wrote the critical line to its log.
+  - **ZA-177 (Medium) — fixed.** `release.ps1` had a literal TAB in the template site's path (from 9234170): the
+    script stamped two files and stopped (reproduced on a copy). Test: `BuildBaselineTests` ZA177 (every stamped path
+    exists, no control characters).
+  - **ZA-178 (Medium) — fixed.** The publish job did not check that HEAD contains the newest version tag, so rerunning
+    an older run after a newer release published older code under a newer version. It now fails unless
+    `git merge-base --is-ancestor <newest tag> HEAD`; a rerun of the tagged commit is unchanged. Checked with a scratch
+    repository and bare origin (9 cases; before the fix two published old code); `actionlint` clean. Test:
+    `BuildBaselineTests` ZA178. The 15 existing tags are all on `main-static`.
+  - **ZA-185 (Medium) — fixed by documentation; behaviour is an owner question.** Since 11e (`AddControllers`) a
+    site's or plugin's `[ValidateAntiForgeryToken]`/`[AutoValidateAntiforgeryToken]` action answers 500 (reproduced
+    on the real bootstrap; `AddMvcCore().AddViews()` restores it). The 11e release notes and FrontEnd.md now say so.
+  - **ZA-172, ZA-173, ZA-174 (Low) — fixed.** Content finders are disposed after the lookup; a lookup from inside a
+    finder does not run the finders again (it recursed 25 levels in a throwaway test) and `EntryPage` passes the
+    request's token; a finder language that is not a culture is ignored with one warning, and the XML doc and
+    FrontEnd.md say the finder's language wins. Tests: `Content/ContentFinderTests` ZA172–ZA174.
+  - **ZA-175 (Low) — fixed.** `GetCachedDomainsAsync` (now per request with domain redirects, per miss with finders)
+    built a DbContext and rendered SQL for the key on every hit; one fixed key under the `Domain` prefix, which domain
+    saves clear. Test: ZA175.
+  - **ZA-179, ZA-180, ZA-181, ZA-182, ZA-183 (Low) — fixed.** The `AdminDefaultLanguage` error gives the runtime's
+    reason and names invariant-globalization mode (was "'en-US' is not a culture name such as en-US"); NU1900 is not
+    a build error; the smoke test prints the site's stderr and log tail on a failure (normal run passes on Windows
+    PowerShell 5.1); `FluentValidation.IValidator`1` is in `ExtensionManager.DiscoveryInterfaces` (a non-public
+    validator is a start-up warning); `NoCacheInvalidationBus` and `RedisCacheInvalidationBus` are public (D53),
+    snapshot updated. Tests: ZA179 ×2, ZA180, ZA182, the public-types snapshot.
+  - **ZA-184, ZA-186 (Low) — fixed (docs).** The import comment said a content-type import cannot be left half done
+    (two saves); AGENTS.md said there is no content-finder pipeline; the audit runbook pointed at `Core/Modal`; the
+    11d, 11e and 11f release notes missed list layering across configuration sources, the blank provider, the
+    antiforgery attributes and the replacement for `AssemblyManager.Assemblies`. Services.md and Standards.md
+    describe redirect domains, list layering and the blank provider.
+  - Dropped or downgraded on verification: a `www.` mismatch and upper-case domains (match as designed); the stale
+    redirect cache after a domain delete is a nit (recorded with the hooks gap as ZA-193); the registration page's
+    not-found layout is older than Phase 11 (ZA-194).
 
 - **Phase 11g (2026-11-27): content finders, the service split, custom components, the DbContext pattern
   (Roadmap D55–D59).** Details and the release notes in the Roadmap's Phase 11g notes.

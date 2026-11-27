@@ -631,6 +631,8 @@ ZauberCMS.Core: ZauberCMS.Core.Shared.Services.ICacheService
 ZauberCMS.Core: ZauberCMS.Core.Shared.Services.IHtmlSanitizerService
 ZauberCMS.Core: ZauberCMS.Core.Shared.Services.IRichTextEmbedService
 ZauberCMS.Core: ZauberCMS.Core.Shared.Services.LayoutResolverService
+ZauberCMS.Core: ZauberCMS.Core.Shared.Services.NoCacheInvalidationBus
+ZauberCMS.Core: ZauberCMS.Core.Shared.Services.RedisCacheInvalidationBus
 ZauberCMS.Core: ZauberCMS.Core.Shared.Services.ServerCache
 ZauberCMS.Core: ZauberCMS.Core.Shared.TreeState
 ZauberCMS.Core: ZauberCMS.Core.Shared.Validation.BaseFluentValidator`1

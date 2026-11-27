@@ -1,4 +1,8 @@
-﻿using ImageResize.Core.Configuration;
+﻿using System.Globalization;
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.Loader;
+using ImageResize.Core.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -188,7 +192,11 @@ public class StartupDiagnosticsTests
     [Fact]
     public void ZA120_every_discovery_interface_in_the_list_exists()
     {
-        var assemblies = new[] { typeof(ZauberSetup).Assembly, typeof(Components.Pages.EntryPage).Assembly };
+        var assemblies = new[]
+        {
+            typeof(ZauberSetup).Assembly, typeof(Components.Pages.EntryPage).Assembly,
+            typeof(FluentValidation.IValidator<>).Assembly
+        };
         foreach (var name in ExtensionManager.DiscoveryInterfaces)
         {
             var type = assemblies.Select(a => a.GetType(name)).SingleOrDefault(t => t != null);
@@ -217,6 +225,126 @@ public class StartupDiagnosticsTests
         // And a caller that changes its dictionary does not change the cache
         all.Clear();
         Assert.NotEmpty(extensionManager.GetImplementations<ISeedData>(useCaching: true));
+    }
+
+    [Fact]
+    public void ZA182_a_fluent_validator_that_is_not_public_is_a_startup_warning()
+    {
+        // FluentValidation's scan finds public validators only, so this one never runs
+        var messages = new StartupMessages();
+        ExtensionManager.ReportHiddenExtensionTypes([typeof(HiddenValidator).Assembly], messages);
+
+        Assert.Contains(messages.Warnings, w => w.StartsWith(typeof(HiddenValidator).FullName +
+            " implements IValidator`1 but is not public", StringComparison.Ordinal));
+    }
+
+    // ---- ZA-176: a start that fails says why, in the log and naming the plugin ----
+
+    [Fact]
+    public async Task ZA176_the_startup_warnings_and_a_failing_setting_reach_the_log_before_the_start_stops()
+    {
+        var logger = new RecordingLoggerProvider();
+        var contentRoot = TestSite.CreateContentRoot();
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            EnvironmentName = "Testing",
+            ContentRootPath = contentRoot,
+            WebRootPath = Path.Combine(contentRoot, "wwwroot")
+        });
+        builder.Configuration.Sources.Clear();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Zauber:DatabaseProvider"] = "",
+            ["Zauber:ConnectionString"] = "",
+            ["Zauber:AdminDefaultLanguage"] = "en US!"
+        });
+        builder.AddZauberCms();
+        builder.Services.AddSingleton<ILoggerFactory>(new LoggerFactory([logger]));
+        await using var app = builder.Build();
+
+        // What AddZauberCms(app) does first; before the fix the collected warnings were lost and nothing was logged
+        var error = Assert.Throws<OptionsValidationException>(() =>
+            ZauberSetup.ReadSettingsAndWriteStartupWarnings(app.Services));
+
+        var startup = logger.Entries.Where(e => e.Category == "ZauberCMS.Startup").ToList();
+        Assert.Contains(startup, e => e.Level == LogLevel.Warning &&
+                                      e.Message.Contains("has no parameterless constructor", StringComparison.Ordinal));
+        var critical = Assert.Single(startup, e => e.Level == LogLevel.Critical);
+        Assert.Contains("Zauber:AdminDefaultLanguage is 'en US!'", critical.Message, StringComparison.Ordinal);
+        Assert.Contains("Zauber:AdminDefaultLanguage is 'en US!'", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ZA176_a_plugin_whose_public_type_cannot_load_stops_the_start_naming_the_plugin_and_the_type()
+    {
+        var plugin = EmitPluginBuiltAgainstZauber4("ZA176PublicPlugin", publicEditor: true);
+
+        // Before the fix the bootstrap only warned ("discovery skips them") and every discovery call then threw a
+        // TypeLoadException that named ZauberCMS.Core, not the plugin
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            TestSite.BuildApp("Sqlite", "DataSource=:memory:", TestSite.CreateContentRoot(), validateContainer: false,
+                additionalAssemblies: [plugin]));
+
+        Assert.StartsWith("ZA176PublicPlugin cannot be used", error.Message, StringComparison.Ordinal);
+        Assert.Contains("ZauberCMS.Core.Content.Interfaces.IContentProperty", error.Message, StringComparison.Ordinal);
+        Assert.Contains("built against another ZauberCMS version", error.Message, StringComparison.Ordinal);
+        Assert.IsType<TypeLoadException>(error.InnerException);
+    }
+
+    [Fact]
+    public void ZA176_a_plugin_whose_only_unloadable_types_are_not_public_still_starts_with_a_warning()
+    {
+        var plugin = EmitPluginBuiltAgainstZauber4("ZA176InternalPlugin", publicEditor: false);
+
+        ExtensionManager.EnsurePublicTypesLoad(plugin); // does not throw: a site that starts today keeps starting
+
+        var messages = new StartupMessages();
+        ExtensionManager.ReportHiddenExtensionTypes([plugin], messages);
+        Assert.Contains(messages.Warnings, w =>
+            w.StartsWith("1 types of ZA176InternalPlugin could not be loaded, so discovery skips them",
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ZA176_a_missing_dependency_also_names_the_plugin()
+    {
+        var error = Assert.Throws<InvalidOperationException>(() => ExtensionManager.EnsurePublicTypesLoad(
+            "My.Plugin", () => throw new FileNotFoundException("Could not load it.", "Some.Dependency, Version=1.0.0.0")));
+
+        Assert.StartsWith("My.Plugin cannot be used: its public types need the assembly Some.Dependency", error.Message,
+            StringComparison.Ordinal);
+        ExtensionManager.EnsurePublicTypesLoad("My.Plugin", () => [typeof(string)]);
+    }
+
+    // ---- ZA-179: the culture error carries the runtime's reason ----
+
+    [Fact]
+    public async Task ZA179_an_admin_language_that_is_not_a_culture_gives_the_runtimes_reason()
+    {
+        await using var app = BuildApp(new Dictionary<string, string?> { ["Zauber:AdminDefaultLanguage"] = "en US!" });
+
+        var error = Assert.Throws<OptionsValidationException>(() =>
+            app.Services.GetRequiredService<IOptions<ZauberSettings>>().Value);
+        Assert.Contains("is an invalid culture identifier", error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain('\n', error.Message);
+    }
+
+    [Fact]
+    public void ZA179_in_globalization_invariant_mode_the_message_gives_the_runtimes_reason()
+    {
+        // What the runtime throws for "en-US" in invariant mode (a test process cannot switch the mode on)
+        var invariant = new CultureNotFoundException("name", "en-US",
+            "Only the invariant culture is supported in globalization-invariant mode. See " +
+            "https://aka.ms/GlobalizationInvariantMode for more information.");
+
+        var message = ZauberSettingsValidator.AdminDefaultLanguageFailure("en-US", invariant, globalizationInvariant: true);
+
+        Assert.StartsWith("Zauber:AdminDefaultLanguage is 'en-US'", message, StringComparison.Ordinal);
+        Assert.Contains("Only the invariant culture is supported in globalization-invariant mode", message,
+            StringComparison.Ordinal);
+        Assert.Contains("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", message, StringComparison.Ordinal);
+        // Before the fix it said "which is not a culture name such as en-US", about en-US
+        Assert.DoesNotContain("such as en-US", message, StringComparison.Ordinal);
     }
 
     // ---- ZA-121: DI leftovers ----
@@ -333,6 +461,37 @@ public class StartupDiagnosticsTests
         }
     }
 
+    /// <summary>
+    /// A plugin as built against ZauberCMS 4.x: a class implementing <c>IContentProperty</c> from ZauberCMS.Core,
+    /// where v5 no longer has it (it moved to ZauberCMS.Components). Loaded beside the real Core, that class cannot
+    /// load; the plugin's other public type can.
+    /// </summary>
+    private static Assembly EmitPluginBuiltAgainstZauber4(string name, bool publicEditor)
+    {
+        var stubCore = new PersistedAssemblyBuilder(
+            new AssemblyName("ZauberCMS.Core") { Version = new Version(4, 0, 0, 0) }, typeof(object).Assembly);
+        var movedInterface = stubCore.DefineDynamicModule("ZauberCMS.Core").DefineType(
+            "ZauberCMS.Core.Content.Interfaces.IContentProperty",
+            TypeAttributes.Public | TypeAttributes.Interface | TypeAttributes.Abstract);
+        movedInterface.CreateType();
+
+        var plugin = new PersistedAssemblyBuilder(new AssemblyName(name), typeof(object).Assembly);
+        var module = plugin.DefineDynamicModule(name);
+        var editor = module.DefineType(name + ".Editor",
+            (publicEditor ? TypeAttributes.Public : TypeAttributes.NotPublic) | TypeAttributes.Class | TypeAttributes.Sealed,
+            typeof(object), [movedInterface]);
+        editor.DefineDefaultConstructor(MethodAttributes.Public);
+        editor.CreateType();
+        var loads = module.DefineType(name + ".Loads", TypeAttributes.Public | TypeAttributes.Class, typeof(object));
+        loads.DefineDefaultConstructor(MethodAttributes.Public);
+        loads.CreateType();
+
+        using var image = new MemoryStream();
+        plugin.Save(image);
+        image.Position = 0;
+        return new AssemblyLoadContext(name, isCollectible: true).LoadFromStream(image);
+    }
+
     private static WebApplication BuildApp(IDictionary<string, string?>? extraSettings = null) =>
         TestSite.BuildApp("Sqlite", "DataSource=:memory:", TestSite.CreateContentRoot(), validateContainer: false,
             extraSettings);
@@ -386,6 +545,12 @@ internal sealed class HiddenSeedData : ISeedData
     {
     }
 }
+
+/// <summary>
+/// A FluentValidation validator nobody finds (it is not public): the bootstrap warns about it (ZA-182). In the test
+/// assembly, which every test site scans, so it validates nothing.
+/// </summary>
+internal sealed class HiddenValidator : FluentValidation.AbstractValidator<HiddenSeedData>;
 
 /// <summary>A start-up plugin the bootstrap cannot create (no parameterless constructor): skipped with a warning.</summary>
 public sealed class StartupPluginWithoutDefaultConstructor(string name) : IStartupPlugin

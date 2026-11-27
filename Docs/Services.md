@@ -125,7 +125,8 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   other's caches: harmless, just wasted work).
 - Another backplane: register your own `ICacheInvalidationBus` singleton after `AddZauberCms` (the last registration
   wins). Apply the clears it receives with `ServerCache.Remove` / `RemoveWithPrefix` / `RemoveAll`, which don't
-  publish — going through `ICacheService` would send them round again.
+  publish — going through `ICacheService` would send them round again. The two defaults, `NoCacheInvalidationBus`
+  (one server) and `RedisCacheInvalidationBus`, are public (sealed), so yours can wrap one.
 - Writes inside a transaction: `SaveChangesAndLog` clears before the commit, so clear the prefix again after
   `CommitAsync` (a read in between may have cached the old rows) — see `ContentService` save, recycle and purge.
 - `IDistributedCache` is still Redis when configured, for site code; ZauberCMS itself does not use it.
@@ -219,7 +220,8 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   leaves them; a permanent delete removes them; a tag id that no longer exists is skipped. An item whose type has no
   tag property keeps links set through `ITagService.SaveTagItemAsync`. Property editors don't write to the database.
 - Content type import over an existing alias keeps the ids of the tabs and properties it already has (matched by
-  alias), so stored values stay attached.
+  alias), so stored values stay attached. The type and the package's content are two saves: when the content save
+  fails (a save hook's veto, a database error) the type stays imported without it, and the result is a failure.
 - Versions: a draft version records the stored draft, and its blocks' drafts. Restoring a version
   (`PublishVersionAsync`) brings back name, navigation settings, property values and blocks only — not tree position,
   language or publish state — discards the pending drafts of the page and its blocks, deletes blocks the version does
@@ -242,10 +244,13 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   (`RedirectRules.LooksLikeRegex`). `RedirectMiddleware` keeps its compiled list in `ICacheService` under the
   `SeoRedirect` prefix, so a save clears it on every server; exact matches ignore letter case, and no rule sends an
   address to that same address. A redirect with a domain (`SeoRedirect.DomainId`, D42) applies only to requests on
-  that domain, by the rule content routing uses (`DomainMatching`: same host, and the domain's path on whole
-  segments); one without applies on every host; for the same From URL the one for the request's domain wins, and
-  exact rules are still tried before regular expressions. The From URL is the whole path, also for a domain with a
-  path (`example.com/fr` → From URL `/fr/old`). The loop check counts only rules that can apply on the same requests.
+  that domain, by the rule content routing uses (`DomainMatching`: same host, the domain's path on whole segments;
+  scheme, trailing dot and slashes ignored; a domain with a port matches only that port). A request is on one domain
+  at most, the longest that matches, as for content (ZA-169), so a redirect for `example.com` does not fire under
+  `example.com/fr` when that is a domain. One without a domain applies on every host; for the same From URL the one
+  for the request's domain wins, and exact rules are still tried before regular expressions. The From URL is the
+  whole path, also for a domain with a path (`example.com/fr` → From URL `/fr/old`). The loop check follows the chain
+  per host as requests would, working out the domain at each step (`RedirectRules.FindLoop` with the site's domains).
   Deleting a domain deletes its redirects.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
 - Recycle-bin code paths must pass `IncludeDeleted = true` (Get, queries) or `OnlyDeleted = true` (`QueryContentParameters`, bin only).

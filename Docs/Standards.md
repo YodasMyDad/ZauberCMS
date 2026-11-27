@@ -124,8 +124,19 @@ removed line is a breaking change for the release notes.
   value only does nothing (a view name, a URL that is ignored) is a warning in `FindWarnings`. The shipped defaults and
   the three `appsettings.json` files must pass with no warning (`StartupDiagnosticsTests`). A list setting with a
   default is replaced, not lengthened, by configuration (`ZauberSettingsBinding`, ZA-167); a test checks every one.
+  But .NET configuration merges a list across sources by index: a shorter list in `appsettings.{Environment}.json`
+  or environment variables keeps the higher indexes of `appsettings.json` (`["uploads"]` over
+  `["img", "images", "media"]` gives `uploads, images, media`), so tell site builders to set a whole list in one
+  place, or remove it from the earlier file. A blank `Zauber:Plugins:StorageProvider` or `EmailProvider` passes the
+  check and means no provider, which does not stop the start: media upload or sending email then fails when it is
+  used (a `NullReferenceException`, not a message naming the setting).
 - Code that runs in `AddZauberCms(builder)` has no logger yet: add to `StartupMessages`, which `AddZauberCms(app)`
-  writes to the log (category `ZauberCMS.Startup`).
+  writes to the log (category `ZauberCMS.Startup`). It writes them before it reads the settings, and logs a
+  setting that fails as critical in the same category before the start stops (ZA-176).
+- A scanned site or plugin assembly whose public types cannot load (built against another ZauberCMS version) stops
+  the start in `AddZauberCms(builder)`, naming the assembly and the missing type: discovery and Blazor's router read
+  an assembly's public types all at once, so it could not work. A non-public type that cannot load is a start-up
+  warning, and discovery skips it (ZA-176).
 
 ## 7. Security baseline
 

@@ -116,8 +116,8 @@ Paths are relative to the repo root. `Core` = `ZauberCMS.Core`, `Components` = `
 - **Paths**: `Components/Admin/_Imports.razor` (the admin's `[Authorize]` gate), `Components/Admin/{Layout,Dashboards,Shared}/`, `Components/Admin/DynamicContentProperty.razor`,
   `Components/Trees/`, `Components/Shared/`, `Components/ContextMenus/SectionNavGroups/`,
   `Components/ContextMenus/ITreeContextMenu.cs`, `Components/DataSources/`, `Components/wwwroot/` (not `lib/`),
-  `Components/Tailwind/`, `Components/Resources/`, `Core/Modal/` (vendored Blazored.Modal: ours to maintain),
-  `Core/Sections/`.
+  `Components/Tailwind/`, `Components/Resources/`, `Components/Modal/` (vendored Blazored.Modal: ours to maintain),
+  `Components/Core/` (the UI-typed contracts under `ZauberCMS.Core.*` namespaces, D51), `Core/Sections/`.
 - **Focus**: `SectionLayout` (one `<RadzenComponents />`); error boundaries (D32); tree paging (D26) and tree state
   per circuit; the context-menu runner; side panels (nesting, focus, close and cancel, child scopes); the sidebar
   resizer script; dashboard queries; accessibility of trees and menus (ZA-128).

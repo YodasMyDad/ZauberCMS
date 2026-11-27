@@ -19,6 +19,10 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
    not looked up as the root page and run in the default request culture.
    A page's language is its domain's, its own, or its nearest ancestor's; with none of those it is
    `GlobalSettings.DefaultLanguage` (set by the installer), and only then `Zauber:AdminDefaultLanguage`.
+   A request is on one domain at most (`DomainMatching`): of the domains whose host (and path, on whole segments)
+   it matches, the one with the longest path, so `example.com/fr/…` is on `example.com/fr`, not `example.com`.
+   A domain's scheme, trailing dot and slashes are ignored; one with a port (`example.com:8080`) matches only that
+   port, one without matches any port. SEO redirects use the same rule for a redirect's domain.
 3. Role-restricted content (`ContentRoles`) redirects to `Zauber:Identity:DefaultLoginRedirectUrl` unless the user has
    a role (admins always pass); the page's view is not rendered (ZA-110).
 4. The view is looked up by `Content.ViewComponent` == **view type `FullName`** (namespace + class) among
@@ -47,15 +51,20 @@ It is ZauberCMS's form of Umbraco's `IContentFinder`; Umbraco's last-chance find
   found no live page, for the home page too. The first one that returns a result wins; returning null asks the
   next, and in the end the not-found page answers with 404. They run inside `IContentService.GetContentFromRequestAsync`,
   so the page request, `EntryPage`, the page's language for interactive components and a site's own calls all get
-  the same answer.
+  the same answer. A lookup made from inside a finder (the finder, or code it calls, calling
+  `GetContentFromRequestAsync`) does the URL lookup only and does not ask the finders again, so a finder that maps
+  an old address to a new one can look the new one up without starting itself over.
 - A result names the page by id (`new ContentFinderResult(page)` or `(page.Id)`). ZauberCMS loads that page again
   as the URL lookup would, and serves it only when it is published, not in the recycle bin and not a block (its
   internal redirect is followed, role restrictions apply as usual); otherwise the next finder is asked. So a finder
   cannot show an unpublished page, and unpublishing the page takes every address it served off the site.
 - `RouteValues` go to the view through `EntryModel.RouteValues`; `EntryPage` cascades the `EntryModel` to the view
-  and its layout. `LanguageIsoCode` sets the language the page is shown in (else the page's own, as for its URL).
+  and its layout. `LanguageIsoCode` sets the language the page is shown in; it wins over the domain's and the
+  page's own. Null gives the language of the domain the address is on, else the page's own or its nearest
+  ancestor's, else the site default. A value that is not a culture name is ignored (logged once as a warning).
 - A finder that throws, or whose constructor throws, is logged as an error and the next one is asked: one broken
-  plugin does not take the site's not-found page down.
+  plugin does not take the site's not-found page down. Every finder is built for each lookup and disposed after
+  it when it is `IDisposable` or `IAsyncDisposable`; the services it injects belong to the request's scope.
 - ZauberCMS caches the page it loads for a finder (cleared by content saves, like a page found by its URL) but not
   the finder's own answer: a finder runs on every request for an address no page has, bots' 404s included. Keep
   it cheap, return null fast for addresses it does not handle, and cache an expensive search itself
@@ -127,6 +136,13 @@ see that from `Entry?.ContentFinder` (null there) and answer 404 itself
 (`HttpContext.SetStatusCodeWhenResponseStarts(404)`), and the page can be hidden from navigation and the sitemap.
 `IProductCatalogue` stands for the site's own service.
 
+`RenderSeoTags` gives a page served through a finder the address asked for as its canonical URL and `og:url`
+(scheme, host and path, without the query string: `/products/abc-123`), not the page's own URL, so each SKU
+address is its own page to search engines and the canonical never points at the base page that answers 404. The
+path is taken as it was asked for, so where several spellings reach one page (`/products/ABC-123` and
+`/products/abc-123`) each is its own canonical: send the others on to one spelling from the view, or render the
+tags in the view itself.
+
 ## Errors (Roadmap D33)
 
 Outside Development, a request that throws is shown `Zauber:ErrorPagePath` (default `/error`) with status 500,
@@ -196,8 +212,11 @@ Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the reques
   It is rendered to static HTML (`HtmlRenderer`) and shown inert: no clicks, JS, `OnAfterRender` or `@rendermode`.
   To show nested blocks with their unsaved edits, call `GetBlocks(alias, ContentService, includePendingChanges: true)`.
 - A block that needs interactivity sets its own `@rendermode`; `IContentBlockView` has no render-mode member (its
-  MVC-typed `RenderMode` went with the MVC rendering path, Roadmap Phase 11e). ZauberCMS renders no MVC views; a site
-  that wants its own calls `AddControllersWithViews()` itself.
+  MVC-typed `RenderMode` went with the MVC rendering path, Roadmap Phase 11e). ZauberCMS renders no MVC views and
+  registers controllers only (`AddControllers`); a site that wants views calls `AddControllersWithViews()` itself.
+  So does a site or plugin whose controllers use `[ValidateAntiForgeryToken]` or `[AutoValidateAntiforgeryToken]`:
+  their filters are view services, and without them such an action answers 500. The alternative is to check the
+  token in the action with `IAntiforgery.IsRequestValidAsync`, as ZauberCMS's `AuthController` does.
 - Rich text from content is HTML: render through `IHtmlSanitizerService` rather than a raw `MarkupString`
   (`@Sanitizer.SanitizeToMarkup(Content.GetValue<string>("Text"))`). The default sanitiser also turns the
   editor's video placeholders into players: `<figure class="zauber-embed" data-embed="youtube"><iframe …>`,

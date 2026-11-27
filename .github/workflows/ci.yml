@@ -106,7 +106,8 @@ jobs:
       # is built or pushed to nuget.org, so the version belongs to this commit from the start:
       # - a later step fails: the next commit finds the tag and gets the next version, never this one;
       # - a rerun of this commit finds its own tag at HEAD and publishes the same code again (pushes that already
-      #   happened are skipped).
+      #   happened are skipped);
+      # - a rerun of an unreleased commit after a newer commit was released stops (ZA-178).
       - name: Determine and reserve the release version
         id: version
         shell: bash
@@ -126,6 +127,15 @@ jobs:
             { echo "rerun=true"; echo "tag=${tag}"; echo "version=${tag#v}"; } >> "$GITHUB_OUTPUT"
             echo "HEAD already has ${tag}: publishing it again."
             exit 0
+          fi
+
+          # The newest version tag must be in HEAD's history (ZA-178). When it is not, a newer commit was released
+          # after this run's commit: this is a rerun of an older run, and it would publish older code under a newer
+          # version. (A rerun of a released commit found its tag above.)
+          newest="$(git tag -l 'v*' --sort=v:refname | { grep -E "${semver}" || true; } | tail -n 1)"
+          if [[ -n "${newest}" ]] && ! git merge-base --is-ancestor "${newest}^{commit}" HEAD; then
+            echo "::error::${newest} was released from a commit that HEAD does not contain. Do not re-run an older run: push to main-static again to publish its latest commit."
+            exit 1
           fi
 
           # <Version> in Directory.Build.props is the next version: published as written when it is above the

@@ -18,8 +18,10 @@ public sealed class ContentFinderResult
     public Guid ContentId { get; }
 
     /// <summary>
-    /// The language to show the page in (an ISO code such as <c>fr-FR</c>). Null uses the page's own: its domain's,
-    /// its own or its nearest ancestor's, else the site's default language.
+    /// The language to show the page in (an ISO code such as <c>fr-FR</c>); it wins over the domain's and the
+    /// page's own. Null uses the language the address would give the page: the domain of the address asked for,
+    /// else the page's own or its nearest ancestor's, else the site's default language. A value that is not a
+    /// culture name is ignored, as if null, and logged once as a warning.
     /// </summary>
     public string? LanguageIsoCode { get; init; }
 

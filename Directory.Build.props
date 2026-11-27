@@ -24,8 +24,9 @@
         <AnalysisModeUsage>Recommended</AnalysisModeUsage>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <!-- A vulnerability advisory published overnight is not caused by the change being built: locally it stays a
-             warning, and CI's vulnerability scan fails on it (direct and transitive packages). -->
-        <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+             warning, and CI's vulnerability scan fails on it (direct and transitive packages). So does NU1900, the
+             vulnerability data could not be read (offline, or nuget.org failing): the scan fails on that too. -->
+        <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1900;NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
         <NuGetAudit>true</NuGetAudit>
         <NuGetAuditMode>all</NuGetAuditMode>
         <NuGetAuditLevel>low</NuGetAuditLevel>

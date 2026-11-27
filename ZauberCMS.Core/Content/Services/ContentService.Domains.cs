@@ -249,11 +249,18 @@ public partial class ContentService
     public async Task<List<Domain>> GetCachedDomainsAsync(CachedDomainsParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        using var scope = serviceScopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var query = dbContext.Domains.AsNoTracking().Include(x => x.Language);
-        var cacheKey = query.GenerateCacheKey();
-        return (await cacheService.GetSetCachedItemAsync(cacheKey,
-            async () => await query.ToListAsync(cancellationToken: cancellationToken)))!;
+        // A fixed key under the Domain prefix, which every domain save and delete clears: this runs on each request
+        // that needs the domains (redirects, content finders), so a cache hit builds no DbContext and renders no SQL
+        // (ZA-175)
+        return (await cacheService.GetSetCachedItemAsync(CachedDomainsKey, async () =>
+        {
+            using var scope = serviceScopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+            return await dbContext.Domains.AsNoTracking().Include(x => x.Language)
+                .ToListAsync(cancellationToken: cancellationToken);
+        }))!;
     }
+
+    /// <summary>The cache key of <see cref="GetCachedDomainsAsync"/>: under the prefix a domain save clears.</summary>
+    internal static readonly string CachedDomainsKey = "CachedDomains".GenerateCacheKey<Domain>();
 }

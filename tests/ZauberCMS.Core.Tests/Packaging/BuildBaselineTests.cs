@@ -125,6 +125,72 @@ public partial class BuildBaselineTests
         Assert.Contains("for id in ZauberCMS.Core ZauberCMS.Components ZauberCMS.Routing ZauberCMS ZauberCMS.Template", text);
     }
 
+    [Fact]
+    public void ZA178_the_publish_job_stops_a_rerun_of_a_commit_older_than_the_newest_release()
+    {
+        var text = File.ReadAllText(Path.Combine(RepositoryRoot(), ".github/workflows/ci.yml")).ReplaceLineEndings("\n");
+        var publish = text[text.IndexOf("\n  publish-nuget:\n", StringComparison.Ordinal)..];
+
+        // A rerun of a released commit finds its tag first and publishes it again (D44); any other run checks that
+        // the newest version tag is in its history before it reserves a version
+        var rerun = publish.IndexOf("git tag --points-at HEAD", StringComparison.Ordinal);
+        var ancestry = publish.IndexOf("git merge-base --is-ancestor", StringComparison.Ordinal);
+        var tagPush = publish.IndexOf("git push origin \"refs/tags/", StringComparison.Ordinal);
+        Assert.True(rerun > 0 && ancestry > rerun && tagPush > ancestry,
+            "the publish job must check that HEAD contains the newest release tag after the rerun check and before it reserves a version");
+        Assert.Contains("fetch-depth: 0", publish, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ZA180_vulnerability_warnings_and_an_unreadable_audit_are_not_build_errors()
+    {
+        var props = Load("Directory.Build.props");
+        Assert.Equal("true", props.Descendants("TreatWarningsAsErrors").Single().Value);
+        var notAsErrors = props.Descendants("WarningsNotAsErrors").Single().Value.Split(';');
+
+        // NU1900: the vulnerability data could not be read (offline, or the feed failing); NU1901-NU1904: advisories
+        foreach (var code in new[] { "NU1900", "NU1901", "NU1902", "NU1903", "NU1904" })
+        {
+            Assert.Contains(code, notAsErrors);
+        }
+
+        // CI's own scan still fails on a vulnerable package or a scan problem
+        var ci = File.ReadAllText(Path.Combine(RepositoryRoot(), ".github/workflows/ci.yml"));
+        Assert.Contains("--vulnerable --include-transitive --format json", ci, StringComparison.Ordinal);
+        Assert.Contains("grep -q '\"problems\"' vulnerable-packages.json", ci, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ZA177_the_release_script_stamps_files_that_exist_and_has_no_control_characters_in_its_text()
+    {
+        var text = File.ReadAllText(Path.Combine(RepositoryRoot(), "release.ps1"));
+
+        // A TAB is indentation only: "\t" in a double-quoted PowerShell string is not an escape, so a typed one was
+        // a TAB in a path. Other control characters (but CR and LF) never belong in the script.
+        foreach (var (line, number) in text.Split('\n').Select((l, i) => (l.TrimEnd('\r'), i + 1)))
+        {
+            var bad = line.TrimStart(' ', '\t').Where(char.IsControl).Select(c => $"U+{(int)c:X4}").ToList();
+            Assert.True(bad.Count == 0, $"release.ps1:{number} has control characters in its text: {string.Join(", ", bad)}");
+        }
+
+        var stamps = StampedFile().Matches(text);
+        Assert.True(stamps.Count >= 3, "release.ps1 stamps Directory.Build.props and the template's two csprojs");
+        foreach (Match stamp in stamps)
+        {
+            var path = Path.Combine([RepositoryRoot(), .. stamp.Groups["path"].Value.Split('\\', '/')]);
+            Assert.True(File.Exists(path), $"release.ps1 stamps {stamp.Groups["path"].Value}, which does not exist");
+            Assert.True(Regex.IsMatch(File.ReadAllText(path), stamp.Groups["pattern"].Value),
+                $"release.ps1's pattern {stamp.Groups["pattern"].Value} finds nothing in {stamp.Groups["path"].Value}");
+        }
+
+        var props = Regex.Match(text, "-PropsPath \"(?<path>[^\"]+)\"").Groups["path"].Value;
+        Assert.True(File.Exists(Path.Combine(RepositoryRoot(), props)), $"release.ps1 reads {props}, which does not exist");
+    }
+
+    // Update-VersionInFile -Path "<file>" `<newline> -Pattern '<regex>'
+    [GeneratedRegex(@"Update-VersionInFile\s+-Path\s+""(?<path>[^""]+)""\s*`?\s*-Pattern\s+'(?<pattern>[^']+)'")]
+    private static partial Regex StampedFile();
+
     private static IEnumerable<string> Workflows() =>
         Directory.EnumerateFiles(Path.Combine(RepositoryRoot(), ".github", "workflows"), "*.yml");
 

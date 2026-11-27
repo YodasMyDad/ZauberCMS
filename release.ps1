@@ -137,7 +137,7 @@ try {
         -Pattern '<Version>[^<]*</Version>' -Replacement "<Version>$NewVersion</Version>"
     Update-VersionInFile -Path "ZauberCMS.Template\ZauberCMS.Template.csproj" `
         -Pattern '<PackageVersion>[^<]*</PackageVersion>' -Replacement "<PackageVersion>$NewVersion</PackageVersion>"
-    Update-VersionInFile -Path "ZauberCMS.Template	emplate\ZauberCMSTemplate.Site\ZauberCMSTemplate.Site.csproj" `
+    Update-VersionInFile -Path "ZauberCMS.Template\template\ZauberCMSTemplate.Site\ZauberCMSTemplate.Site.csproj" `
         -Pattern 'PackageReference Include="ZauberCMS" Version="[^"]*"' -Replacement "PackageReference Include=`"ZauberCMS`" Version=`"$NewVersion`""
 
     Write-Host "All project versions updated to $NewVersion"

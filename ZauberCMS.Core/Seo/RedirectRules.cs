@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using ZauberCMS.Core.Content;
+using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Seo.Models;
 
 namespace ZauberCMS.Core.Seo;
@@ -43,16 +45,32 @@ public static class RedirectRules
     /// Why saving <paramref name="redirect"/> would make visitors go round in circles, or null when it would not:
     /// it sends an address to itself, or the redirects its target leads to (<paramref name="others"/>, the saved
     /// ones) come back to its From URL. Targets on another site end a chain.
+    /// Without the site's domains, each domain a redirect names is taken to be a whole host of its own; use
+    /// <see cref="FindLoop(SeoRedirect, IEnumerable{SeoRedirect}, IEnumerable{Domain})"/> where domains share a host
+    /// (<c>example.com</c> and <c>example.com/fr</c>).
     /// </summary>
-    public static string? FindLoop(SeoRedirect redirect, IEnumerable<SeoRedirect> others)
+    public static string? FindLoop(SeoRedirect redirect, IEnumerable<SeoRedirect> others) =>
+        FindLoop(redirect, others, []);
+
+    /// <summary>
+    /// Why saving <paramref name="redirect"/> would make visitors go round in circles, or null when it would not:
+    /// it sends an address to itself, or the redirects its target leads to (<paramref name="others"/>, the saved
+    /// ones) come back to its From URL. Targets on another site end a chain.
+    /// The chain is followed as requests follow it (ZA-169, Roadmap D42): on each host the redirect can fire on, at
+    /// every step the address's domain is worked out from <paramref name="domains"/> by the rule content routing
+    /// uses (the longest that matches), and only the redirects for that domain and the ones for every domain apply.
+    /// </summary>
+    public static string? FindLoop(SeoRedirect redirect, IEnumerable<SeoRedirect> others, IEnumerable<Domain> domains)
     {
+        if (!IsRegex(redirect) && SameAddress(redirect.FromUrl, redirect.ToUrl))
+        {
+            return $"{redirect.FromUrl} would redirect to itself";
+        }
+
         // In the order the middleware tries them: exact rules before regular expressions, within each the ones for a
         // domain before the ones for all, and then the newest first (the one being saved is the newest), then by id.
-        // Only rules that can apply on the same requests count: a redirect for another domain never follows this one
-        // (ZA-165, D42).
         var rules = others
             .Where(r => r.Id != redirect.Id && !string.IsNullOrWhiteSpace(r.FromUrl))
-            .Where(r => r.DomainId == null || redirect.DomainId == null || r.DomainId == redirect.DomainId)
             .OrderByDescending(r => r.DateUpdated).ThenBy(r => r.Id)
             .Prepend(redirect)
             .Select(r => new Rule(r, IsRegex(r) ? TryCreateRegex(r.FromUrl!) : null, IsRegex(r)))
@@ -60,11 +78,62 @@ public static class RedirectRules
             .OrderBy(r => r.IsRegex).ThenBy(r => r.Redirect.DomainId == null)
             .ToList();
 
-        if (!IsRegex(redirect) && SameAddress(redirect.FromUrl, redirect.ToUrl))
+        // A domain a redirect names that is not in the list (or no list was given) is a whole host of its own
+        var siteDomains = domains.ToList();
+        var known = siteDomains.Select(d => d.Id).ToHashSet();
+        foreach (var id in rules.Select(r => r.Redirect.DomainId).OfType<Guid>().Distinct())
         {
-            return $"{redirect.FromUrl} would redirect to itself";
+            if (known.Add(id))
+            {
+                siteDomains.Add(new Domain { Id = id, Url = $"{id:N}.domain.invalid" });
+            }
         }
 
+        // With no redirect for a domain, every host follows the same chain: once is enough
+        var hosts = rules.Any(r => r.Redirect.DomainId != null)
+            ? HostsToFollow(redirect, siteDomains)
+            : [(string.Empty, 0)];
+        foreach (var (host, port) in hosts)
+        {
+            var loop = FollowChain(redirect, rules, siteDomains, host, port);
+            if (loop != null)
+            {
+                return loop;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The hosts (and ports) a request can come in on for the chain to start with <paramref name="redirect"/>: its
+    /// domain's, or for one without a domain every domain's host and a host that is on no domain. Port 0 stands for
+    /// a port no domain names.
+    /// </summary>
+    private static List<(string Host, int Port)> HostsToFollow(SeoRedirect redirect, List<Domain> domains)
+    {
+        var addresses = domains
+            .Where(d => redirect.DomainId == null || d.Id == redirect.DomainId)
+            .Select(d => DomainMatching.Normalize(d.Url))
+            .OfType<DomainMatching.DomainAddress>()
+            .ToList();
+
+        var hosts = addresses.Select(a => (a.Host, Port: a.Port ?? 0)).Distinct().ToList();
+        if (redirect.DomainId == null)
+        {
+            // The same hosts on a port no domain names, and a host with no domain at all
+            hosts = hosts.Concat(addresses.Select(a => (a.Host, Port: 0)))
+                .Append((string.Empty, 0))
+                .Distinct().ToList();
+        }
+
+        return hosts;
+    }
+
+    /// <summary>Follows the chain from <paramref name="redirect"/>'s target as a request to <paramref name="host"/> would.</summary>
+    private static string? FollowChain(SeoRedirect redirect, List<Rule> rules, List<Domain> domains, string host,
+        int port)
+    {
         var current = redirect.ToUrl;
         for (var step = 0; step < MaxChainLength; step++)
         {
@@ -73,9 +142,14 @@ public static class RedirectRules
                 return null;
             }
 
-            // As the middleware does: a rule never sends an address to that same address
+            // The address's domain, as the middleware works it out for a request to it (on no host: none)
             var address = current;
-            var next = rules.FirstOrDefault(r => r.Matches(address) && !SameAddress(r.Redirect.ToUrl, address));
+            var addressDomain = host.Length == 0 ? null : DomainMatching.FindDomain(domains, host, PathOf(address), port)?.Id;
+
+            // As the middleware does: a rule never sends an address to that same address
+            var next = rules.FirstOrDefault(r =>
+                (r.Redirect.DomainId == null || r.Redirect.DomainId == addressDomain) &&
+                r.Matches(address) && !SameAddress(r.Redirect.ToUrl, address));
             if (next == null)
             {
                 return null;
@@ -90,6 +164,13 @@ public static class RedirectRules
         }
 
         return $"{redirect.ToUrl} leads through more than {MaxChainLength} redirects";
+    }
+
+    /// <summary>The path of an address (path and query), which is what domains match on.</summary>
+    private static string PathOf(string address)
+    {
+        var end = address.IndexOfAny(['?', '#']);
+        return end < 0 ? address : address[..end];
     }
 
     private static Regex? TryCreateRegex(string pattern)

@@ -59,8 +59,10 @@ public class ExtensionManager(IServiceProvider serviceProvider)
 
         foreach (var assembly in GetAssemblies(predicate))
         {
-            // Choose between exported types or all types.
-            var typesToCheck = onlyExportedTypes ? assembly?.GetExportedTypes() : assembly?.GetTypes();
+            // Choose between exported types or all types. The public types of every scanned assembly load (the
+            // bootstrap checks: EnsurePublicTypesLoad); a non-public type that cannot load is skipped (ZA-176).
+            var typesToCheck = assembly == null ? null
+                : onlyExportedTypes ? assembly.GetExportedTypes() : LoadableTypes(assembly, null);
             foreach (var exportedType in typesToCheck ?? Array.Empty<Type>())
             {
                 // If T is assignable from the type, and the type is a non-abstract class...
@@ -245,7 +247,8 @@ public class ExtensionManager(IServiceProvider serviceProvider)
     /// The discovery interfaces whose implementations are found among exported (public) types only, by full name of
     /// the interface or of its generic definition (Components' are not visible to Core by type).
     /// <c>IStartupPlugin</c> and <c>IExternalAuthenticationProvider</c> are not here: the bootstrap also finds
-    /// non-public ones.
+    /// non-public ones. FluentValidation's <c>IValidator&lt;T&gt;</c> is: its own scan of the scanned assemblies
+    /// (<c>EditContextFluentValidationExtensions</c>) also finds public validators only (ZA-182).
     /// </summary>
     internal static readonly IReadOnlySet<string> DiscoveryInterfaces = new HashSet<string>(StringComparer.Ordinal)
     {
@@ -274,7 +277,8 @@ public class ExtensionManager(IServiceProvider serviceProvider)
         "ZauberCMS.Core.Shared.Validation.Interfaces.IValidate`1",
         "ZauberCMS.Core.Tags.Interfaces.ITagReferenceProvider",
         "ZauberCMS.Core.Shared.Interfaces.IBeforeEntitySave`1",
-        "ZauberCMS.Core.Shared.Interfaces.IAfterEntitySave`1"
+        "ZauberCMS.Core.Shared.Interfaces.IAfterEntitySave`1",
+        "FluentValidation.IValidator`1"
     };
 
     /// <summary>
@@ -303,6 +307,40 @@ public class ExtensionManager(IServiceProvider serviceProvider)
                                      "ZauberCMS does not find it. Make it public (and any type it is nested in).");
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Stops the start when a public type of <paramref name="assembly"/> cannot be loaded: discovery, and Blazor's
+    /// router, read an assembly's public types all at once, so one such type makes every use of the assembly throw.
+    /// It happens to a plugin built against another ZauberCMS version (v5 moved some public types from
+    /// ZauberCMS.Core to ZauberCMS.Components). A type that is not public and cannot load does not stop it: that is
+    /// a start-up warning, and discovery skips the type (ZA-176).
+    /// </summary>
+    /// <exception cref="InvalidOperationException">A public type cannot be loaded; names the assembly and the type.</exception>
+    internal static void EnsurePublicTypesLoad(Assembly assembly) =>
+        EnsurePublicTypesLoad(assembly.GetName().Name ?? assembly.FullName ?? "An assembly", assembly.GetExportedTypes);
+
+    /// <summary><see cref="EnsurePublicTypesLoad(Assembly)"/> over the assembly's name and its public types.</summary>
+    internal static void EnsurePublicTypesLoad(string assemblyName, Func<Type[]> exportedTypes)
+    {
+        try
+        {
+            _ = exportedTypes();
+        }
+        catch (Exception ex) when (ex is TypeLoadException or FileNotFoundException or FileLoadException)
+        {
+            var missing = ex switch
+            {
+                TypeLoadException { TypeName.Length: > 0 } typeLoad => $"the type {typeLoad.TypeName}",
+                FileNotFoundException { FileName.Length: > 0 } notFound => $"the assembly {notFound.FileName}",
+                FileLoadException { FileName.Length: > 0 } loadFailed => $"the assembly {loadFailed.FileName}",
+                _ => "a type it uses"
+            };
+            throw new InvalidOperationException(
+                $"{assemblyName} cannot be used: its public types need {missing}, which cannot be loaded " +
+                $"({ex.Message}). It was probably built against another ZauberCMS version (v5 moved some types from " +
+                $"ZauberCMS.Core to ZauberCMS.Components): rebuild it against this version, or remove it.", ex);
         }
     }
 

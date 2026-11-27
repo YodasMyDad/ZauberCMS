@@ -16,7 +16,7 @@ public interface ICacheInvalidationBus
 }
 
 /// <summary>One server: nothing to tell anyone.</summary>
-internal sealed class NoCacheInvalidationBus : ICacheInvalidationBus
+public sealed class NoCacheInvalidationBus : ICacheInvalidationBus
 {
     public void PublishKeyCleared(string key)
     {

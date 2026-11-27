@@ -170,6 +170,84 @@ public class ContentFinderTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ZA172_the_finders_a_lookup_builds_are_disposed_after_it()
+    {
+        var page = await _site.CreateContentAsync(_pageType, "Page");
+        using var script = ContentFinderScript.Start();
+
+        // No finder finds a page
+        await GetEntryAsync("nothing-here");
+        Assert.Equal(1, script.Disposed);
+        Assert.Equal(1, script.AsyncDisposed);
+
+        // One does, before the disposable ones are asked
+        script.First = _ => new ContentFinderSearch(page.Id);
+        Assert.Equal(page.Id, (await GetEntryAsync("somewhere")).Content?.Id);
+        Assert.Equal(2, script.Disposed);
+        Assert.Equal(2, script.AsyncDisposed);
+    }
+
+    [Fact]
+    public async Task ZA173_a_finder_that_looks_its_own_address_up_does_not_start_the_finders_again()
+    {
+        await _site.CreateContentAsync(_pageType, "Home");
+        using var script = ContentFinderScript.Start();
+        script.Reenter = true;
+
+        var entry = await GetEntryAsync("loop-me");
+
+        Assert.Null(entry.Content);
+        Assert.Equal(1, script.ReenterCalls);
+    }
+
+    [Fact]
+    public async Task ZA173_a_lookup_from_inside_a_finder_still_finds_a_page_by_its_url()
+    {
+        var home = await _site.CreateContentAsync(_pageType, "Home");
+        var about = await _site.CreateContentAsync(_pageType, "About", home.Id);
+        using var script = ContentFinderScript.Start();
+        script.Reenter = true;
+        script.ReenterSlug = about.Url;
+
+        var entry = await GetEntryAsync("old/about");
+
+        Assert.Equal(about.Id, entry.Content?.Id);
+        Assert.Equal(typeof(ReenteringTestFinder).FullName, entry.ContentFinder);
+        Assert.Equal(1, script.ReenterCalls);
+    }
+
+    [Theory]
+    [InlineData("not a culture")]
+    [InlineData("fr_FR!")]
+    public async Task ZA174_a_finder_language_that_is_not_a_culture_is_ignored(string languageIsoCode)
+    {
+        var page = await _site.CreateContentAsync(_pageType, "Page");
+        using var script = ContentFinderScript.Start();
+        script.First = _ => new ContentFinderSearch(page.Id) { LanguageIsoCode = languageIsoCode };
+        var withoutFinderLanguage = await GetEntryWithLanguageAsync(page, null);
+
+        var entry = await GetEntryAsync("somewhere");
+        var again = await GetEntryAsync("somewhere");
+
+        Assert.Equal(page.Id, entry.Content?.Id);
+        // The page's own (here the site's default), which the culture middleware can use
+        Assert.Equal(withoutFinderLanguage, entry.LanguageIsoCode);
+        Assert.Equal(withoutFinderLanguage, again.LanguageIsoCode);
+        Assert.NotNull(System.Globalization.CultureInfo.GetCultureInfo(entry.LanguageIsoCode!));
+    }
+
+    /// <summary>The language a finder serving <paramref name="page"/> with <paramref name="languageIsoCode"/> gives.</summary>
+    private async Task<string?> GetEntryWithLanguageAsync(ContentItem page, string? languageIsoCode)
+    {
+        var script = ContentFinderScript.Current!;
+        var first = script.First;
+        script.First = _ => new ContentFinderSearch(page.Id) { LanguageIsoCode = languageIsoCode };
+        var entry = await GetEntryAsync("somewhere-else");
+        script.First = first;
+        return entry.LanguageIsoCode;
+    }
+
+    [Fact]
     public async Task A_finder_can_set_the_language_the_page_is_shown_in()
     {
         var page = await _site.CreateContentAsync(_pageType, "Page");
@@ -253,7 +331,75 @@ public sealed class ContentFinderScript : IDisposable
     /// <summary>The contexts the first finder was given.</summary>
     public List<ContentFinderContext> Contexts { get; } = [];
 
+    /// <summary>ZA-173: the re-entering finder looks an address up through the service (<see cref="ReenterSlug"/>, else its own).</summary>
+    public bool Reenter { get; set; }
+    public string? ReenterSlug { get; set; }
+    public int ReenterCalls { get; set; }
+
+    /// <summary>ZA-172: how often the disposable finders were disposed.</summary>
+    public int Disposed { get; set; }
+    public int AsyncDisposed { get; set; }
+
     public void Dispose() => CurrentScript.Value = null;
+}
+
+/// <summary>ZA-173: looks an address up through IContentService from inside the finders (only when a script asks).</summary>
+public class ReenteringTestFinder(IContentService contentService) : IContentFinder
+{
+    /// <summary>Stops the test, not the code under test, if the finders were entered again without end.</summary>
+    private const int MaxDepth = 25;
+
+    public int SortOrder => 5;
+
+    public async Task<ContentFinderResult?> FindAsync(ContentFinderContext context, CancellationToken cancellationToken = default)
+    {
+        if (ContentFinderScript.Current is not { Reenter: true } script || script.ReenterCalls >= MaxDepth)
+        {
+            return null;
+        }
+
+        script.ReenterCalls++;
+        var slug = script.ReenterSlug ?? context.Slug;
+        var entry = await contentService.GetContentFromRequestAsync(
+            new GetContentFromRequestParameters { Slug = slug, Url = $"http://localhost/{slug}" }, cancellationToken);
+        return entry.Content == null ? null : new ContentFinderResult(entry.Content);
+    }
+}
+
+/// <summary>ZA-172: a finder that owns something to dispose; it finds nothing.</summary>
+public sealed class DisposableTestFinder : IContentFinder, IDisposable
+{
+    public int SortOrder => 30;
+
+    public Task<ContentFinderResult?> FindAsync(ContentFinderContext context, CancellationToken cancellationToken = default) =>
+        Task.FromResult<ContentFinderResult?>(null);
+
+    public void Dispose()
+    {
+        if (ContentFinderScript.Current is { } script)
+        {
+            script.Disposed++;
+        }
+    }
+}
+
+/// <summary>ZA-172: as <see cref="DisposableTestFinder"/>, disposed asynchronously.</summary>
+public sealed class AsyncDisposableTestFinder : IContentFinder, IAsyncDisposable
+{
+    public int SortOrder => 31;
+
+    public Task<ContentFinderResult?> FindAsync(ContentFinderContext context, CancellationToken cancellationToken = default) =>
+        Task.FromResult<ContentFinderResult?>(null);
+
+    public ValueTask DisposeAsync()
+    {
+        if (ContentFinderScript.Current is { } script)
+        {
+            script.AsyncDisposed++;
+        }
+
+        return ValueTask.CompletedTask;
+    }
 }
 
 public class ThrowingTestFinder : IContentFinder

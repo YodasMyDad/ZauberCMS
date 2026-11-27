@@ -305,7 +305,7 @@ one process is then wrong on the others:
 - **Secrets and privacy**: secrets in config, logs or UI; PII in logs (ZA-107); weak crypto (MD5/SHA1 for security,
   `Random` for tokens).
 - **Production**: detailed errors off, HSTS/HTTPS, forwarded headers, data-protection keys persisted on multi-node
-  sites. **Supply chain**: vendored code (`Core/Modal`, `wwwroot/lib`) at a known-vulnerable version; CI workflow
+  sites. **Supply chain**: vendored code (`Components/Modal`, `wwwroot/lib`) at a known-vulnerable version; CI workflow
   permissions, pinned actions, secret scope.
 
 ## E. Blazor and render modes

@@ -56,7 +56,9 @@ public class SeoService(
             var others = await dbContext.Redirects.AsNoTracking()
                 .Where(x => x.Id != parameters.Redirect.Id)
                 .ToListAsync(cancellationToken);
-            var loop = RedirectRules.FindLoop(parameters.Redirect, others);
+            // Followed as requests follow it: the address's domain is worked out at each step (ZA-169)
+            var domains = await dbContext.Domains.AsNoTracking().ToListAsync(cancellationToken);
+            var loop = RedirectRules.FindLoop(parameters.Redirect, others, domains);
             if (loop != null)
             {
                 handlerResult.AddMessage(loop, ResultMessageType.Error);

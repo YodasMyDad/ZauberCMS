@@ -55,7 +55,8 @@
         if (entryModel == null)
         {
             // Fallback: query if middleware didn't process this route (e.g., admin pages)
-            entryModel = await ContentService.GetContentFromRequestAsync(new GetContentFromRequestParameters { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri });
+            entryModel = await ContentService.GetContentFromRequestAsync(new GetContentFromRequestParameters { Slug = Slug, IsRootContent = Slug == null, Url = NavigationManager.Uri },
+                HttpContext?.RequestAborted ?? CancellationToken.None);
         }
         
         Entry = entryModel;

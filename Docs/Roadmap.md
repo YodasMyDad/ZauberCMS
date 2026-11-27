@@ -26,10 +26,11 @@
   **Phase 11e done** (the MVC path removed, UI contracts out of Core, D51–D52, 2026-11-27).
   **Phase 11f done** (public surface and API conventions, D53–D54, 2026-11-27).
   **Phase 11g done** (content finders at the owner's request, D55; the service split, `Content.Url` and the custom
-  components' page id, D56–D58; the DbContext pattern kept, D59; 2026-11-27). **Phase 11 is done** (parts 11a–11g).
-  **4 open findings** (0 Critical, 0 High, 0 Medium, 4 Low), each one assigned below to a phase (10f–10i),
-  plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
-  new finding goes into the phase whose theme fits. **Next: `/audit changed` over Phase 11, then 10f**, then 10g,
+  components' page id, D56–D58; the DbContext pattern kept, D59; 2026-11-27). **Phase 11 is done** (parts 11a–11g)
+  **and audited** (`/audit changed`, 2026-11-27: ZA-169…ZA-186 fixed, ZA-187…ZA-198 recorded; see "Phase 11 audit").
+  **16 open findings** (0 Critical, 0 High, 1 Medium, 15 Low), each one assigned below to a phase (10f, 10g, 10i,
+  12), plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
+  new finding goes into the phase whose theme fits. **Next: Phase 10f**, then 10g,
   10h, 10i, then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner
   delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
@@ -1021,6 +1022,16 @@ ZA-163, ZA-155 (Low). Both were in the Backlog, which the owner removed (2026-11
   current contract working (it can ask for a re-save inside the transaction), and record the design as a D-decision.
 - **ZA-155:** a permanent media delete leaves the image's resized copies in `_mediacache`. Remove them, or prune the
   cache, whichever the ImageResize package allows; decide it the Umbraco way and record it.
+- From the Phase 11 audit (front-end cache and domains):
+  - **ZA-187 (Medium):** the URL→page cache key holds the raw scheme, host, port and path, so every Host header
+    value, port or spelling of a path (`/about/`, `/about//`) caches the same page again (bounded only by the
+    entries' lifetime). Key it on what decides the answer: the matched domain, the normalised slug and the flags.
+  - **ZA-193:** deleting a domain deletes its redirects by cascade in the database: the `SeoRedirect` cache is not
+    cleared and the save hooks never see those deletes. Delete them through the change (with the hooks), as the
+    after-commit work here touches the same path.
+  - **ZA-189:** `RedirectMiddleware` compiles only the newest 5000 redirects and ignores older ones silently.
+  - **ZA-190:** domains are matched against the path with `PathBase` in a circuit and `EntryPage`, without it in the
+    middlewares; a site under a path base gets different domains on the two sides.
 
 ### Phase 10g — Back-office roles: section access per role (D38)
 The feature the owner chose (2026-11-27); it replaces the Backlog row "Back-office roles other than Admin".
@@ -1030,6 +1041,8 @@ The feature the owner chose (2026-11-27); it replaces the Backlog row "Back-offi
   Admin-only through `Components/Admin/_Imports.razor`) and the endpoints the admin calls. Services stay
   unchecked (D27).
 - Docs: what a plugin section or page has to do (AGENTS.md "Core principle"), Installer.md, AdminUI.md.
+- From the Phase 11 audit: **ZA-188**, a role-restricted page whose view is missing is rendered through
+  `MissingView` without the role check (a site's own `MissingView` gets the whole page).
 
 ### Phase 10h — Admin localisation, English resources (D37)
 ZA-129 (Low). Every admin string through `IStringLocalizer` with English resource files; a site adds a language
@@ -1040,6 +1053,9 @@ its new screens are covered.
 ZA-128 (Low). Labels on icon buttons and inputs, keyboard access and roles for the clickable divs (every tree
 button), `label for` matching real ids, focus in side panels. Last of the Phase 10 parts, so it covers 10g's screens
 and uses 10h's localised text.
+- From the Phase 11 audit: **ZA-194**, with registration off the registration page shows the not-found view inside
+  the account layout, not the not-found view's own layout; **ZA-197**, the vendored `BlazoredModal` subscribes to
+  three events in `OnInitialized` and never unsubscribes (harmless while it lives as long as the circuit).
 
 ### Phase 11 — Engineering baseline, API clean-up, v5 — DONE 2026-11-27
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,
@@ -1057,6 +1073,7 @@ Done in parts, one commit each, in this order:
 | 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | DONE 2026-11-27 (D51, D52) |
 | 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | DONE 2026-11-27 (D53, D54) |
 | 11g | Content finders (owner request, 2026-11-27: D55); breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | DONE 2026-11-27 (D55–D59) |
+| audit | `/audit changed` over 2f4dc41..773505c | DONE 2026-11-27 (ZA-169…ZA-186 fixed; ZA-187…ZA-198 to 10f, 10g, 10i, 12) |
 
 - **Found in Phase 10e, do first (done in 11a, below):** ZA-164 (the front end's 404 page is sent with an empty body; reproduce in a bare
   .NET 10 app, then render `Zauber:NotFoundComponent`), ZA-165 (a redirect's domain is ignored).
@@ -1341,13 +1358,16 @@ first run.
   - A `Zauber:Plugins:*` provider name that is not found now stops the site at start-up with a message that names
     the setting and lists the providers found (it failed when media or email was first used). An
     `AdminDefaultLanguage` that is not a culture fails with the setting's name. An empty `StorageProvider` or
-    `EmailProvider` means none (it threw when used).
+    `EmailProvider` means none and passes start-up; media upload or email then still fails when used, as before
+    (corrected by the Phase 11 audit; ZA-196).
   - New start-up warnings (category `ZauberCMS.Startup`): a non-public extension type, a start-up plugin or external
     login provider without a parameterless constructor, types that cannot be loaded, a `SiteUrl` that is not an
     http(s) address, a fallback view or account layout that is not found.
   - `Zauber:ImageResize:ContentRoots` in a site's settings now replaces the default roots instead of being added to
     them. A site that lists the three defaults (every shipped `appsettings.json`) is unchanged; one that listed
-    others now resizes only those, as written.
+    others now resizes only those, as written. .NET still merges a list across configuration sources by index: a
+    shorter list in `appsettings.{Environment}.json` or environment variables keeps the higher indexes of
+    `appsettings.json`, so set the whole list in one place (Standards.md §6; added by the Phase 11 audit).
   - A bootstrap extension whose constructor throws fails the start with `InvalidOperationException` naming the type.
   - **Breaking:** `HttpClient` from DI is the framework's default client (no base address); it was ZauberCMS's own
     with the request's address as base. A site that injects `HttpClient` and uses relative URLs gives them a base
@@ -1418,7 +1438,10 @@ Umbraco's way as delegated. The first part of the v5 breaking batch (D18).
     still compiles; one that implements it explicitly (`IContentBlockView.RenderMode`) drops that.
   - **Breaking:** ZauberCMS registers MVC controllers only (`AddControllers`), not views. A site with its own MVC
     views, view components, TempData or tag helpers calls `builder.Services.AddControllersWithViews()`. `IMemoryCache`
-    and `IDistributedCache` (memory, unless Redis is configured) stay registered.
+    and `IDistributedCache` (memory, unless Redis is configured) stay registered. So does a site or plugin whose
+    controllers use `[ValidateAntiForgeryToken]` or `[AutoValidateAntiforgeryToken]`: their filters are view services,
+    and without them the action answers 500 (or it checks the token itself with `IAntiforgery.IsRequestValidAsync`;
+    added by the Phase 11 audit, ZA-185).
   - **Breaking (binary):** these types moved from the ZauberCMS.Core assembly to ZauberCMS.Components, with the same
     namespaces and names: `ZauberCMS.Core.Content.Interfaces.IContentProperty`,
     `ZauberCMS.Core.Sections.Interfaces.ISectionNavGroupAction`, `ZauberCMS.Core.Extensions.DialogExtensions`,
@@ -1471,8 +1494,9 @@ way as delegated. The second part of the v5 breaking batch (D18).
   `Cached` defaults unchanged, with the rule written down and each default pinned. `AuditExtensions.AddAudit` takes
   `CancellationToken cancellationToken = default` instead of `CancellationToken?`; `ExportContentTypeAsync` and
   `ImportContentTypeAsync` take a token and pass it to their queries and the type save; the import's content save after
-  the type is saved ignores it, so an import is not left half done (the known deviation in
-  Standards.md is gone); `SaveChangesAndLog` (both) and `IQueryModel.ExecuteQuery` give theirs a default. Discovery
+  the type is saved ignores it, so a caller that has gone does not stop the content once the type is saved (the
+  known deviation in Standards.md is gone; the two are still separate saves, so a failing content save leaves the type
+  without its content, ZA-184); `SaveChangesAndLog` (both) and `IQueryModel.ExecuteQuery` give theirs a default. Discovery
   interfaces are not moved; the convention for new ones is written down (Standards.md §11).
 - Tests: `Bootstrap/PublicApiTests` (9): the public types of Core, Components and Routing equal
   `Bootstrap/Snapshots/PublicTypes.txt` (651 types; a new public type has to be added on purpose, a removed one is
@@ -1522,7 +1546,10 @@ way as delegated. The second part of the v5 breaking batch (D18).
       `ZauberCMS.Core.Languages.AdminCultureCircuitHandler`, `ZauberCMS.Components.Seo.Startup.SeoSitemapStartUp`,
       `ZauberCMS.Components.Seo.Startup.SitemapGeneratorService`.
     - `ZauberCMS.Core.Plugins.AssemblyManager`, with its unused `Types` and `TypesByName` removed. A site adds
-      assemblies with `AddZauberCms(params Assembly[])`.
+      assemblies with `AddZauberCms(params Assembly[])`, and reads the scanned ones with
+      `ExtensionManager.GetAssemblies(null)` (what `AssemblyManager.Assemblies` gave). Helpers that went internal with
+      their middleware (`SitePaths.IsSystemPath` among them) have no public replacement: a site that used one keeps a
+      copy (added by the Phase 11 audit).
     - The nested `MediaPickerPropertySettings.EnumObject` and `AddEditRedirect.DomainChoice` are private.
   - **Breaking:** `IContentService.ExportContentTypeAsync` and `ImportContentTypeAsync` take a
     `CancellationToken cancellationToken = default` (calls compile unchanged; a class that implements
@@ -1598,7 +1625,86 @@ commits: content finders (6166a62), then the rest. Phase 11 is done with this pa
     are unchanged (a subclass or decorator compiles as before).
   - No schema change.
 
+#### Phase 11 audit — DONE (2026-11-27)
+`/audit changed` over the whole of Phase 11 (2f4dc41..773505c, 256 files): deterministic checks, three unit reviewers
+(front-end path, bootstrap and start-up, public surface), two independent diff reviewers given only the code
+(11a–11d, which also covered CI, release and packaging, and 11e–11g), and two verifiers that tried to disprove every
+Medium and every finding to be fixed (eight reproduced with throwaway tests). Nothing Critical or High from Phase 11;
+the one High (ZA-187) is older and was downgraded to Medium on verification. Every type Phase 11 made internal,
+moved or removed was already in its release notes.
+- **Fixed (Medium):** ZA-169 a request under nested domains (`example.com`, `example.com/fr`) was on both for
+  redirects, so the shorter domain's redirect could win and loops across the two were saved; now it is on the longest
+  one only, as for content (D42), and `RedirectRules.FindLoop` (new overload with the site's domains, used by
+  `SaveRedirectAsync`) follows the chain per host. ZA-170 a domain entered with a scheme, a port, a trailing dot or
+  slash matched nothing (the domain dialog offers `example.com:8080`), and since 11a its redirects never fired; one
+  internal normaliser at match time (stored rows unchanged), a domain with a port matches only that port. ZA-171 a
+  page served through a content finder declared its own stored URL as canonical and `og:url`; now the address asked
+  for, without its query string. ZA-176 a failing setting at start-up lost the collected warnings and reached only the
+  console; and a plugin built against 4.x whose public type implements a moved contract made discovery and Blazor's
+  router throw `TypeLoadException` naming neither: the warnings are written first, a failing setting is logged as
+  critical, and such an assembly stops the start naming it and the type (one whose unloadable types are all
+  non-public still only warns). ZA-177 `release.ps1` had a literal TAB in the template site's path and stopped half
+  stamped. ZA-178 a rerun of an older CI run after a newer release would publish older code under a newer version;
+  the publish job now requires the newest version tag in HEAD's history (a rerun of the tagged commit is unchanged;
+  checked in a scratch repository with a bare origin, 9 cases). ZA-185 the antiforgery attributes answer 500 without
+  view services (11e): documented (release notes, FrontEnd.md); restoring them is an owner question.
+- **Fixed (Low):** ZA-172 content finders that implement `IDisposable`/`IAsyncDisposable` are disposed after the
+  lookup; ZA-173 a lookup made from inside a finder does not start the finders again (it recursed without end), and
+  `EntryPage` passes the request's token; ZA-174 a finder language that is not a culture is ignored with one warning
+  (it logged an error per request), and the docs say the finder's language wins; ZA-175 the cached domain list (now
+  read per request by redirects and per miss by finders) uses one key, so a hit builds no DbContext; ZA-179 the
+  `AdminDefaultLanguage` error gives the runtime's reason and names invariant-globalization mode; ZA-180 NU1900 (the
+  vulnerability data unreadable, offline) is not a build error, the CI scan still fails; ZA-181 the template smoke
+  test prints the site's stderr and log on a failure; ZA-182 FluentValidation's `IValidator<T>` is in
+  `ExtensionManager.DiscoveryInterfaces`, so a non-public validator is a start-up warning; ZA-183
+  `NoCacheInvalidationBus` and `RedisCacheInvalidationBus` are public (D53: defaults of public service interfaces);
+  ZA-184 the comment on the content-type import said it could not be left half done (two saves); ZA-186 docs:
+  AGENTS.md said there is no content-finder pipeline, the audit runbook pointed at `Core/Modal`, and the 11d/11e/11f
+  release notes missed the list layering, the blank provider, the antiforgery attributes and the replacement for
+  `AssemblyManager.Assemblies` (corrected in place above).
+- **Recorded, older than Phase 11:** ZA-187, ZA-189, ZA-190, ZA-193 (10f); ZA-188 (10g); ZA-194, ZA-197 (10i);
+  ZA-191, ZA-192, ZA-195, ZA-196, ZA-198 (12). Owner questions: ZA-185, ZA-198 ("Open questions").
+- Tests (43 new cases): `Seo/RedirectDomainTests` (ZA169, ZA170), `Seo/SeoTagsTests` (ZA171: `RenderSeoTags`
+  rendered with a finder's `EntryModel` and without), `Content/ContentFinderTests` (ZA172–ZA175),
+  `Bootstrap/StartupDiagnosticsTests` (ZA176 with a plugin assembly built at run time against a missing contract,
+  ZA179, ZA182), `Packaging/BuildBaselineTests` (ZA177, ZA178, ZA180), the public types snapshot (ZA183). Each new
+  test was seen failing with its fix reverted, except the controls (a non-public unloadable type still starts).
+  Full suite 1165 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0
+  warnings; the template smoke test passes (Windows PowerShell 5.1).
+- **Not verified:** a real 4.x plugin package on v5 (the mechanism is reproduced with a run-time-built assembly);
+  `DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1` on a real site; the smoke test under PowerShell 7 locally (CI runs it);
+  the canonical tag and the domain dialog in a browser.
+- **Release notes (D18):**
+  - Nested domains (`example.com` and `example.com/fr`): a request is on the longest matching domain only, as for
+    content, so a redirect for `example.com` no longer applies under `example.com/fr`. The loop check follows each
+    host as requests do (a pair of redirects it refused before may now save, and a real loop across nested domains
+    is refused).
+  - Culture domains entered with `https://`, a trailing dot or slash, or a port now match. A domain with a port
+    matches only that port; one without matches any. Before, such a domain matched nothing.
+  - `RenderSeoTags`: a page served through a content finder declares the address asked for (no query string) as its
+    canonical URL and `og:url`.
+  - Content finders that implement `IDisposable`/`IAsyncDisposable` are disposed after each lookup; a lookup from
+    inside a finder finds pages by URL only (no finders); a finder language that is not a culture is ignored with
+    one warning.
+  - A failing start-up setting is logged (critical, `ZauberCMS.Startup`) after the bootstrap's warnings, not only
+    written to the console. A site or plugin assembly whose public types cannot load (a plugin built against 4.x
+    that implements `IContentProperty` or `ISectionNavGroupAction`) stops the start with a message naming it and the
+    type; rebuild it against v5.
+  - The `AdminDefaultLanguage` start-up error includes the runtime's reason and says when the site runs in
+    globalization-invariant mode.
+  - A FluentValidation validator in a site or plugin that is not public (so it never runs) is a start-up warning.
+  - `NoCacheInvalidationBus` and `RedisCacheInvalidationBus` are public (sealed), so a site can wrap the default.
+  - Breaking: none.
+
 ### Phase 12 — .NET 11 (D4)
+From the Phase 11 audit, to do with the release planning: **ZA-191** (`GetContentFromRequestParameters.IgnoreInternalRedirect`
+is public and never read: honour or obsolete it), **ZA-192** (settings set in code with `Configure<ZauberSettings>` do
+not reach the bootstrap's copy, which configures ImageResize, Identity, rate limits and Redis: document or read the
+options), **ZA-195** (CI's commit-back of the stamped version conflicts when two pushes to `main-static` are in flight;
+it heals on the next push), **ZA-196** (a blank storage or email provider passes start-up and the first upload or
+email throws `NullReferenceException` without naming the setting), **ZA-198** (owner question below: the daily
+clean-up job, the sitemap generator and the admin culture handler are internal, so a site cannot remove one by type
+and there is no setting to run them on one server only).
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 
@@ -1614,6 +1720,20 @@ Owner instructions for this phase (2026-11-25):
   (Razor, C# and CSS edits, admin and front-end), and fix what stops it.
 
 ## Open questions for the owner
+
+- From the Phase 11 audit (2026-11-27):
+  - **ZA-185, antiforgery attributes.** Since Phase 11e (D52) ZauberCMS calls `AddControllers()`, so a site's or
+    plugin's controller with `[ValidateAntiForgeryToken]` or `[AutoValidateAntiforgeryToken]` answers 500 after the
+    update (the filters are view services). Documented now (release notes, FrontEnd.md). Options: (a) keep it
+    documented only; (b) also register the view features (`services.AddMvcCore().AddViews()`: the antiforgery
+    filters, TempData, view components and HTML helpers, about 40 registrations, no Razor view engine). Recommended:
+    (b), because a plugin's 4.x controller then keeps working without a code change, which the "updatable" principle
+    asks for, at the cost of registrations only.
+  - **ZA-198, built-in background work per server.** `DailyJob`, the sitemap generator and
+    `AdminCultureCircuitHandler` are internal since 11f, so a site can no longer remove one by type, and no setting
+    turns them off. Options: (a) leave it; (b) a `Zauber:Jobs` setting (`DailyJobEnabled`, `SitemapEnabled`, default
+    on) so a multi-server site runs them on one node; (c) make the two hosted services public again. Recommended: (b),
+    the Umbraco way (its scheduled publishing and clean-up run on the "scheduling publisher" server only).
 
 - Answered: SVG uploads (D6), sanitiser policy (D7), Phase 6 design (D13–D16), ZA-044 hotfix (D17), v5 (D18), installer (D19–D23).
 - Closed 2026-11-27 (the owner asked for nothing to be left parked):

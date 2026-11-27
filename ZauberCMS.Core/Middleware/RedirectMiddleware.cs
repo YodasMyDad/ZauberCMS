@@ -19,9 +19,11 @@ namespace ZauberCMS.Core.Middleware;
 /// as a regular expression (<see cref="SeoRedirect.IsRegex"/>) is tried in turn after that (ZA-116). The compiled
 /// list is kept in <see cref="ICacheService"/> under the <c>SeoRedirect</c> prefix, so saving or deleting a redirect
 /// clears it on every server (ZA-115).
-/// A redirect with a domain (<see cref="SeoRedirect.DomainId"/>) applies only to requests on that domain, matched by
-/// the rule content routing uses; one without applies on every host. For the same address, a redirect for the
-/// request's domain wins over one for all domains (ZA-165, Roadmap D42).
+/// A redirect with a domain (<see cref="SeoRedirect.DomainId"/>) applies only to requests on that domain; one without
+/// applies on every host. A request is on one domain at most, the one content routing gives it
+/// (<see cref="DomainMatching.FindDomain"/>: the longest that matches), so a redirect for <c>example.com</c> does not
+/// fire on <c>example.com/fr/…</c> when <c>example.com/fr</c> is a domain. For the same address, a redirect for the
+/// request's domain wins over one for all domains (ZA-165, ZA-169, Roadmap D42).
 /// </summary>
 internal class RedirectMiddleware(RequestDelegate next, ILogger<RedirectMiddleware> logger)
 {
@@ -73,16 +75,16 @@ internal class RedirectMiddleware(RequestDelegate next, ILogger<RedirectMiddlewa
 
         var currentUrl = $"{context.Request.Path}{context.Request.QueryString}";
 
-        // The domains this request is on, read from the cached domain list only when a redirect has a domain. It is
+        // The domain this request is on, read from the cached domain list only when a redirect has a domain. It is
         // read on each request, so an edited domain is matched by its new address.
-        var requestDomains = compiledRedirects.HasDomainRedirects
-            ? await GetRequestDomainsAsync(context)
-            : [];
+        var requestDomain = compiledRedirects.HasDomainRedirects
+            ? await GetRequestDomainAsync(context)
+            : null;
 
         // Exact matches first (letter case ignored); each address lists the redirects for a domain before the ones
         // for all domains
         if (compiledRedirects.DirectMatches.TryGetValue(currentUrl, out var directRedirects) &&
-            directRedirects.FirstOrDefault(r => AppliesTo(r.DomainId, requestDomains) &&
+            directRedirects.FirstOrDefault(r => AppliesTo(r.DomainId, requestDomain) &&
                                                 !RedirectRules.SameAddress(r.ToUrl, currentUrl)) is { } directRedirect)
         {
             PerformRedirect(context, directRedirect.ToUrl, directRedirect.IsPermanent);
@@ -91,7 +93,7 @@ internal class RedirectMiddleware(RequestDelegate next, ILogger<RedirectMiddlewa
 
         foreach (var regexRedirect in compiledRedirects.RegexMatches)
         {
-            if (!AppliesTo(regexRedirect.DomainId, requestDomains))
+            if (!AppliesTo(regexRedirect.DomainId, requestDomain))
             {
                 continue;
             }
@@ -116,19 +118,22 @@ internal class RedirectMiddleware(RequestDelegate next, ILogger<RedirectMiddlewa
     }
 
     /// <summary>True when a redirect for <paramref name="domainId"/> (null: every domain) applies to the request.</summary>
-    private static bool AppliesTo(Guid? domainId, HashSet<Guid> requestDomains) =>
-        domainId == null || requestDomains.Contains(domainId.Value);
+    private static bool AppliesTo(Guid? domainId, Guid? requestDomain) =>
+        domainId == null || domainId == requestDomain;
 
-    /// <summary>The ids of the site's domains the request is on (<see cref="DomainMatching.Matches"/>).</summary>
-    private static async Task<HashSet<Guid>> GetRequestDomainsAsync(HttpContext context)
+    /// <summary>
+    /// The id of the site's domain the request is on, by the rule content routing uses
+    /// (<see cref="DomainMatching.FindDomain"/>); null when it is on none.
+    /// </summary>
+    private static async Task<Guid?> GetRequestDomainAsync(HttpContext context)
     {
         var contentService = context.RequestServices.GetRequiredService<IContentService>();
         var domains = await contentService.GetCachedDomainsAsync(new CachedDomainsParameters(),
             context.RequestAborted);
-        return domains
-            .Where(d => DomainMatching.Matches(d.Url, context.Request.Host.Host, context.Request.Path.Value))
-            .Select(d => d.Id)
-            .ToHashSet();
+        var request = context.Request;
+        // The port as content routing sees it in the page's URL: the scheme's default when the Host header has none
+        var port = request.Host.Port ?? (request.IsHttps ? 443 : 80);
+        return DomainMatching.FindDomain(domains, request.Host.Host, request.Path.Value, port)?.Id;
     }
 
     private async Task<CompiledRedirects> GetOrCreateCompiledRedirectsAsync(ISeoService seoService,
