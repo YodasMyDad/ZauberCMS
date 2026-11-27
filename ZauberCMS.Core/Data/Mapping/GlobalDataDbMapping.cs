@@ -4,7 +4,7 @@ using ZauberCMS.Core.Data.Models;
 
 namespace ZauberCMS.Core.Data.Mapping;
 
-public class GlobalDataDbMapping : IEntityTypeConfiguration<GlobalData>
+internal class GlobalDataDbMapping : IEntityTypeConfiguration<GlobalData>
 {
     public void Configure(EntityTypeBuilder<GlobalData> builder)
     {

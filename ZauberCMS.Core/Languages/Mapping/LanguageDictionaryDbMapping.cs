@@ -4,7 +4,7 @@ using ZauberCMS.Core.Languages.Models;
 
 namespace ZauberCMS.Core.Languages.Mapping;
 
-public class LanguageDictionaryDbMapping : IEntityTypeConfiguration<LanguageDictionary>
+internal class LanguageDictionaryDbMapping : IEntityTypeConfiguration<LanguageDictionary>
 {
     public void Configure(EntityTypeBuilder<LanguageDictionary> builder)
     {

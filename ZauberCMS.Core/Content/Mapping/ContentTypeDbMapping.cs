@@ -5,7 +5,7 @@ using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Content.Mapping;
 
-public class ContentTypeDbMapping : IEntityTypeConfiguration<ContentType>
+internal class ContentTypeDbMapping : IEntityTypeConfiguration<ContentType>
 {
     public void Configure(EntityTypeBuilder<ContentType> builder)
     {

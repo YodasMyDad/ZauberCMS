@@ -6,7 +6,7 @@ namespace ZauberCMS.Core.Extensions;
 
 public static class AuditExtensions
 {
-    public static async Task AddAudit<T>(this User? user, T entity, string? name, AuditAction action, IAuditService auditService, CancellationToken? cancellationToken) where T : class
+    public static async Task AddAudit<T>(this User? user, T entity, string? name, AuditAction action, IAuditService auditService, CancellationToken cancellationToken = default) where T : class
     {
         if (user != null)
         {
@@ -18,7 +18,7 @@ public static class AuditExtensions
                 {
                     Description = text
                 }
-            }, cancellationToken ?? CancellationToken.None);   
+            }, cancellationToken);
         }
     }
 

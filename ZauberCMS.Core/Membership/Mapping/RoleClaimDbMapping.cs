@@ -4,7 +4,7 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Membership.Mapping
 {
-    public class RoleClaimDbMapping : IEntityTypeConfiguration<RoleClaim>
+    internal class RoleClaimDbMapping : IEntityTypeConfiguration<RoleClaim>
     {
         public void Configure(EntityTypeBuilder<RoleClaim> builder)
         {

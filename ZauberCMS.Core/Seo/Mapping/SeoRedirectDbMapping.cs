@@ -4,7 +4,7 @@ using ZauberCMS.Core.Seo.Models;
 
 namespace ZauberCMS.Core.Seo.Mapping;
 
-public class SeoRedirectDbMapping : IEntityTypeConfiguration<SeoRedirect>
+internal class SeoRedirectDbMapping : IEntityTypeConfiguration<SeoRedirect>
 {
     public void Configure(EntityTypeBuilder<SeoRedirect> builder)
     {

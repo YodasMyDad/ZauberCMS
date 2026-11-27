@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11f (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1109 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-092, ZA-124 fixed. Next free ID: ZA-169
 After Roadmap Phase 11e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1071 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-090, ZA-091 fixed. Next free ID: ZA-169
 After Roadmap Phase 11d (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1050 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis; `doublecheck` self-review on the part. ZA-120, ZA-121, ZA-167 fixed; the failing CI test of 11c (a Windows path separator) fixed. Next free ID: ZA-169
 After Roadmap Phase 11c (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1034 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes (Windows PowerShell 5.1; PowerShell 7 in the Linux SDK container), now a CI step; `doublecheck` self-review on the part. ZA-087, ZA-094, ZA-118, ZA-119, ZA-123 fixed; ZA-168 found and fixed; ZA-167 new (Phase 11d). Next free ID: ZA-169
@@ -32,6 +33,28 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed, resolved, closed and declined
 
+- **Phase 11f (2026-11-27): public surface and API conventions (Roadmap D53–D54).** Details and the release notes
+  in the Roadmap's Phase 11f notes.
+  - **ZA-092 [Medium] Core exposes hundreds of public types — fixed.** The rule for what is public is written down
+    (Standards.md §1, D53: what a site builds on stays public, service implementations included, as in Umbraco;
+    EF mappings, migrations, design-time factories, wired middleware, ZauberCMS's own hosted services, circuit
+    handlers and start-up plugins, and plumbing are internal; no `InternalsVisibleTo` between packages). Public
+    types, from the assemblies' metadata: Core 429 → 375, Components 278 → 274, Routing and ZauberCMS unchanged
+    (Razor components only). `AssemblyManager` is internal without its unused public mutable caches; three unused
+    public types are `[Obsolete]` (D50). `migrations.ps1` makes each new migration internal. Verified:
+    `Bootstrap/PublicApiTests` (the public types equal `Bootstrap/Snapshots/PublicTypes.txt`; no public plumbing
+    kind; every built-in extension type public; EF lists exactly the internal migrations and applies every internal
+    mapping on SQL Server, SQLite and PostgreSQL), the script run on all three providers (an empty migration came
+    out internal, then removed), `dotnet ef migrations list`, the full suite, the template smoke test and the dev
+    site.
+  - **ZA-124 [Low] API convention drift — fixed.** D54, Standards.md §11: `QueryContentParameters` has
+    `IncludeDeleted`/`OnlyDeleted` with `IsDeleted` as an `[Obsolete]` alias (defaults unchanged); the `Cached`
+    defaults stay, under a written rule, each pinned; `AddAudit` takes `CancellationToken cancellationToken =
+    default` instead of `CancellationToken?`, `Export/ImportContentTypeAsync` take and forward a token,
+    `SaveChangesAndLog` and `IQueryModel.ExecuteQuery` default theirs; discovery interfaces stay where they are, by
+    feature, with the convention for new ones. Verified: `Bootstrap/ApiConventionTests` (recycle-bin defaults and
+    names, `Cached` defaults, token shape over every public method, a token on every service interface's async
+    method) and `ContentSoftDeleteTests` (the new flags and the alias for `false`, `true`, `null`).
 - **Phase 11e (2026-11-27): the MVC path removed, UI contracts out of Core (Roadmap D51–D52).** Details and the
   release notes in the Roadmap's Phase 11e notes.
   - **ZA-090 [Medium] Unwired MVC rendering path ships as public API — fixed.** Removed (not made obsolete, D52):

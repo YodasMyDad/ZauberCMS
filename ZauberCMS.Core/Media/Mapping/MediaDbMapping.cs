@@ -4,7 +4,7 @@ using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Media.Mapping;
 
-public class MediaDbMapping : IEntityTypeConfiguration<Models.Media>
+internal class MediaDbMapping : IEntityTypeConfiguration<Models.Media>
 {
     public void Configure(EntityTypeBuilder<Models.Media> builder)
     {

@@ -15,6 +15,38 @@ patterns into new code.
 - New config goes under `Zauber:*`, bound to `ZauberSettings` (or a sub-options class), with a safe default added to
   **all three** `appsettings.json` files (`ZauberCMS/`, `ZauberCMS.Web/`, template site).
 
+### What is public (Roadmap D53, ZA-092)
+
+A public type is frozen from its first release, so a type is public only when a site or plugin needs it. Like
+Umbraco, ZauberCMS keeps what a site builds on public, service implementations included, so a site can subclass or
+decorate them; what only ZauberCMS's own start-up and EF use is `internal`.
+
+**Public:**
+
+- Every discovery interface and every type discovery finds, the built-in ones too (`ExtensionManager` sees exported
+  types only, rule 3): views, blocks, editors and their settings, sections, nav groups, context menus, data sources,
+  SEO checks, providers, seeders, validators, reference providers, save hooks.
+- Every type whose full name a database or setting holds (rule 2).
+- Service interfaces and their default implementations, and every type `AddZauberCms` registers that a site
+  resolves, replaces or decorates (`ExtensionManager`, `AppState`, `TreeState`, `ProviderService`,
+  `LayoutResolverService`, `ServerCache`, the Identity managers and factories, `IdentityRedirectManager`).
+- Parameter classes, models and entities, results, enums, settings, `Constants`, the DbContexts and `IZauberDbContext`.
+- Extension methods (`ZauberCMS.Core.Extensions`, the `MapTo` copiers) and helpers a plugin author is told to use
+  (`ContentUrl`, `SvgSanitizer`, `UploadContentCheck`, `RedirectTarget`, `SeoHttp`, `AdminAccess`, `Urls`).
+- Razor components (the Razor compiler makes them public) and anything in a public signature.
+- A type another ZauberCMS package uses (`CultureMiddleware`, whose `GetEntryModel` EntryPage calls): the packages
+  use each other through public API only, so a site that updates one package does not meet a missing internal.
+  `InternalsVisibleTo` is for the test projects only.
+
+**Internal:** EF entity mappings (`*DbMapping`), migrations (`migrations.ps1` makes new ones internal) and the
+design-time factories; middleware `AddZauberCms` wires (the order is fixed there); hosted services, circuit handlers
+and start-up plugins ZauberCMS adds for itself; endpoint mapping called by the bootstrap; plumbing such as
+`AssemblyManager`. A public type nothing uses any more is `[Obsolete]` for a later major (D50), not removed.
+
+`PublicApiTests` pins the public types of Core, Components and Routing in
+`tests/ZauberCMS.Core.Tests/Bootstrap/Snapshots/PublicTypes.txt`: a new public type is added there on purpose, and a
+removed line is a breaking change for the release notes.
+
 ## 2. C# and project conventions
 
 - Nullable reference types on; no `!` suppression without a one-line reason. No `#pragma warning disable` without a
@@ -36,7 +68,7 @@ patterns into new code.
 - Async all the way. No `.Result`, `.Wait()`, `GetAwaiter().GetResult()` (two documented exceptions in `ZauberSetup`, both at start-up: the database initialise and the culture query).
   No sync EF calls (`ToList`, `FirstOrDefault`, `Count`) inside async methods — use the `…Async` overloads.
 - Every public async method takes `CancellationToken cancellationToken = default` **last** and forwards it to EF,
-  HTTP and I/O. Components pass a token tied to their lifetime where the work can outlive the component.
+  HTTP and I/O (the two exceptions are in §11). Components pass a token tied to their lifetime where the work can outlive the component.
 - `async void` only for event handlers, and then wrapped in `try/catch` with logging (an escaped exception kills the
   Blazor circuit).
 - No fire-and-forget on request/circuit paths; background work belongs in a hosted service / `Channel`.
@@ -182,6 +214,39 @@ In place since Roadmap Phase 11b (D43):
   project-wide `NoWarn` for a compiler warning (suppress at the site with the reason); the packages carry the
   readme, icon, Source Link and a symbol package from `Directory.Build.props`.
 
+## 11. API conventions (Roadmap D54, ZA-124)
+
+`ApiConventionTests` checks these over the public types.
+
+- **Recycle-bin flags.** `IncludeDeleted` (also items in the recycle bin) and, where a bin-only list is needed,
+  `OnlyDeleted` (only those; wins over `IncludeDeleted`), both `bool` and `false` by default. Never a `bool?`
+  tri-state and never `IsDeleted` on a parameter class (`QueryContentParameters.IsDeleted` is the obsolete v4 alias).
+  The same shape as `IncludeUnpublished` / `OnlyUnpublished`. A default may never start returning recycled items
+  (AGENTS.md rule 4).
+- **`Cached` defaults.** `false` on the Get and Query parameters of entities (content, media, users, tags): the
+  caller opts in, and the admin and every write path read fresh rows. `true` only on small lookups ZauberCMS reads
+  on every request or tree render and clears on every write of their type: `GetGlobalDataParameters`,
+  `GetRestrictedMediaUrlsParameters`, `QueryRedirectsParameters`, `HasChildContentParameters`,
+  `HasChildContentTypeParameters`. The defaults are pinned by a test: changing one changes what callers get (stale
+  rows or extra queries), so it is a breaking change. A new parameter class with `Cached` follows the rule and is
+  added to the test.
+- **Cancellation tokens.** A public method that takes a token takes it last as
+  `CancellationToken cancellationToken = default`; never `CancellationToken?`. Every async method of a service
+  interface takes one (`ICacheService` excepted: its load function closes over the caller's token, and one load
+  serves every waiter). Two exceptions keep their shape: a method whose signature a framework type fixes (an Identity
+  store, a hosted service), and an extension point that keeps a token-less overload for implementations written
+  before the token (`ISeoCheck.Check`), where the token overload has no default.
+- **Discovery interfaces by feature.** A new extension point goes in `ZauberCMS.Core.<Feature>.Interfaces` (or
+  `ZauberCMS.Components.<Feature>` when it takes a UI type, D51), next to the feature it extends, as Umbraco keeps
+  its by feature. The existing ones are not moved (a moved interface breaks every plugin's `using` and buys only
+  neatness): `ISeoCheck` stays in `ZauberCMS.Core.Seo.Models`, `IStorageProvider` in `ZauberCMS.Core.Providers`,
+  `IEmailProvider`, `IStartupPlugin` and `IExternalAuthenticationProvider` in `ZauberCMS.Core.Plugins.Interfaces`,
+  `ITreeContextMenu` in `ZauberCMS.Components.ContextMenus`. A new one is added to
+  `ExtensionManager.DiscoveryInterfaces` and to the extension table in AGENTS.md.
+- **Names (new code).** Parameter classes are `<Verb><Entity>Parameters` (Get, Query, Save, Delete, …) in
+  `<Feature>/Parameters`; order enums `Get<Entity>OrderBy`; a service method is `<Verb><Entity>Async` and returns
+  `HandlerResult<T>` for writes (§6).
+
 ## Known deviations (exist today — do not copy)
 
 | Pattern in code | Target | Example |
@@ -191,5 +256,4 @@ In place since Roadmap Phase 11b (D43):
 | Static `Serilog.Log.*` alongside `ILogger<T>` | `ILogger<T>` only | `DbContextExtensions.cs`, `ZauberSetup.cs` |
 | `ToLower()` search comparisons | provider-safe comparisons | `ContentService`, `MembershipService` |
 | `ISeedData.Initialise` is synchronous | async seeding | `Data/Interfaces/ISeedData.cs` |
-| Some service methods without `CancellationToken` | token on every async API | `IContentService.Export/ImportContentTypeAsync` |
 | `PendingModelChangesWarning` suppressed | detect drift in CI | the three DbContexts |

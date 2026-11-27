@@ -10,7 +10,7 @@ namespace ZauberCMS.Core.Media.Middleware;
 /// able to run script or load anything from elsewhere (a sandboxing Content-Security-Policy).
 /// Runs before the middleware that serves the files (restricted media, image resize, static files).
 /// </summary>
-public class MediaSecurityHeadersMiddleware(RequestDelegate next, IOptions<ZauberSettings> settings)
+internal class MediaSecurityHeadersMiddleware(RequestDelegate next, IOptions<ZauberSettings> settings)
 {
     /// <summary>Policy sent with SVG files: no script, no requests, inline styles and embedded bitmaps only.</summary>
     public const string SvgContentSecurityPolicy =

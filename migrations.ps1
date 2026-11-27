@@ -40,6 +40,17 @@ function New-Migration {
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create $ProviderName migration."
     }
+
+    # EF generates the migration class public; ZauberCMS's migrations are internal (ZA-092, Docs/Data.md), and EF
+    # finds internal ones. A test (PublicApiTests) fails on a public migration.
+    $folder = Join-Path $ProjectPath $OutputDir
+    Get-ChildItem -Path $folder -Filter "*_$MigrationName.cs" | ForEach-Object {
+        $text = [System.IO.File]::ReadAllText($_.FullName)
+        $fixed = $text -replace 'public partial class (\w+) : Migration', 'internal partial class $1 : Migration'
+        if ($fixed -ne $text) {
+            [System.IO.File]::WriteAllText($_.FullName, $fixed, [System.Text.UTF8Encoding]::new($true))
+        }
+    }
 }
 
 try {

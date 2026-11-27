@@ -4,7 +4,7 @@ using ZauberCMS.Core.Tags.Models;
 
 namespace ZauberCMS.Core.Tags.Mapping;
 
-public class TagItemDbMapping : IEntityTypeConfiguration<TagItem>
+internal class TagItemDbMapping : IEntityTypeConfiguration<TagItem>
 {
     public void Configure(EntityTypeBuilder<TagItem> builder)
     {

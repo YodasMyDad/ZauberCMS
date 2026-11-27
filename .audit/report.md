@@ -3,7 +3,7 @@
 Last full run: 5668365 (2026-11-25, full) · Last changed run: b001147+wt (2026-11-27, Roadmap Phase 10e) · Mode: report
 Build: PASS · Warnings: 70 (all NuGet vulnerability advisories; 0 compiler; no previous baseline) · Vulnerable packages: 4 · Outdated majors: 5
 Next free IDs: ZA-169 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
-After Roadmap Phase 11e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1071 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-090, ZA-091 fixed. Next free ID: ZA-169. Earlier after-phase lines: [history.md](history.md) run log
+After Roadmap Phase 11f (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1109 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-092, ZA-124 fixed. Next free ID: ZA-169. Earlier after-phase lines: [history.md](history.md) run log
 
 > First full run. All findings come from reading code plus the deterministic checks below; **nothing was run in a
 > browser or against PostgreSQL/Redis**, so items marked as needing a repro are reasoned, not observed. Critical and
@@ -16,27 +16,15 @@ After Roadmap Phase 11e (2026-11-27): Build PASS · Warnings: 0 · Vulnerable pa
 | --- | --- | --- | --- |
 | Critical | 0 | 1 | 0 |
 | High | 0 | 30 | 0 |
-| Medium | 1 | 70 | 1 |
-| Low | 7 | 43 | 6 |
+| Medium | 0 | 71 | 1 |
+| Low | 6 | 44 | 6 |
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11: the rest); there is no Backlog (owner, 2026-11-27).
+a phase (10f: ZA-155, ZA-163; 10h: ZA-129; 10i: ZA-128; 11g: ZA-125, ZA-126); there is no Backlog (owner, 2026-11-27).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
 ## Open findings
-
-### ZA-092 [Medium/High] Core exposes 362 public types and no internal ones
-
-- Where: `ZauberCMS.Core/Plugins/AssemblyManager.cs:10-12,23` · Category: F · Since: 2026-11-25
-- Issue / Trigger: Implementations, mappings, factories, middleware and unused public mutable statics are all frozen by the compatibility rule.
-- Fix: make non-contract types internal before the next major. · Blocked by: public API.
-- Reconciled 2026-11-26 (Phase 7): the installer and form protection added 28 more public types (`ZauberCMS.Core.Installer`, `ZauberCMS.Core.Security`: 22 in `.cs` files and six Razor components); "no internal ones" no longer holds — `InstallerDatabase` and `InstallerAssets` are internal.
-
-### ZA-124 [Low/High] API convention drift to settle before the next major
-
-- Where: `ZauberCMS.Core/Content/Parameters/QueryContentParameters.cs:19`, `ZauberCMS.Core/Extensions/AuditExtensions.cs:9` · Category: F · Since: 2026-11-25
-- Issue / Fix: `IsDeleted` vs `IncludeDeleted`; `Cached` defaults differ across parameter classes; `CancellationToken?`; discovery interfaces scattered across namespaces.
 
 ### ZA-125 [Low/High] Very large classes; `Content.Url` is obsolete with no exit
 

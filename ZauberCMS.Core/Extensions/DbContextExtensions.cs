@@ -151,7 +151,7 @@ public static class DbContextExtensions
     /// </summary>
     public static Task<HandlerResult<T>> SaveChangesAndLog<T>(this IZauberDbContext context, T? entity,
         HandlerResult<T> crudResult, ICacheService cacheService, ExtensionManager extensionManager,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken = default) =>
         SaveWithHooksAsync(context, entity == null ? [] : [entity], entity, crudResult, cacheService,
             extensionManager, cancellationToken);
 
@@ -165,7 +165,7 @@ public static class DbContextExtensions
     /// <param name="resultEntity">Set as the result's entity on success.</param>
     public static Task<HandlerResult<T>> SaveChangesAndLog<T>(this IZauberDbContext context,
         IReadOnlyCollection<T> entities, T? resultEntity, HandlerResult<T> crudResult, ICacheService cacheService,
-        ExtensionManager extensionManager, CancellationToken cancellationToken) where T : class =>
+        ExtensionManager extensionManager, CancellationToken cancellationToken = default) where T : class =>
         SaveWithHooksAsync(context, [.. entities], resultEntity, crudResult, cacheService, extensionManager,
             cancellationToken);
 

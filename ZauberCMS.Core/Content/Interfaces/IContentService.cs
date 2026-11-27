@@ -29,8 +29,8 @@ public interface IContentService
     Task<HandlerResult<ContentType>> SaveContentTypeAsync(SaveContentTypeParameters parameters, CancellationToken cancellationToken = default);
     Task<PaginatedList<ContentType>> QueryContentTypesAsync(QueryContentTypesParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<ContentType>> DeleteContentTypeAsync(DeleteContentTypeParameters parameters, CancellationToken cancellationToken = default);
-    Task<string?> ExportContentTypeAsync(string alias, bool includeContent = false);
-    Task<HandlerResult<ContentType>> ImportContentTypeAsync(string json);
+    Task<string?> ExportContentTypeAsync(string alias, bool includeContent = false, CancellationToken cancellationToken = default);
+    Task<HandlerResult<ContentType>> ImportContentTypeAsync(string json, CancellationToken cancellationToken = default);
 
     Task<Domain> GetDomainAsync(GetDomainParameters parameters, CancellationToken cancellationToken = default);
     Task<HandlerResult<Domain>> SaveDomainAsync(SaveDomainParameters parameters, CancellationToken cancellationToken = default);

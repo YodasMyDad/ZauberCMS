@@ -5,7 +5,7 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Membership.Mapping;
 
-public class RoleDbMapping : IEntityTypeConfiguration<Role>
+internal class RoleDbMapping : IEntityTypeConfiguration<Role>
 {
     public void Configure(EntityTypeBuilder<Role> builder)
     {

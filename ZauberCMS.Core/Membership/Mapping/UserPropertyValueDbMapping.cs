@@ -4,7 +4,7 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Membership.Mapping;
 
-public class UserPropertyValueDbMapping : IEntityTypeConfiguration<UserPropertyValue>
+internal class UserPropertyValueDbMapping : IEntityTypeConfiguration<UserPropertyValue>
 {
     public void Configure(EntityTypeBuilder<UserPropertyValue> builder)
     {

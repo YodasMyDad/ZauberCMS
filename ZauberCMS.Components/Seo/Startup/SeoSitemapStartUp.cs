@@ -4,7 +4,7 @@ using ZauberCMS.Core.Plugins.Interfaces;
 
 namespace ZauberCMS.Components.Seo.Startup;
 
-public class SeoSitemapStartUp : IStartupPlugin
+internal sealed class SeoSitemapStartUp : IStartupPlugin
 {
     public void Register(IServiceCollection services, IConfiguration configuration)
     {

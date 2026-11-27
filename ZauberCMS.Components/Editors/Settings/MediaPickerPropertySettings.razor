@@ -46,7 +46,7 @@
         await this.SavePropertySettings(Settings);
     }
 
-    public class EnumObject
+    private sealed class EnumObject
     {
         public MediaType Value { get; set; }
         public string? Name { get; set; }

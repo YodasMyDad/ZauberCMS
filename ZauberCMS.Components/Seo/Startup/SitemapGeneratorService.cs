@@ -18,7 +18,7 @@ using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Components.Seo.Startup;
 
-public class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IWebHostEnvironment env, IServiceProvider serviceProvider)
+internal sealed class SitemapGeneratorService(ILogger<SitemapGeneratorService> logger, IWebHostEnvironment env, IServiceProvider serviceProvider)
     : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

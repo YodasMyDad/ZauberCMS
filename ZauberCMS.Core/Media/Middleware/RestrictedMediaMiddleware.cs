@@ -10,7 +10,7 @@ using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Media.Middleware;
 
-public class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider serviceProvider, IOptions<ZauberSettings> settings)
+internal class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider serviceProvider, IOptions<ZauberSettings> settings)
 {
     public async Task InvokeAsync(HttpContext context)
     {

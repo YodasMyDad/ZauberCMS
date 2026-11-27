@@ -79,16 +79,50 @@ public class ContentSoftDeleteTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Query_with_IsDeleted_true_returns_only_recycled_content()
+    public async Task Query_with_OnlyDeleted_returns_only_recycled_content()
     {
         var kept = await _site.CreateContentAsync(_pageType, "Kept");
         var recycled = await _site.CreateContentAsync(_pageType, "Recycled");
         await RecycleAsync(recycled.Id);
 
-        var result = await QueryAsync(new QueryContentParameters { AmountPerPage = 50, IsDeleted = true });
+        var result = await QueryAsync(new QueryContentParameters { AmountPerPage = 50, OnlyDeleted = true });
 
         Assert.Contains(result, x => x.Id == recycled.Id);
         Assert.DoesNotContain(result, x => x.Id == kept.Id);
+    }
+
+    [Fact]
+    public async Task Query_with_IncludeDeleted_returns_live_and_recycled_content()
+    {
+        var kept = await _site.CreateContentAsync(_pageType, "Kept");
+        var recycled = await _site.CreateContentAsync(_pageType, "Recycled");
+        await RecycleAsync(recycled.Id);
+
+        var result = await QueryAsync(new QueryContentParameters { AmountPerPage = 50, IncludeDeleted = true });
+
+        Assert.Contains(result, x => x.Id == recycled.Id);
+        Assert.Contains(result, x => x.Id == kept.Id);
+    }
+
+    // ZA-124: the v4 tri-state IsDeleted is an obsolete alias of IncludeDeleted / OnlyDeleted and filters as it did
+    [Theory]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, true)]
+    [InlineData(null, true, true)]
+    public async Task ZA124_the_obsolete_IsDeleted_filters_as_it_did(bool? isDeleted, bool returnsKept, bool returnsRecycled)
+    {
+        var kept = await _site.CreateContentAsync(_pageType, "Kept");
+        var recycled = await _site.CreateContentAsync(_pageType, "Recycled");
+        await RecycleAsync(recycled.Id);
+
+#pragma warning disable CS0618 // the obsolete alias is what this test is about
+        var parameters = new QueryContentParameters { AmountPerPage = 50, IsDeleted = isDeleted };
+        Assert.Equal(isDeleted, parameters.IsDeleted);
+#pragma warning restore CS0618
+        var result = await QueryAsync(parameters);
+
+        Assert.Equal(returnsKept, result.Any(x => x.Id == kept.Id));
+        Assert.Equal(returnsRecycled, result.Any(x => x.Id == recycled.Id));
     }
 
     // The service calls the recycle-bin "Restore" action makes, in order.

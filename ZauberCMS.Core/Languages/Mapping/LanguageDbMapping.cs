@@ -4,7 +4,7 @@ using ZauberCMS.Core.Languages.Models;
 
 namespace ZauberCMS.Core.Languages.Mapping;
 
-public class LanguageDbMapping : IEntityTypeConfiguration<Language>
+internal class LanguageDbMapping : IEntityTypeConfiguration<Language>
 {
     public void Configure(EntityTypeBuilder<Language> builder)
     {

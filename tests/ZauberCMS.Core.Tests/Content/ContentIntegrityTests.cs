@@ -498,7 +498,7 @@ public class ContentIntegrityTests : IAsyncLifetime
     // ---- ZA-016: the recycle-bin filter on queries ----
 
     [Fact]
-    public async Task ZA016_IsDeleted_null_returns_both_and_included_children_never_hold_recycled_items()
+    public async Task ZA016_IncludeDeleted_returns_both_and_included_children_never_hold_recycled_items()
     {
         var parent = await _site.CreateContentAsync(_pageType, "Parent");
         var live = await _site.CreateContentAsync(_pageType, "Live", parent.Id);
@@ -507,7 +507,7 @@ public class ContentIntegrityTests : IAsyncLifetime
 
         var both = await WithContentService(s => s.QueryContentAsync(new QueryContentParameters
         {
-            IsDeleted = null, IncludeUnpublished = true, AmountPerPage = 50
+            IncludeDeleted = true, IncludeUnpublished = true, AmountPerPage = 50
         }, Ct));
         var withChildren = await WithContentService(s => s.QueryContentAsync(new QueryContentParameters
         {

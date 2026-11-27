@@ -7,7 +7,7 @@ namespace ZauberCMS.Core.Middleware;
 /// The paths ZauberCMS keeps for itself, matched on whole path segments: <c>/admin</c> and <c>/admin/content</c>
 /// are the admin, <c>/administration</c> is a page of the site (ZA-095).
 /// </summary>
-public static class SitePaths
+internal static class SitePaths
 {
     /// <summary>The account pages (sign in, register, password reset).</summary>
     public const string Account = "/account";

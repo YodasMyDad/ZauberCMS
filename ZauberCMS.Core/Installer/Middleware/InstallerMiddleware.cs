@@ -31,7 +31,7 @@ namespace ZauberCMS.Core.Installer.Middleware;
 /// Content-Security-Policy that allows only their own inline style and script.
 /// </para>
 /// </summary>
-public class InstallerMiddleware(
+internal class InstallerMiddleware(
     RequestDelegate next,
     InstallState installState,
     ILoggerFactory loggerFactory)

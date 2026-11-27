@@ -83,7 +83,9 @@ don't reorder without a reason written in the commit.
    consumer sites. No breaking change without `[Obsolete]` first and a major version. (During the rework everything ships as one
    v5 major, so a break is allowed when it buys something and is listed in the release notes — Roadmap D18.) **Type full names are persisted
    data**: views (`Content.ViewComponent`), property editors (`PropertyType.Component`) and fallback views in settings
-   are stored as `Type.FullName` — renaming a class *or its namespace* breaks existing sites.
+   are stored as `Type.FullName` — renaming a class *or its namespace* breaks existing sites. What is public and what
+   is internal follows [Docs/Standards.md](Docs/Standards.md) §1 "What is public" (D53); `PublicApiTests` pins the
+   list of public types, so making a type public is a decision written into its snapshot.
 3. **Extensions are discovered, not registered.** `ExtensionManager` reflects over public, non-abstract types (make
    extension types public — only the bootstrap path also sees non-public ones) in the
    scanned assemblies (Core, Components, host entry assembly, `AddZauberCms(extra)` assemblies, Routing last).

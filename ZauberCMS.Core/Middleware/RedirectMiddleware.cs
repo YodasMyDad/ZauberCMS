@@ -23,7 +23,7 @@ namespace ZauberCMS.Core.Middleware;
 /// the rule content routing uses; one without applies on every host. For the same address, a redirect for the
 /// request's domain wins over one for all domains (ZA-165, Roadmap D42).
 /// </summary>
-public class RedirectMiddleware(RequestDelegate next, ILogger<RedirectMiddleware> logger)
+internal class RedirectMiddleware(RequestDelegate next, ILogger<RedirectMiddleware> logger)
 {
     /// <summary>The cache key of the compiled list: starts with the prefix a redirect save clears.</summary>
     internal const string CacheKey = nameof(SeoRedirect) + "-CompiledRedirects";

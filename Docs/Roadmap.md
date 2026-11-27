@@ -24,10 +24,11 @@
   **Phase 11c done** (packaging and the template, smoke test in CI, D45–D47, 2026-11-27).
   **Phase 11d done** (start-up checks, settings binding and DI leftovers, D48–D50, 2026-11-27).
   **Phase 11e done** (the MVC path removed, UI contracts out of Core, D51–D52, 2026-11-27).
-  **8 open findings** (0 Critical, 0 High, 1 Medium, 7 Low), each one assigned below to a phase (10f–10i or 11),
+  **Phase 11f done** (public surface and API conventions, D53–D54, 2026-11-27).
+  **6 open findings** (0 Critical, 0 High, 0 Medium, 6 Low), each one assigned below to a phase (10f–10i or 11),
   plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a
   new finding goes into the phase whose theme fits. **In progress: Phase 11** (owner, 2026-11-27: before 10f–10i;
-  parts 11a–11g in its section; **next: 11f**), then 10f, 10g, 10h, 10i, then Phase 12 (design
+  parts 11a–11g in its section; **next: 11g**), then 10f, 10g, 10h, 10i, then Phase 12 (design
   questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -89,6 +90,8 @@
 | D50 | **DI registrations nothing in ZauberCMS uses are removed; public types and members that are left over are `[Obsolete]` for removal in a later major.** Removed: the scoped `HttpClient` (its base address was the request's own, from the Host header, and it failed outside a request; an injected `HttpClient` is now the framework's default client from `AddHttpClient`), the `IUserEmailStore<User>` registration (`UserManager` uses the Entity Framework store, which is its email store) and the second `SignInManager<User>` registration (`AddSignInManager<ZauberSignInManager>()`). Obsolete: `IdentityUserAccessor` (still registered, so a site that injects it keeps working; `ICurrentUserAccessor` replaces it, D27), `UserEmailStore`, `ContentNavGroup.Actions` (never read). Umbraco registers no bare `HttpClient` for sites either; it uses `IHttpClientFactory`. (owner delegated, 2026-11-27, Phase 11d) | ZA-121, D18 |
 | D51 | **ZauberCMS.Core has no UI library: a contract that takes a Radzen or modal type lives in ZauberCMS.Components, under the namespace it had in Core.** Moved: `IContentProperty` (its `ModalService` is the modal's `IModalService`), `ISectionNavGroupAction` (Radzen's `MenuItemEventArgs`/`ContextMenuService`), the extensions `DialogExtensions`, `NotificationServiceExtensions`, `TreeExtensions` and `PropertyExtensions.GetPropertySettings(this IContentProperty)` (now `ContentPropertyExtensions`), the services `ValidateService<T>` and `MediaValidationService` (Radzen notifications), and the vendored Blazored.Modal source (`Blazored.Modal*` namespaces kept). The folders `ZauberCMS.Components/Core/` and `Modal/` hold them. Their services are registered by an internal start-up plugin in Components (`AdminUiStartup`), found by the bootstrap like any `IStartupPlugin`, so a site calls nothing new. Core drops its Radzen package; it keeps Razor component support for the installer's pages and ZauberCMS.RTE for rendering rich text. Keeping the namespaces means a site's or plugin's source keeps compiling once it references Components (the `ZauberCMS` package does); it is a binary break (the assembly changed), which v5 allows (D18). No implementation moved or was renamed, so no stored type name changes (rule 2). Umbraco does the same: Umbraco.Core holds no back-office UI types (property editor UIs and dashboards are in the back-office packages), and a package with back-office UI references those. Splitting `IContentProperty` into a Core half and a UI half was not done: Core has no use for an editor without its UI, and two interfaces would break every editor's source instead of none. (owner delegated, 2026-11-27, Phase 11e) | ZA-091, D18 |
 | D52 | **ZauberCMS renders pages only through Blazor (`EntryPage`); the never-mapped MVC rendering path is removed, not made obsolete.** Removed: `IContentFinder`, `ContentFinderPipeline`, `DefaultContentFinder`, `ZauberRouteValueTransformer`, `ZauberCMS.Core.Rendering` (`ZauberViewPage<T>`, `IZauberViewPage`, `ZauberPageViewModel`), `HtmlHelperExtensions`, `RenderExtensions`, Routing's `Views/` (the `ZauberRender` views, the `RenderBlocks` and `BootstrapPager` view components) and `IContentBlockView.RenderMode` (an MVC enum only that path read). Nothing ever ran them: the routes were commented out, `IContentFinder` was never in the discovery list or the docs as an extension point, so a site that implemented it had code that never ran. `[Obsolete]` would have kept MVC types in Core's public contracts for the whole v5 line for no working feature. `AddControllersWithViews` became `AddControllers` (only `AuthController` is MVC), so what the view services brought and live code uses is registered by itself: `IMemoryCache` and a memory `IDistributedCache` (Redis's stays when configured); the sign-out POST checks its antiforgery token itself (`[ValidateAntiForgeryToken]` needs the view services and failed with 500 without them). A site with its own MVC views calls `AddControllersWithViews()`. Umbraco finds pages with a content-finder pipeline (`IContentFinder`, `IContentLastChanceFinder`) that sites extend; ZauberCMS has none working, and adding one is a feature for the owner to decide (Phase 11e question). (owner delegated, 2026-11-27, Phase 11e) | ZA-090, D18 |
+| D53 | **A type is public only when a site or plugin needs it; what is public is pinned by a test.** Public: discovery interfaces and every type discovery finds (the built-in ones too: discovery sees exported types only), every type a database or setting stores by full name, service interfaces with their default implementations and the types `AddZauberCms` registers for a site to resolve, replace or decorate, parameters, models, results, enums, settings, the DbContexts, extension methods (the `MapTo` copiers included: the admin's `ContentEditor` uses one), Razor components, anything in a public signature, and any type another ZauberCMS package uses. Internal: EF entity mappings, migrations (`migrations.ps1` rewrites EF's `public` on a new one) and the design-time factories, the middleware `AddZauberCms` wires, hosted services, circuit handlers and start-up plugins ZauberCMS adds for itself, endpoint mapping the bootstrap calls, and plumbing (`AssemblyManager`, its unused public mutable caches removed). Leftover public types nobody uses are `[Obsolete]` (D50), not removed. `InternalsVisibleTo` only for the test projects: the packages use each other through public API, so a site that updates one package never meets a missing internal of another (so `CultureMiddleware` stays public, EntryPage calls its `GetEntryModel`). `PublicApiTests` pins the public types in `Snapshots/PublicTypes.txt`; the rule is in [Standards.md](Standards.md) §1. Umbraco keeps its service implementations, notification handlers and composers public so sites subclass, decorate and replace them, and keeps infrastructure (EF/NPoco mappings, migrations plumbing, middleware internals) out of its supported API; ZauberCMS does the same: extending and updating win over a smaller surface (core principle). Core went from 429 to 375 public types, Components from 278 to 274 (most of what is left is parameters, models and Razor components, which are API by nature). (owner delegated, 2026-11-27, Phase 11f) | ZA-092, D18, D50 |
+| D54 | **API conventions settled for v5 and checked by a test** ([Standards.md](Standards.md) §11). Recycle-bin flags are `IncludeDeleted` (also recycled) and `OnlyDeleted` (only recycled), `bool`, `false` by default, the shape `IncludeUnpublished`/`OnlyUnpublished` already had; `QueryContentParameters.IsDeleted` (`bool?`, the only tri-state) stays as an `[Obsolete]` alias that maps onto them, so what a query returns by default and for every old value is unchanged. `Cached` defaults are kept as they are (changing one changes what callers get) under a written rule: `false` on entity Get/Query parameters, `true` only on the small per-request lookups that are cleared on every write of their type; a test pins each. A public method takes its token last as `CancellationToken cancellationToken = default`, never `CancellationToken?` (`AuditExtensions.AddAudit` changed); `IContentService.ExportContentTypeAsync`/`ImportContentTypeAsync` gained one; `SaveChangesAndLog` and `IQueryModel.ExecuteQuery` got the default; exceptions: framework-fixed signatures, `ICacheService` (its load closes over the caller's token), and the token overload of `ISeoCheck.Check`, which keeps a token-less one. Discovery interfaces are not moved: Umbraco keeps its by feature, and moving `ISeoCheck` (in `Seo.Models`), `IStorageProvider` or `ITreeContextMenu` would break every plugin's `using` to buy neatness; the convention for new ones is `ZauberCMS.Core.<Feature>.Interfaces`. (owner delegated, 2026-11-27, Phase 11f) | ZA-124, D18 |
 
 ## Working rules for the rework
 
@@ -1045,7 +1048,7 @@ Done in parts, one commit each, in this order:
 | 11c | Packaging and template: ZA-087, ZA-094, ZA-118, ZA-119, ZA-123, template smoke test | DONE 2026-11-27 (D45–D47; ZA-168 found and fixed, ZA-167 found, to 11d) |
 | 11d | Start-up and DI: ZA-120, ZA-121, ZA-167 (found in 11c) | DONE 2026-11-27 (D48–D50; the 11c CI failure fixed) |
 | 11e | Breaking: remove the unwired MVC path (ZA-090), Radzen/Modal-typed contracts out of Core (ZA-091) | DONE 2026-11-27 (D51, D52) |
-| 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | |
+| 11f | Breaking: internalise non-contract types (ZA-092), naming conventions (ZA-124) | DONE 2026-11-27 (D53, D54) |
 | 11g | Breaking: split the large services, remove `Content.Url` (ZA-125), custom components get an id or DTO (ZA-126), `IDbContextFactory` decision | |
 
 - **Found in Phase 10e, do first (done in 11a, below):** ZA-164 (the front end's 404 page is sent with an empty body; reproduce in a bare
@@ -1430,6 +1433,99 @@ Umbraco's way as delegated. The first part of the v5 breaking batch (D18).
     `_content/ZauberCMS.Core/ZauberCMS.Core.bundle.scp.css` removes that link.
   - The sign-out POST (`/api/auth/logout`) still answers 400 without a valid antiforgery token; it checks the token
     itself now.
+
+#### Phase 11f — Public surface and API conventions — DONE (2026-11-27)
+ZA-092 (Medium) and ZA-124 (Low) fixed. Decisions D53 (what is public) and D54 (API conventions), taken Umbraco's
+way as delegated. The second part of the v5 breaking batch (D18).
+- **What is public (ZA-092, D53).** The public types of the four packages were listed from their metadata before
+  and after: **ZauberCMS.Core 429 → 375**, **ZauberCMS.Components 278 → 274**, ZauberCMS.Routing 2 → 2, ZauberCMS
+  4 → 4 (the last two hold only Razor components and `_Imports`). The rule (Standards.md §1, "What is public") keeps
+  public what a site builds on, as Umbraco does with its service implementations; what is left in Core is mostly
+  parameters, models, interfaces, services, extension methods and the built-in extension types, which discovery can
+  only see when they are public. Each candidate was grepped in every project, the template, the tests and the docs;
+  a type another package uses stays public instead of getting `InternalsVisibleTo` (the packages use each other
+  through public API only), so `CultureMiddleware` (EntryPage calls `GetEntryModel`), `AdminAccess` (App and Routes),
+  `ServerCache` (in `DefaultCacheService`'s constructor), `InstallState`, `CultureLookup`, `AdminCulture`,
+  `RedirectRules`, `SeoHttp` and the `MapTo` copiers (the admin's `ContentEditor` uses one) stay public. Made
+  internal (54 in Core, 2 in Components, and two nested classes private): the EF entity mappings, the migrations,
+  the design-time factories, six middleware classes and `SitePaths`, `DailyJob`, `AdminCultureCircuitHandler`, the
+  endpoint mapping of the account pages, `AssemblyManager` (its unused public mutable `Types`/`TypesByName` removed),
+  and in Components the sitemap start-up plugin and its hosted service. Three unused public types are `[Obsolete]`
+  (D50): `ZauberCMS.Core.Shared.Dictionary<TKey1,TKey2,TValue>`, `IMsSqlMigration`, `ISqLiteMigration`.
+- **Migrations.** EF generates a migration `public`; `migrations.ps1` now rewrites a new migration's class to
+  `internal` after `dotnet ef migrations add`. Checked by generating an empty migration on all three providers with
+  the script (each came out `internal`, Up/Down empty, snapshots unchanged; removed afterwards) and by
+  `dotnet ef migrations list`, which lists the internal ones. The design-time factories are internal and
+  `dotnet ef` still finds them (the script ran through them). Docs/Data.md says so.
+- **API conventions (ZA-124, D54).** `QueryContentParameters` has `IncludeDeleted` and `OnlyDeleted` like the other
+  parameter classes; `IsDeleted` is an `[Obsolete]` alias (`false` = neither, `true` = `OnlyDeleted`, `null` =
+  `IncludeDeleted`), and the default still returns only live items. Callers grepped: only tests used `IsDeleted`
+  (moved to the new names); the admin's recycle-bin paths use `GetContentParameters.IncludeDeleted`, unchanged.
+  `Cached` defaults unchanged, with the rule written down and each default pinned. `AuditExtensions.AddAudit` takes
+  `CancellationToken cancellationToken = default` instead of `CancellationToken?`; `ExportContentTypeAsync` and
+  `ImportContentTypeAsync` take a token and pass it to their queries and the type save; the import's content save after
+  the type is saved ignores it, so an import is not left half done (the known deviation in
+  Standards.md is gone); `SaveChangesAndLog` (both) and `IQueryModel.ExecuteQuery` give theirs a default. Discovery
+  interfaces are not moved; the convention for new ones is written down (Standards.md §11).
+- Tests: `Bootstrap/PublicApiTests` (9): the public types of Core, Components and Routing equal
+  `Bootstrap/Snapshots/PublicTypes.txt` (651 types; a new public type has to be added on purpose, a removed one is
+  named as a break); no public EF mapping, migration, model snapshot, design-time factory, hosted service, circuit
+  handler or middleware (but `CultureMiddleware`); every built-in class implementing a discovery interface is public;
+  on SQL Server, SQLite and PostgreSQL EF lists exactly the internal migrations of that context and applies every
+  internal mapping (each entity in its `Zauber*` table). `Bootstrap/ApiConventionTests` (17): no parameter class
+  returns recycled items by default; the recycle-bin flags are only `IncludeDeleted`/`OnlyDeleted` (an obsolete
+  alias aside); each `Cached` default pinned and every parameter class with `Cached` in the list; every public
+  method's token is last, optional and not nullable (with the written exceptions); every async method of a service
+  interface takes a token (`ICacheService` aside). `ContentSoftDeleteTests`: `IncludeDeleted` returns both,
+  `OnlyDeleted` only recycled, the obsolete `IsDeleted` filters as before for `false`, `true` and `null`.
+  Full suite 1109 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0
+  warnings; the template smoke test passes.
+- Dev site (`ZauberCMS.Web`, Release, Production, on a copy of its `app.db`): `/`, `/about`, `/contact-us`, `/blog`
+  200, `/nope-page` 404, `/Account/Login` 200, `/admin` 302 to the login page signed out, a `/media` image 200 with
+  `X-Content-Type-Options` and resized with `?width=40` (1878 of 610998 bytes), `/api/auth/logout` 200. Signed in
+  (Playwright; an account registered on the copy and promoted with `RecoverAdminUser`): the admin loads, the content
+  tree and the About editor with its blocks, Settings, SEO Redirects and its "Create Redirect" dialog with the
+  domain list ("Any"). Nothing logged as an error; the browser console shows only the missing favicon and the 404
+  of the access-denied page before the promoted account signed in again.
+- **Not verified:** a third-party plugin built against the 4.x packages (a binary break by design); the media
+  picker's settings dialog (its nested `EnumObject` is private now) was not opened in the browser, only built.
+- **Release notes (D18):**
+  - **Breaking:** these types are internal now (a site never had a reason to use them; ZauberCMS wires them itself):
+    - EF entity mappings: `ZauberCMS.Core.Audit.Mapping.AuditDbMapper`; `ZauberCMS.Core.Content.Mapping.`
+      `ContentDbMapping`, `ContentPropertyValueDbMapping`, `ContentTypeDbMapping`, `ContentVersionDbMapping`,
+      `DomainDbMapping`, `UnpublishedContentDbMapping`; `ZauberCMS.Core.Data.Mapping.GlobalDataDbMapping`;
+      `ZauberCMS.Core.Languages.Mapping.LanguageDbMapping`, `LanguageDictionaryDbMapping`, `LanguageTextDbMapping`;
+      `ZauberCMS.Core.Media.Mapping.MediaDbMapping`; `ZauberCMS.Core.Membership.Mapping.ContentRoleDbMapping`,
+      `MediaRoleDbMapping`, `RoleClaimDbMapping`, `RoleDbMapping`, `UserClaimDbMapping`, `UserDbMapping`,
+      `UserLoginDbMapping`, `UserPropertyValueDbMapping`, `UserRoleDbMapping`, `UserTokenDbMapping`;
+      `ZauberCMS.Core.Seo.Mapping.SeoRedirectDbMapping`; `ZauberCMS.Core.Tags.Mapping.TagDbMapping`,
+      `TagItemDbMapping`. The `*MappingExtensions` (`MapTo`) stay public.
+    - EF migrations: every class in `ZauberCMS.Core.Data.Migrations.SqlServer`, `.SqLite` and `.PostgreSql`
+      (`Initial`, `AddDateUpdatedConcurrencyToken`, `AddUserDeletedFlag`, `ContentVersionIndexes`,
+      `RedirectIsRegex`), and the design-time factories `ZauberCMS.Core.Data.ZauberDesignTimeDbContextFactory`,
+      `ZauberSqliteDesignTimeDbContextFactory`, `ZauberPostgreSqlDesignTimeDbContextFactory`. The DbContexts stay
+      public.
+    - Middleware and request plumbing: `ZauberCMS.Core.Installer.Middleware.InstallerMiddleware`,
+      `ZauberCMS.Core.Media.Middleware.MediaSecurityHeadersMiddleware`, `RestrictedMediaMiddleware`,
+      `ZauberCMS.Core.Membership.Middleware.AdminAccessMiddleware`, `ZauberCMS.Core.Middleware.ErrorPageMiddleware`,
+      `RedirectMiddleware`, `SitePaths`, and `ZauberCMS.Core.Membership.IdentityComponentsEndpointRouteBuilderExtensions`
+      (`MapAdditionalIdentityEndpoints`, which `AddZauberCms` calls). `CultureMiddleware` and `AdminAccess` stay
+      public.
+    - Background and circuit plumbing: `ZauberCMS.Core.Jobs.DailyJob`,
+      `ZauberCMS.Core.Languages.AdminCultureCircuitHandler`, `ZauberCMS.Components.Seo.Startup.SeoSitemapStartUp`,
+      `ZauberCMS.Components.Seo.Startup.SitemapGeneratorService`.
+    - `ZauberCMS.Core.Plugins.AssemblyManager`, with its unused `Types` and `TypesByName` removed. A site adds
+      assemblies with `AddZauberCms(params Assembly[])`.
+    - The nested `MediaPickerPropertySettings.EnumObject` and `AddEditRedirect.DomainChoice` are private.
+  - **Breaking:** `IContentService.ExportContentTypeAsync` and `ImportContentTypeAsync` take a
+    `CancellationToken cancellationToken = default` (calls compile unchanged; a class that implements
+    `IContentService` adds the parameter). `AuditExtensions.AddAudit` takes `CancellationToken cancellationToken =
+    default` instead of `CancellationToken?` (a call that passed `null` passes nothing).
+  - Obsolete: `QueryContentParameters.IsDeleted` → `IncludeDeleted` (also recycled) or `OnlyDeleted` (only
+    recycled); it still works. `ZauberCMS.Core.Shared.Dictionary<TKey1,TKey2,TValue>`, `IMsSqlMigration` and
+    `ISqLiteMigration` are unused and obsolete.
+  - `SaveChangesAndLog` and `IQueryModel.ExecuteQuery` give their token a default (compiles unchanged).
+  - No behaviour change: what every query returns by default, and every `Cached` default, is as in 4.x.
 
 ### Phase 12 — .NET 11 (D4)
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and

@@ -1854,14 +1854,15 @@ public partial class ContentService(
         return result;
     }
 
-    public async Task<string?> ExportContentTypeAsync(string alias, bool includeContent = false)
+    public async Task<string?> ExportContentTypeAsync(string alias, bool includeContent = false,
+        CancellationToken cancellationToken = default)
     {
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
 
         // Tabs and properties are columns of the type (JSON), not navigations: an Include of them threw
         var contentType = await dbContext.ContentTypes.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Alias == alias);
+            .FirstOrDefaultAsync(x => x.Alias == alias, cancellationToken);
 
         if (contentType == null) return null;
 
@@ -1889,7 +1890,7 @@ public partial class ContentService(
             exportType.CompositionAliases = await dbContext.ContentTypes
                 .Where(ct => contentType.CompositionIds.Contains(ct.Id))
                 .Select(ct => ct.Alias!)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
 
         // Map AllowedChildContentTypes to aliases
@@ -1898,13 +1899,13 @@ public partial class ContentService(
             exportType.AllowedChildContentTypeAliases = await dbContext.ContentTypes
                 .Where(ct => contentType.AllowedChildContentTypes.Contains(ct.Id))
                 .Select(ct => ct.Alias!)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
 
         // Map ParentId to alias
         if (contentType.ParentId.HasValue)
         {
-            var parent = await dbContext.ContentTypes.FindAsync(contentType.ParentId.Value);
+            var parent = await dbContext.ContentTypes.FindAsync([contentType.ParentId.Value], cancellationToken);
             exportType.ParentAlias = parent?.Alias ?? string.Empty;
         }
 
@@ -1915,9 +1916,9 @@ public partial class ContentService(
             var rootContents = await dbContext.Contents
                 .Where(c => c.ContentTypeId == contentType.Id && c.ParentId == null)
                 .Include(c => c.PropertyData)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
-            package.RootContents = await BuildContentExportTree(rootContents, dbContext, contentType);
+            package.RootContents = await BuildContentExportTree(rootContents, dbContext, contentType, cancellationToken);
         }
 
         return JsonSerializer.Serialize(package, ExportJsonOptions);
@@ -1926,7 +1927,7 @@ public partial class ContentService(
     private static readonly JsonSerializerOptions ExportJsonOptions = new() { WriteIndented = true };
 
     private static async Task<List<ContentExport>> BuildContentExportTree(List<Models.Content> contents,
-        IZauberDbContext dbContext, ContentType contentType)
+        IZauberDbContext dbContext, ContentType contentType, CancellationToken cancellationToken)
     {
         var exports = new List<ContentExport>();
 
@@ -1963,8 +1964,8 @@ public partial class ContentService(
             var children = await dbContext.Contents
                 .Where(c => c.ParentId == content.Id)
                 .Include(c => c.PropertyData)
-                .ToListAsync();
-            exp.Children = await BuildContentExportTree(children, dbContext, contentType);
+                .ToListAsync(cancellationToken);
+            exp.Children = await BuildContentExportTree(children, dbContext, contentType, cancellationToken);
 
             exports.Add(exp);
         }
@@ -1972,7 +1973,8 @@ public partial class ContentService(
         return exports;
     }
 
-    public async Task<HandlerResult<ContentType>> ImportContentTypeAsync(string json)
+    public async Task<HandlerResult<ContentType>> ImportContentTypeAsync(string json,
+        CancellationToken cancellationToken = default)
     {
         var handlerResult = new HandlerResult<ContentType>();
         var package = JsonSerializer.Deserialize<ContentTypePackage>(json);
@@ -1985,12 +1987,12 @@ public partial class ContentService(
 
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
-        var user = await currentUserAccessor.GetUserAsync();
+        var user = await currentUserAccessor.GetUserAsync(cancellationToken);
 
         // Import ContentType
         var export = package.Type;
         // Not tracked: the type is saved through SaveContentTypeAsync, the content below on this context
-        var existing = await dbContext.ContentTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Alias == export.Alias);
+        var existing = await dbContext.ContentTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Alias == export.Alias, cancellationToken);
 
         var contentType = existing ?? new ContentType { Alias = export.Alias };
 
@@ -2050,7 +2052,7 @@ public partial class ContentService(
         contentType.CompositionIds = [];
         foreach (var compAlias in export.CompositionAliases)
         {
-            var comp = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == compAlias);
+            var comp = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == compAlias, cancellationToken);
             if (comp != null)
             {
                 contentType.CompositionIds.Add(comp.Id);
@@ -2065,7 +2067,7 @@ public partial class ContentService(
         contentType.AllowedChildContentTypes = new List<Guid>();
         foreach (var childAlias in export.AllowedChildContentTypeAliases)
         {
-            var child = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == childAlias);
+            var child = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == childAlias, cancellationToken);
             if (child != null)
             {
                 contentType.AllowedChildContentTypes.Add(child.Id);
@@ -2079,7 +2081,7 @@ public partial class ContentService(
         // Map ParentAlias to Id
         if (!string.IsNullOrEmpty(export.ParentAlias))
         {
-            var parent = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == export.ParentAlias);
+            var parent = await dbContext.ContentTypes.FirstOrDefaultAsync(x => x.Alias == export.ParentAlias, cancellationToken);
             if (parent != null)
             {
                 contentType.ParentId = parent.Id;
@@ -2091,7 +2093,7 @@ public partial class ContentService(
         }
 
         var saveParams = new SaveContentTypeParameters { ContentType = contentType };
-        var typeResult = await SaveContentTypeAsync(saveParams);
+        var typeResult = await SaveContentTypeAsync(saveParams, cancellationToken);
         if (!typeResult.Success)
         {
             return typeResult;
@@ -2109,7 +2111,8 @@ public partial class ContentService(
             await ImportContentRecursive(rootExp, null, contentType, dbContext, user, propMap, handlerResult);
         }
 
-        // One save for the imported content and its tag links, with the save hooks
+        // One save for the imported content and its tag links, with the save hooks. The content type is saved by
+        // now, so its content is saved even when the caller has gone: an import is not left half done
         await ContentTagLinks.StageAsync(dbContext, extensionManager, dbContext.Contents.Local.ToList(),
             CancellationToken.None);
         var contentResult = await dbContext.SaveChangesAndLog(Array.Empty<Models.Content>(), null,
@@ -2284,14 +2287,18 @@ public partial class ContentService(
                     : query.Include(x => x.UnpublishedContent);
             }
 
-            if (request.IsDeleted != null)
+            if (request.OnlyDeleted)
             {
-                query = query.Where(x => x.Deleted == request.IsDeleted);
+                query = query.Where(x => x.Deleted);
+            }
+            else if (!request.IncludeDeleted)
+            {
+                query = query.Where(x => !x.Deleted);
             }
 
             if (request.IncludeChildren)
             {
-                // Recycled children are never included, whatever IsDeleted asks of the items themselves (ZA-065)
+                // Recycled children are never included, whatever the deleted flags ask of the items themselves (ZA-065)
                 query = request.IncludeUnpublished
                     ? query.Include(x => x.Children.Where(c => !c.Deleted))
                         .ThenInclude(x => x.UnpublishedContent)

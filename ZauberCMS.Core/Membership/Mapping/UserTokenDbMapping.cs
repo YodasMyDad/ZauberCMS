@@ -4,7 +4,7 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Membership.Mapping
 {
-    public class UserTokenDbMapping : IEntityTypeConfiguration<UserToken>
+    internal class UserTokenDbMapping : IEntityTypeConfiguration<UserToken>
     {
         public void Configure(EntityTypeBuilder<UserToken> builder)
         {

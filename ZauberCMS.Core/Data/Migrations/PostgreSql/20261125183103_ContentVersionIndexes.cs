@@ -5,7 +5,7 @@
 namespace ZauberCMS.Core.Data.Migrations.PostgreSql
 {
     /// <inheritdoc />
-    public partial class ContentVersionIndexes : Migration
+    internal partial class ContentVersionIndexes : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

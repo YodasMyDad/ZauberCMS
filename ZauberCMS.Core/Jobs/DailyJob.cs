@@ -15,7 +15,7 @@ namespace ZauberCMS.Core.Jobs;
 /// The daily clean-up: old audit rows, orphaned related-content links and old page versions. The first run is a few
 /// minutes after start-up, then once a day. A shutdown stops a run that is under way (ZA-111).
 /// </summary>
-public class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger) : BackgroundService
+internal class DailyJob(IServiceProvider serviceProvider, ILogger<DailyJob> logger) : BackgroundService
 {
     /// <summary>How long after start-up the first run waits.</summary>
     internal static readonly TimeSpan FirstRunDelay = TimeSpan.FromMinutes(5);

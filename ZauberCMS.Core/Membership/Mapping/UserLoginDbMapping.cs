@@ -4,7 +4,7 @@ using ZauberCMS.Core.Membership.Models;
 
 namespace ZauberCMS.Core.Membership.Mapping
 {
-    public class UserLoginDbMapping : IEntityTypeConfiguration<UserLogin>
+    internal class UserLoginDbMapping : IEntityTypeConfiguration<UserLogin>
     {
         public void Configure(EntityTypeBuilder<UserLogin> builder)
         {

@@ -11,6 +11,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Update="Bootstrap/Snapshots/*.txt" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="Testcontainers.PostgreSql" />
       <PackageReference Include="Testcontainers.Redis" />
     </ItemGroup>

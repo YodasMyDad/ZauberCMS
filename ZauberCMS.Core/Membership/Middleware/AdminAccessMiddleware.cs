@@ -19,7 +19,7 @@ namespace ZauberCMS.Core.Membership.Middleware;
 /// </list>
 /// Must run after authentication and routing, and before authorisation.
 /// </summary>
-public class AdminAccessMiddleware(RequestDelegate next, ILogger<AdminAccessMiddleware> logger)
+internal class AdminAccessMiddleware(RequestDelegate next, ILogger<AdminAccessMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context, IDataService dataService)
     {

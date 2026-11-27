@@ -30,7 +30,7 @@ public static class AdminCulture
 /// connection, which is not an admin request: without this, dates and numbers in the admin followed the language
 /// of the site's root content (ZA-141).
 /// </summary>
-public sealed class AdminCultureCircuitHandler(NavigationManager navigation, IOptions<ZauberSettings> settings)
+internal sealed class AdminCultureCircuitHandler(NavigationManager navigation, IOptions<ZauberSettings> settings)
     : CircuitHandler
 {
     /// <inheritdoc />

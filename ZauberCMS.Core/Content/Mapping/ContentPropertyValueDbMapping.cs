@@ -4,7 +4,7 @@ using ZauberCMS.Core.Content.Models;
 
 namespace ZauberCMS.Core.Content.Mapping;
 
-public class ContentPropertyValueDbMapping : IEntityTypeConfiguration<ContentPropertyValue>
+internal class ContentPropertyValueDbMapping : IEntityTypeConfiguration<ContentPropertyValue>
 {
     public void Configure(EntityTypeBuilder<ContentPropertyValue> builder)
     {

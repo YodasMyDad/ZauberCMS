@@ -5,7 +5,7 @@
 namespace ZauberCMS.Core.Data.Migrations.PostgreSql
 {
     /// <inheritdoc />
-    public partial class AddDateUpdatedConcurrencyToken : Migration
+    internal partial class AddDateUpdatedConcurrencyToken : Migration
     {
         // Adds the IsConcurrencyToken() annotation to ZauberContent.DateUpdated.
         // This is a model-only metadata change — no DDL is required because EF emits the concurrency

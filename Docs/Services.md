@@ -28,9 +28,11 @@ How Core services are built. Paths relative to `ZauberCMS.Core/`. Standards: [St
   `HandlerResult<T>` (`Entity`, `Success`, `Messages`, `RefreshSignIn` + `RefreshSignInTicket`). Add messages with
   `handlerResult.AddMessage(text, ResultMessageType.Error|Warning|Info|Success)`.
 - Parameter conventions: `Cached`, `AsNoTracking = true`, collections `= []`, nullable filters, `OrderBy` enum,
-  `PageIndex` (1-based) / `AmountPerPage`. Soft delete is inconsistent today: Get parameters and the Media/User
-  Query parameters use `IncludeDeleted`; only `QueryContentParameters` uses `bool? IsDeleted = false` (`true` =
-  recycle bin, `null` = both). Included `Children` never contain recycled items, whatever the filter.
+  `PageIndex` (1-based) / `AmountPerPage`; the full list, `Cached` defaults included, is
+  [Standards.md](Standards.md) §11. Soft delete (ZA-124): `IncludeDeleted` (also recycled items) on the Get and
+  Query parameters of Content, Media and User and on `DataGridParameters`, plus `OnlyDeleted` (only recycled items)
+  on `QueryContentParameters`; both default to `false`. The v4 `QueryContentParameters.IsDeleted` (`true` = only,
+  `null` = both) is an `[Obsolete]` alias of them. Included `Children` never contain recycled items, whatever the filter.
   - `WhereClause` (expression) is always applied on top of standard filters.
   - `Query` (`Func<IQueryable<T>>`) **replaces** the whole query — including the soft-delete filter. Callers own it.
 
@@ -242,7 +244,7 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   path (`example.com/fr` → From URL `/fr/old`). The loop check counts only rules that can apply on the same requests.
   Deleting a domain deletes its redirects.
 - Everything else (ContentType, Domain, Role, Language, Tag, Redirect, ContentVersion, Audit): hard delete.
-- Recycle-bin code paths must pass `IncludeDeleted = true` (Get, Media/User queries) / `IsDeleted = true` (`QueryContentParameters`).
+- Recycle-bin code paths must pass `IncludeDeleted = true` (Get, queries) or `OnlyDeleted = true` (`QueryContentParameters`, bin only).
   That includes the admin editor that opens an item from the bin (`EditContent`, `ContentEditor`).
 - Grid methods (`GetDataGridAsync<T>`, `GetDataGridContentAsync`, `GetDataGridLanguageDictionaryAsync`) take the
   grid's filter and sort strings. `GridQueryGuard` parses and checks them: entity properties and simple value

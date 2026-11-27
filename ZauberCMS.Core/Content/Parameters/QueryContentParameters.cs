@@ -17,12 +17,33 @@ public class QueryContentParameters : BaseQueryContentParameters
     public bool IncludeContentRoles { get; set; }
     public bool OnlyUnpublished { get; set; }
     /// <summary>
-    /// Recycle-bin filter. <c>false</c> (the default): only items not in the recycle bin. <c>true</c>: only items in
-    /// the recycle bin. <c>null</c>: both — use it only on purpose (maintenance, admin tools), never for pages
-    /// shown to visitors. Included <see cref="BaseQueryContentParameters.IncludeChildren">children</see> never
-    /// contain recycled items, whatever this is set to.
+    /// Also return items in the recycle bin. <c>false</c> (the default): only items not in the recycle bin. Use it
+    /// only on purpose (maintenance, admin tools), never for pages shown to visitors. Included
+    /// <see cref="BaseQueryContentParameters.IncludeChildren">children</see> never contain recycled items.
     /// </summary>
-    public bool? IsDeleted { get; set; } = false;
+    public bool IncludeDeleted { get; set; }
+
+    /// <summary>
+    /// Return only items in the recycle bin (wins over <see cref="IncludeDeleted"/>). Included
+    /// <see cref="BaseQueryContentParameters.IncludeChildren">children</see> never contain recycled items.
+    /// </summary>
+    public bool OnlyDeleted { get; set; }
+
+    /// <summary>
+    /// The v4 recycle-bin filter, kept as an alias (ZA-124): <c>false</c> = neither flag (the default), <c>true</c> =
+    /// <see cref="OnlyDeleted"/>, <c>null</c> = <see cref="IncludeDeleted"/>.
+    /// </summary>
+    [Obsolete("Use IncludeDeleted (also recycled items) or OnlyDeleted (only recycled items), as the other parameter " +
+              "classes do. Will be removed in a later major version.")]
+    public bool? IsDeleted
+    {
+        get => OnlyDeleted ? true : IncludeDeleted ? null : false;
+        set
+        {
+            OnlyDeleted = value == true;
+            IncludeDeleted = value == null;
+        }
+    }
     public bool RootContentOnly { get; set; }
     public Expression<Func<Content.Models.Content, bool>>? WhereClause { get; set; }
     public Func<IQueryable<Content.Models.Content>>? Query { get; set; }

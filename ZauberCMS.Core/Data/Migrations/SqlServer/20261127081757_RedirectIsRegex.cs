@@ -5,7 +5,7 @@
 namespace ZauberCMS.Core.Data.Migrations.SqlServer
 {
     /// <inheritdoc />
-    public partial class RedirectIsRegex : Migration
+    internal partial class RedirectIsRegex : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

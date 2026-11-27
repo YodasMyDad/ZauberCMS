@@ -12,7 +12,7 @@ namespace ZauberCMS.Core.Middleware;
 /// original exception back and this middleware answers with a plain page that needs nothing: no database, no
 /// layout, no component. It shows the request id, which is in the site's log next to the exception.
 /// </summary>
-public class ErrorPageMiddleware(RequestDelegate next, ILogger<ErrorPageMiddleware> logger)
+internal class ErrorPageMiddleware(RequestDelegate next, ILogger<ErrorPageMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)
     {

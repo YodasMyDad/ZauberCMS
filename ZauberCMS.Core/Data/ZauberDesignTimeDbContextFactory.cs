@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace ZauberCMS.Core.Data
 {
-    public class ZauberDesignTimeDbContextFactory : IDesignTimeDbContextFactory<ZauberDbContext>
+    internal class ZauberDesignTimeDbContextFactory : IDesignTimeDbContextFactory<ZauberDbContext>
     {
         public ZauberDbContext CreateDbContext(string[] args)
         {
@@ -24,7 +24,7 @@ namespace ZauberCMS.Core.Data
         }
     }
 
-    public class ZauberSqliteDesignTimeDbContextFactory : IDesignTimeDbContextFactory<SqliteZauberDbContext>
+    internal class ZauberSqliteDesignTimeDbContextFactory : IDesignTimeDbContextFactory<SqliteZauberDbContext>
     {
         public SqliteZauberDbContext CreateDbContext(string[] args)
         {
@@ -44,7 +44,7 @@ namespace ZauberCMS.Core.Data
         }
     }
 
-    public class ZauberPostgreSqlDesignTimeDbContextFactory : IDesignTimeDbContextFactory<PostgreSqlZauberDbContext>
+    internal class ZauberPostgreSqlDesignTimeDbContextFactory : IDesignTimeDbContextFactory<PostgreSqlZauberDbContext>
     {
         public PostgreSqlZauberDbContext CreateDbContext(string[] args)
         {

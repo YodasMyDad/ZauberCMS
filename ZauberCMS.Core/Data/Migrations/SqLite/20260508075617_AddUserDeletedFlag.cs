@@ -5,7 +5,7 @@
 namespace ZauberCMS.Core.Data.Migrations.SqLite
 {
     /// <inheritdoc />
-    public partial class AddUserDeletedFlag : Migration
+    internal partial class AddUserDeletedFlag : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

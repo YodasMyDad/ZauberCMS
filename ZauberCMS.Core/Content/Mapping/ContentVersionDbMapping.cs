@@ -5,7 +5,7 @@ using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Core.Content.Mapping;
 
-public class ContentVersionDbMapping : IEntityTypeConfiguration<ContentVersion>
+internal class ContentVersionDbMapping : IEntityTypeConfiguration<ContentVersion>
 {
     public const string UniqueCurrentPublishedIndex = "IX_ContentVersion_UniqueCurrentPublished";
     public const string UniqueLatestDraftIndex = "IX_ContentVersion_UniqueLatestDraft";

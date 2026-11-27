@@ -1,5 +1,6 @@
 namespace ZauberCMS.Core.Shared;
 
+[Obsolete("Not used by ZauberCMS (ZA-092). Use Dictionary<(TKey1, TKey2), TValue>. Will be removed in a later major version.")]
 public class Dictionary<TKey1,TKey2,TValue> :  Dictionary<Tuple<TKey1, TKey2>, TValue>
 {
 

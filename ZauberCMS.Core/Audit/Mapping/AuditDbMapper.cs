@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ZauberCMS.Core.Audit.Mapping;
 
-public class AuditDbMapper : IEntityTypeConfiguration<Models.Audit>
+internal class AuditDbMapper : IEntityTypeConfiguration<Models.Audit>
 {
     public void Configure(EntityTypeBuilder<Models.Audit> builder)
     {

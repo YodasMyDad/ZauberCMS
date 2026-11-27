@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ZauberCMS.Core.Data.Migrations.PostgreSql
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    internal partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

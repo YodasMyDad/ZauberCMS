@@ -25,12 +25,14 @@ existing JSON/property-value storage. Schema changes need sign-off.
 
 1. Model in `<Feature>/Models/X.cs`: `Id = Guid.NewGuid().NewSequentialGuid()`, `DateCreated`/`DateUpdated =
    DateTime.UtcNow`.
-2. `<Feature>/Mapping/XDbMapping.cs` implementing `IEntityTypeConfiguration<X>`; table name `Zauber`-prefixed.
-   Mappings are picked up by `ApplyConfigurationsFromAssembly` **for the Core assembly only** — plugin assemblies can't
-   add entities this way.
+2. `<Feature>/Mapping/XDbMapping.cs`: an `internal` class implementing `IEntityTypeConfiguration<X>`; table name
+   `Zauber`-prefixed. Mappings are picked up by `ApplyConfigurationsFromAssembly` **for the Core assembly only** —
+   plugin assemblies can't add entities this way. They are not public API (ZA-092, [Standards.md](Standards.md) §1).
 3. `DbSet<X>` in **both** `Data/IZauberDbContext.cs` and `Data/ZauberDbContextBase.cs`.
 4. `MapTo` in `<Feature>/Mapping/XMappingExtensions.cs` (for service updates).
-5. From repo root: `./migrations.ps1 -MigrationName AddXToY` → generates the migration for all three contexts.
+5. From repo root: `./migrations.ps1 -MigrationName AddXToY` → generates the migration for all three contexts and
+   makes each new migration class `internal` (EF generates it public; EF finds internal ones, and `PublicApiTests`
+   fails on a public migration). The design-time factories are internal too.
 6. Review all three migrations + model snapshots, commit together. Never edit a generated migration by hand except to
    add data-preserving SQL that is valid on that provider.
 7. Model-only changes (e.g. a concurrency token) still need a migration in all three so snapshots stay aligned —

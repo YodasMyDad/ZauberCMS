@@ -4,7 +4,7 @@ using ZauberCMS.Core.Content.Models;
 
 namespace ZauberCMS.Core.Content.Mapping;
 
-public class DomainDbMapping : IEntityTypeConfiguration<Domain>
+internal class DomainDbMapping : IEntityTypeConfiguration<Domain>
 {
     public void Configure(EntityTypeBuilder<Domain> builder)
     {
