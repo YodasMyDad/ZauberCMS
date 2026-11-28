@@ -4,14 +4,15 @@
 @inherits RadzenHtmlEditorButtonBase
 @inject IModalService DialogService
 
-<EditorButton Click="@OnClick" Icon="insert_photo" Title="@Title" />
+<EditorButton Click="@OnClick" Icon="insert_photo" Title="@(Title ?? L["editorDialogs_insertImage"])" />
 
 @code {
     /// <summary>
-    /// Specifies the title (tooltip) displayed when the user hovers the tool. Set to <c>"Insert image"</c> by default.
+    /// Specifies the title (tooltip) displayed when the user hovers the tool, also the media picker's heading. Without it,
+    /// <c>editorDialogs_insertImage</c> ("Insert image") in the admin's language (Roadmap D37).
     /// </summary>
     [Parameter]
-    public string Title { get; set; } = "Insert image";
+    public string? Title { get; set; }
 
     /// <summary>
     /// Specifies the text of button which inserts the image. Set to <c>"OK"</c> by default.
@@ -40,7 +41,7 @@
             { nameof(MediaTree.MediaTypes), new List<MediaType> { MediaType.Image } }
         };
 
-        Modal = DialogService.OpenSidePanel<MediaTree>(Title, parameters);
+        Modal = DialogService.OpenSidePanel<MediaTree>(Title ?? L["editorDialogs_insertImage"], parameters);
         var result = await Modal.Result;
         
         if (result.Confirmed && SelectedMedia != null)

@@ -1,12 +1,14 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
-public class HeadingOneSeoCheck : ISeoCheck
+public class HeadingOneSeoCheck(IStringLocalizer<ZauberText> text) : ISeoCheck
 {
-    public string Name => "H1 Checker";
+    public string Name => text["seo_headingOneCheck"];
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
     {
         var result = new SeoCheckResult(Name);
@@ -18,20 +20,20 @@ public class HeadingOneSeoCheck : ISeoCheck
         if (h1Tags == null || h1Tags.Count == 0)
         {
             seoItem.Status = AlertType.Error;
-            seoItem.DefaultMessage = "Page is missing an <h1> heading tag.";
+            seoItem.DefaultMessage = text["seo_headingOneMissing"];
             result.Items.Add(seoItem);
         }
         else if (h1Tags.Count > 1)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.DefaultMessage = $"Page contains multiple <h1> tags ({h1Tags.Count}). Consider reducing to one for better SEO.";
+            seoItem.DefaultMessage = text["seo_headingOneMultiple", h1Tags.Count];
             result.Items.Add(seoItem);
         }
 
         if (result.Items.Count == 0)
         {
             seoItem.Status = AlertType.Success;
-            seoItem.DefaultMessage = "Page contains an <h1> heading tag.";
+            seoItem.DefaultMessage = text["seo_headingOnePresent"];
             result.Items.Add(seoItem);
         }
 

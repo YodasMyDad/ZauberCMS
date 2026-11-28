@@ -1,12 +1,14 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
-public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
+public class BrokenLinksCheck(IHttpClientFactory httpClientFactory, IStringLocalizer<ZauberText> text) : ISeoCheck
 {
-    public string Name => "Broken Links Checker";
+    public string Name => text["seo_brokenLinksCheck"];
 
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content) =>
         Check(url, document, content, CancellationToken.None);
@@ -24,7 +26,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             result.Items.Add(new SeoCheckResultItem
             {
                 Status = AlertType.Warning,
-                DefaultMessage = "No valid <body> content found on the page."
+                DefaultMessage = text["seo_noBodyContent"].Value
             });
             return result;
         }
@@ -45,7 +47,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             result.Items.Add(new SeoCheckResultItem
             {
                 Status = AlertType.Warning,
-                DefaultMessage = "No valid content links found on the page. Internal links, within content can help improve SEO"
+                DefaultMessage = text["seo_noContentLinks"].Value
             });
             return result;
         }
@@ -75,7 +77,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
                 if (!response.IsSuccessStatusCode)
                 {
                     seoItem.Status = AlertType.Error;
-                    seoItem.DefaultMessage = $"Broken link: {link} (Status: {response.StatusCode})";
+                    seoItem.DefaultMessage = text["seo_brokenLink", link, response.StatusCode];
                     seoItems.Add(seoItem);
                 }
                 // Add 500ms delay between requests
@@ -90,7 +92,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             catch
             {
                 seoItem.Status = AlertType.Error;
-                seoItem.DefaultMessage = $"Invalid or unreachable link: {link}";
+                seoItem.DefaultMessage = text["seo_unreachableLink", link];
                 seoItems.Add(seoItem);
             }
         }
@@ -100,7 +102,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             seoItems.Add(new SeoCheckResultItem
             {
                 Status = AlertType.Warning,
-                DefaultMessage = "More than 50 links. Only the first 50 have been checked."
+                DefaultMessage = text["seo_tooManyLinks"].Value
             });
         }
 
@@ -109,7 +111,7 @@ public class BrokenLinksCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
             result.Items.Add(new SeoCheckResultItem
             {
                 Status = AlertType.Success,
-                DefaultMessage = "No broken links found."
+                DefaultMessage = text["seo_noBrokenLinks"].Value
             });
         }
 

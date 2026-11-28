@@ -4,15 +4,15 @@
     <DataAnnotationsValidator/>
     <EditorRow>
         <LeftColumn>
-            <PropertyInfo Name="Name" Description="The name of the navigation item"/>
+            <PropertyInfo Name="@L["general_name"]" Description="@L["editorDialogs_navigationItemNameDescription"]"/>
         </LeftColumn>
         <CentreColumn>
             @if (NavigationItem?.ContentId != null)
             {
-                <div class="text-xs font-extralight text-slate-300">ID: @NavigationItem.Id</div>
+                <div class="text-xs font-extralight text-slate-300">@L["editorDialogs_navigationItemId", NavigationItem.Id]</div>
             }
             <div class="flex justify-between items-center">
-                <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-full" aria-label="Name"/>
+                <RadzenTextBox @bind-Value="@NavigationItem!.Name" class="w-full" aria-label="@L["general_name"]"/>
                 @if (NavigationItem?.ContentId != null)
                 {
                     <RadzenButton Icon="remove_circle_outline" Variant="Variant.Text" Click="RemoveContent" class="ml-1"/>
@@ -28,10 +28,10 @@
 
     <EditorRow>
         <LeftColumn>
-            <PropertyInfo Name="Url" Description="The url of the navigation item"/>
+            <PropertyInfo Name="@L["general_url"]" Description="@L["editorDialogs_navigationItemUrlDescription"]"/>
         </LeftColumn>
         <CentreColumn>
-            <RadzenTextBox @bind-Value="@NavigationItem!.Url" class="w-full flex-1" aria-label="Url" ReadOnly="@(NavigationItem?.ContentId != null)"/>
+            <RadzenTextBox @bind-Value="@NavigationItem!.Url" class="w-full flex-1" aria-label="@L["general_url"]" ReadOnly="@(NavigationItem?.ContentId != null)"/>
             <ValidationMessage For="() => NavigationItem!.Url" class="text-danger"/>
         </CentreColumn>
     </EditorRow>
@@ -39,7 +39,7 @@
 
     <EditorRow>
         <LeftColumn>
-            <PropertyInfo Name="Sort Order" Description="The position in the tree this item is"/>
+            <PropertyInfo Name="@L["editorDialogs_sortOrder"]" Description="@L["editorDialogs_navigationItemSortOrderDescription"]"/>
         </LeftColumn>
         <CentreColumn>
             <RadzenNumeric @bind-Value="@NavigationItem!.SortOrder"/>
@@ -48,7 +48,7 @@
 
     <EditorRow>
         <LeftColumn>
-            <PropertyInfo Name="Open In New Window" Description="Open this url in a new window"/>
+            <PropertyInfo Name="@L["editorDialogs_openInNewWindow"]" Description="@L["editorDialogs_openInNewWindowDescription"]"/>
         </LeftColumn>
         <CentreColumn>
             <RadzenSwitch @bind-Value="@NavigationItem!.OpenInNewWindow"/>
@@ -56,7 +56,7 @@
     </EditorRow>
 
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" />
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" />
     </RadzenStack>
 </EditForm>
 
@@ -88,7 +88,7 @@
             { nameof(ContentTree.ValueChanged), EventCallback.Factory.Create<object>(this, ContentPicked) }
         };
 
-        Modal = ModalService?.OpenSidePanel<ContentTree>("Choose Content", parameters);
+        Modal = ModalService?.OpenSidePanel<ContentTree>(L["editorDialogs_chooseContent"], parameters);
     }
 
     private Task ContentPicked(object value)

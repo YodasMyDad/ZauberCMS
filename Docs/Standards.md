@@ -132,7 +132,8 @@ removed line is a breaking change for the release notes.
   `["img", "images", "media"]` gives `uploads, images, media`), so tell site builders to set a whole list in one
   place, or remove it from the earlier file. A blank `Zauber:Plugins:StorageProvider` or `EmailProvider` passes the
   check and means no provider (D83): a blank storage provider is a start-up warning, and an upload or a permanent
-  delete of a file is refused with `ProviderService.NoStorageProviderMessage`; a blank email provider is a site that
+  delete of a file is refused with `media_noStorageProvider` (Core's text, D92; its English is the constant
+  `ProviderService.NoStorageProviderMessage`); a blank email provider is a site that
   sends no email (no warning, as Umbraco runs without SMTP), and a send throws `InvalidOperationException` with
   `NoEmailProviderMessage`. Code that needs a provider calls `ProviderService.GetRequiredStorageProvider()` /
   `GetRequiredEmailProvider()` or checks the nullable property, never `StorageProvider!` (a test looks for it).
@@ -193,6 +194,8 @@ Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it o
   `AddZauberCms`, a private in-memory SQLite database created by the real migrations, the seeders, and a signed-in
   user (`TestSite.SignIn`). The web server is not started. Create a `TestSite` per test class (`IAsyncLifetime`),
   call services through a scope, and assert on what is stored with `QueryDatabaseAsync` (fresh DbContext).
+  A test that builds a class needing ZauberCMS's text itself (an SEO check, `RedirectRules`) passes
+  `TestText.Localizer`, Core's English (Docs/AdminUI.md "Localisation").
 - `tests/ZauberCMS.Components.Tests` — plain unit tests of component-side models (`BlockListState`) and the
   snapshot of shipped property-editor type names (`Discovery/Snapshots/PropertyEditors.txt`: adding an editor means
   adding a line; a line may never be removed or renamed — the names are stored in site databases).

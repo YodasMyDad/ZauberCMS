@@ -3,11 +3,13 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Parameters;
 using ZauberCMS.Core.Media.Mapping;
@@ -31,7 +33,8 @@ public class MediaService(
     ICacheService cacheService,
     ICurrentUserAccessor currentUserAccessor,
     ExtensionManager extensionManager,
-    ILogger<MediaService> logger)
+    ILogger<MediaService> logger,
+    IStringLocalizer<ZauberText> text)
     : IMediaService
 {
     /// <summary>
@@ -74,7 +77,7 @@ public class MediaService(
         if (parentId != null &&
             await dbContext.Medias.AsNoTracking().AnyAsync(x => x.Id == parentId && x.Deleted, cancellationToken))
         {
-            result.AddMessage("The folder is in the recycle bin: restore it first", ResultMessageType.Error);
+            result.AddMessage(text["media_folderInRecycleBin"], ResultMessageType.Error);
             return result;
         }
 
@@ -83,7 +86,7 @@ public class MediaService(
         if (parameters.IsUpdate && parameters.MediaToSave is { } toUpdate &&
             await dbContext.Medias.AsNoTracking().AnyAsync(x => x.Id == toUpdate.Id && x.Deleted, cancellationToken))
         {
-            result.AddMessage("This media is in the recycle bin: restore it before changing it", ResultMessageType.Error);
+            result.AddMessage(text["media_inRecycleBin"], ResultMessageType.Error);
             return result;
         }
 
@@ -93,7 +96,8 @@ public class MediaService(
             // A site whose storage setting is blank stores no files: say which setting, not a NullReferenceException (ZA-196)
             if (providerService.StorageProvider is not { } storage)
             {
-                result.AddMessage(ProviderService.NoStorageProviderMessage, ResultMessageType.Error);
+                // The text of ProviderService.NoStorageProviderMessage, in the caller's language
+                result.AddMessage(text["media_noStorageProvider"], ResultMessageType.Error);
                 return result;
             }
 
@@ -130,15 +134,13 @@ public class MediaService(
                     if (dbMedia.Deleted)
                     {
                         // Binned between the check above and here
-                        result.AddMessage("This media is in the recycle bin: restore it before changing it",
-                            ResultMessageType.Error);
+                        result.AddMessage(text["media_inRecycleBin"], ResultMessageType.Error);
                         return result;
                     }
 
                     if (result.Entity.Deleted)
                     {
-                        result.AddMessage("Use Delete to move media to the recycle bin; the save left it where it is",
-                            ResultMessageType.Warning);
+                        result.AddMessage(text["media_useDeleteToRecycle"], ResultMessageType.Warning);
                     }
 
                     result.Entity.MapTo(dbMedia);
@@ -148,7 +150,7 @@ public class MediaService(
 
                     if (result.Entity.Url.IsNullOrWhiteSpace() && result.Entity.MediaType != Models.MediaType.Folder)
                     {
-                        result.AddMessage("Url cannot be empty", ResultMessageType.Error);
+                        result.AddMessage(text["media_urlRequired"], ResultMessageType.Error);
                         return result;
                     }
 
@@ -166,7 +168,7 @@ public class MediaService(
                 }
                 else
                 {
-                    result.AddMessage("Unable to update, as no Media with that id exists", ResultMessageType.Warning);
+                    result.AddMessage(text["media_updateNotFound"], ResultMessageType.Warning);
                     return result;
                 }
             }
@@ -188,7 +190,7 @@ public class MediaService(
         }
         else
         {
-            result.AddMessage("There is no media to save?", ResultMessageType.Error);
+            result.AddMessage(text["media_nothingToSave"], ResultMessageType.Error);
             result.Success = false;
         }
 
@@ -234,7 +236,7 @@ public class MediaService(
         var media = await dbContext.Medias.AsTracking().FirstOrDefaultAsync(x => x.Id == parameters.MediaId, cancellationToken);
         if (media == null)
         {
-            handlerResult.AddMessage("Unable to delete, as no Media with that id exists", ResultMessageType.Warning);
+            handlerResult.AddMessage(text["media_deleteNotFound"], ResultMessageType.Warning);
             return handlerResult;
         }
 
@@ -244,7 +246,7 @@ public class MediaService(
         {
             if (media.Deleted)
             {
-                handlerResult.AddMessage("This media is already in the recycle bin", ResultMessageType.Warning);
+                handlerResult.AddMessage(text["media_alreadyInRecycleBin"], ResultMessageType.Warning);
                 return handlerResult;
             }
 
@@ -272,9 +274,7 @@ public class MediaService(
         // A live item below is never deleted as a side effect
         if (descendants.Any(x => !x.Deleted))
         {
-            handlerResult.AddMessage(
-                "Unable to delete a folder that still has media in it: move that media out or to the recycle bin first",
-                ResultMessageType.Error);
+            handlerResult.AddMessage(text["media_folderNotEmpty"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -303,13 +303,13 @@ public class MediaService(
         var media = await dbContext.Medias.AsTracking().FirstOrDefaultAsync(x => x.Id == parameters.MediaId, cancellationToken);
         if (media == null)
         {
-            handlerResult.AddMessage("Unable to restore, as no Media with that id exists", ResultMessageType.Warning);
+            handlerResult.AddMessage(text["media_restoreNotFound"], ResultMessageType.Warning);
             return handlerResult;
         }
 
         if (!media.Deleted)
         {
-            handlerResult.AddMessage("This media is not in the recycle bin", ResultMessageType.Warning);
+            handlerResult.AddMessage(text["media_notInRecycleBin"], ResultMessageType.Warning);
             return handlerResult;
         }
 
@@ -317,8 +317,7 @@ public class MediaService(
             await dbContext.Medias.AsNoTracking().AnyAsync(x => x.Id == parentId && x.Deleted, cancellationToken))
         {
             // It would be live inside a folder that is not, and in neither tree
-            handlerResult.AddMessage("Restore the parent folder first: it is still in the recycle bin",
-                ResultMessageType.Error);
+            handlerResult.AddMessage(text["media_restoreParentFirst"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -391,9 +390,7 @@ public class MediaService(
 
         if (keep.Count > 0)
         {
-            result.AddMessage(
-                $"{keep.Count} folder(s) in the recycle bin still have live media in them and were kept",
-                ResultMessageType.Warning);
+            result.AddMessage(text["media_foldersKept", keep.Count], ResultMessageType.Warning);
         }
 
         var toDelete = binned.Where(x => !keep.Contains(x.Id)).ToList();
@@ -606,7 +603,8 @@ public class MediaService(
         var storage = providerService.StorageProvider;
         if (deleteFiles && storage == null)
         {
-            handlerResult.AddMessage(ProviderService.NoStorageProviderMessage, ResultMessageType.Error);
+            // The text of ProviderService.NoStorageProviderMessage, in the caller's language
+            handlerResult.AddMessage(text["media_noStorageProvider"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -646,9 +644,7 @@ public class MediaService(
                 catch (Exception ex)
                 {
                     logger.LogWarning(ex, "Media file {Url} could not be removed from storage", url);
-                    result.AddMessage(
-                        $"The file '{url}' could not be removed from storage, so nothing was deleted. Try again; files " +
-                        "removed before it are already gone.", ResultMessageType.Error);
+                    result.AddMessage(text["media_fileNotRemoved", url], ResultMessageType.Error);
                     return false;
                 }
             }

@@ -39,7 +39,7 @@ public partial class ContentService
 
         if (parameters.Content == null)
         {
-            handlerResult.AddMessage("Content is null", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_contentIsNull"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -124,9 +124,7 @@ public partial class ContentService
             catch (DbUpdateConcurrencyException)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                handlerResult.AddMessage(
-                    "Content was modified by another user — please reload and re-apply your changes",
-                    ResultMessageType.Error);
+                handlerResult.AddMessage(text["content_modifiedByAnotherUser"], ResultMessageType.Error);
                 return handlerResult;
             }
             catch
@@ -228,7 +226,7 @@ public partial class ContentService
     {
         if (parameters.Content == null)
         {
-            handlerResult.AddMessage("Content is null", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_contentIsNull"], ResultMessageType.Error);
             return null;
         }
 
@@ -347,7 +345,7 @@ public partial class ContentService
             var isOwnDescendant = newParentId == content.Id || descendants.Any(x => x.Id == newParentId);
             if (isOwnDescendant)
             {
-                handlerResult.AddMessage("Content can't be moved below itself", ResultMessageType.Error);
+                handlerResult.AddMessage(text["content_cannotMoveBelowItself"], ResultMessageType.Error);
                 return null;
             }
         }
@@ -359,8 +357,7 @@ public partial class ContentService
             await dbContext.Contents.AsNoTracking().AnyAsync(x => x.Id == restoreParentId && x.Deleted, cancellationToken))
         {
             // It would be live under a page that is not, unreachable in both trees (ZA-048)
-            handlerResult.AddMessage("Restore the parent page first: it is still in the recycle bin",
-                ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_restoreParentFirst"], ResultMessageType.Error);
             return null;
         }
 
@@ -381,14 +378,13 @@ public partial class ContentService
                     if (isRestore)
                     {
                         await KeepDraftUrlAsync(dbContext, content, cancellationToken);
-                        handlerResult.AddMessage(
-                            $"The URL '{url}' is now used by another page, so the restored page has the URL '{content.Url}'",
+                        handlerResult.AddMessage(text["content_restoredUrlTaken", url, content.Url!],
                             ResultMessageType.Warning);
                     }
                 }
                 else
                 {
-                    handlerResult.AddMessage($"The URL '{url}' is already used by another page", ResultMessageType.Error);
+                    handlerResult.AddMessage(text["content_urlTaken", url], ResultMessageType.Error);
                     return null;
                 }
             }
@@ -425,7 +421,8 @@ public partial class ContentService
                             descendant.Url = await GenerateUniqueUrlAsync(dbContext, descendantUrl!, cancellationToken, descendant.Id, reservedUrls);
                             await KeepDraftUrlAsync(dbContext, descendant, cancellationToken);
                             handlerResult.AddMessage(
-                                $"The URL '{descendantUrl}' is now used by another page, so the restored page '{descendant.Name}' has the URL '{descendant.Url}'",
+                                text["content_restoredChildUrlTaken", descendantUrl!, descendant.Name ?? string.Empty,
+                                    descendant.Url!],
                                 ResultMessageType.Warning);
                         }
 
@@ -731,8 +728,7 @@ public partial class ContentService
                 logger.LogWarning(
                     "Block list property '{PropertyAlias}' on content {ContentId} references content {NestedId} of disallowed type {ContentTypeId}",
                     bp.Alias, content.Id, id, nestedTypeId);
-                handlerResult.AddMessage(
-                    $"Block list '{bp.Alias}' contains a disallowed element type",
+                handlerResult.AddMessage(text["content_disallowedBlockType", bp.Alias ?? string.Empty],
                     ResultMessageType.Warning);
             }
         }

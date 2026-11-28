@@ -9,8 +9,8 @@
 <div style="min-height: 500px;">
     <RadzenSelectBar @bind-Value="@_selectedTab" Change="@((string args) => OnTabChange(args))" Style="margin-bottom: 1rem;">
         <Items>
-            <RadzenSelectBarItem Text="Content" Value="@("content")" />
-            <RadzenSelectBarItem Text="Manual" Value="@("manual")" />
+            <RadzenSelectBarItem Text="@L["general_content"]" Value="@("content")" />
+            <RadzenSelectBarItem Text="@L["editorDialogs_manualLink"]" Value="@("manual")" />
         </Items>
     </RadzenSelectBar>
 
@@ -24,15 +24,15 @@
             @if (_selectedContent != null)
             {
                 <div style="margin-top: 1rem; padding: 0.5rem; background: var(--rz-info-lighter); border-radius: 4px;">
-                    <strong>Selected:</strong> @_selectedContent.Name
+                    <strong>@L["editorDialogs_selectedContent"]</strong> @_selectedContent.Name
                 </div>
             }
         </div>
 
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
                      AlignItems="AlignItems.Center" class="rz-mt-3" Gap="0.5rem">
-            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Click="@Cancel" />
-            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="link" Text="Insert Link"
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="@L["general_cancel"]" Click="@Cancel" />
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="link" Text="@L["editorDialogs_insertLink"]"
                           Click="@InsertContentLink" Disabled="@(_selectedContent == null)" />
         </RadzenStack>
     }
@@ -41,59 +41,59 @@
         <div class="manual-tab">
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="URL" Description="The link destination" />
+                    <PropertyInfo Name="@L["general_url"]" Description="@L["editorDialogs_linkUrlDescription"]" />
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenTextBox @bind-Value="@_url" Style="width: 100%;"
-                                   Placeholder="https://example.com" aria-label="URL" />
+                                   Placeholder="https://example.com" aria-label="@L["general_url"]" />
                 </CentreColumn>
             </EditorRow>
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Link Text" Description="Text to display for the link" />
+                    <PropertyInfo Name="@L["editorDialogs_linkText"]" Description="@L["editorDialogs_linkTextDescription"]" />
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenTextBox @bind-Value="@_linkText" Style="width: 100%;"
-                                   Placeholder="Link text" aria-label="Link Text" />
+                                   Placeholder="@L["editorDialogs_linkTextPlaceholder"]" aria-label="@L["editorDialogs_linkText"]" />
                 </CentreColumn>
             </EditorRow>
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Title" Description="Optional tooltip text" />
+                    <PropertyInfo Name="@L["editorDialogs_linkTitle"]" Description="@L["editorDialogs_linkTitleDescription"]" />
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenTextBox @bind-Value="@_title" Style="width: 100%;"
-                                   Placeholder="Optional" aria-label="Title" />
+                                   Placeholder="@L["editorDialogs_optional"]" aria-label="@L["editorDialogs_linkTitle"]" />
                 </CentreColumn>
             </EditorRow>
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Target" Description="Where to open the link" />
+                    <PropertyInfo Name="@L["editorDialogs_linkTarget"]" Description="@L["editorDialogs_linkTargetDescription"]" />
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenDropDown @bind-Value="@_target" Data="@_targetOptions" Style="width: 100%;"
-                                    TextProperty="Text" ValueProperty="Value" aria-label="Target" />
+                                    TextProperty="Text" ValueProperty="Value" aria-label="@L["editorDialogs_linkTarget"]" />
                 </CentreColumn>
             </EditorRow>
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Rel" Description="Link relationship" />
+                    <PropertyInfo Name="@L["editorDialogs_linkRel"]" Description="@L["editorDialogs_linkRelDescription"]" />
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenDropDown @bind-Value="@_rel" Data="@_relOptions" Style="width: 100%;"
-                                    TextProperty="Text" ValueProperty="Value" aria-label="Rel" />
+                                    TextProperty="Text" ValueProperty="Value" aria-label="@L["editorDialogs_linkRel"]" />
                 </CentreColumn>
             </EditorRow>
         </div>
 
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
                      AlignItems="AlignItems.Center" class="rz-mt-3" Gap="0.5rem">
-            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Click="@Cancel" />
-            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save Link"
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="@L["general_cancel"]" Click="@Cancel" />
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["editorDialogs_saveLink"]"
                           Click="@SaveManualLink" Disabled="@(string.IsNullOrWhiteSpace(_url))" />
         </RadzenStack>
     }
@@ -121,21 +121,26 @@
     private bool _hasContentData;
     private bool _hasManualData;
 
-    private List<OptionItem> _targetOptions =
-    [
-        new() { Text = "Current window", Value = "" },
-        new() { Text = "New window", Value = "_blank" }
-    ];
+    // Filled in OnInitializedAsync: their text comes from L, which a field initialiser cannot read
+    private List<OptionItem> _targetOptions = [];
 
-    private List<OptionItem> _relOptions =
-    [
-        new() { Text = "None", Value = "" },
-        new() { Text = "No follow", Value = "nofollow" },
-        new() { Text = "No opener (recommended for new windows)", Value = "noopener noreferrer" }
-    ];
+    private List<OptionItem> _relOptions = [];
 
     protected override Task OnInitializedAsync()
     {
+        _targetOptions =
+        [
+            new() { Text = L["editorDialogs_targetCurrentWindow"], Value = "" },
+            new() { Text = L["editorDialogs_targetNewWindow"], Value = "_blank" }
+        ];
+
+        _relOptions =
+        [
+            new() { Text = L["general_none"], Value = "" },
+            new() { Text = L["editorDialogs_relNoFollow"], Value = "nofollow" },
+            new() { Text = L["editorDialogs_relNoOpener"], Value = "noopener noreferrer" }
+        ];
+
         // If editing an existing link, populate manual tab fields
         if (ExistingLink != null)
         {
@@ -191,7 +196,7 @@
             if (hasData)
             {
                 var confirmed = await JsRuntime.InvokeAsync<bool>("confirm",
-                    "You have unsaved manual link data. Switch to content selection anyway?");
+                    L["editorDialogs_discardManualLinkConfirm"].Value);
                 if (!confirmed)
                 {
                     _selectedTab = "manual"; // Revert

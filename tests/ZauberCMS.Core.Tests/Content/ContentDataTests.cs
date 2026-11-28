@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZauberCMS.Core.Content.Interfaces;
@@ -235,6 +236,25 @@ public class ContentDataTests : IAsyncLifetime
         copy.Name = "Article (edited)";
         Assert.True((await SaveAsync(copy)).Success);
         Assert.Equal("Hello", (await StoredAsync(page.Id)).PropertyData.Single().Value);
+    }
+
+    [Fact]
+    public async Task ZA260_Importing_a_content_type_tells_the_editor_what_the_file_names_but_the_site_lacks()
+    {
+        await CreateTypeAsync("article", TextBox("title"));
+        var json = await WithContentService(s => s.ExportContentTypeAsync("article"));
+        var package = JsonSerializer.Deserialize<ContentTypePackage>(json!)!;
+        package.Type.CompositionAliases = ["seoComposition"];
+        package.Type.ParentAlias = "folderType";
+
+        var imported = await WithContentService(s => s.ImportContentTypeAsync(JsonSerializer.Serialize(package)));
+
+        // The type is imported without them, and the result says so (the warnings were dropped before)
+        Assert.True(imported.Success, TestSite.Describe(imported.Messages));
+        var warnings = imported.Messages.Where(m => m.MessageType == ResultMessageType.Warning)
+            .Select(m => m.Message).ToList();
+        Assert.Contains("Composition seoComposition not found", warnings);
+        Assert.Contains(warnings, m => m!.Contains("folderType", StringComparison.Ordinal));
     }
 
     [Fact]

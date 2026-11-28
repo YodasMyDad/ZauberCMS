@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Core.Content;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Seo.Models;
@@ -46,11 +47,12 @@ public static class RedirectRules
     /// it sends an address to itself, or the redirects its target leads to (<paramref name="others"/>, the saved
     /// ones) come back to its From URL. Targets on another site end a chain.
     /// Without the site's domains, each domain a redirect names is taken to be a whole host of its own; use
-    /// <see cref="FindLoop(SeoRedirect, IEnumerable{SeoRedirect}, IEnumerable{Domain})"/> where domains share a host
+    /// <see cref="FindLoop(SeoRedirect, IEnumerable{SeoRedirect}, IEnumerable{Domain}, IStringLocalizer)"/> where domains share a host
     /// (<c>example.com</c> and <c>example.com/fr</c>).
     /// </summary>
-    public static string? FindLoop(SeoRedirect redirect, IEnumerable<SeoRedirect> others) =>
-        FindLoop(redirect, others, []);
+    /// <param name="text">ZauberCMS's text (<c>IStringLocalizer&lt;ZauberText&gt;</c>): the reason is in its language.</param>
+    public static string? FindLoop(SeoRedirect redirect, IEnumerable<SeoRedirect> others, IStringLocalizer text) =>
+        FindLoop(redirect, others, [], text);
 
     /// <summary>
     /// Why saving <paramref name="redirect"/> would make visitors go round in circles, or null when it would not:
@@ -60,11 +62,13 @@ public static class RedirectRules
     /// every step the address's domain is worked out from <paramref name="domains"/> by the rule content routing
     /// uses (the longest that matches), and only the redirects for that domain and the ones for every domain apply.
     /// </summary>
-    public static string? FindLoop(SeoRedirect redirect, IEnumerable<SeoRedirect> others, IEnumerable<Domain> domains)
+    /// <param name="text">ZauberCMS's text (<c>IStringLocalizer&lt;ZauberText&gt;</c>): the reason is in its language.</param>
+    public static string? FindLoop(SeoRedirect redirect, IEnumerable<SeoRedirect> others, IEnumerable<Domain> domains,
+        IStringLocalizer text)
     {
         if (!IsRegex(redirect) && SameAddress(redirect.FromUrl, redirect.ToUrl))
         {
-            return $"{redirect.FromUrl} would redirect to itself";
+            return text["seo_redirectToItself", redirect.FromUrl ?? string.Empty];
         }
 
         // In the order the middleware tries them: exact rules before regular expressions, within each the ones for a
@@ -95,7 +99,7 @@ public static class RedirectRules
             : [(string.Empty, 0)];
         foreach (var (host, port) in hosts)
         {
-            var loop = FollowChain(redirect, rules, siteDomains, host, port);
+            var loop = FollowChain(redirect, rules, siteDomains, host, port, text);
             if (loop != null)
             {
                 return loop;
@@ -132,7 +136,7 @@ public static class RedirectRules
 
     /// <summary>Follows the chain from <paramref name="redirect"/>'s target as a request to <paramref name="host"/> would.</summary>
     private static string? FollowChain(SeoRedirect redirect, List<Rule> rules, List<Domain> domains, string host,
-        int port)
+        int port, IStringLocalizer text)
     {
         var current = redirect.ToUrl;
         for (var step = 0; step < MaxChainLength; step++)
@@ -157,13 +161,13 @@ public static class RedirectRules
 
             if (next.Redirect == redirect)
             {
-                return $"{redirect.ToUrl} leads back to {redirect.FromUrl} through other redirects, so visitors would go round in circles";
+                return text["seo_redirectLoop", redirect.ToUrl ?? string.Empty, redirect.FromUrl ?? string.Empty];
             }
 
             current = next.Redirect.ToUrl;
         }
 
-        return $"{redirect.ToUrl} leads through more than {MaxChainLength} redirects";
+        return text["seo_redirectChainTooLong", redirect.ToUrl ?? string.Empty, MaxChainLength];
     }
 
     /// <summary>The path of an address (path and query), which is what domains match on.</summary>

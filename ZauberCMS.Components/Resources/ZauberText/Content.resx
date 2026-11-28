@@ -12,4 +12,335 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="content_addDomain" xml:space="preserve">
+    <value>Add Domain</value>
+  </data>
+  <data name="content_afterValue" xml:space="preserve">
+    <value>After: {0}</value>
+    <comment>{0} = the property value in the second version; a block property change in a version comparison</comment>
+  </data>
+  <data name="content_author" xml:space="preserve">
+    <value>Author</value>
+    <comment>Version history column: who made the version</comment>
+  </data>
+  <data name="content_beforeValue" xml:space="preserve">
+    <value>Before: {0}</value>
+    <comment>{0} = the property value in the first version; a block property change in a version comparison</comment>
+  </data>
+  <data name="content_blockAdded" xml:space="preserve">
+    <value>Added</value>
+    <comment>A block that the second version has and the first does not (version comparison badge)</comment>
+  </data>
+  <data name="content_blockEditorWithoutEditScope" xml:space="preserve">
+    <value>This block editor was opened without an edit scope, so its changes can't be kept</value>
+  </data>
+  <data name="content_blockModified" xml:space="preserve">
+    <value>Modified</value>
+    <comment>A block changed between the two versions (version comparison badge)</comment>
+  </data>
+  <data name="content_blockRemoved" xml:space="preserve">
+    <value>Removed</value>
+    <comment>A block that the first version has and the second does not (version comparison badge)</comment>
+  </data>
+  <data name="content_cannotRestore" xml:space="preserve">
+    <value>Cannot restore</value>
+  </data>
+  <data name="content_changedElsewhere" xml:space="preserve">
+    <value>{0} was changed elsewhere</value>
+    <comment>{0} = the page name; notification summary when someone else saved the page being edited</comment>
+  </data>
+  <data name="content_changedElsewhereDetail" xml:space="preserve">
+    <value>It was reloaded. Block changes you had not saved were not kept.</value>
+  </data>
+  <data name="content_chooseWhereToCopy" xml:space="preserve">
+    <value>Choose where to copy {0} to in the tree structure below</value>
+    <comment>{0} = the page name</comment>
+  </data>
+  <data name="content_chooseWhereToMove" xml:space="preserve">
+    <value>Choose where to move {0} to in the tree structure below</value>
+    <comment>{0} = the page name</comment>
+  </data>
+  <data name="content_clearChanges" xml:space="preserve">
+    <value>Clear Changes</value>
+    <comment>Button: drops the unpublished changes of a page</comment>
+  </data>
+  <data name="content_commentsLabel" xml:space="preserve">
+    <value>Comments:</value>
+    <comment>Version comparison: the version's comments follow</comment>
+  </data>
+  <data name="content_compare" xml:space="preserve">
+    <value>Compare</value>
+    <comment>Button in the version history</comment>
+  </data>
+  <data name="content_compareWithCurrent" xml:space="preserve">
+    <value>Compare this version with current</value>
+    <comment>Tooltip of the Compare button</comment>
+  </data>
+  <data name="content_comparisonFailed" xml:space="preserve">
+    <value>Comparison Failed</value>
+  </data>
+  <data name="content_comparisonFailedDetail" xml:space="preserve">
+    <value>Failed to compare versions. Please try again.</value>
+  </data>
+  <data name="content_containsUnpublishedChanges" xml:space="preserve">
+    <value>(Contains Unpublished Changes)</value>
+    <comment>Under the page name in the content editor</comment>
+  </data>
+  <data name="content_contentFieldChanges" xml:space="preserve">
+    <value>Content Field Changes</value>
+    <comment>Version comparison heading</comment>
+  </data>
+  <data name="content_contentTypeDoesNotExist" xml:space="preserve">
+    <value>Content Type does not exist</value>
+  </data>
+  <data name="content_contentView" xml:space="preserve">
+    <value>Content View</value>
+    <comment>Content editor, System tab</comment>
+  </data>
+  <data name="content_contentViewDescription" xml:space="preserve">
+    <value>The views available to render this content in the front end</value>
+  </data>
+  <data name="content_createAndUpdateContent" xml:space="preserve">
+    <value>Create &amp; Update Content</value>
+    <comment>Browser tab title of the content editor page</comment>
+  </data>
+  <data name="content_createContent" xml:space="preserve">
+    <value>Create Content</value>
+    <comment>Button on the Content section start page</comment>
+  </data>
+  <data name="content_createdByLabel" xml:space="preserve">
+    <value>Created by:</value>
+    <comment>Version comparison: the user's name follows</comment>
+  </data>
+  <data name="content_currentVersion" xml:space="preserve">
+    <value>Current</value>
+    <comment>Version history badge: the version that is published now</comment>
+  </data>
+  <data name="content_dateCreated" xml:space="preserve">
+    <value>Date Created</value>
+  </data>
+  <data name="content_deleted" xml:space="preserve">
+    <value>Deleted</value>
+    <comment>Notification after a page in the list view is moved to the recycle bin</comment>
+  </data>
+  <data name="content_domain" xml:space="preserve">
+    <value>Domain</value>
+    <comment>Culture and domains dialog, grid column</comment>
+  </data>
+  <data name="content_domainNamesHelp" xml:space="preserve">
+    <value>Valid domain names are: "example.com", "www.example.com", "example.com:8080" (only that port; without a port, any port matches). "https://", a trailing dot and a trailing slash are ignored. Paths in domains are supported, e.g. "example.com/en" (the longest matching domain wins), but it is recommended to just set the culture on the content</value>
+    <comment>Culture and domains dialog; keep the example domains as they are</comment>
+  </data>
+  <data name="content_editItem" xml:space="preserve">
+    <value>Edit {0}</value>
+    <comment>{0} = the page name; list view button and the side panel title</comment>
+  </data>
+  <data name="content_emptyValue" xml:space="preserve">
+    <value>(empty)</value>
+    <comment>Version comparison: the field has no value</comment>
+  </data>
+  <data name="content_errorLoadingVersions" xml:space="preserve">
+    <value>Error Loading Versions</value>
+  </data>
+  <data name="content_errorLoadingVersionsDetail" xml:space="preserve">
+    <value>Failed to load version history. Please try refreshing.</value>
+  </data>
+  <data name="content_hideFromNavigation" xml:space="preserve">
+    <value>Hide From Navigation</value>
+    <comment>Content editor, System tab</comment>
+  </data>
+  <data name="content_hideFromNavigationDescription" xml:space="preserve">
+    <value>Optional: Hides this page from any navigation if the developer has integrated it</value>
+  </data>
+  <data name="content_id" xml:space="preserve">
+    <value>Id</value>
+    <comment>Content editor, System tab: the page's id</comment>
+  </data>
+  <data name="content_includeDescendants" xml:space="preserve">
+    <value>Include Descendants</value>
+    <comment>Copy dialog switch: copy the pages below it too</comment>
+  </data>
+  <data name="content_internalRedirect" xml:space="preserve">
+    <value>Internal Redirect</value>
+    <comment>Content editor, System tab</comment>
+  </data>
+  <data name="content_internalRedirectDescription" xml:space="preserve">
+    <value>Choose a different page to show when the user browses to this page's URL</value>
+  </data>
+  <data name="content_itemError" xml:space="preserve">
+    <value>{0} Error</value>
+    <comment>{0} = the page name; notification summary when a save fails</comment>
+  </data>
+  <data name="content_itemSaved" xml:space="preserve">
+    <value>{0} Saved</value>
+    <comment>{0} = the page name; notification summary after a save</comment>
+  </data>
+  <data name="content_languageDescription" xml:space="preserve">
+    <value>Set a language for this content, or set domains</value>
+    <comment>Culture and domains dialog</comment>
+  </data>
+  <data name="content_lastUpdatedLabel" xml:space="preserve">
+    <value>Last Updated: {0}</value>
+    <comment>{0} = how long ago, e.g. "2 hours ago"; under the page name in the content editor</comment>
+  </data>
+  <data name="content_lastUpdatedWhen" xml:space="preserve">
+    <value>Last updated {0}</value>
+    <comment>{0} = how long ago, e.g. "2 hours ago"; list view header</comment>
+  </data>
+  <data name="content_loadingComparison" xml:space="preserve">
+    <value>Loading comparison...</value>
+  </data>
+  <data name="content_loadingVersions" xml:space="preserve">
+    <value>Loading versions...</value>
+  </data>
+  <data name="content_moveToRoot" xml:space="preserve">
+    <value>Move To Root</value>
+    <comment>Move dialog: make the page a root page</comment>
+  </data>
+  <data name="content_nameLabel" xml:space="preserve">
+    <value>Name:</value>
+    <comment>Version comparison: the version's name follows</comment>
+  </data>
+  <data name="content_noChangesBetweenVersions" xml:space="preserve">
+    <value>No changes found between versions</value>
+  </data>
+  <data name="content_noCurrentVersion" xml:space="preserve">
+    <value>No Current Version</value>
+  </data>
+  <data name="content_noCurrentVersionDetail" xml:space="preserve">
+    <value>Cannot compare - no current published version found.</value>
+  </data>
+  <data name="content_noVersionHistory" xml:space="preserve">
+    <value>No version history yet</value>
+  </data>
+  <data name="content_noVersionHistoryDetail" xml:space="preserve">
+    <value>Versions are automatically created when you save or publish content changes.</value>
+  </data>
+  <data name="content_noVersionHistoryHint" xml:space="preserve">
+    <value>Make some changes and save to see your version history here.</value>
+  </data>
+  <data name="content_pickRolesWithAccess" xml:space="preserve">
+    <value>Pick the roles who have access to this page</value>
+    <comment>Restrict access dialog</comment>
+  </data>
+  <data name="content_propertyChanges" xml:space="preserve">
+    <value>Property Changes</value>
+    <comment>Version comparison heading</comment>
+  </data>
+  <data name="content_propertyChangesLabel" xml:space="preserve">
+    <value>Property changes:</value>
+    <comment>Version comparison: a block's changed properties follow</comment>
+  </data>
+  <data name="content_published" xml:space="preserve">
+    <value>Published</value>
+    <comment>Block editor switch: whether the block is shown</comment>
+  </data>
+  <data name="content_recycleBin" xml:space="preserve">
+    <value>Recycle Bin</value>
+    <comment>Content tree: the recycle bin node</comment>
+  </data>
+  <data name="content_restoreFailed" xml:space="preserve">
+    <value>Restore Failed</value>
+  </data>
+  <data name="content_restoreFailedDetail" xml:space="preserve">
+    <value>Failed to restore to the selected version. Please try again.</value>
+  </data>
+  <data name="content_restoreToVersion" xml:space="preserve">
+    <value>Restore content to this version</value>
+    <comment>Tooltip of the Restore button in the version history</comment>
+  </data>
+  <data name="content_restoreVersionError" xml:space="preserve">
+    <value>An error occurred while restoring the version.</value>
+  </data>
+  <data name="content_rolesLabel" xml:space="preserve">
+    <value>Roles:</value>
+    <comment>Restrict access dialog: the roles to pick from</comment>
+  </data>
+  <data name="content_saveAndPublish" xml:space="preserve">
+    <value>Save &amp; Publish</value>
+    <comment>Content editor button</comment>
+  </data>
+  <data name="content_saveOnly" xml:space="preserve">
+    <value>Save Only</value>
+    <comment>Content editor: saves without publishing</comment>
+  </data>
+  <data name="content_selectedRolesLabel" xml:space="preserve">
+    <value>Selected Roles:</value>
+    <comment>Restrict access dialog: the roles that have access</comment>
+  </data>
+  <data name="content_statusLabel" xml:space="preserve">
+    <value>Status:</value>
+    <comment>Version comparison: the version's status follows</comment>
+  </data>
+  <data name="content_systemTab" xml:space="preserve">
+    <value>System</value>
+    <comment>Content editor tab with the page's system fields</comment>
+  </data>
+  <data name="content_systemUser" xml:space="preserve">
+    <value>System</value>
+    <comment>Version history: the author of a version that no user made</comment>
+  </data>
+  <data name="content_unableToFindContentType" xml:space="preserve">
+    <value>Unable to find content type for this content</value>
+  </data>
+  <data name="content_unableToLoadContent" xml:space="preserve">
+    <value>Unable to load this content item</value>
+  </data>
+  <data name="content_unpublish" xml:space="preserve">
+    <value>Unpublish</value>
+    <comment>Content editor button</comment>
+  </data>
+  <data name="content_urlDescription" xml:space="preserve">
+    <value>The URL in the browser bar to show this page</value>
+    <comment>Content editor, System tab</comment>
+  </data>
+  <data name="content_version" xml:space="preserve">
+    <value>Version</value>
+    <comment>Version history column</comment>
+  </data>
+  <data name="content_versionComparison" xml:space="preserve">
+    <value>Version Comparison</value>
+    <comment>Side panel title</comment>
+  </data>
+  <data name="content_versionHistory" xml:space="preserve">
+    <value>Version History</value>
+  </data>
+  <data name="content_versionHistoryIntro" xml:space="preserve">
+    <value>Restore to any previous version</value>
+    <comment>Under the Version History heading</comment>
+  </data>
+  <data name="content_versionNumber" xml:space="preserve">
+    <value>Version {0}</value>
+    <comment>{0} = the version number</comment>
+  </data>
+  <data name="content_versionRestored" xml:space="preserve">
+    <value>Version Restored</value>
+  </data>
+  <data name="content_versionRestoredDetail" xml:space="preserve">
+    <value>Content has been restored to the selected version.</value>
+  </data>
+  <data name="content_versionStatusArchived" xml:space="preserve">
+    <value>Archived</value>
+    <comment>A version's status</comment>
+  </data>
+  <data name="content_versionStatusDraft" xml:space="preserve">
+    <value>Draft</value>
+    <comment>A version's status</comment>
+  </data>
+  <data name="content_versionStatusPublished" xml:space="preserve">
+    <value>Published</value>
+    <comment>A version's status</comment>
+  </data>
+  <data name="content_versionStatusRejected" xml:space="preserve">
+    <value>Rejected</value>
+    <comment>A version's status</comment>
+  </data>
+  <data name="content_versionStatusScheduled" xml:space="preserve">
+    <value>Scheduled</value>
+    <comment>A version's status</comment>
+  </data>
+  <data name="content_versions" xml:space="preserve">
+    <value>Versions</value>
+    <comment>Content editor tab</comment>
+  </data>
 </root>

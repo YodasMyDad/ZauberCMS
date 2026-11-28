@@ -3,6 +3,7 @@
 Last full run: 5668365 (2026-11-25, full) · Last changed run: 7442f14+wt (2026-11-28, Roadmap Phase 11h, 7442f14..working tree, merged after Phase 10g-2) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
 Next free IDs: ZA-236 (findings) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Parallel parts: ZA-220…ZA-229 unused (skipped, not to be filled); ZA-240…ZA-249 unused (Phase 10h-1's range; skipped, not to be filled); ZA-250…ZA-259 held by Phase 11i (in progress); ZP-010 used by Phase 10h-1, ZP-011…ZP-019 unused (skipped, not to be filled)
+After Roadmap Phase 10h-2 (2026-11-28, on its own branch): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1505 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part (three independent diff reviewers); verified in the browser. ZA-129 in progress (Content, Media, the editor dialogs and SEO converted, D110, D111; it closes with 10h-4); ZA-260 found and fixed (Low); ZA-261…ZA-263 recorded (Low, Phase 10i), ZA-264 (Low, Phase 12). ZA-265…ZA-269 unused (Phase 10h-2's range; skipped, not to be filled)
 After Roadmap Phase 10h-1 (2026-11-28, merged after 10g-2 and 11h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1500 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1377 on its own branch) · Template smoke test passes; `doublecheck` self-review on the part. ZA-129 in progress (the mechanism and the first screens, D90–D97; it closes with 10h-4); ZP-010 proposed. Next free ID: ZA-236
 After Roadmap Phase 11h (2026-11-28, merged after 10g-2): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch) · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-191, ZA-192, ZA-195, ZA-196 fixed (D80–D83); ZA-230 found and fixed while building; ZA-231…ZA-234 found by the audit and fixed (Low); ZA-235 recorded (Low, Phase 12); ZP-002, ZP-003 proposed. Next free ID: ZA-236
 After Roadmap Phase 10g-2 (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · ZP-001 built (D72); ZA-214 (D73), ZA-215 fixed; ZA-216 and ZA-197 found while building and fixed; ZA-217 recorded (Phase 12); `/audit changed` over the part (a diff reviewer and two unit reviewers): ZA-218 (Medium) found and fixed with the part's own findings, ZA-219 recorded (Low, Phase 12). Next free ID: ZA-220
@@ -24,7 +25,7 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 | 0 |
 | Medium | 0 | 1 (10g-2: ZA-218) | 1 (10g-2: ZA-218) |
-| Low | 6 | 9 (11h: ZA-230…ZA-235; 10g-2: ZA-216, ZA-217, ZA-219) | 13 (11h: ZA-191, ZA-192, ZA-195, ZA-196, ZA-230…ZA-234; 10g-2: ZA-197, ZA-214…ZA-216) |
+| Low | 10 | 9 (11h: ZA-230…ZA-235; 10g-2: ZA-216, ZA-217, ZA-219) | 13 (11h: ZA-191, ZA-192, ZA-195, ZA-196, ZA-230…ZA-234; 10g-2: ZA-197, ZA-214…ZA-216) |
 
 Proposals: three open, ZP-002 and ZP-003 (Phase 11h, owner decision) and ZP-010 (Phase 10h-1, owner decision);
 ZP-001 built in Phase 10g-2 (D72).
@@ -42,7 +43,7 @@ event-unsubscribe 22 · httpcontext-accessor 5 · exception-text 11. Flat agains
 suppressed warnings 35 → 18; every hit on an added line is moved code or a suppression with its reason.
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10h: ZA-129; 10i: ZA-128, ZA-194; 12: ZA-217, ZA-219, ZA-235); there is no Backlog (owner, 2026-11-27).
+a phase (10h: ZA-129; 10i: ZA-128, ZA-194, ZA-261…ZA-263; 12: ZA-217, ZA-219, ZA-235, ZA-264); there is no Backlog (owner, 2026-11-27).
 The run's two owner questions were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
@@ -62,6 +63,8 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   dashboards, shared components, modal, trees, context menus, data sources, section names and nav group headings
   are converted; 10h-2, 10h-3 and 10h-4 convert the rest (Roadmap "Phase 10h"; rules in Docs/AdminUI.md
   "Localisation"). Closes with 10h-4.
+- Progress (Phase 10h-2, 2026-11-28): Content, Media, the editor dialogs and SEO, and Core's content, media,
+  storage and SEO text (D110, D111).
 
 ### ZA-194 [Low/High] With registration off, the not-found view is shown in the account layout
 - Where: `ZauberCMS.Components/Account/Pages/Register.razor` · Category: E · Since: 2026-11-27 (older; visible since 11a sends the HTML) · Roadmap: 10i
@@ -85,6 +88,27 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   number passes the Zauber check, then fails in the host's start-up validator from `app.Run()`, after the migrations,
   with ImageResize's message and no `Zauber:ImageResize:` path (D48). Run ImageResize's validator on the mapped
   options in `ZauberSettingsValidator` and name the setting.
+
+### ZA-261 [Low/High] Two SEO inputs have no accessible name of their own
+- Where: `ZauberCMS.Components/Seo/Dialogs/AddEditRedirect.razor:9` (the Domain list), `ZauberCMS.Components/Seo/SeoChecker.razor:9` (the address box) · Category: E · Since: 2026-11-28 (older; seen in the Phase 10h-2 browser check) · Roadmap: 10i
+- Issue / Fix: the redirect panel's Domain drop-down is announced by the selected choice's id
+  (`00000000-0000-0000-0000-000000000000` for "any domain"), and the page checker's address box has no label or
+  placeholder. Give both a label from the Seo area (with ZA-128's pass).
+
+### ZA-262 [Low/High] A list view's Delete moves the page to the recycle bin without asking
+- Where: `ZauberCMS.Components/Admin/ContentSection/ContentListView.razor:49,76` · Category: G · Since: 2026-11-28 (older; seen in the Phase 10h-2 browser check) · Roadmap: 10i
+- Issue / Fix: the row's Delete button recycles the page at once, while the tree's Delete asks first; Umbraco's list
+  view asks before it moves items to the recycle bin. Ask with the tree's confirm, and say "Move to recycle bin".
+
+### ZA-263 [Low/Medium] The SEO property's Open Graph image picker accepts any media, a folder too
+- Where: `ZauberCMS.Components/Editors/SeoProperty.razor:57-59` (`MediaPickerSettings` with `AllowedMediaTypes` unset), `Editors/MediaPickerProperty.razor:111` · Category: G · Since: 2026-11-28 (older; seen once in the Phase 10h-2 browser check) · Roadmap: 10i
+- Issue / Fix: choosing a folder in Choose Media set it as the page's Open Graph image. Limit the picker to images
+  (`AllowedMediaTypes = [MediaType.Image]`), as Umbraco's image pickers do.
+
+### ZA-264 [Low/High] The media image editor cannot be opened and writes to the console
+- Where: `ZauberCMS.Components/Admin/MediaSection/Dialogs/EditImage.razor:265-266`, `Dialogs/UpdateMediaForm.razor:84-89` · Category: F · Since: 2026-11-28 (older; found by Phase 10h-2) · Roadmap: 12
+- Issue / Fix: the button that opens `EditImage` is commented out, so the component ships unused, and it writes its
+  crop boxes with `Console.WriteLine`. Finish it (cropping through the storage provider) or remove it.
 
 ## Improvement proposals
 

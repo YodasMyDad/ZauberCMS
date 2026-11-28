@@ -121,7 +121,7 @@ public partial class ContentService
         if (contentToCopy == null)
         {
             handlerResult.Success = false;
-            handlerResult.AddMessage("Unable to copy, as no Content with that ID exists", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_copyNotFound"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -214,7 +214,7 @@ public partial class ContentService
             cacheService.ClearCachedItemsWithPrefix(nameof(Models.Content));
         }
 
-        handlerResult.AddMessage("Content copied successfully.", ResultMessageType.Success);
+        handlerResult.AddMessage(text["content_copied"], ResultMessageType.Success);
         return handlerResult;
 
         async Task<Models.Content> CreateCopyAsync(Models.Content original, User? currentUser, Guid? parentId = null)

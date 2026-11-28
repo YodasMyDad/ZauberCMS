@@ -20,7 +20,7 @@
     <div class="pt-4 flex items-center justify-center">
         <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate"
                                    Size="ProgressBarCircularSize.Medium">
-            <Template>Loading</Template>
+            <Template>@L["general_loading"]</Template>
         </RadzenProgressBarCircular>
     </div>
 }
@@ -32,18 +32,17 @@ else
         <EditForm @ref="@ContentForm" Model="@WorkingCopy">
 
             <RadzenRow class="rz-pb-2">
-                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@WorkingCopy!.Name"
-                               ValueChanged="@((string name) => { WorkingCopy.Name = name; })" aria-label="Name"/>
+                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="@L["general_name"]" Value="@WorkingCopy!.Name"
+                               ValueChanged="@((string name) => { WorkingCopy.Name = name; })" aria-label="@L["general_name"]"/>
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
                              AlignItems="AlignItems.Center" Gap="0.2rem">
                     <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;"
                                 IconStyle="IconStyle.Light"/>
-                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last
-                        Updated: @WorkingCopy.DateUpdated.Humanize()</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@(L["content_lastUpdatedLabel", WorkingCopy.DateUpdated.Humanize()])</RadzenText>
                     @if (WorkingCopy.UnpublishedContent != null)
                     {
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0; color: #e85d5d">
-                            (Contains Unpublished Changes)
+                            @L["content_containsUnpublishedChanges"]
                         </RadzenText>
                     }
                 </RadzenStack>
@@ -101,10 +100,10 @@ else
 
                     @if (IsBlockList != true)
                     {
-                        <RadzenTabsItem Text="System">
+                        <RadzenTabsItem Text="@L["content_systemTab"]">
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Id"/>
+                                    <PropertyInfo Name="@L["content_id"]"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     @WorkingCopy.Id
@@ -113,8 +112,8 @@ else
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Content View"
-                                                  Description="The views available to render this content in the front end"/>
+                                    <PropertyInfo Name="@L["content_contentView"]"
+                                                  Description="@L["content_contentViewDescription"]"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenDropDown @bind-Value="@WorkingCopy.ViewComponent"
@@ -127,8 +126,8 @@ else
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Url"
-                                                  Description="The url in the browser bar to show this page"/>
+                                    <PropertyInfo Name="@L["general_url"]"
+                                                  Description="@L["content_urlDescription"]"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenTextBox Style="width: 100%;" Name="Url" @bind-Value="@WorkingCopyUrl"/>
@@ -137,8 +136,8 @@ else
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Hide From Navigation"
-                                                  Description="Optional: Hides this page from any navigation if the developer has integrated it"/>
+                                    <PropertyInfo Name="@L["content_hideFromNavigation"]"
+                                                  Description="@L["content_hideFromNavigationDescription"]"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenSwitch Name="HideFromNavigation" @bind-Value="@WorkingCopy.HideFromNavigation"/>
@@ -147,8 +146,8 @@ else
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Internal Redirect"
-                                                  Description="Choose a different page to show when the user browses to this pages url"/>
+                                    <PropertyInfo Name="@L["content_internalRedirect"]"
+                                                  Description="@L["content_internalRedirectDescription"]"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <ContentPickerProperty
@@ -160,7 +159,7 @@ else
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Date Created"/>
+                                    <PropertyInfo Name="@L["content_dateCreated"]"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     <RadzenDatePicker @bind-Value="@WorkingCopy.DateCreated" Name="ContentDateCreated"
@@ -170,7 +169,7 @@ else
 
                             <EditorRow>
                                 <LeftColumn>
-                                    <PropertyInfo Name="Last Updated"/>
+                                    <PropertyInfo Name="@L["general_lastUpdated"]"/>
                                 </LeftColumn>
                                 <CentreColumn>
                                     @WorkingCopy.DateUpdated.Humanize()
@@ -181,7 +180,7 @@ else
                             {
                                 <EditorRow>
                                     <LeftColumn>
-                                        <PropertyInfo Name="Updated By"/>
+                                        <PropertyInfo Name="@L["general_updatedBy"]"/>
                                     </LeftColumn>
                                     <CentreColumn>
                                         <div class="flex justify-start items-center space-x-2">
@@ -194,7 +193,7 @@ else
 
                         </RadzenTabsItem>
 
-                        <RadzenTabsItem Text="Versions">
+                        <RadzenTabsItem Text="@L["content_versions"]">
                             <ContentVersions ContentId="@WorkingCopy.Id" />
                         </RadzenTabsItem>
                     }
@@ -221,13 +220,13 @@ else
                     @if (IsBlockList == true)
                     {
                             <div class="flex items-center justify-center gap-2">
-                                <div class="text-sm">Published</div>
+                                <div class="text-sm">@L["content_published"]</div>
                                 <RadzenSwitch @bind-Value="@WorkingCopy!.Published" />
                             </div>
                             <div class="flex items-center justify-center gap-2">
-                                <RadzenButton Click="@Cancel" Text="Cancel" />
+                                <RadzenButton Click="@Cancel" Text="@L["general_cancel"]" />
                                 <RadzenButton Click=@(() => Save(null, false)) Icon="save" ButtonStyle="ButtonStyle.Success"
-                                              Text="Save"/>
+                                              Text="@L["general_save"]"/>
                             </div>
                     }
                     else
@@ -237,16 +236,16 @@ else
                             @if (WorkingCopy!.UnpublishedContentId != null)
                             {
                                 <RadzenButton Click=@(args => ClearUnpublishedChanges()) Shade="Shade.Lighter"
-                                              Text="Clear Changes"/>
+                                              Text="@L["content_clearChanges"]"/>
                             }
                             @if (WorkingCopy!.Published)
                             {
-                                <RadzenButton Click=@(args => Save(null, true)) Text="Unpublish"/>
+                                <RadzenButton Click=@(args => Save(null, true)) Text="@L["content_unpublish"]"/>
                             }
                             <RadzenSplitButton Click=@(args => Save(args, false)) Icon="save"
-                                               ButtonStyle="ButtonStyle.Success" Text="Save &amp; Publish">
+                                               ButtonStyle="ButtonStyle.Success" Text="@L["content_saveAndPublish"]">
                                 <ChildContent>
-                                    <RadzenSplitButtonItem Text="Save Only" Value="1"/>
+                                    <RadzenSplitButtonItem Text="@L["content_saveOnly"]" Value="1"/>
                                 </ChildContent>
                             </RadzenSplitButton>
                         </RadzenStack>
@@ -430,7 +429,7 @@ else
             ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = WorkingCopy.ContentTypeId });
             if (ContentType == null)
             {
-                NotificationService.ShowErrorNotification("Unable to find a content type for the content?");
+                NotificationService.ShowErrorNotification(L["content_unableToFindContentType"]);
             }
             else
             {
@@ -464,7 +463,7 @@ else
             {
                 // Lookup failed (deleted/missing id); avoid NRE on the ContentTypeId deref below
                 // and surface a friendly notification instead of crashing the editor.
-                NotificationService.ShowErrorNotification("Unable to load this content item");
+                NotificationService.ShowErrorNotification(L["content_unableToLoadContent"]);
                 return;
             }
             ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = Content.ContentTypeId });
@@ -481,7 +480,7 @@ else
 
             if (ContentType == null)
             {
-                NotificationService.ShowErrorNotification("Unable to find content type for this content");
+                NotificationService.ShowErrorNotification(L["content_unableToFindContentType"]);
             }
             else
             {
@@ -625,7 +624,7 @@ else
         ContentType = await ContentService.GetContentTypeAsync(new GetContentTypeParameters { Id = contentTypeId });
         if (ContentType == null)
         {
-            NotificationService.ShowErrorNotification("Content Type does not exist");
+            NotificationService.ShowErrorNotification(L["content_contentTypeDoesNotExist"]);
         }
         else
         {
@@ -651,7 +650,7 @@ else
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{WorkingCopy!.Name} Error", Detail = removeUnpublishedContent.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["content_itemError", WorkingCopy!.Name ?? string.Empty], Detail = removeUnpublishedContent.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
 
@@ -679,8 +678,8 @@ else
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Warning,
-                    Summary = $"{WorkingCopy?.Name} was changed elsewhere",
-                    Detail = "It was reloaded. Block changes you had not saved were not kept.",
+                    Summary = L["content_changedElsewhere", WorkingCopy?.Name ?? string.Empty],
+                    Detail = L["content_changedElsewhereDetail"],
                     Duration = 10000
                 });
             }
@@ -706,7 +705,7 @@ else
                 // Opened the old way (without a scope): nothing would ever save these edits
                 Logger.LogWarning("Block editor for {BlockId} was opened without an EditScope; its changes are not kept",
                     WorkingCopy!.Id);
-                NotificationService.ShowErrorNotification("This block editor was opened without an edit scope, so its changes can't be kept");
+                NotificationService.ShowErrorNotification(L["content_blockEditorWithoutEditScope"]);
                 return;
             }
 
@@ -743,7 +742,7 @@ else
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = $"{WorkingCopy!.Name} Error",
+                Summary = L["content_itemError", WorkingCopy!.Name ?? string.Empty],
                 Detail = result.Messages.MessagesAsString(),
                 Duration = 6000
             });
@@ -753,14 +752,14 @@ else
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Success,
-            Summary = $"{WorkingCopy!.Name} Saved",
+            Summary = L["content_itemSaved", WorkingCopy!.Name ?? string.Empty],
             Detail = "",
             Duration = 4000
         });
         var warnings = result.Messages.Where(m => m.MessageType == ResultMessageType.Warning).ToList();
         if (warnings.Count > 0)
         {
-            NotificationService.ShowNotifications(warnings);
+            NotificationService.ShowNotifications(warnings, L);
         }
 
         if (ParentId != null)

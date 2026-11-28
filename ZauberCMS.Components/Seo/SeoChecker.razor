@@ -7,21 +7,21 @@
 
 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.7em">
     <RadzenTextBox Style="width:26rem;" Placeholder="@(FullUrl)" @bind-Value="@_url" />
-    <RadzenButton Variant="Variant.Filled" Size="ButtonSize.Small" Text="Run SEO Checks" Disabled="@ShowLoader"
+    <RadzenButton Variant="Variant.Filled" Size="ButtonSize.Small" Text="@L["seo_runChecks"]" Disabled="@ShowLoader"
                   Click="@(() => RunSeoChecks())"/>
     @if (ShowLoader)
     {
-        <RadzenButton Variant="Variant.Outlined" Size="ButtonSize.Small" Text="Stop" Click="@StopSeoChecks"/>
+        <RadzenButton Variant="Variant.Outlined" Size="ButtonSize.Small" Text="@L["seo_stop"]" Click="@StopSeoChecks"/>
     }
     <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" Visible="@ShowLoader">
-        <Template>Wait</Template>
+        <Template>@L["seo_wait"]</Template>
     </RadzenProgressBarCircular>
 </RadzenStack>
 
 @if (!string.IsNullOrEmpty(ErrorMessage))
 {
     <div class="mt-2">
-        <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Error" Title="SEO checks" DefaultMessage="@ErrorMessage" />
+        <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Error" Title="@L["seo_checksTitle"]" DefaultMessage="@ErrorMessage" />
     </div>
 }
 
@@ -88,7 +88,7 @@
 
         if (!SeoHttp.IsHttpUrl(_url, out var pageUri))
         {
-            ErrorMessage = "Enter the full address of the page, starting with http:// or https://";
+            ErrorMessage = L["seo_enterFullAddress"];
             return;
         }
 
@@ -121,17 +121,17 @@
             if (ReferenceEquals(_run, run))
             {
                 ErrorMessage = _stopped
-                    ? "The checks were stopped."
-                    : $"The checks took longer than {RunTimeLimit.TotalMinutes:0} minutes and were stopped.";
+                    ? L["seo_checksStopped"]
+                    : L["seo_checksTimedOut", RunTimeLimit.TotalMinutes];
             }
         }
         catch (HttpRequestException e) when (ReferenceEquals(_run, run))
         {
-            ErrorMessage = $"The page could not be loaded: {e.Message}";
+            ErrorMessage = L["seo_pageLoadFailed", e.Message];
         }
         catch (TaskCanceledException) when (ReferenceEquals(_run, run))
         {
-            ErrorMessage = "The page did not answer in time.";
+            ErrorMessage = L["seo_pageTimedOut"];
         }
         catch (Exception) when (!ReferenceEquals(_run, run))
         {
@@ -168,7 +168,7 @@
             result.Items.Add(new SeoCheckResultItem
             {
                 Status = ZauberCMS.Core.Shared.Models.AlertType.Error,
-                DefaultMessage = "This check could not be run. The details are in the site's log."
+                DefaultMessage = L["seo_checkFailed"].Value
             });
             return result;
         }

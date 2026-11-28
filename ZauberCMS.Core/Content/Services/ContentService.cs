@@ -1,6 +1,7 @@
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Content.Interfaces;
@@ -8,6 +9,7 @@ using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Languages.Interfaces;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
@@ -26,7 +28,8 @@ public partial class ContentService(
     ExtensionManager extensionManager,
     AppState appState,
     ILanguageService languageService,
-    ILogger<ContentService> logger)
+    ILogger<ContentService> logger,
+    IStringLocalizer<ZauberText> text)
     : IContentService
 {
     private const string BlockListEditorComponentAlias = BlockListNestedContentReferenceProvider.BlockListEditorAlias;

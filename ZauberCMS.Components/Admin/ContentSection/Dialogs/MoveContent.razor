@@ -1,11 +1,11 @@
-﻿<div>Choose where to move @Item.Name to in the tree structure below</div>
+﻿<div>@(L["content_chooseWhereToMove", Item.Name ?? string.Empty])</div>
 
 <EditorRow>
     <CentreColumn>
         @if (ParentId != null)
         {
             <div class="pb-2">
-                <TreeButton Icon="start" Name="Move To Root" OnClick="SetAsRoot" />
+                <TreeButton Icon="start" Name="@L["content_moveToRoot"]" OnClick="SetAsRoot" />
             </div>
         }
         <ContentTree ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>
@@ -14,7 +14,7 @@
 
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 

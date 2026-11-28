@@ -2,6 +2,7 @@ using System.Net;
 using HtmlAgilityPack;
 using ZauberCMS.Core.Seo.Checks;
 using ZauberCMS.Core.Seo.Models;
+using ZauberCMS.Core.Tests.Infrastructure;
 using ContentItemModel = ZauberCMS.Core.Content.Models.Content;
 
 namespace ZauberCMS.Core.Tests.Seo;
@@ -25,7 +26,7 @@ public class SeoCheckTests
         {
             requests++;
             return new HttpResponseMessage(HttpStatusCode.OK);
-        }));
+        }), TestText.Localizer);
         using var stopped = new CancellationTokenSource();
         await stopped.CancelAsync();
 
@@ -37,7 +38,8 @@ public class SeoCheckTests
     [Fact]
     public async Task ZA085_A_stopped_response_status_check_stops_instead_of_reporting_a_timeout()
     {
-        var check = new ResponseStatusCheck(new StubClientFactory(_ => new HttpResponseMessage(HttpStatusCode.OK)));
+        var check = new ResponseStatusCheck(new StubClientFactory(_ => new HttpResponseMessage(HttpStatusCode.OK)),
+            TestText.Localizer);
         using var stopped = new CancellationTokenSource();
         await stopped.CancelAsync();
 
@@ -49,7 +51,8 @@ public class SeoCheckTests
     public async Task ZA085_A_broken_links_check_that_is_not_stopped_still_reports_broken_links()
     {
         var check = new BrokenLinksCheck(new StubClientFactory(request =>
-            new HttpResponseMessage(request.RequestUri!.AbsolutePath == "/gone" ? HttpStatusCode.NotFound : HttpStatusCode.OK)));
+            new HttpResponseMessage(request.RequestUri!.AbsolutePath == "/gone" ? HttpStatusCode.NotFound : HttpStatusCode.OK)),
+            TestText.Localizer);
 
         var result = await check.Check("https://example.com/", PageWithLinks("/fine", "/gone"), new ContentItemModel(),
             TestContext.Current.CancellationToken);

@@ -145,7 +145,7 @@ public partial class ContentService
 
         if (package?.Type == null)
         {
-            handlerResult.AddMessage("Invalid JSON", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_importInvalidJson"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -223,7 +223,7 @@ public partial class ContentService
             }
             else
             {
-                handlerResult.AddMessage($"Composition {compAlias} not found", ResultMessageType.Warning);
+                handlerResult.AddMessage(text["content_importCompositionNotFound", compAlias], ResultMessageType.Warning);
             }
         }
 
@@ -238,7 +238,7 @@ public partial class ContentService
             }
             else
             {
-                handlerResult.AddMessage($"Child type {childAlias} not found", ResultMessageType.Warning);
+                handlerResult.AddMessage(text["content_importChildTypeNotFound", childAlias], ResultMessageType.Warning);
             }
         }
 
@@ -252,12 +252,15 @@ public partial class ContentService
             }
             else
             {
-                handlerResult.AddMessage($"Parent {export.ParentAlias} not found", ResultMessageType.Warning);
+                handlerResult.AddMessage(text["content_importParentNotFound", export.ParentAlias], ResultMessageType.Warning);
             }
         }
 
         var saveParams = new SaveContentTypeParameters { ContentType = contentType };
         var typeResult = await SaveContentTypeAsync(saveParams, cancellationToken);
+        // What the file names but the site lacks (a composition, a child or parent type) goes back with the save's
+        // result, so the editor sees it (ZA-260)
+        typeResult.Messages.AddRange(handlerResult.Messages);
         if (!typeResult.Success)
         {
             return typeResult;
@@ -269,11 +272,14 @@ public partial class ContentService
             return typeResult;
         }
 
-        // Import content recursively
+        // Import content recursively; its warnings (a language or property the site lacks) go back too (ZA-260)
+        var contentWarnings = new HandlerResult<ContentType>();
         foreach (var rootExp in package.RootContents)
         {
-            await ImportContentRecursive(rootExp, null, contentType, dbContext, user, propMap, handlerResult);
+            await ImportContentRecursive(rootExp, null, contentType, dbContext, user, propMap, contentWarnings);
         }
+
+        typeResult.Messages.AddRange(contentWarnings.Messages);
 
         // One save for the imported content and its tag links, with the save hooks. It is a second save: the content
         // type was saved above on its own, so a content save that fails (a veto by an IBeforeEntitySave hook, a
@@ -292,7 +298,7 @@ public partial class ContentService
         return typeResult;
     }
 
-    private static async Task ImportContentRecursive(ContentExport exp, Guid? parentId, ContentType contentType,
+    private async Task ImportContentRecursive(ContentExport exp, Guid? parentId, ContentType contentType,
         IZauberDbContext dbContext, User? user, Dictionary<string, Guid> propMap,
         HandlerResult<ContentType> handlerResult)
     {
@@ -325,7 +331,7 @@ public partial class ContentService
             }
             else
             {
-                handlerResult.AddMessage($"Language {exp.LanguageIsoCode} not found for content {exp.Name}",
+                handlerResult.AddMessage(text["content_importLanguageNotFound", exp.LanguageIsoCode, exp.Name],
                     ResultMessageType.Warning);
             }
         }
@@ -345,7 +351,7 @@ public partial class ContentService
             }
             else
             {
-                handlerResult.AddMessage($"Property {kvp.Key} not found for content {exp.Name}",
+                handlerResult.AddMessage(text["content_importPropertyNotFound", kvp.Key, exp.Name],
                     ResultMessageType.Warning);
             }
         }

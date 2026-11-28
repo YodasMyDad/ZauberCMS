@@ -1,11 +1,11 @@
 ﻿@using ZauberCMS.Core.Media.Parameters
 @using ZauberCMS.Core.Media.Models
 <RadzenSplitButton Click=@(args => OnClick(args, "CreateMedia"))
-                   Text="Create Folder">
+                   Text="@L["media_createFolder"]">
     <ChildContent>
         @if (Media is { MediaType: MediaType.Folder })
         {
-            <RadzenSplitButtonItem Text="Create File" Value="File"/>
+            <RadzenSplitButtonItem Text="@L["media_createFile"]" Value="File"/>
         }
     </ChildContent>
 </RadzenSplitButton>

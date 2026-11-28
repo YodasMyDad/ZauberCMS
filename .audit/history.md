@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10h-2 (2026-11-28, on its own branch): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1505 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part (three independent diff reviewers); verified in the browser. ZA-129 in progress (Content, Media, the editor dialogs and SEO converted, D110, D111; it closes with 10h-4); ZA-260 found and fixed (Low); ZA-261…ZA-263 recorded (Low, Phase 10i), ZA-264 (Low, Phase 12). ZA-265…ZA-269 unused (Phase 10h-2's range; skipped, not to be filled)
 After Roadmap Phase 10h-1 (2026-11-28, merged after 10g-2 and 11h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1500 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1377 on its own branch) · Template smoke test passes; `doublecheck` self-review on the part. ZA-129 in progress (the mechanism and the first screens, D90–D97; it closes with 10h-4); ZP-010 proposed. Next free ID: ZA-236 (ZA-240…ZA-249, this part's range, unused; ZA-250…ZA-259 held by Phase 11i, in progress); proposals ZP-004 (ZP-010 used, ZP-011…ZP-019 unused)
 After Roadmap Phase 11h (2026-11-28, merged after 10g-2): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch) · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-191, ZA-192, ZA-195, ZA-196 fixed (D80–D83); ZA-230 found and fixed while building; ZA-231…ZA-234 found by the audit and fixed (Low); ZA-235 recorded (Low, Phase 12); ZP-002, ZP-003 proposed. Next free ID: ZA-236 (ZA-220…ZA-229 unused; ZA-240…ZA-249 held by a part in progress)
 After Roadmap Phase 10g-2 (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the part (a diff reviewer and two unit reviewers): ZP-001 built (D72); ZA-214, ZA-215 fixed (D73); ZA-216, ZA-197 found while building and fixed; ZA-218 (Medium) found by the audit and fixed; ZA-217, ZA-219 recorded (Low, Phase 12). Next free ID: ZA-220
@@ -41,6 +42,21 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 10h-2 (2026-11-28, admin localisation: Content, Media, the editor dialogs and SEO, D37, D110,
+  D111).** Release notes in the Roadmap's "Phase 10h-2". Full suite 1505 on its branch (all pass, none skipped) on
+  SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings; `doublecheck` self-review (three
+  independent diff reviewers).
+  - **ZA-129 (Low) — in progress, stays open until 10h-4.** The Content and Media sections, the editor dialogs, the
+    SEO screens and Core's content, media, storage and SEO text go through `IStringLocalizer<ZauberText>` (about
+    340 texts, areas Content, Media, EditorDialogs, Seo). Verified: the guard (`ZauberTextResourceTests`, the
+    part's folders in `ConvertedFolders`, Core's too), `CoreMessageTextTests` (a discovered SEO check answers in
+    each call's culture, a site's French through the bootstrap) and the browser (every screen of the part in
+    English, no raw keys).
+  - **ZA-260 (Low) — fixed.** A content type import collected its warnings (a composition, child or parent type,
+    language or property the site lacks) in a result it never returned; they go back with the save's result.
+    Verified: `ContentDataTests.ZA260_…`.
+  - Recorded: ZA-261, ZA-262, ZA-263 (Phase 10i), ZA-264 (Phase 12).
 
 - **Roadmap Phase 10h-1 (2026-11-28, admin localisation: the mechanism and the first screens, D37, D90–D97).**
   Release notes in the Roadmap's "Phase 10h-1". Full suite 1377 on its branch (all pass, none skipped) on SQLite,

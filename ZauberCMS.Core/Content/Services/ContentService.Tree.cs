@@ -30,7 +30,7 @@ public partial class ContentService
         var root = parameters.Content;
         if (root == null)
         {
-            handlerResult.AddMessage("Content is null", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_contentIsNull"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -40,7 +40,7 @@ public partial class ContentService
         {
             if (block.Id == root.Id)
             {
-                handlerResult.AddMessage("A block can't be the content it belongs to", ResultMessageType.Error);
+                handlerResult.AddMessage(text["content_blockIsItsOwnContent"], ResultMessageType.Error);
                 return handlerResult;
             }
 
@@ -51,14 +51,13 @@ public partial class ContentService
         var storedRoot = (await tree.LoadAsync([root.Id], cancellationToken)).GetValueOrDefault(root.Id);
         if (draftMode && storedRoot == null)
         {
-            handlerResult.AddMessage("Save the content once before saving a draft of it", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_saveBeforeDraft"], ResultMessageType.Error);
             return handlerResult;
         }
 
         if (storedRoot != null && !IsCurrentCopy(root, storedRoot, draftMode))
         {
-            handlerResult.AddMessage(
-                $"{storedRoot.Name} was changed by someone else since it was opened. Reload it and make the changes again.",
+            handlerResult.AddMessage(text["content_changedSinceOpened", storedRoot.Name ?? string.Empty],
                 ResultMessageType.Error);
             return handlerResult;
         }
@@ -86,7 +85,7 @@ public partial class ContentService
         if (newTree.Truncated)
         {
             handlerResult.AddMessage(
-                $"The content has more blocks or deeper nesting than can be saved ({NestedContentTree.MaxBlocks} blocks, {NestedContentTree.MaxDepth} levels)",
+                text["content_tooManyBlocks", NestedContentTree.MaxBlocks, NestedContentTree.MaxDepth],
                 ResultMessageType.Error);
             return handlerResult;
         }
@@ -95,14 +94,15 @@ public partial class ContentService
         {
             if (!node.Stored!.IsNestedContent)
             {
-                handlerResult.AddMessage($"'{node.Stored.Name}' is not a block", ResultMessageType.Error);
+                handlerResult.AddMessage(text["content_notABlock", node.Stored.Name ?? string.Empty],
+                    ResultMessageType.Error);
                 return handlerResult;
             }
 
             if (!before.Contains(node.Id))
             {
                 // A block is owned by one item; pointing a second one at it would let either delete it
-                handlerResult.AddMessage($"The block '{node.Stored.Name}' belongs to other content",
+                handlerResult.AddMessage(text["content_blockOwnedByOtherContent", node.Stored.Name ?? string.Empty],
                     ResultMessageType.Error);
                 return handlerResult;
             }
@@ -344,7 +344,8 @@ public partial class ContentService
                     logger.LogWarning(
                         "Block list property '{PropertyAlias}' on content {ContentId} holds block {BlockId} of disallowed type {ContentTypeId}",
                         property.Property.Alias, parent.Id, id, typeId);
-                    handlerResult.AddMessage($"Block list '{property.Property.Alias}' contains a disallowed element type",
+                    handlerResult.AddMessage(
+                        text["content_disallowedBlockType", property.Property.Alias ?? string.Empty],
                         ResultMessageType.Warning);
                 }
             }

@@ -5,7 +5,7 @@
 
 <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
     <Tabs>
-        <RadzenTabsItem Text="@(IsUpdate ? "Update" : "Create")">
+        <RadzenTabsItem Text="@(IsUpdate ? L["general_update"] : L["general_create"])">
 
             <div class="flex space-x-4">
 
@@ -53,22 +53,22 @@
                 <div class="flex-1">
                     <EditorRow>
                         <LeftColumn>
-                            <PropertyInfo Name="Name" Description="The name shown in the tree"/>
+                            <PropertyInfo Name="@L["general_name"]" Description="@L["media_nameDescription"]"/>
                         </LeftColumn>
                         <CentreColumn>
-                            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="Media.Name"
-                                           aria-label="Name"/>
+                            <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="@L["general_name"]" @bind-Value="Media.Name"
+                                           aria-label="@L["general_name"]"/>
                         </CentreColumn>
                     </EditorRow>
                     @if (Media.MediaType == MediaType.Image)
                     {
                         <EditorRow>
                             <LeftColumn>
-                                <PropertyInfo Name="Alt Tag" Description="Optional: Image alt tag"/>
+                                <PropertyInfo Name="@L["media_altTag"]" Description="@L["media_altTagDescription"]"/>
                             </LeftColumn>
                             <CentreColumn>
-                                <RadzenTextBox Style="width: 100%;" Name="Alt Tag" Placeholder="Alt Tag"
-                                               @bind-Value="Media.AltTag" aria-label="alt Tag"/>
+                                <RadzenTextBox Style="width: 100%;" Name="Alt Tag" Placeholder="@L["media_altTag"]"
+                                               @bind-Value="Media.AltTag" aria-label="@L["media_altTag"]"/>
                             </CentreColumn>
                         </EditorRow>
                     }
@@ -77,7 +77,7 @@
                         <EditorRow>
                             <CentreColumn>
                                 <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger"
-                                              Text="Delete Image" Click="@(() => ClearUrl())"/>
+                                              Text="@L["media_deleteImage"]" Click="@(() => ClearUrl())"/>
                             </CentreColumn>
                         </EditorRow>
 
@@ -92,7 +92,7 @@
                     {
                         <EditorRow>
                             <LeftColumn>
-                                <PropertyInfo Name="Requires Authentication" Description="Check if the media requires authentication to view" />
+                                <PropertyInfo Name="@L["media_requiresAuthentication"]" Description="@L["media_requiresAuthenticationDescription"]" />
                             </LeftColumn>
                             <CentreColumn>
                                 <RadzenSwitch @bind-Value="Media.RequiresAuthentication" />
@@ -104,16 +104,16 @@
 
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
                          AlignItems="AlignItems.Center" Gap="10">
-                <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+                <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
             </RadzenStack>
 
         </RadzenTabsItem>
         @if (IsUpdate)
         {
-            <RadzenTabsItem Text="Info">
+            <RadzenTabsItem Text="@L["general_info"]">
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Last Updated"/>
+                        <PropertyInfo Name="@L["general_lastUpdated"]"/>
                     </LeftColumn>
                     <CentreColumn>
                         @Media.DateUpdated.Humanize()
@@ -123,7 +123,7 @@
                 {
                     <EditorRow>
                         <LeftColumn>
-                            <PropertyInfo Name="File Url"/>
+                            <PropertyInfo Name="@L["media_fileUrl"]"/>
                         </LeftColumn>
                         <CentreColumn>
                             <a href="/@Media.Url" target="_blank" alt="@Media.AltTag">
@@ -133,7 +133,7 @@
                     </EditorRow>
                     <EditorRow>
                         <LeftColumn>
-                            <PropertyInfo Name="Size"/>
+                            <PropertyInfo Name="@L["general_size"]"/>
                         </LeftColumn>
                         <CentreColumn>
                             @Media.FileSize
@@ -143,7 +143,7 @@
                     {
                         <EditorRow>
                             <LeftColumn>
-                                <PropertyInfo Name="Width"/>
+                                <PropertyInfo Name="@L["media_width"]"/>
                             </LeftColumn>
                             <CentreColumn>
                                 @Media.Width
@@ -151,7 +151,7 @@
                         </EditorRow>
                         <EditorRow>
                             <LeftColumn>
-                                <PropertyInfo Name="Height"/>
+                                <PropertyInfo Name="@L["media_height"]"/>
                             </LeftColumn>
                             <CentreColumn>
                                 @Media.Height
@@ -209,7 +209,7 @@
         {
             { nameof(ZauberCMS.Components.Admin.MediaSection.Dialogs.EditImage.Media), Media }
         };
-        ModalService?.OpenSidePanel<EditImage>("Create Crops", parameters);
+        ModalService?.OpenSidePanel<EditImage>(L["media_createCrops"], parameters);
     }
 
     private static string GetCompositeKey(Guid? mediaId, Guid? parentId)
@@ -231,7 +231,7 @@
             var result = await MediaService.SaveMediaAsync(saveCommand);
             if (result.Success)
             {
-                NotificationService.ShowSuccessNotification("Saved");
+                NotificationService.ShowSuccessNotification(L["media_saved"]);
                 if (ValueChanged.HasDelegate)
                 {
                     await ValueChanged.InvokeAsync(result.Entity);
@@ -239,7 +239,7 @@
             }
             else
             {
-                NotificationService.ShowNotifications(result.Messages.ErrorMessages().ToList());
+                NotificationService.ShowNotifications(result.Messages.ErrorMessages().ToList(), L);
             }
         }
     }

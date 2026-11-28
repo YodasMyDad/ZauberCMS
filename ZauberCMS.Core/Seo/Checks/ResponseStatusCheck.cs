@@ -1,12 +1,14 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
-public class ResponseStatusCheck(IHttpClientFactory httpClientFactory) : ISeoCheck
+public class ResponseStatusCheck(IHttpClientFactory httpClientFactory, IStringLocalizer<ZauberText> text) : ISeoCheck
 {
-    public string Name => "Response Status Code Checker";
+    public string Name => text["seo_responseStatusCheck"];
 
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content) =>
         Check(url, document, content, CancellationToken.None);
@@ -32,24 +34,24 @@ public class ResponseStatusCheck(IHttpClientFactory httpClientFactory) : ISeoChe
             if (statusCode is 200)
             {
                 seoItem.Status = AlertType.Success;
-                seoItem.DefaultMessage = "The response status code is 200 (OK).";
+                seoItem.DefaultMessage = text["seo_statusOk"];
             }
             else if (statusCode is 301 or 302)
             {
                 seoItem.Status = AlertType.Warning;
-                seoItem.DefaultMessage = $"The response status code is {statusCode} (Redirect). Consider checking redirection setup.";
+                seoItem.DefaultMessage = text["seo_statusRedirect", statusCode];
             }
             else
             {
                 seoItem.Status = AlertType.Error;
-                seoItem.DefaultMessage = $"The response status code is {statusCode}. This might indicate an issue with the URL.";
+                seoItem.DefaultMessage = text["seo_statusOther", statusCode];
             }
         }
         catch (HttpRequestException ex)
         {
             // Handle network or HTTP request-specific errors
             seoItem.Status = AlertType.Error;
-            seoItem.DefaultMessage = $"A network error occurred while checking the response: {ex.Message}";
+            seoItem.DefaultMessage = text["seo_statusNetworkError", ex.Message];
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -59,13 +61,13 @@ public class ResponseStatusCheck(IHttpClientFactory httpClientFactory) : ISeoChe
         catch (TaskCanceledException)
         {
             seoItem.Status = AlertType.Error;
-            seoItem.DefaultMessage = "The page did not answer in time.";
+            seoItem.DefaultMessage = text["seo_pageTimedOut"];
         }
         catch (Exception ex)
         {
             // Handle general errors
             seoItem.Status = AlertType.Error;
-            seoItem.DefaultMessage = $"An unexpected error occurred: {ex.Message}";
+            seoItem.DefaultMessage = text["seo_unexpectedError", ex.Message];
         }
 
         result.Items.Add(seoItem);

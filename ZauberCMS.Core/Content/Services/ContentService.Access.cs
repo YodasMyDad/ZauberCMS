@@ -24,7 +24,7 @@ public partial class ContentService
             .FirstOrDefaultAsync(x => x.Id == parameters.ContentId && !x.Deleted, cancellationToken);
         if (content == null)
         {
-            handlerResult.AddMessage("Content not found", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_notFound"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -33,9 +33,7 @@ public partial class ContentService
         if (ancestorIds.Count != 0 &&
             await dbContext.ContentRoles.AnyAsync(r => ancestorIds.Contains(r.ContentId), cancellationToken))
         {
-            handlerResult.AddMessage(
-                "Cannot change access to this content as it has roles already defined by an ancestor.",
-                ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_accessSetByAncestor"], ResultMessageType.Error);
             return handlerResult;
         }
 

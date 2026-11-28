@@ -7,10 +7,10 @@
 @implements IDisposable
 @attribute [Route($"{Urls.AdminMediaFolder}/{{FolderId:guid}}")]
 
-<PageTitle>Listing Media</PageTitle>
+<PageTitle>@L["media_listingMedia"]</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Right" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Text="Edit" ButtonStyle="ButtonStyle.Secondary" Click="@(() => NavigationManager.NavigateTo($"{Urls.AdminUpdateMedia}/{FolderId}"))" />
+    <RadzenButton Text="@L["general_edit"]" ButtonStyle="ButtonStyle.Secondary" Click="@(() => NavigationManager.NavigateTo($"{Urls.AdminUpdateMedia}/{FolderId}"))" />
     <CreateMediaButtons ParentId="FolderId"/>
 </RadzenStack>
 
@@ -18,7 +18,7 @@
 
     <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
         <Tabs>
-            <RadzenTabsItem Text="Media">
+            <RadzenTabsItem Text="@L["general_media"]">
                 <RadzenDataGrid AllowFiltering="false"
                                 FilterPopupRenderMode="PopupRenderMode.OnDemand"
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
@@ -29,7 +29,7 @@
                                 SelectionMode="DataGridSelectionMode.Single"
                                 RowSelect="@((Media value) => OnRowSelect(value))">
                     <Columns>
-                        <RadzenDataGridColumn Property="MediaType" Title="Type">
+                        <RadzenDataGridColumn Property="MediaType" Title="@L["general_type"]">
                             <Template Context="data">
                                 @if (data.MediaType == MediaType.Image)
                                 {
@@ -41,13 +41,13 @@
                                 }
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn Property="Name" Title="Name">
+                        <RadzenDataGridColumn Property="Name" Title="@L["general_name"]">
                             <Template Context="data">
                                 <div>@data.Name</div>
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn Property="FileSize" Title="Size"/>
-                        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                        <RadzenDataGridColumn Property="FileSize" Title="@L["general_size"]"/>
+                        <RadzenDataGridColumn Property="DateUpdated" Title="@L["general_lastUpdated"]">
                             <Template Context="data">
                                 @data.DateUpdated.Humanize()
                             </Template>
@@ -61,7 +61,7 @@
                                   ButtonStyle="ButtonStyle.Primary" Click="@LoadMoreAsync" class="rz-mt-2"/>
                 }
             </RadzenTabsItem>
-            <RadzenTabsItem Text="Upload">
+            <RadzenTabsItem Text="@L["general_upload"]">
                 <MultipleMediaUpload ParentId="@FolderId"/>
             </RadzenTabsItem>
         </Tabs>

@@ -1,12 +1,14 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
-public class CanonicalSeoChecker : ISeoCheck
+public class CanonicalSeoChecker(IStringLocalizer<ZauberText> text) : ISeoCheck
 {
-    public string Name => "Canonical Link Checker";
+    public string Name => text["seo_canonicalLinkCheck"];
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
     {
         var result = new SeoCheckResult(Name);
@@ -20,12 +22,12 @@ public class CanonicalSeoChecker : ISeoCheck
         if (!canonicalLinkExists)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.DefaultMessage = "Canonical link is missing.";
+            seoItem.DefaultMessage = text["seo_canonicalMissing"];
         }
 
         if (seoItem.Status == AlertType.Success)
         {
-            seoItem.DefaultMessage = "Canonical link is present.";
+            seoItem.DefaultMessage = text["seo_canonicalPresent"];
         }
 
         result.Items.Add(seoItem);

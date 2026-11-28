@@ -52,6 +52,44 @@ public partial class ZauberTextResourceTests
         "ZauberCMS.Components/Trees",
 
         // 10h-2
+        "ZauberCMS.Components/Admin/ContentSection",
+        "ZauberCMS.Components/Admin/ContentSection/Dialogs",
+        "ZauberCMS.Components/Admin/ContentSection/Navigation",
+        "ZauberCMS.Components/Admin/MediaSection",
+        "ZauberCMS.Components/Admin/MediaSection/Buttons",
+        "ZauberCMS.Components/Admin/MediaSection/Dialogs",
+        "ZauberCMS.Components/Admin/MediaSection/Navigation",
+        "ZauberCMS.Components/Editors/Dialogs",
+        "ZauberCMS.Components/Editors/Dialogs/Models",
+        "ZauberCMS.Components/Editors/Dialogs/RichTextEditor",
+        "ZauberCMS.Components/Seo",
+        "ZauberCMS.Components/Seo/Dialogs",
+        "ZauberCMS.Components/Seo/Models",
+        "ZauberCMS.Components/Seo/Navigation",
+        "ZauberCMS.Components/Seo/Startup",
+        "ZauberCMS.Core/Content",
+        "ZauberCMS.Core/Content/Interfaces",
+        "ZauberCMS.Core/Content/Mapping",
+        "ZauberCMS.Core/Content/Models",
+        "ZauberCMS.Core/Content/Parameters",
+        "ZauberCMS.Core/Content/Services",
+        "ZauberCMS.Core/Content/Validation",
+        "ZauberCMS.Core/Media",
+        "ZauberCMS.Core/Media/Interfaces",
+        "ZauberCMS.Core/Media/Mapping",
+        "ZauberCMS.Core/Media/Middleware",
+        "ZauberCMS.Core/Media/Models",
+        "ZauberCMS.Core/Media/Parameters",
+        "ZauberCMS.Core/Media/Services",
+        "ZauberCMS.Core/Media/Validation",
+        "ZauberCMS.Core/Providers",
+        "ZauberCMS.Core/Seo",
+        "ZauberCMS.Core/Seo/Checks",
+        "ZauberCMS.Core/Seo/Interfaces",
+        "ZauberCMS.Core/Seo/Mapping",
+        "ZauberCMS.Core/Seo/Models",
+        "ZauberCMS.Core/Seo/Parameters",
+        "ZauberCMS.Core/Seo/Services",
 
         // 10h-3
 
@@ -65,6 +103,47 @@ public partial class ZauberTextResourceTests
         "ZauberCMS.Components/Admin/Shared/ExtendedDataEditor.razor: remove", // a Material icon's name
 
         // 10h-2
+        // debug output to the console
+        "ZauberCMS.Components/Admin/MediaSection/Dialogs/EditImage.razor: Crop Box (Container): Left={CropLeft}, Top={CropTop}, Width={CropWidth}, Height={CropHeight}",
+        "ZauberCMS.Components/Admin/MediaSection/Dialogs/EditImage.razor: Crop Box (Original): Left={ScaledLeft}, Top={ScaledTop}, Width={ScaledWidth}, Height={ScaledHeight}",
+        // an example address
+        "ZauberCMS.Components/Editors/Dialogs/ContentLinkDialog.razor: https://example.com",
+        // stored: a new content type's default tab name (shown through content_systemTab)
+        "ZauberCMS.Core/Content/Models/ContentType.cs: System",
+        // stored and shown later as data: audit descriptions and version comments (rule 9)
+        "ZauberCMS.Core/Content/Services/ContentService.cs: {user.Name} {action} {name ?? string.Empty}",
+        "ZauberCMS.Core/Content/Services/ContentService.Delete.cs: Recycle Binned",
+        "ZauberCMS.Core/Content/Services/ContentService.Domains.cs: Domain ({domain.Url})",
+        "ZauberCMS.Core/Content/Services/ContentService.Domains.cs: Redirect ({redirect.FromUrl} -> {redirect.ToUrl})",
+        "ZauberCMS.Core/Content/Services/ContentVersioningService.cs: {userName ?? ",
+        "ZauberCMS.Core/Seo/Services/SeoService.cs: Redirect ({redirect.FromUrl} -> {redirect.ToUrl})",
+        "ZauberCMS.Core/Content/Services/ContentService.Save.cs: Draft saved - unpublished changes",
+        "ZauberCMS.Core/Content/Services/ContentService.Save.cs: Content updated and published",
+        "ZauberCMS.Core/Content/Services/ContentService.Save.cs: Content created and published",
+        "ZauberCMS.Core/Content/Services/ContentService.Save.cs: Content updated",
+        "ZauberCMS.Core/Content/Services/ContentService.Save.cs: Content created",
+        "ZauberCMS.Core/Content/Services/ContentService.Tree.cs: Draft saved - unpublished changes",
+        "ZauberCMS.Core/Content/Services/ContentService.Tree.cs: Content updated and published",
+        "ZauberCMS.Core/Content/Services/ContentService.Tree.cs: Content created and published",
+        "ZauberCMS.Core/Content/Services/ContentService.Tree.cs: Content updated",
+        "ZauberCMS.Core/Content/Services/ContentService.Tree.cs: Content created",
+        // log messages on the line after the logger call
+        "ZauberCMS.Core/Content/Services/ContentService.Delete.cs: Permanent delete of content {ContentId} also deleted {DescendantCount} recycled item(s) below it",
+        "ZauberCMS.Core/Content/Services/ContentService.Delete.cs: Successfully cleared RelatedContentId for {OrphanedCount} orphaned content items",
+        "ZauberCMS.Core/Content/Services/ContentService.Routing.cs: The content finder {ContentFinder} named {ContentId} for {Address}, which is not a live page; ",
+        "ZauberCMS.Core/Content/Services/ContentService.Routing.cs: The content finder {ContentFinder} gave the language {LanguageIsoCode}, which is not a culture; ",
+        "ZauberCMS.Core/Content/Services/ContentService.Save.cs: Failed to parse BlockListEditor settings for property {PropertyAlias} on content type {ContentTypeAlias}",
+        "ZauberCMS.Core/Content/Services/ContentService.Save.cs: Block list property '{PropertyAlias}' on content {ContentId} references content {NestedId} of disallowed type {ContentTypeId}",
+        "ZauberCMS.Core/Content/Services/ContentService.Tree.cs: Block list property '{PropertyAlias}' on content {ContentId} holds block {BlockId} of disallowed type {ContentTypeId}",
+        "ZauberCMS.Core/Content/Services/NestedContentTree.cs: Two nested content reference providers for the editor {EditorAlias}: {Used} and {Ignored}",
+        // exception messages on the line after the throw (ProviderService's constants are also the English of
+        // the result messages, media_noStorageProvider and the email one)
+        "ZauberCMS.Core/Seo/SeoHttp.cs: To check this site on a private address, set Zauber:SiteUrl.",
+        "ZauberCMS.Core/Providers/ProviderService.cs: Media storage is not set up: Zauber:Plugins:StorageProvider is empty, so files cannot be stored or removed. ",
+        "ZauberCMS.Core/Providers/ProviderService.cs: Set it to ZauberCMS.Core.Providers.DiskStorageProvider (the default) or to the full type name of an ",
+        "ZauberCMS.Core/Providers/ProviderService.cs: Email is not set up: Zauber:Plugins:EmailProvider is empty, so no email can be sent. Set it to ",
+        // a plain 401 body, written before the culture is set (D110)
+        "ZauberCMS.Core/Media/Middleware/RestrictedMediaMiddleware.cs: Unauthorized access to media",
 
         // 10h-3
 

@@ -227,12 +227,12 @@ public class RedirectDomainTests : IAsyncLifetime
             new() { FromUrl = "/c", ToUrl = "/b", DomainId = second }
         };
 
-        Assert.Null(RedirectRules.FindLoop(new SeoRedirect { FromUrl = "/b", ToUrl = "/a" }, others));
-        Assert.NotNull(RedirectRules.FindLoop(new SeoRedirect { FromUrl = "/c", ToUrl = "/a" }, others));
+        Assert.Null(RedirectRules.FindLoop(new SeoRedirect { FromUrl = "/b", ToUrl = "/a" }, others, TestText.Localizer));
+        Assert.NotNull(RedirectRules.FindLoop(new SeoRedirect { FromUrl = "/c", ToUrl = "/a" }, others, TestText.Localizer));
         Assert.NotNull(RedirectRules.FindLoop(new SeoRedirect { FromUrl = "/c", ToUrl = "/a", DomainId = first },
-            others));
+            others, TestText.Localizer));
         Assert.Null(RedirectRules.FindLoop(new SeoRedirect { FromUrl = "/c", ToUrl = "/a", DomainId = second },
-            others));
+            others, TestText.Localizer));
     }
 
     [Theory]

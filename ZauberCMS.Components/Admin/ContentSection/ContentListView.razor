@@ -10,10 +10,10 @@
                 @Content?.Name
             </RadzenText>
             <RadzenText TextStyle="TextStyle.Body2" class="text-gray-500 mt-1">
-                Last updated @Content?.DateUpdated.Humanize()
+                @(L["content_lastUpdatedWhen", Content?.DateUpdated.Humanize() ?? string.Empty])
             </RadzenText>
         </div>
-        <RadzenButton Variant="Variant.Filled" Icon="edit" Text="@($"Edit {Content?.Name}")" Click="OpenContentEditor" />
+        <RadzenButton Variant="Variant.Filled" Icon="edit" Text="@(L["content_editItem", Content?.Name ?? string.Empty])" Click="OpenContentEditor" />
     </div>
 </div>
 
@@ -33,20 +33,20 @@
                 PagerHorizontalAlign="HorizontalAlign.Center">
     @*@bind-Value="@SelectedContent"*@
     <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+        <RadzenDataGridColumn Property="Name" Title="@L["general_name"]"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="@L["general_lastUpdated"]">
             <Template Context="data">
                 @data.DateUpdated.Humanize()
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="LastUpdatedBy" Title="Updated By">
+        <RadzenDataGridColumn Property="LastUpdatedBy" Title="@L["general_updatedBy"]">
             <Template Context="data">
                 <RadzenGravatar Email="@data.LastUpdatedBy?.Email" Style="width: 25px; height: 25px;"/>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="Id" Title="Delete">
+        <RadzenDataGridColumn Property="Id" Title="@L["general_delete"]">
             <Template Context="data">
-                <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="@L["general_delete"]" Click="@(() => Delete(data.Id))"/>
             </Template>
         </RadzenDataGridColumn>
     </Columns>
@@ -79,11 +79,11 @@
         if (result.Success)
         {
             await LoadAllUserData(new LoadDataArgs { Top = AmountPerPage });
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Deleted", Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = L["content_deleted"], Duration = 4000 });
         }
         else
         {
-            NotificationService.ShowNotifications(result.Messages);
+            NotificationService.ShowNotifications(result.Messages, L);
         }
     }
     
@@ -148,7 +148,7 @@
                 parameters.Add("ParentId", ParentId.Value);
             }
 
-            var dialog = ModalService.OpenSidePanel<ContentEditor>($"Edit {Content?.Name}", parameters);
+            var dialog = ModalService.OpenSidePanel<ContentEditor>(L["content_editItem", Content?.Name ?? string.Empty], parameters);
             var result = await dialog.Result;
             if (result.Confirmed)
             {

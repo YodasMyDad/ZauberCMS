@@ -12,4 +12,128 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="editorDialogs_chooseContent" xml:space="preserve">
+    <value>Choose Content</value>
+    <comment>Heading of the side panel that picks the page a navigation item links to</comment>
+  </data>
+  <data name="editorDialogs_discardManualLinkConfirm" xml:space="preserve">
+    <value>You have unsaved manual link data. Switch to content selection anyway?</value>
+    <comment>Browser confirm in the link dialog when leaving the Manual tab with a URL or link text filled in</comment>
+  </data>
+  <data name="editorDialogs_insertImage" xml:space="preserve">
+    <value>Insert image</value>
+    <comment>Rich text editor tool tooltip and the heading of the image picker it opens</comment>
+  </data>
+  <data name="editorDialogs_insertLink" xml:space="preserve">
+    <value>Insert Link</value>
+    <comment>Link dialog button that inserts a link to the chosen page</comment>
+  </data>
+  <data name="editorDialogs_linkRel" xml:space="preserve">
+    <value>Rel</value>
+    <comment>Link dialog field: the link's rel attribute</comment>
+  </data>
+  <data name="editorDialogs_linkRelDescription" xml:space="preserve">
+    <value>Link relationship</value>
+  </data>
+  <data name="editorDialogs_linkTarget" xml:space="preserve">
+    <value>Target</value>
+    <comment>Link dialog field: where the link opens</comment>
+  </data>
+  <data name="editorDialogs_linkTargetDescription" xml:space="preserve">
+    <value>Where to open the link</value>
+  </data>
+  <data name="editorDialogs_linkText" xml:space="preserve">
+    <value>Link Text</value>
+    <comment>Link dialog field: the text shown for the link</comment>
+  </data>
+  <data name="editorDialogs_linkTextDescription" xml:space="preserve">
+    <value>Text to display for the link</value>
+  </data>
+  <data name="editorDialogs_linkTextPlaceholder" xml:space="preserve">
+    <value>Link text</value>
+    <comment>Placeholder of the link text box</comment>
+  </data>
+  <data name="editorDialogs_linkTitle" xml:space="preserve">
+    <value>Title</value>
+    <comment>Link dialog field: the link's title (tooltip)</comment>
+  </data>
+  <data name="editorDialogs_linkTitleDescription" xml:space="preserve">
+    <value>Optional tooltip text</value>
+  </data>
+  <data name="editorDialogs_linkUrlDescription" xml:space="preserve">
+    <value>The link destination</value>
+    <comment>Description of the link dialog's URL field</comment>
+  </data>
+  <data name="editorDialogs_manualLink" xml:space="preserve">
+    <value>Manual</value>
+    <comment>Link dialog tab for typing a URL by hand (the other tab is Content)</comment>
+  </data>
+  <data name="editorDialogs_navigationItemId" xml:space="preserve">
+    <value>ID: {0}</value>
+    <comment>{0} = the navigation item's ID</comment>
+  </data>
+  <data name="editorDialogs_navigationItemNameDescription" xml:space="preserve">
+    <value>The name of the navigation item</value>
+  </data>
+  <data name="editorDialogs_navigationItemSortOrderDescription" xml:space="preserve">
+    <value>The position in the tree this item is</value>
+  </data>
+  <data name="editorDialogs_navigationItemUrlDescription" xml:space="preserve">
+    <value>The URL of the navigation item</value>
+  </data>
+  <data name="editorDialogs_openInNewWindow" xml:space="preserve">
+    <value>Open In New Window</value>
+    <comment>Navigation item field</comment>
+  </data>
+  <data name="editorDialogs_openInNewWindowDescription" xml:space="preserve">
+    <value>Open this URL in a new window</value>
+  </data>
+  <data name="editorDialogs_optional" xml:space="preserve">
+    <value>Optional</value>
+    <comment>Placeholder of the link dialog's Title box</comment>
+  </data>
+  <data name="editorDialogs_otherElementTypes" xml:space="preserve">
+    <value>Other</value>
+    <comment>Heading over the element types that are in no folder, in the block type picker</comment>
+  </data>
+  <data name="editorDialogs_relNoFollow" xml:space="preserve">
+    <value>No follow</value>
+    <comment>Link rel option: nofollow</comment>
+  </data>
+  <data name="editorDialogs_relNoOpener" xml:space="preserve">
+    <value>No opener (recommended for new windows)</value>
+    <comment>Link rel option: noopener noreferrer</comment>
+  </data>
+  <data name="editorDialogs_saveLink" xml:space="preserve">
+    <value>Save Link</value>
+    <comment>Link dialog button that saves a typed link</comment>
+  </data>
+  <data name="editorDialogs_searchIcons" xml:space="preserve">
+    <value>Search Icons</value>
+    <comment>Accessible label of the icon picker's search box</comment>
+  </data>
+  <data name="editorDialogs_searchIconsPlaceholder" xml:space="preserve">
+    <value>Search Icons...</value>
+    <comment>Placeholder of the icon picker's search box</comment>
+  </data>
+  <data name="editorDialogs_selectContentType" xml:space="preserve">
+    <value>select content type</value>
+    <comment>Accessible label of the content type list</comment>
+  </data>
+  <data name="editorDialogs_selectedContent" xml:space="preserve">
+    <value>Selected:</value>
+    <comment>Label before the name of the page chosen in the link dialog</comment>
+  </data>
+  <data name="editorDialogs_sortOrder" xml:space="preserve">
+    <value>Sort Order</value>
+    <comment>Navigation item field</comment>
+  </data>
+  <data name="editorDialogs_targetCurrentWindow" xml:space="preserve">
+    <value>Current window</value>
+    <comment>Link target option</comment>
+  </data>
+  <data name="editorDialogs_targetNewWindow" xml:space="preserve">
+    <value>New window</value>
+    <comment>Link target option</comment>
+  </data>
 </root>

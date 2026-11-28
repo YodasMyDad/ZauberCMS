@@ -12,4 +12,124 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="media_altTag" xml:space="preserve">
+    <value>Alt Tag</value>
+    <comment>The image's alt text field, in the media editor</comment>
+  </data>
+  <data name="media_altTagDescription" xml:space="preserve">
+    <value>Optional: Image alt tag</value>
+  </data>
+  <data name="media_chooseWhereToMove" xml:space="preserve">
+    <value>Choose where to move {0} to in the tree structure below</value>
+    <comment>{0} = the media item's name</comment>
+  </data>
+  <data name="media_createCrops" xml:space="preserve">
+    <value>Create Crops</value>
+    <comment>Title of the image crop side panel</comment>
+  </data>
+  <data name="media_createFile" xml:space="preserve">
+    <value>Create File</value>
+  </data>
+  <data name="media_createFolder" xml:space="preserve">
+    <value>Create Folder</value>
+  </data>
+  <data name="media_createMedia" xml:space="preserve">
+    <value>Create Media</value>
+    <comment>Page title</comment>
+  </data>
+  <data name="media_cropBoxHeight" xml:space="preserve">
+    <value>Crop Box Height: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_cropBoxLeft" xml:space="preserve">
+    <value>Crop Box Left: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_cropBoxTop" xml:space="preserve">
+    <value>Crop Box Top: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_cropBoxWidth" xml:space="preserve">
+    <value>Crop Box Width: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_croppedPreview" xml:space="preserve">
+    <value>Cropped Preview</value>
+    <comment>Alt text of the cropped image preview</comment>
+  </data>
+  <data name="media_deleteImage" xml:space="preserve">
+    <value>Delete Image</value>
+  </data>
+  <data name="media_fileUrl" xml:space="preserve">
+    <value>File Url</value>
+  </data>
+  <data name="media_height" xml:space="preserve">
+    <value>Height</value>
+    <comment>An image's height</comment>
+  </data>
+  <data name="media_imageSharpCropUrl" xml:space="preserve">
+    <value>ImageSharp Crop URL:</value>
+  </data>
+  <data name="media_listingMedia" xml:space="preserve">
+    <value>Listing Media</value>
+    <comment>Page title of a media folder</comment>
+  </data>
+  <data name="media_moveToRoot" xml:space="preserve">
+    <value>Move To Root</value>
+  </data>
+  <data name="media_nameDescription" xml:space="preserve">
+    <value>The name shown in the tree</value>
+  </data>
+  <data name="media_originalHeight" xml:space="preserve">
+    <value>Original Height: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_originalWidth" xml:space="preserve">
+    <value>Original Width: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_recycleBin" xml:space="preserve">
+    <value>Recycle Bin</value>
+    <comment>The media recycle bin's tree root</comment>
+  </data>
+  <data name="media_requiresAuthentication" xml:space="preserve">
+    <value>Requires Authentication</value>
+  </data>
+  <data name="media_requiresAuthenticationDescription" xml:space="preserve">
+    <value>Check if the media requires authentication to view</value>
+  </data>
+  <data name="media_saveCropInfo" xml:space="preserve">
+    <value>Save Crop Info (Console)</value>
+  </data>
+  <data name="media_saved" xml:space="preserve">
+    <value>Saved</value>
+    <comment>Notification after a media item is saved</comment>
+  </data>
+  <data name="media_scaledCropHeight" xml:space="preserve">
+    <value>Scaled Crop Height: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_scaledCropLeft" xml:space="preserve">
+    <value>Scaled Crop Left: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_scaledCropTop" xml:space="preserve">
+    <value>Scaled Crop Top: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_scaledCropWidth" xml:space="preserve">
+    <value>Scaled Crop Width: {0} px</value>
+    <comment>{0} = a number of pixels</comment>
+  </data>
+  <data name="media_showImageSharpUrl" xml:space="preserve">
+    <value>Show ImageSharp URL</value>
+  </data>
+  <data name="media_updateMedia" xml:space="preserve">
+    <value>Update Media</value>
+    <comment>Page title</comment>
+  </data>
+  <data name="media_width" xml:space="preserve">
+    <value>Width</value>
+    <comment>An image's width</comment>
+  </data>
 </root>

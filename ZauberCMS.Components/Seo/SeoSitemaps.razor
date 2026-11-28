@@ -9,11 +9,11 @@
 
 @layout SectionLayout
 
-<PageTitle>SEO Sitemaps</PageTitle>
+<PageTitle>@L["seo_sitemapsTitle"]</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5"
              Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Add Sitemap" Click="@(args => AddNewSitemap())"/>
+    <RadzenButton Variant="Variant.Filled" Text="@L["seo_addSitemap"]" Click="@(args => AddNewSitemap())"/>
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
@@ -26,20 +26,20 @@
                     SelectionMode="DataGridSelectionMode.Single"
                     RowSelect="@((SeoSitemap value) => OnRowSelect(value))">
         <Columns>
-            <RadzenDataGridColumn Property="RootContentId" Title="Content">
+            <RadzenDataGridColumn Property="RootContentId" Title="@L["general_content"]">
                 <Template Context="data">
                     @data.RootContent?.Name
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="Name" Title="File Name"/>
-            <RadzenDataGridColumn Property="FileName" Title="File Path">
+            <RadzenDataGridColumn Property="Name" Title="@L["seo_fileName"]"/>
+            <RadzenDataGridColumn Property="FileName" Title="@L["seo_filePath"]">
                 <Template Context="data">
                     @($"/{data.FileName}.xml")
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="FileName" Title="Delete" Width="90px" TextAlign="TextAlign.Center">
+            <RadzenDataGridColumn Property="FileName" Title="@L["general_delete"]" Width="90px" TextAlign="TextAlign.Center">
                 <Template Context="data">
-                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete"
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="@L["general_delete"]"
                                   Click="@(() => Delete(data.RootContentId))"/>
                 </Template>
             </RadzenDataGridColumn>
@@ -108,18 +108,18 @@
         var saveResult = await DataService.SaveGlobalDataAsync(new SaveGlobalDataParameters { Alias = SeoConstants.SeoSitemapName, Data = JsonSerializer.Serialize(Sitemaps) });
         if (saveResult.Success)
         {
-            NotificationService.ShowSuccessNotification("Sitemaps updated");
+            NotificationService.ShowSuccessNotification(L["seo_sitemapsUpdated"]);
             await LoadData(new LoadDataArgs());
         }
         else
         {
-            NotificationService.ShowNotifications(saveResult.Messages);
+            NotificationService.ShowNotifications(saveResult.Messages, L);
         }
     }
 
     private async Task AddNewSitemap()
     {
-        var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>("Add New Sitemap");
+        var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>(L["seo_addNewSitemap"]);
         var sitemapDialogResult = await sitemapDialog.Result;
         if (sitemapDialogResult is { Confirmed: true, Data: SeoSitemap sitemap })
         {
@@ -130,7 +130,7 @@
             }
             else
             {
-                NotificationService.ShowErrorNotification("Unable to add sitemap, you already have this content in the list");
+                NotificationService.ShowErrorNotification(L["seo_sitemapContentExists"]);
             }
         }
     }
@@ -139,7 +139,7 @@
     {
         if (value is SeoSitemap selectedRow)
         {
-            var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>("Add New Sitemap",
+            var sitemapDialog = DialogService.OpenSidePanel<NewSitemap>(L["seo_addNewSitemap"],
                 new Dictionary<string, object>
                 {
                     { nameof(NewSitemap.SeoSitemap), selectedRow }

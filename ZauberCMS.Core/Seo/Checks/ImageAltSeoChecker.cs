@@ -1,13 +1,15 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
-public class ImageAltSeoChecker : ISeoCheck
+public class ImageAltSeoChecker(IStringLocalizer<ZauberText> text) : ISeoCheck
 {
-    public string Name => "Image Alt Checker";
+    public string Name => text["seo_imageAltCheck"];
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
     {
         var result = new SeoCheckResult(Name);
@@ -22,12 +24,12 @@ public class ImageAltSeoChecker : ISeoCheck
         if (imagesWithoutAlt > 0)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.DefaultMessage = $"{imagesWithoutAlt} image(s) are missing alt attributes.";
+            seoItem.DefaultMessage = text["seo_imagesMissingAlt", imagesWithoutAlt ?? 0];
         }
 
         if (seoItem.Status == AlertType.Success)
         {
-            seoItem.DefaultMessage = "All images have alt attributes.";
+            seoItem.DefaultMessage = text["seo_imagesAllHaveAlt"];
         }
 
         result.Items.Add(seoItem);

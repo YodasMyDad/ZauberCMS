@@ -1,13 +1,15 @@
 ﻿using System.Text.RegularExpressions;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
-public partial class AiContentCheck : ISeoCheck
+public partial class AiContentCheck(IStringLocalizer<ZauberText> text) : ISeoCheck
 {
-    public string Name => "AI Content Analysis";
+    public string Name => text["seo_aiContentCheck"];
 
     private readonly List<string> _aiTriggers =
     [
@@ -78,21 +80,21 @@ public partial class AiContentCheck : ISeoCheck
 
         if (repeatedPhrases.Count > 0)
         {
-            seoItem.AdditionalMessages.Add($"Repeated AI Phrases: {string.Join(", ", repeatedPhrases)}");   
+            seoItem.AdditionalMessages.Add(text["seo_aiRepeatedPhrases", string.Join(", ", repeatedPhrases)]);
         }
-        seoItem.AdditionalMessages.Add($"Average Sentence Length: {averageSentenceLength:F2} characters");
-        seoItem.AdditionalMessages.Add($"Short Sentence Ratio: {uniformityScore:P2}");
-        seoItem.AdditionalMessages.Add($"Transition Density: {transitionDensity:P2}");
+        seoItem.AdditionalMessages.Add(text["seo_aiAverageSentenceLength", averageSentenceLength]);
+        seoItem.AdditionalMessages.Add(text["seo_aiShortSentenceRatio", uniformityScore]);
+        seoItem.AdditionalMessages.Add(text["seo_aiTransitionDensity", transitionDensity]);
 
         if (repeatedPhrases.Count > 5 || uniformityScore < 0.2 || transitionDensity > 0.1)
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.DefaultMessage = "Potential AI Generated Content Detected";
+            seoItem.DefaultMessage = text["seo_aiContentDetected"];
         }
         else
         {
             seoItem.Status = AlertType.Success;
-            seoItem.DefaultMessage = "Content appears natural";
+            seoItem.DefaultMessage = text["seo_aiContentNatural"];
         }
 
         result.Items.Add(seoItem);

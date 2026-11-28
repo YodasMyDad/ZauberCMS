@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Seo.Interfaces;
@@ -18,7 +20,8 @@ public class SeoService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     ICurrentUserAccessor currentUserAccessor,
-    ExtensionManager extensionManager)
+    ExtensionManager extensionManager,
+    IStringLocalizer<ZauberText> text)
     : ISeoService
 {
     /// <summary>
@@ -39,13 +42,11 @@ public class SeoService(
         {
             if (!RedirectTarget.IsValid(parameters.Redirect.ToUrl))
             {
-                handlerResult.AddMessage(
-                    "The address to redirect to must be a path on this site starting with / or a full http(s) address",
-                    ResultMessageType.Error);
+                handlerResult.AddMessage(text["seo_redirectToInvalid"], ResultMessageType.Error);
                 return handlerResult;
             }
 
-            var fromUrlProblem = CheckFromUrl(parameters.Redirect);
+            var fromUrlProblem = CheckFromUrl(parameters.Redirect, text);
             if (fromUrlProblem != null)
             {
                 handlerResult.AddMessage(fromUrlProblem, ResultMessageType.Error);
@@ -58,7 +59,7 @@ public class SeoService(
                 .ToListAsync(cancellationToken);
             // Followed as requests follow it: the address's domain is worked out at each step (ZA-169)
             var domains = await dbContext.Domains.AsNoTracking().ToListAsync(cancellationToken);
-            var loop = RedirectRules.FindLoop(parameters.Redirect, others, domains);
+            var loop = RedirectRules.FindLoop(parameters.Redirect, others, domains, text);
             if (loop != null)
             {
                 handlerResult.AddMessage(loop, ResultMessageType.Error);
@@ -87,7 +88,7 @@ public class SeoService(
             return await dbContext.SaveChangesAndLog(redirect, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
-        handlerResult.AddMessage("Redirect is null", ResultMessageType.Error);
+        handlerResult.AddMessage(text["seo_redirectMissing"], ResultMessageType.Error);
         return handlerResult;
     }
 
@@ -144,16 +145,16 @@ public class SeoService(
     }
 
     /// <summary>Why the From URL cannot be saved, or null: an exact one is a path, a regular expression must parse.</summary>
-    private static string? CheckFromUrl(SeoRedirect redirect)
+    private static string? CheckFromUrl(SeoRedirect redirect, IStringLocalizer text)
     {
         if (string.IsNullOrWhiteSpace(redirect.FromUrl))
         {
-            return "The address to redirect from is empty";
+            return text["seo_redirectFromEmpty"];
         }
 
         if (!RedirectRules.IsRegex(redirect))
         {
-            return redirect.FromUrl.StartsWith('/') ? null : "The address to redirect from must start with /";
+            return redirect.FromUrl.StartsWith('/') ? null : text["seo_redirectFromNoSlash"].Value;
         }
 
         try
@@ -163,7 +164,7 @@ public class SeoService(
         }
         catch (ArgumentException ex)
         {
-            return $"The address to redirect from is not a valid regular expression: {ex.Message}";
+            return text["seo_redirectFromInvalidRegex", ex.Message];
         }
     }
 

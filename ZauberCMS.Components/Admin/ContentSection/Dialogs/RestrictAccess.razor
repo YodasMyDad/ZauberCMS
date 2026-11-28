@@ -3,17 +3,17 @@
 @using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Shared.Comparers
 
-<div class="font-medium mb-1">Pick the roles who have access to this page</div>
+<div class="font-medium mb-1">@L["content_pickRolesWithAccess"]</div>
 
 <RadzenPickList 
     Multiple="false"
     @bind-Source="@AllRoles" @bind-Target="@SelectedRoles" Style="height:500px; width:100%;"
     TextProperty="@nameof(Role.Name)">
     <SourceHeader>
-        Roles:
+        @L["content_rolesLabel"]
     </SourceHeader>
     <TargetHeader>
-        Selected Roles:
+        @L["content_selectedRolesLabel"]
     </TargetHeader>
     <Template>
         @context.Name
@@ -21,7 +21,7 @@
 </RadzenPickList>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 

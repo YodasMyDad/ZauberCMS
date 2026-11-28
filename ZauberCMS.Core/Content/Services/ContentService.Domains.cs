@@ -71,7 +71,7 @@ public partial class ContentService
 
         if (parameters.Domain == null)
         {
-            handlerResult.AddMessage("Domain is null", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_domainIsNull"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -211,7 +211,7 @@ public partial class ContentService
             return deleted;
         }
 
-        handlerResult.AddMessage("Unable to delete, as no Domain with that id exists", ResultMessageType.Warning);
+        handlerResult.AddMessage(text["content_deleteDomainNotFound"], ResultMessageType.Warning);
         return handlerResult;
     }
 

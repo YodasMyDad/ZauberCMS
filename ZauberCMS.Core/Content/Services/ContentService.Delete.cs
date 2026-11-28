@@ -38,7 +38,7 @@ public partial class ContentService
         var content = await dbContext.Contents.FirstOrDefaultAsync(x => x.Id == parameters.ContentId, cancellationToken);
         if (content == null)
         {
-            handlerResult.AddMessage("Unable to delete, as no Content with that id exists", ResultMessageType.Warning);
+            handlerResult.AddMessage(text["content_deleteNotFound"], ResultMessageType.Warning);
             return handlerResult;
         }
 
@@ -92,9 +92,7 @@ public partial class ContentService
         var descendants = await GetDescendantsAsync(dbContext, content.Id, tracked: true, cancellationToken);
         if (descendants.Any(x => !x.Deleted && !x.IsNestedContent))
         {
-            handlerResult.AddMessage(
-                "Unable to delete content with child content, delete or move those items first",
-                ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_deleteHasChildren"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -285,22 +283,20 @@ public partial class ContentService
                     "Successfully cleared RelatedContentId for {OrphanedCount} orphaned content items", orphanedCount);
 
                 handlerResult.Entity = orphanedCount;
-                handlerResult.AddMessage(
-                    $"Successfully cleared orphaned RelatedContentId references for {orphanedCount} content items",
+                handlerResult.AddMessage(text["content_orphanedRelatedContentCleared", orphanedCount],
                     ResultMessageType.Success);
             }
             else
             {
                 logger.LogInformation("No content items with orphaned RelatedContentId references found");
                 handlerResult.Entity = 0;
-                handlerResult.AddMessage("No orphaned RelatedContentId references found", ResultMessageType.Success);
+                handlerResult.AddMessage(text["content_noOrphanedRelatedContent"], ResultMessageType.Success);
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while cleaning up orphaned RelatedContentId references");
-            handlerResult.AddMessage($"Failed to cleanup orphaned RelatedContentId references: {ex.Message}",
-                ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_orphanedRelatedContentFailed", ex.Message], ResultMessageType.Error);
         }
 
         return handlerResult;

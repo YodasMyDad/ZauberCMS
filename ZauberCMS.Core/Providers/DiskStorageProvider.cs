@@ -4,12 +4,14 @@ using ImageResize.Core.Extensions;
 using ImageResize.Core.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
@@ -21,6 +23,7 @@ public class DiskStorageProvider(
     IDataService dataService,
     IOptions<ZauberSettings> settings,
     IImageResizerService imageResizerService,
+    IStringLocalizer<ZauberText> text,
     ILogger<DiskStorageProvider>? logger = null,
     IOptions<ImageResizeOptions>? imageResizeOptions = null)
     : IStorageProvider
@@ -51,7 +54,7 @@ public class DiskStorageProvider(
         {
             result.Messages.Add(new ResultMessage
             {
-                Message = "File must be an image only",
+                Message = text["media_fileMustBeImage"],
                 MessageType = ResultMessageType.Error
             });
             result.Success = false;
@@ -66,7 +69,7 @@ public class DiskStorageProvider(
                 {
                     result.Messages.Add(new ResultMessage
                     {
-                        Message = "File is too large",
+                        Message = text["media_fileTooLarge"],
                         MessageType = ResultMessageType.Error
                     });
                     result.Success = false;
@@ -75,7 +78,7 @@ public class DiskStorageProvider(
                 {
                     result.Messages.Add(new ResultMessage
                     {
-                        Message = "File contents do not match the file extension",
+                        Message = text["media_fileContentsMismatch"],
                         MessageType = ResultMessageType.Error
                     });
                     result.Success = false;
@@ -85,7 +88,7 @@ public class DiskStorageProvider(
             {
                 result.Messages.Add(new ResultMessage
                 {
-                    Message = "File not allowed",
+                    Message = text["media_fileNotAllowed"],
                     MessageType = ResultMessageType.Error
                 });
                 result.Success = false;
@@ -167,7 +170,7 @@ public class DiskStorageProvider(
 
                 if (!folderName.IsNullOrWhiteSpace() && !IsSafeFolderSegment(folderName))
                 {
-                    result.AddMessage("Invalid folder name", ResultMessageType.Error);
+                    result.AddMessage(text["media_invalidFolderName"], ResultMessageType.Error);
                     result.Success = false;
                     return result;
                 }
@@ -178,7 +181,7 @@ public class DiskStorageProvider(
 
                 if (!TryResolveUnderWebRoot(relativePath, out var dirToSave))
                 {
-                    result.AddMessage("Invalid upload path", ResultMessageType.Error);
+                    result.AddMessage(text["media_invalidUploadPath"], ResultMessageType.Error);
                     result.Success = false;
                     return result;
                 }
@@ -204,7 +207,7 @@ public class DiskStorageProvider(
                         buffered.Position = 0;
                         if (!SvgSanitizer.TrySanitize(buffered, out var svg))
                         {
-                            result.AddMessage("The file is not a valid SVG image", ResultMessageType.Error);
+                            result.AddMessage(text["media_invalidSvg"], ResultMessageType.Error);
                             result.Success = false;
                             return result;
                         }
@@ -247,7 +250,7 @@ public class DiskStorageProvider(
             {
                 // Logged with the detail; the editor gets a message without server paths or internals (ZA-084)
                 _logger.LogError(ex, "Saving the uploaded file {FileName} failed", file.Name);
-                result.AddMessage("The file could not be saved; the error is in the site's log", ResultMessageType.Error);
+                result.AddMessage(text["media_fileNotSaved"], ResultMessageType.Error);
                 result.Success = false;
             }
 

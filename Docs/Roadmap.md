@@ -44,7 +44,10 @@
   building, ZA-231…ZA-234 found by its `/audit changed` and fixed, ZA-235 recorded for Phase 12; 2026-11-28).
   **Phase 10h-1 done** (admin localisation: the mechanism, the shared vocabulary and the first screens, D90–D97;
   ZA-129 in progress; ZP-010 proposed; 2026-11-28, merged after 10g-2 and 11h).
-  **6 open findings** (0 Critical, 0 High, 0 Medium, 6 Low), each one assigned below to a phase (10h, 10i, 12).
+  **Phase 10h-2 done** (admin localisation of Content, Media, the editor dialogs and SEO, and of Core's content,
+  media, storage and SEO text; D110, D111; ZA-260 found and fixed, ZA-261…ZA-264 recorded for 10i and 12;
+  2026-11-28, on its own branch).
+  **10 open findings** (0 Critical, 0 High, 0 Medium, 10 Low), each one assigned below to a phase (10h, 10i, 12).
   **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
   whose theme fits. **Next: Phase 10h-2, 10h-3 and 10h-4 in parallel** (admin localisation, D37, ZA-129; it covers
   the new screens of 10g and 10g-2), then 10i,
@@ -142,6 +145,8 @@
 | D95 | **The installer, the account pages, ZauberCMS's fallback site pages and the sign-out page are localised too; a site's views and content are not.** The installer is in Core (area `Installer`) and runs in `Zauber:AdminDefaultLanguage` (no database, no other language); the account pages (`/Account/*`, area `Account`), the fallback pages (not found, missing view, new site) and the sign-out page are site-facing and use the request's culture, so a site with French content shows them in French once it has the files. Umbraco localises its installer (`installer` area); its member pages are templates the site edits, but ZauberCMS ships its account pages, so a site must be able to translate them without replacing them. Not localised: what is stored and shown back as data (audit descriptions, as Umbraco's audit comments; names; the country names of `CountriesDataSource`), logs and exceptions. (owner delegated to Umbraco parity, Phase 10h-1) | D37, D24 |
 | D96 | **The admin's language stays `Zauber:AdminDefaultLanguage`, one for every user (D37).** Umbraco lets each back-office user choose their language; ZauberCMS's mechanism supports it (it follows the current UI culture), and it is proposed as ZP-010 for the owner. (Phase 10h-1) | D37, ZP-010 |
 | D97 | **Every component in ZauberCMS.Components has `L`; a type discovery builds gets the localiser by constructor.** `@inject IStringLocalizer<ZauberText> L` is in `ZauberCMS.Components/_Imports.razor`, as the services there are. `ExtensionManager` builds discovered types with `ActivatorUtilities`, which fills constructor parameters but not `[Inject]` properties, so a type whose text is read from such an instance (a section's name, a dashboard's tab, a nav group's heading, a tree context menu's text, a data source's name, an editor's name) takes `IStringLocalizer<ZauberText>` as a constructor parameter, a `.razor` one in a constructor in `@code` (Blazor builds components with constructor injection too). The built-in types' constructors gain the parameter (v5 release notes). `ZauberCMS.Components.SharedResource` (one key, its generated class colliding by name) is `[Obsolete]`; its file stays so `IStringLocalizer<SharedResource>` still resolves. (Phase 10h-1) | D37, D18 |
+| D110 | **What Content, Media and SEO keep in English: what is stored, and what reaches the editor from an exception.** The version comments a save writes ("Content updated", "Draft saved - unpublished changes") are stored on the version and stay English, as audit descriptions do (D95); so do the " (Copy)" a copy's stored name gets, a new content type's stored "System" tab (shown as `content_systemTab`), the SEO checks' word lists (detection data) and the 401 body of `RestrictedMediaMiddleware` (a plain status answer, written before the culture middleware runs). The text of an exception shown inside a localised sentence (`seo_pageLoadFailed`'s `{0}`, a network error) stays as .NET or the thrower wrote it. `ProviderService.NoStorageProviderMessage` stays a public constant: the English of the exception and of the result message `media_noStorageProvider` (the Phase 11h refusal, now localised). Umbraco stores its audit and version comments as written and shows exception messages untranslated. (owner delegated to Umbraco parity, Phase 10h-2) | D37, D95 |
+| D111 | **An SEO check's name and results, and the states the admin shows from an enum, are in the admin's language, read when shown.** The built-in checks take `IStringLocalizer<ZauberText>` by constructor (D97) and read `Name` and every message per call, since the checker caches the instances (`GetInstances<ISeoCheck>(true)`); a site's own check does the same with its own area. The checker orders the checks of one `SortOrder` by the name shown, so alphabetically in the admin's language. A version's status (Draft, Published, ...) and a block's change (Added, Removed, Modified), shown with `ToString()` before, have a key per value; the stored enums do not change. Umbraco's back office shows its content states and its health checks' names and results from its language files. (owner delegated to Umbraco parity, Phase 10h-2) | D37, D97 |
 
 ## Working rules for the rework
 
@@ -1477,13 +1482,55 @@ after 10h-4, over the whole of 10h.
     the localised default.
   - `ZauberCMS.Components.SharedResource` is obsolete (use `IStringLocalizer<ZauberText>`).
 
-#### Phase 10h-2 — Content, Media, editor dialogs, SEO (parallel)
-`Admin/ContentSection`, `Admin/MediaSection`, `Editors/Dialogs`, `Seo` (areas Content, Media, EditorDialogs, Seo)
-and Core's content, media and storage messages, validators and SEO checks (Core `Content`, `Media`, `Seo`; storage
-providers in `Media`). The `ContentIndex` "Create Content" button is still to do (its section name is done). From
-Phase 11h: the upload and file-delete refusal with no storage provider, which `MediaService` adds as
-`ProviderService.NoStorageProviderMessage` (a public constant: keep it, as the English, and the exception
-`GetRequiredStorageProvider()` throws, which stays English like every exception; localise the result message).
+#### Phase 10h-2 — Content, Media, editor dialogs, SEO — DONE (2026-11-28)
+- **Converted** (by the rules in [AdminUI.md](AdminUI.md) "Localisation"): Components `Admin/ContentSection` (the
+  editor, versions and their comparison, list view, culture and domains, public access, copy and move, the recycle
+  bin tree, `ContentIndex`'s "Create Content" button; area Content, 90 keys), `Admin/MediaSection` (Media, 33),
+  `Editors/Dialogs` (EditorDialogs, 33), `Seo` (Seo, 54); Core `Content` (the content and versioning services'
+  messages, the validators; Content, 51), `Media` and `Providers` (`MediaService`, `ValidateMedia`, the disk storage
+  provider's refusals; Media, 24) and `Seo` (the eleven checks' names and results, the redirect checks; Seo, 57):
+  about 340 texts. The Phase 11h refusal with no storage provider is `media_noStorageProvider` (its English is
+  `ProviderService.NoStorageProviderMessage`, which stays, as does the exception). All these folders, Core's too,
+  are in the guard's `ConvertedFolders`; what only looks like text is in `NotText` with its reason.
+- **Decisions:** D110 (what stays English: stored version comments and names, the media 401 body, exception text
+  inside a sentence), D111 (SEO checks and enum states in the admin's language, read when shown). Fixed while
+  converting: "this pages url", "eg.", "cleanup", "keywords words", "Url" → "URL"; two near-identical "Unable to
+  find … content type" messages are one key; "Loading" is General's "Loading…".
+- **Found and fixed:** ZA-260 (Low), a content type import dropped its warnings (a composition, child or parent
+  type, language or property the site lacks); they go back with the save's result now (`ContentDataTests`).
+  **Recorded:** ZA-261, ZA-262, ZA-263 (Phase 10i), ZA-264 (Phase 12).
+- **Tests:** `Localization/CoreMessageTextTests` (an SEO check built by discovery answers in each call's culture,
+  a site's French over Core's English, through the bootstrap; the storage refusal's English is the constant), with
+  the test file `Localization/ZauberText/Seo.fr.resx`; `Infrastructure/TestText` (Core's English for a test that
+  builds a check or calls `RedirectRules` itself). Full suite 1505 (all pass, none skipped) on SQLite, PostgreSQL,
+  SQL Server LocalDB and Redis.
+- **Verified in the browser** (dev site on a scratch copy of `app.db`, installed fresh): the installer; Content
+  (landing page and "Create Content", the tree and its menus, the editor's tabs, the Versions grid and Compare, the
+  Save menu, the save and delete notifications, the Copy, Move, Sort, Culture & Domains, Public Access, SEO Checker
+  and Delete panels, the type chooser, the recycle bin, a list view); Media (tree, folder view, upload and its
+  notification, the item editor, Move, Sort, Upload, Delete, the recycle bin); the editor dialogs (Choose Content,
+  Choose Media, Insert Link, Insert Media, the image and video embeds); SEO (Redirects with its panel and
+  notification, Sitemaps with its dialog and notifications, the page checker with every check). English, no raw
+  keys, no localisation errors in the console. **Not verified in the browser:** a French admin (the tests cover
+  it), `EditImage` (unreachable, ZA-264), the import warnings (ZA-260's test), the root "Sort Content" (it opened
+  nothing; a 10h-1 menu).
+- **For the merge:** text outside 10h-2's folders that is still English, for its owner: 10h-3
+  `Editors/MultipleMediaUpload.razor` shows `ProviderService.NoStorageProviderMessage` (Core's
+  `media_noStorageProvider` has it), the titles its editors give these dialogs ("Choose Icon", "Navigation Item",
+  "Sort Items", "Insert Link"), `NavigationItem`'s `[Required]` without a message, `TreeLoadMore.Name` (Core Shared);
+  10h-4 the "Choose Icon" titles of `ContentTypeEditor` and `RoleEditor`. For the 10h audit, two 10h-1 texts:
+  "Permanently delete all 1 items in the media recycle bin" (one key for every count) and the Settings nav group
+  "Seo" beside "SEO Checker".
+- **Release notes (D18):**
+  - The Content, Media and SEO screens and Core's content, media, storage and SEO messages are localisable (D37);
+    the SEO checks' names, the version comparison's field names ("Name", "Url") and "Unnamed Content" are in the
+    admin's language.
+  - Breaking (constructors): `ContentService`, `ContentVersioningService`, `MediaService` and `SeoService` take an
+    `IStringLocalizer<ZauberText>` last; `ValidateContent`, `ValidateContentType` and `ValidateMedia` take one;
+    `DiskStorageProvider` takes one before its optional `logger` and `imageResizeOptions`; the eleven built-in SEO
+    checks take one (a site that builds or subclasses one passes it on). `RedirectRules.FindLoop` (new in v5) takes
+    one. `InsertMedia.Title` is `string?`, null meaning the localised "Insert image".
+  - A content type import returns its warnings (ZA-260).
 
 #### Phase 10h-3 — Editors and the installer (parallel)
 The rest of `Editors` (root, `Settings`, `Components`, `Models`, `ToolbarItems`, `Interfaces`; area Editors), the
@@ -1506,6 +1553,9 @@ and uses 10h's localised text.
 - From the Phase 11 audit: **ZA-194**, with registration off the registration page shows the not-found view inside
   the account layout, not the not-found view's own layout. (ZA-197, the vendored modal's subscriptions, was fixed in
   Phase 10g-2.)
+- From Phase 10h-2: **ZA-261** (the redirect panel's Domain list is announced by the selected id, and the page
+  checker's address box has no label), **ZA-262** (a list view's Delete moves the page to the recycle bin without
+  asking), **ZA-263** (the SEO property's Open Graph image picker accepts any media, a folder too).
 
 ### Phase 11 — Engineering baseline, API clean-up, v5 — DONE 2026-11-27
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,
@@ -2274,6 +2324,8 @@ sign-in refresh and the `Urls.*` `NavigateTo` calls, ignore a path base; the pan
 From the Phase 11h audit: **ZA-235** (an out-of-range `Zauber:ImageResize` value, such as a `DefaultQuality` outside
 1–100, passes the Zauber settings check and stops the start in ImageResize's own validator, after the migrations,
 without naming the setting: check it in `ZauberSettingsValidator`, D48).
+From Phase 10h-2: **ZA-264** (`EditImage.razor`, the media image editor, cannot be opened, its button being commented
+out in `UpdateMediaForm`, and writes its crop boxes to the console: finish it or remove it).
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 

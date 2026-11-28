@@ -1,12 +1,14 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
-public class MobileFriendlyCheck : ISeoCheck
+public class MobileFriendlyCheck(IStringLocalizer<ZauberText> text) : ISeoCheck
 {
-    public string Name => "Mobile-Friendliness Check";
+    public string Name => text["seo_mobileFriendlyCheck"];
 
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
     {
@@ -20,7 +22,7 @@ public class MobileFriendlyCheck : ISeoCheck
         if (viewportMeta == null)
         {
             seoItem.Status = AlertType.Error;
-            seoItem.DefaultMessage = "Missing <meta name=\"viewport\"> tag. The page may not be mobile-friendly.";
+            seoItem.DefaultMessage = text["seo_viewportMissing"];
         }
         else
         {
@@ -31,12 +33,12 @@ public class MobileFriendlyCheck : ISeoCheck
             if (contentAttr.Contains("width=device-width") && contentAttr.Contains("initial-scale"))
             {
                 seoItem.Status = AlertType.Success;
-                seoItem.DefaultMessage = $"Viewport meta tag found: {contentAttr}";
+                seoItem.DefaultMessage = text["seo_viewportFound", contentAttr];
             }
             else
             {
                 seoItem.Status = AlertType.Warning;
-                seoItem.DefaultMessage = $"Viewport tag detected but may not be fully optimized: {contentAttr}. Recommended: \"{recommended}\"";
+                seoItem.DefaultMessage = text["seo_viewportNotOptimized", contentAttr, recommended];
             }
         }
 

@@ -4,7 +4,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Language" Description="Set a language for this content, or set domains"/>
+        <PropertyInfo Name="@L["general_language"]" Description="@L["content_languageDescription"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenDropDown
@@ -22,18 +22,18 @@
 {
     <EditorRow>
         <CentreColumn>
-            <RadzenText TextStyle="TextStyle.Caption">Valid domain names are: "example.com", "www.example.com", "example.com:8080" (only that port; without a port, any port matches). "https://", a trailing dot and a trailing slash are ignored. Paths in domains are supported, eg. "example.com/en" (the longest matching domain wins), but it is recommended to just set the culture on the content</RadzenText>
+            <RadzenText TextStyle="TextStyle.Caption">@L["content_domainNamesHelp"]</RadzenText>
             <RadzenDataGrid @ref="Grid" AllowFiltering="false"
                             AllowPaging="false"
                             PageSize="@(500)"
                             Data="@Domains">
                 <Columns>
-                    <RadzenDataGridColumn Property="Url" Title="Domain">
+                    <RadzenDataGridColumn Property="Url" Title="@L["content_domain"]">
                         <Template Context="data">
                             <RadzenTextBox @bind-Value="@data.Url" Style="width: 100%;"/>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="LanguageId" Title="Language">
+                    <RadzenDataGridColumn Property="LanguageId" Title="@L["general_language"]">
                         <Template Context="data">
                             <RadzenDropDown
                                 AllowFiltering="false"
@@ -44,28 +44,28 @@
                                 @bind-Value="@data.LanguageId"/>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="DateCreated" Title="Date Created" Width="110px" TextAlign="TextAlign.Center">
+                    <RadzenDataGridColumn Property="DateCreated" Title="@L["content_dateCreated"]" Width="110px" TextAlign="TextAlign.Center">
                         <Template Context="data">
                             @data.DateCreated.Humanize()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="Id" Title="Delete" Width="90px" TextAlign="TextAlign.Center">
+                    <RadzenDataGridColumn Property="Id" Title="@L["general_delete"]" Width="90px" TextAlign="TextAlign.Center">
                         <Template Context="data">
-                            <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                            <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="@L["general_delete"]" Click="@(() => Delete(data.Id))"/>
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
 
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" class="rz-mt-3">
-                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Text="Add Domain" Click="AddDomain"/>
+                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Text="@L["content_addDomain"]" Click="AddDomain"/>
             </RadzenStack>
         </CentreColumn>
     </EditorRow>
 }
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 @code {
@@ -91,7 +91,7 @@
         var deleteDomainResult = await ContentService.DeleteDomainAsync(new DeleteDomainParameters { Id = id });
         if (!deleteDomainResult.Success)
         {
-            NotificationService.ShowNotifications(deleteDomainResult.Messages);
+            NotificationService.ShowNotifications(deleteDomainResult.Messages, L);
         }
         else
         {
@@ -113,7 +113,7 @@
         var saveContentResult = await ContentService.SaveContentAsync(new SaveContentParameters { Content = Content, ExcludePropertyData = true });
         if (!saveContentResult.Success)
         {
-            NotificationService.ShowErrorNotification("Error", saveContentResult.Messages.MessagesAsString());
+            NotificationService.ShowErrorNotification(L["general_error"], saveContentResult.Messages.MessagesAsString());
             return;
         }
 
@@ -124,7 +124,7 @@
             if (!domainSave.Success)
             {
                 allDomainsSaved = false;
-                NotificationService.ShowErrorNotification("Error", domainSave.Messages.MessagesAsString());
+                NotificationService.ShowErrorNotification(L["general_error"], domainSave.Messages.MessagesAsString());
             }
         }
 

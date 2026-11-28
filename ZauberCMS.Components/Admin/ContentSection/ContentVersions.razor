@@ -12,7 +12,7 @@
     <div class="pt-4 flex items-center justify-center">
         <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate"
                                    Size="ProgressBarCircularSize.Medium">
-            <Template>Loading versions...</Template>
+            <Template>@L["content_loadingVersions"]</Template>
         </RadzenProgressBarCircular>
     </div>
 }
@@ -20,11 +20,11 @@ else
 {
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <RadzenText TextStyle="TextStyle.H5">Version History</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body2" class="text-muted">Restore to any previous version</RadzenText>
+            <RadzenText TextStyle="TextStyle.H5">@L["content_versionHistory"]</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" class="text-muted">@L["content_versionHistoryIntro"]</RadzenText>
         </div>
         <RadzenButton ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
-                      Icon="refresh" Text="Refresh" Click="RefreshVersions"/>
+                      Icon="refresh" Text="@L["general_refresh"]" Click="RefreshVersions"/>
     </div>
 
     @if (Versions.Any())
@@ -35,7 +35,7 @@ else
                         Data="Versions"
                         TItem="ContentVersion">
             <Columns>
-                <RadzenDataGridColumn Property="VersionNumber" Title="Version" Width="90px" Sortable="true">
+                <RadzenDataGridColumn Property="VersionNumber" Title="@L["content_version"]" Width="90px" Sortable="true">
                     <Template Context="version">
                         <div class="d-flex align-items-center">
                             @if (version.IsCurrentPublished)
@@ -52,13 +52,13 @@ else
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn Property="DateCreated" Title="Date" Sortable="true" Width="150px">
+                <RadzenDataGridColumn Property="DateCreated" Title="@L["general_date"]" Sortable="true" Width="150px">
                     <Template Context="version">
                         @version.DateCreated.Humanize()
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn Property="CreatedBy.Name" Title="Author" Sortable="true">
+                <RadzenDataGridColumn Property="CreatedBy.Name" Title="@L["content_author"]" Sortable="true">
                     <Template Context="version">
                         @if (version.CreatedBy != null)
                         {
@@ -70,12 +70,12 @@ else
                         }
                         else
                         {
-                            <span class="text-muted">System</span>
+                            <span class="text-muted">@L["content_systemUser"]</span>
                         }
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn Title="Actions" Width="280px">
+                <RadzenDataGridColumn Title="@L["general_actions"]" Width="280px">
                     <Template Context="version">
                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Stretch">
                             @if (!version.IsCurrentPublished)
@@ -83,9 +83,9 @@ else
                                 <RadzenButton ButtonStyle="ButtonStyle.Info"
                                               Size="ButtonSize.Small"
                                               Icon="compare"
-                                              Text="Compare"
+                                              Text="@L["content_compare"]"
                                               Click="() => CompareWithCurrent(version)"
-                                              Title="Compare this version with current"
+                                              Title="@L["content_compareWithCurrent"]"
                                               Style="width: 100%; justify-content: flex-start;"/>
                             }
 
@@ -94,18 +94,18 @@ else
                                 <RadzenButton ButtonStyle="ButtonStyle.Warning"
                                               Size="ButtonSize.Small"
                                               Icon="restore"
-                                              Text="Restore"
+                                              Text="@L["general_restore"]"
                                               Click="() => RestoreToVersion(version.Id)"
-                                              Title="Restore content to this version"
+                                              Title="@L["content_restoreToVersion"]"
                                               Style="width: 100%; justify-content: flex-start;"/>
                             }
                             else if (version.IsCurrentPublished)
                             {
-                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Current" Size="BadgeSize.Small"/>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@L["content_currentVersion"]" Size="BadgeSize.Small"/>
                             }
                             else
                             {
-                                <small class="text-muted">Cannot restore</small>
+                                <small class="text-muted">@L["content_cannotRestore"]</small>
                             }
                         </RadzenStack>
                     </Template>
@@ -118,11 +118,11 @@ else
         <div class="text-center py-5">
             <RadzenIcon Icon="history" Size="IconSize.XLarge" class="text-muted mb-3"/>
             <RadzenText TextStyle="TextStyle.H6" class="text-muted mb-2">
-                No version history yet
+                @L["content_noVersionHistory"]
             </RadzenText>
             <RadzenText TextStyle="TextStyle.Body2" class="text-muted">
-                Versions are automatically created when you save or publish content changes.<br/>
-                Make some changes and save to see your version history here.
+                @L["content_noVersionHistoryDetail"]<br/>
+                @L["content_noVersionHistoryHint"]
             </RadzenText>
         </div>
     }
@@ -199,8 +199,8 @@ else
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Error Loading Versions",
-                Detail = "Failed to load version history. Please try refreshing."
+                Summary = L["content_errorLoadingVersions"],
+                Detail = L["content_errorLoadingVersionsDetail"]
             });
         }
         finally
@@ -240,8 +240,8 @@ else
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
-                    Summary = "Version Restored",
-                    Detail = "Content has been restored to the selected version.",
+                    Summary = L["content_versionRestored"],
+                    Detail = L["content_versionRestoredDetail"],
                     Duration = 4000
                 });
             }
@@ -250,8 +250,8 @@ else
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Error,
-                    Summary = "Restore Failed",
-                    Detail = "Failed to restore to the selected version. Please try again.",
+                    Summary = L["content_restoreFailed"],
+                    Detail = L["content_restoreFailedDetail"],
                     Duration = 4000
                 });
             }
@@ -261,8 +261,8 @@ else
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = "An error occurred while restoring the version.",
+                Summary = L["general_error"],
+                Detail = L["content_restoreVersionError"],
                 Duration = 4000
             });
         }
@@ -284,8 +284,8 @@ else
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Warning,
-                    Summary = "No Current Version",
-                    Detail = "Cannot compare - no current published version found.",
+                    Summary = L["content_noCurrentVersion"],
+                    Detail = L["content_noCurrentVersionDetail"],
                     Duration = 4000
                 });
                 return;
@@ -304,7 +304,7 @@ else
                 { nameof(VersionComparison.Loading), false }
             };
 
-            var modal = ModalService.OpenSidePanel<VersionComparison>("Version Comparison", parameters);
+            var modal = ModalService.OpenSidePanel<VersionComparison>(L["content_versionComparison"], parameters);
             var result = await modal.Result;
         }
         catch (Exception)
@@ -312,8 +312,8 @@ else
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Comparison Failed",
-                Detail = "Failed to compare versions. Please try again.",
+                Summary = L["content_comparisonFailed"],
+                Detail = L["content_comparisonFailedDetail"],
                 Duration = 4000
             });
         }

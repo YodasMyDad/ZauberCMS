@@ -1,6 +1,6 @@
 ﻿@using ZauberCMS.Core.Content.Parameters
 
-<h5>Choose where to copy @Content.Name to in the tree structure below</h5>
+<h5>@(L["content_chooseWhereToCopy", Content.Name ?? string.Empty])</h5>
 
 <EditorRow>
     <CentreColumn>
@@ -10,7 +10,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Include Descendants" Description=""/>
+        <PropertyInfo Name="@L["content_includeDescendants"]" Description=""/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@CopyContentCommand.IncludeDescendants" />
@@ -18,7 +18,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 

@@ -54,7 +54,7 @@ public partial class ContentService
 
         if (parameters.ContentType == null)
         {
-            handlerResult.AddMessage("ContentType is null", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_contentTypeIsNull"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -78,8 +78,7 @@ public partial class ContentService
             var containsAlias = await dbContext.ContentTypes.AnyAsync(x => x.Alias == parameters.ContentType.Alias, cancellationToken);
             if (containsAlias)
             {
-                handlerResult.AddMessage("Content Type Alias already exists, change the content type name",
-                    ResultMessageType.Error);
+                handlerResult.AddMessage(text["content_contentTypeAliasExists"], ResultMessageType.Error);
                 return handlerResult;
             }
 
@@ -114,7 +113,7 @@ public partial class ContentService
     /// properties with one alias (ignoring case): on the type itself, between the type and its compositions, or, for a
     /// composition, on any type that uses it. Null when every alias is unique.
     /// </summary>
-    private static async Task<string?> FindPropertyAliasClashAsync(IZauberDbContext dbContext, ContentType contentType,
+    private async Task<string?> FindPropertyAliasClashAsync(IZauberDbContext dbContext, ContentType contentType,
         CancellationToken cancellationToken)
     {
         // Content types are few and their properties are a JSON column: compare in memory
@@ -164,9 +163,9 @@ public partial class ContentService
                     }
 
                     return ReferenceEquals(first, source)
-                        ? $"Two properties on '{source.Name}' use the alias '{alias}'. Give each property its own alias."
-                        : $"The alias '{alias}' is used by '{first.Name}' and '{source.Name}', which are both on " +
-                          $"'{type.Name}'. Give each property its own alias.";
+                        ? text["content_propertyAliasUsedTwice", source.Name ?? string.Empty, alias]
+                        : text["content_propertyAliasUsedByTwoTypes", alias, first.Name ?? string.Empty,
+                            source.Name ?? string.Empty, type.Name ?? string.Empty];
                 }
             }
         }
@@ -294,8 +293,7 @@ public partial class ContentService
         if (contentUsingContentType)
         {
             handlerResult.Success = false;
-            handlerResult.AddMessage("Unable to delete, because this ContentType is being used by content items",
-                ResultMessageType.Warning);
+            handlerResult.AddMessage(text["content_contentTypeInUse"], ResultMessageType.Warning);
             return handlerResult;
         }
 
@@ -347,9 +345,7 @@ public partial class ContentService
             if (liveItems.Count != 0)
             {
                 handlerResult.Success = false;
-                handlerResult.AddMessage(
-                    "Unable to delete, because this Element Type is used by nested content",
-                    ResultMessageType.Warning);
+                handlerResult.AddMessage(text["content_elementTypeInUse"], ResultMessageType.Warning);
                 return handlerResult;
             }
 
@@ -388,8 +384,7 @@ public partial class ContentService
         if (children.Items.Any())
         {
             handlerResult.Success = false;
-            handlerResult.AddMessage("Unable to delete, because this ContentType has children",
-                ResultMessageType.Warning);
+            handlerResult.AddMessage(text["content_contentTypeHasChildren"], ResultMessageType.Warning);
             return handlerResult;
         }
 
@@ -402,9 +397,7 @@ public partial class ContentService
                 if (anyUsingThisComposition.Items.Any())
                 {
                     handlerResult.Success = false;
-                    handlerResult.AddMessage(
-                        "Unable to delete, because there are content types using this composition, remove it first",
-                        ResultMessageType.Warning);
+                    handlerResult.AddMessage(text["content_compositionInUse"], ResultMessageType.Warning);
                     return handlerResult;
                 }
             }
@@ -439,7 +432,7 @@ public partial class ContentService
             }
         }
 
-        handlerResult.AddMessage("Unable to delete, as no ContentType with that id exists", ResultMessageType.Warning);
+        handlerResult.AddMessage(text["content_deleteContentTypeNotFound"], ResultMessageType.Warning);
         return handlerResult;
     }
 

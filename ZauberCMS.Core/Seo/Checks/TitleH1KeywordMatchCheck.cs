@@ -1,13 +1,15 @@
 ﻿using System.Text.RegularExpressions;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Seo.Models;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Seo.Checks;
 
-public partial class TitleH1KeywordMatchCheck : ISeoCheck
+public partial class TitleH1KeywordMatchCheck(IStringLocalizer<ZauberText> text) : ISeoCheck
 {
-    public string Name => "Keyword Match Check";
+    public string Name => text["seo_keywordMatchCheck"];
 
     public Task<SeoCheckResult> Check(string url, HtmlDocument document, Content.Models.Content content)
     {
@@ -25,7 +27,7 @@ public partial class TitleH1KeywordMatchCheck : ISeoCheck
         if (string.IsNullOrWhiteSpace(titleText) || string.IsNullOrWhiteSpace(h1Text))
         {
             seoItem.Status = AlertType.Warning;
-            seoItem.DefaultMessage = "Either the page title or the <h1> is missing, making keyword consistency impossible.";
+            seoItem.DefaultMessage = text["seo_keywordTitleOrHeadingMissing"];
             result.Items.Add(seoItem);
         }
         else
@@ -40,7 +42,7 @@ public partial class TitleH1KeywordMatchCheck : ISeoCheck
             if (matchingWords.Count == 0)
             {
                 seoItem.Status = AlertType.Warning;
-                seoItem.DefaultMessage = "No keywords from the title appear in the <h1>. Consider aligning them for better SEO.";
+                seoItem.DefaultMessage = text["seo_keywordNoMatch"];
                 result.Items.Add(seoItem);
             }
         }
@@ -48,7 +50,7 @@ public partial class TitleH1KeywordMatchCheck : ISeoCheck
         if (result.Items.Count == 0)
         {
             seoItem.Status = AlertType.Success;
-            seoItem.DefaultMessage = "Page title and <h1> contain keywords words that match.";
+            seoItem.DefaultMessage = text["seo_keywordMatch"];
             result.Items.Add(seoItem);
         }
         

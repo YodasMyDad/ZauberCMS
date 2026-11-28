@@ -3,7 +3,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Domain" Description="Optional domain to restrict the redirect to"/>
+        <PropertyInfo Name="@L["seo_domain"]" Description="@L["seo_redirectDomainDescription"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenDropDown TValue="Guid" @bind-Value="@SelectedDomainId" Data="@Domains" TextProperty="Text" ValueProperty="Id" Style="width: 100%;" />
@@ -12,7 +12,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="From Url" Description="The address to redirect from, starting with / (the query string too, if it has one)" />
+        <PropertyInfo Name="@L["seo_fromUrl"]" Description="@L["seo_fromUrlDescription"]" />
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox @bind-Value="@Redirect.FromUrl" Style="width: 100%" />
@@ -21,14 +21,14 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Regular expression?" Description="On: the From Url is a regular expression matched against the address (path and query string). Off: the address must be exactly the From Url." />
+        <PropertyInfo Name="@L["seo_regularExpression"]" Description="@L["seo_regularExpressionDescription"]" />
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@IsRegex" />
         @if (IsRegex)
         {
             <div class="rz-mt-2">
-                Letter case is ignored. Test the expression on <a href="https://regex101.com/" target="_blank" rel="noopener noreferrer">regex101.com</a> (.NET flavour) first.
+                @L["seo_regexCaseIgnored"] <a href="https://regex101.com/" target="_blank" rel="noopener noreferrer">@L["seo_regexTestFirst"]</a>
             </div>
         }
     </CentreColumn>
@@ -36,7 +36,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="To Url" Description="Url you want to redirect to" />
+        <PropertyInfo Name="@L["seo_toUrl"]" Description="@L["seo_toUrlDescription"]" />
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox @bind-Value="@Redirect.ToUrl" Style="width: 100%" />
@@ -45,7 +45,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Permanent Redirect?" Description="Do you want a permanent (301) or temporary redirect (302)?" />
+        <PropertyInfo Name="@L["seo_permanentRedirect"]" Description="@L["seo_permanentRedirectDescription"]" />
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Redirect.IsPermanent" />
@@ -53,7 +53,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 @code {
@@ -85,7 +85,7 @@
             Id = x.Id
         }).ToList();
         
-        Domains.Insert(0, new DomainChoice{Text = "Any", Id = Guid.Empty });
+        Domains.Insert(0, new DomainChoice{Text = L["seo_anyDomain"].Value, Id = Guid.Empty });
     }
         
     private async Task Save()
@@ -100,7 +100,7 @@
         
         if(Redirect.ToUrl.IsNullOrWhiteSpace())
         {
-            NotificationService.ShowErrorNotification("To url must not be empty");
+            NotificationService.ShowErrorNotification(L["seo_toUrlEmpty"]);
             return;
         }
         
@@ -108,7 +108,7 @@
         Redirect.ToUrl = ZauberCMS.Core.Seo.RedirectTarget.Normalize(Redirect.ToUrl);
         if (!ZauberCMS.Core.Seo.RedirectTarget.IsValid(Redirect.ToUrl))
         {
-            NotificationService.ShowErrorNotification("To url must be a path on this site (/new-page) or a full http or https address");
+            NotificationService.ShowErrorNotification(L["seo_toUrlInvalid"]);
             return;
         }
 
@@ -129,12 +129,12 @@
     {
         if (string.IsNullOrWhiteSpace(Redirect.FromUrl))
         {
-            return "From url must not be empty";
+            return L["seo_fromUrlEmpty"];
         }
 
         if (!IsRegex)
         {
-            return Redirect.FromUrl.StartsWith('/') ? null : "From url must start with /";
+            return Redirect.FromUrl.StartsWith('/') ? null : L["seo_fromUrlNoSlash"].Value;
         }
 
         try
@@ -144,7 +144,7 @@
         }
         catch (ArgumentException)
         {
-            return "From url is not a valid regular expression";
+            return L["seo_fromUrlInvalidRegex"];
         }
     }
         private sealed class DomainChoice

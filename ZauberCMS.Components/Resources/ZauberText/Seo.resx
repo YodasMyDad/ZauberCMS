@@ -12,4 +12,195 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="seo_addNewSitemap" xml:space="preserve">
+    <value>Add New Sitemap</value>
+    <comment>Side panel title: adding or editing a sitemap</comment>
+  </data>
+  <data name="seo_addSitemap" xml:space="preserve">
+    <value>Add Sitemap</value>
+    <comment>Button</comment>
+  </data>
+  <data name="seo_anyDomain" xml:space="preserve">
+    <value>Any</value>
+    <comment>The redirect applies on every domain</comment>
+  </data>
+  <data name="seo_checkFailed" xml:space="preserve">
+    <value>This check could not be run. The details are in the site's log.</value>
+    <comment>An SEO check that failed</comment>
+  </data>
+  <data name="seo_checksStopped" xml:space="preserve">
+    <value>The checks were stopped.</value>
+  </data>
+  <data name="seo_checksTimedOut" xml:space="preserve">
+    <value>The checks took longer than {0:0} minutes and were stopped.</value>
+    <comment>{0} = the time limit in minutes</comment>
+  </data>
+  <data name="seo_checksTitle" xml:space="preserve">
+    <value>SEO checks</value>
+    <comment>Title of the SEO checker error message</comment>
+  </data>
+  <data name="seo_completeAllFields" xml:space="preserve">
+    <value>You need to complete all fields</value>
+  </data>
+  <data name="seo_contentTypes" xml:space="preserve">
+    <value>Content Types</value>
+  </data>
+  <data name="seo_contentTypesDescription" xml:space="preserve">
+    <value>Choose the content types that should be included in the sitemap.</value>
+  </data>
+  <data name="seo_createRedirect" xml:space="preserve">
+    <value>Create Redirect</value>
+    <comment>Button and side panel title</comment>
+  </data>
+  <data name="seo_domain" xml:space="preserve">
+    <value>Domain</value>
+  </data>
+  <data name="seo_domainIsLocalhost" xml:space="preserve">
+    <value>You have saved the domain as localhost?</value>
+  </data>
+  <data name="seo_editRedirect" xml:space="preserve">
+    <value>Edit Redirect</value>
+    <comment>Side panel title</comment>
+  </data>
+  <data name="seo_enterFullAddress" xml:space="preserve">
+    <value>Enter the full address of the page, starting with http:// or https://</value>
+    <comment>SEO checker</comment>
+  </data>
+  <data name="seo_fileName" xml:space="preserve">
+    <value>File Name</value>
+    <comment>Sitemap list column</comment>
+  </data>
+  <data name="seo_filePath" xml:space="preserve">
+    <value>File Path</value>
+    <comment>Sitemap list column</comment>
+  </data>
+  <data name="seo_fromUrl" xml:space="preserve">
+    <value>From Url</value>
+    <comment>The address a redirect is from</comment>
+  </data>
+  <data name="seo_fromUrlDescription" xml:space="preserve">
+    <value>The address to redirect from, starting with / (the query string too, if it has one)</value>
+  </data>
+  <data name="seo_fromUrlEmpty" xml:space="preserve">
+    <value>From url must not be empty</value>
+  </data>
+  <data name="seo_fromUrlInvalidRegex" xml:space="preserve">
+    <value>From url is not a valid regular expression</value>
+  </data>
+  <data name="seo_fromUrlNoSlash" xml:space="preserve">
+    <value>From url must start with /</value>
+  </data>
+  <data name="seo_match" xml:space="preserve">
+    <value>Match</value>
+    <comment>Redirect list column: how the From Url is matched</comment>
+  </data>
+  <data name="seo_matchExact" xml:space="preserve">
+    <value>Exact</value>
+    <comment>The From Url is matched exactly</comment>
+  </data>
+  <data name="seo_matchRegex" xml:space="preserve">
+    <value>Regex</value>
+    <comment>The From Url is a regular expression</comment>
+  </data>
+  <data name="seo_pageCheckerTitle" xml:space="preserve">
+    <value>SEO Page Checker</value>
+    <comment>Browser tab title</comment>
+  </data>
+  <data name="seo_pageLoadFailed" xml:space="preserve">
+    <value>The page could not be loaded: {0}</value>
+    <comment>{0} = why (.NET's message, in English)</comment>
+  </data>
+  <data name="seo_permanentRedirect" xml:space="preserve">
+    <value>Permanent Redirect?</value>
+  </data>
+  <data name="seo_permanentRedirectDescription" xml:space="preserve">
+    <value>Do you want a permanent (301) or temporary redirect (302)?</value>
+  </data>
+  <data name="seo_redirectDomainDescription" xml:space="preserve">
+    <value>Optional domain to restrict the redirect to</value>
+  </data>
+  <data name="seo_redirectSaved" xml:space="preserve">
+    <value>Redirect Saved</value>
+  </data>
+  <data name="seo_redirectType" xml:space="preserve">
+    <value>Redirect Type</value>
+    <comment>Redirect list column: 301 or 302</comment>
+  </data>
+  <data name="seo_redirects" xml:space="preserve">
+    <value>SEO Redirects</value>
+    <comment>Browser tab title and tree item</comment>
+  </data>
+  <data name="seo_regexCaseIgnored" xml:space="preserve">
+    <value>Letter case is ignored.</value>
+    <comment>Shown under the regular expression switch</comment>
+  </data>
+  <data name="seo_regexTestFirst" xml:space="preserve">
+    <value>Test the expression on regex101.com (.NET flavour) first.</value>
+    <comment>A link to regex101.com, after seo_regexCaseIgnored</comment>
+  </data>
+  <data name="seo_regularExpression" xml:space="preserve">
+    <value>Regular expression?</value>
+  </data>
+  <data name="seo_regularExpressionDescription" xml:space="preserve">
+    <value>On: the From Url is a regular expression matched against the address (path and query string). Off: the address must be exactly the From Url.</value>
+  </data>
+  <data name="seo_runChecks" xml:space="preserve">
+    <value>Run SEO Checks</value>
+    <comment>Button</comment>
+  </data>
+  <data name="seo_selectContentTypes" xml:space="preserve">
+    <value>Select Content Types</value>
+    <comment>Placeholder of the content type list</comment>
+  </data>
+  <data name="seo_selectWebsiteRoot" xml:space="preserve">
+    <value>Select Website Root</value>
+  </data>
+  <data name="seo_selectWebsiteRootDescription" xml:space="preserve">
+    <value>Select the website root that should be used for the sitemap.</value>
+  </data>
+  <data name="seo_seoChecker" xml:space="preserve">
+    <value>SEO Checker</value>
+    <comment>Tree item</comment>
+  </data>
+  <data name="seo_sitemapContentExists" xml:space="preserve">
+    <value>Unable to add sitemap, you already have this content in the list</value>
+  </data>
+  <data name="seo_sitemapDomainDescription" xml:space="preserve">
+    <value>The domain of the website (Used for the sitemap url)</value>
+  </data>
+  <data name="seo_sitemapNameDescription" xml:space="preserve">
+    <value>The name of the sitemap (Used for the file name)</value>
+  </data>
+  <data name="seo_sitemaps" xml:space="preserve">
+    <value>Sitemaps</value>
+    <comment>Tree item</comment>
+  </data>
+  <data name="seo_sitemapsTitle" xml:space="preserve">
+    <value>SEO Sitemaps</value>
+    <comment>Browser tab title</comment>
+  </data>
+  <data name="seo_sitemapsUpdated" xml:space="preserve">
+    <value>Sitemaps updated</value>
+  </data>
+  <data name="seo_stop" xml:space="preserve">
+    <value>Stop</value>
+    <comment>Button: stops the SEO checks</comment>
+  </data>
+  <data name="seo_toUrl" xml:space="preserve">
+    <value>To Url</value>
+    <comment>The address a redirect goes to</comment>
+  </data>
+  <data name="seo_toUrlDescription" xml:space="preserve">
+    <value>Url you want to redirect to</value>
+  </data>
+  <data name="seo_toUrlEmpty" xml:space="preserve">
+    <value>To url must not be empty</value>
+  </data>
+  <data name="seo_toUrlInvalid" xml:space="preserve">
+    <value>To url must be a path on this site (/new-page) or a full http or https address</value>
+  </data>
+  <data name="seo_wait" xml:space="preserve">
+    <value>Wait</value>
+    <comment>Inside the progress spinner while the SEO checks run</comment>
+  </data>
 </root>

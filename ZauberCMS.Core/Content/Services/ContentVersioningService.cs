@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Mapping;
@@ -7,6 +8,7 @@ using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
@@ -19,7 +21,8 @@ public class ContentVersioningService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     ExtensionManager extensionManager,
-    ILogger<ContentVersioningService> logger)
+    ILogger<ContentVersioningService> logger,
+    IStringLocalizer<ZauberText> text)
     : IContentVersioningService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
@@ -37,7 +40,7 @@ public class ContentVersioningService(
 
         if (parameters.Content == null)
         {
-            handlerResult.AddMessage("Content is null", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_contentIsNull"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -54,7 +57,7 @@ public class ContentVersioningService(
 
         if (content == null)
         {
-            handlerResult.AddMessage("Content not found", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_notFound"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -163,7 +166,7 @@ public class ContentVersioningService(
 
         if (version == null)
         {
-            handlerResult.AddMessage("Version not found", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_versionNotFound"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -173,7 +176,7 @@ public class ContentVersioningService(
 
         if (content == null)
         {
-            handlerResult.AddMessage("Content not found", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_notFound"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -405,14 +408,14 @@ public class ContentVersioningService(
 
         if (version == null)
         {
-            handlerResult.AddMessage("Version not found", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_versionNotFound"], ResultMessageType.Error);
             return handlerResult;
         }
 
         // Prevent deletion of current published version
         if (version.IsCurrentPublished)
         {
-            handlerResult.AddMessage("Cannot delete the currently published version", ResultMessageType.Error);
+            handlerResult.AddMessage(text["content_cannotDeletePublishedVersion"], ResultMessageType.Error);
             return handlerResult;
         }
 
@@ -424,7 +427,7 @@ public class ContentVersioningService(
 
             if (otherDrafts == 0)
             {
-                handlerResult.AddMessage("Cannot delete the only draft version", ResultMessageType.Error);
+                handlerResult.AddMessage(text["content_cannotDeleteOnlyDraftVersion"], ResultMessageType.Error);
                 return handlerResult;
             }
         }
@@ -622,7 +625,7 @@ public class ContentVersioningService(
         return size;
     }
 
-    private static List<ContentDifference> CompareSnapshots(ContentSnapshot snapshot1, ContentSnapshot snapshot2)
+    private List<ContentDifference> CompareSnapshots(ContentSnapshot snapshot1, ContentSnapshot snapshot2)
     {
         var differences = new List<ContentDifference>();
 
@@ -630,7 +633,7 @@ public class ContentVersioningService(
         {
             differences.Add(new ContentDifference
             {
-                Field = "Name",
+                Field = text["content_versionFieldName"],
                 OldValue = snapshot1.Name,
                 NewValue = snapshot2.Name
             });
@@ -640,7 +643,7 @@ public class ContentVersioningService(
         {
             differences.Add(new ContentDifference
             {
-                Field = "Url",
+                Field = text["content_versionFieldUrl"],
                 OldValue = snapshot1.Url,
                 NewValue = snapshot2.Url
             });
@@ -678,7 +681,7 @@ public class ContentVersioningService(
         return differences;
     }
 
-    private static List<BlockListDifference> CompareBlockListSnapshots(ContentVersion version1, ContentVersion version2)
+    private List<BlockListDifference> CompareBlockListSnapshots(ContentVersion version1, ContentVersion version2)
     {
         var differences = new List<BlockListDifference>();
 
@@ -727,7 +730,7 @@ public class ContentVersioningService(
                value.TrimEnd().EndsWith(']');
     }
 
-    private static List<BlockListContentChange> CompareBlockListProperty(
+    private List<BlockListContentChange> CompareBlockListProperty(
         ContentPropertySnapshot prop1, ContentPropertySnapshot prop2,
         List<BlockListContentSnapshot> snapshots1, List<BlockListContentSnapshot> snapshots2)
     {
@@ -752,8 +755,8 @@ public class ContentVersioningService(
                     changes.Add(new BlockListContentChange
                     {
                         ChangeType = BlockListContentChangeType.Added,
-                        ContentName = snapshot.ContentSnapshot.Name ?? "Unnamed Content",
-                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias ?? "Unknown",
+                        ContentName = snapshot.ContentSnapshot.Name ?? text["content_unnamedContent"].Value,
+                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias ?? text["content_unknownContentType"].Value,
                         ContentId = contentId
                     });
                 }
@@ -768,8 +771,8 @@ public class ContentVersioningService(
                     changes.Add(new BlockListContentChange
                     {
                         ChangeType = BlockListContentChangeType.Removed,
-                        ContentName = snapshot.ContentSnapshot.Name ?? "Unnamed Content",
-                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias ?? "Unknown",
+                        ContentName = snapshot.ContentSnapshot.Name ?? text["content_unnamedContent"].Value,
+                        ContentTypeAlias = snapshot.ContentSnapshot.ContentTypeAlias ?? text["content_unknownContentType"].Value,
                         ContentId = contentId
                     });
                 }
@@ -790,8 +793,8 @@ public class ContentVersioningService(
                         changes.Add(new BlockListContentChange
                         {
                             ChangeType = BlockListContentChangeType.Modified,
-                            ContentName = snapshot2.ContentSnapshot.Name ?? "Unnamed Content",
-                            ContentTypeAlias = snapshot2.ContentSnapshot.ContentTypeAlias ?? "Unknown",
+                            ContentName = snapshot2.ContentSnapshot.Name ?? text["content_unnamedContent"].Value,
+                            ContentTypeAlias = snapshot2.ContentSnapshot.ContentTypeAlias ?? text["content_unknownContentType"].Value,
                             PropertyChanges = propertyDiffs,
                             ContentId = contentId
                         });

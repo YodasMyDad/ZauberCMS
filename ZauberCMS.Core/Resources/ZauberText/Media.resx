@@ -12,4 +12,83 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="media_alreadyInRecycleBin" xml:space="preserve">
+    <value>This media is already in the recycle bin</value>
+  </data>
+  <data name="media_deleteNotFound" xml:space="preserve">
+    <value>Unable to delete, as no Media with that id exists</value>
+  </data>
+  <data name="media_fileContentsMismatch" xml:space="preserve">
+    <value>File contents do not match the file extension</value>
+    <comment>An upload refused by the storage provider</comment>
+  </data>
+  <data name="media_fileMustBeImage" xml:space="preserve">
+    <value>File must be an image only</value>
+    <comment>An upload refused by the storage provider</comment>
+  </data>
+  <data name="media_fileNotAllowed" xml:space="preserve">
+    <value>File not allowed</value>
+    <comment>An upload refused by the storage provider: its file type is not in the allowed list</comment>
+  </data>
+  <data name="media_fileNotRemoved" xml:space="preserve">
+    <value>The file '{0}' could not be removed from storage, so nothing was deleted. Try again; files removed before it are already gone.</value>
+    <comment>{0} = the file's URL</comment>
+  </data>
+  <data name="media_fileNotSaved" xml:space="preserve">
+    <value>The file could not be saved; the error is in the site's log</value>
+  </data>
+  <data name="media_fileTooLarge" xml:space="preserve">
+    <value>File is too large</value>
+    <comment>An upload refused by the storage provider</comment>
+  </data>
+  <data name="media_folderInRecycleBin" xml:space="preserve">
+    <value>The folder is in the recycle bin: restore it first</value>
+  </data>
+  <data name="media_folderNotEmpty" xml:space="preserve">
+    <value>Unable to delete a folder that still has media in it: move that media out or to the recycle bin first</value>
+  </data>
+  <data name="media_foldersKept" xml:space="preserve">
+    <value>{0} folder(s) in the recycle bin still have live media in them and were kept</value>
+    <comment>{0} = the number of folders kept</comment>
+  </data>
+  <data name="media_inRecycleBin" xml:space="preserve">
+    <value>This media is in the recycle bin: restore it before changing it</value>
+  </data>
+  <data name="media_invalidFolderName" xml:space="preserve">
+    <value>Invalid folder name</value>
+  </data>
+  <data name="media_invalidSvg" xml:space="preserve">
+    <value>The file is not a valid SVG image</value>
+  </data>
+  <data name="media_invalidUploadPath" xml:space="preserve">
+    <value>Invalid upload path</value>
+  </data>
+  <data name="media_nameRequired" xml:space="preserve">
+    <value>You cannot leave the name empty</value>
+  </data>
+  <data name="media_noStorageProvider" xml:space="preserve">
+    <value>Media storage is not set up: Zauber:Plugins:StorageProvider is empty, so files cannot be stored or removed. Set it to ZauberCMS.Core.Providers.DiskStorageProvider (the default) or to the full type name of an IStorageProvider of your own.</value>
+    <comment>The English is ProviderService.NoStorageProviderMessage, which stays as it is; the setting and type names are not translated</comment>
+  </data>
+  <data name="media_notInRecycleBin" xml:space="preserve">
+    <value>This media is not in the recycle bin</value>
+  </data>
+  <data name="media_nothingToSave" xml:space="preserve">
+    <value>There is no media to save?</value>
+  </data>
+  <data name="media_restoreNotFound" xml:space="preserve">
+    <value>Unable to restore, as no Media with that id exists</value>
+  </data>
+  <data name="media_restoreParentFirst" xml:space="preserve">
+    <value>Restore the parent folder first: it is still in the recycle bin</value>
+  </data>
+  <data name="media_updateNotFound" xml:space="preserve">
+    <value>Unable to update, as no Media with that id exists</value>
+  </data>
+  <data name="media_urlRequired" xml:space="preserve">
+    <value>Url cannot be empty</value>
+  </data>
+  <data name="media_useDeleteToRecycle" xml:space="preserve">
+    <value>Use Delete to move media to the recycle bin; the save left it where it is</value>
+  </data>
 </root>

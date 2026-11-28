@@ -9,10 +9,10 @@
 
 @layout SectionLayout
 
-<PageTitle>SEO Redirects</PageTitle>
+<PageTitle>@L["seo_redirects"]</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Create Redirect" Click="@(() => OpenEditor(null))"/>
+    <RadzenButton Variant="Variant.Filled" Text="@L["seo_createRedirect"]" Click="@(() => OpenEditor(null))"/>
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
@@ -31,7 +31,7 @@
                     PagerHorizontalAlign="HorizontalAlign.Center">
         @*@bind-Value="@SelectedContent"*@
         <Columns>
-            <RadzenDataGridColumn Property="DomainId" Title="Domain">
+            <RadzenDataGridColumn Property="DomainId" Title="@L["seo_domain"]">
                 <Template Context="data">
                     @if (data.DomainId.HasValue)
                     {
@@ -42,38 +42,38 @@
                     }
                     else
                     {
-                        @("Any")
+                        @L["seo_anyDomain"]
                     }
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="FromUrl" Title="From Url">
+            <RadzenDataGridColumn Property="FromUrl" Title="@L["seo_fromUrl"]">
                 <Template Context="data">
                     @data.FromUrl
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="IsRegex" Title="Match" Sortable="false" Filterable="false">
+            <RadzenDataGridColumn Property="IsRegex" Title="@L["seo_match"]" Sortable="false" Filterable="false">
                 <Template Context="data">
-                    @(ZauberCMS.Core.Seo.RedirectRules.IsRegex(data) ? "Regex" : "Exact")
+                    @(ZauberCMS.Core.Seo.RedirectRules.IsRegex(data) ? L["seo_matchRegex"] : L["seo_matchExact"])
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="ToUrl" Title="To Url">
+            <RadzenDataGridColumn Property="ToUrl" Title="@L["seo_toUrl"]">
                 <Template Context="data">
                     @data.ToUrl
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="IsPermanent" Title="Redirect Type">
+            <RadzenDataGridColumn Property="IsPermanent" Title="@L["seo_redirectType"]">
                 <Template Context="data">
                     @(data.IsPermanent ? "301" : "302")
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+            <RadzenDataGridColumn Property="DateUpdated" Title="@L["general_lastUpdated"]">
                 <Template Context="data">
                     @data.DateUpdated.Humanize()
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="Id" Title="Delete" Width="90px" TextAlign="TextAlign.Center">
+            <RadzenDataGridColumn Property="Id" Title="@L["general_delete"]" Width="90px" TextAlign="TextAlign.Center">
                 <Template Context="data">
-                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="@L["general_delete"]" Click="@(() => Delete(data.Id))"/>
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -152,19 +152,19 @@
             parameters.Add(nameof(AddEditRedirect.Redirect), seoRedirect);
         }
 
-        var modal = ModalService.OpenSidePanel<AddEditRedirect>((seoRedirect == null ? "Create" : "Edit") + " Redirect", parameters);
+        var modal = ModalService.OpenSidePanel<AddEditRedirect>(seoRedirect == null ? L["seo_createRedirect"] : L["seo_editRedirect"], parameters);
         var result = await modal.Result;
         if (result is { Confirmed: true, Data: SeoRedirect redirect })
         {
             var saveResult = await SeoService.SaveRedirectAsync(new SaveRedirectParameters { Redirect = redirect });
             if (saveResult.Success)
             {
-                NotificationService.ShowSuccessNotification("Redirect Saved");
+                NotificationService.ShowSuccessNotification(L["seo_redirectSaved"]);
                 await Grid.Reload();
             }
             else
             {
-                NotificationService.ShowNotifications(saveResult.Messages);
+                NotificationService.ShowNotifications(saveResult.Messages, L);
             }
         }        
     }
@@ -174,7 +174,7 @@
         var deleteRedirectResult = await SeoService.DeleteRedirectAsync(new DeleteRedirectParameters { Id = id });
         if (!deleteRedirectResult.Success)
         {
-            NotificationService.ShowNotifications(deleteRedirectResult.Messages);
+            NotificationService.ShowNotifications(deleteRedirectResult.Messages, L);
         }
         else
         {

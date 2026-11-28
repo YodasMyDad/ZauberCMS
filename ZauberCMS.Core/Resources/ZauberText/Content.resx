@@ -12,4 +12,183 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="content_accessSetByAncestor" xml:space="preserve">
+    <value>Cannot change access to this content as it has roles already defined by an ancestor.</value>
+  </data>
+  <data name="content_blockIsItsOwnContent" xml:space="preserve">
+    <value>A block can't be the content it belongs to</value>
+  </data>
+  <data name="content_blockOwnedByOtherContent" xml:space="preserve">
+    <value>The block '{0}' belongs to other content</value>
+    <comment>{0} = the block's name</comment>
+  </data>
+  <data name="content_cannotDeleteOnlyDraftVersion" xml:space="preserve">
+    <value>Cannot delete the only draft version</value>
+  </data>
+  <data name="content_cannotDeletePublishedVersion" xml:space="preserve">
+    <value>Cannot delete the currently published version</value>
+  </data>
+  <data name="content_cannotMoveBelowItself" xml:space="preserve">
+    <value>Content can't be moved below itself</value>
+  </data>
+  <data name="content_changedSinceOpened" xml:space="preserve">
+    <value>{0} was changed by someone else since it was opened. Reload it and make the changes again.</value>
+    <comment>{0} = the page's name</comment>
+  </data>
+  <data name="content_compositionInUse" xml:space="preserve">
+    <value>Unable to delete, because there are content types using this composition, remove it first</value>
+  </data>
+  <data name="content_contentIsNull" xml:space="preserve">
+    <value>Content is null</value>
+  </data>
+  <data name="content_contentTypeAliasExists" xml:space="preserve">
+    <value>Content Type Alias already exists, change the content type name</value>
+  </data>
+  <data name="content_contentTypeHasChildren" xml:space="preserve">
+    <value>Unable to delete, because this ContentType has children</value>
+  </data>
+  <data name="content_contentTypeInUse" xml:space="preserve">
+    <value>Unable to delete, because this ContentType is being used by content items</value>
+  </data>
+  <data name="content_contentTypeIsNull" xml:space="preserve">
+    <value>ContentType is null</value>
+  </data>
+  <data name="content_copied" xml:space="preserve">
+    <value>Content copied successfully.</value>
+  </data>
+  <data name="content_copyNotFound" xml:space="preserve">
+    <value>Unable to copy, as no Content with that ID exists</value>
+  </data>
+  <data name="content_deleteContentTypeNotFound" xml:space="preserve">
+    <value>Unable to delete, as no ContentType with that id exists</value>
+  </data>
+  <data name="content_deleteDomainNotFound" xml:space="preserve">
+    <value>Unable to delete, as no Domain with that id exists</value>
+  </data>
+  <data name="content_deleteHasChildren" xml:space="preserve">
+    <value>Unable to delete content with child content, delete or move those items first</value>
+  </data>
+  <data name="content_deleteNotFound" xml:space="preserve">
+    <value>Unable to delete, as no Content with that id exists</value>
+  </data>
+  <data name="content_disallowedBlockType" xml:space="preserve">
+    <value>Block list '{0}' contains a disallowed element type</value>
+    <comment>{0} = the alias of the block list property</comment>
+  </data>
+  <data name="content_domainIsNull" xml:space="preserve">
+    <value>Domain is null</value>
+  </data>
+  <data name="content_elementTypeInUse" xml:space="preserve">
+    <value>Unable to delete, because this Element Type is used by nested content</value>
+  </data>
+  <data name="content_importChildTypeNotFound" xml:space="preserve">
+    <value>Child type {0} not found</value>
+    <comment>Content type import. {0} = the alias of an allowed child type named in the file</comment>
+  </data>
+  <data name="content_importCompositionNotFound" xml:space="preserve">
+    <value>Composition {0} not found</value>
+    <comment>Content type import. {0} = the alias of a composition named in the file</comment>
+  </data>
+  <data name="content_importInvalidJson" xml:space="preserve">
+    <value>Invalid JSON</value>
+    <comment>Content type import: the file is not a content type package</comment>
+  </data>
+  <data name="content_importLanguageNotFound" xml:space="preserve">
+    <value>Language {0} not found for content {1}</value>
+    <comment>Content type import. {0} = the language's ISO code, {1} = the page's name</comment>
+  </data>
+  <data name="content_importParentNotFound" xml:space="preserve">
+    <value>Parent {0} not found</value>
+    <comment>Content type import. {0} = the alias of the parent type named in the file</comment>
+  </data>
+  <data name="content_importPropertyNotFound" xml:space="preserve">
+    <value>Property {0} not found for content {1}</value>
+    <comment>Content type import. {0} = the property's alias, {1} = the page's name</comment>
+  </data>
+  <data name="content_modifiedByAnotherUser" xml:space="preserve">
+    <value>Content was modified by another user — please reload and re-apply your changes</value>
+  </data>
+  <data name="content_nameEmpty" xml:space="preserve">
+    <value>You cannot leave the name empty</value>
+    <comment>Validation of a page or a content type</comment>
+  </data>
+  <data name="content_noOrphanedRelatedContent" xml:space="preserve">
+    <value>No orphaned RelatedContentId references found</value>
+  </data>
+  <data name="content_notABlock" xml:space="preserve">
+    <value>'{0}' is not a block</value>
+    <comment>{0} = the name of the item a block list points at</comment>
+  </data>
+  <data name="content_notFound" xml:space="preserve">
+    <value>Content not found</value>
+  </data>
+  <data name="content_orphanedRelatedContentCleared" xml:space="preserve">
+    <value>Successfully cleared orphaned RelatedContentId references for {0} content items</value>
+    <comment>{0} = the number of items</comment>
+  </data>
+  <data name="content_orphanedRelatedContentFailed" xml:space="preserve">
+    <value>Failed to clean up orphaned RelatedContentId references: {0}</value>
+    <comment>{0} = the error's message</comment>
+  </data>
+  <data name="content_pageContentTypeNotFound" xml:space="preserve">
+    <value>Content type not found</value>
+    <comment>Validation of a page: its content type does not exist</comment>
+  </data>
+  <data name="content_propertiesMissingName" xml:space="preserve">
+    <value>Some properties are missing a name (and alias)</value>
+    <comment>Validation of a content type</comment>
+  </data>
+  <data name="content_propertyAliasUsedByTwoTypes" xml:space="preserve">
+    <value>The alias '{0}' is used by '{1}' and '{2}', which are both on '{3}'. Give each property its own alias.</value>
+    <comment>{0} = the property alias, {1} and {2} = the names of the content types or compositions that have it, {3} = the name of the content type that has both</comment>
+  </data>
+  <data name="content_propertyAliasUsedTwice" xml:space="preserve">
+    <value>Two properties on '{0}' use the alias '{1}'. Give each property its own alias.</value>
+    <comment>{0} = the content type's name, {1} = the property alias</comment>
+  </data>
+  <data name="content_propertyRequired" xml:space="preserve">
+    <value>{0} is required</value>
+    <comment>Validation of a page. {0} = the property's name</comment>
+  </data>
+  <data name="content_restoreParentFirst" xml:space="preserve">
+    <value>Restore the parent page first: it is still in the recycle bin</value>
+  </data>
+  <data name="content_restoredChildUrlTaken" xml:space="preserve">
+    <value>The URL '{0}' is now used by another page, so the restored page '{1}' has the URL '{2}'</value>
+    <comment>{0} = the page's old URL, {1} = the name of the restored page below the one restored, {2} = its new URL</comment>
+  </data>
+  <data name="content_restoredUrlTaken" xml:space="preserve">
+    <value>The URL '{0}' is now used by another page, so the restored page has the URL '{1}'</value>
+    <comment>{0} = the page's old URL, {1} = its new URL</comment>
+  </data>
+  <data name="content_saveBeforeDraft" xml:space="preserve">
+    <value>Save the content once before saving a draft of it</value>
+  </data>
+  <data name="content_tooManyBlocks" xml:space="preserve">
+    <value>The content has more blocks or deeper nesting than can be saved ({0} blocks, {1} levels)</value>
+    <comment>{0} = the most blocks a page can have, {1} = the most levels they can be nested</comment>
+  </data>
+  <data name="content_unknownContentType" xml:space="preserve">
+    <value>Unknown</value>
+    <comment>Version comparison: shown in place of a block's content type alias when it has none</comment>
+  </data>
+  <data name="content_unnamedContent" xml:space="preserve">
+    <value>Unnamed Content</value>
+    <comment>Version comparison: shown in place of a block's name when it has none</comment>
+  </data>
+  <data name="content_urlTaken" xml:space="preserve">
+    <value>The URL '{0}' is already used by another page</value>
+    <comment>{0} = the URL</comment>
+  </data>
+  <data name="content_versionFieldName" xml:space="preserve">
+    <value>Name</value>
+    <comment>Version comparison: the label of a changed page name</comment>
+  </data>
+  <data name="content_versionFieldUrl" xml:space="preserve">
+    <value>Url</value>
+    <comment>Version comparison: the label of a changed page URL</comment>
+  </data>
+  <data name="content_versionNotFound" xml:space="preserve">
+    <value>Version not found</value>
+  </data>
 </root>

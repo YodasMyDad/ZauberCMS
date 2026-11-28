@@ -5,7 +5,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Select Website Root" Description="Select the website root that should be used for the sitemap." />
+        <PropertyInfo Name="@L["seo_selectWebsiteRoot"]" Description="@L["seo_selectWebsiteRootDescription"]" />
     </LeftColumn>
     <CentreColumn>
         <ContentPickerProperty
@@ -19,7 +19,7 @@
 {
     <EditorRow>
         <LeftColumn>
-            <PropertyInfo Name="Domain" Description="The domain of the website (Used for the sitemap url)" />
+            <PropertyInfo Name="@L["seo_domain"]" Description="@L["seo_sitemapDomainDescription"]" />
         </LeftColumn>
         <CentreColumn>
             <RadzenTextBox @bind-Value="@SeoSitemap!.Domain" Style="width: 100%;" />
@@ -28,7 +28,7 @@
     
     <EditorRow>
         <LeftColumn>
-            <PropertyInfo Name="Name" Description="The name of the sitemap (Used for the file name)" />
+            <PropertyInfo Name="@L["general_name"]" Description="@L["seo_sitemapNameDescription"]" />
         </LeftColumn>
         <CentreColumn>
             <RadzenTextBox Name="Name" @bind-Value="@SeoSitemap!.Name" Style="width: 100%;" />
@@ -37,7 +37,7 @@
 
     <EditorRow>
         <LeftColumn>
-            <PropertyInfo Name="Content Types" Description="Choose the content types that should be included in the sitemap." />
+            <PropertyInfo Name="@L["seo_contentTypes"]" Description="@L["seo_contentTypesDescription"]" />
         </LeftColumn>
         <CentreColumn>
             <RadzenListBox @bind-Value="@SeoSitemap!.ContentTypeIds"
@@ -49,13 +49,13 @@
                            ValueProperty="Id"
                            Multiple="true"
                            AllowClear="true"
-                           Placeholder="Select Content Types" Style="width: 100%; height: 250px"
-                           InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select content types" } })"/>
+                           Placeholder="@L["seo_selectContentTypes"]" Style="width: 100%; height: 250px"
+                           InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["seo_selectContentTypes"].Value } })"/>
         </CentreColumn>
     </EditorRow>
     
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="OnPropertySelected"/>
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="OnPropertySelected"/>
     </RadzenStack>
 }
 
@@ -108,13 +108,13 @@
     {
         if (SeoSitemap!.Name.IsNullOrWhiteSpace() || SeoSitemap.ContentTypeIds.Any() == false)
         {
-            NotificationService.ShowErrorNotification("You need to complete all fields");
+            NotificationService.ShowErrorNotification(L["seo_completeAllFields"]);
         }
         else
         {
             if (SeoSitemap.Domain?.Contains("localhost", StringComparison.CurrentCultureIgnoreCase) == true)
             {
-                NotificationService.ShowWarningNotification("You have saved the domain as localhost?");
+                NotificationService.ShowWarningNotification(L["seo_domainIsLocalhost"]);
             }
             await BlazoredModal.CloseAsync(ModalResult.Ok(SeoSitemap));
         }

@@ -12,4 +12,211 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="seo_aiAverageSentenceLength" xml:space="preserve">
+    <value>Average Sentence Length: {0:F2} characters</value>
+    <comment>{0} = the average length of a sentence in characters. A detail of the AI content check</comment>
+  </data>
+  <data name="seo_aiContentCheck" xml:space="preserve">
+    <value>AI Content Analysis</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_aiContentDetected" xml:space="preserve">
+    <value>Potential AI Generated Content Detected</value>
+  </data>
+  <data name="seo_aiContentNatural" xml:space="preserve">
+    <value>Content appears natural</value>
+  </data>
+  <data name="seo_aiRepeatedPhrases" xml:space="preserve">
+    <value>Repeated AI Phrases: {0}</value>
+    <comment>{0} = the phrases found more than twice, separated by commas (English words)</comment>
+  </data>
+  <data name="seo_aiShortSentenceRatio" xml:space="preserve">
+    <value>Short Sentence Ratio: {0:P2}</value>
+    <comment>{0} = the share of short sentences, as a percentage</comment>
+  </data>
+  <data name="seo_aiTransitionDensity" xml:space="preserve">
+    <value>Transition Density: {0:P2}</value>
+    <comment>{0} = transition words per sentence, as a percentage</comment>
+  </data>
+  <data name="seo_brokenLink" xml:space="preserve">
+    <value>Broken link: {0} (Status: {1})</value>
+    <comment>{0} = the link address, {1} = the HTTP status the link answered with (NotFound, ...)</comment>
+  </data>
+  <data name="seo_brokenLinksCheck" xml:space="preserve">
+    <value>Broken Links Checker</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_canonicalLinkCheck" xml:space="preserve">
+    <value>Canonical Link Checker</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_canonicalMissing" xml:space="preserve">
+    <value>Canonical link is missing.</value>
+  </data>
+  <data name="seo_canonicalPresent" xml:space="preserve">
+    <value>Canonical link is present.</value>
+  </data>
+  <data name="seo_headingOneCheck" xml:space="preserve">
+    <value>H1 Checker</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_headingOneMissing" xml:space="preserve">
+    <value>Page is missing an &lt;h1&gt; heading tag.</value>
+  </data>
+  <data name="seo_headingOneMultiple" xml:space="preserve">
+    <value>Page contains multiple &lt;h1&gt; tags ({0}). Consider reducing to one for better SEO.</value>
+    <comment>{0} = the number of h1 tags on the page</comment>
+  </data>
+  <data name="seo_headingOnePresent" xml:space="preserve">
+    <value>Page contains an &lt;h1&gt; heading tag.</value>
+  </data>
+  <data name="seo_imageAltCheck" xml:space="preserve">
+    <value>Image Alt Checker</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_imagesAllHaveAlt" xml:space="preserve">
+    <value>All images have alt attributes.</value>
+  </data>
+  <data name="seo_imagesMissingAlt" xml:space="preserve">
+    <value>{0} image(s) are missing alt attributes.</value>
+    <comment>{0} = the number of images without alt text</comment>
+  </data>
+  <data name="seo_keywordMatch" xml:space="preserve">
+    <value>Page title and &lt;h1&gt; contain keywords that match.</value>
+  </data>
+  <data name="seo_keywordMatchCheck" xml:space="preserve">
+    <value>Keyword Match Check</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_keywordNoMatch" xml:space="preserve">
+    <value>No keywords from the title appear in the &lt;h1&gt;. Consider aligning them for better SEO.</value>
+  </data>
+  <data name="seo_keywordTitleOrHeadingMissing" xml:space="preserve">
+    <value>Either the page title or the &lt;h1&gt; is missing, making keyword consistency impossible.</value>
+  </data>
+  <data name="seo_metaDescriptionCheck" xml:space="preserve">
+    <value>Meta Description Checker</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_metaDescriptionFine" xml:space="preserve">
+    <value>Meta description is fine</value>
+  </data>
+  <data name="seo_metaDescriptionLength" xml:space="preserve">
+    <value>Meta description should ideally be between 150 and 160 characters.</value>
+  </data>
+  <data name="seo_metaDescriptionMissing" xml:space="preserve">
+    <value>Meta description is missing.</value>
+  </data>
+  <data name="seo_mobileFriendlyCheck" xml:space="preserve">
+    <value>Mobile-Friendliness Check</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_noBodyContent" xml:space="preserve">
+    <value>No valid &lt;body&gt; content found on the page.</value>
+  </data>
+  <data name="seo_noBrokenLinks" xml:space="preserve">
+    <value>No broken links found.</value>
+  </data>
+  <data name="seo_noContentLinks" xml:space="preserve">
+    <value>No valid content links found on the page. Internal links within content can help improve SEO.</value>
+  </data>
+  <data name="seo_pageTimedOut" xml:space="preserve">
+    <value>The page did not answer in time.</value>
+    <comment>An SEO check, or the SEO checker loading the page</comment>
+  </data>
+  <data name="seo_pageTitleCheck" xml:space="preserve">
+    <value>Page Title Checker</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_pageTitleLength" xml:space="preserve">
+    <value>Page title length should be between 30 and 60 characters.</value>
+  </data>
+  <data name="seo_pageTitleMissing" xml:space="preserve">
+    <value>Page title is missing.</value>
+  </data>
+  <data name="seo_redirectChainTooLong" xml:space="preserve">
+    <value>{0} leads through more than {1} redirects</value>
+    <comment>{0} = the address redirected to, {1} = the most redirects a chain is followed through. Saving a redirect</comment>
+  </data>
+  <data name="seo_redirectFromEmpty" xml:space="preserve">
+    <value>The address to redirect from is empty</value>
+    <comment>Saving a redirect</comment>
+  </data>
+  <data name="seo_redirectFromInvalidRegex" xml:space="preserve">
+    <value>The address to redirect from is not a valid regular expression: {0}</value>
+    <comment>{0} = why the expression does not parse (.NET's message, in English). Saving a redirect</comment>
+  </data>
+  <data name="seo_redirectFromNoSlash" xml:space="preserve">
+    <value>The address to redirect from must start with /</value>
+    <comment>Saving a redirect</comment>
+  </data>
+  <data name="seo_redirectLoop" xml:space="preserve">
+    <value>{0} leads back to {1} through other redirects, so visitors would go round in circles</value>
+    <comment>{0} = the address redirected to, {1} = the address redirected from. Saving a redirect</comment>
+  </data>
+  <data name="seo_redirectMissing" xml:space="preserve">
+    <value>Redirect is null</value>
+    <comment>Saving a redirect when none was given</comment>
+  </data>
+  <data name="seo_redirectToInvalid" xml:space="preserve">
+    <value>The address to redirect to must be a path on this site starting with / or a full http(s) address</value>
+    <comment>Saving a redirect</comment>
+  </data>
+  <data name="seo_redirectToItself" xml:space="preserve">
+    <value>{0} would redirect to itself</value>
+    <comment>{0} = the address redirected from. Saving a redirect</comment>
+  </data>
+  <data name="seo_responseStatusCheck" xml:space="preserve">
+    <value>Response Status Code Checker</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_statusNetworkError" xml:space="preserve">
+    <value>A network error occurred while checking the response: {0}</value>
+    <comment>{0} = the error (.NET's message, in English)</comment>
+  </data>
+  <data name="seo_statusOk" xml:space="preserve">
+    <value>The response status code is 200 (OK).</value>
+  </data>
+  <data name="seo_statusOther" xml:space="preserve">
+    <value>The response status code is {0}. This might indicate an issue with the URL.</value>
+    <comment>{0} = the HTTP status code</comment>
+  </data>
+  <data name="seo_statusRedirect" xml:space="preserve">
+    <value>The response status code is {0} (Redirect). Consider checking redirection setup.</value>
+    <comment>{0} = the HTTP status code (301 or 302)</comment>
+  </data>
+  <data name="seo_tooManyLinks" xml:space="preserve">
+    <value>More than 50 links. Only the first 50 have been checked.</value>
+  </data>
+  <data name="seo_unexpectedError" xml:space="preserve">
+    <value>An unexpected error occurred: {0}</value>
+    <comment>{0} = the error (.NET's message, in English)</comment>
+  </data>
+  <data name="seo_unreachableLink" xml:space="preserve">
+    <value>Invalid or unreachable link: {0}</value>
+    <comment>{0} = the link address</comment>
+  </data>
+  <data name="seo_viewportFound" xml:space="preserve">
+    <value>Viewport meta tag found: {0}</value>
+    <comment>{0} = the viewport tag's content</comment>
+  </data>
+  <data name="seo_viewportMissing" xml:space="preserve">
+    <value>Missing &lt;meta name="viewport"&gt; tag. The page may not be mobile-friendly.</value>
+  </data>
+  <data name="seo_viewportNotOptimized" xml:space="preserve">
+    <value>Viewport tag detected but may not be fully optimized: {0}. Recommended: "{1}"</value>
+    <comment>{0} = the viewport tag's content, {1} = the recommended content</comment>
+  </data>
+  <data name="seo_wordCountCheck" xml:space="preserve">
+    <value>Word Count Check</value>
+    <comment>The name of an SEO check</comment>
+  </data>
+  <data name="seo_wordCountFair" xml:space="preserve">
+    <value>Page contains {0} words. While acceptable, more content may improve SEO.</value>
+    <comment>{0} = the number of words on the page</comment>
+  </data>
+  <data name="seo_wordCountLow" xml:space="preserve">
+    <value>Page contains only {0} words. Consider adding more content for better SEO.</value>
+    <comment>{0} = the number of words on the page</comment>
+  </data>
 </root>
