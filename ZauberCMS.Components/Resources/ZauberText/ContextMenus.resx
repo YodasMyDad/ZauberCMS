@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="contextMenus_contentCopied" xml:space="preserve">
+    <value>Content copied</value>
+  </data>
+  <data name="contextMenus_contentHasNoChildrenToSort" xml:space="preserve">
+    <value>Sorry, nothing to sort as this content has no children</value>
+  </data>
+  <data name="contextMenus_contentMoved" xml:space="preserve">
+    <value>Content Moved</value>
+  </data>
+  <data name="contextMenus_contentTypeMoved" xml:space="preserve">
+    <value>Content Type Moved</value>
+  </data>
+  <data name="contextMenus_contentTypeNotAllowedAtRoot" xml:space="preserve">
+    <value>Content Type does not allow this to be moved to the root</value>
+  </data>
+  <data name="contextMenus_copyContent" xml:space="preserve">
+    <value>Copy Content</value>
+  </data>
+  <data name="contextMenus_createComposition" xml:space="preserve">
+    <value>Create Composition</value>
+  </data>
+  <data name="contextMenus_createContent" xml:space="preserve">
+    <value>Create Content</value>
+  </data>
+  <data name="contextMenus_createContentType" xml:space="preserve">
+    <value>Create Content Type</value>
+  </data>
+  <data name="contextMenus_createElementType" xml:space="preserve">
+    <value>Create Element Type</value>
+  </data>
+  <data name="contextMenus_createFolder" xml:space="preserve">
+    <value>Create Folder</value>
+  </data>
+  <data name="contextMenus_createLanguage" xml:space="preserve">
+    <value>Create Language</value>
+  </data>
+  <data name="contextMenus_createMedia" xml:space="preserve">
+    <value>Create Media</value>
+  </data>
+  <data name="contextMenus_culture" xml:space="preserve">
+    <value>Culture</value>
+  </data>
+  <data name="contextMenus_cultureAndDomains" xml:space="preserve">
+    <value>Culture &amp; Domains</value>
+  </data>
+  <data name="contextMenus_cultureUpdated" xml:space="preserve">
+    <value>Culture Updated</value>
+  </data>
+  <data name="contextMenus_deleteAll" xml:space="preserve">
+    <value>Delete All</value>
+  </data>
+  <data name="contextMenus_deleteAllContentConfirm" xml:space="preserve">
+    <value>Permanently delete the {0} items in the recycle bin, and everything below them? This action cannot be undone.</value>
+    <comment>{0} = the number of items at the top of the content recycle bin</comment>
+  </data>
+  <data name="contextMenus_deleteFolderPermanentlyConfirm" xml:space="preserve">
+    <value>{0} Permanently delete this folder, everything in it and their files? This can't be undone.</value>
+    <comment>{0} = the sentence saying which pages and members still use the media (a space follows it), or nothing</comment>
+  </data>
+  <data name="contextMenus_deleteItem" xml:space="preserve">
+    <value>Delete '{0}'</value>
+    <comment>{0} = the media name</comment>
+  </data>
+  <data name="contextMenus_deleteMedia" xml:space="preserve">
+    <value>Delete Media</value>
+  </data>
+  <data name="contextMenus_deleteMediaPermanentlyConfirm" xml:space="preserve">
+    <value>{0} Permanently delete this media and its file? This can't be undone.</value>
+    <comment>{0} = the sentence saying which pages and members still use the media (a space follows it), or nothing</comment>
+  </data>
+  <data name="contextMenus_deletePermanently" xml:space="preserve">
+    <value>Delete permanently</value>
+  </data>
+  <data name="contextMenus_deletePermanentlyConfirm" xml:space="preserve">
+    <value>Permanently delete this?</value>
+  </data>
+  <data name="contextMenus_domainsAndCulture" xml:space="preserve">
+    <value>Domains &amp; Culture</value>
+  </data>
+  <data name="contextMenus_emptyMediaRecycleBinConfirm" xml:space="preserve">
+    <value>{0} Permanently delete all {1} items in the media recycle bin and their files? This can't be undone.</value>
+    <comment>{0} = the sentence saying which pages and members still use the media (a space follows it), or nothing; {1} = the number of items in the media recycle bin</comment>
+  </data>
+  <data name="contextMenus_emptyRecycleBin" xml:space="preserve">
+    <value>Empty recycle bin</value>
+  </data>
+  <data name="contextMenus_folderHasNoChildrenToSort" xml:space="preserve">
+    <value>Sorry, nothing to sort as this folder has no children</value>
+  </data>
+  <data name="contextMenus_itemDeleted" xml:space="preserve">
+    <value>'{0}' deleted</value>
+    <comment>{0} = the media name</comment>
+  </data>
+  <data name="contextMenus_itemRestored" xml:space="preserve">
+    <value>'{0}' restored</value>
+    <comment>{0} = the media name</comment>
+  </data>
+  <data name="contextMenus_mediaMoved" xml:space="preserve">
+    <value>Media Moved</value>
+  </data>
+  <data name="contextMenus_mediaMovedToRecycleBin" xml:space="preserve">
+    <value>Moved to the recycle bin</value>
+  </data>
+  <data name="contextMenus_mediaRecycleBinEmptied" xml:space="preserve">
+    <value>{0} items deleted from the recycle bin</value>
+    <comment>{0} = the number of media items deleted</comment>
+  </data>
+  <data name="contextMenus_mediaStillUsedBy" xml:space="preserve">
+    <value>Still used by {0}: {1}. They will show a missing file.</value>
+    <comment>{0} = how many pages, blocks and members use it (contextMenus_mediaUsage*); {1} = their names. The delete question follows it, after a space.</comment>
+  </data>
+  <data name="contextMenus_mediaStillUsedByAtLeast" xml:space="preserve">
+    <value>Still used by at least {0}: {1}. They will show a missing file.</value>
+    <comment>Shown when the usage list was cut off. {0} = how many pages, blocks and members use it (contextMenus_mediaUsage*); {1} = their names. The delete question follows it, after a space.</comment>
+  </data>
+  <data name="contextMenus_mediaStillUsedByOne" xml:space="preserve">
+    <value>Still used by {0}: {1}. It will show a missing file.</value>
+    <comment>Used by one page, block or member. {0} = contextMenus_mediaUsagePagesOne or contextMenus_mediaUsageMembersOne; {1} = its name. The delete question follows it, after a space.</comment>
+  </data>
+  <data name="contextMenus_mediaUsageInRecycleBin" xml:space="preserve">
+    <value>{0} (in the recycle bin)</value>
+    <comment>{0} = the name of a page or member that uses the media</comment>
+  </data>
+  <data name="contextMenus_mediaUsageMembers" xml:space="preserve">
+    <value>{0} members</value>
+    <comment>{0} = the number of members (more than one)</comment>
+  </data>
+  <data name="contextMenus_mediaUsageMembersOne" xml:space="preserve">
+    <value>1 member</value>
+  </data>
+  <data name="contextMenus_mediaUsageNamesAndMore" xml:space="preserve">
+    <value>{0} and {1} more</value>
+    <comment>{0} = the first names, separated by commas; {1} = how many more there are</comment>
+  </data>
+  <data name="contextMenus_mediaUsageNoName" xml:space="preserve">
+    <value>(no name)</value>
+    <comment>Stands in for a page or member that has no name</comment>
+  </data>
+  <data name="contextMenus_mediaUsagePages" xml:space="preserve">
+    <value>{0} pages or blocks</value>
+    <comment>{0} = the number of pages and blocks (more than one)</comment>
+  </data>
+  <data name="contextMenus_mediaUsagePagesAndMembers" xml:space="preserve">
+    <value>{0} and {1}</value>
+    <comment>{0} = the pages and blocks (contextMenus_mediaUsagePages*); {1} = the members (contextMenus_mediaUsageMembers*)</comment>
+  </data>
+  <data name="contextMenus_mediaUsagePagesOne" xml:space="preserve">
+    <value>1 page or block</value>
+  </data>
+  <data name="contextMenus_moveContent" xml:space="preserve">
+    <value>Move Content</value>
+  </data>
+  <data name="contextMenus_moveContentToRecycleBinConfirm" xml:space="preserve">
+    <value>Move this content to the recycle bin?</value>
+  </data>
+  <data name="contextMenus_moveContentType" xml:space="preserve">
+    <value>Move Content Type</value>
+  </data>
+  <data name="contextMenus_moveContentWithChildrenToRecycleBinConfirm" xml:space="preserve">
+    <value>Move this content and its children to the recycle bin?</value>
+  </data>
+  <data name="contextMenus_moveFolderToRecycleBinConfirm" xml:space="preserve">
+    <value>Move this folder and everything in it to the recycle bin?</value>
+  </data>
+  <data name="contextMenus_moveMedia" xml:space="preserve">
+    <value>Move Media</value>
+  </data>
+  <data name="contextMenus_moveMediaToRecycleBinConfirm" xml:space="preserve">
+    <value>Move this media to the recycle bin?</value>
+  </data>
+  <data name="contextMenus_moveToRecycleBin" xml:space="preserve">
+    <value>Move to recycle bin</value>
+  </data>
+  <data name="contextMenus_noItemsToDelete" xml:space="preserve">
+    <value>There are no items to delete.</value>
+  </data>
+  <data name="contextMenus_nothingToSort" xml:space="preserve">
+    <value>Hmmmm</value>
+    <comment>Summary of the notice that there is nothing to sort</comment>
+  </data>
+  <data name="contextMenus_onlyOneRootContent" xml:space="preserve">
+    <value>Unable to sort as there is only one root content</value>
+  </data>
+  <data name="contextMenus_partiallyCompleted" xml:space="preserve">
+    <value>Partially Completed</value>
+  </data>
+  <data name="contextMenus_publicAccess" xml:space="preserve">
+    <value>Public Access</value>
+  </data>
+  <data name="contextMenus_publicAccessRemoved" xml:space="preserve">
+    <value>Public access removed</value>
+  </data>
+  <data name="contextMenus_publicAccessUpdated" xml:space="preserve">
+    <value>Public access updated</value>
+  </data>
+  <data name="contextMenus_recycleBinEmpty" xml:space="preserve">
+    <value>Recycle Bin Empty</value>
+  </data>
+  <data name="contextMenus_recycleBinIsEmpty" xml:space="preserve">
+    <value>The recycle bin is empty</value>
+  </data>
+  <data name="contextMenus_recycleBinItemsDeleted" xml:space="preserve">
+    <value>Successfully deleted {0} items from the recycle bin.</value>
+    <comment>{0} = the number of items deleted</comment>
+  </data>
+  <data name="contextMenus_recycleBinItemsPartlyDeleted" xml:space="preserve">
+    <value>Deleted {0} items, {1} failed.</value>
+    <comment>{0} = the number of items deleted; {1} = the number that could not be deleted</comment>
+  </data>
+  <data name="contextMenus_seoChecker" xml:space="preserve">
+    <value>SEO Checker</value>
+  </data>
+  <data name="contextMenus_sorry" xml:space="preserve">
+    <value>Sorry</value>
+    <comment>Summary of the notice that the root pages cannot be sorted</comment>
+  </data>
+  <data name="contextMenus_sortChildren" xml:space="preserve">
+    <value>Sort Children</value>
+  </data>
+  <data name="contextMenus_sortContent" xml:space="preserve">
+    <value>Sort Content</value>
+  </data>
+  <data name="contextMenus_sortRootItems" xml:space="preserve">
+    <value>Sort Root Items</value>
+  </data>
+  <data name="contextMenus_unableToLoadContent" xml:space="preserve">
+    <value>Unable to load this content item</value>
+  </data>
+  <data name="contextMenus_uploadMedia" xml:space="preserve">
+    <value>Upload Media</value>
+  </data>
+</root>

@@ -2,7 +2,7 @@
 
 <div>
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" class="">
-        <RadzenTextBox @bind-Value="_newItem" Placeholder="Add a value and click plus" Style="width: 100%"/>
+        <RadzenTextBox @bind-Value="_newItem" Placeholder="@L["shared_addValuePlaceholder"]" Style="width: 100%"/>
         <RadzenButton Click="@AddItem" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
     </RadzenStack>
 
@@ -15,7 +15,7 @@
             @* No @key on the value: two equal values (or editing one to match another) gave two siblings one key,
                which throws and ends the circuit (ZA-127). Rows are plain text boxes, so position is enough. *@
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem">
-                <RadzenTextBox Value="@item" ValueChanged="@(value => OnValueChanged(value, index))" class="w-full" aria-label="Name TextBox"/>
+                <RadzenTextBox Value="@item" ValueChanged="@(value => OnValueChanged(value, index))" class="w-full" aria-label="@L["general_value"]"/>
                 <RadzenButton Click="@(() => RemoveItem(index))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
             </RadzenStack>
         }

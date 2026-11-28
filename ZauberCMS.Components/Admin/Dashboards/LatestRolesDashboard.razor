@@ -17,8 +17,8 @@
                 PagerHorizontalAlign="HorizontalAlign.Center">
     @*@bind-Value="@SelectedContent"*@
     <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+        <RadzenDataGridColumn Property="Name" Title="@L["general_name"]"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="@L["general_lastUpdated"]">
             <Template Context="data">
                 @data.DateUpdated.Humanize()
             </Template>
@@ -30,7 +30,10 @@
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
     
-    public string TabName => "Latest Roles";
+    // Discovery builds this dashboard to read its tab name, without [Inject]: the text comes through the constructor
+    private readonly IStringLocalizer<ZauberText> _text;
+    public LatestRolesDashboard(IStringLocalizer<ZauberText> text) => _text = text;
+    public string TabName => _text["dashboards_latestRoles"];
     public int SortOrder => 1;
     public string SectionAlias => Constants.Sections.UsersSection;
 

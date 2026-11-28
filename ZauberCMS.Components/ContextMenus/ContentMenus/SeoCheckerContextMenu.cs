@@ -1,20 +1,22 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Seo;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
-public class SeoCheckerContextMenu() : ITreeContextMenu
+public class SeoCheckerContextMenu(IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias => [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Seo Checker";
+    public string Text(TreeItemContextMenuEventArgs args) => text["contextMenus_seoChecker"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "rocket_launch";
 
@@ -46,7 +48,7 @@ public class SeoCheckerContextMenu() : ITreeContextMenu
             { nameof(SeoChecker.RunNow), true}
         };
 
-        Modal = modalService.OpenSidePanel<SeoChecker>("SEO Checker", parameters);
+        Modal = modalService.OpenSidePanel<SeoChecker>(text["contextMenus_seoChecker"], parameters);
         var result = await Modal.Result;
         /*if (result is { Confirmed: true, Data: CopyContentCommand copyContentModel })
         {

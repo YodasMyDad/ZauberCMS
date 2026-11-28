@@ -1,21 +1,23 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
-public class DeleteContentContextMenu(IContentService contentService, IMembershipService membershipService, DialogService confirmService, NotificationService notificationService, AppState appState) : ITreeContextMenu
+public class DeleteContentContextMenu(IContentService contentService, IMembershipService membershipService, DialogService confirmService, NotificationService notificationService, AppState appState, IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias { get; } = [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Delete";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_delete"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "close";
 
@@ -34,15 +36,15 @@ public class DeleteContentContextMenu(IContentService contentService, IMembershi
         // Confirm dialogue, say if there are children, and confirm then delete all
         var hasChildren = dbContent!.Children.Count != 0;
         var message = hasChildren
-            ? "Move this content and it's children to the recycle bin?"
-            : "Move this content to the recycle bin?";
-        var delete = await confirmService.Confirm(message, "Move to recycle bin", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+            ? text["contextMenus_moveContentWithChildrenToRecycleBinConfirm"].Value
+            : text["contextMenus_moveContentToRecycleBinConfirm"].Value;
+        var delete = await confirmService.Confirm(message, text["contextMenus_moveToRecycleBin"], new ConfirmOptions { OkButtonText = text["general_yes"], CancelButtonText = text["general_no"] });
         if (delete == true)
         {
             var result = await contentService.DeleteContentAsync(new DeleteContentParameters {ContentId = dbContent.Id, MoveToRecycleBin = true});
             notificationService.Notify(new NotificationMessage { 
                 Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
-                Summary = result.Success ? "Success" : "Error", 
+                Summary = result.Success ? text["general_success"] : text["general_error"], 
                 Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             if (result.Success)
             {

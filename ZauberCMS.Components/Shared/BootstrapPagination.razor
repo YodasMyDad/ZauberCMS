@@ -30,7 +30,7 @@
     var hasNext = CurrentPage < PageCount;
     <div class="container">
         <div class="py-4">
-            <nav aria-label="Page navigation">
+            <nav aria-label="@L["shared_pageNavigation"]">
                 <ul class="pagination justify-content-center">
                     @if (ShowFirstLast)
                     {
@@ -38,7 +38,7 @@
                         {
                             <li class="page-item disabled noselect">
                                 <a class="page-link" tabindex="-1">
-                                    @FirstText
+                                    @(FirstText ?? L["general_first"])
                                 </a>
                             </li>
                         }
@@ -46,7 +46,7 @@
                         {
                             <li class="page-item noselect">
                                 <a class="page-link sort-link" href="@GetPageUrl(1)">
-                                    @FirstText
+                                    @(FirstText ?? L["general_first"])
                                 </a>
                             </li>
                         }
@@ -55,7 +55,7 @@
                     {
                         <li class="page-item noselect">
                             <a class="page-link sort-link" href="@GetPageUrl(CurrentPage - 1)">
-                                @PreviousText
+                                @(PreviousText ?? L["general_previous"])
                             </a>
                         </li>
                     }
@@ -63,7 +63,7 @@
                     {
                         <li class="page-item disabled noselect">
                             <a class="page-link" tabindex="-1">
-                                @PreviousText
+                                @(PreviousText ?? L["general_previous"])
                             </a>
                         </li>
                     }
@@ -90,7 +90,7 @@
                     {
                         <li class="page-item">
                             <a class="page-link sort-link" href="@GetPageUrl(CurrentPage + 1)">
-                                @NextText
+                                @(NextText ?? L["general_next"])
                             </a>
                         </li>
                     }
@@ -98,7 +98,7 @@
                     {
                         <li class="page-item disabled">
                             <a class="page-link" tabindex="-1">
-                                @NextText
+                                @(NextText ?? L["general_next"])
                             </a>
                         </li>
                     }
@@ -108,7 +108,7 @@
                         {
                             <li class="page-item disabled">
                                 <a class="page-link" tabindex="-1">
-                                    @LastText
+                                    @(LastText ?? L["general_last"])
                                 </a>
                             </li>
                         }
@@ -116,7 +116,7 @@
                         {
                             <li class="page-item">
                                 <a class="page-link sort-link" href="@GetPageUrl(PageCount)">
-                                    @LastText
+                                    @(LastText ?? L["general_last"])
                                 </a>
                             </li>
                         }
@@ -136,13 +136,17 @@
 
     [Parameter] public bool ShowPageNumbers { get; set; } = true;
 
-    [Parameter] public string FirstText { get; set; } = "First";
+    /// <summary>The first-page link's text; without it, <c>general_first</c> in the page's language (Roadmap D37).</summary>
+    [Parameter] public string? FirstText { get; set; }
 
-    [Parameter] public string LastText { get; set; } = "Last";
+    /// <summary>The last-page link's text; without it, <c>general_last</c>.</summary>
+    [Parameter] public string? LastText { get; set; }
 
-    [Parameter] public string PreviousText { get; set; } = "Previous";
+    /// <summary>The previous-page link's text; without it, <c>general_previous</c>.</summary>
+    [Parameter] public string? PreviousText { get; set; }
 
-    [Parameter] public string NextText { get; set; } = "Next";
+    /// <summary>The next-page link's text; without it, <c>general_next</c>.</summary>
+    [Parameter] public string? NextText { get; set; }
 
     [Parameter] public int VisiblePages { get; set; } = 5;
 

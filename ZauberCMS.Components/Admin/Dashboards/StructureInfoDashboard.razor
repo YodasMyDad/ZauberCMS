@@ -1,13 +1,16 @@
 ﻿@implements ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 
 <div>
-    <p><strong>Content Types</strong> - These are the blue prints for the content you create.</p>
-    <p><strong>Element Types</strong> - These are used in the Block List Editor</p>
+    <p><strong>@L["dashboards_contentTypesTerm"]</strong> - @L["dashboards_contentTypesInfo"]</p>
+    <p><strong>@L["dashboards_elementTypesTerm"]</strong> - @L["dashboards_elementTypesInfo"]</p>
     @*<p><strong>Compositions</strong> - These are used as re-usable groups of tabs and editors for your content types</p>*@
 </div>
 
 @code {
-    public string TabName => "Info";
+    // Discovery builds this dashboard to read its tab name, without [Inject]: the text comes through the constructor
+    private readonly IStringLocalizer<ZauberText> _text;
+    public StructureInfoDashboard(IStringLocalizer<ZauberText> text) => _text = text;
+    public string TabName => _text["dashboards_structureInfo"];
     public int SortOrder => 1;
     public string SectionAlias => Constants.Sections.StructureSection;
 }

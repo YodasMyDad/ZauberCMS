@@ -1,17 +1,19 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Components.ContextMenus.Structure;
 
-public class CopyContentTypeContextMenu() : ITreeContextMenu
+public class CopyContentTypeContextMenu(IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree, Constants.Sections.Trees.StructureCompositionsTree];
-    public string Text(TreeItemContextMenuEventArgs args) => "Copy";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_copy"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "content_copy";
 

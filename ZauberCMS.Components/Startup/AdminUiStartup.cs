@@ -1,6 +1,7 @@
 using Blazored.Modal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Radzen;
 using ZauberCMS.Core.Media.Services;
 using ZauberCMS.Core.Plugins.Interfaces;
@@ -19,6 +20,8 @@ internal sealed class AdminUiStartup : IStartupPlugin
     public void Register(IServiceCollection services, IConfiguration configuration)
     {
         services.AddRadzenComponents();
+        // Radzen's own text through ZauberCMS's (Roadmap D93): a site that registers its own ILocalizer keeps it
+        services.TryAddSingleton<ILocalizer, RadzenTextLocalizer>();
         services.AddBlazoredModal();
         services.AddScoped(typeof(ValidateService<>));
         services.AddScoped<MediaValidationService>();

@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using ZauberCMS.Components.Shared;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Languages.Interfaces;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Seo.Interfaces;
@@ -46,9 +48,12 @@ internal static class AdminRenderer
         });
     }
 
-    /// <summary>The Core services _Imports.razor injects into every component of the package; here they throw if called.</summary>
+    /// <summary>The Core services _Imports.razor injects into every component of the package; here they throw if
+    /// called. ZauberCMS's text (<c>L</c>) is the real one, from the English resources (Roadmap D90).</summary>
     public static void AddImportedServices(IServiceCollection services)
     {
+        services.AddZauberText([typeof(ZauberText).Assembly, typeof(AdminErrorBoundary).Assembly],
+            [typeof(ZauberText).Assembly, typeof(AdminErrorBoundary).Assembly]);
         var injected = new[]
         {
             typeof(IContentService), typeof(IMembershipService), typeof(IMediaService), typeof(ILanguageService),

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="dashboards_contentTypesInfo" xml:space="preserve">
+    <value>These are the blue prints for the content you create.</value>
+    <comment>Structure "Info" tab: after the term "Content Types"</comment>
+  </data>
+  <data name="dashboards_contentTypesTerm" xml:space="preserve">
+    <value>Content Types</value>
+    <comment>Structure "Info" tab: the term explained</comment>
+  </data>
+  <data name="dashboards_elementTypesInfo" xml:space="preserve">
+    <value>These are used in the Block List Editor</value>
+    <comment>Structure "Info" tab: after the term "Element Types"</comment>
+  </data>
+  <data name="dashboards_elementTypesTerm" xml:space="preserve">
+    <value>Element Types</value>
+    <comment>Structure "Info" tab: the term explained</comment>
+  </data>
+  <data name="dashboards_latestContent" xml:space="preserve">
+    <value>Latest Content</value>
+    <comment>Content section dashboard tab</comment>
+  </data>
+  <data name="dashboards_latestContentTypes" xml:space="preserve">
+    <value>Latest Content Types</value>
+    <comment>Structure section dashboard tab</comment>
+  </data>
+  <data name="dashboards_latestMedia" xml:space="preserve">
+    <value>Latest Media</value>
+    <comment>Media section dashboard tab</comment>
+  </data>
+  <data name="dashboards_latestRoles" xml:space="preserve">
+    <value>Latest Roles</value>
+    <comment>Users section dashboard tab</comment>
+  </data>
+  <data name="dashboards_latestUsers" xml:space="preserve">
+    <value>Latest Users</value>
+    <comment>Users section dashboard tab</comment>
+  </data>
+  <data name="dashboards_recentActivity" xml:space="preserve">
+    <value>Recent Activity</value>
+    <comment>Content dashboard: heading of everyone's recently changed pages</comment>
+  </data>
+  <data name="dashboards_recentActivityHelp" xml:space="preserve">
+    <value>Shows all users' recent activity</value>
+  </data>
+  <data name="dashboards_structureInfo" xml:space="preserve">
+    <value>Info</value>
+    <comment>Structure section dashboard tab that explains the terms</comment>
+  </data>
+  <data name="dashboards_unpublishedContent" xml:space="preserve">
+    <value>Unpublished Content</value>
+    <comment>Content dashboard: heading (after the count) and the side panel's title</comment>
+  </data>
+  <data name="dashboards_unpublishedContentHelp" xml:space="preserve">
+    <value>The amount of unpublished content waiting to be published</value>
+  </data>
+  <data name="dashboards_yourActivity" xml:space="preserve">
+    <value>Your Activity</value>
+    <comment>Content dashboard: heading of the signed-in user's recently changed pages</comment>
+  </data>
+  <data name="dashboards_yourActivityHelp" xml:space="preserve">
+    <value>Shows your recent activity</value>
+  </data>
+</root>

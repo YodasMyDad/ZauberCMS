@@ -1,8 +1,10 @@
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;
@@ -16,13 +18,14 @@ namespace ZauberCMS.Components.ContextMenus.MediaRecycleBinMenus;
 public class DeleteMediaPermanentlyContextMenu(
     IMediaService mediaService,
     DialogService dialogService,
-    NotificationService notificationService) : ITreeContextMenu
+    NotificationService notificationService,
+    IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     private const int MaxUsages = 50;
 
     public List<string> Sections { get; } = [];
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.MediaRecycleBinTree];
-    public string Text(TreeItemContextMenuEventArgs args) => "Delete permanently";
+    public string Text(TreeItemContextMenuEventArgs args) => text["contextMenus_deletePermanently"];
     public string Icon(TreeItemContextMenuEventArgs args) => "dangerous";
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
 
@@ -42,11 +45,13 @@ public class DeleteMediaPermanentlyContextMenu(
             MediaIds = [media.Id],
             Max = MaxUsages
         });
-        var what = media.MediaType == MediaType.Folder ? "this folder, everything in it and their files" : "this media and its file";
-        var message = $"{MediaUsageText.Describe(usages, MaxUsages)}Permanently delete {what}? This can't be undone.";
+        var usedBy = MediaUsageText.Describe(usages, MaxUsages, text);
+        var message = media.MediaType == MediaType.Folder
+            ? text["contextMenus_deleteFolderPermanentlyConfirm", usedBy].Value
+            : text["contextMenus_deleteMediaPermanentlyConfirm", usedBy].Value;
 
-        var confirmed = await dialogService.Confirm(message, $"Delete '{media.Name}'",
-            new ConfirmOptions { OkButtonText = "Delete permanently", CancelButtonText = "Cancel" });
+        var confirmed = await dialogService.Confirm(message, text["contextMenus_deleteItem", media.Name ?? string.Empty],
+            new ConfirmOptions { OkButtonText = text["contextMenus_deletePermanently"], CancelButtonText = text["general_cancel"] });
         if (confirmed != true)
         {
             return;
@@ -59,12 +64,12 @@ public class DeleteMediaPermanentlyContextMenu(
         });
         if (result.Success)
         {
-            notificationService.ShowSuccessNotification($"'{media.Name}' deleted");
+            notificationService.ShowSuccessNotification(text["contextMenus_itemDeleted", media.Name ?? string.Empty]);
         }
 
         if (!result.Success || result.Messages.Count != 0)
         {
-            notificationService.ShowNotifications(result.Messages);
+            notificationService.ShowNotifications(result.Messages, text);
         }
     }
 

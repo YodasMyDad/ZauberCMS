@@ -1,11 +1,13 @@
-﻿using ZauberCMS.Core;
+﻿using Microsoft.Extensions.Localization;
+using ZauberCMS.Core;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Sections.Interfaces;
 
 namespace ZauberCMS.Components.Admin.ContentSection.Navigation;
 
-public class ContentNavGroup : ISectionNavGroup
+public class ContentNavGroup(IStringLocalizer<ZauberText> text) : ISectionNavGroup
 {
-    public string Heading => "Content";
+    public string Heading => text["sections_contentGroup"];
     public string Alias => Constants.Sections.SectionNavGroups.ContentNavGroup;
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.ContentSection;

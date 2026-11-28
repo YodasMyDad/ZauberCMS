@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="shared_addTagPlaceholder" xml:space="preserve">
+    <value>Add a tag</value>
+    <comment>Tag editor: placeholder of the new tag box</comment>
+  </data>
+  <data name="shared_addValuePlaceholder" xml:space="preserve">
+    <value>Add a value and click plus</value>
+    <comment>List editor: placeholder of the new value box</comment>
+  </data>
+  <data name="shared_changeAlias" xml:space="preserve">
+    <value>Change Alias</value>
+    <comment>Property editor: the side panel's title and its field label</comment>
+  </data>
+  <data name="shared_changeAliasWarning" xml:space="preserve">
+    <value>Changing the alias can break the front end of your site!</value>
+  </data>
+  <data name="shared_changeTab" xml:space="preserve">
+    <value>Change Tab</value>
+    <comment>Property editor: button title</comment>
+  </data>
+  <data name="shared_contentTypesSource" xml:space="preserve">
+    <value>Content Types</value>
+    <comment>Data list source: name</comment>
+  </data>
+  <data name="shared_contentTypesSourceInfo" xml:space="preserve">
+    <value>List of all content types</value>
+    <comment>Data list source: description</comment>
+  </data>
+  <data name="shared_contentViewsSource" xml:space="preserve">
+    <value>Content Views</value>
+    <comment>Data list source: name</comment>
+  </data>
+  <data name="shared_contentViewsSourceInfo" xml:space="preserve">
+    <value>List of the available content views</value>
+    <comment>Data list source: description</comment>
+  </data>
+  <data name="shared_countriesSource" xml:space="preserve">
+    <value>Countries Data</value>
+    <comment>Data list source: name</comment>
+  </data>
+  <data name="shared_countriesSourceInfo" xml:space="preserve">
+    <value>Country data list in English in alphabetical order</value>
+    <comment>Data list source: description (the country names are data, in English)</comment>
+  </data>
+  <data name="shared_descriptionPlaceholder" xml:space="preserve">
+    <value>Description...</value>
+    <comment>Property editor: placeholder of the description box</comment>
+  </data>
+  <data name="shared_editSettings" xml:space="preserve">
+    <value>Edit Settings</value>
+    <comment>Property editor: button title</comment>
+  </data>
+  <data name="shared_errorDetailsInLog" xml:space="preserve">
+    <value>The details are in the site's log.</value>
+    <comment>Error boundary and side panel: shown instead of the error when detailed errors are off</comment>
+  </data>
+  <data name="shared_fullWidth" xml:space="preserve">
+    <value>Full Width</value>
+    <comment>Property editor: switch label</comment>
+  </data>
+  <data name="shared_honeypotLabel" xml:space="preserve">
+    <value>Leave this field empty</value>
+    <comment>Registration form: label of the hidden anti-spam field</comment>
+  </data>
+  <data name="shared_mediaDeleted" xml:space="preserve">
+    <value>Media Deleted</value>
+    <comment>Rich text check: notification summary</comment>
+  </data>
+  <data name="shared_mediaDeletedDetail" xml:space="preserve">
+    <value>{0} media item(s) have been deleted and removed from content.</value>
+    <comment>{0} = the number of media items</comment>
+  </data>
+  <data name="shared_mediaUpdated" xml:space="preserve">
+    <value>Media Updated</value>
+    <comment>Rich text check: notification summary</comment>
+  </data>
+  <data name="shared_mediaUpdatedDetail" xml:space="preserve">
+    <value>Media URLs have changed. {0} item(s) updated. Save to apply changes.</value>
+    <comment>{0} = the number of media items</comment>
+  </data>
+  <data name="shared_moveDown" xml:space="preserve">
+    <value>Move Down</value>
+    <comment>Property editor: button title</comment>
+  </data>
+  <data name="shared_moveUp" xml:space="preserve">
+    <value>Move up</value>
+    <comment>Property editor: button title</comment>
+  </data>
+  <data name="shared_pageFailed" xml:space="preserve">
+    <value>This part of the page could not be shown</value>
+    <comment>Error boundary: title when the part has no name</comment>
+  </data>
+  <data name="shared_pageNavigation" xml:space="preserve">
+    <value>Page navigation</value>
+    <comment>Pager: label of the navigation</comment>
+  </data>
+  <data name="shared_panelFailed" xml:space="preserve">
+    <value>This panel could not be shown.</value>
+    <comment>Side panel: title when its content failed</comment>
+  </data>
+  <data name="shared_partFailed" xml:space="preserve">
+    <value>{0} could not be shown</value>
+    <comment>Error boundary: title. {0} = what failed, e.g. "The Title editor"</comment>
+  </data>
+  <data name="shared_propertyName" xml:space="preserve">
+    <value>Property name</value>
+    <comment>Property editor: label of the name box</comment>
+  </data>
+  <data name="shared_tagName" xml:space="preserve">
+    <value>Tag name</value>
+    <comment>Tag editor: label of a tag's box</comment>
+  </data>
+  <data name="shared_valueRequired" xml:space="preserve">
+    <value>Value Required</value>
+    <comment>Property editor: switch label</comment>
+  </data>
+</root>

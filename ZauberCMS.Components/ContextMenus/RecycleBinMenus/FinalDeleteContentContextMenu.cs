@@ -1,19 +1,21 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Components.ContextMenus.RecycleBinMenus;
 
-public class FinalDeleteContentContextMenu(IContentService contentService, DialogService dialogService, NotificationService notificationService) : ITreeContextMenu
+public class FinalDeleteContentContextMenu(IContentService contentService, DialogService dialogService, NotificationService notificationService, IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.RecycleBinTree];
-    public string Text(TreeItemContextMenuEventArgs args) => "Delete";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_delete"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "dangerous";
 
@@ -39,13 +41,13 @@ public class FinalDeleteContentContextMenu(IContentService contentService, Dialo
         }
 
         contextMenuService.Close();
-        var delete = await dialogService.Confirm("Permanently delete this?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        var delete = await dialogService.Confirm(text["contextMenus_deletePermanentlyConfirm"], text["general_delete"], new ConfirmOptions { OkButtonText = text["general_yes"], CancelButtonText = text["general_no"] });
         if (delete == true)
         {
             var result = await contentService.DeleteContentAsync(new DeleteContentParameters { ContentId = dbContent.Id });
             notificationService.Notify(new NotificationMessage { 
                 Severity = result.Success ? NotificationSeverity.Success : NotificationSeverity.Error, 
-                Summary = result.Success ? "Success" : "Error", 
+                Summary = result.Success ? text["general_success"] : text["general_error"], 
                 Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             if (result.Success)
             {

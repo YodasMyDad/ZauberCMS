@@ -42,9 +42,12 @@
   **Phase 11h done** (the Phase 11 audit's leftovers: `IgnoreInternalRedirect` honoured, settings set in code,
   CI's commit-back, blank providers; D80–D83, ZA-191, ZA-192, ZA-195, ZA-196; ZA-230 found and fixed while
   building, ZA-231…ZA-234 found by its `/audit changed` and fixed, ZA-235 recorded for Phase 12; 2026-11-28).
+  **Phase 10h-1 done** (admin localisation: the mechanism, the shared vocabulary and the first screens, D90–D97;
+  ZA-129 in progress; ZP-010 proposed; 2026-11-28, merged after 10g-2 and 11h).
   **6 open findings** (0 Critical, 0 High, 0 Medium, 6 Low), each one assigned below to a phase (10h, 10i, 12).
   **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
-  whose theme fits. **Next: Phase 10h** (admin localisation, D37, ZA-129; it covers 10g's new screens), then 10i,
+  whose theme fits. **Next: Phase 10h-2, 10h-3 and 10h-4 in parallel** (admin localisation, D37, ZA-129; it covers
+  the new screens of 10g and 10g-2), then 10i,
   then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -131,6 +134,14 @@
 | D81 | **Settings changed in code count wherever ZauberCMS uses them; only the ones that decide which services are registered come from configuration, and a change in code to those is a start-up warning.** `AddZauberCms(builder)` set ImageResize, Identity's password rules and confirmed-account sign-in, the login and register rate limits, the Redis address and Blazor's detailed errors from its own copy of the configuration, so a site's `Configure<ZauberSettings>`/`PostConfigure` changed `IOptions<ZauberSettings>` but not those. Each is now an internal `IConfigureOptions<T>` (detailed errors: `IPostConfigureOptions<T>`) over `IOptions<ZauberSettings>` (`Settings/OptionsFromZauberSettings.cs`), run when those options are first built; a site's own `Configure<IdentityOptions>` registered after `AddZauberCms` still runs after them and wins. Read while composing, from configuration: `DatabaseProvider` and `ConnectionString` (which DbContext is registered; the installer writes them to configuration, D19, D40) and whether `RedisConnectionString` is set (the Redis cache, the invalidation bus and its listener). `AddZauberCms(app)` compares those with the options: a database setting changed in code (the options differ from the configuration as it is then; the DbContexts read the configuration live, so a source added after `AddZauberCms(builder)` is used, ZA-231) is a warning that names the setting and shows no value (a connection string holds a password); Redis set after the services were registered, in code or by a configuration source added after `AddZauberCms(builder)`, is a warning, and Redis emptied that way while it was set stops the start (its services would have no address, D48). The template's `Program.cs` says to add configuration sources before `builder.AddZauberCms()`. Rejected: building a second service provider to read the options while composing (ASP0000, a parallel singleton container), and reading every setting from configuration only (a site that keeps secrets in a vault sets them in code). Umbraco does the same: its settings are read through `IOptions<T>` by `IConfigureOptions` classes (`ConfigureBackOfficeIdentityOptions` from its password and security settings, `ConfigureImageSharpMiddlewareOptions` from `ImagingSettings`), so `Configure<T>` in code works, and what it composes (the runtime mode, the database, ModelsBuilder's mode) it reads from `builder.Config`. (owner delegated to Umbraco parity, 2026-11-28, Phase 11h) | ZA-192, D48, D19 |
 | D82 | **The stamped version is committed back on top of whatever `main-static` has by then; only this job's own earlier bumps are overridden, never a person's change or a higher version.** The publish jobs already ran one at a time (the `concurrency` group), so with two pushes in flight the second job's `pull --rebase` replayed its bump over the first job's bump of the same lines and conflicted, after its packages were out. Each attempt now fetches `main-static`; it commits nothing when that already has a higher version (a rerun of an older release); it only warns when a commit after the one built changed one of the three stamped files and is not one of this job's bumps (a person's version or edit: that commit's own run stamps it); otherwise it replays the bump with `rebase -X theirs` (where only bumps changed the lines, this version wins) and pushes, and a push that loses a race is tried again, five times at most. Rejected: dropping the commit-back and taking the version from the tags alone (the version rule already works from the tags, D44, but the repository's files would lag the releases: a change to the owner's release flow for a defect that the rebase fixes). Umbraco commits nothing back: Nerdbank.GitVersioning computes the version from `version.json` and the git height, and a release manager tags; ZauberCMS keeps its push-to-publish flow (D44) and makes the commit-back safe. (owner delegated to Umbraco parity, 2026-11-28, Phase 11h) | ZA-195, D44 |
 | D83 | **A blank `Zauber:Plugins:StorageProvider` is a site that stores no files and a blank `EmailProvider` a site that sends no email; both start, and what needs one says which setting to set.** D48 kept blank as "no provider" (a site that runs with it must still start after the update), but an upload or an email then threw `NullReferenceException`. Storage: a warning at every start (a media section that cannot upload is almost never meant), and an upload or a permanent delete of a file is refused with a message that names the setting (`ProviderService.NoStorageProviderMessage`: a failed `HandlerResult`, the upload dialog's error). Email: no start-up warning, since a site may send none; a send throws `InvalidOperationException` naming the setting (`NoEmailProviderMessage`), as the SMTP provider already does when `Zauber:Email:Smtp:Host` is empty (ZA-032), and the callers that log and carry on (forgot password, the set-password email, a resent confirmation) log that. New: `ProviderService.GetRequiredStorageProvider()`/`GetRequiredEmailProvider()`, which throw it; the nullable properties stay; a test fails on `StorageProvider!`/`EmailProvider!` anywhere in the packages. Umbraco runs without SMTP configured (`IEmailSender.CanSendRequiredEmail()` is false, a send is skipped with a log line, and the features that need email check it first); it has no setting for "no media storage" (its media file system is always there), so a blank one here is a warning, not a start-up failure. (owner delegated to Umbraco parity, 2026-11-28, Phase 11h) | ZA-196, D48, ZA-032 |
+| D90 | **ZauberCMS's text is `.resx` files in `ZauberText` folders, layered over each other by assembly; a site, plugin or language pack translates or overrides keys with files of its own, and a missing key falls back to English.** `IStringLocalizer<ZauberText>` (`ZauberCMS.Core.Localization`; `ZauberText` is the one new public type) reads the `ZauberText/<Area>[.<culture>].resx` resources of every scanned assembly: neutral files from the assembly, a culture's from its satellite (`fr/MySite.resources.dll`). A key is looked up most specific culture first (`fr-CA`, `fr`, neutral) and at each step in the site's entry assembly, then the plugins in `AddZauberCms` order, then ZauberCMS's English (`ZauberTextCatalog`, internal; read once per assembly and culture). Discovery is the resource name (any resource with a `ZauberText` segment), so nothing is registered; a plugin brings its own area the same way; the localiser is registered with `TryAdd` and replaceable (texts kept in a database or JSON). A missing key shows as the key and is logged once. Umbraco does the same with XML: English language files per area in the core (`en.xml`, `en-us.xml`), packages add `lang/*.xml` files that add or override keys per culture, a site overrides in `config/lang/*.user.xml`, a missing key falls back to `en-US`. Rejected: plain .NET satellites for ZauberCMS's own resource names (a site cannot build `fr/ZauberCMS.Components.resources.dll`); replacing the global `IStringLocalizerFactory` (it would sit under a site's own localisation and libraries); loose JSON or XML files in a folder (no story for a NuGet plugin or language pack, a second format beside .NET's; a site can still plug one in by replacing the localiser). (owner delegated to Umbraco parity, Phase 10h-1) | D37, ZA-129 |
+| D91 | **A key is `area_name`, one `.resx` file per area, the whole key as the entry's name.** `general_save`, `contextMenus_moveToRecycleBin`: the area is the file name with a lower-case first letter, the name is camelCase and says what the text means. The admin's areas follow its folders (Dashboards, Trees, ContextMenus, Content, …), each owned by one part of Phase 10h, so the parts never edit the same file; `General` is the shared vocabulary (buttons, labels, notification summaries), filled by 10h-1 and read by all. An area can have a file in Components (its screens) and one in Core (its messages): it is one area for a translator. Parameterised text is one key per sentence with numbered placeholders and a comment naming them. Umbraco's keys are `area_alias` (`general_save`, `buttons_save`, `speechBubbles_editContentSaved`) in areas of one file per language; ZauberCMS keeps its areas apart in files so the parts and translators can work on one area at a time, and writes the whole key so it is found by searching. (owner delegated, Phase 10h-1) | D37 |
+| D92 | **Core localises its messages where it builds them; `HandlerResult` carries text, not keys.** `Microsoft.Extensions.Localization` is not a UI library, so Core uses it (AGENTS.md: Core has no Radzen or modal). A Core service, validator or check that builds text shown to a person takes `IStringLocalizer<ZauberText>` by constructor (its last parameter) and writes the text in the caller's culture (the admin's in a circuit), so `HandlerResult`, `ResultMessage` and every caller stay as they are; log and exception messages stay English. Core's keys are in Core's own files, since Core runs without Components'. A service's constructor gaining the parameter is a v5 change for its release notes (D18). Rejected: keys in `ResultMessage` localised by the UI (every place that shows a message would change, and API callers would get keys). Umbraco injects `ILocalizedTextService` where a message is made and localises with the current UI culture (`_localizedTextService.Localize("speechBubbles", "editContentSavedHeader")` in its controllers); ZauberCMS's services make the messages, so they localise. A notification's summary is the message type in the admin's language (`ShowNotifications(messages, L)`; it showed the enum name). (owner delegated to Umbraco parity, Phase 10h-1) | D37, D18 |
+| D93 | **Radzen's own text goes through ZauberCMS's text: Radzen's key `X` is `radzen_X`.** Radzen 13 asks an `ILocalizer` for each of its built-in strings (data grid filter and pager, "No records to display.", date pickers, dialogs, upload); ZauberCMS registers one (`RadzenTextLocalizer`, internal, `TryAdd`) that answers from the same layers, so a translator translates Radzen in `Radzen.fr.resx` beside ZauberCMS's areas. ZauberCMS ships no Radzen file: a key nobody translated is Radzen's built-in English, which follows Radzen's updates. Each culture's Radzen keys are read once. Rejected: setting the `*Text` parameters on every grid and picker (dozens per grid, every screen). Umbraco's back office translates its own UI library's labels from its language files, so a translation covers the grids and pickers too. (owner delegated to Umbraco parity, Phase 10h-1) | D37 |
+| D94 | **A guard test keeps the resources and the code in step.** `ZauberTextResourceTests`: each key is named after its file and is in one file once; texts are trimmed, placeholders numbered from `{0}`, a translation has only keys of the English with the same placeholders; every literal key the code asks for is in the English files (Core's in Core's) and every key outside General is used; every English text is in the built assemblies (the packages carry them); the folders already converted keep no hard-coded text (markup text, text attributes, literals given to UI members and calls, sentences; exceptions are listed). Each part adds its folders to its own block of the list, so the parts merge cleanly. Umbraco checks its language files in its build the same way (keys of other languages must exist in English). (Phase 10h-1) | D37 |
+| D95 | **The installer, the account pages, ZauberCMS's fallback site pages and the sign-out page are localised too; a site's views and content are not.** The installer is in Core (area `Installer`) and runs in `Zauber:AdminDefaultLanguage` (no database, no other language); the account pages (`/Account/*`, area `Account`), the fallback pages (not found, missing view, new site) and the sign-out page are site-facing and use the request's culture, so a site with French content shows them in French once it has the files. Umbraco localises its installer (`installer` area); its member pages are templates the site edits, but ZauberCMS ships its account pages, so a site must be able to translate them without replacing them. Not localised: what is stored and shown back as data (audit descriptions, as Umbraco's audit comments; names; the country names of `CountriesDataSource`), logs and exceptions. (owner delegated to Umbraco parity, Phase 10h-1) | D37, D24 |
+| D96 | **The admin's language stays `Zauber:AdminDefaultLanguage`, one for every user (D37).** Umbraco lets each back-office user choose their language; ZauberCMS's mechanism supports it (it follows the current UI culture), and it is proposed as ZP-010 for the owner. (Phase 10h-1) | D37, ZP-010 |
+| D97 | **Every component in ZauberCMS.Components has `L`; a type discovery builds gets the localiser by constructor.** `@inject IStringLocalizer<ZauberText> L` is in `ZauberCMS.Components/_Imports.razor`, as the services there are. `ExtensionManager` builds discovered types with `ActivatorUtilities`, which fills constructor parameters but not `[Inject]` properties, so a type whose text is read from such an instance (a section's name, a dashboard's tab, a nav group's heading, a tree context menu's text, a data source's name, an editor's name) takes `IStringLocalizer<ZauberText>` as a constructor parameter, a `.razor` one in a constructor in `@code` (Blazor builds components with constructor injection too). The built-in types' constructors gain the parameter (v5 release notes). `ZauberCMS.Components.SharedResource` (one key, its generated class colliding by name) is `[Obsolete]`; its file stays so `IStringLocalizer<SharedResource>` still resolves. (Phase 10h-1) | D37, D18 |
 
 ## Working rules for the rework
 
@@ -1404,8 +1415,89 @@ and fixed it with its own code's findings, and recorded **ZA-219** (Low, admin n
 
 ### Phase 10h — Admin localisation, English resources (D37)
 ZA-129 (Low). Every admin string through `IStringLocalizer` with English resource files; a site adds a language
-with its own resources. Settle how a site supplies them (resource assembly or files) and record it. Done after 10g so
-its new screens are covered.
+with its own resources. Done after 10g so its new screens are covered. In four parts: 10h-1 builds the mechanism
+and converts the first screens; then **10h-2, 10h-3 and 10h-4 run in parallel**, each in its own worktree, each
+converting only its own folders into its own area files, by the rules and area table in
+[AdminUI.md](AdminUI.md) "Localisation" (followed literally). ZA-129 closes with 10h-4; `/audit changed` runs once
+after 10h-4, over the whole of 10h.
+
+#### Phase 10h-1 — The mechanism and the first screens — DONE (2026-11-28)
+- **Mechanism (D90–D97).** `IStringLocalizer<ZauberText>` (`ZauberCMS.Core/Localization/`: the public marker
+  `ZauberText`, the internal `ZauberTextCatalog` and `ZauberTextLocalizer`, `AddZauberText` called where
+  `AddLocalization` was): `.resx` files in `ZauberText` folders, one per area, layered site → plugins → ZauberCMS,
+  most specific culture first, English as the fallback (D90); keys `area_name` (D91); Core localises its messages
+  where it builds them (D92); Radzen's own text through `radzen_<key>` (`RadzenTextLocalizer`, registered in
+  `AdminUiStartup`, D93); the guard tests (D94); the installer and account pages in scope (D95); one admin language
+  (D96, ZP-010); `L` in every component from `_Imports.razor`, discovered types by constructor (D97).
+- **Area files created** (empty ones wait for their part): Components `Resources/ZauberText/` General, Sections,
+  Dashboards, Shared, Trees, ContextMenus (filled); Content, Media, EditorDialogs, Seo, Editors, Structure,
+  Settings, Users, Layout, Account (empty). Core `Resources/ZauberText/` Content, Media, Seo, Installer, Shared,
+  Languages, Membership, Sections, Audit, Tags, Email (empty). Core's csproj has `NeutralLanguage en`.
+- **Converted:** `Admin/Dashboards` (tab names by constructor, grid columns, the content dashboard's headings and side
+  panel), `Shared`, `Admin/Shared` (+ `Dialogs`), `Modal` (close button, the failed-panel text), `Trees`,
+  `ContextMenus` (37 files, 70 keys: menu texts, confirms, side panel titles, notifications; the media-usage sentence
+  as whole sentences), `DataSources` (names, descriptions), Components' `Core` (`ValidateService`,
+  `MediaValidationService`, `NotificationServiceExtensions`: a `ShowNotifications(messages, IStringLocalizer)`
+  overload whose summary is the message type in the admin's language), the section names of Content, Media,
+  Settings and Structure (by constructor) and every nav group heading but Users' (whose keys,
+  `sections_users`/`sections_usersGroup`, are ready for 10h-4). `BootstrapPagination`'s link texts default to
+  `general_first`/`_last`/`_previous`/`_next` when not set. Fixed while converting: "it's children", "there only
+  one", "Seo Checker"/"SEO Checker" (one key).
+- **Tests:** `Localization/ZauberTextTests` (English shipped; a site's French wins, `fr-CA` before `fr`, an
+  untranslated key is English; a plugin's own area and its translation; the layer and culture order with fake
+  layers; the localiser's missing key, culture formatting and bad placeholders; the bootstrap registers both
+  localisers and Radzen's key comes through) and `Localization/ZauberTextResourceTests` (the guard, D94); test
+  resources `tests/ZauberCMS.Core.Tests/Localization/ZauberText/` play the site. `AdminErrorBoundaryTests` render
+  with the real text (Core gives `ZauberCMS.Components.Tests` its internals for `AddZauberText`).
+- **Verified in the browser** (dev site on a scratch copy of `app.db`, with three temporary site files in
+  `ZauberCMS.Web/ZauberText/`, removed afterwards): `Sections.en.resx` renamed the Content section in the top
+  navigation and the page title, `Dashboards.en.resx` its dashboard tab (both read from instances discovery builds,
+  so the constructor path works in Blazor too), `Radzen.en.resx` an empty grid's "No records to display."; the
+  Content, Media, Structure (both tabs), Settings and Users screens show English, no raw keys; the content context
+  menu, its delete confirm (Yes/No), the Copy side panel's title and close button, the Media nav group's actions,
+  the "nothing to sort" notification, and the registration page's hidden field label (a static page).
+- **Not verified in the browser:** a whole French admin (`Zauber:AdminDefaultLanguage` `fr` with French files: the
+  lookup tests cover it), the failed-panel and error-boundary texts (component tests), `BootstrapPagination`'s
+  defaults, `MediaValidationService`'s notifications.
+- **For the parallel parts (merge):** a component test that renders a ZauberCMS component with its own
+  `ServiceCollection` must add `services.AddZauberText([core, components], [core, components])` (the component's
+  `L`), as `AdminErrorBoundaryTests` does; the tests' `AdminRenderer.AddImportedServices` (10g-2) adds it since
+  the merge, so a test built on it has the text. The decision rows D90–D97 and the `ConvertedFolders` blocks are
+  where merges meet.
+- **Merged onto Phases 10g-2 and 11h** (made alongside them from 7442f14): the tests' `AdminRenderer.AddImportedServices` (10g-2's helper, which `ModalHostDisposalTests` uses too) registers ZauberCMS's text, since every component now injects `L`; 10g-2 and 11h added no text in the folders 10h-1 converted, so the guard passes unchanged, and their new text stays with its part (10g-2's with 10h-4, 11h's storage refusal with 10h-2). Full suite after the merge
+  1500 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis (1377 on its own branch).
+- **Release notes (D18):**
+  - The admin's text is localisable (D37). A site, plugin or language pack adds a language with
+    `ZauberText/<Area>.<culture>.resx` files (Docs/AdminUI.md "Localisation"); Radzen's text too (`radzen_*`).
+    The admin shows English as before; notification summaries say "Success"/"Error"/… in the admin's language.
+  - Breaking (constructors): the built-in nav groups, context menus and nav group actions, dashboards, the section
+    index pages, the data sources, `ValidateService<T>` and `MediaValidationService` take an
+    `IStringLocalizer<ZauberText>`; a site that subclasses one passes it on. `ContentEditor.Localizer` (unused) is
+    gone. `BootstrapPagination`'s `FirstText`, `LastText`, `PreviousText`, `NextText` are `string?`, null meaning
+    the localised default.
+  - `ZauberCMS.Components.SharedResource` is obsolete (use `IStringLocalizer<ZauberText>`).
+
+#### Phase 10h-2 — Content, Media, editor dialogs, SEO (parallel)
+`Admin/ContentSection`, `Admin/MediaSection`, `Editors/Dialogs`, `Seo` (areas Content, Media, EditorDialogs, Seo)
+and Core's content, media and storage messages, validators and SEO checks (Core `Content`, `Media`, `Seo`; storage
+providers in `Media`). The `ContentIndex` "Create Content" button is still to do (its section name is done). From
+Phase 11h: the upload and file-delete refusal with no storage provider, which `MediaService` adds as
+`ProviderService.NoStorageProviderMessage` (a public constant: keep it, as the English, and the exception
+`GetRequiredStorageProvider()` throws, which stays English like every exception; localise the result message).
+
+#### Phase 10h-3 — Editors and the installer (parallel)
+The rest of `Editors` (root, `Settings`, `Components`, `Models`, `ToolbarItems`, `Interfaces`; area Editors), the
+installer (`ZauberCMS.Core/Installer`, Core area Installer, D95) and Core's generic messages (`Shared`,
+`Extensions` — the save messages — and `Data`; Core area Shared).
+
+#### Phase 10h-4 — Structure, Settings, Users, layout, account (parallel)
+`Admin/StructureSection`, `Admin/SettingsSection`, `Admin/UsersSection`, `Admin/Layout`, `Account/*`, `Pages` and
+`Controllers` (areas Structure, Settings, Users, Layout, Account), the API-key picker editor and
+`ZauberCMS/Components/Routes.razor` (left out of 10h-1 while 10g-2 edits them), the Users section's name and nav
+group heading (`sections_users`, `sections_usersGroup`, then out of the guard's `NotUsedYet`), Core's language,
+audit, tags, role, user, membership, security and email messages (Core `Languages`, `Audit`, `Tags`,
+`Membership`, `Sections`, `Email`), the account parameter classes' DataAnnotations (D92's rule 8 in AdminUI.md),
+and the new text of Phases 10g and 10g-2 (listed in their sections). Closes ZA-129.
 
 ### Phase 10i — Accessibility pass
 ZA-128 (Low). Labels on icon buttons and inputs, keyboard access and roles for the clickable divs (every tree

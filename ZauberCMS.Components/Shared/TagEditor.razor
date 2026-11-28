@@ -3,7 +3,7 @@
 @using TupleExtensions = ZauberCMS.Core.Extensions.TupleExtensions
 <div>
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" class="mb-4">
-        <RadzenTextBox @bind-Value="_newItem.TagName" Placeholder="Add a tag" Style="width: 100%"/>
+        <RadzenTextBox @bind-Value="_newItem.TagName" Placeholder="@L["shared_addTagPlaceholder"]" Style="width: 100%"/>
         <RadzenButton Click="@AddItem" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
     </RadzenStack>
 
@@ -15,7 +15,7 @@
                     <div class="pr-1 flex items-center justify-center cursor-grab">
                         <RadzenIcon Icon="drag_indicator"/>
                     </div>
-                    <RadzenTextBox Value="@item.TagName" ValueChanged="@(value => OnValueChanged(value, item))" class="w-full" aria-label="Tag Name"/>
+                    <RadzenTextBox Value="@item.TagName" ValueChanged="@(value => OnValueChanged(value, item))" class="w-full" aria-label="@L["shared_tagName"]"/>
                     <RadzenButton Click="@(() => RemoveItem(item))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
                 </RadzenStack>
             </div>
@@ -50,14 +50,14 @@
             }
             else
             {
-                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["general_error"], Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             }
         }
     }
 
     private async Task RemoveItem(Tag item)
     {
-        var delete = await DialogService.Confirm("Are you sure?", "Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        var delete = await DialogService.Confirm(L["general_areYouSure"], L["general_delete"], new ConfirmOptions { OkButtonText = L["general_yes"], CancelButtonText = L["general_no"] });
         if (delete == true)
         {
             // Are you sure
@@ -81,7 +81,7 @@
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["general_error"], Detail = result.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
 
@@ -102,7 +102,7 @@
             var result = await TagService.SaveTagAsync(new SaveTagParameters { Id = tag.Id, TagName = tag.TagName, SortOrder = tag.SortOrder});
             if (!result.Success)
             {
-                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["general_error"], Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             }
         }
     }

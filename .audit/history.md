@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10h-1 (2026-11-28, merged after 10g-2 and 11h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1500 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1377 on its own branch) · Template smoke test passes; `doublecheck` self-review on the part. ZA-129 in progress (the mechanism and the first screens, D90–D97; it closes with 10h-4); ZP-010 proposed. Next free ID: ZA-236 (ZA-240…ZA-249, this part's range, unused; ZA-250…ZA-259 held by Phase 11i, in progress); proposals ZP-004 (ZP-010 used, ZP-011…ZP-019 unused)
 After Roadmap Phase 11h (2026-11-28, merged after 10g-2): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch) · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-191, ZA-192, ZA-195, ZA-196 fixed (D80–D83); ZA-230 found and fixed while building; ZA-231…ZA-234 found by the audit and fixed (Low); ZA-235 recorded (Low, Phase 12); ZP-002, ZP-003 proposed. Next free ID: ZA-236 (ZA-220…ZA-229 unused; ZA-240…ZA-249 held by a part in progress)
 After Roadmap Phase 10g-2 (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the part (a diff reviewer and two unit reviewers): ZP-001 built (D72); ZA-214, ZA-215 fixed (D73); ZA-216, ZA-197 found while building and fixed; ZA-218 (Medium) found by the audit and fixed; ZA-217, ZA-219 recorded (Low, Phase 12). Next free ID: ZA-220
 After Roadmap Phase 10g (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-188 fixed (D38 phase, D66–D71); ZA-199…ZA-201 found and fixed while building; ZA-202…ZA-213 found by the audit and fixed (3 High, 4 Medium, 5 Low); ZA-214, ZA-215 recorded (Low, Phase 12); ZP-001 proposed. Next free ID: ZA-216
@@ -40,6 +41,27 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 10h-1 (2026-11-28, admin localisation: the mechanism and the first screens, D37, D90–D97).**
+  Release notes in the Roadmap's "Phase 10h-1". Full suite 1377 on its branch (all pass, none skipped) on SQLite,
+  PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings; template smoke test passes; `doublecheck`
+  self-review.
+  - **ZA-129 (Low) — in progress, stays open until 10h-4.** The mechanism (`IStringLocalizer<ZauberText>`, `.resx`
+    per area in `ZauberText` folders, layered site → plugins → ZauberCMS, English fallback; Radzen's own text
+    through `radzen_*`), every area's English file, the shared `General` vocabulary, and the first screens:
+    `Admin/Dashboards`, `Shared`, `Admin/Shared`, `Modal`, `Trees`, `ContextMenus`, `DataSources`, Components'
+    `Core`, the section names and nav group headings (Users' for 10h-4). Tests: `Localization/ZauberTextTests` (a
+    site's French wins, `fr-CA` before `fr`, an untranslated key and a plugin's untranslated key stay English, the
+    layer order, the localiser's missing key and bad placeholders, the bootstrap's two localisers and a Radzen key);
+    `Localization/ZauberTextResourceTests` (the guard, D94: file naming, one file per key, placeholders, keys the
+    code asks for exist, keys are used, the English is in the built assemblies, no hard-coded text in the converted
+    folders; its heuristic was checked against four unconverted folders, where it reported 249 texts). Browser
+    (scratch copy of `app.db`, temporary site files): a site's English override of a section name, a dashboard tab
+    and Radzen's empty-grid text showed; the converted screens, menus, a confirm, a side panel and a notification
+    showed English with no raw keys (the Roadmap's "Phase 10h-1" lists what was and was not checked).
+  - **ZP-010 proposed:** a per-user admin language (D96).
+  - **Merged onto Phases 10g-2 and 11h** (made alongside them from 7442f14): the tests' `AdminRenderer.AddImportedServices` (10g-2's helper, which `ModalHostDisposalTests` uses too) registers ZauberCMS's text, since every component now injects `L`; 10g-2 and 11h added no text in the folders 10h-1 converted, so the guard passes unchanged, and their new text stays with its part (10g-2's with 10h-4, 11h's storage refusal with 10h-2). Full suite after the merge
+    1500 (all pass, none skipped) on the same four.
 
 - **Roadmap Phase 11h (2026-11-28, the Phase 11 audit's leftovers, D80–D83).** Release notes in the Roadmap's
   "Phase 11h". Full suite 1400 on its branch (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and

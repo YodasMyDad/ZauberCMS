@@ -12,7 +12,10 @@
 
 @code {
     private const string Url = Urls.AdminMediaBaseUrl; // So we only have on string
-    public string Name => "Media";
+    // Discovery builds this page to read the section's name, without [Inject]: the text comes through the constructor
+    private readonly IStringLocalizer<ZauberText> _text;
+    public MediaIndex(IStringLocalizer<ZauberText> text) => _text = text;
+    public string Name => _text["sections_media"];
     public string Alias => Constants.Sections.MediaSection;
     public string IndexUrl => Url;
     public int SortOrder => 1;

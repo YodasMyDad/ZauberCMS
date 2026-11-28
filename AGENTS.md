@@ -190,6 +190,12 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
 - Behind a reverse proxy set `Zauber:ForwardedHeaders`; set `Zauber:SiteUrl` on any site that sends email.
 - The admin always runs in `Zauber:AdminDefaultLanguage` (`CultureMiddleware` for requests,
   `AdminCultureCircuitHandler` for circuits); front-end pages run in the language of their content.
+- Text ZauberCMS shows goes through `IStringLocalizer<ZauberText>` (`L` in every component, from `_Imports.razor`;
+  a discovered type's text by constructor), keys `area_name`, English `.resx` per area in `Resources/ZauberText/` of
+  Components and Core (Roadmap D37, D90–D97; Phase 10h converts the admin part by part). A site, plugin or language
+  pack adds `ZauberText/<Area>.<culture>.resx` in a scanned assembly to translate or override keys; a missing key
+  falls back to English; Radzen's own text is `radzen_<Radzen key>`. Rules, area table:
+  [Docs/AdminUI.md](Docs/AdminUI.md) "Localisation".
 - Rich text stores video embeds as placeholders; `IRichTextEmbedService` (replaceable) owns the provider list
   and expands them at render time, through the default `IHtmlSanitizerService`.
 - API keys are stored and picked by name and read on the server through the replaceable `IApiKeyService`
@@ -237,6 +243,7 @@ and how it was verified: [.audit/history.md](.audit/history.md).
 | Entities, mappings, migrations, provider gotchas | [Docs/Data.md](Docs/Data.md) |
 | Front-end views, layouts, blocks, helpers, routing | [Docs/FrontEnd.md](Docs/FrontEnd.md) |
 | Admin sections, nav, trees, context menus, dialogs, dashboards | [Docs/AdminUI.md](Docs/AdminUI.md) |
+| Admin text, translations, a site's own language for the admin | [Docs/AdminUI.md](Docs/AdminUI.md) "Localisation" |
 | Property editors and their settings | [Docs/Editors.md](Docs/Editors.md) |
 | Block list editor (nesting, previews, persistence, versions) | [Docs/BlockListEditor.md](Docs/BlockListEditor.md) |
 | CI, releases, NuGet packaging, the template | [Docs/Releasing.md](Docs/Releasing.md) |

@@ -1,12 +1,14 @@
 using System.Globalization;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Localization;
 using Radzen;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Parameters;
 
 namespace ZauberCMS.Core.Media.Services;
 
-public class MediaValidationService(IMediaService mediaService, NotificationService notificationService)
+public class MediaValidationService(IMediaService mediaService, NotificationService notificationService, IStringLocalizer<ZauberText> text)
 {
     /// <summary>
     /// Validates and updates media references in HTML content.
@@ -105,8 +107,8 @@ public class MediaValidationService(IMediaService mediaService, NotificationServ
             notificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Info,
-                Summary = "Media Updated",
-                Detail = $"Media URLs have changed. {updatedItems.Count} item(s) updated. Save to apply changes.",
+                Summary = text["shared_mediaUpdated"],
+                Detail = text["shared_mediaUpdatedDetail", updatedItems.Count],
                 Duration = 6000
             });
         }
@@ -116,8 +118,8 @@ public class MediaValidationService(IMediaService mediaService, NotificationServ
             notificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Warning,
-                Summary = "Media Deleted",
-                Detail = $"{deletedItems.Count} media item(s) have been deleted and removed from content.",
+                Summary = text["shared_mediaDeleted"],
+                Detail = text["shared_mediaDeletedDetail", deletedItems.Count],
                 Duration = 6000
             });
         }

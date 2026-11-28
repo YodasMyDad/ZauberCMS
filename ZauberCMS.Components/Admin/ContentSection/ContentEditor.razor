@@ -1,7 +1,6 @@
 ﻿@using System.Globalization
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.Extensions.Localization
 @using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Plugins
@@ -278,8 +277,6 @@ else
     [Inject] public TreeState TreeState { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public ValidateService<Content> ValidateService { get; set; } = null!;
-
-    [Inject] public IStringLocalizer<SharedResource> Localizer { get; set; } = null!;
 
     [Parameter] public Guid? ContentId { get; set; }
     [Parameter] public Guid? ParentId { get; set; }

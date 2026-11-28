@@ -1,10 +1,12 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
@@ -12,11 +14,11 @@ using ZauberCMS.Core.Shared.Models;
 namespace ZauberCMS.Components.ContextMenus.RecycleBinMenus;
 
 public class RestoreContextMenu(IContentService contentService, IMembershipService membershipService, AppState appState,
-    NotificationService notificationService) : ITreeContextMenu
+    NotificationService notificationService, IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.RecycleBinTree];
-    public string Text(TreeItemContextMenuEventArgs args) => "Restore";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_restore"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "settings_backup_restore";
 
@@ -53,7 +55,7 @@ public class RestoreContextMenu(IContentService contentService, IMembershipServi
 
         if (!saveResult.Success || saveResult.Messages.Count != 0)
         {
-            notificationService.ShowNotifications(saveResult.Messages);
+            notificationService.ShowNotifications(saveResult.Messages, text);
         }
     }
 

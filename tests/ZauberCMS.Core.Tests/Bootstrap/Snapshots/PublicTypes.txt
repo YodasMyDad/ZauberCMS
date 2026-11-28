@@ -477,6 +477,7 @@ ZauberCMS.Core: ZauberCMS.Core.Languages.Parameters.SaveLanguageDictionaryParame
 ZauberCMS.Core: ZauberCMS.Core.Languages.Parameters.SaveLanguageParameters
 ZauberCMS.Core: ZauberCMS.Core.Languages.Services.LanguageService
 ZauberCMS.Core: ZauberCMS.Core.Languages.Validation.ValidateLanguageDictionary
+ZauberCMS.Core: ZauberCMS.Core.Localization.ZauberText
 ZauberCMS.Core: ZauberCMS.Core.Media.Interfaces.IMediaService
 ZauberCMS.Core: ZauberCMS.Core.Media.Mapping.MediaMappingExtensions
 ZauberCMS.Core: ZauberCMS.Core.Media.Models.Media

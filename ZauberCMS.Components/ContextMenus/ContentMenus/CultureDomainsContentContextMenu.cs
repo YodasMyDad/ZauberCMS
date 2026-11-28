@@ -1,5 +1,6 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Admin.ContentSection.Dialogs;
 using ZauberCMS.Core;
@@ -7,6 +8,7 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
@@ -16,7 +18,8 @@ public class CultureDomainsContentContextMenu(
     IContentService contentService,
     IMembershipService membershipService,
     NotificationService notificationService,
-    AppState appState) : ITreeContextMenu
+    AppState appState,
+    IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias { get; } = [];
@@ -24,7 +27,7 @@ public class CultureDomainsContentContextMenu(
     public string Text(TreeItemContextMenuEventArgs args)
     {
         var content = (Content)args.Value!;
-        return content.IsRootContent ? "Culture & Domains" : "Culture";
+        return content.IsRootContent ? text["contextMenus_cultureAndDomains"] : text["contextMenus_culture"];
     }
 
     public string Icon(TreeItemContextMenuEventArgs args) => "bungalow";
@@ -52,12 +55,12 @@ public class CultureDomainsContentContextMenu(
         contextMenuService.Close();
         if (dbContent is null)
         {
-            notificationService.ShowErrorNotification("Unable to load this content item");
+            notificationService.ShowErrorNotification(text["contextMenus_unableToLoadContent"]);
             return;
         }
 
         var currentUser = await membershipService.GetCurrentUser();
-        var languageDialog = modalService.OpenSidePanel<CultureDomains>("Domains & Culture",
+        var languageDialog = modalService.OpenSidePanel<CultureDomains>(text["contextMenus_domainsAndCulture"],
             new Dictionary<string, object>
             {
                 { "Content", dbContent }
@@ -67,7 +70,7 @@ public class CultureDomainsContentContextMenu(
         {
             // The dialog has already saved the content and its domains; saving again here would be refused as a
             // concurrent edit (ZA-076).
-            notificationService.ShowSuccessNotification("Culture Updated");
+            notificationService.ShowSuccessNotification(text["contextMenus_cultureUpdated"]);
             await appState.NotifyContentChanged(languageDialogResult.Data as Content ?? dbContent, currentUser?.Name ?? "Unknown");
         }
     }

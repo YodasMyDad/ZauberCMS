@@ -23,7 +23,7 @@ else
                         }
                         @if (!HideCloseButton)
                         {
-                            <button type="button" class="bm-close" aria-label="close" @onclick="() => CancelAsync()" @attributes="@_closeBtnAttributes">
+                            <button type="button" class="bm-close" aria-label="@L["general_close"]" @onclick="() => CancelAsync()" @attributes="@_closeBtnAttributes">
                                 <span>&times;</span>
                             </button>
                         }
@@ -52,13 +52,13 @@ else
         <ChildContent>@Content</ChildContent>
         <ErrorContent Context="exception">
             <div class="bm-error" role="alert">
-                <p class="bm-error-title">This panel could not be shown.</p>
-                <p>@(CircuitOptions.Value.DetailedErrors ? $"{exception.GetType().Name}: {exception.Message}" : "The details are in the site's log.")</p>
+                <p class="bm-error-title">@L["shared_panelFailed"]</p>
+                <p>@(CircuitOptions.Value.DetailedErrors ? $"{exception.GetType().Name}: {exception.Message}" : L["shared_errorDetailsInLog"])</p>
                 <div class="bm-error-actions">
                     <button type="button" class="rz-button rz-button-sm rz-variant-outlined rz-primary"
-                            @onclick="() => _contentBoundary?.Recover()">Try again</button>
+                            @onclick="() => _contentBoundary?.Recover()">@L["general_tryAgain"]</button>
                     <button type="button" class="rz-button rz-button-sm rz-variant-text rz-base"
-                            @onclick="() => CancelAsync()">Close</button>
+                            @onclick="() => CancelAsync()">@L["general_close"]</button>
                 </div>
             </div>
         </ErrorContent>

@@ -1,11 +1,11 @@
 ﻿@using ZauberCMS.Core.Shared.Models
 <div class="pb-2">
-    <TailwindAlert Title="Changing the alias can break the front end of your site!" Type="AlertType.Warning" />
+    <TailwindAlert Title="@L["shared_changeAliasWarning"]" Type="AlertType.Warning" />
 </div>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Change Alias"/>
+        <PropertyInfo Name="@L["shared_changeAlias"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox Style="width: 100%;" Name="Alias" @bind-Value="@PropertyType.Alias"/>
@@ -13,7 +13,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 @code {

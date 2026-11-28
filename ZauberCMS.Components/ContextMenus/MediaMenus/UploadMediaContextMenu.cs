@@ -1,19 +1,21 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Editors;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Models;
 
 namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
-public class UploadMediaContextMenu() : ITreeContextMenu
+public class UploadMediaContextMenu(IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Upload Media";
+    public string Text(TreeItemContextMenuEventArgs args) => text["contextMenus_uploadMedia"];
     public string Icon(TreeItemContextMenuEventArgs args) => "upload_file";
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
@@ -36,7 +38,7 @@ public class UploadMediaContextMenu() : ITreeContextMenu
             }
         };
         contextMenuService.Close();
-        UpdateMediaModal = modalService?.OpenSidePanel<MultipleMediaUpload>("Upload Media", uploadParams);
+        UpdateMediaModal = modalService?.OpenSidePanel<MultipleMediaUpload>(text["contextMenus_uploadMedia"], uploadParams);
         return Task.CompletedTask;
     }
     

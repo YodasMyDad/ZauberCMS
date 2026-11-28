@@ -1,10 +1,12 @@
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Models;
@@ -16,11 +18,12 @@ public class DeleteAllContentContextMenu(
     IMembershipService membershipService,
     DialogService dialogService, 
     NotificationService notificationService,
-    AppState appState) : ITreeContextMenu
+    AppState appState,
+    IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.RecycleBinTree];
-    public string Text(TreeItemContextMenuEventArgs args) => "Delete All";
+    public string Text(TreeItemContextMenuEventArgs args) => text["contextMenus_deleteAll"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "delete_forever";
 
@@ -57,17 +60,17 @@ public class DeleteAllContentContextMenu(
             notificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Info,
-                Summary = "Recycle Bin Empty",
-                Detail = "There are no items to delete.",
+                Summary = text["contextMenus_recycleBinEmpty"],
+                Detail = text["contextMenus_noItemsToDelete"],
                 Duration = 4000
             });
             return;
         }
 
         // Confirm deletion
-        var confirmMessage = $"Permanently delete the {topLevelItems.Count} items in the recycle bin, and everything below them? This action cannot be undone.";
-        var confirmed = await dialogService.Confirm(confirmMessage, "Delete All", 
-            new ConfirmOptions { OkButtonText = "Delete All", CancelButtonText = "Cancel" });
+        var confirmMessage = text["contextMenus_deleteAllContentConfirm", topLevelItems.Count].Value;
+        var confirmed = await dialogService.Confirm(confirmMessage, text["contextMenus_deleteAll"], 
+            new ConfirmOptions { OkButtonText = text["contextMenus_deleteAll"], CancelButtonText = text["general_cancel"] });
         
         if (confirmed != true)
             return;
@@ -103,8 +106,8 @@ public class DeleteAllContentContextMenu(
             notificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
-                Summary = "Success",
-                Detail = $"Successfully deleted {successCount} items from the recycle bin.",
+                Summary = text["general_success"],
+                Detail = text["contextMenus_recycleBinItemsDeleted", successCount],
                 Duration = 4000
             });
         }
@@ -113,8 +116,8 @@ public class DeleteAllContentContextMenu(
             notificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Warning,
-                Summary = "Partially Completed",
-                Detail = $"Deleted {successCount} items, {errorCount} failed.",
+                Summary = text["contextMenus_partiallyCompleted"],
+                Detail = text["contextMenus_recycleBinItemsPartlyDeleted", successCount, errorCount],
                 Duration = 6000
             });
         }

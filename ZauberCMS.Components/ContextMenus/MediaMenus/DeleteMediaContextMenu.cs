@@ -1,8 +1,10 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;
@@ -13,11 +15,12 @@ namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 public class DeleteMediaContextMenu(
     IMediaService mediaService,
     DialogService dialogService,
-    NotificationService notificationService) : ITreeContextMenu
+    NotificationService notificationService,
+    IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Delete";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_delete"];
     public string Icon(TreeItemContextMenuEventArgs args) => "close";
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
@@ -30,9 +33,9 @@ public class DeleteMediaContextMenu(
     {
         var media = (Media)args.Value!;
         var message = media.MediaType == MediaType.Folder
-            ? "Move this folder and everything in it to the recycle bin?"
-            : "Move this media to the recycle bin?";
-        var delete = await dialogService.Confirm(message, "Delete Media", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+            ? text["contextMenus_moveFolderToRecycleBinConfirm"].Value
+            : text["contextMenus_moveMediaToRecycleBinConfirm"].Value;
+        var delete = await dialogService.Confirm(message, text["contextMenus_deleteMedia"], new ConfirmOptions { OkButtonText = text["general_yes"], CancelButtonText = text["general_no"] });
 
         if (delete == true)
         {
@@ -40,7 +43,7 @@ public class DeleteMediaContextMenu(
             var deleteResult = await mediaService.DeleteMediaAsync(new DeleteMediaParameters { MediaId = media.Id });
             if (deleteResult.Success)
             {
-                notificationService.ShowSuccessNotification("Moved to the recycle bin");
+                notificationService.ShowSuccessNotification(text["contextMenus_mediaMovedToRecycleBin"]);
             }
             else
             {

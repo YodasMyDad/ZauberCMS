@@ -6,20 +6,20 @@
     <LeftColumn>
         <RadzenTextBox class="w-full rz-mb-2" Name="Name" Value="@Property.Name"
                        ValueChanged="@((string name) => { Property.Name = name; Property.Alias = SlugHelper.GenerateSlug(name); })"
-                       Style="font-size: 13px; color: #000;" Placeholder="Name" aria-label="Property Name"/>
+                       Style="font-size: 13px; color: #000;" Placeholder="@L["general_name"]" aria-label="@L["shared_propertyName"]"/>
         @if (!Property.Alias.IsNullOrWhiteSpace())
         {
             <div class="cursor-pointer underline hover:no-underline text-sm text-gray-700" @onclick=@(args => ChangeAlias())>@Property.Alias</div>
         }
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
             <RadzenSwitch @bind-Value="@Property.IsRequired" Name="IsRequired"/>
-            <RadzenLabel Text="Value Required" Style="font-size: 13px;" Component="IsRequired"/>
+            <RadzenLabel Text="@L["shared_valueRequired"]" Style="font-size: 13px;" Component="IsRequired"/>
         </RadzenStack>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
             <RadzenSwitch @bind-Value="@Property.FullWidth" Name="FullWidth"/>
-            <RadzenLabel Text="Full Width" Style="font-size: 13px;" Component="FullWidth"/>
+            <RadzenLabel Text="@L["shared_fullWidth"]" Style="font-size: 13px;" Component="FullWidth"/>
         </RadzenStack>
-        <RadzenTextArea Style="font-size: 12px;" @bind-Value="@Property.Description" Placeholder="Description..."/>
+        <RadzenTextArea Style="font-size: 12px;" @bind-Value="@Property.Description" Placeholder="@L["shared_descriptionPlaceholder"]"/>
         @if (ContentTypeIsComposition && Property.IsFromComposition)
         {
             <RadzenNumeric Style="font-size: 12px;" @bind-Value="@Property.SortOrder" />   
@@ -47,11 +47,11 @@
         }
         else
         {
-            <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move up" Click="@(() => OnSortUp.InvokeAsync(Property))"/>
-            <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Delete" Click="@(() => OnDelete.InvokeAsync(Property))"/>
-            <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Move Down" Click="@(() => OnSortDown.InvokeAsync(Property))"/>
-            <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Change Tab" Click="@(() => OnChangeTab.InvokeAsync(Property))"/>
-            <RadzenButton Icon="settings" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="Edit Settings" Click="@(() => OnSettings.InvokeAsync(Property))"/>   
+            <RadzenButton Icon="keyboard_arrow_up" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="@L["shared_moveUp"]" Click="@(() => OnSortUp.InvokeAsync(Property))"/>
+            <RadzenButton Icon="clear" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="@L["general_delete"]" Click="@(() => OnDelete.InvokeAsync(Property))"/>
+            <RadzenButton Icon="keyboard_arrow_down" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="@L["shared_moveDown"]" Click="@(() => OnSortDown.InvokeAsync(Property))"/>
+            <RadzenButton Icon="low_priority" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="@L["shared_changeTab"]" Click="@(() => OnChangeTab.InvokeAsync(Property))"/>
+            <RadzenButton Icon="settings" style="height: 100%;" ButtonStyle="ButtonStyle.Info" Variant="Variant.Text" title="@L["shared_editSettings"]" Click="@(() => OnSettings.InvokeAsync(Property))"/>   
         }
     </RightColumn>
 </EditorRow>
@@ -70,7 +70,7 @@
 
     private async Task ChangeAlias()
     {
-        var dialog = ModalService.OpenSidePanel<ChangeAlias>("Change Alias", 
+        var dialog = ModalService.OpenSidePanel<ChangeAlias>(L["shared_changeAlias"], 
             new Dictionary<string, object>
             {
                 {nameof(Dialogs.ChangeAlias.PropertyType), Property}

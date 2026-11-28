@@ -16,7 +16,7 @@
                 RowSelect="@((Media value) => OnRowSelect(value))"
                 PagerHorizontalAlign="HorizontalAlign.Center">
     <Columns>
-        <RadzenDataGridColumn Property="MediaType" Title="Type">
+        <RadzenDataGridColumn Property="MediaType" Title="@L["general_type"]">
             <Template Context="data">
                 @if (data.MediaType == MediaType.Image)
                 {
@@ -28,9 +28,9 @@
                 }
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="Name" Title="Name"/>
-        <RadzenDataGridColumn Property="FileSize" Title="Size"/>
-        <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+        <RadzenDataGridColumn Property="Name" Title="@L["general_name"]"/>
+        <RadzenDataGridColumn Property="FileSize" Title="@L["general_size"]"/>
+        <RadzenDataGridColumn Property="DateUpdated" Title="@L["general_lastUpdated"]">
             <Template Context="data">
                 @data.DateUpdated.Humanize()
             </Template>
@@ -42,7 +42,10 @@
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
     
-    public string TabName => "Latest Media";
+    // Discovery builds this dashboard to read its tab name, without [Inject]: the text comes through the constructor
+    private readonly IStringLocalizer<ZauberText> _text;
+    public MainMediaDashboard(IStringLocalizer<ZauberText> text) => _text = text;
+    public string TabName => _text["dashboards_latestMedia"];
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.MediaSection;
 

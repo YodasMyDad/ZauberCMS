@@ -11,16 +11,16 @@
         <div class="p-2 border border-gray-500 border-solid col-span-2">
             <div class="font-semibold flex items-center text-lg cursor-pointer" @onclick="ShowUnpublishedContent">
                 <div class="flex rounded-full bg-cyan-800 w-8 h-8 justify-center items-center text-white mr-2">@UnpublishedContent.Count</div>
-                <div>Unpublished Content</div>
+                <div>@L["dashboards_unpublishedContent"]</div>
             </div>
-            <div class="text-sm mt-1">The amount of unpublished content waiting to be published</div>
+            <div class="text-sm mt-1">@L["dashboards_unpublishedContentHelp"]</div>
         </div>
     }
 
     <div>
         <div class="p-2 font-semibold">
-            Recent Activity
-            <div class="text-sm font-normal">Shows all users recent activity</div>
+            @L["dashboards_recentActivity"]
+            <div class="text-sm font-normal">@L["dashboards_recentActivityHelp"]</div>
         </div>
         <div class="p-2">
             <RadzenDataGrid AllowFiltering="true"
@@ -38,13 +38,13 @@
                             PagerHorizontalAlign="HorizontalAlign.Center">
                 @*@bind-Value="@SelectedContent"*@
                 <Columns>
-                    <RadzenDataGridColumn Property="Name" Title="Name"/>
-                    <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                    <RadzenDataGridColumn Property="Name" Title="@L["general_name"]"/>
+                    <RadzenDataGridColumn Property="DateUpdated" Title="@L["general_lastUpdated"]">
                         <Template Context="data">
                             @data.DateUpdated.Humanize()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="LastUpdatedBy" Title="Updated By">
+                    <RadzenDataGridColumn Property="LastUpdatedBy" Title="@L["general_updatedBy"]">
                         <Template Context="data">
                             <RadzenGravatar Email="@data.LastUpdatedBy?.Email" Style="width: 25px; height: 25px;"/>
                         </Template>
@@ -56,8 +56,8 @@
 
     <div>
         <div class="p-2 font-semibold">
-            Your Activity
-            <div class="text-sm font-normal">Shows your recent activity</div>
+            @L["dashboards_yourActivity"]
+            <div class="text-sm font-normal">@L["dashboards_yourActivityHelp"]</div>
         </div>
         <div class="p-2">
             <RadzenDataGrid AllowFiltering="true"
@@ -75,8 +75,8 @@
                             PagerHorizontalAlign="HorizontalAlign.Center">
                 @*@bind-Value="@SelectedContent"*@
                 <Columns>
-                    <RadzenDataGridColumn Property="Name" Title="Name"/>
-                    <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+                    <RadzenDataGridColumn Property="Name" Title="@L["general_name"]"/>
+                    <RadzenDataGridColumn Property="DateUpdated" Title="@L["general_lastUpdated"]">
                         <Template Context="data">
                             @data.DateUpdated.Humanize()
                         </Template>
@@ -94,7 +94,10 @@
     [Parameter] public int AmountPerPage { get; set; } = 20;
     [Parameter] public bool RefreshPage { get; set; }
 
-    public string TabName => "Latest Content";
+    // Discovery builds this dashboard to read its tab name, without [Inject]: the text comes through the constructor
+    private readonly IStringLocalizer<ZauberText> _text;
+    public MainContentDashboard(IStringLocalizer<ZauberText> text) => _text = text;
+    public string TabName => _text["dashboards_latestContent"];
     public int SortOrder => 0;
     public string SectionAlias => Constants.Sections.ContentSection;
     private User? CurrentUser { get; set; }
@@ -202,7 +205,7 @@
 
     private async Task ShowUnpublishedContent()
     {
-        var unpubContent = DialogService.OpenSidePanel<UnpublishedContentList>("Unpublished Content");
+        var unpubContent = DialogService.OpenSidePanel<UnpublishedContentList>(L["dashboards_unpublishedContent"]);
         var unpubContentResult = await unpubContent.Result;
     }
 

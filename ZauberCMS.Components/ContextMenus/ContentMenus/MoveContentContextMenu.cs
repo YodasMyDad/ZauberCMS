@@ -1,6 +1,7 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Admin.ContentSection.Dialogs;
 using ZauberCMS.Core;
@@ -8,17 +9,18 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.ContentMenus;
 
-public class MoveContentContextMenu(NotificationService notificationService, IContentService contentService, IMembershipService membershipService, AppState appState) : ITreeContextMenu
+public class MoveContentContextMenu(NotificationService notificationService, IContentService contentService, IMembershipService membershipService, AppState appState, IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias => [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Move";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_move"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "move_up";
 
@@ -51,7 +53,7 @@ public class MoveContentContextMenu(NotificationService notificationService, ICo
             parameters.Add(nameof(MoveContent.ParentId), baseItem.ParentId);
         }
 
-        Modal = modalService.OpenSidePanel<MoveContent>("Move Content", parameters);
+        Modal = modalService.OpenSidePanel<MoveContent>(text["contextMenus_moveContent"], parameters);
         var result = await Modal.Result;
         if (result is { Confirmed: true, Data: Guid parentId })
         {
@@ -67,7 +69,7 @@ public class MoveContentContextMenu(NotificationService notificationService, ICo
                 }
                 else
                 {
-                    notificationService.ShowNotification("Content Type does not allow this to be moved to the root", NotificationSeverity.Warning);
+                    notificationService.ShowNotification(text["contextMenus_contentTypeNotAllowedAtRoot"], NotificationSeverity.Warning);
                     return;
                 }
             }
@@ -86,11 +88,11 @@ public class MoveContentContextMenu(NotificationService notificationService, ICo
                 var copyContentResult = await contentService.SaveContentAsync(new SaveContentParameters {Content = content, ExcludePropertyData = true});
                 if (!copyContentResult.Success)
                 {
-                    notificationService.ShowNotifications(copyContentResult.Messages);
+                    notificationService.ShowNotifications(copyContentResult.Messages, text);
                 }
                 else
                 {
-                    notificationService.ShowSuccessNotification("Content Moved");
+                    notificationService.ShowSuccessNotification(text["contextMenus_contentMoved"]);
                     await appState.NotifyContentChanged(content, user?.UserName ?? "Unknown");
                 }
             }

@@ -4,12 +4,17 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>ZauberCMS.Core</PackageId>
         <Description>ZauberCMS core package</Description>
+        <!-- The resources in this assembly (Resources/ZauberText) are English (CA1824, Roadmap D90); a translation
+             ships as a satellite assembly. -->
+        <NeutralLanguage>en</NeutralLanguage>
         <PreserveCompilationContext>true</PreserveCompilationContext>
     </PropertyGroup>
 
     <ItemGroup>
         <!-- Tests wait on internal readiness signals (the Redis cache invalidation subscription) -->
         <InternalsVisibleTo Include="ZauberCMS.Core.Tests" />
+        <!-- Component tests render with ZauberCMS's real text (AddZauberText, Roadmap D90) -->
+        <InternalsVisibleTo Include="ZauberCMS.Components.Tests" />
     </ItemGroup>
 
     <ItemGroup>

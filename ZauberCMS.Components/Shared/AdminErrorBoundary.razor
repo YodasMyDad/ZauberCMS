@@ -20,9 +20,9 @@ else if (ErrorContent is not null)
 else
 {
     <div class="zauber-error-boundary" role="alert">
-        <TailwindAlert Type="AlertType.Error" Title="@($"{Name ?? "This part of the page"} could not be shown")"
+        <TailwindAlert Type="AlertType.Error" Title="@(Name is null ? L["shared_pageFailed"] : L["shared_partFailed", Name])"
                        DefaultMessage="@Describe(CurrentException)"/>
-        <RadzenButton Variant="Variant.Outlined" Size="ButtonSize.Small" Icon="refresh" Text="Try again"
+        <RadzenButton Variant="Variant.Outlined" Size="ButtonSize.Small" Icon="refresh" Text="@L["general_tryAgain"]"
                       class="mt-2" Click="@Recover"/>
     </div>
 }
@@ -41,5 +41,5 @@ else
     /// errors on, otherwise a pointer to the log. For an <c>ErrorContent</c> of your own.</summary>
     public string Describe(Exception exception) => CircuitOptions.Value.DetailedErrors
         ? $"{exception.GetType().Name}: {exception.Message}"
-        : "The details are in the site's log.";
+        : L["shared_errorDetailsInLog"];
 }

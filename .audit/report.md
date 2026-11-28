@@ -2,7 +2,8 @@
 
 Last full run: 5668365 (2026-11-25, full) · Last changed run: 7442f14+wt (2026-11-28, Roadmap Phase 11h, 7442f14..working tree, merged after Phase 10g-2) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
-Next free IDs: ZA-236 (findings) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Parallel parts: ZA-220…ZA-229 unused (skipped, not to be filled); ZA-240…ZA-249 and ZP-010…ZP-019 held by a part in progress
+Next free IDs: ZA-236 (findings) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Parallel parts: ZA-220…ZA-229 unused (skipped, not to be filled); ZA-240…ZA-249 unused (Phase 10h-1's range; skipped, not to be filled); ZA-250…ZA-259 held by Phase 11i (in progress); ZP-010 used by Phase 10h-1, ZP-011…ZP-019 unused (skipped, not to be filled)
+After Roadmap Phase 10h-1 (2026-11-28, merged after 10g-2 and 11h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1500 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1377 on its own branch) · Template smoke test passes; `doublecheck` self-review on the part. ZA-129 in progress (the mechanism and the first screens, D90–D97; it closes with 10h-4); ZP-010 proposed. Next free ID: ZA-236
 After Roadmap Phase 11h (2026-11-28, merged after 10g-2): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch) · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-191, ZA-192, ZA-195, ZA-196 fixed (D80–D83); ZA-230 found and fixed while building; ZA-231…ZA-234 found by the audit and fixed (Low); ZA-235 recorded (Low, Phase 12); ZP-002, ZP-003 proposed. Next free ID: ZA-236
 After Roadmap Phase 10g-2 (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · ZP-001 built (D72); ZA-214 (D73), ZA-215 fixed; ZA-216 and ZA-197 found while building and fixed; ZA-217 recorded (Phase 12); `/audit changed` over the part (a diff reviewer and two unit reviewers): ZA-218 (Medium) found and fixed with the part's own findings, ZA-219 recorded (Low, Phase 12). Next free ID: ZA-220
 After Roadmap Phase 10g (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-188 fixed (D38 phase, D66–D71); ZA-199…ZA-201 found and fixed while building; ZA-202…ZA-213 found by the audit and fixed (3 High, 4 Medium, 5 Low); ZA-214, ZA-215 recorded (Low, Phase 12); ZP-001 proposed. Next free ID: ZA-216
@@ -25,7 +26,8 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 | Medium | 0 | 1 (10g-2: ZA-218) | 1 (10g-2: ZA-218) |
 | Low | 6 | 9 (11h: ZA-230…ZA-235; 10g-2: ZA-216, ZA-217, ZA-219) | 13 (11h: ZA-191, ZA-192, ZA-195, ZA-196, ZA-230…ZA-234; 10g-2: ZA-197, ZA-214…ZA-216) |
 
-Proposals: two open, ZP-002 and ZP-003 (Phase 11h, owner decision); ZP-001 built in Phase 10g-2 (D72).
+Proposals: three open, ZP-002 and ZP-003 (Phase 11h, owner decision) and ZP-010 (Phase 10h-1, owner decision);
+ZP-001 built in Phase 10g-2 (D72).
 
 Phase 10g-2 run: on added lines, no sync-over-async, fire-and-forget, markup, raw SQL, local time, regex or
 suppression; the one `async void` is the modal's existing navigation handler, now guarded (ZA-197); three event
@@ -56,6 +58,10 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 
 - Where: `ZauberCMS.Components/` (166 razor files) · Category: E · Since: 2026-11-25
 - Issue / Fix: 0 localiser uses, ~370 literal strings; `AdminDefaultLanguage` only affects formatting.
+- Progress (Phase 10h-1, 2026-11-28): the mechanism is built (`IStringLocalizer<ZauberText>`, D90–D97) and the
+  dashboards, shared components, modal, trees, context menus, data sources, section names and nav group headings
+  are converted; 10h-2, 10h-3 and 10h-4 convert the rest (Roadmap "Phase 10h"; rules in Docs/AdminUI.md
+  "Localisation"). Closes with 10h-4.
 
 ### ZA-194 [Low/High] With registration off, the not-found view is shown in the account layout
 - Where: `ZauberCMS.Components/Account/Pages/Register.razor` · Category: E · Since: 2026-11-27 (older; visible since 11a sends the HTML) · Roadmap: 10i
@@ -105,6 +111,15 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   points them at a policy of its own. A public API and a release-notes entry either way.
 - Why: the sign-in and registration limits are a security setting a site may need to fit its host (a CDN, a web
   farm, per-account limits) without forking ZauberCMS or giving up the built-in pages.
+
+### ZP-010 [Low/Medium] Each back-office user chooses the admin's language
+- Section: Users and access · Lens: H · Since: 2026-11-28 · Needs: owner decision
+- Today: the admin runs in `Zauber:AdminDefaultLanguage` for everyone (D37, D96); the text mechanism (D90) follows
+  the current UI culture, so it would serve a per-user language as it is.
+- Proposal: a language on the user (`ExtendedData`, no migration), chosen on their page or in "Your account" (the
+  current-user panel, ZP-001, built in 10g-2, D72), applied by `AdminCultureCircuitHandler` and `CultureMiddleware` in place of the setting when set.
+- Why: Umbraco lets each back-office user pick their UI language from the installed language files
+  (https://docs.umbraco.com/umbraco-cms/fundamentals/backoffice/users).
 
 ZP-001 (every back-office user edits their own profile and password) was built in Phase 10g-2 (D72).
 

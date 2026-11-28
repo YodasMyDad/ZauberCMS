@@ -1,6 +1,7 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Admin.StructureSection.Dialogs;
 using ZauberCMS.Core;
@@ -8,12 +9,13 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.Structure;
 
-public class MoveContentTypeContextMenu(NotificationService notificationService, IContentService contentService, IMembershipService membershipService, AppState appState)
+public class MoveContentTypeContextMenu(NotificationService notificationService, IContentService contentService, IMembershipService membershipService, AppState appState, IStringLocalizer<ZauberText> text)
     : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
@@ -21,7 +23,7 @@ public class MoveContentTypeContextMenu(NotificationService notificationService,
     public List<string> TreeAlias { get; } =
         [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree, Constants.Sections.Trees.StructureCompositionsTree];
 
-    public string Text(TreeItemContextMenuEventArgs args) => "Move";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_move"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "move_up";
 
@@ -49,7 +51,7 @@ public class MoveContentTypeContextMenu(NotificationService notificationService,
             { nameof(MoveContentType.IsComposition), baseItem.IsComposition }
         };
 
-        Modal = modalService.OpenSidePanel<MoveContentType>("Move Content Type", parameters);
+        Modal = modalService.OpenSidePanel<MoveContentType>(text["contextMenus_moveContentType"], parameters);
         var result = await Modal.Result;
 
         if (result is { Confirmed: true, Data: Guid parentId })
@@ -69,11 +71,11 @@ public class MoveContentTypeContextMenu(NotificationService notificationService,
                 { ContentType = baseItem });
             if (!copyContentTypeResult.Success)
             {
-                notificationService.ShowNotifications(copyContentTypeResult.Messages);
+                notificationService.ShowNotifications(copyContentTypeResult.Messages, text);
             }
             else
             {
-                notificationService.ShowSuccessNotification("Content Type Moved");
+                notificationService.ShowSuccessNotification(text["contextMenus_contentTypeMoved"]);
                 await appState.NotifyContentTypeChanged(baseItem, user?.UserName ?? "Unknown");
             }
         }

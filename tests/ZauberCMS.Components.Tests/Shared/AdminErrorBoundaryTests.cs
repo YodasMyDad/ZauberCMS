@@ -12,6 +12,7 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Languages.Interfaces;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Seo.Interfaces;
@@ -61,8 +62,11 @@ public class AdminErrorBoundaryTests
         services.Configure<CircuitOptions>(options => options.DetailedErrors = detailedErrors);
         services.AddSingleton<IErrorBoundaryLogger>(new RecordingLogger(logged));
         services.AddSingleton<IJSRuntime, NoJsRuntime>();
-        // Every component in the package gets these from _Imports.razor; the boundary uses none of them
+        // Every component in the package gets these from _Imports.razor; the boundary uses only L
         services.AddSingleton<NavigationManager, TestNavigationManager>();
+        // ZauberCMS's text (L): the boundary's own messages are English resources (Roadmap D90)
+        services.AddZauberText([typeof(ZauberText).Assembly, typeof(AdminErrorBoundary).Assembly],
+            [typeof(ZauberText).Assembly, typeof(AdminErrorBoundary).Assembly]);
         foreach (var type in new[]
                  {
                      typeof(IContentService), typeof(IMembershipService), typeof(IMediaService), typeof(ILanguageService),

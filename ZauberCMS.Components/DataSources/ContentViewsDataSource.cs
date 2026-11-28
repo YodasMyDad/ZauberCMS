@@ -1,14 +1,16 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Plugins;
 
 namespace ZauberCMS.Components.DataSources;
 
-public class ContentViewsDataSource(ExtensionManager extensionManager) : IDataListSource
+public class ContentViewsDataSource(ExtensionManager extensionManager, IStringLocalizer<ZauberText> text) : IDataListSource
 {
-    public string Name => "Content Views";
-    public string Description => "List of the available content views";
+    public string Name => text["shared_contentViewsSource"];
+    public string Description => text["shared_contentViewsSourceInfo"];
     public string Icon => "tag";
     public string FullName => GetType().FullName ?? string.Empty;
 

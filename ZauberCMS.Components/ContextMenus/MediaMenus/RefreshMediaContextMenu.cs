@@ -1,8 +1,10 @@
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;
@@ -17,12 +19,13 @@ public class RefreshMediaContextMenu(
     IMediaService mediaService,
     ICacheService cacheService,
     TreeState treeState,
-    AppState appState) : ITreeContextMenu
+    AppState appState,
+    IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
 
-    public string Text(TreeItemContextMenuEventArgs args) => "Refresh";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_refresh"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "frame_reload";
 

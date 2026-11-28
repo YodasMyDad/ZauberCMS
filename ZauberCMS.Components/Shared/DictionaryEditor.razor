@@ -2,8 +2,8 @@
 
 <div>
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" class="">
-        <RadzenTextBox @bind-Value="_newKey" Placeholder="Key" Style="width: 100%"/>
-        <RadzenTextBox @bind-Value="_newValue" Placeholder="Value" Style="width: 100%"/>
+        <RadzenTextBox @bind-Value="_newKey" Placeholder="@L["general_key"]" Style="width: 100%"/>
+        <RadzenTextBox @bind-Value="_newValue" Placeholder="@L["general_value"]" Style="width: 100%"/>
         <RadzenButton Click="@AddItem" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
     </RadzenStack>
 
@@ -11,8 +11,8 @@
         @foreach (var item in Value.ToList())
         {
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0.3rem" @key="item.Key">
-                <RadzenTextBox Value="@item.Key" ValueChanged="@(newKey => OnKeyChanged(newKey, item.Key))" class="w-full" aria-label="Key TextBox"/>
-                <RadzenTextBox Value="@item.Value" ValueChanged="@(newValue => OnValueChanged(newValue, item.Key))" class="w-full" aria-label="Value TextBox"/>
+                <RadzenTextBox Value="@item.Key" ValueChanged="@(newKey => OnKeyChanged(newKey, item.Key))" class="w-full" aria-label="@L["general_key"]"/>
+                <RadzenTextBox Value="@item.Value" ValueChanged="@(newValue => OnValueChanged(newValue, item.Key))" class="w-full" aria-label="@L["general_value"]"/>
                 <RadzenButton Click="@(() => RemoveItem(item.Key))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" class="rz-border-radius-10 rz-shadow-4"/>
             </RadzenStack>
         }

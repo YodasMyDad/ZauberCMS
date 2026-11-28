@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="sections_advancedGroup" xml:space="preserve">
+    <value>Advanced</value>
+    <comment>Settings section: the nav group of advanced settings</comment>
+  </data>
+  <data name="sections_compositionsGroup" xml:space="preserve">
+    <value>Compositions</value>
+    <comment>Structure section: the nav group of compositions</comment>
+  </data>
+  <data name="sections_content" xml:space="preserve">
+    <value>Content</value>
+    <comment>The Content section's name (top navigation, page title)</comment>
+  </data>
+  <data name="sections_contentGroup" xml:space="preserve">
+    <value>Content</value>
+    <comment>Content section: the nav group of the content tree</comment>
+  </data>
+  <data name="sections_contentTypesGroup" xml:space="preserve">
+    <value>Content Types</value>
+    <comment>Structure section: the nav group of content types</comment>
+  </data>
+  <data name="sections_elementTypesGroup" xml:space="preserve">
+    <value>Element Types</value>
+    <comment>Structure section: the nav group of element types</comment>
+  </data>
+  <data name="sections_languagesGroup" xml:space="preserve">
+    <value>Languages</value>
+    <comment>Settings section: the nav group of languages</comment>
+  </data>
+  <data name="sections_media" xml:space="preserve">
+    <value>Media</value>
+    <comment>The Media section's name</comment>
+  </data>
+  <data name="sections_mediaGroup" xml:space="preserve">
+    <value>Media</value>
+    <comment>Media section: the nav group of the media tree</comment>
+  </data>
+  <data name="sections_seoGroup" xml:space="preserve">
+    <value>Seo</value>
+    <comment>Settings section: the nav group of the SEO tools</comment>
+  </data>
+  <data name="sections_settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>The Settings section's name</comment>
+  </data>
+  <data name="sections_settingsGroup" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Settings section: the nav group of the settings pages</comment>
+  </data>
+  <data name="sections_structure" xml:space="preserve">
+    <value>Structure</value>
+    <comment>The Structure section's name</comment>
+  </data>
+  <data name="sections_users" xml:space="preserve">
+    <value>Users</value>
+    <comment>The Users section's name</comment>
+  </data>
+  <data name="sections_usersGroup" xml:space="preserve">
+    <value>User Management</value>
+    <comment>Users section: the nav group of users and roles</comment>
+  </data>
+</root>

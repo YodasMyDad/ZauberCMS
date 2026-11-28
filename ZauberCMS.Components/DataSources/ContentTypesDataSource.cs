@@ -1,16 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Data;
 
 namespace ZauberCMS.Components.DataSources;
 
-public class ContentTypesDataSource(IContentService contentService) : IDataListSource
+public class ContentTypesDataSource(IContentService contentService, IStringLocalizer<ZauberText> text) : IDataListSource
 {
-    public string Name => "Content Types";
-    public string Description => "List of all content types";
+    public string Name => text["shared_contentTypesSource"];
+    public string Description => text["shared_contentTypesSourceInfo"];
     public string Icon => "content_copy";
     public string FullName => GetType().FullName ?? string.Empty;
 

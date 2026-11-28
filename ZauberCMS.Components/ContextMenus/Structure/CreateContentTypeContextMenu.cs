@@ -1,12 +1,14 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Localization;
 
 namespace ZauberCMS.Components.ContextMenus.Structure;
 
-public class CreateContentTypeContextMenu() : ITreeContextMenu
+public class CreateContentTypeContextMenu(IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections { get; } = [];
     public List<string> TreeAlias { get; } = [Constants.Sections.Trees.StructureContentTypeTree, Constants.Sections.Trees.StructureElementTypeTree, Constants.Sections.Trees.StructureCompositionsTree];
@@ -17,15 +19,15 @@ public class CreateContentTypeContextMenu() : ITreeContextMenu
         {
             if (contentType.IsElementType)
             {
-                return "Create Element Type";
+                return text["contextMenus_createElementType"];
             }
 
             if (contentType.IsComposition)
             {
-                return "Create Composition";
+                return text["contextMenus_createComposition"];
             }
         }
-        return "Create Content Type";
+        return text["contextMenus_createContentType"];
     }
 
     public string Icon(TreeItemContextMenuEventArgs args) => "add";

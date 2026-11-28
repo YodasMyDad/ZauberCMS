@@ -26,7 +26,10 @@ else
 
 @code {
     private const string Url = Urls.AdminSettingsBaseUrl; // So we only have on string
-    public string Name => "Settings";
+    // Discovery builds this page to read the section's name, without [Inject]: the text comes through the constructor
+    private readonly IStringLocalizer<ZauberText> _text;
+    public SettingsIndex(IStringLocalizer<ZauberText> text) => _text = text;
+    public string Name => _text["sections_settings"];
     public string Alias => Constants.Sections.SettingsSection;
     public string IndexUrl => Url;
     public int SortOrder => 2;

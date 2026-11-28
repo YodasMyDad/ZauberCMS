@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="general_actionFailed" xml:space="preserve">
+    <value>Action failed</value>
+  </data>
+  <data name="general_actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="general_add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="general_alias" xml:space="preserve">
+    <value>Alias</value>
+  </data>
+  <data name="general_all" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="general_areYouSure" xml:space="preserve">
+    <value>Are you sure?</value>
+  </data>
+  <data name="general_back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="general_cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="general_choose" xml:space="preserve">
+    <value>Choose</value>
+  </data>
+  <data name="general_clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="general_close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="general_confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="general_content" xml:space="preserve">
+    <value>Content</value>
+  </data>
+  <data name="general_copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="general_create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="general_created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="general_date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="general_delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="general_deleteConfirm" xml:space="preserve">
+    <value>Are you sure you want to delete {0}?</value>
+    <comment>{0} = the name of what is deleted</comment>
+  </data>
+  <data name="general_description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="general_details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="general_disabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="general_edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="general_email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="general_enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="general_error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="general_first" xml:space="preserve">
+    <value>First</value>
+  </data>
+  <data name="general_folder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="general_icon" xml:space="preserve">
+    <value>Icon</value>
+  </data>
+  <data name="general_info" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="general_key" xml:space="preserve">
+    <value>Key</value>
+  </data>
+  <data name="general_language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="general_last" xml:space="preserve">
+    <value>Last</value>
+  </data>
+  <data name="general_lastUpdated" xml:space="preserve">
+    <value>Last Updated</value>
+  </data>
+  <data name="general_loading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="general_media" xml:space="preserve">
+    <value>Media</value>
+  </data>
+  <data name="general_move" xml:space="preserve">
+    <value>Move</value>
+  </data>
+  <data name="general_name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="general_next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="general_no" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="general_noItems" xml:space="preserve">
+    <value>No items</value>
+  </data>
+  <data name="general_none" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="general_ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="general_open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="general_password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="general_preview" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="general_previous" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="general_properties" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="general_refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="general_remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="general_required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="general_restore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="general_role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="general_roles" xml:space="preserve">
+    <value>Roles</value>
+  </data>
+  <data name="general_save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="general_search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="general_select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="general_settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="general_size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="general_sort" xml:space="preserve">
+    <value>Sort</value>
+  </data>
+  <data name="general_status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="general_success" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="general_tryAgain" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="general_type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="general_unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="general_update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="general_updated" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="general_updatedBy" xml:space="preserve">
+    <value>Updated By</value>
+  </data>
+  <data name="general_upload" xml:space="preserve">
+    <value>Upload</value>
+  </data>
+  <data name="general_url" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="general_user" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="general_username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="general_users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="general_validationError" xml:space="preserve">
+    <value>Validation Error</value>
+  </data>
+  <data name="general_value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="general_warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="general_yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+</root>

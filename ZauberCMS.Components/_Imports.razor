@@ -41,6 +41,8 @@
 @using ZauberCMS.Core.Seo.Interfaces
 @using ZauberCMS.Core.Email.Interfaces
 @using Blazored.Modal.Services
+@using Microsoft.Extensions.Localization
+@using ZauberCMS.Core.Localization
 @inject IContentService ContentService
 @inject IMembershipService MembershipService
 @inject IMediaService MediaService
@@ -50,3 +52,5 @@
 @inject IEmailService EmailService
 @inject IDataService DataService
 @inject NavigationManager NavigationManager
+@* ZauberCMS's text: @L["general_save"] (Docs/AdminUI.md "Localisation", Roadmap D90) *@
+@inject IStringLocalizer<ZauberText> L

@@ -1,14 +1,16 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Sections.Interfaces;
 
 namespace ZauberCMS.Components.ContextMenus.SectionNavGroups;
 
-public class CreateMediaNavMenu : ISectionNavGroupAction
+public class CreateMediaNavMenu(IStringLocalizer<ZauberText> text) : ISectionNavGroupAction
 {
-    public string Text => "Create Media";
+    public string Text => text["contextMenus_createMedia"];
     public string Icon => "add";
     public string IconColor => string.Empty;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.MediaNavGroup;

@@ -39,6 +39,7 @@ using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Services;
 using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Languages.Services;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Tags.Interfaces;
 using ZauberCMS.Core.Tags.Services;
 using ZauberCMS.Core.Audit.Interfaces;
@@ -382,8 +383,8 @@ public static class ZauberSetup
             provider.Add(builder.Services, authBuilder, builder.Configuration);
         }
 
-        // Add localization services
-        builder.Services.AddLocalization(opts => { opts.ResourcesPath = "Resources"; });
+        // Localisation, and ZauberCMS's own text from the scanned assemblies' ZauberText resources (D37, D90)
+        builder.Services.AddZauberText(discoverAssemblies, zauberAssemblies);
     }
 
     // The DbContext for the database this site uses now. Fails with a readable message while there is none.

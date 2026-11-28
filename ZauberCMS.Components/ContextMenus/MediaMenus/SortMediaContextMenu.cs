@@ -1,9 +1,11 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Admin.Shared;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;
@@ -12,12 +14,12 @@ using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
-public class SortMediaContextMenu(IMembershipService membershipService, IMediaService mediaService, NotificationService notificationService, AppState appState)
+public class SortMediaContextMenu(IMembershipService membershipService, IMediaService mediaService, NotificationService notificationService, AppState appState, IStringLocalizer<ZauberText> text)
     : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Sort";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_sort"];
     public string Icon(TreeItemContextMenuEventArgs args) => "swap_vert";
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
 
@@ -43,14 +45,14 @@ public class SortMediaContextMenu(IMembershipService membershipService, IMediaSe
             // Show message if no children
             notificationService.Notify(new NotificationMessage
             {
-                Severity = NotificationSeverity.Warning, Summary = "Hmmmm",
-                Detail = "Sorry, nothing to sort as this folder has no children", Duration = 4000
+                Severity = NotificationSeverity.Warning, Summary = text["contextMenus_nothingToSort"],
+                Detail = text["contextMenus_folderHasNoChildrenToSort"], Duration = 4000
             });
         }
         else
         {
             contextMenuService.Close();
-            var dialog = modalService.OpenSidePanel<SortChilden<Media>>("Sort Children",
+            var dialog = modalService.OpenSidePanel<SortChilden<Media>>(text["contextMenus_sortChildren"],
                 new Dictionary<string, object>
                 {
                     { nameof(SortChilden<Media>.ItemId), dbContent.Id },
@@ -64,7 +66,7 @@ public class SortMediaContextMenu(IMembershipService membershipService, IMediaSe
                     var saveResult = await mediaService.SaveMediaAsync(new SaveMediaParameters { MediaToSave = c, IsUpdate = true });
                     if (!saveResult.Success)
                     {
-                        notificationService.ShowNotifications(saveResult.Messages);
+                        notificationService.ShowNotifications(saveResult.Messages, text);
                     }
                 }
 

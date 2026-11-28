@@ -1,11 +1,13 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Shared;
 using ZauberCMS.Core.Shared.Services;
@@ -17,12 +19,13 @@ public class RefreshContentContextMenu(
     IContentService contentService,
     ICacheService cacheService,
     TreeState treeState,
-    AppState appState) : ITreeContextMenu
+    AppState appState,
+    IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias { get; } = [];
 
-    public string Text(TreeItemContextMenuEventArgs args) => "Refresh";
+    public string Text(TreeItemContextMenuEventArgs args) => text["general_refresh"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "frame_reload";
 

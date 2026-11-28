@@ -1,5 +1,6 @@
 ﻿using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Admin.Shared;
 using ZauberCMS.Core;
@@ -7,15 +8,16 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Sections.Interfaces;
 using ZauberCMS.Core.Shared;
 
 namespace ZauberCMS.Components.ContextMenus.SectionNavGroups;
 
-public class SortRootContentContextMenu(IContentService contentService, IMembershipService membershipService, NotificationService notificationService, AppState appState) : ISectionNavGroupAction
+public class SortRootContentContextMenu(IContentService contentService, IMembershipService membershipService, NotificationService notificationService, AppState appState, IStringLocalizer<ZauberText> text) : ISectionNavGroupAction
 {
-    public string Text => "Sort Content";
+    public string Text => text["contextMenus_sortContent"];
     public string Icon => "swap_vert";
     public string IconColor => string.Empty;
     public string SectionNavGroupAlias => Constants.Sections.SectionNavGroups.ContentNavGroup;
@@ -36,14 +38,14 @@ public class SortRootContentContextMenu(IContentService contentService, IMembers
             // Show message if no children
             notificationService.Notify(new NotificationMessage
             {
-                Severity = NotificationSeverity.Warning, Summary = "Sorry",
-                Detail = "Unable to sort as there only one root content", Duration = 4000
+                Severity = NotificationSeverity.Warning, Summary = text["contextMenus_sorry"],
+                Detail = text["contextMenus_onlyOneRootContent"], Duration = 4000
             });
         }
         else
         {
             contextMenuService.Close();
-            var dialog = modalService.OpenSidePanel<SortChilden<Content>>("Sort Root Items",
+            var dialog = modalService.OpenSidePanel<SortChilden<Content>>(text["contextMenus_sortRootItems"],
                 new Dictionary<string, object>
                 {
                     { nameof(SortChilden<Content>.Items), rootItems.Items.OrderBy(x => x.SortOrder).ToList() }
@@ -59,7 +61,7 @@ public class SortRootContentContextMenu(IContentService contentService, IMembers
                     {
                         notificationService.Notify(new NotificationMessage
                         {
-                            Severity = NotificationSeverity.Error, Summary = "Error",
+                            Severity = NotificationSeverity.Error, Summary = text["general_error"],
                             Detail = saveResult.Messages.MessagesAsString(), Duration = 4000
                         });
                     }

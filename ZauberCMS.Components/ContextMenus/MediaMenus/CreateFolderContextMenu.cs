@@ -1,19 +1,21 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Admin.MediaSection.Dialogs;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Models;
 
 namespace ZauberCMS.Components.ContextMenus.MediaMenus;
 
-public class CreateFolderContextMenu() : ITreeContextMenu
+public class CreateFolderContextMenu(IStringLocalizer<ZauberText> text) : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.MediaSection];
     public List<string> TreeAlias { get; } = [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Create Folder";
+    public string Text(TreeItemContextMenuEventArgs args) => text["contextMenus_createFolder"];
     public string Icon(TreeItemContextMenuEventArgs args) => "add";
     public string IconColor(TreeItemContextMenuEventArgs args) => string.Empty;
     public bool CanShowContextMenu(TreeItemContextMenuEventArgs args)
@@ -36,7 +38,7 @@ public class CreateFolderContextMenu() : ITreeContextMenu
             }
         };
         contextMenuService.Close();
-        CreateFolderModal = modalService?.OpenSidePanel<UpdateMediaForm>("Create Folder", createParams);
+        CreateFolderModal = modalService?.OpenSidePanel<UpdateMediaForm>(text["contextMenus_createFolder"], createParams);
         return Task.CompletedTask;
     }
     

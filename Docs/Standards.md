@@ -109,6 +109,9 @@ removed line is a breaking change for the release notes.
 - Don't put logic in markup; keep components thin and push work into services. No EF in components.
 - Admin UI: Radzen components + the shared building blocks (`EditorRow`, `PropertyInfo`, `TreeButton`,
   `OpenSidePanel`, notification extensions). See [AdminUI.md](AdminUI.md). Accessible labels on inputs; keyboard usable.
+- Text a person reads (admin, installer, account pages, Core messages shown to them) is never a literal: it is
+  `L["area_name"]` / `IStringLocalizer<ZauberText>` with the English in the area's `.resx` (D37, D90–D97; the rules
+  and area table are [AdminUI.md](AdminUI.md) "Localisation"; a guard test checks the converted folders).
 
 ## 6. Errors, logging, results
 

@@ -190,7 +190,7 @@
             {
                 Logger.LogError(ex, "Context menu action {ContextMenu} failed", contextMenu.GetType().FullName);
                 contextMenuService.Close();
-                NotificationService.ShowErrorNotification("Action failed", "The action could not be completed. The error has been logged.");
+                NotificationService.ShowErrorNotification(L["general_actionFailed"], L["trees_actionFailedDetail"]);
             }
         }
     }

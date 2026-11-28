@@ -32,21 +32,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Update="Resources\SharedResource.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>SharedResource.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Update="Resources\SharedResource.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>SharedResource.resx</DependentUpon>
-        </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
         <!-- The npm manifests build the admin's Tailwind CSS in this repository (package.json "site-css"); a site has
              no use for them (ZA-087). As None items they stay visible in the IDE and are neither packed nor copied. -->
         <Content Remove="package.json;package-lock.json" />

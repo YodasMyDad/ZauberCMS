@@ -1,6 +1,7 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Components.Admin.ContentSection.Dialogs;
 using ZauberCMS.Core;
@@ -8,6 +9,7 @@ using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Content.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared;
@@ -18,12 +20,13 @@ public class RestrictAccessContextMenu(
     NotificationService notificationService,
     IMembershipService membershipService,
     IContentService contentService,
-    AppState appState)
+    AppState appState,
+    IStringLocalizer<ZauberText> text)
     : ITreeContextMenu
 {
     public List<string> Sections => [Constants.Sections.ContentSection];
     public List<string> TreeAlias => [];
-    public string Text(TreeItemContextMenuEventArgs args) => "Public Access";
+    public string Text(TreeItemContextMenuEventArgs args) => text["contextMenus_publicAccess"];
 
     public string Icon(TreeItemContextMenuEventArgs args) => "lock";
 
@@ -53,7 +56,7 @@ public class RestrictAccessContextMenu(
             { nameof(RestrictAccess.ContentId), content.Id }
         };
 
-        Modal = modalService.OpenSidePanel<RestrictAccess>("Public Access", parameters);
+        Modal = modalService.OpenSidePanel<RestrictAccess>(text["contextMenus_publicAccess"], parameters);
         var result = await Modal.Result;
         if (result is { Confirmed: true, Data: (bool _, List<Role> selectedRoles) })
         {
@@ -65,13 +68,13 @@ public class RestrictAccessContextMenu(
             });
             if (!saveResult.Success)
             {
-                notificationService.ShowNotifications(saveResult.Messages);
+                notificationService.ShowNotifications(saveResult.Messages, text);
                 return;
             }
 
             notificationService.ShowSuccessNotification(selectedRoles.Count == 0
-                ? "Public access removed"
-                : "Public access updated");
+                ? text["contextMenus_publicAccessRemoved"]
+                : text["contextMenus_publicAccessUpdated"]);
 
             await appState.NotifyContentChanged(content, currentUser?.Name ?? "Unknown");
         }

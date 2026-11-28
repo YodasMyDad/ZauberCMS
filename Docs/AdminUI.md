@@ -199,7 +199,8 @@ if (result is { Confirmed: true, Data: MyType value }) { … }
   `Blazored.Modal*`): panels nest, and fixes go there.
 - Yes/no: Radzen `DialogService.Confirm(...)`.
 - Notifications: `NotificationService.ShowSuccessNotification/ShowErrorNotification/ShowWarningNotification/
-  ShowNotifications(handlerResult.Messages)` (`ZauberCMS.Components/Core/Extensions/NotificationServiceExtensions.cs`).
+  ShowNotifications(handlerResult.Messages, L)` (`ZauberCMS.Components/Core/Extensions/NotificationServiceExtensions.cs`;
+  with `L` the summary is the message type in the admin's language, "Localisation" below).
 - Form layout: `<EditorRow>` with `<LeftColumn><PropertyInfo Name Alias Description/></LeftColumn><CentreColumn>…`
   (`Shared/EditorRow.razor`, `Shared/PropertyInfo.razor`).
 
@@ -216,6 +217,141 @@ if (result is { Confirmed: true, Data: MyType value }) { … }
 Radzen (material theme) + Tailwind compiled into `wwwroot/css/admin.css`. Tailwind purges by scanning `**/*.razor`:
 after adding classes run `npm run site-css` in `ZauberCMS.Components`. Plugin assemblies can only use classes already
 in the compiled CSS (or ship their own stylesheet).
+
+## Localisation (Roadmap D37, D90–D97)
+
+Every text ZauberCMS shows (the admin, the installer, the account pages and its fallback site pages) comes from
+`IStringLocalizer<ZauberText>` (`ZauberCMS.Core.Localization`), and ZauberCMS ships English. It is .NET
+localisation, so it follows `CultureInfo.CurrentUICulture`: in the admin `Zauber:AdminDefaultLanguage` (D37: one
+admin language, not one per user), on the account and site pages the request's culture. A site's own text (its
+views, its dictionary items: `LanguageDictionary`, `EntryModel.LanguageKeys`) is content, not this.
+
+**How it works.** The texts are `.resx` files in a folder named `ZauberText`, one file per area. ZauberCMS's own are
+`ZauberCMS.Components/Resources/ZauberText/<Area>.resx` (the admin's text) and
+`ZauberCMS.Core/Resources/ZauberText/<Area>.resx` (Core's messages, the installer); they are the neutral (English)
+files, embedded in the assemblies, so they ship in the packages. A key is looked up in the most specific culture
+first (`fr-CA`, then `fr`, then the neutral files), and at each step in the site's entry assembly first, then in the
+plugins in the order passed to `AddZauberCms(...)`, then in ZauberCMS's (`ZauberTextCatalog`, internal; every file is
+read once). A key nobody has shows as the key itself and is logged once as a warning. Radzen's own text (a grid's
+"No records to display.", its filter and pager, date pickers) comes through the same files: Radzen's key `X` is
+`radzen_X` (`DataGrid_EmptyText` → `radzen_DataGrid_EmptyText`, Radzen's keys are in its `RadzenStrings`
+resource); ZauberCMS ships no Radzen file, so a key nobody translated is Radzen's built-in English (D93).
+
+**A site or a translator adds a language (D90).**
+
+1. In the site project, or a plugin or language-pack class library that the site passes to
+   `builder.AddZauberCms(typeof(SomeTypeInIt).Assembly)`, make a folder named `ZauberText` (`Resources/ZauberText/`).
+2. Add a file per area with the culture in its name: `General.fr.resx`, `ContextMenus.fr.resx`, … holding the keys
+   it translates, named as in ZauberCMS's English files (copy the file, translate the values, keep the `{0}`s). A
+   key it leaves out stays English. The SDK builds them into a satellite assembly (`fr/MySite.resources.dll`),
+   which a NuGet package ships too: no build chain beyond `dotnet build`.
+3. Set `Zauber:AdminDefaultLanguage` to `fr`. The account pages use the request's culture, so they show French to a
+   request in a culture the site has (`UseRequestLocalization`: the site's languages).
+4. To change ZauberCMS's English wording, `General.en.resx` with the keys to change. A file with no culture
+   (`General.resx`) changes a key in every language that has no translation of it.
+5. Radzen: `Radzen.fr.resx` with `radzen_DataGrid_EmptyText` and the other keys it translates.
+6. Texts kept elsewhere (a database, JSON): register an `IStringLocalizer<ZauberText>` of your own, as a singleton
+   (Radzen's bridge holds it), after `AddZauberCms` (it replaces ZauberCMS's; registered before, ZauberCMS's is not
+   added), and a Radzen `ILocalizer` if Radzen's text comes from there too.
+
+A plugin with admin text of its own does the same with its own area: `ZauberText/MyPlugin.resx` (English) with keys
+`myPlugin_*`, read with `IStringLocalizer<ZauberText>`, and a site or translator adds `MyPlugin.fr.resx`. (A plain
+`IStringLocalizer<T>` of its own also works, but is not part of these layers.)
+
+**Rules for ZauberCMS's code (D91, D92, D97).** Phase 10h's parts follow these literally.
+
+1. **Key**: `area_name`. `area` is the file name with a lower-case first letter (`ContextMenus.resx` → `contextMenus_`),
+   `name` is camelCase and says what the text means (`contextMenus_moveToRecycleBin`, `general_save`), not where it
+   is. The `.resx` entry's name is the whole key. Keep today's English as the value, trimmed, without markup (split
+   `<strong>Term</strong> - text` into two keys); fix an obvious typo.
+2. **File**: the table below says which file a folder's text goes in. A key is in one file only. A part adds keys
+   only to its own area files (it may create a new file for a folder it owns); `General.resx` is the shared
+   vocabulary (buttons, labels, notification summaries): use its keys when the English is exactly the same, and
+   put a missing word in your own area, not in General.
+3. **Write the key as a string literal at the indexer**: `L["general_save"]`, never from a variable or constant;
+   the guard test reads the literals.
+4. **Placeholders**: one key per sentence, `L["contextMenus_deleteConfirm", page.Name]` with the value `Delete {0}?`
+   and a `<comment>` naming each placeholder (`{0} = the page name`); numbered from `{0}`; never concatenate
+   localised fragments or wrap localised text in `$"..."`. A comment that says where a text is shown helps the
+   translator.
+5. **Razor**: every component in ZauberCMS.Components has `L` (`@inject IStringLocalizer<ZauberText> L` in
+   `ZauberCMS.Components/_Imports.razor`): `Text="@L["general_save"]"`, `@L["dashboards_recentActivity"]`, and
+   `L["..."]` in `@code`. `L[...]` is a `LocalizedString`, which converts to `string`; write `.Value` where the target
+   is `object` or a `var` that must be a string. Core's installer components add the same line to their own
+   `_Imports.razor`.
+6. **A type discovery builds** (`ExtensionManager.GetInstances`), whose text is read from that instance, gets the
+   localiser **by constructor**: such an instance has no `[Inject]` properties. That is `ISection.Name`,
+   `ISectionDashboard.TabName`, `ISectionNavGroup.Heading`, `ITreeContextMenu.Text`, `ISectionNavGroupAction.Text`,
+   `IDataListSource.Name`/`Description`, `IContentProperty.Name`/`Description`, an SEO check's text. In a `.cs`
+   class: `IStringLocalizer<ZauberText> text` as the last parameter of the primary constructor,
+   `public string Heading => text["sections_contentGroup"];`. In a `.razor` component: a constructor in `@code`
+   (Blazor builds components with constructor injection too), the markup still uses `L`:
+   ```razor
+   @code {
+       private readonly IStringLocalizer<ZauberText> _text;
+       public MainContentDashboard(IStringLocalizer<ZauberText> text) => _text = text;
+       public string TabName => _text["dashboards_latestContent"];
+   }
+   ```
+7. **Notifications**: `NotificationService.ShowNotifications(result.Messages, L)` (the summary in the admin's
+   language); a summary of your own: `L["general_success"]` / `L["general_error"]`; Radzen confirms:
+   `new ConfirmOptions { OkButtonText = L["general_yes"], CancelButtonText = L["general_no"] }`.
+8. **Core messages (D92)**: a Core service, validator or check that builds text shown to a person injects
+   `IStringLocalizer<ZauberText>` (the last constructor parameter: a constructor change for the v5 release notes)
+   and writes the text there, `result.AddMessage(text["content_saved"], ResultMessageType.Success)`. Its keys are in
+   Core's file of the area (`ZauberCMS.Core/Resources/ZauberText/<Area>.resx`): Core's code uses Core's keys only (it
+   runs without Components' files). `HandlerResult` and `ResultMessage` carry the text, already in the caller's
+   culture, as before: no keys, no API change. An `IValidate<T>` takes it by constructor (rule 6); FluentValidation:
+   `.WithMessage(_ => text["…"])`, so each call reads the current culture. Static helpers take it as a parameter.
+   DataAnnotations (`[Required(ErrorMessage = …)]`, `[Display(Name = …)]`, only on the account parameter classes):
+   Blazor shows those messages as written, so 10h-4 moves them to a check that has the localiser (a validation
+   attribute that reads it from `ValidationContext.GetService`, which Blazor's validator fills from the circuit, or
+   the page's own check) and records how.
+9. **Not text**: log messages and exception messages (English, for whoever reads the log); aliases, icon names, CSS,
+   URLs; values that are stored and shown later as data (an audit row's description stays English, as Umbraco's
+   audit comments do; the `"Unknown"` user name passed to `AppState` events; `CountriesDataSource`'s country names,
+   which are the stored values). A guard-test exception (`NotText`) names anything else that only looks like text.
+
+| Area (file) | Prefix | Text of | Files | Part |
+| --- | --- | --- | --- | --- |
+| General | `general_` | shared words: buttons, labels, notification summaries | Components | 10h-1 (filled; the others read it) |
+| Sections | `sections_` | section names, nav group headings (the Users ones are there for 10h-4) | Components | 10h-1 |
+| Dashboards | `dashboards_` | `Admin/Dashboards` | Components | 10h-1 |
+| Shared | `shared_` | `Shared`, `Admin/Shared`, `Modal`, `DataSources`, `Core` (Components'), `ContentComponents`, `Startup` | Components | 10h-1 |
+| Trees | `trees_` | `Trees` | Components | 10h-1 |
+| ContextMenus | `contextMenus_` | `ContextMenus` (tree menus, nav group actions) | Components | 10h-1 |
+| Content | `content_` | `Admin/ContentSection`; Core `Content` (services, validators) | Components, Core | 10h-2 |
+| Media | `media_` | `Admin/MediaSection`; Core `Media`, `Providers` (storage) | Components, Core | 10h-2 |
+| EditorDialogs | `editorDialogs_` | `Editors/Dialogs` | Components | 10h-2 |
+| Seo | `seo_` | `Seo`; Core `Seo` (checks, messages) | Components, Core | 10h-2 |
+| Editors | `editors_` | `Editors` (root, `Settings`, `Components`, `Models`, `ToolbarItems`, `Interfaces`) | Components | 10h-3 |
+| Installer | `installer_` | Core `Installer` (its components and messages) | Core | 10h-3 |
+| Shared (Core) | `shared_` | Core `Shared`, `Extensions` (the save messages), `Data` | Core | 10h-3 |
+| Structure | `structure_` | `Admin/StructureSection` | Components | 10h-4 |
+| Settings | `settings_` | `Admin/SettingsSection` | Components | 10h-4 |
+| Users | `users_` | `Admin/UsersSection` | Components | 10h-4 |
+| Layout | `layout_` | `Admin/Layout` | Components | 10h-4 |
+| Account | `account_` | `Account/*`, `Pages` (the fallback site pages), `Controllers` (the sign-out page) | Components | 10h-4 |
+| Languages | `languages_` | Core `Languages` | Core | 10h-4 |
+| Membership | `membership_` | Core `Membership`, `Security` (users, roles, sign-in, registration) | Core | 10h-4 |
+| Sections (Core) | `sections_` | Core `Sections` (`BackOfficeAccessService`'s reasons) | Core | 10h-4 |
+| Audit, Tags, Email | `audit_`, `tags_`, `email_` | Core `Audit`, `Tags`, `Email` (the emails' text) | Core | 10h-4 |
+| Radzen | `radzen_` | Radzen's own text: no ZauberCMS file, only sites' and language packs' | — | — |
+
+An area with files in both projects is one area (a translator writes one `Content.fr.resx`); a key is in one of
+them. Each part converts only its own folders and files; `Admin/Layout`, `Admin/UsersSection`, `Account/*`, the
+API-key picker editor and `ZauberCMS/Components/Routes.razor` (left out of 10h-1 while 10g-2 edited them) are
+10h-4's.
+
+**The guard (D94)**, `tests/ZauberCMS.Core.Tests/Localization/ZauberTextResourceTests.cs`: every key is named after
+its file and is in one file once; texts are trimmed and their placeholders numbered from `{0}`; a translation has only
+keys of the English with the same placeholders; every literal key the code asks for is in the English files (Core's
+in Core's), every non-General key is used; every English text is in the built assemblies; and the folders listed in
+`ConvertedFolders` keep no hard-coded text (markup text, text attributes, literals given to UI members and calls,
+sentences). A part adds its folders to its own block of `ConvertedFolders` (and `NotText`), so the parts merge
+cleanly. `ZauberTextTests` covers the lookup order and the bootstrap. A component test that renders with its own
+`ServiceCollection` registers the text too (every component has `L`): `AdminRenderer.AddImportedServices` in
+`tests/ZauberCMS.Components.Tests/Shared` does it, with the Core services `_Imports.razor` injects.
 
 ## Rules
 

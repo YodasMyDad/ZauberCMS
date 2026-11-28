@@ -3,10 +3,10 @@
     <CentreColumn>
             <RadzenTabs @bind-SelectedIndex="@SelectedIndex" Change="@OnTabChanged">
                 <Tabs>
-                    <RadzenTabsItem Text="Media">
+                    <RadzenTabsItem Text="@L["general_media"]">
                         <MediaTree @ref="MediaTreeRef" ValueChanged="OnValueChangedHandler" DisableContextMenu="@(true)"/>                
                     </RadzenTabsItem>
-                    <RadzenTabsItem Text="Upload">
+                    <RadzenTabsItem Text="@L["general_upload"]">
                         <MultipleMediaUpload EnableFolderSelection="true" ParentId="@SelectedFolderId"/>
                     </RadzenTabsItem>
                 </Tabs>
