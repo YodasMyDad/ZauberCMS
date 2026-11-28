@@ -89,13 +89,27 @@ Umbraco's user groups, first step: which roles may open each section. Start node
   action (`ISectionNavGroupAction`), dashboard (`ISectionDashboard`) or tree context menu (`ITreeContextMenu`) whose
   type carries `[Authorize]`/`[AuthorizeSection]` shows only to users who pass it (a nav group left with no item is
   hidden): a plugin keeps an administrators-only tool in a section other roles open with
-  `[Authorize(Roles = Constants.Roles.AdminRoleName)]` on its type. The profile menu's "Edit" (the user's page in
-  Users) shows only to users who may open Users.
+  `[Authorize(Roles = Constants.Roles.AdminRoleName)]` on its type.
+- **Your account (D72, Umbraco's current-user panel).** The profile menu's "Your account" opens
+  `Admin/Layout/CurrentUserPanel.razor` for every back-office user: their name (changed at once, no session ends),
+  their email address (a link goes to the new address and the account moves when it is opened; needs the current
+  password) and their password (the current one, then the new one twice; the other sessions end and this page
+  reloads through the sign-in refresh). Nothing else: roles, sections and profile properties stay on the user's page
+  in Users, which the panel links to for users who may open Users (on their own page there the address box is
+  read-only and "Change Password" opens the panel). The panel acts only on the signed-in user, read from their
+  sign-in for each change, never from a parameter (D27); a wrong current password counts towards the lockout as at
+  sign-in, one link a minute is sent per account, and only the newest link works. The sign-in renewal after a
+  password change (`/api/auth/refreshsignin` with the change's ticket) also takes a cookie the five-minute stamp
+  check has just refused (ZA-218). The service side is
+  `IMembershipService.ChangeUserNameAsync`, `ChangePasswordAsync` and `RequestEmailChangeAsync`; a plugin's own
+  account page can call them the same way, for the signed-in user only.
 - **Endpoints.** Recycled and role-restricted media files are served to whoever may open Media (before D38: Admin
   only). A controller or minimal API the admin calls carries `[AuthorizeSection(...)]` or
   `.RequireAuthorization(SectionPolicies.ForSections(...))`.
 - **Administrators only, whoever else may open Settings (D70):** Global Settings (who gets in, uploads, API keys): its
-  page and nav item carry `[Authorize(Roles = Admin)]`.
+  page and nav item carry `[Authorize(Roles = Admin)]`. Its API keys show names only (D73): a saved value is never
+  sent back to the page, an empty box keeps it, a typed one replaces it; keys set in configuration
+  (`Zauber:ApiKeys`, which win) are listed by name.
 - **Users and roles without widening access (D68), as Umbraco's user and user-group editors check:** someone who may
   open Users but is not an administrator cannot change, delete, set the password of, or change the roles of an
   administrator, or of a user who opens a section they cannot (that would hand them the section); can give only
@@ -157,7 +171,11 @@ One exception in an editor, dashboard or plugin no longer ends the circuit. `Zau
 (an `ErrorBoundary`) shows "*Name* could not be shown" with a **Try again** button in place of what failed; the rest
 of the page, its unsaved changes included, carries on. Boundaries sit round each property editor
 (`DynamicContentProperty`), each dashboard tab, the sidebar navigation and the page body (`SectionLayout`; cleared
-on navigation), and the vendored modal puts one round each side panel's content (with **Close**). Radzen's own
+on navigation), and the vendored modal puts one round each side panel's content (with **Close**). The access
+checks that read the roles on a cache miss are covered too (ZA-215): the header's `SectionLinks` shows "The
+sections could not be shown: try again" in its place, and `Routes.razor` puts a boundary ("This page") round the
+admin's route and its `AuthorizeView`/`AuthorizeRouteView`, cleared by the next navigation, for a check that fails
+before the layout is there. Radzen's own
 dialogs and side panels (`DialogService`) are inside one round `<RadzenComponents />`: an error there closes the
 open Radzen dialogs and shows a box over the page with **Close**. The exception is
 logged; its message is shown only when Blazor's detailed errors are on (`CircuitOptions.DetailedErrors`, which

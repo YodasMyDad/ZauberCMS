@@ -1,0 +1,325 @@
+@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Membership.Parameters
+@using ZauberCMS.Core.Sections.Interfaces
+@using ZauberCMS.Core.Shared
+@using ZauberCMS.Core.Shared.Models
+@using ZauberCMS.Core.Shared.Services
+@* The signed-in user's own account (Roadmap D72, ZP-001), opened from the profile menu by every back-office user:
+   their name, email address and password, nothing else. It acts only on the account of whoever is signed in, read
+   from their sign-in for each change and never taken from a parameter: that is the access check (D27). Roles,
+   sections and profile properties are changed on the user's page in Users, by someone who may (D68). *@
+
+@if (_user == null)
+{
+    @if (_loaded)
+    {
+        <TailwindAlert Type="AlertType.Warning" Title="Your account could not be found" DefaultMessage="Sign in again."/>
+    }
+}
+else
+{
+    <RadzenStack Gap="1.5rem">
+        <RadzenText TextStyle="TextStyle.Body2">
+            Your roles, and the sections of the admin you can open, are set by an administrator.
+        </RadzenText>
+
+        <section aria-labelledby="current-user-name">
+            <RadzenText TextStyle="TextStyle.H6" id="current-user-name">Name</RadzenText>
+            <RadzenStack Gap="0.5rem">
+                <RadzenTextBox @bind-Value="@_name" Name="CurrentUserName" aria-label="Name" MaxLength="150" Style="width: 100%;"/>
+                @ShowMessage(_nameMessage)
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right">
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save name" Disabled="@_busy" Click="@SaveNameAsync"/>
+                </RadzenStack>
+            </RadzenStack>
+        </section>
+
+        <section aria-labelledby="current-user-email">
+            <RadzenText TextStyle="TextStyle.H6" id="current-user-email">Email address</RadzenText>
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Body2">You sign in with <strong>@_user.Email</strong>.</RadzenText>
+                @if (_hasPassword)
+                {
+                    <RadzenTextBox @bind-Value="@_newEmail" Name="NewEmail" Placeholder="New email address" aria-label="New email address" autocomplete="email" Style="width: 100%;"/>
+                    <RadzenPassword @bind-Value="@_emailPassword" Name="EmailCurrentPassword" Placeholder="Your current password" aria-label="Your current password, to change the email address" AutoCompleteType="AutoCompleteType.CurrentPassword" Style="width: 100%;"/>
+                    <RadzenText TextStyle="TextStyle.Caption">
+                        A link is sent to the new address. Your account moves to it when the link is opened; until then
+                        you sign in with the address above.
+                    </RadzenText>
+                    @ShowMessage(_emailMessage)
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right">
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="send" Text="Send the link" Disabled="@_busy" Click="@RequestEmailChangeAsync"/>
+                    </RadzenStack>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Caption">
+                        Your account has no password, so its address is changed by an administrator.
+                    </RadzenText>
+                }
+            </RadzenStack>
+        </section>
+
+        <section aria-labelledby="current-user-password">
+            <RadzenText TextStyle="TextStyle.H6" id="current-user-password">Password</RadzenText>
+            <RadzenStack Gap="0.5rem">
+                @if (_hasPassword)
+                {
+                    <RadzenPassword @bind-Value="@_currentPassword" Name="CurrentPassword" Placeholder="Current password" aria-label="Current password" AutoCompleteType="AutoCompleteType.CurrentPassword" Style="width: 100%;"/>
+                    <RadzenPassword @bind-Value="@_newPassword" Name="NewPassword" Placeholder="New password" aria-label="New password" AutoCompleteType="AutoCompleteType.NewPassword" Style="width: 100%;"/>
+                    <RadzenPassword @bind-Value="@_confirmPassword" Name="ConfirmPassword" Placeholder="New password again" aria-label="New password again" AutoCompleteType="AutoCompleteType.NewPassword" Style="width: 100%;"/>
+                    <RadzenText TextStyle="TextStyle.Caption">
+                        Your other sessions are signed out, and this page reloads to keep you signed in here: save your
+                        work first.
+                    </RadzenText>
+                    @ShowMessage(_passwordMessage)
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right">
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="key" Text="Change password" Disabled="@_busy" Click="@ChangePasswordAsync"/>
+                    </RadzenStack>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Caption">
+                        Your account has no password: you sign in with an external login. "Forgot your password" on the
+                        sign-in page sets one.
+                    </RadzenText>
+                }
+            </RadzenStack>
+        </section>
+
+        @if (_mayOpenUsers)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left">
+                <RadzenButton Variant="Variant.Outlined" Icon="manage_accounts" Text="Open your page in Users" Click="@OpenInUsersAsync"/>
+            </RadzenStack>
+        }
+    </RadzenStack>
+}
+
+@code {
+    [Inject] public ICurrentUserAccessor CurrentUser { get; set; } = null!;
+    [Inject] public IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
+    [Inject] public ValidateService<User> ValidateService { get; set; } = null!;
+    [Inject] public AppState AppState { get; set; } = null!;
+    [CascadingParameter] public BlazoredModalInstance? ModalInstance { get; set; }
+
+    private User? _user;
+    private bool _loaded;
+    private bool _hasPassword;
+    private bool _mayOpenUsers;
+    private bool _busy;
+
+    private string? _name;
+    private string? _newEmail;
+    private string? _emailPassword;
+    private string? _currentPassword;
+    private string? _newPassword;
+    private string? _confirmPassword;
+
+    private (AlertType Type, string Text)? _nameMessage;
+    private (AlertType Type, string Text)? _emailMessage;
+    private (AlertType Type, string Text)? _passwordMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await CurrentUser.GetUserAsync();
+        _loaded = true;
+        if (_user == null)
+        {
+            return;
+        }
+
+        _name = _user.UserName;
+        _hasPassword = !string.IsNullOrEmpty(_user.PasswordHash);
+        // The user's own page in Users is for those who may open Users (D70)
+        _mayOpenUsers = await BackOfficeAccess.CanOpenSectionAsync(await CurrentUser.GetPrincipalAsync(),
+            Constants.Sections.UsersSection);
+    }
+
+    /// <summary>Whoever is signed in now: every change is made to their account, and only theirs.</summary>
+    private async Task<User?> SignedInUserAsync()
+    {
+        var user = await CurrentUser.GetUserAsync();
+        if (user == null || user.Id != _user?.Id)
+        {
+            // Signed out, or signed in as somebody else, since the panel opened
+            await CloseAsync();
+            return null;
+        }
+
+        return user;
+    }
+
+    private async Task SaveNameAsync()
+    {
+        // One change at a time: the buttons are disabled while one runs, but a second click can arrive before that renders
+        if (_busy)
+        {
+            return;
+        }
+
+        _nameMessage = null;
+        _busy = true;
+        try
+        {
+            var me = await SignedInUserAsync();
+            if (me == null)
+            {
+                return;
+            }
+
+            // A site's validators for users (IValidate<User>) see the account as it would be saved, as on its page
+            me.UserName = _name?.Trim();
+            if (!await ValidateService.CanSave(me))
+            {
+                return;
+            }
+
+            var result = await MembershipService.ChangeUserNameAsync(new ChangeUserNameParameters { UserId = me.Id, Name = _name });
+            if (result.Success)
+            {
+                _user!.UserName = result.Entity?.UserName;
+                _name = _user.UserName;
+                _nameMessage = (AlertType.Success, "Your name was changed.");
+                await AppState.NotifyUserSaved(result.Entity, _user.UserName ?? string.Empty);
+            }
+            else
+            {
+                _nameMessage = (AlertType.Error, result.Messages.MessagesAsString());
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RequestEmailChangeAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _emailMessage = null;
+        _busy = true;
+        try
+        {
+            var me = await SignedInUserAsync();
+            if (me == null)
+            {
+                return;
+            }
+
+            var newEmail = _newEmail?.Trim();
+            var result = await MembershipService.RequestEmailChangeAsync(new RequestEmailChangeParameters
+            {
+                UserId = me.Id,
+                NewEmailAddress = newEmail,
+                CurrentPassword = _emailPassword,
+                ReturnUrl = Urls.AdminBaseUrl
+            });
+            _emailPassword = null;
+            if (result.Success)
+            {
+                _emailMessage = (AlertType.Success,
+                    $"A link was sent to {newEmail}. Your address changes when you open it.");
+                _newEmail = null;
+            }
+            else
+            {
+                _emailMessage = (AlertType.Error, result.Messages.MessagesAsString());
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _passwordMessage = null;
+        if (!string.Equals(_newPassword, _confirmPassword, StringComparison.Ordinal))
+        {
+            _passwordMessage = (AlertType.Error, "The new password and the new password again are not the same.");
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var me = await SignedInUserAsync();
+            if (me == null)
+            {
+                return;
+            }
+
+            var result = await MembershipService.ChangePasswordAsync(new ChangePasswordParameters
+            {
+                UserId = me.Id,
+                CurrentPassword = _currentPassword,
+                NewPassword = _newPassword
+            });
+            _currentPassword = null;
+            if (!result.Success)
+            {
+                _passwordMessage = (AlertType.Error, result.Messages.MessagesAsString());
+                return;
+            }
+
+            _newPassword = null;
+            _confirmPassword = null;
+            _passwordMessage = (AlertType.Success, "Your password was changed.");
+            if (result is { RefreshSignIn: true, RefreshSignInTicket: not null })
+            {
+                // The new security stamp ends every session, this one too, unless its sign-in is renewed: a full
+                // load of this page through the refresh endpoint (a path on this site; it only returns to those)
+                // Addresses relative to the base, and back to this page with its path base, so a site under one works
+                var here = System.Net.WebUtility.UrlEncode(new Uri(NavigationManager.Uri).PathAndQuery);
+                NavigationManager.NavigateTo(
+                    $"{Urls.ApiRefreshSignIn.TrimStart('/')}?redirectUrl={here}&ticket={System.Net.WebUtility.UrlEncode(result.RefreshSignInTicket)}",
+                    forceLoad: true);
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OpenInUsersAsync()
+    {
+        var me = await SignedInUserAsync();
+        if (me == null)
+        {
+            return;
+        }
+
+        await CloseAsync();
+        NavigationManager.NavigateTo($"{Urls.AdminUsersEdit.TrimStart('/')}/{me.Id}");
+    }
+
+    // Read out when it appears (role status), an error as an alert
+    private static RenderFragment ShowMessage((AlertType Type, string Text)? message) =>
+        @<text>@if (message is { } shown)
+        {
+            <div role="@(shown.Type == AlertType.Error ? "alert" : "status")">
+                <TailwindAlert Type="@shown.Type" Title="@shown.Text"/>
+            </div>
+        }</text>;
+
+    private async Task CloseAsync()
+    {
+        if (ModalInstance != null)
+        {
+            await ModalInstance.CloseAsync();
+        }
+    }
+}

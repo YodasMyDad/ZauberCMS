@@ -1,6 +1,10 @@
 ﻿@page "/Account/ConfirmEmail"
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.Extensions.DependencyInjection
 @using Microsoft.Extensions.Options
 @using ZauberCMS.Core
+@using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Plugins
@@ -18,6 +22,9 @@
 @code {
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public SignInManager<User> SignInManager { get; set; } = null!;
+    [Inject] public IServiceScopeFactory ScopeFactory { get; set; } = null!;
+    [CascadingParameter] public HttpContext? HttpContext { get; set; }
 
     [SupplyParameterFromQuery] private string? UserId { get; set; }
     [SupplyParameterFromQuery] private string? Code { get; set; }
@@ -54,12 +61,40 @@
 
             var result = await MembershipService.ConfirmEmailAsync(confirmEmailCommand);
             ResultMessages = result.Messages;
+            if (result.Success && confirmEmailCommand.IsEmailUpdate)
+            {
+                await RenewOwnSignInAsync();
+            }
+
             if (result.Success && ResultMessages.Count == 0)
             {
                 ResultMessages.Add(new ResultMessage(
                     confirmEmailCommand.IsEmailUpdate ? "Your email address has been changed." : "Thank you for confirming your email.",
                     ResultMessageType.Success));
             }
+        }
+    }
+
+    /// <summary>
+    /// Moving the account to a new address replaced its security stamp, which ends its sessions. The one in this
+    /// browser, when it is that account's, has just proven the new address: its sign-in is renewed, so the user is
+    /// not signed out here (Roadmap D72). Nobody else's is touched, and nobody is signed in by it.
+    /// </summary>
+    private async Task RenewOwnSignInAsync()
+    {
+        if (HttpContext?.User.Identity?.IsAuthenticated != true ||
+            !string.Equals(SignInManager.UserManager.GetUserId(HttpContext.User), UserId, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        // From a scope of its own: the stamp check may have loaded this user in the request's scope before the change,
+        // and that copy still has the old stamp, which the renewed cookie would carry (ZA-218)
+        await using var scope = ScopeFactory.CreateAsyncScope();
+        var user = await scope.ServiceProvider.GetRequiredService<UserManager<User>>().FindByIdAsync(UserId!);
+        if (user is { Deleted: false } && !HttpContext.Response.HasStarted)
+        {
+            await SignInManager.RefreshSignInAsync(user);
         }
     }
 

@@ -363,8 +363,27 @@ public partial class MembershipService
                     return confirmationResult;
                 }
 
+                // Only the address asked for last (Roadmap D72): a link sent before it, for an address the user then
+                // replaced (mistyped, say), is refused, so whoever reads that mailbox cannot take the account
+                if (user.ExtendedData.TryGetValue(PendingEmailKey, out var pending) &&
+                    !string.Equals(pending?.ToString(), parameters.NewEmailAddress, StringComparison.OrdinalIgnoreCase))
+                {
+                    confirmationResult.AddMessage(
+                        "A newer link was sent for this account; this one no longer works. Use the newest email.",
+                        ResultMessageType.Error);
+                    return confirmationResult;
+                }
+
+                // Saved with the change below, which also stores nothing when the token is refused
+                user.ExtendedData.Remove(PendingEmailKey);
+
                 // The token was issued for this exact address, so a different address in the link is refused.
                 result = await userManager.ChangeEmailAsync(user, parameters.NewEmailAddress!, token);
+                if (result.Succeeded)
+                {
+                    await WriteAccountAuditAsync(scope.ServiceProvider, user, "changed their email address",
+                        cancellationToken);
+                }
             }
             else
             {

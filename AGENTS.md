@@ -177,7 +177,9 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
   admin-only; the middleware enforces `GlobalSettings.AllowedAdminIpAddress`. `/admin` lands on the user's first
   section; Global Settings stay admin-only; the starting role opens no section (D71); a non-admin who may open Users
   cannot change an administrator or a user with a section they lack, or give a role or section they do not have
-  (D68). → [Docs/AdminUI.md](Docs/AdminUI.md) "Access"
+  (D68). Every back-office user changes their own name, email (by a link to the new address) and password (the
+  current one first) in "Your account" from the profile menu, for the signed-in user only (D72).
+  → [Docs/AdminUI.md](Docs/AdminUI.md) "Access"
 - **Services do no authorisation** (Roadmap D27): the page, component or endpoint that calls a service checks
   access first (in the admin, through `IBackOfficeAccessService`). Services read the caller only to record who made a change, through `ICurrentUserAccessor` (circuit,
   static page, controller or job; `RunAs` for code with nobody signed in). Never inject `AuthenticationStateProvider`
@@ -187,6 +189,9 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
   `AdminCultureCircuitHandler` for circuits); front-end pages run in the language of their content.
 - Rich text stores video embeds as placeholders; `IRichTextEmbedService` (replaceable) owns the provider list
   and expands them at render time, through the default `IHtmlSanitizerService`.
+- API keys are stored and picked by name and read on the server through the replaceable `IApiKeyService`
+  (`Zauber:ApiKeys` in configuration wins over Global Settings); the admin never shows a saved value (D73).
+  → [Docs/Editors.md](Docs/Editors.md)
 
 ## High-risk areas — read the doc before editing
 

@@ -52,6 +52,7 @@ ZauberCMS.Components: ZauberCMS.Components.Admin.Dashboards.MainMediaDashboard
 ZauberCMS.Components: ZauberCMS.Components.Admin.Dashboards.MainStructureDashboard
 ZauberCMS.Components: ZauberCMS.Components.Admin.Dashboards.StructureInfoDashboard
 ZauberCMS.Components: ZauberCMS.Components.Admin.DynamicContentProperty
+ZauberCMS.Components: ZauberCMS.Components.Admin.Layout.CurrentUserPanel
 ZauberCMS.Components: ZauberCMS.Components.Admin.Layout.ProfileMenuItem
 ZauberCMS.Components: ZauberCMS.Components.Admin.Layout.SectionDashboards
 ZauberCMS.Components: ZauberCMS.Components.Admin.Layout.SectionLayout
@@ -525,6 +526,8 @@ ZauberCMS.Core: ZauberCMS.Core.Membership.Models.UserLogin
 ZauberCMS.Core: ZauberCMS.Core.Membership.Models.UserPropertyValue
 ZauberCMS.Core: ZauberCMS.Core.Membership.Models.UserRole
 ZauberCMS.Core: ZauberCMS.Core.Membership.Models.UserToken
+ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.ChangePasswordParameters
+ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.ChangeUserNameParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.ConfirmEmailParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.CreateUpdateUserParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.DeleteRoleParameters
@@ -539,6 +542,7 @@ ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.LoginUserParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.QueryRolesParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.QueryUsersParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.RegisterUserParameters
+ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.RequestEmailChangeParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.ResetPasswordParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.SaveRoleParameters
 ZauberCMS.Core: ZauberCMS.Core.Membership.Parameters.SaveUserParameters
@@ -613,9 +617,11 @@ ZauberCMS.Core: ZauberCMS.Core.Settings.Identity
 ZauberCMS.Core: ZauberCMS.Core.Settings.ImageCacheSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.ImageResizeSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.ImageResponseCacheSettings
+ZauberCMS.Core: ZauberCMS.Core.Settings.Interfaces.IApiKeyService
 ZauberCMS.Core: ZauberCMS.Core.Settings.JobsSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.PluginSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.RateLimitSettings
+ZauberCMS.Core: ZauberCMS.Core.Settings.Services.ApiKeyService
 ZauberCMS.Core: ZauberCMS.Core.Settings.SmtpSettings
 ZauberCMS.Core: ZauberCMS.Core.Settings.ZauberSettings
 ZauberCMS.Core: ZauberCMS.Core.Shared.AppState

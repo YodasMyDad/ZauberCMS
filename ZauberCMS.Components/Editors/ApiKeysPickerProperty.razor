@@ -1,38 +1,73 @@
-﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+﻿@using ZauberCMS.Core.Settings.Interfaces
+@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
+@* Stores the chosen key's name, never its value (ZA-214, Roadmap D73): the value is read on the server where it is
+   used (IApiKeyService.GetPickedApiKeyAsync), so whoever edits the page, its drafts and versions, or the editor's
+   settings never sees it. *@
 
-<RadzenDropDown TValue="string" Value="@Value" Data="@ApiKeys" Change="@(args => OnValueChanged(args))" TextProperty="Key" ValueProperty="Value" Style="width: 100%;" />
+<RadzenDropDown TValue="string" Value="@_selectedName" Data="@_names" Change="@(args => OnValueChanged(args))"
+                AllowClear="true" Placeholder="Choose a key" Style="width: 100%;" aria-label="API key"/>
+@if (_unknownValue)
+{
+    <RadzenText TextStyle="TextStyle.Caption" class="rz-mt-1">
+        The saved key is not one of the site's keys now. It is used as it was saved until you choose one.
+    </RadzenText>
+}
 
 @code {
     public string Name => "Api Key Picker";
     public string Alias => "ZauberCMS.ApiKeyPicker";
-    public string Description => "Pick your API keys by name from the appSettings";
+    public string Description => "Pick one of the site's API keys by name (Global Settings or Zauber:ApiKeys); the page stores the name";
     public string Icon => "api";
     public Type? SettingsComponent { get; set; }
-    
+
     [Parameter] public string? Value { get; set; }
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string? Settings { get; set; }
     [Parameter] public Content? Content { get; set; }
     [CascadingParameter] public IModalService? ModalService { get; set; }
+    [Inject] public IApiKeyService ApiKeyService { get; set; } = null!;
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
     public bool FullWidth { get; set; }
-    private Dictionary<string, string> ApiKeys { get; set; } = [];
+
+    private IReadOnlyList<string> _names = [];
+    private string? _selectedName;
+    private bool _unknownValue;
 
     protected override async Task OnInitializedAsync()
     {
-        var globalSettingsRequest = await DataService.GetGlobalSettings();
-        ApiKeys = globalSettingsRequest.ApiKeys;
-    }
-    
-    private async Task OnValueChanged(object value)
-    {
-        if (value is string apiKey)
+        _names = await ApiKeyService.GetApiKeyNamesAsync();
+        if (Value.IsNullOrWhiteSpace())
         {
-            Value = apiKey;
-            await ValueChanged.InvokeAsync(Value);   
+            return;
         }
+
+        _selectedName = _names.FirstOrDefault(name => string.Equals(name, Value, StringComparison.OrdinalIgnoreCase));
+        if (_selectedName != null)
+        {
+            return;
+        }
+
+        // Saved before v5, the value is the key itself: show the key it belongs to, and store its name from now on
+        // (the page or settings keep the old value until they are saved)
+        foreach (var name in _names)
+        {
+            if (string.Equals(await ApiKeyService.GetApiKeyAsync(name), Value, StringComparison.Ordinal))
+            {
+                _selectedName = name;
+                await ValueChanged.InvokeAsync(name);
+                return;
+            }
+        }
+
+        _unknownValue = true;
     }
 
-
+    private async Task OnValueChanged(object? value)
+    {
+        _selectedName = value as string;
+        _unknownValue = false;
+        // Through ValueChanged only: the parent owns Value (Docs/Editors.md)
+        await ValueChanged.InvokeAsync(_selectedName ?? string.Empty);
+    }
 }

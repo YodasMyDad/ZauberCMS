@@ -165,7 +165,10 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
 6. Multi-entity writes: `await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken)`, so
    a second save an after-save hook asks for, or two saves that must be in order (a version's old flag, then the new
    one), commit together. The `SaveChangesAndLog(entities, resultEntity, …)` overload names several entities.
-7. Content saves set the original `DateUpdated` (optimistic concurrency).
+7. Content saves set the original `DateUpdated` (optimistic concurrency). Exception: a user's sign-in fields (user
+   name, email, password, security stamp, lockout) are written through Identity's `UserManager`, which saves by
+   itself, so the save hooks do not run for them (`SaveUserAsync`, the D72 account changes, confirmation and
+   resets); a user's profile values and the delete (D35) go through `SaveChangesAndLog`.
 8. Two after-hooks, as Umbraco has its "-ed" notifications after the scope completes (Roadmap D62):
    `IAfterEntitySave<T>` runs inside the caller's transaction, before the commit, and may ask for the second save;
    the change can still roll back after it (a media file that can't be removed, a later step that fails).

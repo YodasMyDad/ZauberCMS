@@ -1,8 +1,9 @@
 # ZauberCMS Audit Report
 
-Last full run: 5668365 (2026-11-25, full) · Last changed run: a749761+wt (2026-11-28, Roadmap Phase 10g, a749761..working tree) · Mode: fix
+Last full run: 5668365 (2026-11-25, full) · Last changed run: 7442f14+wt (2026-11-28, Roadmap Phase 10g-2, 7442f14..working tree) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
-Next free IDs: ZA-216 (findings) · ZP-002 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+Next free IDs: ZA-220 (findings) · ZP-002 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+After Roadmap Phase 10g-2 (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · ZP-001 built (D72); ZA-214 (D73), ZA-215 fixed; ZA-216 and ZA-197 found while building and fixed; ZA-217 recorded (Phase 12); `/audit changed` over the part (a diff reviewer and two unit reviewers): ZA-218 (Medium) found and fixed with the part's own findings, ZA-219 recorded (Low, Phase 12). Next free ID: ZA-220
 After Roadmap Phase 10g (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-188 fixed (D38 phase, D66–D71); ZA-199…ZA-201 found and fixed while building; ZA-202…ZA-213 found by the audit and fixed (3 High, 4 Medium, 5 Low); ZA-214, ZA-215 recorded (Low, Phase 12); ZP-001 proposed. Next free ID: ZA-216
 After Roadmap Phase 10f-2 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1221 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · ZA-187 (the URL lookup cached per domain and slug, D64), ZA-190 (domains matched below the path base everywhere, D64), ZA-189 (every redirect honoured, D65) fixed; Phase 10f done. Next free ID: ZA-199
 After Roadmap Phase 10f-1 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1205 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · ZA-163 (after-commit hook `IAfterEntityCommit<T>`, D62), ZA-155 (resized copies removed with their image, D63), ZA-193 (a domain's redirects deleted through the change) fixed. Next free ID: ZA-199
@@ -16,13 +17,18 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 
 ## Summary
 
-| Severity | Open | New this run (Phase 10g changed run) | Fixed this run (Phase 10g, its audit included) |
+| Severity | Open | New this run (Phase 10g-2 changed run) | Fixed this run (Phase 10g-2, its audit included) |
 | --- | --- | --- | --- |
 | Critical | 0 | 0 | 0 |
-| High | 0 | 3 (ZA-202, ZA-203, ZA-204) | 3 |
-| Medium | 0 | 4 (ZA-205…ZA-208) | 4 |
-| Low | 10 | 7 (ZA-209…ZA-215) | 9 (ZA-188, ZA-199…ZA-201, ZA-209…ZA-213) |
+| High | 0 | 0 | 0 |
+| Medium | 0 | 1 (ZA-218) | 1 (ZA-218) |
+| Low | 9 | 3 (ZA-216, ZA-217, ZA-219) | 4 (ZA-197, ZA-214, ZA-215, ZA-216) |
 
+Proposals: none open (ZP-001 built in Phase 10g-2, D72).
+
+Phase 10g-2 run: on added lines, no sync-over-async, fire-and-forget, markup, raw SQL, local time, regex or
+suppression; the one `async void` is the modal's existing navigation handler, now guarded (ZA-197); three event
+unsubscriptions added (ZA-197); seven `catch` blocks, each logs or says why it is empty.
 Phase 10g run: no pattern count rose on an added line except two `MarkupString`s, now through the sanitiser (ZA-204),
 and one `#pragma warning disable CS0618` with its reason (ZA-200).
 
@@ -33,8 +39,8 @@ event-unsubscribe 22 · httpcontext-accessor 5 · exception-text 11. Flat agains
 suppressed warnings 35 → 18; every hit on an added line is moved code or a suppression with its reason.
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10h: ZA-129; 10i: ZA-128, ZA-194,
-ZA-197; 12: ZA-191, ZA-192, ZA-195, ZA-196, ZA-214, ZA-215); there is no Backlog (owner, 2026-11-27). The run's two owner questions
+a phase (10h: ZA-129; 10i: ZA-128, ZA-194; 12: ZA-191, ZA-192, ZA-195, ZA-196, ZA-217, ZA-219); there is no Backlog
+(owner, 2026-11-27). The run's two owner questions
 were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
@@ -74,38 +80,35 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Issue / Fix: a blank `Zauber:Plugins:StorageProvider`/`EmailProvider` passes start-up and the first upload or email
   throws `NullReferenceException`. Throw a message that names the setting, or refuse blank at start-up.
 
-### ZA-197 [Low/Medium] The vendored modal never unsubscribes its three events
-- Where: `ZauberCMS.Components/Modal/BlazoredModal.razor` (`OnInitialized`, `DisposeAsync`) · Category: A4 · Since: 2026-11-27 (older, moved in 11e) · Roadmap: 10i
-- Issue / Fix: `OnModalInstanceAdded`, `OnModalCloseRequested` and `LocationChanged` are never removed; harmless
-  while the modal lives as long as the circuit, a leak if a layout re-creates it. Unsubscribe in `DisposeAsync`.
+### ZA-217 [Low/High] A site with no `wwwroot` folder fails at start without saying why
+- Where: `ZauberCMS.Core/ZauberSetup.cs:111` (`AddImageResize` options) · Category: F · Since: 2026-11-28 (older; found while building Phase 10g-2) · Roadmap: 12
+- Issue / Fix: with no web root, `IWebHostEnvironment.WebRootPath` is null and `Path.Combine` throws
+  `ArgumentNullException` (`path1`) when the options are validated at start. Fall back to the content root's
+  `wwwroot` (or create it), or stop with a message that names the folder.
 
-### ZA-214 [Low/Medium] The API-key picker stores and shows the key's value
-- Where: `ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor` · Category: D · Since: 2026-11-28 (older; visible since D70 keeps Global Settings admin-only) · Roadmap: 12
-- Issue / Fix: the picker lists every `GlobalSettings.ApiKeys` entry and saves the chosen key's value into the page,
-  so whoever edits that page (or its drafts and versions) reads the secret. Store the key's name and resolve the
-  value where it is used (a stored-format change: old values read as they are).
-
-### ZA-215 [Low/Medium] The section checks in the header and the router read the database outside the error boundaries
-- Where: `ZauberCMS.Components/Admin/Layout/SectionLinks.razor`, `UserProfile.razor`, `ZauberCMS/Components/Routes.razor` · Category: E · Since: 2026-11-28 (Phase 10g) · Roadmap: 12
-- Issue / Fix: on a cache miss `IBackOfficeAccessService` reads the roles; a failed read there ends the circuit instead
-  of showing in an `AdminErrorBoundary` (D32). Catch and log in the header components; the router's check has no
-  boundary to show in.
+### ZA-219 [Low/High] Admin navigations to absolute addresses ignore a path base
+- Where: `ZauberCMS.Components/Admin/UsersSection/UserEditor.razor` and `RoleEditor.razor` (sign-in refresh), the `Urls.*` constants passed to `NavigationManager.NavigateTo` across the admin · Category: E · Since: 2026-11-28 (older; found by the Phase 10g-2 audit) · Roadmap: 12
+- Issue / Fix: under `UsePathBase` an address that starts with `/` leaves the path base, and the refresh's
+  `redirectUrl` lacks it. Navigate to base-relative addresses (the current-user panel's were fixed in 10g-2), and
+  pass `new Uri(NavigationManager.Uri).PathAndQuery` as the return address.
 
 ## Improvement proposals
 
-### ZP-001 [Medium/Medium] Every back-office user edits their own profile and password
-- Section: Users and access · Lens: G | H · Since: 2026-11-28 · Needs: owner decision
-- Today: a user's page is in the Users section, so only users who may open Users (and administrators) can change
-  their own name, email or password in the admin; the others use "Forgot your password" (D70).
-- Proposal: a current-user panel from the profile menu: name, email, password (with the current one), nothing else.
-- Why: Umbraco's current-user panel does this for every back-office user
-  (https://docs.umbraco.com/umbraco-cms/fundamentals/backoffice/users).
+None open. ZP-001 (every back-office user edits their own profile and password) was built in Phase 10g-2 (D72).
 
 Lenses G (editor UX) and H (Umbraco alignment) have not had their first `full` run; the next one fills this section.
 
 ## Fixed this run / Resolved since last run
 
-This run (Phase 10g changed run, 2026-11-28); details and how each was verified in [history.md](history.md):
+This run (Phase 10g-2 changed run, 2026-11-28); details and how each was verified in [history.md](history.md):
+- Medium: ZA-218 the sign-in renewal after a change of the security stamp failed for a cookie over five minutes old,
+  and the confirmation page renewed with the old stamp.
+- Low: ZA-197 the vendored modal's subscriptions (moved from 10i); ZA-214 API keys stored and shown by value (D73);
+  ZA-215 access checks outside the error boundaries, with the circuit's stamp check signing a tab out on a database
+  error; ZA-216 `Zauber:ApiKeys` read by nothing (found while building).
+- Proposal ZP-001 built (D72).
+
+Earlier this day (Phase 10g changed run, 2026-11-28):
 - High: ZA-202 deleting a role opened what it restricted; ZA-203 a user manager could take over a user with more
   sections; ZA-204 Editor Notes markup unsanitised.
 - Medium: ZA-205 the D68 checks read stale sign-in roles; ZA-206 the starting role could open sections (D71); ZA-207
@@ -141,7 +144,7 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 | Config parity | Since Phase 11c the three `appsettings.json` files have the same `Zauber` keys and `Serilog` section (ZA-118, ZA-168; `AppSettingsParityTests`) |
 | Docs drift | Paths all resolve; ~55 claims spot-checked, 5 wrong, corrected this run |
 | Repo hygiene | Only `ZauberCMS.Web/app.db` tracked (exempt); `.gitattributes`, `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and an SDK pin since Phase 11b (ZA-131 fixed) |
-| Tests | Phase 10g run, after its fixes: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 11 run: 1165 |
+| Tests | Phase 10g-2 run, after its fixes: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 10g run: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 11 run: 1165 |
 | Pattern counts | First counts in the Summary (Phase 11 run) |
 | Hot-path budget | First run, by reading: about 10 round-trips cold; 0 within 5 s of the same URL; 4–5 after 5 s idle; 2 per 404; +3 per block list, +1 per single media picker. Phase 10 changed front-end caching since: re-measure |
 | Package contents | Phase 11 run: all five packed; no stray files; Components carries the modal's script and CSS, Core no Radzen dependency or scoped CSS; dependencies at 4.1.3 |
@@ -149,6 +152,13 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 | Template smoke test | `tests/template-smoke.ps1` since Phase 11c, in CI's build job; passes |
 
 ## Coverage
+
+- Phase 10g-2 changed run (2026-11-28, 7442f14..working tree): the whole diff by a reviewer given the code and the
+  requirement; Core (the account changes, confirmation, API keys, settings) and the UI (the panel, header, router,
+  modal, editors, Global Settings, the user page) end to end by two unit reviewers. The orchestrator walked the screens
+  in a browser on a scratch site while building, with a failing access service switched on and off (see the Roadmap's
+  Phase 10g-2). Not done: a separate product agent and R1 (no front-end or caching change), a site under a real path
+  base, Long Polling or Azure SignalR.
 
 - Phase 10g changed run (2026-11-28, a749761..working tree): the whole diff by a reviewer given the code and the
   requirement; Core (the access service, policies, middlewares, seeder, membership changes) and the UI (router, entry

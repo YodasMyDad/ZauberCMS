@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10g-2 (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the part (a diff reviewer and two unit reviewers): ZP-001 built (D72); ZA-214, ZA-215 fixed (D73); ZA-216, ZA-197 found while building and fixed; ZA-218 (Medium) found by the audit and fixed; ZA-217, ZA-219 recorded (Low, Phase 12). Next free ID: ZA-220
 After Roadmap Phase 10g (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-188 fixed (D38 phase, D66–D71); ZA-199…ZA-201 found and fixed while building; ZA-202…ZA-213 found by the audit and fixed (3 High, 4 Medium, 5 Low); ZA-214, ZA-215 recorded (Low, Phase 12); ZP-001 proposed. Next free ID: ZA-216
 After Roadmap Phase 10f-2 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1221 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part. ZA-187, ZA-189, ZA-190 fixed (D64, D65); Phase 10f done. Next free ID: ZA-199
 After Roadmap Phase 10f-1 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1205 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-155, ZA-163, ZA-193 fixed (D62, D63). Next free ID: ZA-199
@@ -38,6 +39,42 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 10g-2 (2026-11-28, back-office roles follow-ups, D72–D73).** Release notes in the Roadmap's
+  "Phase 10g-2". Full suite 1455 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis;
+  Release build 0 warnings; template smoke test passes; checked in a browser on a scratch site (the Roadmap's Phase
+  10g-2 lists what). The picker (ZA-214 ×3), header (ZA-215) and modal (ZA-197) tests were seen failing with their fix
+  reverted; the rest test code new in the part.
+  - **ZP-001 (proposal) — built (D72).** "Your account" for every back-office user: name, address by link, password
+    with the current one. Tests: `Membership/CurrentUserAccountTests` ×3 providers; browser (as an Editor).
+  - **ZA-214 (Low) — fixed (D73).** API keys by name: `IApiKeyService`; the picker and TinyMCE's settings store the
+    name, older values read as they are and replaced by the name at the next save; Global Settings never sends a saved
+    value back. Tests: `Editors/ApiKeysPickerTests` ×6, `Security/ApiKeyServiceTests`; browser (no value in the HTML,
+    names stored, an old value converted).
+  - **ZA-215 (Low) — fixed.** `SectionLinks` catches, logs and offers "try again"; the profile menu reads nothing;
+    `Routes.razor` puts an `AdminErrorBoundary` round the admin's route, a fresh one after each failed page; the
+    circuit's stamp check keeps the sign-in when it cannot read the user (found by the audit). Tests:
+    `Shared/SectionChecksInBoundaryTests` ×3, `Membership/RevalidationTests`; browser (both failures shown in place,
+    the circuit kept, "Try again" recovered).
+  - **ZA-216 (Low, found while building) — fixed.** `Zauber:ApiKeys` in the shipped `appsettings.json` had been read
+    by nothing since the keys moved to Global Settings (2024); `ZauberSettings.ApiKeys` reads it again and it wins
+    (D73). Test: `ApiKeyServiceTests`.
+  - **ZA-197 (Low, moved from 10i) — fixed.** The vendored modal unsubscribes on dispose, ignores a navigation that
+    reaches it disposed, cancels its open panels and disposes a late script module; found live when the router's new
+    boundary removed the layout and the next navigation ended the circuit. Test: `Shared/ModalHostDisposalTests`;
+    browser (navigation after the error, a panel opened once).
+  - **ZA-218 (Medium, audit) — fixed.** The refresh endpoint was `[Authorize]`, so a cookie older than the stamp
+    check's five minutes was refused before the ticket was read and the user signed out after changing their own
+    password; it now reads the refused cookie and renews it only with a ticket for the same user. The confirmation
+    page renewed with the user the stamp check had loaded (old stamp); it loads it fresh. Tests:
+    `Membership/RefreshSignInTests` ×2 (the renewal from a refused cookie; another user's ticket or none refused).
+  - **Audit fixes in the part's own code (no ID).** Password checks one at a time (a lost lockout count); the panel
+    ignores a second click while a change runs; only the newest change-email link works; names over 150 characters
+    refused; an audit row that cannot be written is logged; the link built from `Zauber:SiteUrl` when a circuit has no
+    request; the panel's navigations keep the path base; Google Maps waits for its key; the user's own page in Users
+    sends address and password changes to the panel. Tests: `CurrentUserAccountTests` (newest link, taken address,
+    no request, name length).
+  - **ZA-217 (Low) and ZA-219 (Low) — recorded**, Phase 12.
 
 - **Roadmap Phase 10g (2026-11-28, back-office access per section and role, D38, D66–D71).** Release notes in the
   Roadmap's "Phase 10g". Full suite 1366 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and

@@ -3,6 +3,7 @@
 @using ZauberCMS.Components.Editors.Models
 @using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Core.Settings
+@using ZauberCMS.Core.Settings.Interfaces
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 @if (Location is { Lat: not 0, Lng: not 0 })
@@ -11,21 +12,25 @@
         <RadzenText TextStyle="TextStyle.Subtitle1">Latitude: @Location.Lat, Longitude: @Location.Lng</RadzenText>
     </div>
 }
-@if (ApiKey.IsNullOrWhiteSpace())
+@* Not before the key is known: the map loads Google's script with the key on its first render *@
+@if (_keyLoaded && ApiKey.IsNullOrWhiteSpace())
 {
-    <div>You have not set or created an API key with the name 'GoogleMaps'</div>
+    <div>There is no API key named 'GoogleMaps' (Global Settings, or Zauber:ApiKeys in the site's configuration)</div>
 }
 
-<RadzenGoogleMap ApiKey="@ApiKey" MapId="@(MapId.ToString())" @ref="Map" 
-                 Style="height: 400px" 
-                 Options=@(new Dictionary<string, object> { { "disableDoubleClickZoom", true } })
-                 Zoom="@SettingsModel.ZoomLevel" 
-                 Center="@(Location)" 
-                 MapClick="@OnMapClick">
-    <Markers>
-            <RadzenGoogleMapMarker Title="" Position="@(Location)" />   
-    </Markers>
-</RadzenGoogleMap>
+@if (_keyLoaded)
+{
+    <RadzenGoogleMap ApiKey="@ApiKey" MapId="@(MapId.ToString())" @ref="Map" 
+                     Style="height: 400px" 
+                     Options=@(new Dictionary<string, object> { { "disableDoubleClickZoom", true } })
+                     Zoom="@SettingsModel.ZoomLevel" 
+                     Center="@(Location)" 
+                     MapClick="@OnMapClick">
+        <Markers>
+                <RadzenGoogleMapMarker Title="" Position="@(Location)" />   
+        </Markers>
+    </RadzenGoogleMap>
+}
 
 @code {
     public string Name { get; set; } = "Google Map Picker";
@@ -53,6 +58,8 @@
     private RadzenGoogleMap? Map { get; set; }
     private Guid MapId { get; set; }
     private string? ApiKey { get; set; }
+    [Inject] public IApiKeyService ApiKeyService { get; set; } = null!;
+    private bool _keyLoaded;
     
     // Once per editor: a new map id on every parameter set rebuilt the map and lost its position (ZA-127)
     protected override async Task OnInitializedAsync()
@@ -69,11 +76,10 @@
             Location.Lat = SettingsModel.DefaultLat.Value;
         }
 
-        var globalSettings = await DataService.GetGlobalSettings();
-        if (globalSettings.ApiKeys.TryGetValue("GoogleMaps", out var apiKey))
-        {
-            ApiKey = apiKey;
-        }
+        // Configuration's key or Global Settings' (D73). The Maps JavaScript key is a browser key: it reaches the
+        // browser by design, so restrict it to the site's addresses in Google's console.
+        ApiKey = await ApiKeyService.GetApiKeyAsync("GoogleMaps");
+        _keyLoaded = true;
     }
 
     private async Task OnMapClick(GoogleMapClickEventArgs args)

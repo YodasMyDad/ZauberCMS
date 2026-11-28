@@ -32,4 +32,38 @@ public interface IMembershipService
     Task<AuthenticationResult> ForgotPasswordAsync(ForgotPasswordParameters parameters, CancellationToken cancellationToken = default);
     Task<AuthenticationResult> ResetPasswordAsync(ResetPasswordParameters parameters, CancellationToken cancellationToken = default);
     Task<User?> GetCurrentUserAsync(CancellationToken cancellationToken = default);
+
+    // A user's own account: what the admin's current-user panel changes (Roadmap D72). Like every service method
+    // these check no access (D27): the caller decides whose account it changes; the panel only ever passes the
+    // signed-in user's own id.
+
+    /// <summary>
+    /// Changes the user's name (<c>UserName</c>) and nothing else. The name is checked as any user name is (allowed
+    /// characters, not taken). The security stamp is kept, so no session ends: users sign in with their email
+    /// address, not their name, and a sign-in shows the new name once it is next renewed (within five minutes).
+    /// Writes an audit row.
+    /// </summary>
+    Task<HandlerResult<User>> ChangeUserNameAsync(ChangeUserNameParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Changes the user's password when <see cref="ChangePasswordParameters.CurrentPassword"/> is right. A wrong one
+    /// counts towards the account's lockout as a wrong password at sign-in does, and a locked account is refused.
+    /// The new password must meet the site's password rules. The security stamp is replaced, so the user's other
+    /// sessions end; when the caller is that user the result carries <see cref="HandlerResult{T}.RefreshSignIn"/>
+    /// and a ticket, to renew the caller's own sign-in. Writes an audit row.
+    /// </summary>
+    Task<HandlerResult<User>> ChangePasswordAsync(ChangePasswordParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a link to <see cref="RequestEmailChangeParameters.NewEmailAddress"/>; the account moves to that address
+    /// when the link is opened (<see cref="ConfirmEmailAsync"/>), which also ends the user's other sessions. Until
+    /// then the user signs in with the old address. Needs the current password, checked as in
+    /// <see cref="ChangePasswordAsync"/>; an account without a password is refused. At most one link per account per
+    /// minute, and only the newest link works (a link sent before it, for an address the user replaced, is refused).
+    /// Whether the new address belongs to another account is not said here (that would tell the caller who has an
+    /// account); the link is then refused when it is opened. Writes an audit row, and another when the address
+    /// moves. Like every write to a user's sign-in fields, these go through <c>UserManager</c>: the save hooks
+    /// (<c>IBeforeEntitySave&lt;User&gt;</c> and the others) do not run for them.
+    /// </summary>
+    Task<HandlerResult<User>> RequestEmailChangeAsync(RequestEmailChangeParameters parameters, CancellationToken cancellationToken = default);
 }

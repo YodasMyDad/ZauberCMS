@@ -19,13 +19,26 @@ public sealed class IdentityRevalidatingAuthenticationStateProvider(
 {
     protected override TimeSpan RevalidationInterval => TimeSpan.FromMinutes(10);
 
+    private readonly ILogger _logger = loggerFactory.CreateLogger<IdentityRevalidatingAuthenticationStateProvider>();
+
     protected override async Task<bool> ValidateAuthenticationStateAsync(
         AuthenticationState authenticationState, CancellationToken cancellationToken)
     {
-        // Get the user manager from a new scope to ensure it fetches fresh data
-        await using var scope = scopeFactory.CreateAsyncScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        return await ValidateSecurityStampAsync(userManager, authenticationState.User);
+        try
+        {
+            // Get the user manager from a new scope to ensure it fetches fresh data
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            return await ValidateSecurityStampAsync(userManager, authenticationState.User);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The check could not read the user (the database is down a moment). Signing the circuit out would send
+            // the user to the login page and lose their unsaved work; the sign-in stays until the next check, ten
+            // minutes on, and every request still checks the stamp itself (ZA-215, Roadmap D32)
+            _logger.LogWarning(ex, "The sign-in of an open admin tab could not be checked; it is checked again later");
+            return true;
+        }
     }
 
     private async Task<bool> ValidateSecurityStampAsync(UserManager<User> userManager,

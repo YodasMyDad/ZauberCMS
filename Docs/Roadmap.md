@@ -36,7 +36,10 @@
   sides, D64, ZA-187, ZA-190; every redirect honoured, D65, ZA-189; 2026-11-27). **Phase 10f is done.**
   **Phase 10g done** (back-office access per section and role, D38, D66–D71; ZA-188, ZA-199…ZA-201 found and fixed
   while building, ZA-202…ZA-213 found by its `/audit changed` and fixed, ZA-214 and ZA-215 recorded; 2026-11-28).
-  **10 open findings** (0 Critical, 0 High, 0 Medium, 10 Low), each one assigned below to a phase (10h, 10i, 12).
+  **Phase 10g-2 done** (your account for every back-office user, D72, ZP-001; API keys by name, D73, ZA-214, ZA-216;
+  the access checks inside the error boundaries, ZA-215, with ZA-197; ZA-218 found by its `/audit changed` and
+  fixed; ZA-217 and ZA-219 recorded; 2026-11-28).
+  **9 open findings** (0 Critical, 0 High, 0 Medium, 9 Low), each one assigned below to a phase (10h, 10i, 12).
   **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
   whose theme fits. **Next: Phase 10h** (admin localisation, D37, ZA-129; it covers 10g's new screens), then 10i,
   then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
@@ -117,8 +120,10 @@
 | D67 | **Pages, endpoints and the navigation are gated by section, with an `[Authorize]` attribute whose policy is built from its name.** `[AuthorizeSection("Alias", …)]` (Core, `Sections.Authorization`) is an `AuthorizeAttribute` with the policy `SectionPolicies.ForSections(...)`; ZauberCMS's policy provider (`SectionAuthorizationPolicyProvider`, ASP.NET's default plus these names) builds it on first use, so a plugin section needs no policy registration; with no alias it asks for any section (`SectionPolicies.BackOffice`); the request pipeline, Blazor's `AuthorizeRouteView` and controllers all honour it. The pages of each `Components/Admin/<Section>/` folder carry their section (that folder's `_Imports.razor`; the root `[Authorize(Roles = Admin)]` is gone), the SEO pages carry Settings. A page under `/admin` that declares no authorisation is for the users of the section whose `IndexUrl` its address is under (longest match on whole segments), else administrators only, as before: a plugin's pages under its section's address work for its users with no change. `/admin` sends each user to their first section (a redirect in `AdminAccessMiddleware`; `AdminIndex` in a circuit), signing in without a return address sends anyone with a section to the admin, a refused signed-in user gets an access-denied page (`/account/accessdenied`, the cookie's default address, status 403; there was none, so a refused member got the not-found page), the top navigation lists the user's sections only, and a nav item, nav group action, dashboard or tree context menu whose type carries `[Authorize]` is hidden from users who do not pass it (the last three since the phase's audit, ZA-209). Recycled and role-restricted media files are served to whoever may open Media (they were Admin-only). Rejected: a hand-kept list of page → section (the URL rule and the attribute need nothing kept), and `IAuthorizationRequirementData` on the attribute (Blazor's router reads only `IAuthorizeData`). Umbraco does the same: its Management API controllers carry section policies (`[Authorize(Policy = AuthorizationPolicies.SectionAccessContent)]`), a plugin's controller declares one, the back office shows only the user's sections and opens the first. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38 |
 | D68 | **Someone who manages users and roles cannot give anybody more than they have; the `Admin` role cannot be renamed or deleted.** A user who may open Users but is not an administrator cannot change, delete, set the password of, or change the roles of an administrator, or of a user who opens a section they cannot (setting that user's password would hand them the section; found by the phase's audit, ZA-203); gives only roles they are in, never `Admin` (taking a role away is allowed); opens and saves only roles they are in, never `Admin`, and adds to a role only sections they can open; can make a new role with those sections, and is then put in it, as Umbraco puts the maker of a user group in it (so they can go on managing it; it widens nothing). The user and role pages ask `IBackOfficeAccessService` (`CanEditUserAsync`, `CanSetUserRolesAsync`, `CanEditRoleAsync`, `CanSaveRoleAsync`, `CanDeleteRoleAsync`) before each change and say why when it refuses; these checks read the editor's roles as stored, not their sign-in's, so someone whose role was just taken away cannot give it back from an open session (ZA-205); the roles dialog and the role's section boxes disable what cannot be given. The services stay unchecked (D27). Nobody, an administrator included, renames or deletes `Admin`: `IMembershipService` refuses, as it refuses removing the last administrator, because every admin check compares that name; nor deletes a role that pages or media are restricted to, which would open them to everyone (ZA-202). Umbraco's `UserEditorAuthorizationHelper` and user-group authorisation do the same: a non-admin cannot save an administrator, assign a group they are not in, change a group they are not in or the administrators' group, or add a section they do not have; Umbraco's administrators group cannot be deleted. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38, D27 |
 | D69 | **The `Editor` role (Content and Media) is seeded once per database, and only when no role of that name exists.** `SeedEditorRole` (an `ISeedData`) creates it and writes a `GlobalData` marker (`ZauberEditorRoleSeeded`), so a site that deletes or renames it does not get it back at the next start; a role named `Editor` that a site already has (it may be a role for front-end members) is left untouched, so an upgrade gives nobody access to the admin. New sites have it before the installer runs; upgraded sites get it, empty, at their first start. Umbraco creates its default user groups (Administrators, Editors, Writers, Translators, Sensitive data) when it installs, and an upgrade migration adds a new one once. Only `Editor` is seeded (D38). (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38 |
-| D70 | **Global Settings stay administrators-only, whoever else may open Settings; a user edits their own account in Users only when they may open Users.** The global settings decide who gets in (admin email addresses, which promote an address's owner to administrator, the admin IP list, registration), what may be uploaded, and hold the API keys: anyone who could change them could make themselves an administrator. The page and its nav item carry `[Authorize(Roles = Admin)]`; the Settings index no longer sends non-administrators there; the rest of Settings (languages, dictionary, audit log, SEO) follows the section. The profile menu's "Edit" opens the user's page in Users, so it shows only to users who may open Users. Umbraco keeps these settings in configuration (`appsettings.json`: `Security`, `Content:DisallowedUploadFiles`), out of the Settings section's reach; it has a current-user panel for one's own profile, which ZauberCMS has not built (a user without Users changes their password through "Forgot your password"). (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38 |
+| D70 | **Global Settings stay administrators-only, whoever else may open Settings; a user edits their own account in Users only when they may open Users.** The global settings decide who gets in (admin email addresses, which promote an address's owner to administrator, the admin IP list, registration), what may be uploaded, and hold the API keys: anyone who could change them could make themselves an administrator. The page and its nav item carry `[Authorize(Roles = Admin)]`; the Settings index no longer sends non-administrators there; the rest of Settings (languages, dictionary, audit log, SEO) follows the section. The profile menu's "Edit" opens the user's page in Users, so it shows only to users who may open Users. Umbraco keeps these settings in configuration (`appsettings.json`: `Security`, `Content:DisallowedUploadFiles`), out of the Settings section's reach; it has a current-user panel for one's own profile, which ZauberCMS has not built (a user without Users changes their password through "Forgot your password"). (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) *Changed by D72 (Phase 10g-2): every back-office user now changes their own name, email address and password in "Your account" from the profile menu; the user's page in Users is still for those who may open Users, and Global Settings stay administrators-only.* | D38 |
 | D71 | **The role every registration gets opens no section of the admin.** `Zauber:NewUserStartingRole` (default `Member`) is given to whoever registers or first signs in externally, so sections on it would let anyone with an email address into the admin: `BackOfficeAccessService` leaves it out of every user's sections, whatever is stored on it, and saving sections on it is refused, for administrators too, with the reason on its role page (which shows a note instead of the boxes). A site that wants registrants in the admin gives them another role afterwards. Nothing changes on upgrade (no role had sections before D38); a new site whose starting role is `Editor` gets the seeded `Editor` with no effect until it changes the setting. Found by the phase's audit (ZA-206). Umbraco keeps members (who register) and back-office users apart, so a registration can never reach the back office; ZauberCMS has one user table, so it keeps the registration role out of the back office instead. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38, D23 |
+| D72 | **Every back-office user changes their own name, email address and password in "Your account", a side panel from the profile menu, and nothing else of their account there.** The name changes at once (checked as any user name; the security stamp is kept, so no session ends: users sign in with their email address, and a sign-in shows the new name once it is renewed). The address needs the current password and moves only when the link sent to the new address is opened (ASP.NET Identity's change-email token, through the existing confirmation page); until then the old address signs in; opening it ends the user's other sessions, and the confirmation page renews the sign-in of that same user in that browser; one link per account per minute on each server, and only the newest works (a link for an address the user then replaced, mistyped say, is refused, so its reader cannot take the account); whether the new address belongs to another account is not said (that would tell a user who has an account), the link is refused when it is opened; a confirmed address on the admin list does not promote (D22). The password needs the current one, then the new one twice and the site's password rules; a wrong current password counts towards the lockout as at sign-in (six lock the account for five minutes); the new security stamp ends the other sessions, and this browser's sign-in is renewed through the refresh endpoint (a full load, so the panel says to save first). Each change writes an audit row (never the address). The panel acts only on whoever is signed in, read from the sign-in for each change and never taken from a parameter: that is the access check (D27); roles, sections and profile properties stay on the user's page in Users (D68), which the panel opens for users who may open Users; there, on their own page, the address box is read-only and "Change Password" opens the panel, so the current password is asked whoever changes their own (Umbraco asks for the old password when a user changes their own in the user editor too). The service side, `IMembershipService.ChangeUserNameAsync`, `ChangePasswordAsync` and `RequestEmailChangeAsync`, checks no access, as every service (D27). Umbraco's current-user panel (the avatar) gives every back-office user Change password (the current password asked; an administrator resetting another user's is not), Log out, two-factor and external logins, and Edit (their user in the Users section) only to users who have that section; name and email are changed there, at once and without a confirmation. ZauberCMS adds name and email to the panel because ZP-001 asked for them for users without Users, and because it is the session's owner, not a user manager, who changes the address, the address is confirmed by link and needs the current password, so a stolen session cannot move the account to an address of its own and reset the password from there (re-authentication for sensitive changes, as OWASP advises). Not built: avatar, a language per user, two-factor and external-login management (separate features in Umbraco). (owner delegated to Umbraco parity, 2026-11-28, Phase 10g-2) | ZP-001, D70, D27, D68 |
+| D73 | **API keys are referred to by name; the admin never shows a key's value once it is saved; a site can keep its keys in configuration.** `IApiKeyService` (Core, `Settings`, scoped, replaceable) lists the names and gives a value on the server where it is used: `Zauber:ApiKeys:<name>` from configuration (appsettings, environment variables, user secrets, a key vault; read again, as it had been read by nothing since the keys moved to Global Settings in 2024, ZA-216) wins over a key of the same name in Global Settings, and an empty value is ignored (the shipped `appsettings.json` has an empty `TinyMCE`). The API Key Picker and TinyMCE's settings store the key's name, not its value; `GetPickedApiKeyAsync` reads a value stored before v5 (the key itself) as it is, and the picker shows such a value as its key's name and stores the name the next time the page or the settings are saved. No data migration: the values live in pages, drafts, versions and block snapshots on three providers, as in D30. Global Settings lists the names; each value box starts empty (an empty box keeps the saved value, a typed one replaces it), and the names configuration sets are listed. A key that a script in the browser needs (TinyMCE's cloud key, the Maps JavaScript key) still reaches the browser, as those providers intend; restrict it to the site's domains with the provider. Because TinyMCE sends whichever key its settings name to the browser, whoever may change content types can see any key's value through it, as they could before (the settings then held the value itself); keys that must stay on the server belong in a configuration section of the site's own, not in `Zauber:ApiKeys` or Global Settings, which are for keys editors and views pick by name. Pages and settings keep the name, so renaming or removing a key leaves them without it (the Global Settings page says so; the picker then says the saved key is not one of the site's keys). Umbraco keeps secrets in configuration (appsettings, environment variables, user secrets, Azure Key Vault) and its back office never shows them; it has no API-key store in the back office at all. ZauberCMS keeps the Global Settings keys (sites use them) but write-only, and reads configuration again so a site can keep its keys out of the database as Umbraco does. Rejected: encrypting the values in the database (the server needs the plain value anyway, and it adds a key-management dependency to every deployment), and a data migration of stored values. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g-2) | ZA-214, ZA-216, D30 |
 
 ## Working rules for the rework
 
@@ -1155,7 +1160,7 @@ ZA-187 (Medium), ZA-189, ZA-190 (Low) fixed. Decisions D64 and D65 (delegated, U
 ### Phase 10g — Back-office roles: section access per role (D38) — DONE (2026-11-28)
 The feature the owner chose (2026-11-27); it replaces the Backlog row "Back-office roles other than Admin". ZA-188
 fixed; ZA-199, ZA-200, ZA-201 found and fixed while building (all Low); the phase's `/audit changed` found ZA-202…ZA-213
-(3 High, 4 Medium, 5 Low), all fixed, and recorded ZA-214 and ZA-215 (Low, Phase 12). Decisions D66–D71 (delegated,
+(3 High, 4 Medium, 5 Low), all fixed, and recorded ZA-214 and ZA-215 (Low; done in Phase 10g-2). Decisions D66–D71 (delegated,
 Umbraco's way). Start nodes and per-action permissions are not part of it (D38).
 - **Sections per role (D66).** `Role.ExtendedData["AllowedSections"]` (`RoleExtensions.Get/SetAllowedSections`),
   ticked in a "Sections" box on the role's page, which lists every discovered `ISection`; a user opens the sections
@@ -1215,12 +1220,12 @@ Umbraco's way). Start nodes and per-action permissions are not part of it (D38).
   circuit's `UserManager` (a second change failed) and showed the password: own scope, a password box. **ZA-213** (Low)
   the ChangeTab dialog had a route (`/ChangeTab/{id}`) outside `/admin`. With ZA-199: `App.razor`'s `<base href>` is
   the request's path base now, so a circuit's base address matches it. Recorded: **ZA-214** the API-key picker stores
-  and shows the key's value to whoever edits the page (Phase 12: a stored-format change); **ZA-215** the section
-  checks in the header and the router read the database outside the D32 error boundaries (Phase 12). Not changed:
+  and shows the key's value to whoever edits the page; **ZA-215** the section checks in the header and the router
+  read the database outside the D32 error boundaries (both done in Phase 10g-2). Not changed:
   a role rename reaches open sessions only when their sign-in is renewed (D66, documented); a site's own
   `IAuthorizationPolicyProvider` registered before `AddZauberCms` is replaced (documented: derive from
   `SectionAuthorizationPolicyProvider` and register it after). Proposal ZP-001 (own profile and password for every
-  back-office user, as Umbraco's current-user panel) is in the report.
+  back-office user, as Umbraco's current-user panel) was built in Phase 10g-2 (D72).
 - Tests: `Security/SectionAccessTests` (seeding ×3, sections ×4, address → section ×9, policies, attribute,
   undeclared pages ×5, the `/admin` redirect ×3, every shipped admin page declares its access, D68 ×4, the Admin role
   protected, ZA-200, ZA-202, ZA-203, ZA-205, ZA-206, ZA-207, sign-in redirect), on SQLite, PostgreSQL and SQL Server;
@@ -1276,6 +1281,120 @@ Umbraco's way). Start nodes and per-action permissions are not part of it (D38).
   - Breaking: none in the API. `AdminAccessMiddleware` is internal; `IBackOfficeAccessService` is new and registered
     by `AddZauberCms`.
 
+### Phase 10g-2 — Back-office roles follow-ups: your account, API keys by name, checks inside the error boundaries — DONE (2026-11-28)
+ZP-001, ZA-214 and ZA-215, moved here from Phase 12 (owner, 2026-11-28). ZP-001 built (D72), ZA-214 fixed (D73), ZA-215
+fixed. Found while building: **ZA-216** (Low, the `Zauber:ApiKeys` setting had been read by nothing since the keys
+moved to Global Settings in 2024) fixed; **ZA-197** (the vendored modal kept its subscriptions after disposal) fixed
+here instead of 10i, because ZA-215's router boundary removes the layout and the next navigation then ended the
+circuit; **ZA-217** (Low, a site with no `wwwroot` folder fails at start with an `ArgumentNullException` from the
+ImageResize options) recorded for Phase 12. The part's `/audit changed` found **ZA-218** (Medium, the sign-in renewal)
+and fixed it with its own code's findings, and recorded **ZA-219** (Low, admin navigations ignore a path base, Phase
+12). Decisions D72–D73 (delegated, Umbraco's way); D70 updated.
+- **Your account (D72, ZP-001).** The profile menu's "Edit" (Users only) became "Your account" for everyone: a side
+  panel (`Admin/Layout/CurrentUserPanel.razor`) with the name, the email address (a link to the new address, the
+  current password asked) and the password (current, new twice). `IMembershipService.ChangeUserNameAsync`,
+  `ChangePasswordAsync`, `RequestEmailChangeAsync` (new partial `MembershipService.Profile.cs`) with their parameter
+  classes; wrong current passwords count towards the lockout, checked one at a time; the change-email link is sent to
+  the new address with its own wording, one a minute per account, only the newest works (`ExtendedData`
+  `ZauberPendingEmail`, checked by `ConfirmEmailAsync`); audit rows for each change and for the confirmed move. The
+  confirmation page renews the sign-in of the same user in that browser. The user's own page in Users: the address
+  box is read-only and "Change Password" opens the panel.
+- **API keys by name (D73, ZA-214, ZA-216).** `IApiKeyService` / `ApiKeyService` (Core, `Settings`, scoped,
+  replaceable): names from `Zauber:ApiKeys` (configuration, read again, wins) and Global Settings; values resolved on
+  the server. The API Key Picker stores the name (an older value is shown as its key's name and replaced by the name
+  at the next save); TinyMCE resolves its settings' key (`GetPickedApiKeyAsync`) and renders only once it has it;
+  Google Maps reads `GoogleMaps` through the service and also waits for it. Global Settings lists names with empty
+  value boxes (`ApiKeyEdits`: an empty box keeps the saved value) and the names configuration sets.
+- **ZA-215.** `SectionLinks` catches and logs a failed check and shows "The sections could not be shown: try again"
+  in the header; the profile menu no longer reads the database (its Users check moved into the panel, inside the
+  side panel's boundary); `Routes.razor` puts an `AdminErrorBoundary` ("This page") round the admin's route and its
+  `AuthorizeView`/`AuthorizeRouteView`, and the next navigation gets a fresh one (`AdminErrorBoundary.HasError`, a
+  key that changes only after an error, so the layout is not made again on every navigation). Found by the audit and
+  fixed with it: the circuit's ten-minute stamp check (`IdentityRevalidatingAuthenticationStateProvider`) signed the
+  tab out when it could not read the user; it now logs a warning and checks again next time.
+- **ZA-197 (found here).** `BlazoredModal` removes its three subscriptions when it is disposed, ignores a navigation
+  that reaches it disposed, cancels the panels still open (their `Result` completes) and restores the page's scroll,
+  and disposes a script module that finished loading after it was removed.
+- **`/audit changed` (2026-11-28):** a diff reviewer and two unit reviewers (Core; UI), given the code and the
+  requirement. Nothing Critical or High. Fixed: **ZA-218** (Medium) the sign-in renewal after a change that replaces
+  the security stamp failed for a cookie older than the stamp check's five minutes (the check refused it before
+  `/api/auth/refreshsignin` ran, so a password change from a tab open a while ended on the login page): the endpoint
+  is `[AllowAnonymous]` and, when the cookie was refused, reads it and renews it only with a ticket for that same user
+  (pre-existing since ZA-052 for the user page's self-changes); the confirmation page renewed with a copy of the user
+  the stamp check had loaded before the change (old stamp): it loads the user in a scope of its own. In the part's own
+  code: two password checks at once could lose a lockout count (now one at a time, loaded inside the lock); a
+  double click could run a change twice (the panel's handlers return while one runs); an older change-email link
+  stayed valid (only the newest now); a name over the column's 150 characters failed in the database (refused with a
+  message); an audit row that could not be written lost the renewal ticket (logged instead); the change-email link
+  could not be built in a circuit without a request (Long Polling, Azure SignalR) even with `Zauber:SiteUrl` set
+  (`EmailService` uses it then, else names the setting); the panel's navigations ignored a path base; Google Maps
+  could load Google's script before its key; the modal fixes above; the user's own page in Users changed the address
+  and password without the current password. Recorded: **ZA-219** (Low) other admin navigations (`UserEditor`,
+  `RoleEditor`, `Urls.*` with `NavigateTo`) go to absolute addresses that ignore a path base (Phase 12). Not changed,
+  documented in D72/D73: TinyMCE sends whichever key its settings name to the browser (Structure-level, as before);
+  renaming a key leaves the pages that name it without it; a confirmation link is applied when it is opened (GET), as
+  ASP.NET Identity's is, and the old address is not told; `RecoverAdminUser` matching a user name that a user could
+  give themselves predates the panel (registration gives any free name) and is a setting to remove after use.
+- Tests: `Membership/CurrentUserAccountTests` (name, password, lockout, rules, no password, the address by link,
+  newest link only, address taken, link without a request, name length, admin list does not promote; ×3 providers),
+  `Membership/RefreshSignInTests` (ZA-218 ×2), `Membership/RevalidationTests` (ZA-215), `Security/ApiKeyServiceTests`
+  (ZA-214, ZA-216); `ZauberCMS.Components.Tests` `Editors/ApiKeysPickerTests` (ZA-214 ×6),
+  `Shared/SectionChecksInBoundaryTests` (ZA-215 ×3), `Shared/ModalHostDisposalTests` (ZA-197). Seen failing with the
+  fix reverted: the three picker tests, the header test and the modal test. PublicApiTests snapshot: 6 new public
+  types (`CurrentUserPanel`, the three parameter classes, `IApiKeyService`, `ApiKeyService`). Full suite 1455
+  (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings; template
+  smoke test passes (start-up touched).
+- **Verified in the browser** (dev site, Release, Development, a scratch SQLite database through the installer,
+  `app.db` untouched; a temporary file provider for email and a switchable failing `IBackOfficeAccessService` in the
+  dev runner, removed before the commit): Global Settings keys added, saved, shown with empty boxes and "Saved: type a
+  new value to replace it", no value in the page's HTML after a reload; TinyMCE's settings picker lists the names and
+  the content type stores `TinyMCE`; the editor loads TinyMCE's script with the key resolved from the name; a page's
+  picker stores `Maps`; a value stored the old way (`sk-…`) shows as `Maps`, is not in the page's HTML, and is stored
+  as `Maps` at the next save. As an Editor (Content and Media only): "Your account" in the profile menu, no "Open
+  your page in Users", nothing about roles or sections; the name changed (audit row, same security stamp); a wrong
+  current password refused (`AccessFailedCount` 1); the password changed: the page reloaded signed in, new stamp, the
+  old password then refused; the address: link written to the new address, a second within the minute refused, the
+  link opened in the same browser changed the address (roles unchanged) and the browser stayed signed in past the
+  five-minute stamp check. With the access checks failing: in-circuit navigation showed "This page could not be shown"
+  with "Try again" (the circuit stayed; it had ended before the ZA-197 fix), "Try again" brought the page back once
+  the checks worked, a side panel then opened once; with only the header's list failing, the header showed "The
+  sections could not be shown: try again" over a working page, logged, and came back on "Try again". As the
+  administrator: the panel has "Open your page in Users"; there the address box is read-only with the caption and
+  "Change Password" opens the panel; the password changed from it five and a half minutes after the tab's last
+  request (so the stamp check refused the cookie first, ZA-218) and the page came back signed in.
+- **Not verified in the browser:** a real SMTP server (the email went to a file); Google Maps (no key set); keys from
+  configuration listed in Global Settings (tests only); the admin under a path base; Long Polling or Azure SignalR;
+  the confirmation link opened in another browser; the ten-minute circuit revalidation failing (unit test only).
+- **For 10h and 10i:** new admin text to localise: the "Your account" menu item and panel (headings Name, Email
+  address, Password; "Your roles, and the sections of the admin you can open, are set by an administrator.", the
+  captions under the address and the password, the placeholders and the buttons "Save name", "Send the link", "Change
+  password", "Open your page in Users", the success and refusal messages, including the service's messages in
+  `MembershipService.Profile.cs` and `LockedOutMessage`), the change-email email's subject and two paragraphs
+  (`EmailService`), the confirmation page's "A newer link was sent…", the own-page caption in `UserEditor`, the Global
+  Settings API key texts (description, placeholders, "Saved: type a new value to replace it", the configuration
+  caption, the three refusals in `ApiKeyEdits`), the picker's placeholder and its "not one of the site's keys" caption,
+  the Google Maps warning, "The sections could not be shown: try again". 10i: the panel's password boxes are not in a
+  `<form>` (browsers note it; Enter does not submit); the profile menu items are clickable `div`s (ZA-128); messages
+  use `role="alert"`/`role="status"`.
+- **Release notes (D18):**
+  - Every back-office user has "Your account" in the profile menu: their name, email address (confirmed by a link to
+    the new address; their current password is asked) and password (the current one is asked). Users who may open
+    Users still find their own page there, but change their own address and password through the panel.
+  - After a password change the other sessions of the user end; the browser it was made in stays signed in. The sign-in
+    renewal now works for a cookie older than five minutes too.
+  - API keys: the API Key Picker and TinyMCE's settings store the key's name. **Breaking:** a site view that reads a
+    picker value and uses it as the key must resolve it with `IApiKeyService.GetPickedApiKeyAsync(value)` (pages
+    saved before keep the key itself, which that method returns as it is, until they are saved again).
+    `Zauber:ApiKeys` in configuration is read again and wins over a key of the same name in Global Settings: remove an
+    old entry there that should not. Global Settings no longer shows saved values; renaming a key leaves the pages that
+    name it without it.
+  - An error while the admin's header or router checks access shows in place with "Try again" instead of ending the
+    circuit; an open tab is not signed out when its periodic check cannot reach the database.
+  - **Breaking:** `IMembershipService` has three new members (`ChangeUserNameAsync`, `ChangePasswordAsync`,
+    `RequestEmailChangeAsync`); a class that implements it itself must add them. `AuthController`'s constructor takes
+    the cookie options. New public types: `IApiKeyService`, `ApiKeyService` (registered by `AddZauberCms`),
+    `CurrentUserPanel` and the three parameter classes; `ZauberSettings.ApiKeys`; `AdminErrorBoundary.HasError`.
+
 ### Phase 10h — Admin localisation, English resources (D37)
 ZA-129 (Low). Every admin string through `IStringLocalizer` with English resource files; a site adds a language
 with its own resources. Settle how a site supplies them (resource assembly or files) and record it. Done after 10g so
@@ -1286,8 +1405,8 @@ ZA-128 (Low). Labels on icon buttons and inputs, keyboard access and roles for t
 button), `label for` matching real ids, focus in side panels. Last of the Phase 10 parts, so it covers 10g's screens
 and uses 10h's localised text.
 - From the Phase 11 audit: **ZA-194**, with registration off the registration page shows the not-found view inside
-  the account layout, not the not-found view's own layout; **ZA-197**, the vendored `BlazoredModal` subscribes to
-  three events in `OnInitialized` and never unsubscribes (harmless while it lives as long as the circuit).
+  the account layout, not the not-found view's own layout. (ZA-197, the vendored modal's subscriptions, was fixed in
+  Phase 10g-2.)
 
 ### Phase 11 — Engineering baseline, API clean-up, v5 — DONE 2026-11-27
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,
@@ -1972,10 +2091,10 @@ not reach the bootstrap's copy, which configures ImageResize, Identity, rate lim
 options), **ZA-195** (CI's commit-back of the stamped version conflicts when two pushes to `main-static` are in flight;
 it heals on the next push), **ZA-196** (a blank storage or email provider passes start-up and the first upload or
 email throws `NullReferenceException` without naming the setting).
-From the Phase 10g audit: **ZA-214** (the API-key picker saves the chosen key's value into the page, so whoever edits
-it reads the secret: store the key's name and resolve it where used, reading old values as they are), **ZA-215** (the
-section checks in the admin header and the router read the database outside the D32 error boundaries: catch and log
-in the header).
+(ZA-214 and ZA-215, from the Phase 10g audit, were done in Phase 10g-2.) From Phase 10g-2: **ZA-217** (a site with no
+`wwwroot` folder fails at start with an `ArgumentNullException` from the ImageResize options, `ZauberSetup.cs`: name
+the folder or create it), **ZA-219** (admin navigations to absolute addresses, `UserEditor`'s and `RoleEditor`'s
+sign-in refresh and the `Urls.*` `NavigateTo` calls, ignore a path base; the panel's own were fixed in 10g-2).
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 

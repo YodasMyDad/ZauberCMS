@@ -1,15 +1,20 @@
 ﻿@using ZauberCMS.Components.Editors.Settings
 @using ZauberCMS.Components.Editors.Models
 @using TinyMCE.Blazor
+@using ZauberCMS.Core.Settings.Interfaces
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<Editor
-    Field="@(() => Value)"
-    Conf="@EditorConf"
-    Value="@Value"
-    ApiKey="@ApiKey"
-    ValueChanged="@(s => OnChange(s))"
-/>
+@* Not before the key is known: the editor loads TinyMCE's script with the key in its address on its first render *@
+@if (_keyLoaded)
+{
+    <Editor
+        Field="@(() => Value)"
+        Conf="@EditorConf"
+        Value="@Value"
+        ApiKey="@ApiKey"
+        ValueChanged="@(s => OnChange(s))"
+    />
+}
 
 @code {
     //https://www.tiny.cloud/docs/tinymce/latest/menus-configuration-options/
@@ -29,8 +34,11 @@
     public List<string> Styles { get; set; } = [];
     public bool FullWidth { get; set; }
     
+    [Inject] public IApiKeyService ApiKeyService { get; set; } = null!;
+
     private TinyMcePropertySettingsModel SettingsModel { get; set; } = new();
     private string? ApiKey { get; set; }
+    private bool _keyLoaded;
     
     private Dictionary<string, object> EditorConf { get; set; } = new()
     {
@@ -38,12 +46,15 @@
         { "image_advtab", true }
     };
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         SettingsModel = Settings.FromJson<TinyMcePropertySettingsModel>();
-        ApiKey = SettingsModel.SelectedApiKey;
         EditorConf.Add("menubar", SettingsModel.ShowMenuBar ? string.Join(" ", SettingsModel.SelectedMenuBar) : "false");
         EditorConf.Add("toolbar", string.Join(" ", SettingsModel.SelectedToolBar));
+        // The settings hold the key's name (ZA-214, D73), or the key itself when saved before v5. TinyMCE's cloud
+        // key goes to the browser in the script's address: it is meant to be public, limited to the site's domains.
+        ApiKey = await ApiKeyService.GetPickedApiKeyAsync(SettingsModel.SelectedApiKey);
+        _keyLoaded = true;
     }
 
     void OnChange(string html)

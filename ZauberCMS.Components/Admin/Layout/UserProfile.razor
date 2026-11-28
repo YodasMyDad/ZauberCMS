@@ -2,14 +2,13 @@
 
 <RadzenProfileMenu class="rz-background-color-primary-darker">
     <Template>
-        <RadzenGravatar Email="@AuthState.User.GetUserEmail()"/>
+        <RadzenGravatar Email="@AuthState?.User.GetUserEmail()"/>
     </Template>
     <ChildContent>
-        @* The account is edited on its page in the Users section, so only for those who may open it (Roadmap D70) *@
-        @if (_mayOpenUsers)
-        {
-            <ProfileMenuItem Icon="edit" Name="Edit" OnClick="() => Edit()"/>
-        }
+        @* Every back-office user changes their own name, email address and password here (Roadmap D72); the
+           panel offers their page in Users to those who may open Users. Nothing here reads the database, so the
+           header cannot fail on it (ZA-215). *@
+        <ProfileMenuItem Icon="person" Name="Your account" OnClick="() => OpenAccount()"/>
         <ProfileMenuItem Icon="logout" Name="Logout" OnClick="() => Logout()"/>
     </ChildContent>
 </RadzenProfileMenu>
@@ -17,13 +16,12 @@
 @code {
 
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
-    [Inject] public ZauberCMS.Core.Sections.Interfaces.IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
-    private AuthenticationState AuthState { get; set; } = null!;
-    private bool _mayOpenUsers;
+    [CascadingParameter] public IModalService? ModalService { get; set; }
+    private AuthenticationState? AuthState { get; set; }
 
-    private void Edit()
+    private void OpenAccount()
     {
-        NavigationManager.NavigateTo($"{Urls.AdminUsersEdit}/{AuthState.User.GetUserId()}");
+        ModalService?.OpenSidePanel<CurrentUserPanel>("Your account");
     }
 
     private void Logout()
@@ -34,8 +32,6 @@
     protected override async Task OnInitializedAsync()
     {
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        _mayOpenUsers = await BackOfficeAccess.CanOpenSectionAsync(AuthState.User, Constants.Sections.UsersSection);
     }
 
 }
-

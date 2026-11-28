@@ -1,26 +1,53 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Sections.Interfaces
 @using ZauberCMS.Core.Shared
 @* Only the sections the signed-in user may open (Roadmap D38, D67); their pages refuse everyone else as well *@
-@foreach (var section in Sections)
+@if (_failed)
 {
-    <RadzenButton Variant="Variant.Text" Text="@(section.Name)" class="@(section.Alias == CurrentSection ? "section-nav-active" : "")" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigateTo(section.IndexUrl))/>
+    @* The check reads the roles on a cache miss. When that fails the header says so in its place and the rest of the
+       page carries on (ZA-215, D32), instead of the circuit ending; the exception is in the log. *@
+    <span role="alert">
+        <RadzenButton Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Icon="refresh"
+                      Text="The sections could not be shown: try again" Click="@LoadAsync"/>
+    </span>
+}
+else
+{
+    @foreach (var section in Sections)
+    {
+        <RadzenButton Variant="Variant.Text" Text="@(section.Name)" class="@(section.Alias == CurrentSection ? "section-nav-active" : "")" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigateTo(section.IndexUrl))/>
+    }
 }
 
 @code {
-    
+
     [Inject] public IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
-    
+    [Inject] public ILogger<SectionLinks> Logger { get; set; } = null!;
+
     private IReadOnlyList<ISection> Sections { get; set; } = [];
-    
+    private bool _failed;
+
     [Parameter] public string? CurrentSection { get; set; }
-    
-    protected override async Task OnInitializedAsync()
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
-        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
-        Sections = await BackOfficeAccess.GetSectionsAsync(user);
+        try
+        {
+            var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+            Sections = await BackOfficeAccess.GetSectionsAsync(user);
+            _failed = false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Logger.LogError(ex, "The sections of the admin header could not be loaded");
+            Sections = [];
+            _failed = true;
+        }
     }
 
     private void NavigateTo(string url)

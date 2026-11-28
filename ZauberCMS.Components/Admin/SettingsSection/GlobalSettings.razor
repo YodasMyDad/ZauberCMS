@@ -29,10 +29,36 @@
                 </EditorRow>
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Api Keys" Description="Manage API keys that can be selected in the API key editor"/>
+                        <PropertyInfo Name="Api Keys" Description="Keys that the API Key Picker and the editors (TinyMCE, Google Maps) use by name. A saved key's value is never shown again: type a new value to replace it. Pages and editor settings keep the name, so renaming or removing a key leaves them without it. A key in the site's configuration (Zauber:ApiKeys) wins over one of the same name here"/>
                     </LeftColumn>
                     <CentreColumn>
-                        <DictionaryEditor TItem="string" @bind-Value="@GlobalSettingsModel.ApiKeys"/>                    
+                        @* Values go one way (ZA-214, Roadmap D73): a saved value is kept on the server and never sent back
+                           to the page; an empty box keeps it *@
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                                <RadzenTextBox @bind-Value="@_newApiKeyName" Placeholder="Name" aria-label="New API key name" Style="width: 100%"/>
+                                <RadzenTextBox @bind-Value="@_newApiKeyValue" Placeholder="Value" aria-label="New API key value" autocomplete="off" Style="width: 100%"/>
+                                <RadzenButton Click="@AddApiKey" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                              class="rz-border-radius-10 rz-shadow-4" title="Add the key" aria-label="Add the key"/>
+                            </RadzenStack>
+                            @foreach (var row in _apiKeys.Rows)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" @key="row">
+                                    <RadzenTextBox @bind-Value="@row.Name" aria-label="API key name" Style="width: 100%"/>
+                                    <RadzenTextBox @bind-Value="@row.NewValue" autocomplete="off" Style="width: 100%"
+                                                   Placeholder="@(row.SavedName != null ? "Saved: type a new value to replace it" : "Value")"
+                                                   aria-label="@($"New value for the API key {row.Name}")"/>
+                                    <RadzenButton Click="@(() => _apiKeys.Rows.Remove(row))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                                  class="rz-border-radius-10 rz-shadow-4" title="Remove the key" aria-label="@($"Remove the API key {row.Name}")"/>
+                                </RadzenStack>
+                            }
+                            @if (_configuredApiKeyNames.Count > 0)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption">
+                                    In the site's configuration, which wins over a key of the same name here: @string.Join(", ", _configuredApiKeyNames)
+                                </RadzenText>
+                            }
+                        </RadzenStack>
                     </CentreColumn>
                 </EditorRow>
             </RadzenTabsItem>
@@ -100,18 +126,51 @@
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
     
     [Inject] public NotificationService NotificationService { get; set; } = null!;
-    
+    [Inject] public Microsoft.Extensions.Options.IOptions<ZauberCMS.Core.Settings.ZauberSettings> ZauberSettings { get; set; } = null!;
+
     private int SelectedIndex { get; set; }
     private ZauberCMS.Core.Settings.GlobalSettings GlobalSettingsModel { get; set; } = new();
+
+    // The API keys: names and typed values only; the saved values stay in ApiKeyEdits (D73)
+    private ApiKeyEdits _apiKeys = new(new Dictionary<string, string>());
+    private List<string> _configuredApiKeyNames = [];
+    private string? _newApiKeyName;
+    private string? _newApiKeyValue;
     
     protected override async Task OnInitializedAsync()
     {
         GlobalSettingsModel = await DataService.GetGlobalSettings();
+        _apiKeys = new ApiKeyEdits(GlobalSettingsModel.ApiKeys);
+        _configuredApiKeyNames = ZauberSettings.Value.ApiKeys
+            .Where(x => !string.IsNullOrWhiteSpace(x.Key) && !string.IsNullOrEmpty(x.Value))
+            .Select(x => x.Key).Order(StringComparer.OrdinalIgnoreCase).ToList();
         Layout?.SetSection(Constants.Sections.SettingsSection);
+    }
+
+    private void AddApiKey()
+    {
+        var problem = _apiKeys.Add(_newApiKeyName, _newApiKeyValue);
+        if (problem != null)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = problem, Duration = 6000 });
+            return;
+        }
+
+        _newApiKeyName = null;
+        _newApiKeyValue = null;
     }
 
     private async Task Save()
     {
+        var (apiKeys, apiKeysProblem) = _apiKeys.ToSave();
+        if (apiKeys == null)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = apiKeysProblem ?? "The API keys could not be saved", Duration = 6000 });
+            return;
+        }
+
+        GlobalSettingsModel.ApiKeys = apiKeys;
+
         // A culture nobody can use would silently fall back; refuse it here instead
         var defaultLanguage = GlobalSettingsModel.DefaultLanguage?.Trim();
         if (string.IsNullOrEmpty(defaultLanguage))
@@ -131,6 +190,12 @@
         }
 
         var result = await DataService.SaveGlobalSettings(GlobalSettingsModel);
+        if (result)
+        {
+            // What was typed is saved: the boxes empty again
+            _apiKeys.Load(apiKeys);
+        }
+
         NotificationService.Notify(result ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Saved", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "There was an error", Duration = 4000 });
     }
 }

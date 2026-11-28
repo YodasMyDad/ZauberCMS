@@ -34,6 +34,7 @@
     private readonly ModalOptions _globalModalOptions = new();
     private IJSObjectReference? _styleFunctions;
     private bool _haveActiveModals;
+    private bool _disposed;
 
     internal event Action? OnModalClosed;
 
@@ -67,7 +68,15 @@
     {
         if (firstRender)
         {
-            _styleFunctions = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/ZauberCMS.Components/Modal/BlazoredModal.razor.js");
+            var styleFunctions = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/ZauberCMS.Components/Modal/BlazoredModal.razor.js");
+            if (_disposed)
+            {
+                // Removed while the module loaded: nothing would dispose it later
+                await DisposeQuietlyAsync(styleFunctions);
+                return;
+            }
+
+            _styleFunctions = styleFunctions;
         }
     }
 
@@ -110,16 +119,33 @@
         }
     }
 
+    // async void (an event handler): an exception here would end the circuit. A navigation can still reach a modal
+    // that its layout's removal has just disposed, as the event's handlers were read before (ZA-197).
     private async void CancelModals(object? sender, LocationChangedEventArgs e)
     {
-        foreach (var modalReference in _modals.ToList())
+        if (_disposed)
         {
-            modalReference.Dismiss(ModalResult.Cancel());
+            return;
         }
 
-        _modals.Clear();
-        await ClearBodyStyles();
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            foreach (var modalReference in _modals.ToList())
+            {
+                modalReference.Dismiss(ModalResult.Cancel());
+            }
+
+            _modals.Clear();
+            await ClearBodyStyles();
+            if (!_disposed)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or ObjectDisposedException or TaskCanceledException)
+        {
+            // Disposed meanwhile, or the browser is gone: nothing is left to clean up
+        }
     }
 
     private async Task Update(ModalReference modalReference)
@@ -144,7 +170,7 @@
     private async Task ClearBodyStyles()
     {
         _haveActiveModals = false;
-        if (_styleFunctions is not null)
+        if (_styleFunctions is not null && !_disposed)
         {
             await _styleFunctions.InvokeVoidAsync("removeBodyStyle");
         }
@@ -152,17 +178,50 @@
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
+        // The modal service lives as long as the circuit and the navigation manager longer: a layout that is
+        // removed (an error shown in its place) and made again must not leave this instance answering them (ZA-197)
+        _disposed = true;
+        ((ModalService) CascadedModalService).OnModalInstanceAdded -= Update;
+        ((ModalService) CascadedModalService).OnModalCloseRequested -= CloseInstance;
+        NavigationManager.LocationChanged -= CancelModals;
+
+        // Panels still open go with it: whoever awaits their result gets Cancel instead of waiting for ever, and
+        // the page can scroll again
+        foreach (var modalReference in _modals.ToList())
+        {
+            modalReference.Dismiss(ModalResult.Cancel());
+        }
+
+        _modals.Clear();
         if (_styleFunctions is not null)
         {
-            try
+            if (_haveActiveModals)
             {
-                await _styleFunctions.DisposeAsync();
+                try
+                {
+                    await _styleFunctions.InvokeVoidAsync("removeBodyStyle");
+                }
+                catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException)
+                {
+                    // The browser is gone, or the page with it
+                }
             }
-            catch (JSDisconnectedException)
-            {
-                // If the browser is gone, we don't need it to clean up any browser-side state
-            }
+
+            await DisposeQuietlyAsync(_styleFunctions);
+            _styleFunctions = null;
         }
-    } 
+    }
+
+    private static async Task DisposeQuietlyAsync(IJSObjectReference module)
+    {
+        try
+        {
+            await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // If the browser is gone, we don't need it to clean up any browser-side state
+        }
+    }
 
 }

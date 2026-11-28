@@ -1,9 +1,12 @@
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Models;
@@ -16,16 +19,20 @@ public class AuthController(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
     IAntiforgery antiforgery,
-    RefreshSignInTicketService refreshSignInTickets)
+    RefreshSignInTicketService refreshSignInTickets,
+    IOptionsMonitor<CookieAuthenticationOptions> cookieOptions)
     : ControllerBase
 {
     /// <summary>
-    /// Re-issues the sign-in cookie after the user changed their own account (user name, email, roles).
+    /// Re-issues the sign-in cookie after the user changed their own account (user name, email, password, roles).
     /// The cookie is only renewed for a user who may still sign in, and only when the cookie's security stamp is
-    /// still valid or the request carries the ticket the save handed out. Anything else ends the session, so a
+    /// still valid or the request carries the ticket the change handed out. Anything else ends the session, so a
     /// cookie that was invalidated (password reset, user deleted) cannot be turned into a fresh one (ZA-052).
+    /// Not <c>[Authorize]</c>: a cookie older than the security stamp check's interval (five minutes) is refused by
+    /// that check before this runs, because the change replaced the stamp; the cookie the browser sent is then read
+    /// here, and renewed only together with a ticket for that same user (ZA-218).
     /// </summary>
-    [Authorize]
+    [AllowAnonymous]
     [HttpGet("refreshsignin")]
     public async Task<IActionResult> RefreshSignIn(string? redirectUrl = null, string? ticket = null)
     {
@@ -40,8 +47,40 @@ public class AuthController(
             return LocalRedirectOrHome(redirectUrl);
         }
 
+        if (user == null)
+        {
+            var (cookieUser, properties) = await UserOfRefusedCookieAsync();
+            if (cookieUser != null
+                && refreshSignInTickets.IsValid(ticket, cookieUser)
+                && await signInManager.CanSignInAsync(cookieUser)
+                && !await userManager.IsLockedOutAsync(cookieUser))
+            {
+                await signInManager.SignInAsync(cookieUser, properties ?? new AuthenticationProperties());
+                return LocalRedirectOrHome(redirectUrl);
+            }
+        }
+
         await signInManager.SignOutAsync();
         return Redirect(Urls.Account.Login);
+    }
+
+    /// <summary>
+    /// The user, and the sign-in's properties ("remember me"), of the application cookie this request carries when
+    /// the cookie handler did not accept it: still within its lifetime, and protected by this site's keys.
+    /// </summary>
+    private async Task<(User? User, AuthenticationProperties? Properties)> UserOfRefusedCookieAsync()
+    {
+        var options = cookieOptions.Get(IdentityConstants.ApplicationScheme);
+        var cookie = options.Cookie.Name is { } name ? options.CookieManager.GetRequestCookie(HttpContext, name) : null;
+        var cookieTicket = string.IsNullOrEmpty(cookie) ? null : options.TicketDataFormat.Unprotect(cookie);
+        if (cookieTicket?.Principal is not { } principal ||
+            cookieTicket.Properties.ExpiresUtc is { } expires && expires <= DateTimeOffset.UtcNow)
+        {
+            return (null, null);
+        }
+
+        var cookieUser = await userManager.GetUserAsync(principal);
+        return cookieUser is { Deleted: false } ? (cookieUser, cookieTicket.Properties) : (null, null);
     }
 
     // GET renders a tiny form that posts the sign-out (the POST below checks the antiforgery token). It submits

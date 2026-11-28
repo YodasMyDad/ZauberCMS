@@ -51,6 +51,13 @@ that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/Edit
   which also reads a bare id from before D30. Query the items with `AmountPerPage = ids.Count` (the default is 10)
   and put them back in order with `InPickerOrder`; queries return their own order. Save after a drag, not only after
   an add or remove. `GetContentItems` / `GetMediaItems` / `GetUsers` do this for views.
+- **API keys** are stored by name, never by value (ZA-214, Roadmap D73): the API Key Picker and TinyMCE's settings
+  keep the key's name, and the value is read on the server where it is used, with
+  `IApiKeyService.GetPickedApiKeyAsync(value)` (a value stored before v5 is the key itself and comes back as it is;
+  the picker shows it as its key's name and stores the name from the next save) or `GetApiKeyAsync(name)` for a fixed
+  name (Google Maps reads `GoogleMaps`). Keys come from `Zauber:ApiKeys` in configuration, which wins, and Global
+  Settings. Never render a key into the admin. A key that a script in the browser needs (TinyMCE's cloud key, the
+  Maps JavaScript key) reaches the browser anyway: restrict it to the site's domains with its provider.
 - **Numbers and dates** are stored in the invariant culture (`1.5`, `2026-11-26T14:30:00`, format `"s"`); the admin
   runs in `AdminDefaultLanguage` and a page in its own language, so a culture-formatted value reads differently on the
   site. `ToValue<double|decimal|DateTime>` reads the invariant form first and the current culture's as a fallback,

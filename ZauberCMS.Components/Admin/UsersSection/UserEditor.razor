@@ -45,8 +45,17 @@
                          AlignItems="AlignItems.Start" Gap="0.5rem">
                 <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@User.UserName"
                                ValueChanged="@((string name) => { User.UserName = name; })" aria-label="Name"/>
+                @* Your own address and password are changed in "Your account", with your current password and a link to
+                   the new address (Roadmap D72), also when you may open Users: as Umbraco asks for your old password *@
                 <RadzenTextBox Style="width: 100%;" Name="Email" Placeholder="Email" Value="@User.Email"
-                               ValueChanged="@((string name) => { User.Email = name; })" aria-label="Name"/>
+                               ValueChanged="@((string name) => { User.Email = name; })" aria-label="Email"
+                               Disabled="@IsSelf"/>
+                @if (IsSelf)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption">
+                        Change your own email address and password in "Your account", from the profile menu.
+                    </RadzenText>
+                }
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
                              AlignItems="AlignItems.Center" Gap="0">
                     <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;"
@@ -212,10 +221,22 @@
         return Access.Allowed;
     }
 
+    /// <summary>The user on the page is the one signed in.</summary>
+    private bool IsSelf => User != null &&
+                           string.Equals(AuthState?.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                               User.Id.ToString(), StringComparison.OrdinalIgnoreCase);
+
     private async Task ChangePassword()
     {
         if (!await MayChangeAsync())
         {
+            return;
+        }
+
+        if (IsSelf)
+        {
+            // Your own password needs your current one (D72): the panel asks for it
+            ModalService.OpenSidePanel<ZauberCMS.Components.Admin.Layout.CurrentUserPanel>("Your account");
             return;
         }
 
@@ -393,6 +414,12 @@
         if (!await MayChangeAsync())
         {
             return;
+        }
+
+        if (IsSelf)
+        {
+            // Never from here for your own account, whatever the box sent (D72)
+            User!.Email = InitialEmail;
         }
 
         if (await ValidateService.CanSave(User!))

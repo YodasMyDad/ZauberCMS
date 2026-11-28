@@ -39,6 +39,15 @@ public class ZauberSettings
     /// site that sends email. The SEO checker may also fetch this host when it is on a private address.
     /// </summary>
     public string? SiteUrl { get; set; }
+
+    /// <summary>
+    /// API keys by name (Roadmap D73), for the API Key Picker and the editors that need one (TinyMCE takes the key
+    /// its settings name, Google Maps the one named <c>GoogleMaps</c>). Set here they stay in the site's
+    /// configuration (appsettings, environment variables such as <c>Zauber__ApiKeys__GoogleMaps</c>, user secrets)
+    /// and win over a key of the same name in Global Settings; the admin shows only their names. An empty value is
+    /// ignored. Read them through <c>IApiKeyService</c>.
+    /// </summary>
+    public Dictionary<string, string> ApiKeys { get; set; } = [];
     public EmailSettings Email { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new()
     {

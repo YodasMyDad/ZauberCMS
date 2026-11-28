@@ -5,9 +5,9 @@ using ZauberCMS.Core.Membership.Models;
 namespace ZauberCMS.Core.Membership;
 
 /// <summary>
-/// Short-lived proof that the signed-in user has just changed their own account (user name, email, roles) and
+/// Short-lived proof that the signed-in user has just changed their own account (user name, email, password, roles) and
 /// may have their sign-in cookie re-issued.
-/// A change of user name or email replaces the security stamp, so the cookie the user holds no longer validates.
+/// A change of user name, email or password replaces the security stamp, so the cookie the user holds no longer validates.
 /// The ticket is bound to the user and to the stamp that change produced; without it the refresh endpoint only
 /// re-issues a cookie whose stamp is still valid. A stolen cookie therefore cannot be renewed after the account's
 /// password is reset or the user is deleted.

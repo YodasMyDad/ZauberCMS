@@ -9,9 +9,52 @@
 
 <Router
     AppAssembly="@typeof(App).Assembly"
-    AdditionalAssemblies="@ExtensionManager.GetFilteredAssemblies(null)">
+    AdditionalAssemblies="@ExtensionManager.GetFilteredAssemblies(null)"
+    OnNavigateAsync="@OnNavigateAsync">
     <Found Context="routeData">
         <CascadingValue Value="routeData">
+            @if (AdminAccess.IsAdminPath(NavigationManager))
+            {
+                @* The access checks below read the roles on a cache miss. In the admin's circuit an exception there
+                   shows here, with "Try again", instead of ending the circuit (ZA-215, Roadmap D32); the next
+                   navigation clears it. What fails inside a page shows in the layout's own boundaries, which keep
+                   the header and navigation. The front end has no circuit: its errors go to the error page (D33). *@
+                <ZauberCMS.Components.Shared.AdminErrorBoundary @ref="_adminBoundary" @key="_adminBoundaryKey" Name="This page">
+                    @RouteContent(routeData)
+                </ZauberCMS.Components.Shared.AdminErrorBoundary>
+            }
+            else
+            {
+                @RouteContent(routeData)
+            }
+            @*<FocusOnNavigate RouteData="routeData" Selector="h1"/>*@
+        </CascadingValue>
+    </Found>
+</Router>
+
+@code {
+    private ZauberCMS.Components.Shared.AdminErrorBoundary? _adminBoundary;
+    private int _adminBoundaryKey;
+
+    // Below the path base: NavigationManager.Uri starts with it (ZA-199)
+    private bool IsUnprotectedAdminPage(RouteData routeData) =>
+        AdminAccess.IsAdminPath(NavigationManager) && !AdminAccess.DeclaresAuthorization(routeData.PageType);
+
+    // A failed check for one page does not stay on screen for the next: the next page gets a boundary of its own.
+    // Not Recover(), which would render the failed page again first, and could fail into the next one. A boundary
+    // without an error keeps its key, so the layout (navigation, open trees) is not made again on every navigation.
+    private Task OnNavigateAsync(NavigationContext context)
+    {
+        if (_adminBoundary?.HasError == true)
+        {
+            _adminBoundaryKey++;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private RenderFragment RouteContent(RouteData routeData) =>
+        @<text>
             @if (IsUnprotectedAdminPage(routeData))
             {
                 @* A page under /admin that declares no [Authorize] of its own is for the users who may open the
@@ -50,13 +93,5 @@
                     </NotAuthorized>
                 </AuthorizeRouteView>
             }
-            @*<FocusOnNavigate RouteData="routeData" Selector="h1"/>*@
-        </CascadingValue>
-    </Found>
-</Router>
-
-@code {
-    // Below the path base: NavigationManager.Uri starts with it (ZA-199)
-    private bool IsUnprotectedAdminPage(RouteData routeData) =>
-        AdminAccess.IsAdminPath(NavigationManager) && !AdminAccess.DeclaresAuthorization(routeData.PageType);
+        </text>;
 }

@@ -154,6 +154,8 @@ public static class ZauberSetup
         builder.Services.AddScoped<ISeoService, SeoService>();
         builder.Services.AddScoped<IDataService, DataService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        // API keys by name, from configuration and Global Settings (Roadmap D73); replaceable
+        builder.Services.AddScoped<ZauberCMS.Core.Settings.Interfaces.IApiKeyService, ZauberCMS.Core.Settings.Services.ApiKeyService>();
 
         builder.Services.AddHostedService<DailyJob>();
 

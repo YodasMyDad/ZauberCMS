@@ -34,6 +34,9 @@ else
 
     [Inject] public IOptions<CircuitOptions> CircuitOptions { get; set; } = null!;
 
+    /// <summary>Whether it shows an error now instead of its content.</summary>
+    public bool HasError => CurrentException is not null;
+
     /// <summary>What the error shows about <paramref name="exception"/>: its type and message with Blazor's detailed
     /// errors on, otherwise a pointer to the log. For an <c>ErrorContent</c> of your own.</summary>
     public string Describe(Exception exception) => CircuitOptions.Value.DetailedErrors
