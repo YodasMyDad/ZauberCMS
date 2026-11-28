@@ -11,7 +11,7 @@
 @using ZauberCMS.Core.Membership
 @using ZauberCMS.Core.Shared.Models
 @attribute [ExcludeFromInteractiveRouting]
-@attribute [EnableRateLimiting("login")]
+@attribute [EnableRateLimiting(ZauberCMS.Core.ZauberSetup.LoginRateLimitPolicy)]
 
 <PageTitle>@L["account_register"]</PageTitle>
 
@@ -88,7 +88,8 @@
                 "{Name} logged in with {LoginProvider} provider.",
                 _externalLoginInfo.Principal.Identity?.Name,
                 _externalLoginInfo.LoginProvider);
-            RedirectManager.RedirectTo(ReturnUrl);
+            // Back to the page that sent the visitor here, when it is on this site (ZA-253, as the login page, ZA-201)
+            RedirectManager.RedirectTo(NavigationManager.ToLocalReturnUrl(ReturnUrl));
         }
         else if (result.IsLockedOut)
         {

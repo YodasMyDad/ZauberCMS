@@ -41,7 +41,7 @@
             if (MediaId != null &&
                 await MediaService.GetMediaAsync(new GetMediaParameters { Id = MediaId }) == null)
             {
-                NavigationManager.NavigateTo(Urls.AdminMediaBaseUrl);
+                NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(Urls.AdminMediaBaseUrl));
             }
         });
 

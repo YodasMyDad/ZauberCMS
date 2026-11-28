@@ -57,7 +57,7 @@
             }
             else
             {
-                NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{content.Id}");
+                NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminStructureUpdateContentType}/{content.Id}"));
                 StateHasChanged();
             }
         }

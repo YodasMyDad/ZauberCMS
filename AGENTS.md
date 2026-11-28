@@ -161,8 +161,12 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
   Media). Handlers fire on the publisher's thread in every circuit → marshal with `InvokeAsync`.
 - Identity tables are `Zauber*`-prefixed; migrations history table `ZauberMigrations`. Keys are sequential GUIDs.
 - Login-like pages use rate-limit policy `"login"` (per-IP 10 / 5 min); the registration page has its own,
-  `"register"` (per-IP 5 POSTs / 10 min). Both from `Zauber:Identity:LoginRateLimit` / `RegisterRateLimit`. Identity lockout is active: six wrong passwords lock the account for
+  `"register"` (per-IP 5 POSTs / 10 min). Both from `Zauber:Identity:LoginRateLimit` / `RegisterRateLimit`; each
+  is the keyed `IRateLimiterPolicy<string>` of its name, so a site registers its own to replace it (D104). Identity lockout is active: six wrong passwords lock the account for
   five minutes.
+- Under a path base (`UsePathBase`), site paths (`Urls.*`, `IndexUrl`, tree and media addresses) go through
+  `NavigationManager.ToSiteUrl` for navigation and links, return addresses through `GetReturnUrl()`; server code
+  prefixes `Request.PathBase` (D101). A site without `wwwroot` gets one in its content root at start (D100).
 - The first administrator comes from the installer, never from registering first. "Installed" is a `GlobalData`
   flag that is never unset; `Zauber:Identity:RecoverAdminUser` is the way back in for a site with no administrator.
   There is no switch for the installer: empty database settings always show it (D24).
@@ -187,7 +191,8 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
   access first (in the admin, through `IBackOfficeAccessService`). Services read the caller only to record who made a change, through `ICurrentUserAccessor` (circuit,
   static page, controller or job; `RunAs` for code with nobody signed in). Never inject `AuthenticationStateProvider`
   into a service. → [Docs/Services.md](Docs/Services.md) "Callers and access"
-- Behind a reverse proxy set `Zauber:ForwardedHeaders`; set `Zauber:SiteUrl` on any site that sends email.
+- Behind a reverse proxy set `Zauber:ForwardedHeaders`; set `Zauber:SiteUrl` on any site that sends email
+  (with the path base in it, for a site under one).
 - The admin always runs in `Zauber:AdminDefaultLanguage` (`CultureMiddleware` for requests,
   `AdminCultureCircuitHandler` for circuits); front-end pages run in the language of their content, the account
   pages in the request's (`UseRequestLocalization`: the site's languages, D95). ZauberCMS's own text follows that
@@ -230,6 +235,7 @@ and how it was verified: [.audit/history.md](.audit/history.md).
    comes with a regression test (or un-skips the one waiting for it); UI behaviour with no test yet → state how it
    was verified. → [Docs/Standards.md](Docs/Standards.md) §9. A csproj, packaging, the template or start-up touched →
    `./tests/template-smoke.ps1` passes too (a site made from the template, run through the installer; CI runs it).
+   CI's stamp or commit-back step touched → `bash tests/commit-back-test.sh` passes (CI runs it).
 4. **Docs updated in the same change** when behaviour, an extension point, a convention or a fact in this file changes.
    A doc that disagrees with code is a bug. Never write versions into docs — point at the csproj.
 5. Self-review with the `doublecheck` skill; larger changes or before a release run the `audit` skill.

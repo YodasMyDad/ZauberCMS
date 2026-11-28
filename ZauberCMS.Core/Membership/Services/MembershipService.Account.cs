@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Memory;
@@ -54,7 +55,7 @@ public partial class MembershipService
                         (await scope.ServiceProvider.GetRequiredService<IBackOfficeAccessService>()
                             .GetSectionsAsync(userPrincipal, cancellationToken)).Count > 0)
                     {
-                        parameters.ReturnUrl = Urls.AdminBaseUrl;
+                        parameters.ReturnUrl = HostPath(Urls.AdminBaseUrl);
                     }
                     loginResult.NavigateToUrl = parameters.ReturnUrl;
                 }
@@ -97,7 +98,7 @@ public partial class MembershipService
                     else if (signInResult.RequiresTwoFactor)
                     {
                         // This is currently not supported
-                        loginResult.NavigateToUrl = $"{Urls.Account.LoginWith2Fa}?returnUrl={parameters.ReturnUrl}&rememberMe={parameters.RememberMe}";
+                        loginResult.NavigateToUrl = $"{HostPath(Urls.Account.LoginWith2Fa)}?returnUrl={parameters.ReturnUrl}&rememberMe={parameters.RememberMe}";
                     }
                     else
                     {
@@ -120,6 +121,15 @@ public partial class MembershipService
 
         return loginResult;
     }
+
+    /// <summary>
+    /// A path on this site as a return address or link takes it: the request's path base, then the path, so a site
+    /// under <c>UsePathBase</c> sends the visitor below it (ZA-219). The pages hand <c>NavigateToUrl</c> to
+    /// <see cref="IdentityRedirectManager.RedirectTo(string?)"/>, which reads a path from the host's root, as the return
+    /// address of a sign-in is.
+    /// </summary>
+    private string HostPath(string path) =>
+        (httpContextAccessor.HttpContext?.Request.PathBase ?? PathString.Empty).Add(new PathString(path)).ToString();
 
     /// <summary>
     /// Sends the confirmation email again, at most once per <see cref="ConfirmationResendInterval"/> for each account
@@ -242,11 +252,11 @@ public partial class MembershipService
                             (await scope.ServiceProvider.GetRequiredService<IBackOfficeAccessService>()
                                 .GetSectionsAsync(await signInManager.CreateUserPrincipalAsync(user!), cancellationToken)).Count > 0)
                         {
-                            parameters.ReturnUrl = Urls.AdminBaseUrl;
+                            parameters.ReturnUrl = HostPath(Urls.AdminBaseUrl);
                         }
                     }
-                    
-                    registrationResult.NavigateToUrl = parameters.ReturnUrl ?? "/";   
+
+                    registrationResult.NavigateToUrl = parameters.ReturnUrl ?? HostPath("/");
                     
                 }
             }
@@ -529,7 +539,7 @@ public partial class MembershipService
 
                     resetPasswordResult.Success = true;
                     resetPasswordResult.NavigateToUrl = parameters.ReturnUrl;
-                    resetPasswordResult.AddMessage(text["membership_passwordResetDone", $"<a class=\"underline\" href=\"{Urls.Account.Login}\">", "</a>"], ResultMessageType.Success);
+                    resetPasswordResult.AddMessage(text["membership_passwordResetDone", $"<a class=\"underline\" href=\"{HostPath(Urls.Account.Login)}\">", "</a>"], ResultMessageType.Success);
                 }
                 else
                 {

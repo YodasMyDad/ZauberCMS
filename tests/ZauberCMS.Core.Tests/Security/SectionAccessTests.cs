@@ -553,6 +553,20 @@ public class SectionAccessTests : IAsyncLifetime
         Assert.NotEqual(Urls.AdminBaseUrl, memberResult.NavigateToUrl);
     }
 
+    [Fact]
+    public async Task ZA219_signing_in_under_a_path_base_sends_someone_who_may_open_a_section_below_it()
+    {
+        // The login page hands NavigateToUrl to IdentityRedirectManager, which reads it from the host's root, as the
+        // return address of a sign-in is: the path base has to be in it
+        var editor = await _site.CreateUserAsync("path-base-editor");
+        await AddToRolesAsync(editor, Constants.Roles.EditorRoleName);
+
+        var result = await LoginAsync(editor.Email!, pathBase: "/site");
+
+        Assert.True(result.Success, TestSite.Describe(result.Messages));
+        Assert.Equal("/site" + Urls.AdminBaseUrl, result.NavigateToUrl);
+    }
+
     // ---- Helpers ----
 
     /// <summary>
@@ -620,12 +634,13 @@ public class SectionAccessTests : IAsyncLifetime
         return await factory.CreateAsync((await userManager.FindByIdAsync(user.Id.ToString()))!);
     }
 
-    private async Task<AuthenticationResult> LoginAsync(string email)
+    private async Task<AuthenticationResult> LoginAsync(string email, string pathBase = "")
     {
         using var scope = _site.CreateScope();
         // Sign-in writes cookies, so it needs a request to write them to
-        scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext =
-            new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        context.Request.PathBase = pathBase;
+        scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext = context;
         return await scope.ServiceProvider.GetRequiredService<IMembershipService>().LoginUserAsync(
             new LoginUserParameters { Email = email, Password = "Passw0rd-For-Tests" }, Ct);
     }

@@ -6,6 +6,7 @@ using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Shared.Models;
+using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Components.ContextMenus.Structure;
 
@@ -38,7 +39,7 @@ public class CopyContentTypeContextMenu(IStringLocalizer<ZauberText> text) : ITr
         }
 
         contextMenuService.Close();
-        navigationManager.NavigateTo($"{Urls.AdminStructureCopyContentType}/{branch.Id}");
+        navigationManager.NavigateTo(navigationManager.ToSiteUrl($"{Urls.AdminStructureCopyContentType}/{branch.Id}"));
         return Task.CompletedTask;
     }
 

@@ -9,7 +9,7 @@
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Shared.Models
 @attribute [ExcludeFromInteractiveRouting]
-@attribute [EnableRateLimiting("login")]
+@attribute [EnableRateLimiting(ZauberSetup.LoginRateLimitPolicy)]
 
 <LayoutView Layout="LayoutType">
     <PageTitle>@L["account_logIn"]</PageTitle>
@@ -45,12 +45,12 @@
                     </div>
                     <div style="padding-top: 10px;">
                         <p>
-                            <a href="/Account/ForgotPassword">@L["account_forgotPassword"]</a>
+                            <a href="@NavigationManager.ToSiteUrl(Urls.Account.ForgotPassword)">@L["account_forgotPassword"]</a>
                         </p>
                         @if (RegistrationOpen)
                         {
                             <p>
-                                <a href="@(NavigationManager.GetUriWithQueryParameters("/Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">@L["account_registerAsNewUser"]</a>
+                                <a href="@(NavigationManager.GetUriWithQueryParameters(NavigationManager.ToSiteUrl(Urls.Account.Register), new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">@L["account_registerAsNewUser"]</a>
                             </p>
                         }
                     </div>
@@ -59,7 +59,7 @@
             }
             else
             {
-                <p><a href="@(Urls.ApiLogout)">@L["account_logOutHere"]</a></p>
+                <p><a href="@NavigationManager.ToSiteUrl(Urls.ApiLogout)">@L["account_logOutHere"]</a></p>
             }
 
     </div>

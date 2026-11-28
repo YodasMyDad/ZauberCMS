@@ -126,7 +126,7 @@
                             <PropertyInfo Name="@L["media_fileUrl"]"/>
                         </LeftColumn>
                         <CentreColumn>
-                            <a href="/@Media.Url" target="_blank" alt="@Media.AltTag">
+                            <a href="@NavigationManager.ToSiteUrl(Media.Url ?? string.Empty)" target="_blank" alt="@Media.AltTag">
                                 /@Media.Url
                             </a>
                         </CentreColumn>

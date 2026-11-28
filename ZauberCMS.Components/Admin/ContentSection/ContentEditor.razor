@@ -210,7 +210,7 @@ else
                                 @foreach (var content in Breadcrumb.SkipLast(1))
                                 {
                                     <RadzenBreadCrumbItem
-                                        Path="@($"{Urls.AdminUpdateContent}/{content.Id}")"
+                                        Path="@NavigationManager.ToSiteUrl($"{Urls.AdminUpdateContent}/{content.Id}")"
                                         Text="@(content.Name?.Length > 30 ? content.Name[..30] + "..." : content.Name)"/>
                                 }
                             </RadzenBreadCrumb>
@@ -785,7 +785,7 @@ else
         }
         else
         {
-            NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{WorkingCopy.Id}");
+            NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminUpdateContent}/{WorkingCopy.Id}"));
         }
     }
 

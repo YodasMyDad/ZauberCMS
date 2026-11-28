@@ -83,7 +83,7 @@
     {
         if (value is ContentType selectedRow)
         {
-            NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{selectedRow.Id}", RefreshPage);
+            NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminStructureUpdateContentType}/{selectedRow.Id}"), RefreshPage);
         }
     }
 }

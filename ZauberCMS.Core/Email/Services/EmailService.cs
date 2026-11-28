@@ -95,7 +95,7 @@ public class EmailService(
         if (Uri.TryCreate(siteUrl, UriKind.Absolute, out var site) &&
             (site.Scheme == Uri.UriSchemeHttp || site.Scheme == Uri.UriSchemeHttps))
         {
-            return new Uri(site, Urls.Account.ConfirmEmail).ToString();
+            return HttpContextExtensions.OnSite(site, Urls.Account.ConfirmEmail);
         }
 
         throw new InvalidOperationException(

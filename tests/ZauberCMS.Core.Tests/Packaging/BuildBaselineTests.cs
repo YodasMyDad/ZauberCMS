@@ -142,31 +142,43 @@ public partial class BuildBaselineTests
     }
 
     [Fact]
-    public void ZA195_the_commit_back_replays_the_bump_on_the_newest_main_static_without_overwriting_a_persons_change()
+    public void ZA195_the_commit_back_is_the_publish_jobs_last_step_and_the_publish_jobs_run_one_at_a_time()
     {
-        var text = File.ReadAllText(Path.Combine(RepositoryRoot(), ".github/workflows/ci.yml")).ReplaceLineEndings("\n");
-        var start = text.IndexOf("- name: Commit the stamped version back to main-static", StringComparison.Ordinal);
-        Assert.True(start > text.IndexOf("dotnet nuget push", StringComparison.Ordinal),
-            "the version is committed back after the packages are pushed");
-        var step = text[start..];
+        var publish = Job(ReadCi(), "publish-nuget");
+        var steps = StepName().Matches(publish).Select(m => m.Groups["name"].Value).ToList();
 
-        // A plain `pull --rebase` conflicted with the bump of the release before when two pushes were in flight
-        Assert.DoesNotContain("git pull --rebase", step, StringComparison.Ordinal);
-        var fetch = step.IndexOf("git fetch --quiet origin +refs/heads/main-static:refs/remotes/origin/main-static",
-            StringComparison.Ordinal);
-        var rolledBack = step.IndexOf("if ! git merge-base --is-ancestor \"${built}\" \"${tip}\"; then",
-            StringComparison.Ordinal);
-        var newerKept = step.IndexOf("if is_higher \"${current}\" \"${VERSION}\"", StringComparison.Ordinal);
-        var personsKept = step.IndexOf("main-static has later changes to the version files", StringComparison.Ordinal);
-        var replay = step.IndexOf("git rebase --quiet -X theirs \"${tip}\"", StringComparison.Ordinal);
-        var push = step.IndexOf("if git push origin HEAD:main-static; then", StringComparison.Ordinal);
-        Assert.True(fetch > 0 && rolledBack > fetch && newerKept > rolledBack && personsKept > newerKept &&
-                    replay > personsKept && push > replay,
-            "each attempt fetches main-static, stops when it no longer holds the commit built (ZA-233), keeps a " +
-            "newer version and a person's change, then replays the bump and pushes");
-        // Only this job's own bumps are overridden, and a lost race is tried again
-        Assert.Contains("$2 == bot && $3 ~ /^Bump version to [^ ]+ \\[skip ci\\]$/", step, StringComparison.Ordinal);
-        Assert.Contains("for attempt in 1 2 3 4 5; do", step, StringComparison.Ordinal);
+        // tests/commit-back-test.sh runs the step itself (ZP002); what it cannot see is the job around the step. The
+        // version is committed back once every package is on nuget.org, and nothing runs after it
+        Assert.Equal("Commit the stamped version back to main-static", steps[^1]);
+        var push = publish.IndexOf("dotnet nuget push", StringComparison.Ordinal);
+        var commitBack = publish.IndexOf("- name: Commit the stamped version back", StringComparison.Ordinal);
+        Assert.True(push > 0 && commitBack > push, "the version is committed back after the packages are pushed");
+        // Each job replays its bump over the previous job's (D82), which holds while the publish jobs run one at a
+        // time in push order: one concurrency group for every run, and a running job is never cancelled
+        Assert.Matches(PublishConcurrency(), publish);
+    }
+
+    [Fact]
+    public void ZP002_the_build_job_runs_the_commit_back_test_on_the_steps_named_in_the_publish_job()
+    {
+        var ci = ReadCi();
+        Assert.Contains("run: bash tests/commit-back-test.sh\n", Job(ci, "build"), StringComparison.Ordinal);
+
+        // The script takes the two steps out of ci.yml by name: a step renamed there must be renamed in the script
+        var script = File.ReadAllText(Path.Combine(RepositoryRoot(), "tests/commit-back-test.sh"))
+            .ReplaceLineEndings("\n");
+        var named = ScriptStepName().Matches(script)
+            .ToDictionary(m => m.Groups["variable"].Value, m => m.Groups["name"].Value);
+        Assert.Equal(["commit_back_step", "stamp_step"], named.Keys.Order());
+        var steps = StepName().Matches(Job(ci, "publish-nuget")).Select(m => m.Groups["name"].Value).ToList();
+        foreach (var name in named.Values)
+        {
+            Assert.True(steps.Count(s => s == name) == 1,
+                $"the publish job has no step named '{name}', or more than one");
+        }
+
+        Assert.True(steps.IndexOf(named["stamp_step"]) < steps.IndexOf(named["commit_back_step"]),
+            "the script runs the stamp step before the commit-back, as the publish job does");
     }
 
     [Fact]
@@ -218,6 +230,33 @@ public partial class BuildBaselineTests
     // Update-VersionInFile -Path "<file>" `<newline> -Pattern '<regex>'
     [GeneratedRegex(@"Update-VersionInFile\s+-Path\s+""(?<path>[^""]+)""\s*`?\s*-Pattern\s+'(?<pattern>[^']+)'")]
     private static partial Regex StampedFile();
+
+    private static string ReadCi() =>
+        File.ReadAllText(Path.Combine(RepositoryRoot(), ".github/workflows/ci.yml")).ReplaceLineEndings("\n");
+
+    // One job of ci.yml: from its `  <id>:` line to the next job's, or the end
+    private static string Job(string ci, string id)
+    {
+        var start = ci.IndexOf($"\n  {id}:\n", StringComparison.Ordinal);
+        Assert.True(start >= 0, $"ci.yml has no job {id}");
+        var next = JobLine().Match(ci, start + 1);
+        return next.Success ? ci[start..next.Index] : ci[start..];
+    }
+
+    [GeneratedRegex(@"\n  [A-Za-z0-9_-]+:\n")]
+    private static partial Regex JobLine();
+
+    // `      - name: <step>`: a step of a job
+    [GeneratedRegex(@"^      - name: (?<name>.+)$", RegexOptions.Multiline)]
+    private static partial Regex StepName();
+
+    // A group without `${{ }}` is one group for every run; `cancel-in-progress: false` lets a running job finish
+    [GeneratedRegex(@"^    concurrency:\n      group: [^$\n]+\n      cancel-in-progress: false$", RegexOptions.Multiline)]
+    private static partial Regex PublishConcurrency();
+
+    // `stamp_step='<step name>'` and `commit_back_step='<step name>'` in tests/commit-back-test.sh
+    [GeneratedRegex(@"^(?<variable>stamp_step|commit_back_step)='(?<name>[^']+)'$", RegexOptions.Multiline)]
+    private static partial Regex ScriptStepName();
 
     private static IEnumerable<string> Workflows() =>
         Directory.EnumerateFiles(Path.Combine(RepositoryRoot(), ".github", "workflows"), "*.yml");

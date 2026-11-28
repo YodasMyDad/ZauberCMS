@@ -373,5 +373,10 @@ cleanly. `ZauberTextTests` covers the lookup order and the bootstrap. A componen
   services don't decide who may write ([Services.md](Services.md) "Callers and access"), so a page or menu opened to
   a section's users can do whatever the services it calls can do; a change that could widen someone's access asks
   `IBackOfficeAccessService` first.
+- Addresses are site paths: an `ISection.IndexUrl`, a nav item's or tree item's `Url` and a `TreeButton`'s `Url`
+  start with `/` and are read from the site's root, so they keep a path base (`UsePathBase`, D101). A plugin's own
+  `NavigateTo`, `href`, `src` or Radzen `Path` to one goes through `NavigationManager.ToSiteUrl(...)`
+  (`ZauberCMS.Core.Extensions`); a `returnUrl`/`redirectUrl` it passes is `NavigationManager.GetReturnUrl()`.
+  `NavigateTo("/admin/…")` and `href="/admin/…"` leave the path base.
 - Never call EF directly from components — use services.
 - Every service save result goes to the user via the notification extensions; never show raw exception text.

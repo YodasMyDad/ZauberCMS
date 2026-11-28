@@ -580,6 +580,8 @@ ZauberCMS.Core: ZauberCMS.Core.Security.Interfaces.ICaptchaProvider
 ZauberCMS.Core: ZauberCMS.Core.Security.Interfaces.IFormProtectionService
 ZauberCMS.Core: ZauberCMS.Core.Security.Models.FormProtectionResult
 ZauberCMS.Core: ZauberCMS.Core.Security.Services.FormProtectionService
+ZauberCMS.Core: ZauberCMS.Core.Security.Services.LoginRateLimiterPolicy
+ZauberCMS.Core: ZauberCMS.Core.Security.Services.RegisterRateLimiterPolicy
 ZauberCMS.Core: ZauberCMS.Core.SeedData.SeedEditorRole
 ZauberCMS.Core: ZauberCMS.Core.SeedData.SyncTabsToUseAlias
 ZauberCMS.Core: ZauberCMS.Core.Seo.Checks.AiContentCheck

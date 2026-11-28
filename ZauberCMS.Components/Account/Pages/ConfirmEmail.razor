@@ -15,7 +15,7 @@
     <PageTitle>@L["account_confirmEmail"]</PageTitle>
     <div style="width: 100%; max-width: 700px;">
         <StatusMessage ResultMessages="@ResultMessages"/>
-        <p><a href="@Urls.Account.Login">@L["account_goToLoginPage"]</a></p>
+        <p><a href="@NavigationManager.ToSiteUrl(Urls.Account.Login)">@L["account_goToLoginPage"]</a></p>
     </div>
 </LayoutView>
 

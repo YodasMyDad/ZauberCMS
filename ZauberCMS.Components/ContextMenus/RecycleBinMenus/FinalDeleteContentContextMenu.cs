@@ -52,7 +52,7 @@ public class FinalDeleteContentContextMenu(IContentService contentService, Dialo
             if (result.Success)
             {
                 // Hard reload as could be in the edit screen
-                navigationManager.NavigateTo(Urls.AdminBaseUrl, forceLoad: true); 
+                navigationManager.NavigateTo(navigationManager.ToSiteUrl(Urls.AdminBaseUrl), forceLoad: true); 
             }
         }
     }

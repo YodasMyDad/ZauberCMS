@@ -181,7 +181,16 @@ installer asks and suggests off.
      by default; GETs are free. (It no longer shares `"login"`.) Set in `Zauber:Identity:RegisterRateLimit`
      (`PermitLimit`, `WindowMinutes`; a `PermitLimit` of 0 turns it off); the login pages' `"login"` policy is
      `Zauber:Identity:LoginRateLimit` (10 per 5 minutes). Both count per visitor address, so behind a proxy set
-     `Zauber:ForwardedHeaders`.
+     `Zauber:ForwardedHeaders`. Either policy is replaceable (D104): each is the keyed
+     `IRateLimiterPolicy<string>` of its name (`ZauberSetup.LoginRateLimitPolicy`, `RegisterRateLimitPolicy`), by
+     default `LoginRateLimiterPolicy` / `RegisterRateLimiterPolicy` (`ZauberCMS.Core.Security.Services`, public, so
+     a site can subclass one). A site with its own limiter (another partition key such as a CDN's client-address
+     header or the account, another algorithm, a store shared by a farm) registers it under the name, before or
+     after `builder.AddZauberCms()`:
+     `builder.Services.AddKeyedSingleton<IRateLimiterPolicy<string>, MyLoginPolicy>(ZauberSetup.LoginRateLimitPolicy);`
+     (a singleton: the rate limiter builds its policies once). The settings then do nothing unless the site's
+     policy reads them. Adding a policy of either name to `RateLimiterOptions` itself still fails with its
+     duplicate-name error; the page attributes name the policies, so a plugin page can name one too.
   2. `IFormProtectionService` (replaceable singleton): a honeypot field and a signed timestamp. A filled
      honeypot, a form back in under `Zauber:FormProtection:MinimumFillSeconds` (default 3, 0 = off) or a token
      older than 12 hours is refused. `<FormProtectionFields />` (`ZauberCMS.Components.Shared`) renders the two

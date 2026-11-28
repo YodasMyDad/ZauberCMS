@@ -29,7 +29,16 @@ public sealed class IdentityRedirectManager(NavigationManager navigationManager)
         }
         else if (!Uri.IsWellFormedUriString(uri, UriKind.Relative))
         {
-            uri = navigationManager.ToBaseRelativePath(uri);
+            // An absolute address below this site's base; one on another site, or one that cannot be read, goes to
+            // the home page instead of failing the request after the sign-in (ZA-253)
+            try
+            {
+                uri = navigationManager.ToBaseRelativePath(uri);
+            }
+            catch (ArgumentException)
+            {
+                uri = "";
+            }
         }
 
         // During static rendering, NavigateTo throws a NavigationException which is handled by the framework as a redirect.

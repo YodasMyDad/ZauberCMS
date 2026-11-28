@@ -3,7 +3,7 @@
 @foreach (var content in UnpublishedContent)
 {
     <p>
-        <a href="@Urls.AdminUpdateContent/@content.Id">@content.Name</a>
+        <a href="@NavigationManager.ToSiteUrl($"{Urls.AdminUpdateContent}/{content.Id}")">@content.Name</a>
     </p>
 }
 

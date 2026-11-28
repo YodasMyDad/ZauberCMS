@@ -26,7 +26,7 @@
 
     private void Logout()
     {
-        NavigationManager.NavigateTo(Urls.ApiLogout, true);
+        NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(Urls.ApiLogout), true);
     }
 
     protected override async Task OnInitializedAsync()

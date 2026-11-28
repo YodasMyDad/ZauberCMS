@@ -93,7 +93,7 @@
     {
         if (value is Media selectedRow)
         {
-            NavigationManager.NavigateTo($"{Urls.AdminUpdateMedia}/{selectedRow.Id}", RefreshPage);
+            NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminUpdateMedia}/{selectedRow.Id}"), RefreshPage);
         }
     }
 

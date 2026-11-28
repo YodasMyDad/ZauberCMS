@@ -310,9 +310,9 @@
                 NotificationService.ShowSuccessNotification(L["users_rolesUpdated"]);
                 if (roleUpdateResult.RefreshSignIn)
                 {
-                    // A path on this site: the refresh endpoint only returns to local addresses.
-                var currentUrl = System.Net.WebUtility.UrlEncode("/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
-                    NavigationManager.NavigateTo($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}&ticket={System.Net.WebUtility.UrlEncode(roleUpdateResult.RefreshSignInTicket)}", true);
+                    // A path on this site, path base included: the refresh endpoint only returns to local addresses
+                    var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.GetReturnUrl());
+                    NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}&ticket={System.Net.WebUtility.UrlEncode(roleUpdateResult.RefreshSignInTicket)}"), true);
                 }
             }
         }
@@ -335,7 +335,7 @@
             {
                 NotificationService.ShowSuccessNotification(L["users_userDeleted"]);
                 await AppState.NotifyUserDeleted(User, AuthState.User.Identity?.Name!);
-                NavigationManager.NavigateTo(Urls.AdminUsersBaseUrl);
+                NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(Urls.AdminUsersBaseUrl));
             }
             else
             {
@@ -429,9 +429,9 @@
             await AppState.NotifyUserSaved(User, AuthState.User.Identity?.Name!);
             if (result is { Success: true, RefreshSignIn: true })
             {
-                // A path on this site: the refresh endpoint only returns to local addresses.
-                var currentUrl = System.Net.WebUtility.UrlEncode("/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
-                NavigationManager.NavigateTo($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}&ticket={System.Net.WebUtility.UrlEncode(result.RefreshSignInTicket)}", true);
+                // A path on this site, path base included: the refresh endpoint only returns to local addresses
+                var currentUrl = System.Net.WebUtility.UrlEncode(NavigationManager.GetReturnUrl());
+                NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.ApiRefreshSignIn}?redirectUrl={currentUrl}&ticket={System.Net.WebUtility.UrlEncode(result.RefreshSignInTicket)}"), true);
             }
         }
     }

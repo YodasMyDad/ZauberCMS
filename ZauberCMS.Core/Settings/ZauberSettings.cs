@@ -49,7 +49,9 @@ public class ZauberSettings
     /// The public address of the site, for example <c>https://www.example.com</c>. Links in emails (password
     /// reset, email confirmation) are built from it. When it is empty they are built from the Host header of the
     /// request, which the sender of the request controls, so set this (or restrict <c>AllowedHosts</c>) on any
-    /// site that sends email. The SEO checker may also fetch this host when it is on a private address.
+    /// site that sends email. The SEO checker may also fetch this host when it is on a private address. A site under
+    /// a path base includes it (<c>https://www.example.com/site</c>): when this is set, links are built below its
+    /// path, not below the request's path base.
     /// </summary>
     public string? SiteUrl { get; set; }
 

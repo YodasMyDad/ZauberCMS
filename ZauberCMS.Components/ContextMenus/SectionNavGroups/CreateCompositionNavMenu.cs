@@ -5,6 +5,7 @@ using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Sections.Interfaces;
+using ZauberCMS.Core.Extensions;
 
 namespace ZauberCMS.Components.ContextMenus.SectionNavGroups;
 
@@ -20,7 +21,7 @@ public class CreateCompositionNavMenu(IStringLocalizer<ZauberText> text) : ISect
         IModalService modalService)
     {
         contextMenuService.Close();
-        navigationManager.NavigateTo(Urls.AdminStructureCreateComposition, true);
+        navigationManager.NavigateTo(navigationManager.ToSiteUrl(Urls.AdminStructureCreateComposition), true);
         return Task.CompletedTask;
     }
 }

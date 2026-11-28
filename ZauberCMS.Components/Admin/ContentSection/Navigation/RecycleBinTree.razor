@@ -179,7 +179,7 @@
         TreeState.TreeValue = Selection;
         if (Selection is TreeBranch branch && !branch.Url.IsNullOrWhiteSpace())
         {
-            NavigationManager.NavigateTo(branch.Url);
+            NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(branch.Url));
             StateHasChanged();
         }
     }

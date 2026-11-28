@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System.Threading.RateLimiting;
+using ZauberCMS.Core.Security.Services;
 
 namespace ZauberCMS.Core.Settings;
 
@@ -18,8 +19,9 @@ namespace ZauberCMS.Core.Settings;
 // settings (ConfigureBackOfficeIdentityOptions, ConfigureImageSharpMiddlewareOptions). They run where the lambdas
 // they replace ran, so a site's own Configure<T> keeps its old effect (ZA-232): registered after AddZauberCms it runs
 // after them and wins (IdentityOptions, ImageResizeOptions, RedisCacheOptions); the "login" and "register" policies
-// are added once, so a site that adds a policy of either name gets RateLimiterOptions' duplicate-name error, as
-// before; detailed errors are a post-configure step that only turns them on.
+// are added once, from the keyed policies a site replaces (D104), so a site that adds a policy of either name to
+// RateLimiterOptions itself gets its duplicate-name error, as before; detailed errors are a post-configure step
+// that only turns them on.
 
 /// <summary><c>Zauber:ImageResize</c> for the image resizer.</summary>
 internal sealed class ImageResizeOptionsFromZauberSettings(IOptions<ZauberSettings> settings,
@@ -75,35 +77,22 @@ internal sealed class IdentityOptionsFromZauberSettings(IOptions<ZauberSettings>
 }
 
 /// <summary>
-/// The <c>login</c> and <c>register</c> rate-limit policies, from <c>Zauber:Identity:LoginRateLimit</c> and
-/// <c>RegisterRateLimit</c> (ZA-149). A <c>PermitLimit</c> of 0 turns that limit off.
+/// The <c>login</c> and <c>register</c> rate-limit policies the account pages name: each is the keyed
+/// <see cref="IRateLimiterPolicy{TPartitionKey}"/> of <see cref="string"/> registered under its name, by default
+/// <see cref="LoginRateLimiterPolicy"/> and <see cref="RegisterRateLimiterPolicy"/> (from
+/// <c>Zauber:Identity:LoginRateLimit</c> and <c>RegisterRateLimit</c>, ZA-149), so a site replaces one by registering
+/// its own under that name (ZP-003, Roadmap D104).
 /// </summary>
-internal sealed class RateLimiterOptionsFromZauberSettings(IOptions<ZauberSettings> settings)
+internal sealed class RateLimiterOptionsFromZauberSettings(
+    [FromKeyedServices(ZauberSetup.LoginRateLimitPolicy)] IRateLimiterPolicy<string> loginPolicy,
+    [FromKeyedServices(ZauberSetup.RegisterRateLimitPolicy)] IRateLimiterPolicy<string> registerPolicy)
     : IConfigureOptions<RateLimiterOptions>
 {
     public void Configure(RateLimiterOptions options)
     {
-        var loginLimit = settings.Value.Identity.LoginRateLimit;
-        var registerLimit = settings.Value.Identity.RegisterRateLimit;
         options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-        // Sliding window rate limiter for login attempts (10 per address in 5 minutes by default)
-        options.AddPolicy("login", httpContext =>
-            loginLimit.PermitLimit > 0
-                ? RateLimitPartition.GetSlidingWindowLimiter(
-                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    factory: _ => loginLimit.ToLimiterOptions())
-                : RateLimitPartition.GetNoLimiter("login-off"));
-
-        // Registration has a limit of its own, so a flood of sign-ups neither uses up the login allowance of the
-        // people behind the same address nor hides inside it. Only the posts count: looking at the form is free,
-        // sending it is not (5 per address in 10 minutes by default).
-        options.AddPolicy(ZauberSetup.RegisterRateLimitPolicy, httpContext =>
-            HttpMethods.IsPost(httpContext.Request.Method) && registerLimit.PermitLimit > 0
-                ? RateLimitPartition.GetSlidingWindowLimiter(
-                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    factory: _ => registerLimit.ToLimiterOptions())
-                : RateLimitPartition.GetNoLimiter("register-view"));
+        options.AddPolicy(ZauberSetup.LoginRateLimitPolicy, loginPolicy);
+        options.AddPolicy(ZauberSetup.RegisterRateLimitPolicy, registerPolicy);
     }
 }
 

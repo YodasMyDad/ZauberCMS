@@ -791,7 +791,7 @@
                 if (isNewContentType)
                 {
                     // Navigate to the edit page for the newly created content type
-                    NavigationManager.NavigateTo($"{Urls.AdminStructureUpdateContentType}/{ContentType.Id}");
+                    NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminStructureUpdateContentType}/{ContentType.Id}"));
                     return;
                 }
 
@@ -820,7 +820,7 @@
             {            
                 NotificationService.ShowSuccessNotification(L["structure_contentTypeDeleted"]);
                 await AppState.NotifyContentTypeDeleted(null, AuthState.User.Identity?.Name!);
-                NavigationManager.NavigateTo(Urls.AdminStructureBaseUrl, true);
+                NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(Urls.AdminStructureBaseUrl), true);
             }
             else
             {

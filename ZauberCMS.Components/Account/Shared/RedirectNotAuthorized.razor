@@ -10,7 +10,7 @@
     {
         var here = Uri.EscapeDataString(NavigationManager.Uri);
         NavigationManager.NavigateTo(User?.Identity?.IsAuthenticated == true
-                ? $"{ZauberCMS.Core.Urls.Account.AccessDenied.TrimStart('/')}?returnUrl={here}"
+                ? NavigationManager.ToSiteUrl($"{ZauberCMS.Core.Urls.Account.AccessDenied}?returnUrl={here}")
                 : $"Account/Login?returnUrl={here}",
             forceLoad: true);
     }

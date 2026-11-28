@@ -451,9 +451,9 @@ if (Role != null)
         if (joined.RefreshSignIn)
         {
             // The new role is in the sign-in only once it is issued again; then back to this role
-            var back = System.Net.WebUtility.UrlEncode($"{Urls.AdminUsersEditRole}/{role.Id}");
+            var back = System.Net.WebUtility.UrlEncode(NavigationManager.GetReturnUrl($"{Urls.AdminUsersEditRole}/{role.Id}"));
             NavigationManager.NavigateTo(
-                $"{Urls.ApiRefreshSignIn}?redirectUrl={back}&ticket={System.Net.WebUtility.UrlEncode(joined.RefreshSignInTicket)}",
+                NavigationManager.ToSiteUrl($"{Urls.ApiRefreshSignIn}?redirectUrl={back}&ticket={System.Net.WebUtility.UrlEncode(joined.RefreshSignInTicket)}"),
                 true);
         }
     }
@@ -479,7 +479,7 @@ if (Role != null)
         var result = await MembershipService.DeleteRoleAsync(new DeleteRoleParameters { Id = Role!.Id });
         if (result.Success)
         {
-            NavigationManager.NavigateTo(Urls.AdminUsersBaseUrl);
+            NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(Urls.AdminUsersBaseUrl));
         }
         else
         {

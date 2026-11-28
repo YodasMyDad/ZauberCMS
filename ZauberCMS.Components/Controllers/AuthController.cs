@@ -64,7 +64,7 @@ public class AuthController(
         }
 
         await signInManager.SignOutAsync();
-        return Redirect(Urls.Account.Login);
+        return Redirect(SitePath(Urls.Account.Login));
     }
 
     /// <summary>
@@ -94,7 +94,7 @@ public class AuthController(
     public ContentResult LogoutGet(string? redirectUrl = null)
     {
         var tokens = antiforgery.GetAndStoreTokens(HttpContext);
-        var safeRedirect = !string.IsNullOrEmpty(redirectUrl) && Url.IsLocalUrl(redirectUrl) ? redirectUrl : "/";
+        var safeRedirect = !string.IsNullOrEmpty(redirectUrl) && Url.IsLocalUrl(redirectUrl) ? redirectUrl : SitePath("/");
         var enc = HtmlEncoder.Default;
         var autoSubmit = IsFromThisSite(Request);
         // In the request's culture (Roadmap D95); encoded, since a translation is text, not markup
@@ -102,7 +102,7 @@ public class AuthController(
         var html =
             "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\">" +
             $"<title>{signOut}</title></head><body>" +
-            "<form id=\"zauber-logout\" method=\"post\" action=\"/api/auth/logout\">" +
+            $"<form id=\"zauber-logout\" method=\"post\" action=\"{enc.Encode(SitePath(Urls.ApiLogout))}\">" +
             $"<input type=\"hidden\" name=\"{enc.Encode(tokens.FormFieldName)}\" value=\"{enc.Encode(tokens.RequestToken!)}\" />" +
             $"<input type=\"hidden\" name=\"redirectUrl\" value=\"{enc.Encode(safeRedirect)}\" />" +
             (autoSubmit
@@ -150,13 +150,17 @@ public class AuthController(
         return LocalRedirectOrHome(redirectUrl);
     }
 
-    // Defence against open-redirect: only honour same-site redirect targets, fall back to "/" otherwise.
+    // Defence against open-redirect: only honour same-site redirect targets (a path from the host's root, path base
+    // included, as a return address is), fall back to the site's home page otherwise.
     private RedirectResult LocalRedirectOrHome(string? redirectUrl)
     {
         if (!string.IsNullOrEmpty(redirectUrl) && Url.IsLocalUrl(redirectUrl))
         {
             return Redirect(redirectUrl);
         }
-        return Redirect("/");
+        return Redirect(SitePath("/"));
     }
+
+    // A path on this site as the browser needs it: the request's path base, then the path (ZA-219)
+    private string SitePath(string path) => Request.PathBase.Add(new PathString(path)).ToString();
 }

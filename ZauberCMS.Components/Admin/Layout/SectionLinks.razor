@@ -55,6 +55,6 @@ else
         // If we click the top nav items we need to clear the tree state value
         TreeState.TreeValue = null;
         StateHasChanged();
-        NavigationManager.NavigateTo(url);
+        NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(url));
     }
 }

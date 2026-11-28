@@ -79,6 +79,14 @@ jobs:
         shell: pwsh
         run: ./tests/template-smoke.ps1
 
+      # Runs the publish job's "Stamp the version" and "Commit the stamped version back to main-static" steps, as
+      # written below, against a scratch bare origin (a push in flight, a person's change, reruns, a lost race, a
+      # rollback, ...) and checks what main-static is left with (ZP-002). That step only runs after a release, so
+      # this is where a defect in it is found. A failure here also stops publishing.
+      - name: Commit-back step test
+        shell: bash
+        run: bash tests/commit-back-test.sh
+
   publish-nuget:
     name: Publish NuGet
     if: github.event_name == 'push' && github.ref == 'refs/heads/main-static'
@@ -318,7 +326,11 @@ jobs:
               echo "Committed ${VERSION} back to main-static."
               exit 0
             fi
-            echo "The push to main-static was refused (attempt ${attempt}), usually because a push landed meanwhile; fetching it again."
+            if (( attempt < 5 )); then
+              echo "The push to main-static was refused (attempt ${attempt}), usually because a push landed meanwhile; fetching it again."
+            else
+              echo "The push to main-static was refused (attempt ${attempt})."
+            fi
           done
           echo "::error::${VERSION} is published and tagged, but committing it back to main-static failed 5 times."
           exit 1

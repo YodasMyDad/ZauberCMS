@@ -279,9 +279,9 @@ else
                 // The new security stamp ends every session, this one too, unless its sign-in is renewed: a full
                 // load of this page through the refresh endpoint (a path on this site; it only returns to those)
                 // Addresses relative to the base, and back to this page with its path base, so a site under one works
-                var here = System.Net.WebUtility.UrlEncode(new Uri(NavigationManager.Uri).PathAndQuery);
+                var here = System.Net.WebUtility.UrlEncode(NavigationManager.GetReturnUrl());
                 NavigationManager.NavigateTo(
-                    $"{Urls.ApiRefreshSignIn.TrimStart('/')}?redirectUrl={here}&ticket={System.Net.WebUtility.UrlEncode(result.RefreshSignInTicket)}",
+                    NavigationManager.ToSiteUrl($"{Urls.ApiRefreshSignIn}?redirectUrl={here}&ticket={System.Net.WebUtility.UrlEncode(result.RefreshSignInTicket)}"),
                     forceLoad: true);
             }
         }
@@ -300,7 +300,7 @@ else
         }
 
         await CloseAsync();
-        NavigationManager.NavigateTo($"{Urls.AdminUsersEdit.TrimStart('/')}/{me.Id}");
+        NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminUsersEdit}/{me.Id}"));
     }
 
     // "You sign in with {0}." with the address in bold: one text for the whole sentence, and neither the address nor

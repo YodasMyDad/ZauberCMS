@@ -32,6 +32,6 @@
     {
         var action = item != null ? Urls.AdminCreateMedia : Urls.AdminCreateMediaFolder;
         var path = ParentId != null ? $"{action}/{ParentId}" : $"{action}";
-        NavigationManager.NavigateTo(path);
+        NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(path));
     }
 }

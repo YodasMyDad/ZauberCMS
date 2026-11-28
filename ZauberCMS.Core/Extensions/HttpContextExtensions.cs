@@ -13,6 +13,8 @@ public static class HttpContextExtensions
     /// The site address is <c>Zauber:SiteUrl</c> when that is set. Otherwise it is taken from the current
     /// request, whose Host header is chosen by whoever sent it: an emailed link built that way can point at
     /// another site, so production sites should set <c>Zauber:SiteUrl</c> (or restrict <c>AllowedHosts</c>).
+    /// <paramref name="relativeUrl"/> starting with <c>/</c> is read from the site's root: below the path of
+    /// <c>Zauber:SiteUrl</c>, or below the request's path base (ZA-219).
     /// </summary>
     /// <example>
     /// var url = _httpContextAccessor.ToAbsoluteUrl("/Identity/Account/ConfirmEmail", new { userId = applicationUser.Id, code });
@@ -30,9 +32,9 @@ public static class HttpContextExtensions
         var siteUri = Uri.TryCreate(siteUrl, UriKind.Absolute, out var configured) &&
                       (configured.Scheme == Uri.UriSchemeHttp || configured.Scheme == Uri.UriSchemeHttps)
             ? configured
-            : new Uri($"{request?.Scheme}://{request?.Host.Value}");
+            : new Uri($"{request?.Scheme}://{request?.Host.Value}{request?.PathBase.ToUriComponent()}");
 
-        var url = new Uri(siteUri, relativeUrl).ToString();
+        var url = OnSite(siteUri, relativeUrl);
 
         if (parameters != null)
         {
@@ -40,6 +42,19 @@ public static class HttpContextExtensions
         }
 
         return url;
+    }
+
+    /// <summary>
+    /// The address of <paramref name="path"/> on the site at <paramref name="site"/>: a path that starts with
+    /// <c>/</c> is read from the site's root, so the path of <c>Zauber:SiteUrl</c> (<c>https://example.com/site</c>)
+    /// or the request's path base is kept (ZA-219); before, <c>new Uri(site, "/account/login")</c> dropped it.
+    /// </summary>
+    internal static string OnSite(Uri site, string path)
+    {
+        var root = site.GetLeftPart(UriPartial.Path);
+        var siteRoot = new Uri(root.EndsWith('/') ? root : root + "/");
+        var fromSiteRoot = path.StartsWith('/') && !path.StartsWith("//", StringComparison.Ordinal);
+        return new Uri(siteRoot, fromSiteRoot ? path[1..] : path).ToString();
     }
 
     /// <summary>

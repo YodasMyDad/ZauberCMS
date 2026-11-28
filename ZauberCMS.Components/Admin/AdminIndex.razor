@@ -31,6 +31,6 @@
             return;
         }
 
-        NavigationManager.NavigateTo(first.IndexUrl, replace: true);
+        NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(first.IndexUrl), replace: true);
     }
 }

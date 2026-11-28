@@ -39,8 +39,52 @@ internal sealed class ZauberSettingsValidator(IServiceProvider services) : IVali
             failures.Add(AdminDefaultLanguageFailure(options.AdminDefaultLanguage, ex, IsGlobalizationInvariant()));
         }
 
+        failures.AddRange(ImageResizeFailures(options.ImageResize));
+
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
     }
+
+    /// <summary>
+    /// The <c>Zauber:ImageResize</c> numbers ImageResize refuses, each naming the setting, its value and what is valid
+    /// (ZA-235, Roadmap D102). They are the rules of ImageResize's own options validator, which is internal to it and
+    /// runs later, from <c>app.Run()</c> after the migrations, with ImageResize's option names; a test checks these are
+    /// no looser than it.
+    /// </summary>
+    internal static IEnumerable<string> ImageResizeFailures(ImageResizeSettings settings)
+    {
+        if (settings.DefaultQuality is < 1 or > 100)
+        {
+            yield return ImageResizeFailure("DefaultQuality", settings.DefaultQuality,
+                "use 1 to 100 (the quality of resized JPEG and WebP images)");
+        }
+
+        if (settings.PngCompressionLevel is < 0 or > 9)
+        {
+            yield return ImageResizeFailure("PngCompressionLevel", settings.PngCompressionLevel, "use 0 to 9");
+        }
+
+        if (settings.Cache.FolderSharding < 0)
+        {
+            yield return ImageResizeFailure("Cache:FolderSharding", settings.Cache.FolderSharding,
+                "use 0 or more (the levels of folders the resized images are spread over)");
+        }
+
+        if (settings.Cache.MaxCacheBytes < 0)
+        {
+            yield return ImageResizeFailure("Cache:MaxCacheBytes", settings.Cache.MaxCacheBytes,
+                "use 0 for no limit, or the most bytes the resized images may take");
+        }
+
+        if (settings.ResponseCache.ClientCacheSeconds < 0)
+        {
+            yield return ImageResizeFailure("ResponseCache:ClientCacheSeconds", settings.ResponseCache.ClientCacheSeconds,
+                "use 0 or more seconds");
+        }
+    }
+
+    private static string ImageResizeFailure(string setting, long value, string valid) =>
+        string.Create(CultureInfo.InvariantCulture,
+            $"Zauber:ImageResize:{setting} is {value}, which ImageResize does not accept: {valid}.");
 
     /// <summary>
     /// The error for an <c>AdminDefaultLanguage</c> the runtime cannot load, with the runtime's reason: in

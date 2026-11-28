@@ -47,7 +47,7 @@
         TreeState.TreeValue = Selection;
         if (Selection is Content content)
         {
-            NavigationManager.NavigateTo($"{Urls.AdminUpdateContent}/{content.Id}");
+            NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminUpdateContent}/{content.Id}"));
             StateHasChanged();
         }
     }

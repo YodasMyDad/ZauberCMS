@@ -14,7 +14,7 @@
      @ondblclick="ResetCropBox">
 
     <!-- Image scaled to fit -->
-    <img src="@($"/{Media.Url}")"
+    <img src="@NavigationManager.ToSiteUrl(Media.Url ?? string.Empty)"
          alt="@Media.Name"
          style="max-width: 100%; height: auto;" />
 

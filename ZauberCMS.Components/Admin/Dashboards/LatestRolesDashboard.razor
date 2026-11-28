@@ -84,7 +84,7 @@
     {
         if (value is Role selectedRow)
         {
-            NavigationManager.NavigateTo($"{Urls.AdminUsersEditRole}/{selectedRow.Id}", RefreshPage);
+            NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminUsersEditRole}/{selectedRow.Id}"), RefreshPage);
         }
     }
 

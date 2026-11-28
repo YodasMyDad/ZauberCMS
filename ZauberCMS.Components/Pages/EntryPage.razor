@@ -75,9 +75,9 @@
             {
                 ComponentView = null;
                 // Signed in already: the login page would only say so; the access-denied page says why (D67)
-                NavigationManager.NavigateTo(AuthState.User.Identity?.IsAuthenticated == true
+                NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(AuthState.User.Identity?.IsAuthenticated == true
                     ? $"{Urls.Account.AccessDenied}?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}"
-                    : Settings.Value.Identity.DefaultLoginRedirectUrl);
+                    : Settings.Value.Identity.DefaultLoginRedirectUrl));
                 return;
             }
 

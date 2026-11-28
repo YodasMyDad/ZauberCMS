@@ -75,7 +75,7 @@
     {
         if (value is User selectedRow)
         {
-            NavigationManager.NavigateTo($"{Urls.AdminUsersEdit}/{selectedRow.Id}");
+            NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminUsersEdit}/{selectedRow.Id}"));
         }
     }
 }

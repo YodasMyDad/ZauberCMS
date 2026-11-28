@@ -198,6 +198,9 @@
         }
 
         RegisterUserCommand!.AutoLogin = true;
+        // Back to the page that sent the visitor here, when it is on this site: the address the page was opened
+        // with, not one posted in the form (ZA-253, as the login page, ZA-201)
+        RegisterUserCommand.ReturnUrl = NavigationManager.ToLocalReturnUrl(ReturnUrl);
         var result = await MembershipService.RegisterUserAsync(RegisterUserCommand);
 
         if (result.Success)

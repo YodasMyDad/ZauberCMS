@@ -21,10 +21,10 @@
         switch (Selection)
         {
             case Media { MediaType: MediaType.Folder } folder:
-                NavigationManager.NavigateTo($"{Urls.AdminMediaFolder}/{folder.Id}");
+                NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminMediaFolder}/{folder.Id}"));
                 break;
             case Media media:
-                NavigationManager.NavigateTo($"{Urls.AdminUpdateMedia}/{media.Id}");
+                NavigationManager.NavigateTo(NavigationManager.ToSiteUrl($"{Urls.AdminUpdateMedia}/{media.Id}"));
                 break;
         }
     }

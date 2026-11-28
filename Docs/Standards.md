@@ -170,7 +170,13 @@ removed line is a breaking change for the release notes.
 - Redirects: local URLs only (`returnUrl` validated); SEO redirect targets pass `RedirectTarget.IsValid`.
 - Content URLs: compare and store through `ContentUrl.Normalize`; build links with `ContentUrl.SiteRelative`
   (never a script address or another host). Don't hand-roll `"/" + url` or `ToLower()` on URLs.
-  Absolute links in emails come from `ToAbsoluteUrl` (uses `Zauber:SiteUrl`), never from the `Host` header directly.
+  Absolute links in emails come from `ToAbsoluteUrl` (uses `Zauber:SiteUrl`, its path kept, else the request's path
+  base), never from the `Host` header directly.
+- Path base (`UsePathBase`, D101): a site path (`/admin/…`, the `Urls` constants, an `IndexUrl`, a tree item's or
+  media item's address) goes through `NavigationManager.ToSiteUrl` for `NavigateTo`, `href`, `src` and Radzen
+  `Path`; a return address (`returnUrl`, `redirectUrl`) is `NavigationManager.GetReturnUrl()` (the path from the
+  host's root, path base included); server code prefixes `Request.PathBase`. `NavigateTo("/admin")` and
+  `href="/admin"` leave the path base; `Security/PathBaseNavigationTests` fails on them in the packages.
 - Secrets never in committed `appsettings*.json`; use user-secrets / environment / vault.
 - Outbound HTTP to user-supplied URLs uses the `SeoHttp` client (refuses private addresses, has timeouts), or a
   client built the same way. Never `new HttpClient()` / `HtmlWeb.Load` on such a URL.
@@ -221,6 +227,9 @@ Run: `dotnet test --solution ZauberCMS.sln -c Release` (repo root). CI runs it o
   publishes and runs it, goes through the installer and checks the pages and their scripts
   ([Releasing.md](Releasing.md)). It needs nuget.org, so it is a script, not part of `dotnet test`; CI runs it on
   every push. Run it after changing a csproj, the packaging, the template or start-up.
+- Commit-back step test: `bash tests/commit-back-test.sh` runs CI's stamp and commit-back steps, as written,
+  against a scratch bare origin ([Releasing.md](Releasing.md)); CI runs it on every push. Run it after changing
+  either step.
 - Not built yet: bUnit component tests. UI behaviour without a test still needs its manual verification written
   down.
 

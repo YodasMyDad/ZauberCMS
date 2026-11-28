@@ -19,10 +19,10 @@
         <ul>
             @if (_hasAdminSection)
             {
-                <li><a href="@Urls.AdminBaseUrl" data-enhance-nav="false">@L["account_goToAdmin"]</a></li>
+                <li><a href="@NavigationManager.ToSiteUrl(Urls.AdminBaseUrl)" data-enhance-nav="false">@L["account_goToAdmin"]</a></li>
             }
             <li><a href="@LoginUrl" data-enhance-nav="false">@L["account_signInWithAnotherAccount"]</a></li>
-            <li><a href="/">@L["account_goToHomePage"]</a></li>
+            <li><a href="@NavigationManager.ToSiteUrl("/")">@L["account_goToHomePage"]</a></li>
         </ul>
     </div>
 </LayoutView>
@@ -46,10 +46,10 @@
     {
         get
         {
-            var login = NavigationManager.ToLocalReturnUrl(ReturnUrl) is { } local
+            var login = NavigationManager.GetReturnUrl(NavigationManager.ToLocalReturnUrl(ReturnUrl) is { } local
                 ? $"{Urls.Account.Login}?returnUrl={Uri.EscapeDataString(local)}"
-                : Urls.Account.Login;
-            return $"{Urls.ApiLogout}?redirectUrl={Uri.EscapeDataString(login)}";
+                : Urls.Account.Login);
+            return NavigationManager.ToSiteUrl($"{Urls.ApiLogout}?redirectUrl={Uri.EscapeDataString(login)}");
         }
     }
 

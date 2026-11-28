@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11i (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1581 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1537 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-217, ZA-219, ZA-235 fixed (D100–D102); ZP-002, ZP-003 adopted and built (D103, D104); ZA-250 found and fixed while building; ZA-253 found by the audit and fixed (Low); ZA-251, ZA-252 recorded (Low, Phase 11j). Next free ID: ZA-300, numbering going on above every used and held ID (ZA-236…ZA-249, ZA-254…ZA-259, ZA-265…ZA-269, ZA-272…ZA-279, ZA-285…ZA-289 unused, skipped, not to be filled; ZA-290…ZA-299 held by Phase 11j, in progress)
 After Roadmap Phase 10h-4 (2026-11-28, merged after 10h-2 and 10h-3): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1533 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1521 on its own branch) · Template smoke test passes (with a new check, ZA-284); `doublecheck` self-review on the part. ZA-129 fixed (with 10h-1 to 10h-3 and the leftovers converted at the merge; Phase 10h done); ZA-271 fixed (D131); ZA-280…ZA-284 found and fixed (ZA-284 High). Next free ID: ZA-236 (ZA-285…ZA-289 unused, skipped, not to be filled; ZA-250…ZA-259 held by Phase 11i, in progress)
 After Roadmap Phase 10h-3 (2026-11-28, merged after 10h-2): Build PASS · Warnings: 0 · Tests: 1510 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1505 on its own branch) · Template smoke test passes; `doublecheck` self-review with an independent review of the editors. ZA-129 in progress (the property editors, the installer and Core's generic messages converted, D120–D122; it closes with 10h-4); ZA-270, ZA-271 recorded (Low, 10i); ZA-264 moved from Phase 12 to 10i (owner). Next free ID: ZA-236 (ZA-265…ZA-269 and ZA-272…ZA-279 unused, skipped, not to be filled; ZA-250…ZA-259 held by Phase 11i, ZA-280…ZA-289 by Phase 10h-4, both in progress)
 After Roadmap Phase 10h-2 (2026-11-28, on its own branch): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1505 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part (three independent diff reviewers); verified in the browser. ZA-129 in progress (Content, Media, the editor dialogs and SEO converted, D110, D111; it closes with 10h-4); ZA-260 found and fixed (Low); ZA-261…ZA-263 recorded (Low, Phase 10i), ZA-264 (Low, Phase 12). ZA-265…ZA-269 unused (Phase 10h-2's range; skipped, not to be filled)
@@ -44,6 +45,45 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 11i (2026-11-28, start-up, path base and rate-limit leftovers, D100–D104).** Release notes in the
+  Roadmap's "Phase 11i". Full suite 1537 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
+  Redis; Release build 0 warnings; template smoke test passes. Merged onto Phase 10h (made from f7c38f2): 1581 on
+  the same four, template smoke test and `tests/commit-back-test.sh` (55 checks) pass; the navigation lines 10h
+  localised keep both its text and `ToSiteUrl` (Roadmap "Phase 11i", "Merged onto Phase 10h"). Each fix's tests were seen failing with the fix taken
+  out (the web root, the ImageResize check, the keyed policies, the refresh and sign-out redirects, the sign-in's
+  default return address, the email links, one navigation for the source scan). `/audit changed`: a diff reviewer
+  given the code and a unit reviewer for U1/U7, each reproducing in a worktree of its own.
+  - **ZA-217 (Low) — fixed.** A host with no web root gets `<content root>/wwwroot`, created, as its web root
+    (static web assets kept behind it); a folder that cannot be made stops the start naming it (D100). Tests:
+    `Bootstrap/WebRootTests` ×4 (the start and the resizer's paths, a file written later served, static web assets
+    kept, a file in the way, a web root of the host's own kept).
+  - **ZA-219 (Low) — fixed.** `NavigationManager.ToSiteUrl`/`GetReturnUrl`; every admin and account navigation, link,
+    image and Radzen path to a site path, the sign-in refreshes, `AuthController`'s redirects and sign-out form, a
+    sign-in's default return address, `ToAbsoluteUrl` and the confirmation link keep the path base (D101). Tests:
+    `Security/PathBaseNavigationTests` (helpers, email links, the endpoints over HTTP under `UsePathBase`, a source
+    scan that flags 66 of the fixed places at `f7c38f2`), `Security/SectionAccessTests` ZA219 ×3 providers. Browser:
+    the dev site under `/site` (sign-in, sections, trees, Create Content, a role change's refresh, sign-out).
+  - **ZA-235 (Low) — fixed.** Five `Zauber:ImageResize` numbers checked with the Zauber settings, naming the setting
+    (D102). Tests: `Bootstrap/ImageResizeSettingsCheckTests` ×13 (each range at start, the edges, the same refusals as
+    ImageResize's own validator over a sweep of values).
+  - **ZA-250 (Low, found while building) — fixed.** The commit-back step's fifth refused push no longer says it
+    fetches again. Test: a check in `tests/commit-back-test.sh`.
+  - **ZA-253 (Low, audit) — fixed.** The external sign-in passed its query's return address straight on and the
+    registration took one from the form; `IdentityRedirectManager` threw on an address it could not read (an error
+    page after the sign-in); `ToLocalReturnUrl` let `/\t/host` through (a browser reads it as `//host`). Both pages
+    use `ToLocalReturnUrl`, the redirect sends such an address home, and a control character is refused. Tests:
+    `Security/PathBaseNavigationTests` ZA253 ×7.
+  - **Audit fixes in the phase's own code (no ID).** The Block List preview's stylesheets keep the path base;
+    `ToSiteUrl` gives a path from the host's root (no scheme or host from the request); the source scan covers
+    `RedirectTo`, ternaries, attributes in C# strings, `href="/"` and scripts; the `Zauber:SiteUrl` doc says to put
+    the path base in it.
+  - **ZP-002 — adopted and built (D103).** `tests/commit-back-test.sh`, 11 cases, 55 checks, run by CI's build job;
+    Git Bash (bash 5.2.37, git 2.51.2, gawk) and the .NET SDK container (Ubuntu 24.04, bash 5.2.21, git 2.43, mawk);
+    shellcheck 0.11.0 and actionlint 1.7.12 clean; four injected defects caught. CI itself not run (GitHub only).
+  - **ZP-003 — adopted and built (D104).** The `login`/`register` policies are keyed `IRateLimiterPolicy<string>`
+    registrations a site replaces. Tests: `Security/RateLimitPolicyTests` ×3 (over HTTP for a site's own policies).
+  - **ZA-251 and ZA-252 (Low) — recorded**, for Phase 11j (assigned at the merge onto 10h; recorded for Phase 12).
 
 - **Roadmap Phase 10h-4 (2026-11-28, Structure, Settings, Users, the layout, the account pages and Core's messages
   localised, D37, D130–D132).** Details and release notes in the Roadmap's "Phase 10h-4". Full suite 1521 on its

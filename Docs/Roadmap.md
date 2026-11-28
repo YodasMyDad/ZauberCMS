@@ -54,9 +54,14 @@
   membership, access, language, tag, audit and email messages localised, D130–D132; ZA-129 fixed with it, ZA-271
   fixed by D131; ZA-280…ZA-284 found and fixed while building, ZA-284 High: the reset-password page; 2026-11-28,
   merged after 10h-2 and 10h-3). **Phase 10h done** (all four parts).
-  **10 open findings** (0 Critical, 0 High, 0 Medium, 10 Low), each one assigned below to a phase (10i, 12).
+  **Phase 11i done** (a site without `wwwroot`, the path base in admin navigation, `Zauber:ImageResize` checked,
+  CI's commit-back step tested, replaceable rate limits; D100–D104, ZA-217, ZA-219, ZA-235, ZP-002, ZP-003; ZA-250
+  found and fixed while building, ZA-253 found by its `/audit changed` and fixed, ZA-251 and ZA-252 recorded for
+  Phase 11j; 2026-11-28, merged after 10h).
+  **9 open findings** (0 Critical, 0 High, 0 Medium, 9 Low), each one assigned below to a phase (10i, 11j).
   **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
-  whose theme fits. **Next: `/audit changed` over the whole of Phase 10h** (10h-1 to 10h-4), then 10i,
+  whose theme fits. **Next: `/audit changed` over the whole of Phase 10h** (10h-1 to 10h-4), then 10i
+  (Phase 11j, ZA-251 and ZA-252, is in progress in its own worktree),
   then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -151,6 +156,11 @@
 | D95 | **The installer, the account pages, ZauberCMS's fallback site pages and the sign-out page are localised too; a site's views and content are not.** The installer is in Core (area `Installer`) and runs in `Zauber:AdminDefaultLanguage` (no database, no other language); the account pages (`/Account/*`, area `Account`), the fallback pages (not found, missing view, new site) and the sign-out page are site-facing and use the request's culture, so a site with French content shows them in French once it has the files. Umbraco localises its installer (`installer` area); its member pages are templates the site edits, but ZauberCMS ships its account pages, so a site must be able to translate them without replacing them. Not localised: what is stored and shown back as data (audit descriptions, as Umbraco's audit comments; names; the country names of `CountriesDataSource`), logs and exceptions. (owner delegated to Umbraco parity, Phase 10h-1) | D37, D24 |
 | D96 | **The admin's language stays `Zauber:AdminDefaultLanguage`, one for every user (D37).** Umbraco lets each back-office user choose their language; ZauberCMS's mechanism supports it (it follows the current UI culture), and it is proposed as ZP-010 for the owner. (Phase 10h-1) | D37, ZP-010 |
 | D97 | **Every component in ZauberCMS.Components has `L`; a type discovery builds gets the localiser by constructor.** `@inject IStringLocalizer<ZauberText> L` is in `ZauberCMS.Components/_Imports.razor`, as the services there are. `ExtensionManager` builds discovered types with `ActivatorUtilities`, which fills constructor parameters but not `[Inject]` properties, so a type whose text is read from such an instance (a section's name, a dashboard's tab, a nav group's heading, a tree context menu's text, a data source's name, an editor's name) takes `IStringLocalizer<ZauberText>` as a constructor parameter, a `.razor` one in a constructor in `@code` (Blazor builds components with constructor injection too). The built-in types' constructors gain the parameter (v5 release notes). `ZauberCMS.Components.SharedResource` (one key, its generated class colliding by name) is `[Obsolete]`; its file stays so `IStringLocalizer<SharedResource>` still resolves. (Phase 10h-1) | D37, D18 |
+| D100 | **A host with no web root gets `wwwroot` in its content root, created, when `AddZauberCms(builder)` runs; a folder that cannot be created stops the start naming it.** ASP.NET Core sets `WebRootPath` only when `wwwroot` exists or a web root is configured (that one it creates), and leaves it null otherwise; ZauberCMS keeps the media (the disk storage provider), the image cache and the sitemaps there, so a site with no such folder stopped at start in ImageResize's options with `ArgumentNullException` (`path1`), and the storage provider and the sitemap job would have failed at first use. The host's `WebRootPath` and `WebRootFileProvider` are set, so static files serve what is written there without a restart; a web root the host has (found or set) is left alone. Umbraco does the same: `MapPathWebRoot` falls back to `<content root>/wwwroot` and sets `WebRootPath`, and its media file system creates its folders as it writes. Rejected: stopping whenever the folder is missing (a new site with no static files of its own would need an empty folder) and a Zauber setting for the folder (the host's web root setting is there). (owner delegated to Umbraco parity, 2026-11-28, Phase 11i) | ZA-217 |
+| D101 | **ZauberCMS's own addresses are site paths: a path that starts with `/` is read from the site's root, below a path base, and every navigation, link and redirect to one keeps the path base.** The `Urls` constants, `ISection.IndexUrl`, tree and nav items' `Url`, the Block List preview's stylesheets and `Identity:DefaultLoginRedirectUrl` are site paths, as a route template is (a media item's `Url` is stored without the `/` and is resolved against the base address already). Components resolve them with `NavigationManager.ToSiteUrl` (public, `ZauberCMS.Core.Extensions`) for `NavigateTo`, `href`, `src` and Radzen `Path`: the path from the host's root with the path base (`/site/admin/users`), as `Url.Content("~/…")` gives it, with no scheme or host, so a link is right behind a proxy too; a return address (`returnUrl`, the sign-in refresh's `redirectUrl`) is a path from the host's root with the path base (`NavigationManager.GetReturnUrl()`), as ASP.NET's cookie handler writes `ReturnUrl` and as `ToLocalReturnUrl` and the endpoints that redirect to it expect; server code prefixes `Request.PathBase` (the refresh endpoint, the sign-out form and its redirects, a sign-in's default return address); email links keep the request's path base or the path of `Zauber:SiteUrl`. The constants keep their values: they are route templates and cookie paths, and sites use them. A test fails on `NavigateTo("/…")`, `href="/…"`, `Redirect("/…")` or one with a `Urls` constant in the packages. Umbraco does the same: its back-office paths are app-relative (`~/umbraco`), resolved with the application's virtual path (`IHostingEnvironment.ToAbsolute`), and ASP.NET's `LinkGenerator` and `Url.Content("~/")` prepend `PathBase`. Rejected: constants without the leading `/` (they would break `@page`, the cookie paths and sites' own uses) and a NavigationManager of ZauberCMS's own (every component and plugin gets the framework's). The front end's content links are not covered (ZA-251, Phase 12). (owner delegated to Umbraco parity, 2026-11-28, Phase 11i) | ZA-219, ZA-199, D64 |
+| D102 | **The `Zauber:ImageResize` numbers are checked with the other Zauber settings (D48): `DefaultQuality` 1–100, `PngCompressionLevel` 0–9, and `Cache:FolderSharding`, `Cache:MaxCacheBytes` and `ResponseCache:ClientCacheSeconds` not negative; a value outside stops the start naming the setting, its value and what is valid, before the migrations.** These are ImageResize's own rules. Its options validator is internal to it, so it cannot be run on the mapped options, and running every registered `IValidateOptions<ImageResizeOptions>` would also run a site's own validators on options without the site's own `Configure<ImageResizeOptions>`. A test runs ImageResize's registered validator over a sweep of values for each of the five and fails when the two disagree, so an ImageResize update that changes a rule is noticed. What a site sets on ImageResize's options itself (`MaxSourceBytes`, `Bounds`) stays with ImageResize's check. Umbraco validates its settings classes with `IValidateOptions` (D48), but its `ImagingSettings` reach ImageSharp through `ConfigureImageSharpMiddlewareOptions` unchecked, so a bad value fails inside ImageSharp; ZauberCMS checks what it maps because the site owner set a Zauber setting. (owner delegated to Umbraco parity, 2026-11-28, Phase 11i) | ZA-235, D48, D81 |
+| D103 | **CI's stamp and commit-back steps are tested by running them: `tests/commit-back-test.sh` takes both `run:` scripts out of `ci.yml` by step name and runs them, as written, with bash and git against a scratch bare origin, for 11 cases; CI's build job runs it on every push, before anything publishes.** A script, as the template smoke test is (D46): it needs bash and git, not .NET, and CI's Ubuntu runner has both, while in xUnit it would be skipped where Git Bash is missing or run WSL's bash. `BuildBaselineTests` keeps only what the script cannot see (the step is the publish job's last, after the push to nuget.org; the publish jobs run one at a time) and checks that the build job runs the script on step names the publish job has. The script refuses an origin other than its own. Umbraco has nothing to compare (it commits nothing back, D82). (owner delegated, 2026-11-28, Phase 11i) | ZP-002, D82, D46 |
+| D104 | **The `login` and `register` rate-limit policies are replaceable: each is the keyed `IRateLimiterPolicy<string>` registered under its name, by default `LoginRateLimiterPolicy` and `RegisterRateLimiterPolicy` (public, reading `Zauber:Identity:LoginRateLimit`/`RegisterRateLimit` as before), and a site's own registration under the name, before or after `builder.AddZauberCms()`, replaces it.** ASP.NET Core's idiom for a policy of one's own is a class implementing `IRateLimiterPolicy<TPartitionKey>`, added under a name; `RateLimiterOptions` takes each name once, so ZauberCMS adds both names from DI and a site swaps the class there, as it swaps other defaults (`IFormProtectionService`). New public: `ZauberSetup.LoginRateLimitPolicy` (`"login"`, the pages now name it) and the two classes (virtual `GetPartition`, so a site can subclass one). Rejected: the policy names as settings (`[EnableRateLimiting]` takes a constant, and a plugin's page could not follow a setting), a Zauber interface of its own (ASP.NET Core's fits), and an options hook over the built-in limiter (it could change neither the algorithm nor the store). Umbraco ships no rate limiter for member or back-office sign-in (it relies on Identity's lockout), so ASP.NET Core's idiom decides. (owner delegated, 2026-11-28, Phase 11i) | ZP-003, ZA-149, D81 |
 | D110 | **What Content, Media and SEO keep in English: what is stored, and what reaches the editor from an exception.** The version comments a save writes ("Content updated", "Draft saved - unpublished changes") are stored on the version and stay English, as audit descriptions do (D95); so do the " (Copy)" a copy's stored name gets, a new content type's stored "System" tab (shown as `content_systemTab`), the SEO checks' word lists (detection data) and the 401 body of `RestrictedMediaMiddleware` (a plain status answer, written before the culture middleware runs). The text of an exception shown inside a localised sentence (`seo_pageLoadFailed`'s `{0}`, a network error) stays as .NET or the thrower wrote it. `ProviderService.NoStorageProviderMessage` stays a public constant: the English of the exception and of the result message `media_noStorageProvider` (the Phase 11h refusal, now localised). Umbraco stores its audit and version comments as written and shows exception messages untranslated. (owner delegated to Umbraco parity, Phase 10h-2) | D37, D95 |
 | D111 | **An SEO check's name and results, and the states the admin shows from an enum, are in the admin's language, read when shown.** The built-in checks take `IStringLocalizer<ZauberText>` by constructor (D97) and read `Name` and every message per call, since the checker caches the instances (`GetInstances<ISeoCheck>(true)`); a site's own check does the same with its own area. The checker orders the checks of one `SortOrder` by the name shown, so alphabetically in the admin's language. A version's status (Draft, Published, ...) and a block's change (Added, Removed, Modified), shown with `ToString()` before, have a key per value; the stored enums do not change. Umbraco's back office shows its content states and its health checks' names and results from its language files. (owner delegated to Umbraco parity, Phase 10h-2) | D37, D97 |
 | D120 | **A built-in property editor keeps its parameterless constructor and its `Name`/`Description` setters beside the localising constructor.** The localising constructor (`IStringLocalizer<ZauberText>`, D97) is marked `[ActivatorUtilitiesConstructor]`, so discovery (`ExtensionManager`, `ActivatorUtilities.CreateInstance`) and Blazor (`ActivatorUtilities.CreateFactory`) always choose it; built with `new` (a starter kit that reads `new TextProperty().Alias`, as Installer.md tells sites to and the template's kit does), its name and description are ZauberCMS's English (`EditorText`, internal, reads `Editors.resx`); a name or description set on an editor (a site, a subclass) wins over the text, as the setters did before. The RTE toolbar items keep their `(IModalService)` constructor the same way. So nothing a site wrote against the editors breaks. Umbraco: a data editor's name is attribute metadata that the back office localises by key; ZauberCMS reads it from an instance, so the instance carries the localiser. Rejected: only the localising constructor and get-only names (breaks the template's starter kit, every site that followed the documented pattern and every subclass that renames an editor); `typeof(T)` and alias constants (a second pattern for sites to learn). (Phase 10h-3) | D97, D18 |
@@ -2497,17 +2507,121 @@ The four Low findings the Phase 11 audit assigned to Phase 12, decided Umbraco's
   - CI: a release pushed while the previous one is still publishing no longer fails its commit-back (build only).
   - Breaking: none.
 
+#### Phase 11i — start-up, path base and rate-limit leftovers — DONE (2026-11-28)
+The three Low findings assigned to Phase 12 and the Phase 11h audit's two proposals, decided the Umbraco (or ASP.NET
+Core) way (D100–D104) and done before it.
+- **A site without `wwwroot` starts (ZA-217, D100).** `ZauberSetup.EnsureWebRoot` (internal), first thing in
+  `AddZauberCms(builder)`: a host with no web root gets `<content root>/wwwroot`, created, as `WebRootPath` and
+  `WebRootFileProvider`; a folder that cannot be created stops the start with an `InvalidOperationException` naming
+  it. The ImageResize options, the disk storage provider and the sitemap job all read that path.
+- **The path base in every navigation, link and redirect (ZA-219, D101).** `NavigationManager.ToSiteUrl(url)` and
+  `GetReturnUrl(url?)` (public, `ZauberCMS.Core.Extensions`). Through them: every `NavigateTo` in Components (the
+  `Urls` navigations of the sections, dashboards, trees, context menus and editors; the tree, section and
+  `TreeButton` sinks for consumer addresses; `AdminIndex`'s `IndexUrl`; the user editor's two and the role editor's
+  sign-in refreshes, now back to the page with its path base; the current-user panel; `EntryPage`'s access-denied
+  and login redirects), the account pages' links (access denied, login, confirm email) and the admin's links and
+  images (the content breadcrumb, unpublished pages, a media item, a content type's cover image, the new-site
+  page). Server side: `AuthController` (the refresh's login redirect, the sign-out form's action, its default and
+  fallback home address), `MembershipService` (a sign-in's or registration's default return address, the 2FA
+  address and the reset-password link), `ToAbsoluteUrl` and the confirmation link (the request's path base, or the
+  path of `Zauber:SiteUrl`, which `new Uri(site, "/…")` dropped). The razor edits touch the navigation lines only.
+- **`Zauber:ImageResize` checked with the Zauber settings (ZA-235, D102).** `ZauberSettingsValidator.ImageResizeFailures`:
+  five numbers, the setting, its value and the valid range, before the migrations.
+- **CI's commit-back step run in a test (ZP-002, D103).** `tests/commit-back-test.sh` (11 cases, 55 checks) and the
+  build job's "Commit-back step test" step; `BuildBaselineTests` ZA195 pins only the job around the step, ZP002
+  that CI runs the script on the publish job's step names. Checked: Git Bash (bash 5.2.37, git 2.51.2, gawk) and
+  the .NET SDK container (Ubuntu 24.04: bash 5.2.21, git 2.43, mawk); shellcheck 0.11.0 and actionlint 1.7.12
+  clean; four injected defects caught (the rebase without `-X theirs`, the rollback check removed, the fetch moved
+  out of the retry loop, the stamp step renamed).
+- **Replaceable `login` and `register` rate limits (ZP-003, D104).** `LoginRateLimiterPolicy`,
+  `RegisterRateLimiterPolicy` (public, `ZauberCMS.Core.Security.Services`), registered with
+  `TryAddKeyedSingleton<IRateLimiterPolicy<string>>` under `ZauberSetup.LoginRateLimitPolicy` (new) and
+  `RegisterRateLimitPolicy`; `RateLimiterOptionsFromZauberSettings` adds the two names from those. The four sign-in
+  pages name the constant. [Installer.md](Installer.md) gives the site's path.
+- **ZA-250 (Low, found while building) — fixed.** After the fifth refused push the commit-back step still said
+  "fetching it again"; the last attempt says only that it was refused. Recorded: ZA-251 (Low, Phase 11j since the merge) the front
+  end under a path base: content links (`ContentUrl.SiteRelative`, links stored in rich text) start at the host's
+  root; ZA-252 (Low, Phase 11j since the merge) a browser holding cookies of the same names at the path `/` (a site moved under a
+  path base, another site at the host's root) could not sign in or post a form under the path base until they were
+  cleared (seen in the browser check; the cause is not pinned down).
+- **`/audit changed` over the phase** (a diff reviewer given the code and a unit reviewer for bootstrap, settings
+  and the account pages, each reproducing in a worktree of its own): nothing Critical, High or Medium. Fixed (Low):
+  the Block List preview's stylesheets (site paths) left the path base; `ToSiteUrl` gave the request's scheme and
+  host, which behind a proxy without `Zauber:ForwardedHeaders` are the proxy's view: it gives the path from the
+  host's root now, as `Url.Content("~/…")`; the source scan missed `RedirectTo`, a navigation across a ternary, an
+  attribute written in a C# string, `href="/"` and scripts (over the files at `f7c38f2` it now flags 66 of the
+  places this phase fixed; the addresses passed on in variables, the sign-in's default and the email links have tests
+  or the browser check of their own); the `Zauber:SiteUrl` doc did not say to put the path base in it; and
+  **ZA-253**: a crafted
+  return address made the sign-in end in an error page after it had signed the visitor in (the external sign-in
+  passed its query's address straight on, the registration took one from the form unchecked, and
+  `IdentityRedirectManager` threw on an address it could not read), and `ToLocalReturnUrl` let `/\t/host` through,
+  which a browser reads as `//host` once it drops the tab: both pages make it local as the login page does
+  (ZA-201), the redirect sends such an address home, and a return address with a control character is refused, as
+  ASP.NET's `IsLocalUrl` does. Recorded: ZA-251 widened to the SEO redirects' targets (`RedirectMiddleware` writes
+  `ToUrl` as stored) and the block previews' HTML.
+- Tests (48 new cases): `Security/PathBaseNavigationTests` ZA219 ×17 (site paths and return addresses, email links
+  with a path base or a `SiteUrl` path, the refresh and sign-out endpoints over HTTP under `UsePathBase`, a source
+  scan for host-root navigations, links and redirects) and ZA253 ×7 (return addresses with control characters, the
+  redirect of one it cannot use), `Security/SectionAccessTests` ZA219 (×3 providers, the
+  sign-in's default return address), `Bootstrap/WebRootTests` ZA217 ×4, `Bootstrap/ImageResizeSettingsCheckTests`
+  ZA235 ×13 (each range, the edges, the same refusals as ImageResize's validator), `Security/RateLimitPolicyTests`
+  ZP003 ×3 (the defaults, a site's own after `AddZauberCms` over HTTP, one before it), `Packaging/BuildBaselineTests`
+  ZP002. Seen failing with each fix taken out. Full suite 1537 (all pass, none skipped) on SQLite, PostgreSQL,
+  SQL Server LocalDB and Redis; Release
+  build 0 warnings; the template smoke test passes (Windows PowerShell 5.1).
+- **Browser check** (the dev site under `UsePathBase("/site")`, added for the run and not committed, on a scratch
+  copy of `app.db`, `http://127.0.0.1:5350/site`): the installer (it sent the browser to `/site/admin`; the sign-in
+  did not hold until the browser's older same-named cookies were cleared, ZA-252); sign-in from `/site/admin` and from the login page
+  without a return address (both to `/site/admin/content`); the section links, a content tree item, Create Content,
+  Settings and Global Settings, the Users tree, a role's user list and a user; a role change on one's own user (the
+  refresh went to `/site/api/auth/refreshsignin?redirectUrl=%2Fsite%2Fadmin%2Fusers%2Fedit%2F…` and back, still
+  signed in); sign-out from the profile menu (`/site/api/auth/logout`, its post, then `/site/`); no host-root link
+  left on the content page. **Not verified:** the role editor's refresh (it runs for a non-administrator who makes
+  a role; same code as the user editor's), the media dialogs and context menus in a browser (the source scan
+  covers them), an email sent under a path base (the link is tested), CI itself (GitHub only).
+- **Release notes (D18):**
+  - A site with no `wwwroot` folder starts: it gets `wwwroot` in its content root, created, as its web root.
+  - Under a path base (`UsePathBase`), the admin's and the account pages' navigations, links and redirects keep
+    it, and so do email links; `ToAbsoluteUrl` keeps the request's path base and the path of `Zauber:SiteUrl`
+    (`https://example.com/site` gave `https://example.com/account/…` before). A sign-in's default return address
+    (`AuthenticationResult.NavigateToUrl`) has the path base in it. `ISection.IndexUrl`, tree and nav items' `Url`
+    and `Zauber:Identity:DefaultLoginRedirectUrl` are read below the path base (a value that had the path base
+    written into it, to work around this, now gets it twice: take it out). New: `NavigationManager.ToSiteUrl`,
+    `GetReturnUrl`; a plugin navigates to a site path with them ([AdminUI.md](AdminUI.md) "Rules").
+  - The external sign-in and the registration page go back only to a return address on this site, as the login page
+    does; one the sign-in redirect cannot use goes to the home page instead of an error page, and a return address
+    with a tab or line break in it is refused (`ToLocalReturnUrl`).
+  - A `Zauber:ImageResize` number out of range stops the start naming the setting, before the migrations (it
+    stopped later, in ImageResize's check).
+  - The `login` and `register` rate limits are replaceable with a keyed `IRateLimiterPolicy<string>`; new:
+    `ZauberSetup.LoginRateLimitPolicy`, `LoginRateLimiterPolicy`, `RegisterRateLimiterPolicy`. Unchanged by default.
+  - CI: the commit-back step is tested on every push (build only).
+  - Breaking: none.
+- **Merged onto Phase 10h** (made from f7c38f2, before 10h-1). Where 11i changed a navigation and 10h localised
+  the text beside it, both are kept: the access-denied, confirmation, login and new-site pages' links, the Create
+  buttons of Content, Settings, Structure and Users, the media folder's Edit, the sign-out page's form (its title
+  10h-4's, its action `SitePath(Urls.ApiLogout)`) and the reset password's message (`membership_passwordResetDone`
+  with its link through `HostPath`). 10h-4's own navigations keep the path base too: the access-denied page's
+  sign-in and sign-out links (`GetReturnUrl`, `ToSiteUrl`), the external sign-in's relative `Account/Login`, the
+  reset-password page (ZA-284) and the emails of D132 (`ToAbsoluteUrl`); the source scan passes over them. 11i's
+  new text is start-up errors and log lines (English, AdminUI.md "Localisation" rule 9). ZA-251 and ZA-252 go to
+  Phase 11j. Full suite after the merge 1581 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
+  Redis (1537 on its own branch); template smoke test and `tests/commit-back-test.sh` (55 checks) pass.
+- **Recorded for Phase 11j** (in progress, in its own worktree; assigned at the merge): **ZA-251** (the front end
+  under a path base: content links from `ContentUrl.SiteRelative`, the SEO redirects' targets (`RedirectMiddleware`
+  writes `ToUrl` as stored), the block previews' HTML and the links stored in rich text start at the host's root;
+  decide Umbraco's way, whose URL provider adds the application's virtual path, without rewriting stored content)
+  and **ZA-252** (a browser holding cookies of the same names at the path `/` could not sign in or post a form
+  under a path base until they were cleared: reproduce, find which cookie ASP.NET Core reads, and decide whether
+  the cookie names need the path base).
+
 ### Phase 12 — .NET 11 (D4)
 The Phase 11 audit's four leftovers (ZA-191, ZA-192, ZA-195, ZA-196) were done in Phase 11h (D80–D83).
 (ZA-214 and ZA-215, from the Phase 10g audit, were done in Phase 10g-2.)
-From Phase 10g-2: **ZA-217** (a site with no
-`wwwroot` folder fails at start with an `ArgumentNullException` from the ImageResize options,
-`OptionsFromZauberSettings.cs` since 11h: name the folder or create it), **ZA-219** (admin navigations to absolute addresses, `UserEditor`'s and `RoleEditor`'s
-sign-in refresh and the `Urls.*` `NavigateTo` calls, ignore a path base; the panel's own were fixed in 10g-2).
-From the Phase 11h audit: **ZA-235** (an out-of-range `Zauber:ImageResize` value, such as a `DefaultQuality` outside
-1–100, passes the Zauber settings check and stops the start in ImageResize's own validator, after the migrations,
-without naming the setting: check it in `ZauberSettingsValidator`, D48).
-(ZA-264, from Phase 10h-2, moved to Phase 10i.)
+ZA-217, ZA-219 (from Phase 10g-2) and ZA-235 (from the Phase 11h audit) were done in Phase 11i (D100–D102).
+(ZA-264, from Phase 10h-2, moved to Phase 10i. ZA-251 and ZA-252, recorded by Phase 11i, are Phase 11j's, in
+progress: see "Phase 11i".)
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 

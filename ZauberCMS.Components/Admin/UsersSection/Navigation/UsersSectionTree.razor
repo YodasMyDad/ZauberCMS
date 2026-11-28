@@ -99,7 +99,7 @@
         switch (Selection)
         {
             case TreeBranch branch:
-                if (branch.Url != null) NavigationManager.NavigateTo(branch.Url);
+                if (branch.Url != null) NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(branch.Url));
                 break;
         }
     }

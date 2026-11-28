@@ -145,7 +145,7 @@
             {
                 if (!treeStub.Url.IsNullOrWhiteSpace())
                 {
-                    NavigationManager.NavigateTo(treeStub.Url);
+                    NavigationManager.NavigateTo(NavigationManager.ToSiteUrl(treeStub.Url));
                 }
 
                 break;

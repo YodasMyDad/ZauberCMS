@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using ZauberCMS.Core.Membership.Middleware;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -19,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -76,7 +78,18 @@ namespace ZauberCMS.Core;
 
 public static class ZauberSetup
 {
-    /// <summary>The rate limit policy of the registration page: 5 posts per address in 10 minutes.</summary>
+    /// <summary>
+    /// The rate limit policy of the sign-in pages (login, external sign-in, forgot and reset password): by default
+    /// <see cref="LoginRateLimiterPolicy"/>, 10 requests per address in 5 minutes. A site replaces it with a keyed
+    /// <c>IRateLimiterPolicy&lt;string&gt;</c> of this name (Roadmap D104).
+    /// </summary>
+    public const string LoginRateLimitPolicy = "login";
+
+    /// <summary>
+    /// The rate limit policy of the registration page: by default <see cref="RegisterRateLimiterPolicy"/>, 5 posts
+    /// per address in 10 minutes. A site replaces it with a keyed <c>IRateLimiterPolicy&lt;string&gt;</c> of this
+    /// name (Roadmap D104).
+    /// </summary>
     public const string RegisterRateLimitPolicy = "register";
 
     public static void AddZauberCms(this WebApplicationBuilder builder, params Assembly[] additionalAssemblies)
@@ -90,6 +103,10 @@ public static class ZauberSetup
         // What the bootstrap finds before logging exists; AddZauberCms(app) writes it to the log (ZA-120)
         var startupMessages = new StartupMessages();
         builder.Services.AddSingleton(startupMessages);
+
+        // Media, resized images and sitemaps live in the web root, which a site without a wwwroot folder has not got
+        // (ZA-217, D100)
+        EnsureWebRoot(builder.Environment);
 
         // The Zauber section, read the same way here and for IOptions<ZauberSettings>: a list the configuration sets
         // replaces its default instead of being added to it (ZA-167). Settings that would fail at the first request
@@ -240,9 +257,13 @@ public static class ZauberSetup
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddAntiforgery();
         
-        // Rate limiting for the sign-in and registration pages: the "login" and "register" policies, from
-        // Zauber:Identity:LoginRateLimit / RegisterRateLimit (ZA-149, D81)
+        // Rate limiting for the sign-in and registration pages: the "login" and "register" policies, by default from
+        // Zauber:Identity:LoginRateLimit / RegisterRateLimit (ZA-149, D81). Each is the keyed policy of its name, so a
+        // site's own registration under that name, before or after this, replaces it (ZP-003, D104).
         builder.Services.AddRateLimiter(_ => { });
+        builder.Services.TryAddKeyedSingleton<IRateLimiterPolicy<string>, LoginRateLimiterPolicy>(LoginRateLimitPolicy);
+        builder.Services.TryAddKeyedSingleton<IRateLimiterPolicy<string>, RegisterRateLimiterPolicy>(
+            RegisterRateLimitPolicy);
         builder.Services.ConfigureOptions<RateLimiterOptionsFromZauberSettings>();
 
         builder.Services.AddScoped<ExtensionManager>();
@@ -403,6 +424,42 @@ public static class ZauberSetup
         }
 
         return DatabaseProviders.ContextType(installState.DatabaseProvider);
+    }
+
+    /// <summary>
+    /// Gives a host with no web root the folder <c>wwwroot</c> in its content root, created, and serves it as the
+    /// web root (ZA-217, Roadmap D100). ASP.NET Core leaves <see cref="IWebHostEnvironment.WebRootPath"/> null when
+    /// that folder is missing (it creates a web root only when one is set), and the media, the image cache and the
+    /// sitemaps are kept there; Umbraco falls back to the same folder (<c>MapPathWebRoot</c>) and creates its media
+    /// folders as it writes them. A web root the host has (set or found) is left as it is.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The folder could not be created; the message names it.</exception>
+    internal static void EnsureWebRoot(IWebHostEnvironment environment)
+    {
+        if (!string.IsNullOrEmpty(environment.WebRootPath))
+        {
+            return;
+        }
+
+        var webRoot = Path.Combine(environment.ContentRootPath, "wwwroot");
+        try
+        {
+            Directory.CreateDirectory(webRoot);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            throw new InvalidOperationException(
+                $"ZauberCMS keeps media, resized images and sitemaps in the site's web root, and this site has none: " +
+                $"the folder '{webRoot}' could not be created ({ex.Message}). Create it, or set the web root " +
+                "(WebApplicationOptions.WebRootPath, or the webroot setting) to a folder the site can write to.", ex);
+        }
+
+        environment.WebRootPath = webRoot;
+        // Static web assets (Development, UseStaticWebAssets) already wrap the empty provider: keep them behind it
+        var physical = new PhysicalFileProvider(webRoot);
+        environment.WebRootFileProvider = environment.WebRootFileProvider is null or NullFileProvider
+            ? physical
+            : new CompositeFileProvider(physical, environment.WebRootFileProvider);
     }
 
     /// <summary>Builds the forwarded-headers options from <c>Zauber:ForwardedHeaders</c>.</summary>

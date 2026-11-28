@@ -4,6 +4,7 @@ using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core;
 using ZauberCMS.Core.Content.Models;
+using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Localization;
 
 namespace ZauberCMS.Components.ContextMenus.Structure;
@@ -52,7 +53,7 @@ public class CreateContentTypeContextMenu(IStringLocalizer<ZauberText> text) : I
         }
 
         contextMenuService.Close();
-        navigationManager.NavigateTo($"{Urls.AdminStructureCreateContentType}/{contentType.Id}");
+        navigationManager.NavigateTo(navigationManager.ToSiteUrl($"{Urls.AdminStructureCreateContentType}/{contentType.Id}"));
         return Task.CompletedTask;
     }
 

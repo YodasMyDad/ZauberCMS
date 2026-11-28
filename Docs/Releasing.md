@@ -34,7 +34,8 @@
 
 - Every push (any branch) and PRs to `main-static`: build, the tests (including the PostgreSQL and Redis tests:
   Docker containers on the runner; they fail rather than skip on CI), a scan that fails on any package with a
-  known vulnerability, direct or transitive, then the template smoke test (`tests/template-smoke.ps1`, below). The
+  known vulnerability, direct or transitive, then the template smoke test (`tests/template-smoke.ps1`, below) and
+  the commit-back step test (`tests/commit-back-test.sh`, below). The
   SDK comes from `global.json`. A push or PR that changes only documentation (Markdown, `Docs/`, `.audit/`,
   `.claude/`, IDE folders, `LICENSE`) runs nothing, so it does not publish. That includes `ReadMe.md`, although it
   is the packages' readme: a package's readme is part of its version, so the new text ships with the next release
@@ -104,6 +105,22 @@ confirmation (`Read-Host`), never tags or commits. Use only when CI is unavailab
   `.razor` files. After changing them (or an API they use), build a copy against the source: copy the site folder
   somewhere outside the repo, replace the `ZauberCMS` `PackageReference` with a `ProjectReference` to
   `ZauberCMS/ZauberCMS.csproj`, `dotnet build`, run it and go through the installer with the starter kit chosen.
+
+### Commit-back step test — `tests/commit-back-test.sh`
+
+The publish job's "Stamp the version" and "Commit the stamped version back to main-static" steps run only after a
+release, so the script runs them on every push instead (ZP-002, D103): it takes their `run:` scripts out of
+`ci.yml` by step name, as written, and runs them with `bash` and `git` against a scratch repository and a bare
+origin in a temp folder (it refuses any other origin), stubbing only what GitHub provides. It checks what
+`main-static` is left with, the stamped versions and the step's exit code and messages for each case: two pushes in
+flight, a single push, a person's later version, a person's later edit of the props, a rerun of an older release, a
+push that loses a race, a rerun of the newest release, a prerelease and its release, a rollback of `main-static`
+past the commit built, an origin that refuses every push, and a commit that has the version already (as
+`release.ps1` leaves it). Run it from the repository root in Git Bash or Linux (`bash tests/commit-back-test.sh`;
+a path as its argument tests another copy of the workflow); it prints one line per check and ends with exit code 1
+when one fails. CI runs it in the build job. Change either step, then run it; a new behaviour gets a case.
+`BuildBaselineTests` pins only what the script cannot check (the step is the publish job's last, after the push to
+nuget.org; the publish jobs run one at a time) and that CI runs the script.
 
 ### Template smoke test — `tests/template-smoke.ps1`
 

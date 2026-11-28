@@ -60,7 +60,9 @@ else
         _pushToShadowRoot = false;
         try
         {
-            await JsRuntime.InvokeVoidAsync("zauberSetBlockPreview", _host, Stylesheets, _html);
+            // Site paths (/css/site.css), read below the path base like every address of the site (D101)
+            await JsRuntime.InvokeVoidAsync("zauberSetBlockPreview", _host,
+                Stylesheets.Select(NavigationManager.ToSiteUrl).ToList(), _html);
         }
         catch (JSDisconnectedException)
         {

@@ -22,7 +22,7 @@
                                     class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
                                     @if (CoverImages.TryGetValue(contentType.Id, out var coverImage))
                                     {
-                                        <img class="h-48 object-cover" src="/@coverImage.Url" alt="@contentType.Name">
+                                        <img class="h-48 object-cover" src="@NavigationManager.ToSiteUrl(coverImage.Url ?? string.Empty)" alt="@contentType.Name">
                                     }
                                     else if (contentType.Icon != null)
                                     {
@@ -57,7 +57,7 @@
                                 class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
                                 @if (CoverImages.TryGetValue(contentType.Id, out var coverImage))
                                 {
-                                    <img class="h-48 object-cover" src="/@coverImage.Url" alt="@contentType.Name">
+                                    <img class="h-48 object-cover" src="@NavigationManager.ToSiteUrl(coverImage.Url ?? string.Empty)" alt="@contentType.Name">
                                 }
                                 else if (contentType.Icon != null)
                                 {
@@ -88,7 +88,7 @@
                             class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
                             @if (CoverImages.TryGetValue(contentType.Id, out var coverImage))
                             {
-                                <img class="h-48 object-cover" src="/@coverImage.Url" alt="@contentType.Name">
+                                <img class="h-48 object-cover" src="@NavigationManager.ToSiteUrl(coverImage.Url ?? string.Empty)" alt="@contentType.Name">
                             }
                             else if (contentType.Icon != null)
                             {
