@@ -14,27 +14,27 @@
 
 @attribute [Route($"{Urls.AdminUsersEdit}/{{UserId:guid}}")]
 
-<PageTitle>Edit User</PageTitle>
+<PageTitle>@L["users_editUser"]</PageTitle>
 
 @if (Access is { Allowed: true })
 {
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
                  Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-        <RadzenButton Variant="Variant.Filled" Text="Update Roles" Click="@(UpdateRoles)"/>
-        <RadzenButton Variant="Variant.Filled" Text="Change Password" Click="@(ChangePassword)"/>
-        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteUser)"/>
+        <RadzenButton Variant="Variant.Filled" Text="@L["users_updateRoles"]" Click="@(UpdateRoles)"/>
+        <RadzenButton Variant="Variant.Filled" Text="@L["users_changePassword"]" Click="@(ChangePassword)"/>
+        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="@L["general_delete"]" Click="@(DeleteUser)"/>
     </RadzenStack>
 }
 
 <RadzenPanel Class="rz-mx-auto">
     @if (UserId == null)
     {
-        <p>There is no user id passed in</p>
+        <p>@L["users_noUserId"]</p>
     }
     else if (Access is { Allowed: false })
     {
         @* Someone who may open Users but not change this user: an administrator (Roadmap D68) *@
-        <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="You cannot change this user"
+        <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="@L["users_cannotChangeUserTitle"]"
                        DefaultMessage="@Access.Reason"/>
     }
     else if (Access != null && User != null)
@@ -43,25 +43,24 @@
 
             <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center"
                          AlignItems="AlignItems.Start" Gap="0.5rem">
-                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" Value="@User.UserName"
-                               ValueChanged="@((string name) => { User.UserName = name; })" aria-label="Name"/>
+                <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="@L["general_name"]" Value="@User.UserName"
+                               ValueChanged="@((string name) => { User.UserName = name; })" aria-label="@L["general_name"]"/>
                 @* Your own address and password are changed in "Your account", with your current password and a link to
                    the new address (Roadmap D72), also when you may open Users: as Umbraco asks for your old password *@
-                <RadzenTextBox Style="width: 100%;" Name="Email" Placeholder="Email" Value="@User.Email"
-                               ValueChanged="@((string name) => { User.Email = name; })" aria-label="Email"
+                <RadzenTextBox Style="width: 100%;" Name="Email" Placeholder="@L["general_email"]" Value="@User.Email"
+                               ValueChanged="@((string name) => { User.Email = name; })" aria-label="@L["general_email"]"
                                Disabled="@IsSelf"/>
                 @if (IsSelf)
                 {
                     <RadzenText TextStyle="TextStyle.Caption">
-                        Change your own email address and password in "Your account", from the profile menu.
+                        @L["users_ownAccountCaption"]
                     </RadzenText>
                 }
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left"
                              AlignItems="AlignItems.Center" Gap="0">
                     <RadzenIcon Icon="schedule" Style="line-height: 20px; height: 20px; font-size: 20px;"
                                 IconStyle="IconStyle.Light"/>
-                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">Last
-                        Updated: @User.DateUpdated.Humanize()</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; padding: 0;">@(L["users_lastUpdatedAgo", User.DateUpdated.Humanize()])</RadzenText>
                 </RadzenStack>
             </RadzenStack>
             
@@ -130,7 +129,7 @@
 
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
                          AlignItems="AlignItems.Center">
-                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
+                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]"/>
             </RadzenStack>
 
         </EditForm>
@@ -211,11 +210,11 @@
     private async Task<bool> MayChangeAsync()
     {
         Access = User == null
-            ? BackOfficeAccessResult.Deny("There is no user.")
+            ? BackOfficeAccessResult.Deny(L["users_noUser"])
             : await BackOfficeAccess.CanEditUserAsync(AuthState.User, User.Id);
         if (!Access.Allowed)
         {
-            NotificationService.ShowErrorNotification(Access.Reason ?? "You cannot change this user.");
+            NotificationService.ShowErrorNotification(Access.Reason ?? L["users_cannotChangeUser"].Value);
         }
 
         return Access.Allowed;
@@ -236,11 +235,11 @@
         if (IsSelf)
         {
             // Your own password needs your current one (D72): the panel asks for it
-            ModalService.OpenSidePanel<ZauberCMS.Components.Admin.Layout.CurrentUserPanel>("Your account");
+            ModalService.OpenSidePanel<ZauberCMS.Components.Admin.Layout.CurrentUserPanel>(L["users_yourAccount"]);
             return;
         }
 
-        var dialog = ModalService.OpenSidePanel<ChangePassword>("Change Password",
+        var dialog = ModalService.OpenSidePanel<ChangePassword>(L["users_changePassword"],
             new Dictionary<string, object>
             {
                 {
@@ -259,7 +258,7 @@
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
                 var user = await userManager.FindByIdAsync(User.Id.ToString());
                 if (user != null) await userManager.UpdateSecurityStampAsync(user);
-                NotificationService.ShowSuccessNotification("Password Updated");
+                NotificationService.ShowSuccessNotification(L["users_passwordUpdated"]);
             }
             else
             {
@@ -281,7 +280,7 @@
             return;
         }
 
-        var dialog = ModalService.OpenSidePanel<UpdateRoles>("Update Users Roles",
+        var dialog = ModalService.OpenSidePanel<UpdateRoles>(L["users_updateUsersRoles"],
             new Dictionary<string, object>
             {
                 {
@@ -297,7 +296,7 @@
             var mayGive = await BackOfficeAccess.CanSetUserRolesAsync(AuthState.User, User.Id, roleNames!);
             if (!mayGive.Allowed)
             {
-                NotificationService.ShowErrorNotification(mayGive.Reason ?? "You cannot give these roles.");
+                NotificationService.ShowErrorNotification(mayGive.Reason ?? L["users_cannotGiveRoles"].Value);
                 return;
             }
 
@@ -308,7 +307,7 @@
             }
             else
             {
-                NotificationService.ShowSuccessNotification("Roles Updated");
+                NotificationService.ShowSuccessNotification(L["users_rolesUpdated"]);
                 if (roleUpdateResult.RefreshSignIn)
                 {
                     // A path on this site: the refresh endpoint only returns to local addresses.
@@ -328,13 +327,13 @@
             return;
         }
 
-        var delete = await DialogService.Confirm("Delete this user for good? Their name, email address, password and profile are erased; this cannot be undone. To stop someone signing in but keep the account, lock it instead.", "Delete user", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        var delete = await DialogService.Confirm(L["users_deleteUserConfirm"], L["users_deleteUser"], new ConfirmOptions { OkButtonText = L["general_yes"], CancelButtonText = L["general_no"] });
         if (delete == true)
         {
             var deleteResult = await MembershipService.DeleteUserAsync(new DeleteUserParameters { Id = User!.Id });
             if (deleteResult.Success)
             {
-                NotificationService.ShowSuccessNotification("User deleted");
+                NotificationService.ShowSuccessNotification(L["users_userDeleted"]);
                 await AppState.NotifyUserDeleted(User, AuthState.User.Identity?.Name!);
                 NavigationManager.NavigateTo(Urls.AdminUsersBaseUrl);
             }
@@ -426,7 +425,7 @@
         {
             var saveUserCommand = new SaveUserParameters { User = User };
             var result = await MembershipService.SaveUserAsync(saveUserCommand);
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{User?.UserName} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{User?.UserName} Error", Detail = "", Duration = 4000 });
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = L["users_saved", User?.UserName ?? string.Empty], Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["users_saveError", User?.UserName ?? string.Empty], Detail = "", Duration = 4000 });
             await AppState.NotifyUserSaved(User, AuthState.User.Identity?.Name!);
             if (result is { Success: true, RefreshSignIn: true })
             {

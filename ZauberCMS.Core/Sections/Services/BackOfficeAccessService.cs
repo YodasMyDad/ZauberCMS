@@ -2,9 +2,11 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Sections.Interfaces;
@@ -29,7 +31,8 @@ public class BackOfficeAccessService(
     ExtensionManager extensionManager,
     ICacheService cacheService,
     IServiceScopeFactory serviceScopeFactory,
-    IOptions<ZauberSettings> settings) : IBackOfficeAccessService
+    IOptions<ZauberSettings> settings,
+    IStringLocalizer<ZauberText> text) : IBackOfficeAccessService
 {
     /// <summary>The cache key of the role → sections list; under the <see cref="Role"/> prefix.</summary>
     public const string RoleSectionsCacheKey = nameof(Role) + "-AllowedSections";
@@ -138,7 +141,7 @@ public class BackOfficeAccessService(
         var targetRoles = await GetStoredRoleNamesAsync(userId, cancellationToken);
         if (targetRoles.Any(IsAdminRoleName))
         {
-            return BackOfficeAccessResult.Deny("Only an administrator can change an administrator.");
+            return BackOfficeAccessResult.Deny(text["sections_onlyAdminChangesAdmin"]);
         }
 
         // Signing in as someone else must not open more than the editor has: their password, email and roles are
@@ -148,7 +151,7 @@ public class BackOfficeAccessService(
         return notYours.Count == 0
             ? BackOfficeAccessResult.Allow
             : BackOfficeAccessResult.Deny(
-                $"You can only change users whose sections you can open yourself: {string.Join(", ", notYours.Select(SectionName))}.");
+                text["sections_onlyYourSectionsUsers", string.Join(", ", notYours.Select(SectionName))]);
     }
 
     public virtual async Task<BackOfficeAccessResult> CanSetUserRolesAsync(ClaimsPrincipal editor, Guid userId,
@@ -178,7 +181,7 @@ public class BackOfficeAccessService(
         return notYours.Count == 0
             ? BackOfficeAccessResult.Allow
             : BackOfficeAccessResult.Deny(
-                $"You can only give roles you are in yourself, and never the {Constants.Roles.AdminRoleName} role: {string.Join(", ", notYours)}.");
+                text["sections_onlyYourRoles", Constants.Roles.AdminRoleName, string.Join(", ", notYours)]);
     }
 
     public virtual async Task<BackOfficeAccessResult> CanEditRoleAsync(ClaimsPrincipal editor, Guid roleId,
@@ -204,12 +207,12 @@ public class BackOfficeAccessService(
 
         if (IsAdminRoleName(storedName))
         {
-            return BackOfficeAccessResult.Deny($"Only an administrator can change the {Constants.Roles.AdminRoleName} role.");
+            return BackOfficeAccessResult.Deny(text["sections_onlyAdminChangesAdminRole", Constants.Roles.AdminRoleName]);
         }
 
         return facts.RoleNames.Contains(storedName, StringComparer.OrdinalIgnoreCase)
             ? BackOfficeAccessResult.Allow
-            : BackOfficeAccessResult.Deny($"You can only change roles you are in yourself; you are not in {storedName}.");
+            : BackOfficeAccessResult.Deny(text["sections_onlyRolesYouAreIn", storedName]);
     }
 
     public virtual async Task<BackOfficeAccessResult> CanSaveRoleAsync(ClaimsPrincipal editor, Role role,
@@ -225,8 +228,7 @@ public class BackOfficeAccessService(
         if (string.Equals(role.Name?.Trim(), StartingRoleName, StringComparison.OrdinalIgnoreCase) &&
             role.GetAllowedSections().Count > 0)
         {
-            return BackOfficeAccessResult.Deny(
-                $"Everyone who registers gets the {StartingRoleName} role (Zauber:NewUserStartingRole), so it cannot open sections of the admin. Give them to another role.");
+            return BackOfficeAccessResult.Deny(text["sections_startingRoleNoSections", StartingRoleName]);
         }
 
         var facts = await GetEditorAsync(editor, cancellationToken);
@@ -237,7 +239,7 @@ public class BackOfficeAccessService(
 
         if (IsAdminRoleName(role.Name))
         {
-            return BackOfficeAccessResult.Deny($"Only an administrator can make the {Constants.Roles.AdminRoleName} role.");
+            return BackOfficeAccessResult.Deny(text["sections_onlyAdminMakesAdminRole", Constants.Roles.AdminRoleName]);
         }
 
         using var scope = serviceScopeFactory.CreateScope();
@@ -253,7 +255,7 @@ public class BackOfficeAccessService(
         return notYours.Count == 0
             ? BackOfficeAccessResult.Allow
             : BackOfficeAccessResult.Deny(
-                $"You can only give a role sections you can open yourself: {string.Join(", ", notYours.Select(SectionName))}.");
+                text["sections_onlyYourSectionsRoles", string.Join(", ", notYours.Select(SectionName))]);
     }
 
     public virtual Task<BackOfficeAccessResult> CanDeleteRoleAsync(ClaimsPrincipal editor, Guid roleId,
@@ -327,7 +329,7 @@ public class BackOfficeAccessService(
     {
         if (!IsSignedIn(editor))
         {
-            return new EditorFacts([], false, new HashSet<string>(), BackOfficeAccessResult.Deny("Sign in first."));
+            return new EditorFacts([], false, new HashSet<string>(), BackOfficeAccessResult.Deny(text["sections_signInFirst"]));
         }
 
         var userId = editor.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -341,7 +343,7 @@ public class BackOfficeAccessService(
                 StringComparer.OrdinalIgnoreCase);
         var refused = isAdministrator || sections.Contains(Constants.Sections.UsersSection)
             ? null
-            : BackOfficeAccessResult.Deny("You cannot open the Users section.");
+            : BackOfficeAccessResult.Deny(text["sections_cannotOpenUsers"]);
         return new EditorFacts(roleNames, isAdministrator, sections, refused);
     }
 

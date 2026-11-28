@@ -12,4 +12,215 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="settings_addApiKey" xml:space="preserve">
+    <value>Add the key</value>
+    <comment>Global settings, API keys: tooltip and label of the add button</comment>
+  </data>
+  <data name="settings_adminEmailAddresses" xml:space="preserve">
+    <value>Admin Email Addresses</value>
+    <comment>Global settings, Identity tab: setting name</comment>
+  </data>
+  <data name="settings_adminEmailAddressesDescription" xml:space="preserve">
+    <value>An account with one of these email addresses becomes an administrator once its owner has proven the address. A social login proves it. Someone who registers with a password is emailed a link to choose the password, and using it makes the account an administrator</value>
+  </data>
+  <data name="settings_allowRegistration" xml:space="preserve">
+    <value>Allow Registration</value>
+    <comment>Global settings, Identity tab: setting name</comment>
+  </data>
+  <data name="settings_allowRegistrationDescription" xml:space="preserve">
+    <value>Visitors can create an account, on the registration page or with a social login. Off: the registration page answers 404 and the link on the login page is hidden</value>
+  </data>
+  <data name="settings_allowedAdminIpAddresses" xml:space="preserve">
+    <value>Allowed Admin IP Addresses</value>
+    <comment>Global settings, Identity tab: setting name</comment>
+  </data>
+  <data name="settings_allowedAdminIpAddressesDescription" xml:space="preserve">
+    <value>Restrict access to this admin CMS by IP address</value>
+  </data>
+  <data name="settings_allowedFileTypes" xml:space="preserve">
+    <value>Allowed File Types</value>
+    <comment>Global settings, Media tab: setting name</comment>
+  </data>
+  <data name="settings_allowedFileTypesDescription" xml:space="preserve">
+    <value>The allowed file types that can be uploaded into the CMS</value>
+  </data>
+  <data name="settings_apiKeyName" xml:space="preserve">
+    <value>API key name</value>
+    <comment>Global settings, API keys: screen-reader label of a saved key's name box</comment>
+  </data>
+  <data name="settings_apiKeyNameAndValueRequired" xml:space="preserve">
+    <value>Give the key a name and a value</value>
+    <comment>Global settings, API keys: adding a key without a name or value</comment>
+  </data>
+  <data name="settings_apiKeyNameRequired" xml:space="preserve">
+    <value>Every API key needs a name</value>
+    <comment>Global settings, API keys: save refused</comment>
+  </data>
+  <data name="settings_apiKeyNameTaken" xml:space="preserve">
+    <value>There is already a key named {0}</value>
+    <comment>Global settings, API keys: adding a key whose name is taken. {0} = the name</comment>
+  </data>
+  <data name="settings_apiKeyNameTwice" xml:space="preserve">
+    <value>Two API keys are named {0}</value>
+    <comment>Global settings, API keys: save refused. {0} = the name</comment>
+  </data>
+  <data name="settings_apiKeyNewValueLabel" xml:space="preserve">
+    <value>New value for the API key {0}</value>
+    <comment>Global settings, API keys: screen-reader label of a key's value box. {0} = the key's name</comment>
+  </data>
+  <data name="settings_apiKeySavedPlaceholder" xml:space="preserve">
+    <value>Saved: type a new value to replace it</value>
+    <comment>Global settings, API keys: placeholder of a saved key's value box (the value is never shown)</comment>
+  </data>
+  <data name="settings_apiKeyValueRequired" xml:space="preserve">
+    <value>The API key {0} has no value</value>
+    <comment>Global settings, API keys: save refused. {0} = the key's name</comment>
+  </data>
+  <data name="settings_apiKeys" xml:space="preserve">
+    <value>Api Keys</value>
+    <comment>Global settings, General tab: setting name</comment>
+  </data>
+  <data name="settings_apiKeysDescription" xml:space="preserve">
+    <value>Keys that the API Key Picker and the editors (TinyMCE, Google Maps) use by name. A saved key's value is never shown again: type a new value to replace it. Pages and editor settings keep the name, so renaming or removing a key leaves them without it. A key in the site's configuration (Zauber:ApiKeys) wins over one of the same name here</value>
+  </data>
+  <data name="settings_apiKeysInConfiguration" xml:space="preserve">
+    <value>In the site's configuration, which wins over a key of the same name here: {0}</value>
+    <comment>Global settings, API keys: caption. {0} = the names of the keys in Zauber:ApiKeys, separated by commas</comment>
+  </data>
+  <data name="settings_apiKeysNotSaved" xml:space="preserve">
+    <value>The API keys could not be saved</value>
+    <comment>Global settings: notification</comment>
+  </data>
+  <data name="settings_auditLog" xml:space="preserve">
+    <value>Audit Log</value>
+    <comment>Settings: page title and its navigation item</comment>
+  </data>
+  <data name="settings_chooseFromNavigation" xml:space="preserve">
+    <value>Choose a setting from the navigation.</value>
+    <comment>Settings section start page, when no dashboard is installed</comment>
+  </data>
+  <data name="settings_createContentType" xml:space="preserve">
+    <value>Create Content Type</value>
+    <comment>Settings section start page: button</comment>
+  </data>
+  <data name="settings_createDictionary" xml:space="preserve">
+    <value>Create Dictionary</value>
+    <comment>Language dictionary items page: button</comment>
+  </data>
+  <data name="settings_createLanguage" xml:space="preserve">
+    <value>Create Language</value>
+    <comment>Languages page: button, the new language side panel's title and its field label</comment>
+  </data>
+  <data name="settings_createLanguageDictionary" xml:space="preserve">
+    <value>Create Language Dictionary</value>
+    <comment>Language dictionary items page: side panel title</comment>
+  </data>
+  <data name="settings_defaultLanguage" xml:space="preserve">
+    <value>Default Language</value>
+    <comment>Global settings, General tab: setting name</comment>
+  </data>
+  <data name="settings_defaultLanguageDescription" xml:space="preserve">
+    <value>The culture (for example en-GB) of pages that have no language set on themselves, a parent page or their domain. Empty: the admin language is used</value>
+  </data>
+  <data name="settings_defaultLanguageNotCulture" xml:space="preserve">
+    <value>Default Language is not a culture such as en-GB</value>
+    <comment>Global settings: save refused</comment>
+  </data>
+  <data name="settings_deleted" xml:space="preserve">
+    <value>Deleted</value>
+    <comment>Languages and dictionary items pages: notification</comment>
+  </data>
+  <data name="settings_dictionary" xml:space="preserve">
+    <value>Dictionary</value>
+    <comment>Settings navigation: the language dictionary items</comment>
+  </data>
+  <data name="settings_dictionaryKeyDescription" xml:space="preserve">
+    <value>The text key used to get the language values</value>
+    <comment>Dictionary item side panel: description of the Key field</comment>
+  </data>
+  <data name="settings_dictionaryValuesCaption" xml:space="preserve">
+    <value>Set the value for each language below</value>
+    <comment>Dictionary item side panel</comment>
+  </data>
+  <data name="settings_editLanguage" xml:space="preserve">
+    <value>Edit Language</value>
+    <comment>Languages page: the side panel's title when a language is opened</comment>
+  </data>
+  <data name="settings_generalTab" xml:space="preserve">
+    <value>General</value>
+    <comment>Global settings: tab name</comment>
+  </data>
+  <data name="settings_globalSettings" xml:space="preserve">
+    <value>Global Settings</value>
+    <comment>Settings: page title and its navigation item</comment>
+  </data>
+  <data name="settings_identityTab" xml:space="preserve">
+    <value>Identity</value>
+    <comment>Global settings: tab name</comment>
+  </data>
+  <data name="settings_isoCode" xml:space="preserve">
+    <value>ISO Code</value>
+    <comment>Languages page: column title</comment>
+  </data>
+  <data name="settings_languageDictionaryItems" xml:space="preserve">
+    <value>Language Dictionary Items</value>
+    <comment>Language dictionary items page: page title</comment>
+  </data>
+  <data name="settings_languages" xml:space="preserve">
+    <value>Languages</value>
+    <comment>Languages page: page title and its navigation item</comment>
+  </data>
+  <data name="settings_maxImageSize" xml:space="preserve">
+    <value>Max Image Size</value>
+    <comment>Global settings, Media tab: setting name</comment>
+  </data>
+  <data name="settings_maxImageSizeDescription" xml:space="preserve">
+    <value>The maximum allowed width/height of an image in pixels (Images over this will be resized where possible)</value>
+  </data>
+  <data name="settings_maxUploadFileSize" xml:space="preserve">
+    <value>Max Upload File Size</value>
+    <comment>Global settings, Media tab: setting name</comment>
+  </data>
+  <data name="settings_maxUploadFileSizeDescription" xml:space="preserve">
+    <value>The maximum allowed file size upload in bytes</value>
+  </data>
+  <data name="settings_newApiKeyName" xml:space="preserve">
+    <value>New API key name</value>
+    <comment>Global settings, API keys: screen-reader label of the new key's name box</comment>
+  </data>
+  <data name="settings_newApiKeyValue" xml:space="preserve">
+    <value>New API key value</value>
+    <comment>Global settings, API keys: screen-reader label of the new key's value box</comment>
+  </data>
+  <data name="settings_removeApiKey" xml:space="preserve">
+    <value>Remove the key</value>
+    <comment>Global settings, API keys: tooltip of a key's remove button</comment>
+  </data>
+  <data name="settings_removeApiKeyLabel" xml:space="preserve">
+    <value>Remove the API key {0}</value>
+    <comment>Global settings, API keys: screen-reader label of a key's remove button. {0} = the key's name</comment>
+  </data>
+  <data name="settings_saveError" xml:space="preserve">
+    <value>There was an error</value>
+    <comment>Global settings: notification when the save fails</comment>
+  </data>
+  <data name="settings_saved" xml:space="preserve">
+    <value>Saved</value>
+    <comment>Global settings: notification</comment>
+  </data>
+  <data name="settings_siteName" xml:space="preserve">
+    <value>Site Name</value>
+    <comment>Global settings, General tab: setting name</comment>
+  </data>
+  <data name="settings_siteNameDescription" xml:space="preserve">
+    <value>The name of the site. Views and emails can show it</value>
+  </data>
+  <data name="settings_updateLanguageDictionary" xml:space="preserve">
+    <value>Update Language Dictionary</value>
+    <comment>Language dictionary items page: side panel title</comment>
+  </data>
+  <data name="settings_values" xml:space="preserve">
+    <value>Values</value>
+    <comment>Language dictionary items page: column title (how many languages have a value)</comment>
+  </data>
 </root>

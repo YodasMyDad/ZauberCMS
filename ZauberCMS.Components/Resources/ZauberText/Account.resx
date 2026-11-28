@@ -12,4 +12,212 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="account_accessDenied" xml:space="preserve">
+    <value>Access denied</value>
+    <comment>Access-denied page: title and heading</comment>
+  </data>
+  <data name="account_accessDeniedDetail" xml:space="preserve">
+    <value>You are signed in, but you do not have access to that page.</value>
+    <comment>Access-denied page</comment>
+  </data>
+  <data name="account_alreadyLoggedIn" xml:space="preserve">
+    <value>You are already logged in</value>
+    <comment>Login and registration pages: warning to a visitor who is signed in</comment>
+  </data>
+  <data name="account_captchaFailed" xml:space="preserve">
+    <value>Please complete the check and send the form again.</value>
+    <comment>Registration page: the CAPTCHA was not passed</comment>
+  </data>
+  <data name="account_confirmEmail" xml:space="preserve">
+    <value>Confirm email</value>
+    <comment>Email confirmation page: title</comment>
+  </data>
+  <data name="account_confirmPassword" xml:space="preserve">
+    <value>Confirm password</value>
+    <comment>Reset password page: label</comment>
+  </data>
+  <data name="account_confirmPasswordPlaceholder" xml:space="preserve">
+    <value>Please confirm your password.</value>
+    <comment>Reset password page: placeholder of the password confirmation</comment>
+  </data>
+  <data name="account_confirmationCheckFailed" xml:space="preserve">
+    <value>Unable to check User Id or Confirmation Code</value>
+    <comment>Email confirmation page: the link has no user id or code</comment>
+  </data>
+  <data name="account_createAccount" xml:space="preserve">
+    <value>Create a new account.</value>
+    <comment>Registration page: heading</comment>
+  </data>
+  <data name="account_emailChanged" xml:space="preserve">
+    <value>Your email address has been changed.</value>
+    <comment>Email confirmation page: after a change of address</comment>
+  </data>
+  <data name="account_emailConfirmed" xml:space="preserve">
+    <value>Thank you for confirming your email.</value>
+    <comment>Email confirmation page: after confirming an address</comment>
+  </data>
+  <data name="account_enterEmail" xml:space="preserve">
+    <value>Enter your email.</value>
+    <comment>Forgot password page: heading</comment>
+  </data>
+  <data name="account_enterPassword" xml:space="preserve">
+    <value>Please enter your password.</value>
+    <comment>Reset password page: placeholder of the new password</comment>
+  </data>
+  <data name="account_externalLoginInfoError" xml:space="preserve">
+    <value>Error loading external login information.</value>
+    <comment>Login page: status message after an external sign-in, shown as an error</comment>
+  </data>
+  <data name="account_externalLoginLockedOut" xml:space="preserve">
+    <value>Unable to login please contact us.</value>
+    <comment>Login page: status message after an external sign-in to a locked account</comment>
+  </data>
+  <data name="account_externalProviderError" xml:space="preserve">
+    <value>Error from external provider: {0}</value>
+    <comment>Login page: status message after an external sign-in. {0} = the provider's error, shown as an error</comment>
+  </data>
+  <data name="account_externalSignInFailed" xml:space="preserve">
+    <value>We could not sign you in with {0}. An account is only created when the provider confirms your email address.</value>
+    <comment>External sign-in page, registration open. {0} = the provider's name</comment>
+  </data>
+  <data name="account_externalSignInFailedClosed" xml:space="preserve">
+    <value>We could not sign you in with {0}. This site is not accepting new accounts.</value>
+    <comment>External sign-in page, registration closed. {0} = the provider's name</comment>
+  </data>
+  <data name="account_forgotPassword" xml:space="preserve">
+    <value>Forgot your password?</value>
+    <comment>Forgot password page: title; login page: link</comment>
+  </data>
+  <data name="account_formAlreadySent" xml:space="preserve">
+    <value>This form was sent already. Please send it again.</value>
+    <comment>Registration page: the form's token was used already</comment>
+  </data>
+  <data name="account_formExpired" xml:space="preserve">
+    <value>The form was open for too long. Please send it again.</value>
+    <comment>Registration page: the form's token expired</comment>
+  </data>
+  <data name="account_formTooFast" xml:space="preserve">
+    <value>That was quick. Please send the form again.</value>
+    <comment>Registration page: the form came back too quickly to be from a person</comment>
+  </data>
+  <data name="account_goToAdmin" xml:space="preserve">
+    <value>Go to the parts of the admin you can open</value>
+    <comment>Access-denied page: link</comment>
+  </data>
+  <data name="account_goToHomePage" xml:space="preserve">
+    <value>Go to the home page</value>
+    <comment>Access-denied page: link</comment>
+  </data>
+  <data name="account_goToLoginPage" xml:space="preserve">
+    <value>Go to the Login Page</value>
+    <comment>Email confirmation page: link</comment>
+  </data>
+  <data name="account_logIn" xml:space="preserve">
+    <value>Log in</value>
+    <comment>Login page: title and button</comment>
+  </data>
+  <data name="account_logInHeading" xml:space="preserve">
+    <value>Log in.</value>
+    <comment>Login page: heading</comment>
+  </data>
+  <data name="account_logInWithProvider" xml:space="preserve">
+    <value>Log in using your {0} account</value>
+    <comment>Login and registration pages: tooltip of an external sign-in button. {0} = the provider's name</comment>
+  </data>
+  <data name="account_logOutHere" xml:space="preserve">
+    <value>You can log out here</value>
+    <comment>Login page: link for a visitor who is signed in</comment>
+  </data>
+  <data name="account_missingView" xml:space="preserve">
+    <value>Missing View</value>
+    <comment>Missing view page: title and heading</comment>
+  </data>
+  <data name="account_missingViewDetail" xml:space="preserve">
+    <value>It looks like you haven't selected a Component View for the {0} page, or the Component View has been deleted.</value>
+    <comment>Missing view page. {0} = the page's name</comment>
+  </data>
+  <data name="account_newInstall" xml:space="preserve">
+    <value>New Install</value>
+    <comment>New site page (no content yet): title</comment>
+  </data>
+  <data name="account_newSiteDocumentation" xml:space="preserve">
+    <value>Then make sure you check out our documentation and videos: they show you everything you need to know about building your first website.</value>
+    <comment>New site page (no content yet), before the link to the documentation</comment>
+  </data>
+  <data name="account_newSiteDocumentationLink" xml:space="preserve">
+    <value>Documentation and videos</value>
+    <comment>New site page (no content yet): link to the documentation</comment>
+  </data>
+  <data name="account_newSiteGoToAdmin" xml:space="preserve">
+    <value>Go to the admin</value>
+    <comment>New site page (no content yet): link to the admin</comment>
+  </data>
+  <data name="account_newSiteNoContent" xml:space="preserve">
+    <value>Looks like you haven't created any content yet. If you are not sure where to start, sign in to the admin with the administrator account you created when you installed the site.</value>
+    <comment>New site page (no content yet), before the link to the admin</comment>
+  </data>
+  <data name="account_notFound" xml:space="preserve">
+    <value>Whooops, we can't find that page!</value>
+    <comment>Not-found page: heading</comment>
+  </data>
+  <data name="account_notFoundTitle" xml:space="preserve">
+    <value>404 Missing Page</value>
+    <comment>Not-found page: title</comment>
+  </data>
+  <data name="account_pageNotFound" xml:space="preserve">
+    <value>Page not found</value>
+    <comment>Registration page with registration off: title and heading</comment>
+  </data>
+  <data name="account_register" xml:space="preserve">
+    <value>Register</value>
+    <comment>Registration page: title and button; external sign-in page: title</comment>
+  </data>
+  <data name="account_registerAsNewUser" xml:space="preserve">
+    <value>Register as a new user</value>
+    <comment>Login page: link</comment>
+  </data>
+  <data name="account_registerFailed" xml:space="preserve">
+    <value>We could not create your account. Please try again.</value>
+    <comment>Registration page: the form was refused</comment>
+  </data>
+  <data name="account_reload" xml:space="preserve">
+    <value>Reload</value>
+    <comment>Account and site pages: link in the bar shown on an unhandled error</comment>
+  </data>
+  <data name="account_rememberMe" xml:space="preserve">
+    <value>Remember me</value>
+    <comment>Login page: checkbox</comment>
+  </data>
+  <data name="account_reset" xml:space="preserve">
+    <value>Reset</value>
+    <comment>Reset password page: button</comment>
+  </data>
+  <data name="account_resetCodeMissing" xml:space="preserve">
+    <value>A code must be supplied for password to be reset</value>
+    <comment>Reset password page: the link has no code</comment>
+  </data>
+  <data name="account_resetPassword" xml:space="preserve">
+    <value>Reset password</value>
+    <comment>Reset password page: title; forgot password page: button</comment>
+  </data>
+  <data name="account_resetYourPassword" xml:space="preserve">
+    <value>Reset your password.</value>
+    <comment>Reset password page: heading</comment>
+  </data>
+  <data name="account_signInWithAnotherAccount" xml:space="preserve">
+    <value>Sign in with another account</value>
+    <comment>Access-denied page: link</comment>
+  </data>
+  <data name="account_signOut" xml:space="preserve">
+    <value>Sign out</value>
+    <comment>Sign-out page: title and button</comment>
+  </data>
+  <data name="account_signOutConfirm" xml:space="preserve">
+    <value>Do you want to sign out?</value>
+    <comment>Sign-out page, opened from a link on another site</comment>
+  </data>
+  <data name="account_unhandledError" xml:space="preserve">
+    <value>An unhandled error has occurred.</value>
+    <comment>Account and site pages: bar shown on an unhandled error</comment>
+  </data>
 </root>

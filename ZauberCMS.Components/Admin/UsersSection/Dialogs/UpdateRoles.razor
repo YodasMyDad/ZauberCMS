@@ -13,11 +13,11 @@
                             DisabledProperty="@nameof(RoleOption.Disabled)" />
         @if (Roles.Any(x => x.Disabled))
         {
-            <RadzenText TextStyle="TextStyle.Caption">You can only give roles you are in yourself.</RadzenText>
+            <RadzenText TextStyle="TextStyle.Caption">@L["users_onlyYourRoles"]</RadzenText>
         }
     </RadzenStack>
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
     </RadzenStack>
 }
                     
@@ -55,7 +55,7 @@
         }
         else
         {
-            NotificationService.ShowErrorNotification("User must be in at least one role");
+            NotificationService.ShowErrorNotification(L["users_atLeastOneRole"]);
         }
     }
 }

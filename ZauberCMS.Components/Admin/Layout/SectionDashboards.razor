@@ -11,7 +11,7 @@
                 {
                     <RadzenTabsItem Text="@(sectionDashboard.Value.TabName)">
                         @* A dashboard that throws shows its error in its tab (ZA-097, D32) *@
-                        <AdminErrorBoundary Name="@($"The {sectionDashboard.Value.TabName} dashboard")">
+                        <AdminErrorBoundary Name="@(L["layout_dashboardBoundary", sectionDashboard.Value.TabName])">
                             <DynamicComponent Type="@sectionDashboard.Value.GetType()"/>
                         </AdminErrorBoundary>
                     </RadzenTabsItem>

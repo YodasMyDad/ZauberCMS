@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
+
 namespace ZauberCMS.Components.Admin.SettingsSection;
 
 /// <summary>
@@ -23,26 +26,27 @@ internal sealed class ApiKeyEdits
             .ToList();
     }
 
-    /// <summary>Adds a key; null when added, else why not.</summary>
-    public string? Add(string? name, string? value)
+    /// <summary>Adds a key; null when added, else why not, in <paramref name="text"/>'s language.</summary>
+    public string? Add(string? name, string? value, IStringLocalizer<ZauberText> text)
     {
         name = name?.Trim();
         if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(value))
         {
-            return "Give the key a name and a value";
+            return text["settings_apiKeyNameAndValueRequired"].Value;
         }
 
         if (Rows.Any(x => string.Equals(x.Name?.Trim(), name, StringComparison.OrdinalIgnoreCase)))
         {
-            return $"There is already a key named {name}";
+            return text["settings_apiKeyNameTaken", name].Value;
         }
 
         Rows.Add(new ApiKeyRow { Name = name, NewValue = value });
         return null;
     }
 
-    /// <summary>The keys to save, or why they cannot be: a key without a name or a value, or two of one name.</summary>
-    public (Dictionary<string, string>? Keys, string? Problem) ToSave()
+    /// <summary>The keys to save, or why they cannot be: a key without a name or a value, or two of one name
+    /// (in <paramref name="text"/>'s language).</summary>
+    public (Dictionary<string, string>? Keys, string? Problem) ToSave(IStringLocalizer<ZauberText> text)
     {
         var keys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var row in Rows)
@@ -53,17 +57,17 @@ internal sealed class ApiKeyEdits
                 : row.SavedName != null ? _saved.GetValueOrDefault(row.SavedName) : null;
             if (string.IsNullOrEmpty(name))
             {
-                return (null, "Every API key needs a name");
+                return (null, text["settings_apiKeyNameRequired"].Value);
             }
 
             if (string.IsNullOrEmpty(value))
             {
-                return (null, $"The API key {name} has no value");
+                return (null, text["settings_apiKeyValueRequired", name].Value);
             }
 
             if (!keys.TryAdd(name, value))
             {
-                return (null, $"Two API keys are named {name}");
+                return (null, text["settings_apiKeyNameTwice", name].Value);
             }
         }
 

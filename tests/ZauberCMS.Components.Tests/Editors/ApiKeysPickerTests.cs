@@ -1,8 +1,11 @@
+using System.Net;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Components.Admin.SettingsSection;
 using ZauberCMS.Components.Editors;
 using ZauberCMS.Components.Tests.Shared;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Settings.Interfaces;
 
 namespace ZauberCMS.Components.Tests.Editors;
@@ -20,6 +23,10 @@ public class ApiKeysPickerTests
         ["Maps"] = Secret,
         ["TinyMCE"] = "tiny-key"
     };
+
+    // ZauberCMS's English text, as the Global Settings page passes its L (Roadmap D90)
+    private static readonly ServiceProvider TextServices = CreateTextServices();
+    private static IStringLocalizer<ZauberText> Text => TextServices.GetRequiredService<IStringLocalizer<ZauberText>>();
 
     [Fact]
     public async Task ZA214_a_value_saved_before_v5_is_shown_as_its_key_and_replaced_by_the_name()
@@ -52,7 +59,8 @@ public class ApiKeysPickerTests
         var html = await RenderPickerAsync("an-old-rotated-key", changes);
 
         Assert.Empty(changes);
-        Assert.Contains("is not one of the site's keys now", html);
+        // The text is written encoded (site&#x27;s) now that it comes from the resources
+        Assert.Contains("is not one of the site's keys now", WebUtility.HtmlDecode(html));
     }
 
     [Fact]
@@ -71,9 +79,9 @@ public class ApiKeysPickerTests
         edits.Rows.Single(x => x.Name == "TinyMCE").NewValue = "new-tiny-key";
         // Renamed: the value it was saved with goes with it
         edits.Rows.Single(x => x.Name == "Maps").Name = "GoogleMaps";
-        Assert.Null(edits.Add("Stripe", "pk-test"));
+        Assert.Null(edits.Add("Stripe", "pk-test", Text));
 
-        var (keys, problem) = edits.ToSave();
+        var (keys, problem) = edits.ToSave(Text);
 
         Assert.Null(problem);
         Assert.Equal(Secret, keys!["GoogleMaps"]);
@@ -95,11 +103,19 @@ public class ApiKeysPickerTests
         var edits = new ApiKeyEdits(Keys);
         edits.Rows.Add(new ApiKeyRow { Name = name, NewValue = value });
 
-        var (keys, problem) = edits.ToSave();
+        var (keys, problem) = edits.ToSave(Text);
 
         Assert.Null(keys);
         Assert.Equal(expected, problem);
-        Assert.Equal("There is already a key named maps", edits.Add("maps", "x"));
+        Assert.Equal("There is already a key named maps", edits.Add("maps", "x", Text));
+    }
+
+    private static ServiceProvider CreateTextServices()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        AdminRenderer.AddImportedServices(services);
+        return services.BuildServiceProvider();
     }
 
     private static Task<string> RenderPickerAsync(string? value, List<string> changes) =>

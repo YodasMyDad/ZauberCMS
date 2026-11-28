@@ -12,4 +12,209 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="structure_addProperty" xml:space="preserve">
+    <value>Add Property</value>
+    <comment>Content type editor: the button, and the title of the side panel that lists the property editors</comment>
+  </data>
+  <data name="structure_addTab" xml:space="preserve">
+    <value>Add Tab</value>
+    <comment>Content type editor: button</comment>
+  </data>
+  <data name="structure_addTabFirst" xml:space="preserve">
+    <value>You need to add a tab</value>
+    <comment>Content type editor: Add Property pressed while the type has no tab of its own</comment>
+  </data>
+  <data name="structure_allowAtRootLabel" xml:space="preserve">
+    <value>Allow at root</value>
+    <comment>Content type editor: screen-reader label of the Allowed At Tree Root switch</comment>
+  </data>
+  <data name="structure_allowedAtRoot" xml:space="preserve">
+    <value>Allowed At Tree Root</value>
+    <comment>Content type editor, System tab: setting name</comment>
+  </data>
+  <data name="structure_allowedAtRootDescription" xml:space="preserve">
+    <value>Whether this content can be created at the root of the content tree</value>
+  </data>
+  <data name="structure_allowedChildContentTypes" xml:space="preserve">
+    <value>Allowed Child Content Types</value>
+    <comment>Content type editor, System tab: setting name</comment>
+  </data>
+  <data name="structure_allowedChildContentTypesDescription" xml:space="preserve">
+    <value>Optionally limit what child content types can be created</value>
+  </data>
+  <data name="structure_allowedViews" xml:space="preserve">
+    <value>Allowed Views</value>
+    <comment>Content type editor, System tab: setting name</comment>
+  </data>
+  <data name="structure_allowedViewsDescription" xml:space="preserve">
+    <value>The views the user can pick to display their content</value>
+  </data>
+  <data name="structure_chooseIcon" xml:space="preserve">
+    <value>Choose Icon</value>
+    <comment>Content type editor: title of the icon side panel</comment>
+  </data>
+  <data name="structure_chooseWhereToMove" xml:space="preserve">
+    <value>Choose where to move {0} to in the tree structure below</value>
+    <comment>Move content type side panel. {0} = the content type's name</comment>
+  </data>
+  <data name="structure_compositions" xml:space="preserve">
+    <value>Compositions</value>
+    <comment>Content type editor, System tab: setting name</comment>
+  </data>
+  <data name="structure_compositionsDescription" xml:space="preserve">
+    <value>Choose compositions to add to this content type</value>
+  </data>
+  <data name="structure_contentPropertyNotFound" xml:space="preserve">
+    <value>Can't find content property?</value>
+    <comment>Property settings side panel: the property's editor is not installed</comment>
+  </data>
+  <data name="structure_contentTypeDeleted" xml:space="preserve">
+    <value>Content Type Deleted</value>
+    <comment>Content type editor: notification</comment>
+  </data>
+  <data name="structure_contentTypeSaveError" xml:space="preserve">
+    <value>{0} Error</value>
+    <comment>Content type editor: summary of the notification when a save fails. {0} = the content type's name</comment>
+  </data>
+  <data name="structure_contentTypeSaved" xml:space="preserve">
+    <value>{0} Saved</value>
+    <comment>Content type editor: notification. {0} = the content type's name</comment>
+  </data>
+  <data name="structure_copyOf" xml:space="preserve">
+    <value>Copy Of {0}</value>
+    <comment>The name a copied content type starts with. {0} = the copied type's name</comment>
+  </data>
+  <data name="structure_createContentType" xml:space="preserve">
+    <value>Create Content Type</value>
+    <comment>Content type editor: page title</comment>
+  </data>
+  <data name="structure_deleteContentTypeConfirm" xml:space="preserve">
+    <value>Do you really want to delete content type?</value>
+    <comment>Content type editor: delete confirmation</comment>
+  </data>
+  <data name="structure_deleteThisProperty" xml:space="preserve">
+    <value>Delete This Property</value>
+    <comment>Content type editor: button under a property whose editor is missing</comment>
+  </data>
+  <data name="structure_deleteThisTab" xml:space="preserve">
+    <value>Delete This Tab</value>
+    <comment>Content type editor: button on an empty tab</comment>
+  </data>
+  <data name="structure_editTab" xml:space="preserve">
+    <value>Edit Tab</value>
+    <comment>Content type editor: button</comment>
+  </data>
+  <data name="structure_editorNotFound" xml:space="preserve">
+    <value>Unable to find the editor {0} so it's been skipped, has the component been deleted or alias changed?</value>
+    <comment>Content type editor: shown in place of a property whose editor is missing. {0} = the editor's type name</comment>
+  </data>
+  <data name="structure_elementTypePreviewImage" xml:space="preserve">
+    <value>Element Type Preview Image</value>
+    <comment>Content type editor, System tab: setting name</comment>
+  </data>
+  <data name="structure_elementTypePreviewImageDescription" xml:space="preserve">
+    <value>Choose an image to show for this element type when it is displayed in the block list editor</value>
+  </data>
+  <data name="structure_enableListView" xml:space="preserve">
+    <value>Enable List View</value>
+    <comment>Content type editor, System tab: setting name</comment>
+  </data>
+  <data name="structure_enableListViewDescription" xml:space="preserve">
+    <value>Show list view of child content instead of them showing as child items in the tree</value>
+  </data>
+  <data name="structure_isElementType" xml:space="preserve">
+    <value>Is Element Type</value>
+    <comment>Content type editor, System tab: setting name and its switch's screen-reader label</comment>
+  </data>
+  <data name="structure_isElementTypeDescription" xml:space="preserve">
+    <value>Allows this content type to be used in the Block List Editor</value>
+  </data>
+  <data name="structure_missingEditor" xml:space="preserve">
+    <value>Missing Editor</value>
+    <comment>Content type editor: summary of the notification for a property whose editor is missing</comment>
+  </data>
+  <data name="structure_missingEditorDetail" xml:space="preserve">
+    <value>Unable to find the editor {0} so it's been skipped, has it been deleted?</value>
+    <comment>Content type editor: notification. {0} = the editor's type name</comment>
+  </data>
+  <data name="structure_moveIntoFoldersOnly" xml:space="preserve">
+    <value>Content Types can only be moved into folders</value>
+    <comment>Move content type side panel: a content type was picked as the target</comment>
+  </data>
+  <data name="structure_noPropertySettings" xml:space="preserve">
+    <value>No settings available for this property</value>
+    <comment>Property settings side panel</comment>
+  </data>
+  <data name="structure_notAContentType" xml:space="preserve">
+    <value>This is not a Content Type</value>
+    <comment>Move content type side panel: the picked item is not a content type</comment>
+  </data>
+  <data name="structure_optionalDescription" xml:space="preserve">
+    <value>Optional Description</value>
+    <comment>Content type editor: placeholder of the description box</comment>
+  </data>
+  <data name="structure_orphanedPropertiesReassignedToTab" xml:space="preserve">
+    <value>{0} orphaned properties were reassigned to a tab</value>
+    <comment>Content type editor: on save, properties whose tab was deleted moved to one tab. {0} = how many</comment>
+  </data>
+  <data name="structure_orphanedPropertiesReassignedToTabs" xml:space="preserve">
+    <value>{0} orphaned properties were reassigned to tabs</value>
+    <comment>Content type editor: on save, properties whose tabs were deleted moved to other tabs. {0} = how many</comment>
+  </data>
+  <data name="structure_orphanedPropertyReassigned" xml:space="preserve">
+    <value>{0} orphaned property was reassigned to a tab</value>
+    <comment>Content type editor: on save, a property whose tab was deleted moved to another tab. {0} = 1</comment>
+  </data>
+  <data name="structure_propertiesReassigned" xml:space="preserve">
+    <value>Properties Reassigned</value>
+    <comment>Content type editor: summary of the notification about properties moved to another tab</comment>
+  </data>
+  <data name="structure_propertyFromComposition" xml:space="preserve">
+    <value>This property is from a composition, unable to delete here</value>
+    <comment>Content type editor: warning</comment>
+  </data>
+  <data name="structure_selectChildTypes" xml:space="preserve">
+    <value>select child types</value>
+    <comment>Content type editor: screen-reader label of the Allowed Child Content Types list</comment>
+  </data>
+  <data name="structure_selectCompositions" xml:space="preserve">
+    <value>Select Compositions</value>
+    <comment>Content type editor: placeholder and screen-reader label of the Compositions list</comment>
+  </data>
+  <data name="structure_selectContentTypes" xml:space="preserve">
+    <value>Select Content Types</value>
+    <comment>Content type editor: placeholder of the Allowed Child Content Types list</comment>
+  </data>
+  <data name="structure_selectContentViews" xml:space="preserve">
+    <value>Select Content Views</value>
+    <comment>Content type editor: placeholder and screen-reader label of the Allowed Views list</comment>
+  </data>
+  <data name="structure_selectNewTab" xml:space="preserve">
+    <value>select new tab</value>
+    <comment>Change tab side panel: screen-reader label of the list of tabs</comment>
+  </data>
+  <data name="structure_selectProperty" xml:space="preserve">
+    <value>select property</value>
+    <comment>Add property side panel: screen-reader label of the list of property editors</comment>
+  </data>
+  <data name="structure_systemTab" xml:space="preserve">
+    <value>System</value>
+    <comment>Content type editor: name of the tab with the type's own settings</comment>
+  </data>
+  <data name="structure_tabFromComposition" xml:space="preserve">
+    <value>Unable to delete, this tab is from a composition</value>
+    <comment>Content type editor: warning</comment>
+  </data>
+  <data name="structure_tabName" xml:space="preserve">
+    <value>Tab Name</value>
+    <comment>Tab side panel: placeholder and label of the name box</comment>
+  </data>
+  <data name="structure_tabSortOrder" xml:space="preserve">
+    <value>Tab Sort Order</value>
+    <comment>Tab side panel: screen-reader label of the sort order box</comment>
+  </data>
+  <data name="structure_updateTab" xml:space="preserve">
+    <value>Update Tab</value>
+    <comment>Content type editor: title of the tab side panel (adding or editing a tab)</comment>
+  </data>
 </root>

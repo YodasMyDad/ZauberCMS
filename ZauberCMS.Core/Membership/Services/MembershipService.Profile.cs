@@ -19,9 +19,6 @@ public partial class MembershipService
     /// <summary>How often <see cref="RequestEmailChangeAsync"/> sends a link for one account, on this server.</summary>
     internal static readonly TimeSpan EmailChangeLinkInterval = TimeSpan.FromMinutes(1);
 
-    internal const string LockedOutMessage =
-        "Too many wrong passwords: the account is locked for a few minutes. Try again later.";
-
     /// <summary>The key in <see cref="User.ExtendedData"/> of the address the newest email-change link is for.</summary>
     internal const string PendingEmailKey = "ZauberPendingEmail";
 
@@ -38,13 +35,13 @@ public partial class MembershipService
         var name = parameters.Name?.Trim();
         if (string.IsNullOrEmpty(name))
         {
-            handlerResult.Messages.Add(new ResultMessage("Enter a name.", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_enterName"], ResultMessageType.Error));
             return handlerResult;
         }
 
         if (name.Length > MaxUserNameLength)
         {
-            handlerResult.Messages.Add(new ResultMessage($"A name can be at most {MaxUserNameLength} characters long.", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_nameTooLong", MaxUserNameLength], ResultMessageType.Error));
             return handlerResult;
         }
 
@@ -53,7 +50,7 @@ public partial class MembershipService
         var user = await FindAccountAsync(userManager, parameters.UserId);
         if (user == null)
         {
-            handlerResult.Messages.Add(new ResultMessage("User not found", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_userNotFound"], ResultMessageType.Error));
             return handlerResult;
         }
 
@@ -93,7 +90,7 @@ public partial class MembershipService
         var handlerResult = new HandlerResult<User>();
         if (string.IsNullOrEmpty(parameters.NewPassword))
         {
-            handlerResult.Messages.Add(new ResultMessage("Enter a new password.", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_enterNewPassword"], ResultMessageType.Error));
             return handlerResult;
         }
 
@@ -108,7 +105,7 @@ public partial class MembershipService
             user = await FindAccountAsync(userManager, parameters.UserId);
             if (user == null)
             {
-                handlerResult.Messages.Add(new ResultMessage("User not found", ResultMessageType.Error));
+                handlerResult.Messages.Add(new ResultMessage(text["membership_userNotFound"], ResultMessageType.Error));
                 return handlerResult;
             }
 
@@ -161,7 +158,7 @@ public partial class MembershipService
         var newEmail = parameters.NewEmailAddress?.Trim();
         if (string.IsNullOrEmpty(newEmail) || newEmail.Length > 256 || !new EmailAddressAttribute().IsValid(newEmail))
         {
-            handlerResult.Messages.Add(new ResultMessage("Enter a valid email address.", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_enterValidEmail"], ResultMessageType.Error));
             return handlerResult;
         }
 
@@ -177,14 +174,14 @@ public partial class MembershipService
             user = await FindAccountAsync(userManager, parameters.UserId);
             if (user == null)
             {
-                handlerResult.Messages.Add(new ResultMessage("User not found", ResultMessageType.Error));
+                handlerResult.Messages.Add(new ResultMessage(text["membership_userNotFound"], ResultMessageType.Error));
                 return handlerResult;
             }
 
             handlerResult.Entity = user;
             if (string.Equals(user.Email, newEmail, StringComparison.OrdinalIgnoreCase))
             {
-                handlerResult.Messages.Add(new ResultMessage("That is already the account's email address.", ResultMessageType.Error));
+                handlerResult.Messages.Add(new ResultMessage(text["membership_alreadyAccountEmail"], ResultMessageType.Error));
                 return handlerResult;
             }
 
@@ -199,8 +196,7 @@ public partial class MembershipService
             sentKey = $"ZauberCMS.EmailChangeLinkSent.{user.Id}";
             if (memoryCache.TryGetValue(sentKey, out _))
             {
-                handlerResult.Messages.Add(new ResultMessage(
-                    "A link was sent less than a minute ago. Wait a minute before asking for another.",
+                handlerResult.Messages.Add(new ResultMessage(text["membership_emailChangeLinkTooSoon"],
                     ResultMessageType.Error));
                 return handlerResult;
             }
@@ -236,8 +232,7 @@ public partial class MembershipService
         {
             memoryCache.Remove(sentKey);
             logger.LogError(ex, "Could not send the email-change link for user {UserId}", user.Id);
-            handlerResult.Messages.Add(new ResultMessage(
-                "The email could not be sent. The details are in the site's log.", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_emailNotSent"], ResultMessageType.Error));
             return handlerResult;
         }
 
@@ -265,28 +260,30 @@ public partial class MembershipService
     /// Null when <paramref name="password"/> is the user's password, else why not. A wrong one counts as a wrong
     /// password at sign-in does (six lock the account for five minutes), so the panel cannot be used to guess it.
     /// </summary>
-    private static async Task<string?> CheckCurrentPasswordAsync(UserManager<User> userManager, User user,
+    private async Task<string?> CheckCurrentPasswordAsync(UserManager<User> userManager, User user,
         string? password)
     {
         if (await userManager.IsLockedOutAsync(user))
         {
-            return LockedOutMessage;
+            return text["membership_lockedWrongPasswords"];
         }
 
         if (!await userManager.HasPasswordAsync(user))
         {
-            return "This account has no password: it signs in with an external login.";
+            return text["membership_noPasswordExternalLogin"];
         }
 
         if (string.IsNullOrEmpty(password))
         {
-            return "Enter your current password.";
+            return text["membership_enterCurrentPassword"];
         }
 
         if (!await userManager.CheckPasswordAsync(user, password))
         {
             await userManager.AccessFailedAsync(user);
-            return await userManager.IsLockedOutAsync(user) ? LockedOutMessage : "The current password is not right.";
+            return await userManager.IsLockedOutAsync(user)
+                ? text["membership_lockedWrongPasswords"].Value
+                : text["membership_currentPasswordWrong"].Value;
         }
 
         await userManager.ResetAccessFailedCountAsync(user);

@@ -311,10 +311,15 @@ A plugin with admin text of its own does the same with its own area: `ZauberText
    `SaveChangesAndLog`'s messages come from the `ExtensionManager` it is given (`ExtensionManager.Text`, internal),
    so its callers do not change (D122). A message that travels in an exception because it is written for the person
    at a form is localised too (`DatabaseSetupParameters.BuildConnectionString(text)`, D121).
-   DataAnnotations (`[Required(ErrorMessage = …)]`, `[Display(Name = …)]`, only on the account parameter classes):
-   Blazor shows those messages as written, so 10h-4 moves them to a check that has the localiser (a validation
-   attribute that reads it from `ValidationContext.GetService`, which Blazor's validator fills from the circuit, or
-   the page's own check) and records how.
+   DataAnnotations (only on the account parameter classes and `NavigationItem`; Blazor shows an attribute's message
+   as written): the `Zauber*` attributes of `Membership/Validation` (`[ZauberRequired]`, `[ZauberEmailAddress]`,
+   `[ZauberStringLength]`, `[ZauberComparePassword]`) keep the base attribute's rule and read the localiser from
+   `ValidationContext.GetService`, which Blazor's `DataAnnotationsValidator` fills from the page's services; without
+   services they give the base attribute's English (D130); a field's name in the message is a key of its own
+   (`AccountValidationText.FieldName`). ASP.NET Identity's own messages go through
+   `ZauberIdentityErrorDescriber` (`membership_identity*`, D131). An email's paragraph is
+   `EmailHtml.Paragraph(text["email_…"], openTag, closeTag)`: the sentence HTML-encoded, the link's tags as
+   `{0}`/`{1}` (D132).
 9. **Not text**: log messages and exception messages (English, for whoever reads the log); aliases, icon names, CSS,
    URLs; values that are stored and shown later as data (an audit row's description stays English, as Umbraco's
    audit comments do; the `"Unknown"` user name passed to `AppState` events; `CountriesDataSource`'s country names,
@@ -332,16 +337,16 @@ A plugin with admin text of its own does the same with its own area: `ZauberText
 | Media | `media_` | `Admin/MediaSection`; Core `Media`, `Providers` (storage) | Components, Core | 10h-2 |
 | EditorDialogs | `editorDialogs_` | `Editors/Dialogs` | Components | 10h-2 |
 | Seo | `seo_` | `Seo`; Core `Seo` (checks, messages) | Components, Core | 10h-2 |
-| Editors | `editors_` | `Editors` (root, `Settings`, `Components`, `Models`, `ToolbarItems`, `Interfaces`) | Components | 10h-3 |
+| Editors | `editors_` | `Editors` (root, `Settings`, `Components`, `Models`, `ToolbarItems`, `Interfaces`), the API Key Picker included (its keys moved from Settings at the 10h merge: `EditorText` reads only this file, D120) | Components | 10h-3 |
 | Installer | `installer_` | Core `Installer` (its components and messages) | Core | 10h-3 |
 | Shared (Core) | `shared_` | Core `Shared`, `Extensions` (the save messages), `Data` | Core | 10h-3 |
 | Structure | `structure_` | `Admin/StructureSection` | Components | 10h-4 |
 | Settings | `settings_` | `Admin/SettingsSection` | Components | 10h-4 |
 | Users | `users_` | `Admin/UsersSection` | Components | 10h-4 |
-| Layout | `layout_` | `Admin/Layout` | Components | 10h-4 |
+| Layout | `layout_` | `Admin/Layout`, `Admin/AdminIndex.razor`, `Admin/DynamicContentProperty.razor` (an editor's boundary name), the admin boundary in `ZauberCMS/Components/Routes.razor` | Components | 10h-4 |
 | Account | `account_` | `Account/*`, `Pages` (the fallback site pages), `Controllers` (the sign-out page) | Components | 10h-4 |
 | Languages | `languages_` | Core `Languages` | Core | 10h-4 |
-| Membership | `membership_` | Core `Membership`, `Security` (users, roles, sign-in, registration) | Core | 10h-4 |
+| Membership | `membership_` | Core `Membership`, `Security` (users, roles, sign-in, registration, the account forms' validation, ASP.NET Identity's messages) | Core | 10h-4 |
 | Sections (Core) | `sections_` | Core `Sections` (`BackOfficeAccessService`'s reasons) | Core | 10h-4 |
 | Audit, Tags, Email | `audit_`, `tags_`, `email_` | Core `Audit`, `Tags`, `Email` (the emails' text) | Core | 10h-4 |
 | Radzen | `radzen_` | Radzen's own text: no ZauberCMS file, only sites' and language packs' | — | — |

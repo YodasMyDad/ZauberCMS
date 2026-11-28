@@ -3,10 +3,10 @@
 @using ZauberCMS.Core.Languages.Models
 @layout SectionLayout
 
-<PageTitle>Language Dictionary Items</PageTitle>
+<PageTitle>@L["settings_languageDictionaryItems"]</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Create Dictionary" Click="@CreateLanguageDictionary"/>
+    <RadzenButton Variant="Variant.Filled" Text="@L["settings_createDictionary"]" Click="@CreateLanguageDictionary"/>
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
@@ -25,15 +25,15 @@
                     PagerHorizontalAlign="HorizontalAlign.Center">
 
         <Columns>
-            <RadzenDataGridColumn Property="Key" Title="Key"/>
-            <RadzenDataGridColumn Property="Id" Title="Values">
+            <RadzenDataGridColumn Property="Key" Title="@L["general_key"]"/>
+            <RadzenDataGridColumn Property="Id" Title="@L["settings_values"]">
                 <Template Context="data">
                     @data.Texts.Count
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="Id" Title="Delete">
+            <RadzenDataGridColumn Property="Id" Title="@L["general_delete"]">
                 <Template Context="data">
-                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="@L["general_delete"]" Click="@(() => Delete(data.Id))"/>
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -94,7 +94,7 @@
 
     private async Task CreateLanguageDictionary()
     {
-        var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>("Create Language Dictionary", 
+        var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>(L["settings_createLanguageDictionary"],
             new Dictionary<string, object>
             {
                 {nameof(SaveLanguageDictionary.LanguageDictionary), new LanguageDictionary()}
@@ -112,11 +112,11 @@
         if (result.Success)
         {
             await LoadData(new LoadDataArgs { Top = AmountPerPage });
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Deleted", Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = L["settings_deleted"], Duration = 4000 });
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["general_error"], Detail = result.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
 
@@ -124,7 +124,7 @@
     {
         if (value is LanguageDictionary selectedRow)
         {
-            var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>("Update Language Dictionary", new Dictionary<string, object>
+            var dialog = DialogService.OpenSidePanel<SaveLanguageDictionary>(L["settings_updateLanguageDictionary"], new Dictionary<string, object>
             {
                 { nameof(SaveLanguageDictionary.LanguageDictionary), selectedRow }
             });

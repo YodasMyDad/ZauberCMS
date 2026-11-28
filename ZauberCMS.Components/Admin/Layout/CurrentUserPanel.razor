@@ -14,75 +14,72 @@
 {
     @if (_loaded)
     {
-        <TailwindAlert Type="AlertType.Warning" Title="Your account could not be found" DefaultMessage="Sign in again."/>
+        <TailwindAlert Type="AlertType.Warning" Title="@L["layout_accountNotFound"]" DefaultMessage="@L["layout_signInAgain"]"/>
     }
 }
 else
 {
     <RadzenStack Gap="1.5rem">
         <RadzenText TextStyle="TextStyle.Body2">
-            Your roles, and the sections of the admin you can open, are set by an administrator.
+            @L["layout_rolesSetByAdmin"]
         </RadzenText>
 
         <section aria-labelledby="current-user-name">
-            <RadzenText TextStyle="TextStyle.H6" id="current-user-name">Name</RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" id="current-user-name">@L["general_name"]</RadzenText>
             <RadzenStack Gap="0.5rem">
-                <RadzenTextBox @bind-Value="@_name" Name="CurrentUserName" aria-label="Name" MaxLength="150" Style="width: 100%;"/>
+                <RadzenTextBox @bind-Value="@_name" Name="CurrentUserName" aria-label="@L["general_name"]" MaxLength="150" Style="width: 100%;"/>
                 @ShowMessage(_nameMessage)
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right">
-                    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save name" Disabled="@_busy" Click="@SaveNameAsync"/>
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["layout_saveName"]" Disabled="@_busy" Click="@SaveNameAsync"/>
                 </RadzenStack>
             </RadzenStack>
         </section>
 
         <section aria-labelledby="current-user-email">
-            <RadzenText TextStyle="TextStyle.H6" id="current-user-email">Email address</RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" id="current-user-email">@L["layout_emailAddress"]</RadzenText>
             <RadzenStack Gap="0.5rem">
-                <RadzenText TextStyle="TextStyle.Body2">You sign in with <strong>@_user.Email</strong>.</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@SignInWith(_user.Email)</RadzenText>
                 @if (_hasPassword)
                 {
-                    <RadzenTextBox @bind-Value="@_newEmail" Name="NewEmail" Placeholder="New email address" aria-label="New email address" autocomplete="email" Style="width: 100%;"/>
-                    <RadzenPassword @bind-Value="@_emailPassword" Name="EmailCurrentPassword" Placeholder="Your current password" aria-label="Your current password, to change the email address" AutoCompleteType="AutoCompleteType.CurrentPassword" Style="width: 100%;"/>
+                    <RadzenTextBox @bind-Value="@_newEmail" Name="NewEmail" Placeholder="@L["layout_newEmailAddress"]" aria-label="@L["layout_newEmailAddress"]" autocomplete="email" Style="width: 100%;"/>
+                    <RadzenPassword @bind-Value="@_emailPassword" Name="EmailCurrentPassword" Placeholder="@L["layout_yourCurrentPassword"]" aria-label="@L["layout_currentPasswordForEmail"]" AutoCompleteType="AutoCompleteType.CurrentPassword" Style="width: 100%;"/>
                     <RadzenText TextStyle="TextStyle.Caption">
-                        A link is sent to the new address. Your account moves to it when the link is opened; until then
-                        you sign in with the address above.
+                        @L["layout_emailChangeCaption"]
                     </RadzenText>
                     @ShowMessage(_emailMessage)
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right">
-                        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="send" Text="Send the link" Disabled="@_busy" Click="@RequestEmailChangeAsync"/>
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="send" Text="@L["layout_sendLink"]" Disabled="@_busy" Click="@RequestEmailChangeAsync"/>
                     </RadzenStack>
                 }
                 else
                 {
                     <RadzenText TextStyle="TextStyle.Caption">
-                        Your account has no password, so its address is changed by an administrator.
+                        @L["layout_emailChangeByAdmin"]
                     </RadzenText>
                 }
             </RadzenStack>
         </section>
 
         <section aria-labelledby="current-user-password">
-            <RadzenText TextStyle="TextStyle.H6" id="current-user-password">Password</RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" id="current-user-password">@L["general_password"]</RadzenText>
             <RadzenStack Gap="0.5rem">
                 @if (_hasPassword)
                 {
-                    <RadzenPassword @bind-Value="@_currentPassword" Name="CurrentPassword" Placeholder="Current password" aria-label="Current password" AutoCompleteType="AutoCompleteType.CurrentPassword" Style="width: 100%;"/>
-                    <RadzenPassword @bind-Value="@_newPassword" Name="NewPassword" Placeholder="New password" aria-label="New password" AutoCompleteType="AutoCompleteType.NewPassword" Style="width: 100%;"/>
-                    <RadzenPassword @bind-Value="@_confirmPassword" Name="ConfirmPassword" Placeholder="New password again" aria-label="New password again" AutoCompleteType="AutoCompleteType.NewPassword" Style="width: 100%;"/>
+                    <RadzenPassword @bind-Value="@_currentPassword" Name="CurrentPassword" Placeholder="@L["layout_currentPassword"]" aria-label="@L["layout_currentPassword"]" AutoCompleteType="AutoCompleteType.CurrentPassword" Style="width: 100%;"/>
+                    <RadzenPassword @bind-Value="@_newPassword" Name="NewPassword" Placeholder="@L["layout_newPassword"]" aria-label="@L["layout_newPassword"]" AutoCompleteType="AutoCompleteType.NewPassword" Style="width: 100%;"/>
+                    <RadzenPassword @bind-Value="@_confirmPassword" Name="ConfirmPassword" Placeholder="@L["layout_newPasswordAgain"]" aria-label="@L["layout_newPasswordAgain"]" AutoCompleteType="AutoCompleteType.NewPassword" Style="width: 100%;"/>
                     <RadzenText TextStyle="TextStyle.Caption">
-                        Your other sessions are signed out, and this page reloads to keep you signed in here: save your
-                        work first.
+                        @L["layout_passwordChangeCaption"]
                     </RadzenText>
                     @ShowMessage(_passwordMessage)
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right">
-                        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="key" Text="Change password" Disabled="@_busy" Click="@ChangePasswordAsync"/>
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="key" Text="@L["layout_changePassword"]" Disabled="@_busy" Click="@ChangePasswordAsync"/>
                     </RadzenStack>
                 }
                 else
                 {
                     <RadzenText TextStyle="TextStyle.Caption">
-                        Your account has no password: you sign in with an external login. "Forgot your password" on the
-                        sign-in page sets one.
+                        @L["layout_noPasswordCaption"]
                     </RadzenText>
                 }
             </RadzenStack>
@@ -91,7 +88,7 @@ else
         @if (_mayOpenUsers)
         {
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left">
-                <RadzenButton Variant="Variant.Outlined" Icon="manage_accounts" Text="Open your page in Users" Click="@OpenInUsersAsync"/>
+                <RadzenButton Variant="Variant.Outlined" Icon="manage_accounts" Text="@L["layout_openInUsers"]" Click="@OpenInUsersAsync"/>
             </RadzenStack>
         }
     </RadzenStack>
@@ -181,7 +178,7 @@ else
             {
                 _user!.UserName = result.Entity?.UserName;
                 _name = _user.UserName;
-                _nameMessage = (AlertType.Success, "Your name was changed.");
+                _nameMessage = (AlertType.Success, L["layout_nameChanged"].Value);
                 await AppState.NotifyUserSaved(result.Entity, _user.UserName ?? string.Empty);
             }
             else
@@ -224,7 +221,7 @@ else
             if (result.Success)
             {
                 _emailMessage = (AlertType.Success,
-                    $"A link was sent to {newEmail}. Your address changes when you open it.");
+                    L["layout_emailLinkSent", newEmail ?? string.Empty].Value);
                 _newEmail = null;
             }
             else
@@ -248,7 +245,7 @@ else
         _passwordMessage = null;
         if (!string.Equals(_newPassword, _confirmPassword, StringComparison.Ordinal))
         {
-            _passwordMessage = (AlertType.Error, "The new password and the new password again are not the same.");
+            _passwordMessage = (AlertType.Error, L["layout_passwordsDiffer"].Value);
             return;
         }
 
@@ -276,7 +273,7 @@ else
 
             _newPassword = null;
             _confirmPassword = null;
-            _passwordMessage = (AlertType.Success, "Your password was changed.");
+            _passwordMessage = (AlertType.Success, L["layout_passwordChanged"].Value);
             if (result is { RefreshSignIn: true, RefreshSignInTicket: not null })
             {
                 // The new security stamp ends every session, this one too, unless its sign-in is renewed: a full
@@ -304,6 +301,14 @@ else
 
         await CloseAsync();
         NavigationManager.NavigateTo($"{Urls.AdminUsersEdit.TrimStart('/')}/{me.Id}");
+    }
+
+    // "You sign in with {0}." with the address in bold: one text for the whole sentence, and neither the address nor
+    // the translation is rendered as markup
+    private RenderFragment SignInWith(string? email)
+    {
+        var parts = L["layout_signInWith"].Value.Split("{0}", 2);
+        return @<text>@(parts[0])<strong>@email</strong>@(parts.Length > 1 ? parts[1] : string.Empty)</text>;
     }
 
     // Read out when it appears (role status), an error as an alert

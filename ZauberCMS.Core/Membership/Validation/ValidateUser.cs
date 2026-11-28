@@ -1,18 +1,20 @@
-﻿using ZauberCMS.Core.Extensions;
+﻿using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Validation.Interfaces;
 using ZauberCMS.Core.Shared.Validation.Models;
 
 namespace ZauberCMS.Core.Membership.Validation;
 
-public class ValidateUser : IValidate<User>
+public class ValidateUser(IStringLocalizer<ZauberText> text) : IValidate<User>
 {
     public Task<ValidateResult> Validate(User item)
     {
         var validateResult = new ValidateResult();
         if (item.UserName.IsNullOrWhiteSpace())
         {
-            validateResult.ErrorMessages.Add("You cannot leave the name empty");
+            validateResult.ErrorMessages.Add(text["membership_nameRequired"]);
         }
         
         var roles = item!.UserRoles.Select(x => x.Role);
@@ -25,7 +27,7 @@ public class ValidateUser : IValidate<User>
             valuesInDict.TryGetValue(p.Id, out var contentValue);
             if (contentValue != null && contentValue.Value.IsNullOrWhiteSpace())
             {
-                validateResult.ErrorMessages.Add($"{p.Name} is required");
+                validateResult.ErrorMessages.Add(text["membership_propertyRequired", p.Name ?? string.Empty]);
             }
         }
 

@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Models;
 
@@ -59,32 +57,14 @@ public static class ResultExtensions
     }
     
     /// <summary>
-    /// Returns list of messages as string
+    /// The messages as one text, one per line, as they are written. Several used to give only the success
+    /// messages, so a refusal for more than one reason (a password that breaks three rules) read as nothing
+    /// (ZA-283).
     /// </summary>
     /// <param name="messages"></param>
     /// <returns></returns>
-    public static string MessagesAsString(this List<ResultMessage> messages)
-    {
-        var messageCount = messages.Count; 
-        if (messageCount != 0)
-        {
-            if (messageCount == 1)
-            {
-                return messages.FirstOrDefault()!.Message;
-            }
-
-            var sb = new StringBuilder();
-            var messagesToUse = messages.SuccessMessages();
-            foreach (var rm in messagesToUse)
-            {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"{rm.Message}.");
-            }
-
-            return sb.ToString();
-        }
-
-        return string.Empty;
-    }
+    public static string MessagesAsString(this List<ResultMessage> messages) =>
+        string.Join(Environment.NewLine, messages.Select(m => m.Message));
     
     /// <summary>
     /// Adds a handler result message

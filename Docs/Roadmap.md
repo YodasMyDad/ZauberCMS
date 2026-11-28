@@ -50,10 +50,13 @@
   **Phase 10h-3 done** (the property editors, the installer and Core's generic messages localised, D120–D122;
   ZA-270 and ZA-271 recorded for 10i; 2026-11-28, merged after 10h-2). ZA-264 moved from Phase 12 to 10i (owner,
   2026-11-28: every Phase 10/11 finding is done in those phases).
-  **12 open findings** (0 Critical, 0 High, 0 Medium, 12 Low), each one assigned below to a phase (10h, 10i, 12).
+  **Phase 10h-4 done** (Structure, Settings, Users, the admin layout, the account and fallback pages and Core's
+  membership, access, language, tag, audit and email messages localised, D130–D132; ZA-129 fixed with it, ZA-271
+  fixed by D131; ZA-280…ZA-284 found and fixed while building, ZA-284 High: the reset-password page; 2026-11-28,
+  merged after 10h-2 and 10h-3). **Phase 10h done** (all four parts).
+  **10 open findings** (0 Critical, 0 High, 0 Medium, 10 Low), each one assigned below to a phase (10i, 12).
   **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
-  whose theme fits. **Next: Phase 10h-4** (in progress; admin localisation, D37, closes ZA-129; it covers the new
-  screens of 10g and 10g-2), then 10i,
+  whose theme fits. **Next: `/audit changed` over the whole of Phase 10h** (10h-1 to 10h-4), then 10i,
   then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -153,6 +156,9 @@
 | D120 | **A built-in property editor keeps its parameterless constructor and its `Name`/`Description` setters beside the localising constructor.** The localising constructor (`IStringLocalizer<ZauberText>`, D97) is marked `[ActivatorUtilitiesConstructor]`, so discovery (`ExtensionManager`, `ActivatorUtilities.CreateInstance`) and Blazor (`ActivatorUtilities.CreateFactory`) always choose it; built with `new` (a starter kit that reads `new TextProperty().Alias`, as Installer.md tells sites to and the template's kit does), its name and description are ZauberCMS's English (`EditorText`, internal, reads `Editors.resx`); a name or description set on an editor (a site, a subclass) wins over the text, as the setters did before. The RTE toolbar items keep their `(IModalService)` constructor the same way. So nothing a site wrote against the editors breaks. Umbraco: a data editor's name is attribute metadata that the back office localises by key; ZauberCMS reads it from an instance, so the instance carries the localiser. Rejected: only the localising constructor and get-only names (breaks the template's starter kit, every site that followed the documented pattern and every subclass that renames an editor); `typeof(T)` and alias constants (a second pattern for sites to learn). (Phase 10h-3) | D97, D18 |
 | D121 | **The installer's messages are in the installer's language, including the one that travels in an exception.** `DatabaseSetupParameters.BuildConnectionString(IStringLocalizer<ZauberText>)` throws `ArgumentException` with a message documented as written for the person at the form, so it takes the localiser (the parameterless method is gone; v5 release notes), as `InstallService` does (its last constructor parameter) and the internal `InstallerDatabase`; every other exception stays English (AdminUI.md rule 9). The installer sets the admin culture itself for its requests (`AdminCulture.Apply`, D95), since request localisation would pick one of the site's languages once its database has some, and its page's `lang` is that culture. A sentence that names a file, setting or command is one key with placeholders, the names shown as code (`InstallerMarkup.WithCode`, both encoded); the password rules are one sentence per rule. What the database or the system says (a connection error, why a file cannot be written) and Identity's own password messages stay as they come (ZA-271). Umbraco localises its installer through its `installer` area. (Phase 10h-3) | D95, D92, D18 |
 | D122 | **`SaveChangesAndLog` localises through the scope it is given.** Its messages (a save hook's veto, a concurrency conflict) come from `ExtensionManager.Text` (internal: the scope's `IStringLocalizer<ZauberText>`), so none of its callers change; AdminUI.md rule 8's "static helpers take it as a parameter" stays for the others. `EditContextFluentValidationExtensions.ValidatorFailedMessage` stays a public constant with the English, and the form shows `shared_validatorFailed` from the service provider it is given. Rejected: a localiser parameter on `SaveChangesAndLog` (every service in Core would change, across the parallel parts' folders). (Phase 10h-3) | D92 |
+| D130 | **The account forms' validation messages come from ZauberCMS's text through validation attributes that read the localiser from the validation's services.** The account parameter classes (`LoginUserParameters`, `RegisterUserParameters`, `ForgotPasswordParameters`, `ResetPasswordParameters`) carry `[ZauberRequired]`, `[ZauberEmailAddress]`, `[ZauberStringLength]` and `[ZauberComparePassword]` (internal, `Membership/Validation`), which keep the rules of `[Required]`, `[EmailAddress]`, `[StringLength]` and `[Compare]` and take their message from `IStringLocalizer<ZauberText>` in the `ValidationContext`: Blazor's `DataAnnotationsValidator` passes the page's services (the request's on the static account pages), so the message is in the request's culture; the field's name in it is ZauberCMS's text too (`membership_field*`). Validated without services (`Validator` called with none), each gives its base attribute's English, as before. `[Display]` and `[DataType]` stay for other code that reads them. The English is unchanged. Rejected: each page checking its fields itself (the rules twice, and the attributes gone from public classes a site may validate with), MVC's `DataAnnotationsLocalization` (Blazor does not use it), and a resource type on the attributes (`ErrorMessageResourceType` needs static properties, which cannot follow the layers of D90). Umbraco's member forms are templates the site edits and keep .NET's attributes as they are; ZauberCMS ships its account pages (D95), so it localises their messages as Umbraco localises its back office's validation messages from its language files. `NavigationItem` (the navigation editor's item dialog, the one other DataAnnotations model the admin validates) carries `[ZauberRequired]` too, its field names Core's `shared_navigationItem*` (at the 10h merge). (owner delegated to Umbraco parity, 2026-11-28, Phase 10h-4) | D92, D95 |
+| D131 | **ASP.NET Identity's own messages (the password rules, a name or address already taken, a wrong password, an invalid link) are ZauberCMS's text.** `ZauberIdentityErrorDescriber` (internal, `Membership/Validation`) overrides each `IdentityErrorDescriber` message with a `membership_identity*` key, keeping Identity's code and its English, so the account pages show them in the request's culture and the admin (a user's password, "Your account") in the admin's; it is registered with `AddErrorDescriber` in the bootstrap, and a site's own `AddErrorDescriber` after `AddZauberCms` wins. A message a later .NET adds and the class does not override stays Identity's English; a test fails when one is not overridden or its English differs from Identity's. Umbraco does the same: `BackOfficeErrorDescriber` and `MembersErrorDescriber` (over `UmbracoErrorDescriberBase`) localise Identity's errors through `ILocalizedTextService`. (owner delegated to Umbraco parity, 2026-11-28, Phase 10h-4) | D92 |
+| D132 | **An email is written in the culture of the code that sends it, and its sentences are encoded text with the link as their placeholders.** Registration, a resent confirmation and "Forgot your password" are sent from the account pages, in the request's culture; the set-password email an administrator's save sends and the change-email link from "Your account" are sent from the admin, in the admin's. ZauberCMS has one admin language and no language per user (D96), so it cannot write in the recipient's language; ZP-010 (a language per back-office user) would add that. Each paragraph is a whole sentence whose link's opening and closing tags are `{0}`/`{1}` (`Please confirm your account by {0}clicking here{1}.`): the sentence is HTML-encoded, then the tags (built and encoded in code) are put in, so a translation is text, never markup (`EmailHtml`, internal). Subjects are plain text. Umbraco writes a back-office user's emails (invitation, password reset) in that user's own language (`GetUserCulture`), which it can because each user has one. (owner delegated to Umbraco parity, 2026-11-28, Phase 10h-4) | D96, ZP-010 |
 
 ## Working rules for the rework
 
@@ -1431,6 +1437,7 @@ and converts the first screens; then **10h-2, 10h-3 and 10h-4 run in parallel**,
 converting only its own folders into its own area files, by the rules and area table in
 [AdminUI.md](AdminUI.md) "Localisation" (followed literally). ZA-129 closes with 10h-4; `/audit changed` runs once
 after 10h-4, over the whole of 10h.
+**DONE (2026-11-28): all four parts merged; ZA-129 fixed. Next: `/audit changed` over the whole of 10h.**
 
 #### Phase 10h-1 — The mechanism and the first screens — DONE (2026-11-28)
 - **Mechanism (D90–D97).** `IStringLocalizer<ZauberText>` (`ZauberCMS.Core/Localization/`: the public marker
@@ -1592,14 +1599,127 @@ after 10h-4, over the whole of 10h.
   - Not breaking: the built-in editors and the RTE toolbar items gain a localising constructor and keep the ones
     they had; an editor's `Name`/`Description` setters still work (a set value wins).
 
-#### Phase 10h-4 — Structure, Settings, Users, layout, account (parallel)
-`Admin/StructureSection`, `Admin/SettingsSection`, `Admin/UsersSection`, `Admin/Layout`, `Account/*`, `Pages` and
-`Controllers` (areas Structure, Settings, Users, Layout, Account), the API-key picker editor and
-`ZauberCMS/Components/Routes.razor` (left out of 10h-1 while 10g-2 edits them), the Users section's name and nav
-group heading (`sections_users`, `sections_usersGroup`, then out of the guard's `NotUsedYet`), Core's language,
-audit, tags, role, user, membership, security and email messages (Core `Languages`, `Audit`, `Tags`,
-`Membership`, `Sections`, `Email`), the account parameter classes' DataAnnotations (D92's rule 8 in AdminUI.md),
-and the new text of Phases 10g and 10g-2 (listed in their sections). Closes ZA-129.
+#### Phase 10h-4 — Structure, Settings, Users, layout, account (parallel) — DONE (2026-11-28)
+Scope: `Admin/StructureSection`, `Admin/SettingsSection`, `Admin/UsersSection`, `Admin/Layout`, `Account/*`,
+`Pages` and `Controllers` (areas Structure, Settings, Users, Layout, Account), the API-key picker editor and
+`ZauberCMS/Components/Routes.razor`, the Users section's name and nav group heading, Core's language, audit, tags,
+role, user, membership, security and email messages (Core `Languages`, `Audit`, `Tags`, `Membership`, `Sections`,
+`Email`), the account parameter classes' DataAnnotations, and the new text of Phases 10g and 10g-2. Closes ZA-129.
+- **Converted** (350 keys): Components `Structure` 53, `Settings` 60 (with the API Key Picker's, beside Global
+  Settings' keys: the Editors file is 10h-3's; its five moved to `Editors` at the merge, so `Settings` has 55),
+  `Users` 41, `Layout` 38 (with `Admin/AdminIndex.razor`'s title and
+  "No section to open", and `layout_thisPage`, which `Routes.razor` shares with the section layout: the guard reads
+  key use in Core and Components only), `Account` 52 (account pages, `StatusMessage`, `ExternalLoginPicker`, the
+  fallback pages, the sign-out page); Core `Membership` 72 (with the account forms' validation, D130, and
+  ASP.NET Identity's messages, D131), `Sections` 10 (`BackOfficeAccessService`'s reasons), `Email` 13 (every
+  email's subject and paragraphs, D132), `Languages` 5, `Audit` 4, `Tags` 2. The Users section's name and nav group
+  heading by constructor (`sections_users`, `sections_usersGroup`, out of `NotUsedYet`); the new text of 10g and 10g-2
+  (the role page's Sections box, the refusals and `BackOfficeAccessResult` reasons, the access-denied page, the delete
+  confirmations, "Your account" and its messages, the change-email email, the API-key screens, the picker's
+  caption, "The sections could not be shown: try again", the "Try again" panels). The guard's 10h-4 block lists 33
+  folders (Core's included) and the `NotText` exceptions (audit descriptions, exceptions continued below their
+  `throw`, commented-out code, the role's stored "System" tab).
+- **Not localised, on purpose**: audit descriptions, role names (shown as stored), the role's "System" tab, the
+  fallback tab name a content type's save creates (its alias is made from it), logs and exceptions. "Copy Of {0}"
+  (a copied content type's name) is in the admin's language and saved as the name, which the editor sees and
+  changes. Sentences round a link became whole sentences with the link as its own text: the new-site page ("Go to the
+  admin", "Documentation and videos"), the login page's sign-out link and the confirmation page's sign-in link (the
+  whole line is the link now); the hidden `placeholder="password"` reads "Password"; two lower-case aria-labels of
+  the content type page are capitalised (they share the placeholders' keys). Fixed English: "logout" → "log out",
+  "Update Users Roles" → "Update User's Roles", "PhoneNumber Cannot be longer…" → "Phone number cannot be longer…".
+- **Decisions**: D130 (the account forms' validation messages through attributes that read the localiser from the
+  validation's services), D131 (ASP.NET Identity's messages through `ZauberIdentityErrorDescriber`), D132 (an email
+  is written in the culture of the code that sends it; its sentences are encoded text with the link as their
+  placeholders).
+- **Account pages in the request's culture (D95), checked**: `UseRequestLocalization` sets it (the site's
+  languages, default `Zauber:AdminDefaultLanguage`) and `CultureMiddleware` leaves `/Account/*` alone. The account
+  layout (`BlankLayout`) applied the admin's culture in its `OnInitialized`, which said the opposite of D95 and
+  reached nothing rendered (a culture set in a lifecycle method stays in that method): removed (its `Settings`
+  property stays).
+- **Found and fixed while building**: ZA-280 (an account page's status message was red only when its text started
+  with the English "Error", so a translation showed as a success, and "Unable to login please contact us." already
+  did: the type travels with the message, `IdentityRedirectManager.RedirectToWithStatus(uri, message, type,
+  context)` and `StatusMessage.MessageType`), ZA-281 (the content type page's Delete deleted the type before asking,
+  whatever the answer), ZA-282 (the language dialogs: both dictionary columns' tooltip said "Name", the edit panel
+  was titled "Create Language", a refused language save closed the panel without saying why). Found in the browser:
+  ZA-283 (`MessagesAsString` kept only the success messages when there were several, so a refusal for more than one
+  reason, a password breaking three of Identity's rules in "Your account", showed an empty alert, and the same
+  empty notification everywhere it is used: now every message, one per line, as written) and ZA-284 (High: the
+  reset-password page threw for every link with a code, so "Forgot your password" and the set-password email of D22
+  could not be used: the form model was made in `OnParametersSet`, after `OnInitialized` used it; since the .NET 10
+  update, before the rework; the template smoke test now opens the page from a link).
+- **Tests**: `Membership/AccountParameterValidationTests` (the four account parameter classes' English messages
+  with and without services, and the keys read from the context), `Membership/AccountTextCultureTests` (through the
+  bootstrap, with this test assembly as a site with `Membership.fr.resx`: Identity's message and the login form's
+  message through Blazor's `EnableDataAnnotationsValidation` are French in `fr` and English in `en`; every Identity
+  message keeps Identity's code and English, and every one is overridden), `Account/StatusMessageTests` (ZA-280),
+  `Account/AccountLayoutCultureTests` (the account layout renders its page in the request's culture),
+  `Shared/MessagesAsStringTests` (ZA-283), the template smoke test's reset-password check (ZA-284), the guard's
+  10h-4 block. Full suite 1521 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis;
+  Release build 0 warnings; template smoke test passes (with a new check, ZA-284); `doublecheck` self-review.
+- **Verified in the browser** (dev site on a scratch copy of `app.db`, installed through the installer, with an
+  administrator and a registered user given `Editor`): English and no raw keys on Structure (the content type page,
+  its Add Tab panel, its Delete confirm answered No and the type still there, ZA-281), Settings (Global Settings with
+  an API key added, saved, its "Saved: type a new value to replace it" box, the duplicate-name refusal; Languages and
+  its Edit Language panel, a refused save keeping the panel open with the reason, ZA-282; the dictionary panel's
+  column tooltips; the audit log), Users (the list, the user page with the own-page caption and the "Update User's
+  Roles" panel, the `Editor` role's Sections box, the starting role's note, the role delete confirm), the profile menu
+  and "Your account" (for the administrator and for the Editor, who has no "Open your page in Users"; a password
+  breaking three of Identity's rules lists the three, ZA-283), the access-denied page as the Editor (`/admin/settings`)
+  and as a member (`/admin`), the login page (the validation messages from the attributes, a wrong password), the
+  registration page (the length message, then a registration), the forgot-password page and its message, the
+  reset-password page from a link (it threw before, ZA-284; an invalid code gives Identity's "Invalid token."), the
+  sign-out page. The request's culture reaches the account pages: `Accept-Language: es-ES` and `de-DE` (languages
+  of the sample site) give `<html lang="es">` / `"de"`, `fr-FR` (not one) the default.
+- **Not verified in the browser**: a translated site (French files; the culture tests cover it), the change-email
+  link and the emails (no SMTP on the dev site; tests cover the change-email flow), the external-login refusals and
+  status messages (no provider configured; `StatusMessageTests`), the API Key Picker in a content type's settings.
+- **Release notes (D18)**:
+  - The Structure, Settings and Users sections, the admin layout, the account pages, the fallback pages, the
+    sign-out page and Core's membership, role, access, language, tag, audit and email messages are localisable
+    (Docs/AdminUI.md "Localisation"); English as before. ASP.NET Identity's messages are ZauberCMS's text
+    (`membership_identity*`); a site's own `AddErrorDescriber` after `AddZauberCms` still wins.
+  - Breaking (constructors gain `IStringLocalizer<ZauberText>`, last parameter): `MembershipService`,
+    `BackOfficeAccessService`, `EmailService`, `IdentityEmailSender`, `LanguageService`, `TagService`,
+    `AuditService`, `AuthController`, `UsersNavGroup`; `ValidateRole`, `ValidateUser`, `UserValidation`,
+    `CreateUpdateUserCommandValidator`, `ValidateLanguageDictionary` and the `UsersIndex` page lose their
+    parameterless constructors. A site that subclasses one passes the localiser on. `ApiKeysPickerProperty` keeps
+    its parameterless constructor (English text) beside the localising one, as every built-in editor does (D120).
+  - The account parameter classes' validation attributes are ZauberCMS's (`[Required]` → `[ZauberRequired]` and the
+    like, internal; same rules, same English); code that looked for `EmailAddressAttribute` on them finds a
+    `DataTypeAttribute` of `DataType.EmailAddress`. `NavigationItem`'s `Name` and `Url` carry `[ZauberRequired]`
+    (a `RequiredAttribute`) in place of `[Required]`.
+  - `IdentityRedirectManager.RedirectToWithStatus(uri, message, type, context)` and `StatusMessage.MessageType` are
+    new; a status message written without a type is still an error when it starts with "Error".
+  - The account layout no longer sets the admin's culture (it had no effect).
+- **For the merge**: files outside the part's folders: `ZauberCMS.Core/ZauberSetup.cs` (one `AddErrorDescriber`
+  line and a `using`), `ZauberCMS.Core/Membership/IdentityRedirectManager.cs`, `ZauberCMS.Core/Extensions/
+  ResultExtensions.cs` (`MessagesAsString`'s body and two `using`s, ZA-283; 10h-3's folder, no text there),
+  `tests/template-smoke.ps1` (one check, ZA-284), `ZauberCMS.Components/Admin/
+  AdminIndex.razor`, `Editors/ApiKeysPickerProperty.razor` (this part's), `AGENTS.md` (the account pages' culture),
+  `Docs/AdminUI.md` (rule 8, three table rows), the guard's 10h-4 blocks (and `NotUsedYet` emptied), tests. Left to
+  their parts: the Google Maps editor's missing-key warning (`Editors/GoogleMapsProperty.razor`, 10h-3's folder) and
+  `Admin/DynamicContentProperty.razor`'s boundary names ("This editor", "The {0} editor": in no part's list).
+- **Merged onto Phases 10h-2 and 10h-3** (made alongside them from ec60912). The three parts' guard blocks kept
+  side by side. The API Key Picker follows D120 like the other editors: its keys moved from `Settings` to `Editors`
+  (`editors_apiKeyPicker`, `…Info`, `…Label`, `…Placeholder`, `…UnknownKey`; `EditorText` reads only `Editors`), and
+  it got back its parameterless constructor beside the localising one (`[ActivatorUtilitiesConstructor]`), so
+  `EditorConstructionTests` covers it with every editor (`NotConvertedYet` is gone, and 10h-3's `NotText` lines for
+  it). Converted at the merge, so nothing of ZA-129 is left: the Google Maps warning was already 10h-3's
+  (`editors_googleMapsNoApiKey`); `Admin/DynamicContentProperty.razor`'s boundary names are `layout_editorBoundary`
+  and `layout_propertyEditorBoundary` (Layout, beside the other boundary names; the guard's 10h-4 block now lists
+  `ZauberCMS.Components/Admin`); `NavigationItem`'s `[Required]`, shown by the navigation item dialog as .NET's
+  "The Name field is required.", is D130's `[ZauberRequired]`, whose field names for it are Core's
+  `shared_navigationItemName` and `shared_navigationItemUrl` (the dialog's "Name" and "URL"). **ZA-271** (10h-3:
+  Identity's messages English in the installer and on the account pages) is fixed by D131's describer: the
+  installer checks the password with the `UserManager`'s validators, which take the registered describer, and
+  "keeping Identity's English" means the English file holds Identity's sentences, translated like any key (as
+  Umbraco's describers do); tests `AccountTextCultureTests.ZA271_…` (the validators' message is the site's French)
+  and `…The_navigation_item_dialog_s_required_fields_follow_the_culture`. **ZA-270** (the trees' "Show more" row)
+  stays for 10i: the text is built in Core's `TreeLoadMore` and rendered by `TreeExtensions`' public static
+  templates for trees in Trees, Content and Media, which 10i's tree button work rewrites. Full suite after the merge
+  1533 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis (1521 on its own branch);
+  template smoke test passes.
 
 ### Phase 10i — Accessibility pass
 ZA-128 (Low). Labels on icon buttons and inputs, keyboard access and roles for the clickable divs (every tree
@@ -1616,9 +1736,9 @@ and uses 10h's localised text.
   `UpdateMediaForm`, and writes its crop boxes to the console: finish it or remove it). Decide it Umbraco's way:
   Umbraco never edits the stored file, crops are data.
 - From Phase 10h-3: **ZA-270**, the trees' "Show more" row (`TreeLoadMore.Name`) is English: the trees read it
-  without `L`; give the row its text where the trees render it (it is a tree button, already 10i's). **ZA-271**,
-  Identity's own messages (the password rules a refused password breaks, a taken user name) are ASP.NET Core's
-  English in the installer and the account pages: an `IdentityErrorDescriber` that reads ZauberCMS's text.
+  without `L`; give the row its text where the trees render it (it is a tree button, already 10i's: Core's
+  `TreeLoadMore` builds it and `TreeExtensions`' static templates render it for the trees of Trees, Content and
+  Media). (ZA-271, Identity's own messages in English, was fixed in Phase 10h-4 by D131.)
 
 ### Phase 11 — Engineering baseline, API clean-up, v5 — DONE 2026-11-27
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,

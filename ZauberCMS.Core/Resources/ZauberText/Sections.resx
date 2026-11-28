@@ -12,4 +12,44 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="sections_cannotOpenUsers" xml:space="preserve">
+    <value>You cannot open the Users section.</value>
+    <comment>Users and roles: why someone may change no user or role</comment>
+  </data>
+  <data name="sections_onlyAdminChangesAdmin" xml:space="preserve">
+    <value>Only an administrator can change an administrator.</value>
+    <comment>User page: why the user cannot be changed</comment>
+  </data>
+  <data name="sections_onlyAdminChangesAdminRole" xml:space="preserve">
+    <value>Only an administrator can change the {0} role.</value>
+    <comment>Role page: why the role cannot be changed. {0} = the administrators' role name (Admin), which is not translated</comment>
+  </data>
+  <data name="sections_onlyAdminMakesAdminRole" xml:space="preserve">
+    <value>Only an administrator can make the {0} role.</value>
+    <comment>Role page: why the role cannot be saved. {0} = the administrators' role name (Admin), which is not translated</comment>
+  </data>
+  <data name="sections_onlyRolesYouAreIn" xml:space="preserve">
+    <value>You can only change roles you are in yourself; you are not in {0}.</value>
+    <comment>Role page: why the role cannot be changed. {0} = the role's name</comment>
+  </data>
+  <data name="sections_onlyYourRoles" xml:space="preserve">
+    <value>You can only give roles you are in yourself, and never the {0} role: {1}.</value>
+    <comment>User page: why the roles chosen cannot be given. {0} = the administrators' role name (Admin), which is not translated; {1} = the roles refused, separated by commas</comment>
+  </data>
+  <data name="sections_onlyYourSectionsRoles" xml:space="preserve">
+    <value>You can only give a role sections you can open yourself: {0}.</value>
+    <comment>Role page: why the sections ticked cannot be saved. {0} = the sections refused, separated by commas</comment>
+  </data>
+  <data name="sections_onlyYourSectionsUsers" xml:space="preserve">
+    <value>You can only change users whose sections you can open yourself: {0}.</value>
+    <comment>User page: why the user cannot be changed. {0} = the user's sections the editor cannot open, separated by commas</comment>
+  </data>
+  <data name="sections_signInFirst" xml:space="preserve">
+    <value>Sign in first.</value>
+    <comment>Users and roles: why someone not signed in may change nothing</comment>
+  </data>
+  <data name="sections_startingRoleNoSections" xml:space="preserve">
+    <value>Everyone who registers gets the {0} role (Zauber:NewUserStartingRole), so it cannot open sections of the admin. Give them to another role.</value>
+    <comment>Role page: why sections cannot be saved on the role new registrations get. {0} = that role's name</comment>
+  </data>
 </root>

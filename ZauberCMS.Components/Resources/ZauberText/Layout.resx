@@ -12,4 +12,164 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="layout_accountNotFound" xml:space="preserve">
+    <value>Your account could not be found</value>
+    <comment>Your account panel: title when the signed-in user's account is not found</comment>
+  </data>
+  <data name="layout_admin" xml:space="preserve">
+    <value>Admin</value>
+    <comment>The page title of /admin, while it opens the user's first section</comment>
+  </data>
+  <data name="layout_changePassword" xml:space="preserve">
+    <value>Change password</value>
+    <comment>Your account panel: button</comment>
+  </data>
+  <data name="layout_currentPassword" xml:space="preserve">
+    <value>Current password</value>
+    <comment>Your account panel: placeholder and label of the current password, to change the password</comment>
+  </data>
+  <data name="layout_currentPasswordForEmail" xml:space="preserve">
+    <value>Your current password, to change the email address</value>
+    <comment>Your account panel: label (read by screen readers) of the password field next to the new email address</comment>
+  </data>
+  <data name="layout_dashboardBoundary" xml:space="preserve">
+    <value>The {0} dashboard</value>
+    <comment>Error boundary name, shown as "{0} could not be shown". {0} = the dashboard's tab name</comment>
+  </data>
+  <data name="layout_dialogBoundary" xml:space="preserve">
+    <value>The dialog</value>
+    <comment>Error boundary name of the admin's dialogs</comment>
+  </data>
+  <data name="layout_dialogFailed" xml:space="preserve">
+    <value>The dialog could not be shown</value>
+    <comment>Admin layout: title when a dialog or side panel failed</comment>
+  </data>
+  <data name="layout_editorBoundary" xml:space="preserve">
+    <value>This editor</value>
+    <comment>Error boundary name of a property editor without an alias, shown as "This editor could not be shown"</comment>
+  </data>
+  <data name="layout_emailAddress" xml:space="preserve">
+    <value>Email address</value>
+    <comment>Your account panel: heading</comment>
+  </data>
+  <data name="layout_emailChangeByAdmin" xml:space="preserve">
+    <value>Your account has no password, so its address is changed by an administrator.</value>
+    <comment>Your account panel: under the email address, for an account with no password</comment>
+  </data>
+  <data name="layout_emailChangeCaption" xml:space="preserve">
+    <value>A link is sent to the new address. Your account moves to it when the link is opened; until then you sign in with the address above.</value>
+    <comment>Your account panel: under the new email address</comment>
+  </data>
+  <data name="layout_emailLinkSent" xml:space="preserve">
+    <value>A link was sent to {0}. Your address changes when you open it.</value>
+    <comment>Your account panel: after asking for a new email address. {0} = the new email address</comment>
+  </data>
+  <data name="layout_logout" xml:space="preserve">
+    <value>Logout</value>
+    <comment>Admin header: profile menu item</comment>
+  </data>
+  <data name="layout_nameChanged" xml:space="preserve">
+    <value>Your name was changed.</value>
+    <comment>Your account panel: after saving the name</comment>
+  </data>
+  <data name="layout_navigationBoundary" xml:space="preserve">
+    <value>The navigation</value>
+    <comment>Error boundary name of the admin's side navigation, shown as "The navigation could not be shown"</comment>
+  </data>
+  <data name="layout_navigationWidth" xml:space="preserve">
+    <value>Navigation width</value>
+    <comment>Admin layout: label (read by screen readers) of the divider that changes the navigation's width</comment>
+  </data>
+  <data name="layout_navigationWidthHint" xml:space="preserve">
+    <value>Drag to change the width. Double-click, or press Enter, for the default.</value>
+    <comment>Admin layout: tooltip of the divider that changes the navigation's width</comment>
+  </data>
+  <data name="layout_newEmailAddress" xml:space="preserve">
+    <value>New email address</value>
+    <comment>Your account panel: placeholder and label</comment>
+  </data>
+  <data name="layout_newPassword" xml:space="preserve">
+    <value>New password</value>
+    <comment>Your account panel: placeholder and label</comment>
+  </data>
+  <data name="layout_newPasswordAgain" xml:space="preserve">
+    <value>New password again</value>
+    <comment>Your account panel: placeholder and label of the password confirmation</comment>
+  </data>
+  <data name="layout_noPasswordCaption" xml:space="preserve">
+    <value>Your account has no password: you sign in with an external login. "Forgot your password" on the sign-in page sets one.</value>
+    <comment>Your account panel: under Password, for an account with no password</comment>
+  </data>
+  <data name="layout_noSection" xml:space="preserve">
+    <value>No section to open</value>
+    <comment>Admin start page: title when the user's roles give no section</comment>
+  </data>
+  <data name="layout_noSectionDetail" xml:space="preserve">
+    <value>Your roles do not give you any section of the admin. Ask an administrator for access.</value>
+    <comment>Admin start page: when the user's roles give no section</comment>
+  </data>
+  <data name="layout_openInUsers" xml:space="preserve">
+    <value>Open your page in Users</value>
+    <comment>Your account panel: button, for users who may open the Users section</comment>
+  </data>
+  <data name="layout_passwordChangeCaption" xml:space="preserve">
+    <value>Your other sessions are signed out, and this page reloads to keep you signed in here: save your work first.</value>
+    <comment>Your account panel: under the new password</comment>
+  </data>
+  <data name="layout_passwordChanged" xml:space="preserve">
+    <value>Your password was changed.</value>
+    <comment>Your account panel: after changing the password</comment>
+  </data>
+  <data name="layout_passwordsDiffer" xml:space="preserve">
+    <value>The new password and the new password again are not the same.</value>
+    <comment>Your account panel: the new password and its confirmation differ</comment>
+  </data>
+  <data name="layout_propertyEditorBoundary" xml:space="preserve">
+    <value>The {0} editor</value>
+    <comment>Error boundary name of a property editor, shown as "The {0} editor could not be shown". {0} = the property's alias</comment>
+  </data>
+  <data name="layout_reload" xml:space="preserve">
+    <value>Reload</value>
+    <comment>Admin layout: link in the bar shown when the connection fails with an unhandled error</comment>
+  </data>
+  <data name="layout_rolesSetByAdmin" xml:space="preserve">
+    <value>Your roles, and the sections of the admin you can open, are set by an administrator.</value>
+    <comment>Your account panel: at the top</comment>
+  </data>
+  <data name="layout_saveName" xml:space="preserve">
+    <value>Save name</value>
+    <comment>Your account panel: button</comment>
+  </data>
+  <data name="layout_sectionsFailed" xml:space="preserve">
+    <value>The sections could not be shown: try again</value>
+    <comment>Admin header: button shown instead of the section links when they could not be read</comment>
+  </data>
+  <data name="layout_sendLink" xml:space="preserve">
+    <value>Send the link</value>
+    <comment>Your account panel: button that sends the confirmation link to the new email address</comment>
+  </data>
+  <data name="layout_signInAgain" xml:space="preserve">
+    <value>Sign in again.</value>
+    <comment>Your account panel: when the signed-in user's account is not found</comment>
+  </data>
+  <data name="layout_signInWith" xml:space="preserve">
+    <value>You sign in with {0}.</value>
+    <comment>Your account panel: under Email address. {0} = the user's email address, shown in bold</comment>
+  </data>
+  <data name="layout_thisPage" xml:space="preserve">
+    <value>This page</value>
+    <comment>Error boundary name of the admin's page, shown as "This page could not be shown"</comment>
+  </data>
+  <data name="layout_unhandledError" xml:space="preserve">
+    <value>An unhandled error has occurred.</value>
+    <comment>Admin layout: bar shown when the connection fails with an unhandled error</comment>
+  </data>
+  <data name="layout_yourAccount" xml:space="preserve">
+    <value>Your account</value>
+    <comment>Admin header: profile menu item, and the title of its side panel</comment>
+  </data>
+  <data name="layout_yourCurrentPassword" xml:space="preserve">
+    <value>Your current password</value>
+    <comment>Your account panel: placeholder of the password field next to the new email address</comment>
+  </data>
 </root>

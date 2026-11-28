@@ -1,20 +1,24 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Providers;
 
 namespace ZauberCMS.Core.Email;
 
-public class IdentityEmailSender(ProviderService providerService) : IEmailSender<User>
+public class IdentityEmailSender(ProviderService providerService, IStringLocalizer<ZauberText> text) : IEmailSender<User>
 {
+    // The sentences are encoded text and the links' tags their placeholders (EmailHtml). The links and the code
+    // come HTML-encoded already (IEmailSender: "Do not double encode this")
     public Task SendConfirmationLinkAsync(User user, string email, string confirmationLink)=>  
-        providerService.GetRequiredEmailProvider().SendEmailAsync(email, "Confirm your email",
-            $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.");
+        providerService.GetRequiredEmailProvider().SendEmailAsync(email, text["email_confirmAccountSubject"],
+            EmailHtml.Paragraph(text["email_confirmAccountBody"], $"<a href='{confirmationLink}'>", "</a>"));
 
     public Task SendPasswordResetLinkAsync(User user, string email, string resetLink) =>
-        providerService.GetRequiredEmailProvider().SendEmailAsync(email, "Reset your password",
-            $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
+        providerService.GetRequiredEmailProvider().SendEmailAsync(email, text["email_resetYourPasswordSubject"],
+            EmailHtml.Paragraph(text["email_resetPasswordBody"], $"<a href='{resetLink}'>", "</a>"));
 
     public Task SendPasswordResetCodeAsync(User user, string email, string resetCode) =>
-        providerService.GetRequiredEmailProvider().SendEmailAsync(email, "Reset your password",
-            $"Please reset your password using the following code: {resetCode}");
+        providerService.GetRequiredEmailProvider().SendEmailAsync(email, text["email_resetYourPasswordSubject"],
+            EmailHtml.Paragraph(text["email_resetPasswordCode"], resetCode));
 }

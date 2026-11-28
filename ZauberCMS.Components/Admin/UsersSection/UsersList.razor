@@ -18,9 +18,9 @@
                     RowSelect="@((User value) => OnRowSelect(value))">
         @*@bind-Value="@SelectedContent"*@
         <Columns>
-            <RadzenDataGridColumn Property="Username" Title="Username"/>
-            <RadzenDataGridColumn Property="Email" Title="Email"/>
-            <RadzenDataGridColumn Property="DateUpdated" Title="Last Updated">
+            <RadzenDataGridColumn Property="Username" Title="@L["general_username"]"/>
+            <RadzenDataGridColumn Property="Email" Title="@L["general_email"]"/>
+            <RadzenDataGridColumn Property="DateUpdated" Title="@L["general_lastUpdated"]">
                 <Template Context="data">
                     @data.DateUpdated.Humanize()
                 </Template>

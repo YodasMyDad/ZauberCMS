@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
@@ -17,7 +19,8 @@ public class TagService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     ICurrentUserAccessor currentUserAccessor,
-    ExtensionManager extensionManager)
+    ExtensionManager extensionManager,
+    IStringLocalizer<ZauberText> text)
     : ITagService
 {
     private readonly SlugHelper _slugHelper = new();
@@ -82,7 +85,7 @@ public class TagService(
             return await dbContext.SaveChangesAndLog(tag, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
-        handlerResult.AddMessage("Tag Name is null", ResultMessageType.Error);
+        handlerResult.AddMessage(text["tags_tagNameMissing"], ResultMessageType.Error);
         return handlerResult;
     }
 
@@ -167,7 +170,7 @@ public class TagService(
 
         if (parameters.ItemId == Guid.Empty)
         {
-            handlerResult.AddMessage("ItemId is empty", ResultMessageType.Error);
+            handlerResult.AddMessage(text["tags_itemIdMissing"], ResultMessageType.Error);
             return handlerResult;
         }
 

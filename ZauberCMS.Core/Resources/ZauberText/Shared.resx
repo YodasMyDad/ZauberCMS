@@ -20,6 +20,14 @@
     <value>GlobalData is null</value>
     <comment>A global data value was saved without its alias or data</comment>
   </data>
+  <data name="shared_navigationItemName" xml:space="preserve">
+    <value>Name</value>
+    <comment>Navigation editor's item dialog: the name field's name in validation messages (membership_fieldRequired)</comment>
+  </data>
+  <data name="shared_navigationItemUrl" xml:space="preserve">
+    <value>URL</value>
+    <comment>Navigation editor's item dialog: the address field's name in validation messages (membership_fieldRequired)</comment>
+  </data>
   <data name="shared_saveAbandoned" xml:space="preserve">
     <value>Save was purposely abandoned</value>
     <comment>A save hook (IBeforeEntitySave) stopped the save</comment>

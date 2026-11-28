@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="membership_fieldEmail" xml:space="preserve">
+    <value>Adresse e-mail</value>
+    <comment>Test override: a site's French name of the email field</comment>
+  </data>
+  <data name="membership_fieldRequired" xml:space="preserve">
+    <value>Le champ {0} est obligatoire.</value>
+    <comment>Test override: a site's French DataAnnotations message</comment>
+  </data>
+  <data name="membership_identityPasswordTooShort" xml:space="preserve">
+    <value>Les mots de passe doivent comporter au moins {0} caractères.</value>
+    <comment>Test override: a site's French translation of an ASP.NET Identity message</comment>
+  </data>
+</root>

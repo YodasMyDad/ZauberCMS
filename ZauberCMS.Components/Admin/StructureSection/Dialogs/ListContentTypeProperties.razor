@@ -9,7 +9,7 @@
                TextProperty="Name"
                ValueProperty="Alias"
                Style="width: 100%; height: 100%;"
-               InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select property" } })"
+               InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["structure_selectProperty"].Value } })"
                Change="@OnPropertySelected">
     <Template>
         @{

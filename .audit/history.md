@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10h-4 (2026-11-28, merged after 10h-2 and 10h-3): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1533 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1521 on its own branch) · Template smoke test passes (with a new check, ZA-284); `doublecheck` self-review on the part. ZA-129 fixed (with 10h-1 to 10h-3 and the leftovers converted at the merge; Phase 10h done); ZA-271 fixed (D131); ZA-280…ZA-284 found and fixed (ZA-284 High). Next free ID: ZA-236 (ZA-285…ZA-289 unused, skipped, not to be filled; ZA-250…ZA-259 held by Phase 11i, in progress)
 After Roadmap Phase 10h-3 (2026-11-28, merged after 10h-2): Build PASS · Warnings: 0 · Tests: 1510 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1505 on its own branch) · Template smoke test passes; `doublecheck` self-review with an independent review of the editors. ZA-129 in progress (the property editors, the installer and Core's generic messages converted, D120–D122; it closes with 10h-4); ZA-270, ZA-271 recorded (Low, 10i); ZA-264 moved from Phase 12 to 10i (owner). Next free ID: ZA-236 (ZA-265…ZA-269 and ZA-272…ZA-279 unused, skipped, not to be filled; ZA-250…ZA-259 held by Phase 11i, ZA-280…ZA-289 by Phase 10h-4, both in progress)
 After Roadmap Phase 10h-2 (2026-11-28, on its own branch): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1505 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part (three independent diff reviewers); verified in the browser. ZA-129 in progress (Content, Media, the editor dialogs and SEO converted, D110, D111; it closes with 10h-4); ZA-260 found and fixed (Low); ZA-261…ZA-263 recorded (Low, Phase 10i), ZA-264 (Low, Phase 12). ZA-265…ZA-269 unused (Phase 10h-2's range; skipped, not to be filled)
 After Roadmap Phase 10h-1 (2026-11-28, merged after 10g-2 and 11h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1500 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1377 on its own branch) · Template smoke test passes; `doublecheck` self-review on the part. ZA-129 in progress (the mechanism and the first screens, D90–D97; it closes with 10h-4); ZP-010 proposed. Next free ID: ZA-236 (ZA-240…ZA-249, this part's range, unused; ZA-250…ZA-259 held by Phase 11i, in progress); proposals ZP-004 (ZP-010 used, ZP-011…ZP-019 unused)
@@ -43,6 +44,45 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 10h-4 (2026-11-28, Structure, Settings, Users, the layout, the account pages and Core's messages
+  localised, D37, D130–D132).** Details and release notes in the Roadmap's "Phase 10h-4". Full suite 1521 on its
+  branch (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings;
+  template smoke test passes (with a new check, ZA-284); `doublecheck` self-review and an independent review of the diff.
+  - **ZA-129 (Low) — fixed** (confirmed at the merge onto 10h-2 and 10h-3, with the leftovers below). 350 keys in
+    Components' Structure, Settings, Users, Layout, Account and Core's Membership, Sections, Email, Languages, Audit,
+    Tags; the account forms' validation through ZauberCMS's attributes (D130), Identity's messages through
+    `ZauberIdentityErrorDescriber` (D131), the emails encoded and in the sender's culture (D132). Verified: the guard
+    with 33 folders in its 10h-4 block; `AccountTextCultureTests` (French through the bootstrap, Identity's English
+    and codes kept), `AccountParameterValidationTests`, `AccountLayoutCultureTests`; the browser walk in the Roadmap.
+    Converted at the merge (Roadmap "Phase 10h-4", "Merged onto Phases 10h-2 and 10h-3"): `Admin/
+    DynamicContentProperty.razor`'s boundary names (Layout; the guard's 10h-4 block lists `ZauberCMS.Components/
+    Admin` now, 34 folders), `NavigationItem`'s `[Required]` as `[ZauberRequired]` (field names `shared_navigationItem*`;
+    test `AccountTextCultureTests.The_navigation_item_dialog_s_required_fields_follow_the_culture`), and the API Key
+    Picker moved to the Editors area with D120's constructors (`EditorConstructionTests` covers every editor now); the
+    Google Maps warning was already 10h-3's. Full suite after the merge 1533 (all pass, none skipped) on SQLite,
+    PostgreSQL, SQL Server LocalDB and Redis; template smoke test passes.
+  - **ZA-271 (Low, found by 10h-3) — fixed by D131.** ASP.NET Identity's messages in the installer and on the
+    account pages are ZauberCMS's text through `ZauberIdentityErrorDescriber`, Umbraco's way (its back-office and
+    members describers): the English file holds Identity's sentences, translated like any key, and Identity's codes
+    stay. The installer's password check uses the `UserManager`'s validators, which take the registered describer.
+    Verified: `AccountTextCultureTests.ZA271_the_installer_s_password_check_gives_Identity_s_messages_in_the_culture`
+    (a site's French through the bootstrap) and `D131_…` (every message overridden, Identity's English and codes).
+  - **ZA-280 (Low) — fixed.** A status message on the account pages was red only when it started with the English
+    "Error". The type travels with it (`RedirectToWithStatus(uri, message, type, context)`, `StatusMessage.MessageType`;
+    the old rule stays for messages written without one). Verified: `StatusMessageTests`.
+  - **ZA-281 (Low) — fixed.** The content type page deleted the type before its confirm, whatever the answer. Verified
+    in the browser (No keeps the type).
+  - **ZA-282 (Low) — fixed.** Language dialogs: the dictionary columns' tooltips, the edit panel's title, a refused
+    save that closed the panel unsaid. Verified in the browser.
+  - **ZA-283 (Low) — fixed.** `MessagesAsString` gave only the success messages when there were several: a refusal
+    for more than one reason showed as an empty alert or notification. Verified: `MessagesAsStringTests`; the browser
+    ("Your account" lists three of Identity's password rules).
+  - **ZA-284 (High) — fixed.** The reset-password page threw a `NullReferenceException` for every link with a code
+    (its form model was made in `OnParametersSet`, after `OnInitialized` used it), so "Forgot your password" and the
+    set-password email (D22) could not be used; since the .NET 10 update, before the rework. Verified: the page with a
+    code answered the exception before the fix and the form after it (the dev site); the template smoke test now
+    opens it from a link; the browser (an invalid code gives "Invalid token.").
 
 - **Roadmap Phase 10h-3 (2026-11-28, admin localisation: the property editors and the installer, D37, D120–D122).**
   Release notes in the Roadmap's "Phase 10h-3". Full suite 1505 on its branch (all pass, none skipped) on SQLite,

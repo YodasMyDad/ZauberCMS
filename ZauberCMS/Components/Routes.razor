@@ -3,8 +3,11 @@
 @using ZauberCMS.Core.Membership.Middleware
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Sections.Interfaces
+@using Microsoft.Extensions.Localization
+@using ZauberCMS.Core.Localization
 @inject NavigationManager NavigationManager
 @inject IBackOfficeAccessService BackOfficeAccess
+@inject IStringLocalizer<ZauberText> L
 @using ZauberCMS.Components.Account.Shared
 
 <Router
@@ -19,7 +22,7 @@
                    shows here, with "Try again", instead of ending the circuit (ZA-215, Roadmap D32); the next
                    navigation clears it. What fails inside a page shows in the layout's own boundaries, which keep
                    the header and navigation. The front end has no circuit: its errors go to the error page (D33). *@
-                <ZauberCMS.Components.Shared.AdminErrorBoundary @ref="_adminBoundary" @key="_adminBoundaryKey" Name="This page">
+                <ZauberCMS.Components.Shared.AdminErrorBoundary @ref="_adminBoundary" @key="_adminBoundaryKey" Name="@L["layout_thisPage"]">
                     @RouteContent(routeData)
                 </ZauberCMS.Components.Shared.AdminErrorBoundary>
             }

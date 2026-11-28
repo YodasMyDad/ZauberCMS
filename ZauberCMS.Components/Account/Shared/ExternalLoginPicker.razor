@@ -18,7 +18,7 @@
                 @foreach (var provider in externalLogins)
                 {
                     <div class="col">
-                        <button type="submit" class="btn btn-primary w-100" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                        <button type="submit" class="btn btn-primary w-100" name="provider" value="@provider.Name" title="@(L["account_logInWithProvider", provider.DisplayName ?? string.Empty])">@provider.DisplayName</button>
                     </div>
                 }
             </div>

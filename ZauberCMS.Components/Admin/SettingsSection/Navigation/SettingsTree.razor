@@ -5,7 +5,7 @@
    the user does not pass *@
 @attribute [Authorize(Roles = Constants.Roles.AdminRoleName)]
 
-<TreeButton Icon="settings" Name="Global Settings" Url="@(Urls.AdminSettingsGlobalSettings)" />
+<TreeButton Icon="settings" Name="@L["settings_globalSettings"]" Url="@(Urls.AdminSettingsGlobalSettings)" />
 
 @code {
     public int SortOrder => 0;

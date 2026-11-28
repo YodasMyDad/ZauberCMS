@@ -1,5 +1,5 @@
 ﻿@using ZauberCMS.Components.Admin.StructureSection.Navigation
-<div>Choose where to move @Item.Name to in the tree structure below</div>
+<div>@(L["structure_chooseWhereToMove", Item.Name ?? string.Empty])</div>
 
 <EditorRow>
     <CentreColumn>
@@ -25,7 +25,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 
@@ -45,7 +45,7 @@
         {
             if (!baseItem.IsFolder)
             {
-                NotificationService.ShowErrorNotification("Content Types can only be moved into folders");
+                NotificationService.ShowErrorNotification(L["structure_moveIntoFoldersOnly"]);
             }
             else
             {
@@ -57,7 +57,7 @@
         }
         else
         {
-            NotificationService.ShowErrorNotification("This is not a Content Type");
+            NotificationService.ShowErrorNotification(L["structure_notAContentType"]);
         }
     }
 

@@ -30,6 +30,26 @@
   <data name="editors_addNewBlock" xml:space="preserve">
     <value>Add New Block</value>
   </data>
+  <data name="editors_apiKeyPicker" xml:space="preserve">
+    <value>Api Key Picker</value>
+    <comment>Property editor list: the API Key Picker's name</comment>
+  </data>
+  <data name="editors_apiKeyPickerInfo" xml:space="preserve">
+    <value>Pick one of the site's API keys by name (Global Settings or Zauber:ApiKeys); the page stores the name</value>
+    <comment>Property editor list: the API Key Picker's description</comment>
+  </data>
+  <data name="editors_apiKeyPickerLabel" xml:space="preserve">
+    <value>API key</value>
+    <comment>API Key Picker editor: screen-reader label of the list</comment>
+  </data>
+  <data name="editors_apiKeyPickerPlaceholder" xml:space="preserve">
+    <value>Choose a key</value>
+    <comment>API Key Picker editor: placeholder of the list</comment>
+  </data>
+  <data name="editors_apiKeyPickerUnknownKey" xml:space="preserve">
+    <value>The saved key is not one of the site's keys now. It is used as it was saved until you choose one.</value>
+    <comment>API Key Picker editor: the stored value matches none of the site's keys</comment>
+  </data>
   <data name="editors_blockChangesNotKept" xml:space="preserve">
     <value>Block changes not kept</value>
     <comment>A notification's summary</comment>

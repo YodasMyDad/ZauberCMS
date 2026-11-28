@@ -8,8 +8,8 @@
         @* Every back-office user changes their own name, email address and password here (Roadmap D72); the
            panel offers their page in Users to those who may open Users. Nothing here reads the database, so the
            header cannot fail on it (ZA-215). *@
-        <ProfileMenuItem Icon="person" Name="Your account" OnClick="() => OpenAccount()"/>
-        <ProfileMenuItem Icon="logout" Name="Logout" OnClick="() => Logout()"/>
+        <ProfileMenuItem Icon="person" Name="@L["layout_yourAccount"]" OnClick="() => OpenAccount()"/>
+        <ProfileMenuItem Icon="logout" Name="@L["layout_logout"]" OnClick="() => Logout()"/>
     </ChildContent>
 </RadzenProfileMenu>
 
@@ -21,7 +21,7 @@
 
     private void OpenAccount()
     {
-        ModalService?.OpenSidePanel<CurrentUserPanel>("Your account");
+        ModalService?.OpenSidePanel<CurrentUserPanel>(L["layout_yourAccount"]);
     }
 
     private void Logout()

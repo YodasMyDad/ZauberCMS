@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Data;
+using ZauberCMS.Core.Email;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Email.Parameters;
 using ZauberCMS.Core.Extensions;
@@ -69,29 +70,29 @@ public partial class MembershipService
                         if (await userManager.IsLockedOutAsync(user))
                         {
                             logger.LogWarning("User {UserId} account is locked out", user.Id);
-                            loginResult.AddMessage("Too many failed sign-in attempts. Please wait a few minutes and try again.", ResultMessageType.Error);
+                            loginResult.AddMessage(text["membership_tooManySignInAttempts"], ResultMessageType.Error);
                         }
                         else if (!await userManager.CheckPasswordAsync(user, parameters.Password))
                         {
                             await userManager.AccessFailedAsync(user);
-                            loginResult.AddMessage("Invalid login credentials", ResultMessageType.Error);
+                            loginResult.AddMessage(text["membership_invalidLogin"], ResultMessageType.Error);
                         }
                         else if (!await userManager.IsEmailConfirmedAsync(user))
                         {
                             await userManager.ResetAccessFailedCountAsync(user);
-                            loginResult.AddMessage("Email isn't confirmed. Check your inbox for a confirmation email", ResultMessageType.Warning);
+                            loginResult.AddMessage(text["membership_emailNotConfirmed"], ResultMessageType.Warning);
                             await ResendConfirmationAsync(scope.ServiceProvider, user, parameters.ReturnUrl, cancellationToken);
                         }
                         else
                         {
-                            loginResult.AddMessage("Invalid login credentials", ResultMessageType.Error);
+                            loginResult.AddMessage(text["membership_invalidLogin"], ResultMessageType.Error);
                         }
                     }
                     else if (signInResult.IsLockedOut)
                     {
                         // The user id, not the address typed in: no email addresses in the log (ZA-107)
                         logger.LogWarning("User {UserId} account is locked out", user.Id);
-                        loginResult.AddMessage("Too many failed sign-in attempts. Please wait a few minutes and try again.", ResultMessageType.Error);
+                        loginResult.AddMessage(text["membership_tooManySignInAttempts"], ResultMessageType.Error);
                     }
                     else if (signInResult.RequiresTwoFactor)
                     {
@@ -100,19 +101,19 @@ public partial class MembershipService
                     }
                     else
                     {
-                        loginResult.AddMessage("Invalid login credentials", ResultMessageType.Error);
+                        loginResult.AddMessage(text["membership_invalidLogin"], ResultMessageType.Error);
                     }
                 }
             }
             else
             {
-                loginResult.AddMessage("Invalid login credentials", ResultMessageType.Error);
+                loginResult.AddMessage(text["membership_invalidLogin"], ResultMessageType.Error);
             }
         }
         catch (Exception e)
         {
            logger.LogError(e, "Error during login");
-           loginResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
+           loginResult.AddMessage(text["membership_unexpectedError"], ResultMessageType.Error);
            loginResult.Success = false;
            return loginResult;
         }
@@ -228,7 +229,7 @@ public partial class MembershipService
                         await emailService.SendEmailConfirmationAsync(sendConfirmationEmailCommand, cancellationToken);
                     }
 
-                    registrationResult.AddMessage("Please check your email and click the link to confirm your account", ResultMessageType.Success);
+                    registrationResult.AddMessage(text["membership_checkEmailToConfirm"], ResultMessageType.Success);
                 }
                 else
                 {
@@ -258,7 +259,7 @@ public partial class MembershipService
         catch (Exception e)
         {
             logger.LogError(e, "Error during registration");
-            registrationResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
+            registrationResult.AddMessage(text["membership_unexpectedError"], ResultMessageType.Error);
             registrationResult.Success = false;
         }
 
@@ -283,7 +284,7 @@ public partial class MembershipService
             var info = await signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                loginResult.AddMessage("Error loading external login information", ResultMessageType.Error);
+                loginResult.AddMessage(text["membership_externalLoginInfoError"], ResultMessageType.Error);
                 return loginResult;
             }
 
@@ -295,26 +296,25 @@ public partial class MembershipService
             }
             else if (signInResult.IsLockedOut)
             {
-                loginResult.AddMessage("Account is locked out", ResultMessageType.Error);
+                loginResult.AddMessage(text["membership_accountLockedOut"], ResultMessageType.Error);
             }
             else if (signInResult.IsNotAllowed)
             {
                 // The account exists but may not sign in (deleted, or its email address is not confirmed)
-                loginResult.AddMessage("This account cannot sign in", ResultMessageType.Error);
+                loginResult.AddMessage(text["membership_accountCannotSignIn"], ResultMessageType.Error);
             }
             else
             {
                 // ZauberSignInManager creates the account for a first sign-in, with its checks: registration on,
                 // an email address the provider says is verified (ZA-105). A failure here means it refused; this
                 // used to create the account anyway, without those checks.
-                loginResult.AddMessage("Signing in with this provider did not work. Sign in another way, or " +
-                                       "ask the site's administrator", ResultMessageType.Error);
+                loginResult.AddMessage(text["membership_externalSignInFailed"], ResultMessageType.Error);
             }
         }
         catch (Exception e)
         {
             logger.LogError(e, "Error during external login");
-            loginResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
+            loginResult.AddMessage(text["membership_unexpectedError"], ResultMessageType.Error);
             loginResult.Success = false;
         }
 
@@ -338,7 +338,7 @@ public partial class MembershipService
             var user = await userManager.FindByIdAsync(parameters.UserId!);
             if (user == null)
             {
-                confirmationResult.AddMessage("User not found", ResultMessageType.Error);
+                confirmationResult.AddMessage(text["membership_userNotFound"], ResultMessageType.Error);
                 return confirmationResult;
             }
 
@@ -350,7 +350,7 @@ public partial class MembershipService
             }
             catch (FormatException)
             {
-                confirmationResult.AddMessage("The confirmation link is not valid.", ResultMessageType.Error);
+                confirmationResult.AddMessage(text["membership_invalidConfirmationLink"], ResultMessageType.Error);
                 return confirmationResult;
             }
 
@@ -359,7 +359,7 @@ public partial class MembershipService
             {
                 if (parameters.NewEmailAddress.IsNullOrWhiteSpace())
                 {
-                    confirmationResult.AddMessage("The confirmation link is not valid.", ResultMessageType.Error);
+                    confirmationResult.AddMessage(text["membership_invalidConfirmationLink"], ResultMessageType.Error);
                     return confirmationResult;
                 }
 
@@ -368,9 +368,7 @@ public partial class MembershipService
                 if (user.ExtendedData.TryGetValue(PendingEmailKey, out var pending) &&
                     !string.Equals(pending?.ToString(), parameters.NewEmailAddress, StringComparison.OrdinalIgnoreCase))
                 {
-                    confirmationResult.AddMessage(
-                        "A newer link was sent for this account; this one no longer works. Use the newest email.",
-                        ResultMessageType.Error);
+                    confirmationResult.AddMessage(text["membership_newerLinkSent"], ResultMessageType.Error);
                     return confirmationResult;
                 }
 
@@ -406,7 +404,7 @@ public partial class MembershipService
         catch (Exception e)
         {
             logger.LogError(e, "Error confirming email for user {UserId}", parameters.UserId);
-            confirmationResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
+            confirmationResult.AddMessage(text["membership_unexpectedError"], ResultMessageType.Error);
             confirmationResult.Success = false;
         }
 
@@ -425,7 +423,7 @@ public partial class MembershipService
 
         if (parameters.Email == null)
         {
-            forgotPasswordResult.AddMessage("Email is missing", ResultMessageType.Error);
+            forgotPasswordResult.AddMessage(text["membership_emailMissing"], ResultMessageType.Error);
             forgotPasswordResult.Success = false;
             return forgotPasswordResult;
         }
@@ -450,8 +448,12 @@ public partial class MembershipService
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                     var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ResetPassword, new { code, email = parameters.Email });
 
-                    var paragraphs = new List<string> { $"Please reset your password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>." };
-                    await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(parameters.Email, "Reset Password", paragraphs);
+                    // The link's opening and closing tags are the placeholders: the translator keeps the sentence whole
+                    var paragraphs = new List<string>
+                    {
+                        EmailHtml.Paragraph(text["email_resetPasswordBody"], $"<a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>", "</a>")
+                    };
+                    await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(parameters.Email, text["email_resetPasswordSubject"], paragraphs);
                 }
             }
         }
@@ -462,7 +464,7 @@ public partial class MembershipService
         }
 
         forgotPasswordResult.Success = true;
-        forgotPasswordResult.AddMessage("If the email matches an account, a password reset link has been sent.", ResultMessageType.Success);
+        forgotPasswordResult.AddMessage(text["membership_passwordResetLinkSent"], ResultMessageType.Success);
         return forgotPasswordResult;
     }
 
@@ -476,11 +478,11 @@ public partial class MembershipService
 
         var paragraphs = new List<string>
         {
-            "An account was registered on this site with your email address.",
-            $"To finish setting it up, choose its password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.",
-            "If you did not register, you can ignore this email."
+            EmailHtml.Paragraph(text["email_setPasswordRegistered"]),
+            EmailHtml.Paragraph(text["email_setPasswordBody"], $"<a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>", "</a>"),
+            EmailHtml.Paragraph(text["email_setPasswordIgnore"])
         };
-        await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(user.Email!, "Finish setting up your account", paragraphs);
+        await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(user.Email!, text["email_setPasswordSubject"], paragraphs);
     }
 
     /// <summary>
@@ -502,7 +504,7 @@ public partial class MembershipService
                 var user = await userManager.FindByEmailAsync(parameters.Email);
                 if (user == null || user.Deleted)
                 {
-                    resetPasswordResult.AddMessage("User not found", ResultMessageType.Error);
+                    resetPasswordResult.AddMessage(text["membership_userNotFound"], ResultMessageType.Error);
                     return resetPasswordResult;
                 }
 
@@ -527,7 +529,7 @@ public partial class MembershipService
 
                     resetPasswordResult.Success = true;
                     resetPasswordResult.NavigateToUrl = parameters.ReturnUrl;
-                    resetPasswordResult.AddMessage($"Your password has been reset, <a class=\"underline\" href=\"{Urls.Account.Login}\">please login</a>", ResultMessageType.Success);
+                    resetPasswordResult.AddMessage(text["membership_passwordResetDone", $"<a class=\"underline\" href=\"{Urls.Account.Login}\">", "</a>"], ResultMessageType.Success);
                 }
                 else
                 {
@@ -537,14 +539,14 @@ public partial class MembershipService
             }
             else
             {
-                resetPasswordResult.AddMessage("Email is empty", ResultMessageType.Error);
+                resetPasswordResult.AddMessage(text["membership_emailEmpty"], ResultMessageType.Error);
                 resetPasswordResult.Success = false;
             }
         }
         catch (Exception e)
         {
             logger.LogError(e, "Error resetting password");
-            resetPasswordResult.AddMessage("An unexpected error occurred. Please try again.", ResultMessageType.Error);
+            resetPasswordResult.AddMessage(text["membership_unexpectedError"], ResultMessageType.Error);
             resetPasswordResult.Success = false;
         }
 

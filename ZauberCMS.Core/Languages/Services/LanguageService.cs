@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using System.Linq.Dynamic.Core;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Data;
@@ -9,6 +10,7 @@ using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Languages.Parameters;
 using ZauberCMS.Core.Languages.Mapping;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
@@ -20,7 +22,8 @@ public class LanguageService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     ICurrentUserAccessor currentUserAccessor,
-    ExtensionManager extensionManager)
+    ExtensionManager extensionManager,
+    IStringLocalizer<ZauberText> text)
     : ILanguageService
 {
     /// <summary>
@@ -92,7 +95,7 @@ public class LanguageService(
                     // Caller asked to update a specific language id but it doesn't exist —
                     // don't silently fall through and create a new one with that id, that's
                     // not what the caller asked for.
-                    handlerResult.AddMessage("Language not found", ResultMessageType.Error);
+                    handlerResult.AddMessage(text["languages_languageNotFound"], ResultMessageType.Error);
                     return handlerResult;
                 }
             }
@@ -102,7 +105,7 @@ public class LanguageService(
                 x.LanguageIsoCode == parameters.CultureInfo.Name && x.Id != language.Id);
             if (existing != null)
             {
-                handlerResult.AddMessage("Language already exists", ResultMessageType.Error);
+                handlerResult.AddMessage(text["languages_languageExists"], ResultMessageType.Error);
                 return handlerResult;
             }
 
@@ -132,7 +135,7 @@ public class LanguageService(
             return saved;
         }
 
-        handlerResult.AddMessage("CultureInfo is null", ResultMessageType.Error);
+        handlerResult.AddMessage(text["languages_cultureMissing"], ResultMessageType.Error);
         return handlerResult;
     }
 
@@ -374,11 +377,11 @@ public class LanguageService(
                 .Select(x => new { x.Id, x.Key })
                 .ToListAsync(cancellationToken);
             var texts = new Dictionary<(Guid LanguageId, Guid DictionaryId), string>();
-            foreach (var text in await dbContext.LanguageTexts.AsNoTracking()
+            foreach (var row in await dbContext.LanguageTexts.AsNoTracking()
                          .Select(x => new { x.LanguageId, x.LanguageDictionaryId, x.Value })
                          .ToListAsync(cancellationToken))
             {
-                texts.TryAdd((text.LanguageId, text.LanguageDictionaryId), text.Value);
+                texts.TryAdd((row.LanguageId, row.LanguageDictionaryId), row.Value);
             }
 
             var returnDict = new Dictionary<string, Dictionary<string, string>>();

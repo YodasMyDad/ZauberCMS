@@ -14,19 +14,19 @@
 <div style="display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden;">
     @Body
     <div id="blazor-error-ui" style="display: none" data-nosnippet>
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
+        @L["account_unhandledError"]
+        <a href="." class="reload">@L["account_reload"]</a>
         <span class="dismiss">🗙</span>
     </div>
 </div>
 
 @code
 {
+    // Kept for sites that read it from a layout of their own; this layout no longer uses it
     [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
-    protected override void OnInitialized()
-    {
-        // The account pages are in the admin's language. Only this render's culture: the process-wide default is
-        // never set (ZA-114)
-        ZauberCMS.Core.Languages.AdminCulture.Apply(Settings.Value);
-    }
+
+    // The account pages and the fallback site pages are site-facing: they are in the request's culture (the site's
+    // languages, UseRequestLocalization; a content page's language for a page under content), not the admin's
+    // (Roadmap D95). The layout sets no culture of its own: it applied the admin's in OnInitialized, which said the
+    // opposite and reached nothing rendered (a culture set in a lifecycle method stays in that method).
 }

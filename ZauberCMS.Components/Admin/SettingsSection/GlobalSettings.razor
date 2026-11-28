@@ -4,16 +4,16 @@
 @attribute [Authorize(Roles = Constants.Roles.AdminRoleName)]
 @layout SectionLayout
 
-<PageTitle>Global Settings</PageTitle>
+<PageTitle>@L["settings_globalSettings"]</PageTitle>
 
 <RadzenPanel Class="rz-mx-auto">
 
     <RadzenTabs @bind-SelectedIndex="@SelectedIndex">
         <Tabs>
-            <RadzenTabsItem Text="General">
+            <RadzenTabsItem Text="@L["settings_generalTab"]">
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Site Name" Description="The name of the site. Views and emails can show it"/>
+                        <PropertyInfo Name="@L["settings_siteName"]" Description="@L["settings_siteNameDescription"]"/>
                     </LeftColumn>
                     <CentreColumn>
                         <RadzenTextBox Name="SiteName" @bind-Value="@GlobalSettingsModel.SiteName" MaxLength="200" Style="width: 100%"/>
@@ -21,7 +21,7 @@
                 </EditorRow>
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Default Language" Description="The culture (for example en-GB) of pages that have no language set on themselves, a parent page or their domain. Empty: the admin language is used"/>
+                        <PropertyInfo Name="@L["settings_defaultLanguage"]" Description="@L["settings_defaultLanguageDescription"]"/>
                     </LeftColumn>
                     <CentreColumn>
                         <RadzenTextBox Name="DefaultLanguage" @bind-Value="@GlobalSettingsModel.DefaultLanguage" MaxLength="14" Style="width: 100%"/>
@@ -29,43 +29,43 @@
                 </EditorRow>
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Api Keys" Description="Keys that the API Key Picker and the editors (TinyMCE, Google Maps) use by name. A saved key's value is never shown again: type a new value to replace it. Pages and editor settings keep the name, so renaming or removing a key leaves them without it. A key in the site's configuration (Zauber:ApiKeys) wins over one of the same name here"/>
+                        <PropertyInfo Name="@L["settings_apiKeys"]" Description="@L["settings_apiKeysDescription"]"/>
                     </LeftColumn>
                     <CentreColumn>
                         @* Values go one way (ZA-214, Roadmap D73): a saved value is kept on the server and never sent back
                            to the page; an empty box keeps it *@
                         <RadzenStack Gap="0.5rem">
                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
-                                <RadzenTextBox @bind-Value="@_newApiKeyName" Placeholder="Name" aria-label="New API key name" Style="width: 100%"/>
-                                <RadzenTextBox @bind-Value="@_newApiKeyValue" Placeholder="Value" aria-label="New API key value" autocomplete="off" Style="width: 100%"/>
+                                <RadzenTextBox @bind-Value="@_newApiKeyName" Placeholder="@L["general_name"]" aria-label="@L["settings_newApiKeyName"]" Style="width: 100%"/>
+                                <RadzenTextBox @bind-Value="@_newApiKeyValue" Placeholder="@L["general_value"]" aria-label="@L["settings_newApiKeyValue"]" autocomplete="off" Style="width: 100%"/>
                                 <RadzenButton Click="@AddApiKey" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                              class="rz-border-radius-10 rz-shadow-4" title="Add the key" aria-label="Add the key"/>
+                                              class="rz-border-radius-10 rz-shadow-4" title="@L["settings_addApiKey"]" aria-label="@L["settings_addApiKey"]"/>
                             </RadzenStack>
                             @foreach (var row in _apiKeys.Rows)
                             {
                                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" @key="row">
-                                    <RadzenTextBox @bind-Value="@row.Name" aria-label="API key name" Style="width: 100%"/>
+                                    <RadzenTextBox @bind-Value="@row.Name" aria-label="@L["settings_apiKeyName"]" Style="width: 100%"/>
                                     <RadzenTextBox @bind-Value="@row.NewValue" autocomplete="off" Style="width: 100%"
-                                                   Placeholder="@(row.SavedName != null ? "Saved: type a new value to replace it" : "Value")"
-                                                   aria-label="@($"New value for the API key {row.Name}")"/>
+                                                   Placeholder="@(row.SavedName != null ? L["settings_apiKeySavedPlaceholder"] : L["general_value"])"
+                                                   aria-label="@(L["settings_apiKeyNewValueLabel", row.Name ?? string.Empty].Value)"/>
                                     <RadzenButton Click="@(() => _apiKeys.Rows.Remove(row))" Icon="remove" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                                  class="rz-border-radius-10 rz-shadow-4" title="Remove the key" aria-label="@($"Remove the API key {row.Name}")"/>
+                                                  class="rz-border-radius-10 rz-shadow-4" title="@L["settings_removeApiKey"]" aria-label="@(L["settings_removeApiKeyLabel", row.Name ?? string.Empty].Value)"/>
                                 </RadzenStack>
                             }
                             @if (_configuredApiKeyNames.Count > 0)
                             {
                                 <RadzenText TextStyle="TextStyle.Caption">
-                                    In the site's configuration, which wins over a key of the same name here: @string.Join(", ", _configuredApiKeyNames)
+                                    @(L["settings_apiKeysInConfiguration", string.Join(", ", _configuredApiKeyNames)])
                                 </RadzenText>
                             }
                         </RadzenStack>
                     </CentreColumn>
                 </EditorRow>
             </RadzenTabsItem>
-            <RadzenTabsItem Text="Media">
+            <RadzenTabsItem Text="@L["general_media"]">
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Max Upload File Size" Description="The maximum allowed file size upload in bytes"/>
+                        <PropertyInfo Name="@L["settings_maxUploadFileSize"]" Description="@L["settings_maxUploadFileSizeDescription"]"/>
                     </LeftColumn>
                     <CentreColumn>
                         <RadzenNumeric @bind-Value="@GlobalSettingsModel.MaxUploadFileSizeInBytes"/>
@@ -73,7 +73,7 @@
                 </EditorRow>
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Max Image Size" Description="The maximum allowed width/height of an image in pixels (Images over this will be resized where possible)" />
+                        <PropertyInfo Name="@L["settings_maxImageSize"]" Description="@L["settings_maxImageSizeDescription"]" />
                     </LeftColumn>
                     <CentreColumn>
                         <RadzenNumeric @bind-Value="@GlobalSettingsModel.MaxImageSizeInPixels"/>
@@ -82,17 +82,17 @@
 
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Allowed File Types" Description="The allowed file types that can be uploaded into the CMS" />
+                        <PropertyInfo Name="@L["settings_allowedFileTypes"]" Description="@L["settings_allowedFileTypesDescription"]" />
                     </LeftColumn>
                     <CentreColumn>
                         <ListEditor TItem="string" @bind-Value="@GlobalSettingsModel.AllowedFileTypes"/>
                     </CentreColumn>
                 </EditorRow>
             </RadzenTabsItem>
-            <RadzenTabsItem Text="Identity">
+            <RadzenTabsItem Text="@L["settings_identityTab"]">
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Allow Registration" Description="Visitors can create an account, on the registration page or with a social login. Off: the registration page answers 404 and the link on the login page is hidden"/>
+                        <PropertyInfo Name="@L["settings_allowRegistration"]" Description="@L["settings_allowRegistrationDescription"]"/>
                     </LeftColumn>
                     <CentreColumn>
                         <RadzenSwitch Name="AllowRegistration" @bind-Value="@GlobalSettingsModel.AllowRegistration"/>
@@ -100,7 +100,7 @@
                 </EditorRow>
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Allowed Admin IP Addresses" Description="Restrict access to this admin CMS by IP address" />
+                        <PropertyInfo Name="@L["settings_allowedAdminIpAddresses"]" Description="@L["settings_allowedAdminIpAddressesDescription"]" />
                     </LeftColumn>
                     <CentreColumn>
                         <ListEditor TItem="string" @bind-Value="@GlobalSettingsModel.AllowedAdminIpAddress"/>
@@ -108,7 +108,7 @@
                 </EditorRow>
                 <EditorRow>
                     <LeftColumn>
-                        <PropertyInfo Name="Admin Email Addresses" Description="An account with one of these email addresses becomes an administrator once its owner has proven the address. A social login proves it. Someone who registers with a password is emailed a link to choose the password, and using it makes the account an administrator" />
+                        <PropertyInfo Name="@L["settings_adminEmailAddresses"]" Description="@L["settings_adminEmailAddressesDescription"]" />
                     </LeftColumn>
                     <CentreColumn>
                         <ListEditor TItem="string" @bind-Value="@GlobalSettingsModel.AdminEmailAddresses"/>
@@ -118,7 +118,7 @@
         </Tabs>
     </RadzenTabs>
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center">
-        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
     </RadzenStack>
 </RadzenPanel>
 
@@ -149,7 +149,7 @@
 
     private void AddApiKey()
     {
-        var problem = _apiKeys.Add(_newApiKeyName, _newApiKeyValue);
+        var problem = _apiKeys.Add(_newApiKeyName, _newApiKeyValue, L);
         if (problem != null)
         {
             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = problem, Duration = 6000 });
@@ -162,10 +162,10 @@
 
     private async Task Save()
     {
-        var (apiKeys, apiKeysProblem) = _apiKeys.ToSave();
+        var (apiKeys, apiKeysProblem) = _apiKeys.ToSave(L);
         if (apiKeys == null)
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = apiKeysProblem ?? "The API keys could not be saved", Duration = 6000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = apiKeysProblem ?? L["settings_apiKeysNotSaved"].Value, Duration = 6000 });
             return;
         }
 
@@ -182,7 +182,7 @@
             var culture = ZauberCMS.Core.Languages.CultureLookup.FindSpecific(defaultLanguage);
             if (culture == null)
             {
-                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Default Language is not a culture such as en-GB", Duration = 6000 });
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["settings_defaultLanguageNotCulture"], Duration = 6000 });
                 return;
             }
 
@@ -196,6 +196,6 @@
             _apiKeys.Load(apiKeys);
         }
 
-        NotificationService.Notify(result ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Saved", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "There was an error", Duration = 4000 });
+        NotificationService.Notify(result ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = L["settings_saved"], Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["settings_saveError"], Duration = 4000 });
     }
 }

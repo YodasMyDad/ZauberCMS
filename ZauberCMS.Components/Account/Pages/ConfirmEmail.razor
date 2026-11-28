@@ -12,10 +12,10 @@
 @attribute [ExcludeFromInteractiveRouting]
 
 <LayoutView Layout="LayoutType">
-    <PageTitle>Confirm email</PageTitle>
+    <PageTitle>@L["account_confirmEmail"]</PageTitle>
     <div style="width: 100%; max-width: 700px;">
         <StatusMessage ResultMessages="@ResultMessages"/>
-        <p>Go to the <a href="@Urls.Account.Login">Login Page</a></p>
+        <p><a href="@Urls.Account.Login">@L["account_goToLoginPage"]</a></p>
     </div>
 </LayoutView>
 
@@ -47,7 +47,7 @@
     {
         if (UserId == null || Code == null)
         {
-            ResultMessages.Add(new ResultMessage("Unable to check User Id or Confirmation Code", ResultMessageType.Error));
+            ResultMessages.Add(new ResultMessage(L["account_confirmationCheckFailed"], ResultMessageType.Error));
         }
         else
         {
@@ -69,7 +69,7 @@
             if (result.Success && ResultMessages.Count == 0)
             {
                 ResultMessages.Add(new ResultMessage(
-                    confirmEmailCommand.IsEmailUpdate ? "Your email address has been changed." : "Thank you for confirming your email.",
+                    confirmEmailCommand.IsEmailUpdate ? L["account_emailChanged"] : L["account_emailConfirmed"],
                     ResultMessageType.Success));
             }
         }

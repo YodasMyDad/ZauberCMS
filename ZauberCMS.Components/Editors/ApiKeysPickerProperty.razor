@@ -5,18 +5,29 @@
    settings never sees it. *@
 
 <RadzenDropDown TValue="string" Value="@_selectedName" Data="@_names" Change="@(args => OnValueChanged(args))"
-                AllowClear="true" Placeholder="Choose a key" Style="width: 100%;" aria-label="API key"/>
+                AllowClear="true" Placeholder="@L["editors_apiKeyPickerPlaceholder"]" Style="width: 100%;" aria-label="@L["editors_apiKeyPickerLabel"]"/>
 @if (_unknownValue)
 {
     <RadzenText TextStyle="TextStyle.Caption" class="rz-mt-1">
-        The saved key is not one of the site's keys now. It is used as it was saved until you choose one.
+        @L["editors_apiKeyPickerUnknownKey"]
     </RadzenText>
 }
 
 @code {
-    public string Name => "Api Key Picker";
+    // Discovery builds this editor to read its name, without [Inject]: the text comes through the constructor (D120)
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public ApiKeysPickerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public ApiKeysPickerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    public string Name => _text["editors_apiKeyPicker"];
     public string Alias => "ZauberCMS.ApiKeyPicker";
-    public string Description => "Pick one of the site's API keys by name (Global Settings or Zauber:ApiKeys); the page stores the name";
+    public string Description => _text["editors_apiKeyPickerInfo"];
     public string Icon => "api";
     public Type? SettingsComponent { get; set; }
 

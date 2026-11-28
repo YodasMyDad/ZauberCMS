@@ -12,4 +12,24 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="languages_cultureMissing" xml:space="preserve">
+    <value>CultureInfo is null</value>
+    <comment>Saving a language without a culture chosen</comment>
+  </data>
+  <data name="languages_dictionaryKeyRequired" xml:space="preserve">
+    <value>You cannot leave key name empty</value>
+    <comment>Dictionary item: validation</comment>
+  </data>
+  <data name="languages_dictionaryValuesRequired" xml:space="preserve">
+    <value>You cannot leave the language values empty</value>
+    <comment>Dictionary item: validation</comment>
+  </data>
+  <data name="languages_languageExists" xml:space="preserve">
+    <value>Language already exists</value>
+    <comment>Saving a language whose culture the site has already</comment>
+  </data>
+  <data name="languages_languageNotFound" xml:space="preserve">
+    <value>Language not found</value>
+    <comment>Updating a language that is no longer there</comment>
+  </data>
 </root>

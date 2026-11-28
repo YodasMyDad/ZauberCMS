@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
+using ZauberCMS.Core.Shared.Models;
 
 namespace ZauberCMS.Core.Membership;
 
@@ -49,11 +50,30 @@ public sealed class IdentityRedirectManager(NavigationManager navigationManager)
         RedirectTo(newUri);
     }
 
+    /// <summary>The cookie that carries the status message's <see cref="ResultMessageType"/> beside it.</summary>
+    public const string StatusTypeCookieName = "Identity.StatusMessageType";
+
+    /// <summary>
+    /// Redirects and shows <paramref name="message"/> on the page it lands on (the account pages'
+    /// <c>StatusMessage</c>): as an error when it starts with "Error", as in ASP.NET's Identity template, otherwise as
+    /// a success. A localised message cannot count on its first word: use the overload with a type.
+    /// </summary>
     [DoesNotReturn]
     public void RedirectToWithStatus(string uri, string message, HttpContext context)
     {
         context.Response.Cookies.Append(StatusCookieName, message, StatusCookieBuilder.Build(context));
         RedirectTo(uri);
+    }
+
+    /// <summary>
+    /// Redirects and shows <paramref name="message"/> as a message of <paramref name="type"/>, whatever its language
+    /// (ZA-280).
+    /// </summary>
+    [DoesNotReturn]
+    public void RedirectToWithStatus(string uri, string message, ResultMessageType type, HttpContext context)
+    {
+        context.Response.Cookies.Append(StatusTypeCookieName, type.ToString(), StatusCookieBuilder.Build(context));
+        RedirectToWithStatus(uri, message, context);
     }
 
     private string CurrentPath => navigationManager.ToAbsoluteUri(navigationManager.Uri).GetLeftPart(UriPartial.Path);

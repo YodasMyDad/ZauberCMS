@@ -4,10 +4,10 @@
 @using ZauberCMS.Core.Languages.Models
 @layout SectionLayout
 
-<PageTitle>Languages</PageTitle>
+<PageTitle>@L["settings_languages"]</PageTitle>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: 0; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Create Language" Click="@CreateLanguage"/>
+    <RadzenButton Variant="Variant.Filled" Text="@L["settings_createLanguage"]" Click="@CreateLanguage"/>
 </RadzenStack>
 
 <RadzenPanel Class="rz-mx-auto">
@@ -26,16 +26,16 @@
                     PagerHorizontalAlign="HorizontalAlign.Center">
 
         <Columns>
-            <RadzenDataGridColumn Property="LanguageCultureName" Title="Name"/>
-            <RadzenDataGridColumn Property="LanguageIsoCode" Title="ISO Code"/>
-            <RadzenDataGridColumn Property="DateCreated" Title="Created">
+            <RadzenDataGridColumn Property="LanguageCultureName" Title="@L["general_name"]"/>
+            <RadzenDataGridColumn Property="LanguageIsoCode" Title="@L["settings_isoCode"]"/>
+            <RadzenDataGridColumn Property="DateCreated" Title="@L["general_created"]">
                 <Template Context="data">
                     @data.DateCreated.Humanize()
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn Property="Id" Title="Delete">
+            <RadzenDataGridColumn Property="Id" Title="@L["general_delete"]">
                 <Template Context="data">
-                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="Delete" Click="@(() => Delete(data.Id))"/>
+                    <RadzenButton Variant="Variant.Text" Size="ButtonSize.Small" Text="@L["general_delete"]" Click="@(() => Delete(data.Id))"/>
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -97,7 +97,7 @@
 
     private async Task CreateLanguage()
     {
-        var dialog = DialogService.OpenSidePanel<CreateLanguage>("Create Language");
+        var dialog = DialogService.OpenSidePanel<CreateLanguage>(L["settings_createLanguage"]);
         var result = await dialog.Result;
         if (result is { Confirmed: true })
         {
@@ -111,11 +111,11 @@
         if (result.Success)
         {
             await LoadData(new LoadDataArgs {Top = AmountPerPage});
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Deleted", Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = L["settings_deleted"], Duration = 4000 });
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["general_error"], Detail = result.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
     
@@ -123,7 +123,7 @@
     {
         if (value is Language selectedRow)
         {
-            var dialog = DialogService.OpenSidePanel<CreateLanguage>("Create Language", new Dictionary<string, object>
+            var dialog = DialogService.OpenSidePanel<CreateLanguage>(L["settings_editLanguage"], new Dictionary<string, object>
             {
                 { nameof(Dialogs.CreateLanguage.Language), selectedRow }
             });

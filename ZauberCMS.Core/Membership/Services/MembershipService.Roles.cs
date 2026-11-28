@@ -81,7 +81,7 @@ public partial class MembershipService
                 if (IsAdminRole(role.Name) && !string.Equals(parameters.Role.Name, Constants.Roles.AdminRoleName, StringComparison.Ordinal))
                 {
                     handlerResult.Messages.Add(new ResultMessage(
-                        $"The {Constants.Roles.AdminRoleName} role cannot be renamed", ResultMessageType.Error));
+                        text["membership_adminRoleCannotBeRenamed", Constants.Roles.AdminRoleName], ResultMessageType.Error));
                     return handlerResult;
                 }
 
@@ -107,7 +107,7 @@ public partial class MembershipService
         }
         else
         {
-            handlerResult.Messages.Add(new ResultMessage("Role is null", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_roleIsNull"], ResultMessageType.Error));
         }
 
         if (handlerResult.Success)
@@ -145,7 +145,7 @@ public partial class MembershipService
         {
             // Without it nobody could open the admin (Roadmap D68)
             handlerResult.Messages.Add(new ResultMessage(
-                $"The {Constants.Roles.AdminRoleName} role cannot be deleted", ResultMessageType.Error));
+                text["membership_adminRoleCannotBeDeleted", Constants.Roles.AdminRoleName], ResultMessageType.Error));
             return handlerResult;
         }
 
@@ -159,8 +159,7 @@ public partial class MembershipService
             if (pages + files > 0)
             {
                 handlerResult.Messages.Add(new ResultMessage(
-                    $"{role.Name} restricts {pages} page(s) and {files} media item(s) to its members; deleting it would " +
-                    "open them to everyone. Take the role off their access first", ResultMessageType.Error));
+                    text["membership_roleRestrictsContent", role.Name ?? string.Empty, pages, files], ResultMessageType.Error));
                 return handlerResult;
             }
         }
@@ -182,7 +181,7 @@ public partial class MembershipService
         }
         else
         {
-            handlerResult.Messages.Add(new ResultMessage("Role not found", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_roleNotFound"], ResultMessageType.Error));
         }
 
         if (handlerResult.Success)

@@ -4,7 +4,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Key" Description="The text key used to get the language values"/>
+        <PropertyInfo Name="@L["general_key"]" Description="@L["settings_dictionaryKeyDescription"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox @bind-Value="@LanguageDictionary.Key" Style="width: 100%;"/>
@@ -13,7 +13,7 @@
 
 <EditorRow>
     <CentreColumn>
-        <RadzenText TextStyle="TextStyle.Caption">Set the value for each language below</RadzenText>
+        <RadzenText TextStyle="TextStyle.Caption">@L["settings_dictionaryValuesCaption"]</RadzenText>
         <div class="rz-data-grid rz-datatable rz-datatable-scrollable">
             <div class="rz-data-grid-data" tabindex="-1">
                 <table class="rz-grid-table rz-grid-table-fixed rz-grid-table-striped">
@@ -21,15 +21,15 @@
                     <tr>
                         <th rowspan="1" colspan="1" class="rz-unselectable-text rz-text-align-left" scope="col" style="">
                             <div>
-                                <span class="rz-column-title" title="Name">
-                                    <span class="rz-column-title-content">Language</span>
+                                <span class="rz-column-title" title="@L["general_language"]">
+                                    <span class="rz-column-title-content">@L["general_language"]</span>
                                 </span>
                             </div>
                         </th>
                         <th rowspan="1" colspan="1" class="rz-unselectable-text rz-text-align-left" scope="col" style="">
                             <div>
-                                <span class="rz-column-title" title="Name">
-                                    <span class="rz-column-title-content">Value</span>
+                                <span class="rz-column-title" title="@L["general_value"]">
+                                    <span class="rz-column-title-content">@L["general_value"]</span>
                                 </span>
                             </div>
                         </th>
@@ -59,7 +59,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 @code {

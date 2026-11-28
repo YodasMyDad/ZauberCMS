@@ -12,4 +12,292 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="membership_accountCannotSignIn" xml:space="preserve">
+    <value>This account cannot sign in</value>
+    <comment>External sign-in: the account exists but may not sign in (deleted, or its email address is not confirmed)</comment>
+  </data>
+  <data name="membership_accountLockedOut" xml:space="preserve">
+    <value>Account is locked out</value>
+    <comment>External sign-in: the account is locked</comment>
+  </data>
+  <data name="membership_adminRoleCannotBeDeleted" xml:space="preserve">
+    <value>The {0} role cannot be deleted</value>
+    <comment>Deleting a role. {0} = the administrators' role name (Admin), which is not translated</comment>
+  </data>
+  <data name="membership_adminRoleCannotBeRenamed" xml:space="preserve">
+    <value>The {0} role cannot be renamed</value>
+    <comment>Saving a role. {0} = the administrators' role name (Admin), which is not translated</comment>
+  </data>
+  <data name="membership_alreadyAccountEmail" xml:space="preserve">
+    <value>That is already the account's email address.</value>
+    <comment>Your account: changing the email address to the one it has</comment>
+  </data>
+  <data name="membership_cannotDeleteOwnAccount" xml:space="preserve">
+    <value>You cannot delete your own account</value>
+    <comment>Deleting a user: the one signed in</comment>
+  </data>
+  <data name="membership_checkEmailToConfirm" xml:space="preserve">
+    <value>Please check your email and click the link to confirm your account</value>
+    <comment>Registration page: after registering, when the account must be confirmed</comment>
+  </data>
+  <data name="membership_currentPasswordWrong" xml:space="preserve">
+    <value>The current password is not right.</value>
+    <comment>Your account: the current password typed is wrong</comment>
+  </data>
+  <data name="membership_emailChangeLinkTooSoon" xml:space="preserve">
+    <value>A link was sent less than a minute ago. Wait a minute before asking for another.</value>
+    <comment>Your account: asking for a second email-change link within a minute</comment>
+  </data>
+  <data name="membership_emailEmpty" xml:space="preserve">
+    <value>Email is empty</value>
+    <comment>Reset-password page: no email address</comment>
+  </data>
+  <data name="membership_emailMissing" xml:space="preserve">
+    <value>Email is missing</value>
+    <comment>Forgot-password page: no email address</comment>
+  </data>
+  <data name="membership_emailNotConfirmed" xml:space="preserve">
+    <value>Email isn't confirmed. Check your inbox for a confirmation email</value>
+    <comment>Sign-in page: the account's email address is not confirmed yet</comment>
+  </data>
+  <data name="membership_emailNotSent" xml:space="preserve">
+    <value>The email could not be sent. The details are in the site's log.</value>
+    <comment>Your account: the email-change link could not be sent</comment>
+  </data>
+  <data name="membership_enterCurrentPassword" xml:space="preserve">
+    <value>Enter your current password.</value>
+    <comment>Your account: the current password box is empty</comment>
+  </data>
+  <data name="membership_enterName" xml:space="preserve">
+    <value>Enter a name.</value>
+    <comment>Your account: the name box is empty</comment>
+  </data>
+  <data name="membership_enterNewPassword" xml:space="preserve">
+    <value>Enter a new password.</value>
+    <comment>Your account: the new password box is empty</comment>
+  </data>
+  <data name="membership_enterValidEmail" xml:space="preserve">
+    <value>Enter a valid email address.</value>
+    <comment>Your account: the new email address is not valid</comment>
+  </data>
+  <data name="membership_externalLoginInfoError" xml:space="preserve">
+    <value>Error loading external login information</value>
+    <comment>External sign-in: the provider's answer could not be read</comment>
+  </data>
+  <data name="membership_externalSignInFailed" xml:space="preserve">
+    <value>Signing in with this provider did not work. Sign in another way, or ask the site's administrator</value>
+    <comment>External sign-in: the first sign-in was refused (registration off, or no verified email address)</comment>
+  </data>
+  <data name="membership_fieldCode" xml:space="preserve">
+    <value>Code</value>
+    <comment>Account pages: the reset code field's name in validation messages (membership_field*)</comment>
+  </data>
+  <data name="membership_fieldEmail" xml:space="preserve">
+    <value>Email</value>
+    <comment>Account pages: the email address field's name in validation messages (membership_field*)</comment>
+  </data>
+  <data name="membership_fieldInvalidEmail" xml:space="preserve">
+    <value>The {0} field is not a valid e-mail address.</value>
+    <comment>Account pages: validation message. {0} = the field's name (membership_fieldEmail)</comment>
+  </data>
+  <data name="membership_fieldLengthBetween" xml:space="preserve">
+    <value>The {0} must be at least {1} and at max {2} characters long.</value>
+    <comment>Account pages: validation message for the password's length. {0} = the field's name (membership_fieldPassword); {1} = the fewest characters; {2} = the most characters</comment>
+  </data>
+  <data name="membership_fieldMaxLength" xml:space="preserve">
+    <value>The field {0} must be a string with a maximum length of {1}.</value>
+    <comment>Account pages: validation message. {0} = the field's name (membership_field*); {1} = the most characters</comment>
+  </data>
+  <data name="membership_fieldPassword" xml:space="preserve">
+    <value>Password</value>
+    <comment>Account pages: the password field's name in validation messages (membership_field*)</comment>
+  </data>
+  <data name="membership_fieldRequired" xml:space="preserve">
+    <value>The {0} field is required.</value>
+    <comment>Account pages: validation message. {0} = the field's name (membership_field*)</comment>
+  </data>
+  <data name="membership_fieldUsername" xml:space="preserve">
+    <value>Username</value>
+    <comment>Account pages: the username field's name in validation messages (membership_field*)</comment>
+  </data>
+  <data name="membership_identityConcurrencyFailure" xml:space="preserve">
+    <value>Optimistic concurrency failure, object has been modified.</value>
+    <comment>ASP.NET Identity's message: a save that met a newer change</comment>
+  </data>
+  <data name="membership_identityDefaultError" xml:space="preserve">
+    <value>An unknown failure has occurred.</value>
+    <comment>ASP.NET Identity's message</comment>
+  </data>
+  <data name="membership_identityDuplicateEmail" xml:space="preserve">
+    <value>Email '{0}' is already taken.</value>
+    <comment>ASP.NET Identity's message. {0} = the email address</comment>
+  </data>
+  <data name="membership_identityDuplicateRoleName" xml:space="preserve">
+    <value>Role name '{0}' is already taken.</value>
+    <comment>ASP.NET Identity's message. {0} = the role's name</comment>
+  </data>
+  <data name="membership_identityDuplicateUserName" xml:space="preserve">
+    <value>Username '{0}' is already taken.</value>
+    <comment>ASP.NET Identity's message. {0} = the username</comment>
+  </data>
+  <data name="membership_identityInvalidEmail" xml:space="preserve">
+    <value>Email '{0}' is invalid.</value>
+    <comment>ASP.NET Identity's message. {0} = the email address</comment>
+  </data>
+  <data name="membership_identityInvalidRoleName" xml:space="preserve">
+    <value>Role name '{0}' is invalid.</value>
+    <comment>ASP.NET Identity's message. {0} = the role's name</comment>
+  </data>
+  <data name="membership_identityInvalidToken" xml:space="preserve">
+    <value>Invalid token.</value>
+    <comment>ASP.NET Identity's message: a link (reset password, confirm email) that is not valid</comment>
+  </data>
+  <data name="membership_identityInvalidUserName" xml:space="preserve">
+    <value>Username '{0}' is invalid, can only contain letters or digits.</value>
+    <comment>ASP.NET Identity's message. {0} = the username</comment>
+  </data>
+  <data name="membership_identityLoginAlreadyAssociated" xml:space="preserve">
+    <value>A user with this login already exists.</value>
+    <comment>ASP.NET Identity's message: an external login already linked to an account</comment>
+  </data>
+  <data name="membership_identityPasswordMismatch" xml:space="preserve">
+    <value>Incorrect password.</value>
+    <comment>ASP.NET Identity's message</comment>
+  </data>
+  <data name="membership_identityPasswordRequiresDigit" xml:space="preserve">
+    <value>Passwords must have at least one digit ('0'-'9').</value>
+    <comment>ASP.NET Identity's message: a password rule</comment>
+  </data>
+  <data name="membership_identityPasswordRequiresLower" xml:space="preserve">
+    <value>Passwords must have at least one lowercase ('a'-'z').</value>
+    <comment>ASP.NET Identity's message: a password rule</comment>
+  </data>
+  <data name="membership_identityPasswordRequiresNonAlphanumeric" xml:space="preserve">
+    <value>Passwords must have at least one non alphanumeric character.</value>
+    <comment>ASP.NET Identity's message: a password rule</comment>
+  </data>
+  <data name="membership_identityPasswordRequiresUniqueChars" xml:space="preserve">
+    <value>Passwords must use at least {0} different characters.</value>
+    <comment>ASP.NET Identity's message: a password rule. {0} = the number of different characters</comment>
+  </data>
+  <data name="membership_identityPasswordRequiresUpper" xml:space="preserve">
+    <value>Passwords must have at least one uppercase ('A'-'Z').</value>
+    <comment>ASP.NET Identity's message: a password rule</comment>
+  </data>
+  <data name="membership_identityPasswordTooShort" xml:space="preserve">
+    <value>Passwords must be at least {0} characters.</value>
+    <comment>ASP.NET Identity's message: a password rule. {0} = the shortest length allowed</comment>
+  </data>
+  <data name="membership_identityRecoveryCodeRedemptionFailed" xml:space="preserve">
+    <value>Recovery code redemption failed.</value>
+    <comment>ASP.NET Identity's message: a two-factor recovery code</comment>
+  </data>
+  <data name="membership_identityUserAlreadyHasPassword" xml:space="preserve">
+    <value>User already has a password set.</value>
+    <comment>ASP.NET Identity's message</comment>
+  </data>
+  <data name="membership_identityUserAlreadyInRole" xml:space="preserve">
+    <value>User already in role '{0}'.</value>
+    <comment>ASP.NET Identity's message. {0} = the role's name</comment>
+  </data>
+  <data name="membership_identityUserLockoutNotEnabled" xml:space="preserve">
+    <value>Lockout is not enabled for this user.</value>
+    <comment>ASP.NET Identity's message</comment>
+  </data>
+  <data name="membership_identityUserNotInRole" xml:space="preserve">
+    <value>User is not in role '{0}'.</value>
+    <comment>ASP.NET Identity's message. {0} = the role's name</comment>
+  </data>
+  <data name="membership_invalidConfirmationLink" xml:space="preserve">
+    <value>The confirmation link is not valid.</value>
+    <comment>Email confirmation page: the link was changed or cut short</comment>
+  </data>
+  <data name="membership_invalidLogin" xml:space="preserve">
+    <value>Invalid login credentials</value>
+    <comment>Sign-in page: wrong email address or password</comment>
+  </data>
+  <data name="membership_lastAdministrator" xml:space="preserve">
+    <value>This is the last administrator. Make another user an administrator first</value>
+    <comment>Deleting a user: the only administrator</comment>
+  </data>
+  <data name="membership_lockedWrongPasswords" xml:space="preserve">
+    <value>Too many wrong passwords: the account is locked for a few minutes. Try again later.</value>
+    <comment>Your account: the account is locked after wrong current passwords</comment>
+  </data>
+  <data name="membership_nameRequired" xml:space="preserve">
+    <value>You cannot leave the name empty</value>
+    <comment>User and role pages: saving without a name</comment>
+  </data>
+  <data name="membership_nameTooLong" xml:space="preserve">
+    <value>A name can be at most {0} characters long.</value>
+    <comment>Your account: the name is too long. {0} = the most characters</comment>
+  </data>
+  <data name="membership_newerLinkSent" xml:space="preserve">
+    <value>A newer link was sent for this account; this one no longer works. Use the newest email.</value>
+    <comment>Email confirmation page: an email-change link replaced by a newer one</comment>
+  </data>
+  <data name="membership_noPasswordExternalLogin" xml:space="preserve">
+    <value>This account has no password: it signs in with an external login.</value>
+    <comment>Your account: changing the password or email address of an account without a password</comment>
+  </data>
+  <data name="membership_passwordResetDone" xml:space="preserve">
+    <value>Your password has been reset, {0}please login{1}</value>
+    <comment>Reset-password page: after the reset. {0} and {1} open and close the link to the sign-in page</comment>
+  </data>
+  <data name="membership_passwordResetLinkSent" xml:space="preserve">
+    <value>If the email matches an account, a password reset link has been sent.</value>
+    <comment>Forgot-password page: after sending (said whether or not the account exists)</comment>
+  </data>
+  <data name="membership_passwordsDoNotMatch" xml:space="preserve">
+    <value>The password and confirmation password do not match.</value>
+    <comment>Reset-password page: validation message for the confirmation box</comment>
+  </data>
+  <data name="membership_phoneNumberTooLong" xml:space="preserve">
+    <value>Phone number cannot be longer than 100 characters</value>
+    <comment>User validation: the phone number is too long</comment>
+  </data>
+  <data name="membership_propertiesMissingName" xml:space="preserve">
+    <value>Some properties are missing a name (and alias)</value>
+    <comment>Role page: saving with a property that has no name</comment>
+  </data>
+  <data name="membership_propertyRequired" xml:space="preserve">
+    <value>{0} is required</value>
+    <comment>User page: a required property is empty. {0} = the property's name</comment>
+  </data>
+  <data name="membership_roleIsNull" xml:space="preserve">
+    <value>Role is null</value>
+    <comment>Saving a role: no role was given</comment>
+  </data>
+  <data name="membership_roleNotFound" xml:space="preserve">
+    <value>Role not found</value>
+    <comment>Deleting a role that does not exist</comment>
+  </data>
+  <data name="membership_roleRestrictsContent" xml:space="preserve">
+    <value>{0} restricts {1} page(s) and {2} media item(s) to its members; deleting it would open them to everyone. Take the role off their access first</value>
+    <comment>Deleting a role that pages or media are restricted to. {0} = the role's name; {1} = the number of pages; {2} = the number of media items</comment>
+  </data>
+  <data name="membership_tooManySignInAttempts" xml:space="preserve">
+    <value>Too many failed sign-in attempts. Please wait a few minutes and try again.</value>
+    <comment>Sign-in page: the account is locked</comment>
+  </data>
+  <data name="membership_unexpectedError" xml:space="preserve">
+    <value>An unexpected error occurred. Please try again.</value>
+    <comment>Account pages: something failed (the details are logged)</comment>
+  </data>
+  <data name="membership_userIsNull" xml:space="preserve">
+    <value>User is null</value>
+    <comment>Saving a user: no user was given</comment>
+  </data>
+  <data name="membership_usernameRequired" xml:space="preserve">
+    <value>You must enter a username</value>
+    <comment>User validation: no username</comment>
+  </data>
+  <data name="membership_usernameTooLong" xml:space="preserve">
+    <value>Cannot be longer than 100 characters</value>
+    <comment>User validation: the username is too long</comment>
+  </data>
+  <data name="membership_userNotFound" xml:space="preserve">
+    <value>User not found</value>
+    <comment>Account pages and user changes: the user does not exist</comment>
+  </data>
 </root>

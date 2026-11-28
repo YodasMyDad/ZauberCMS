@@ -12,4 +12,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="tags_itemIdMissing" xml:space="preserve">
+    <value>ItemId is empty</value>
+    <comment>Saving an item's tags without the item's id</comment>
+  </data>
+  <data name="tags_tagNameMissing" xml:space="preserve">
+    <value>Tag Name is null</value>
+    <comment>Saving a tag without a name</comment>
+  </data>
 </root>

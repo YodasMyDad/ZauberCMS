@@ -12,4 +12,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="audit_auditMissing" xml:space="preserve">
+    <value>Audit is null</value>
+    <comment>Saving an audit row without one</comment>
+  </data>
+  <data name="audit_cleanupFailed" xml:space="preserve">
+    <value>An error occurred while cleaning up old audit records</value>
+    <comment>Audit clean-up (the daily job)</comment>
+  </data>
+  <data name="audit_noOldRecords" xml:space="preserve">
+    <value>No audit records older than {0} days found</value>
+    <comment>Audit clean-up. {0} = the number of days kept</comment>
+  </data>
+  <data name="audit_oldRecordsDeleted" xml:space="preserve">
+    <value>Successfully deleted {0} audit records older than {1} days</value>
+    <comment>Audit clean-up. {0} = how many rows were deleted, {1} = the number of days kept</comment>
+  </data>
 </root>

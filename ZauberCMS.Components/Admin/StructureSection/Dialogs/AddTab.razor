@@ -1,10 +1,10 @@
 ﻿@using ZauberCMS.Core.Shared.Models
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center">
-    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Tab Name" @bind-Value="@Tab!.Name" Disabled="@(!IsComposition && Tab?.IsCompositionTab == true)" aria-label="Tab Name"/>
-    <RadzenNumeric Style="width: 100%;" TValue="int" @bind-Value="@Tab!.SortOrder" Disabled="@(!IsComposition && Tab?.IsCompositionTab == true)" aria-label="Tab Sort Order" />
+    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="@L["structure_tabName"]" @bind-Value="@Tab!.Name" Disabled="@(!IsComposition && Tab?.IsCompositionTab == true)" aria-label="@L["structure_tabName"]"/>
+    <RadzenNumeric Style="width: 100%;" TValue="int" @bind-Value="@Tab!.SortOrder" Disabled="@(!IsComposition && Tab?.IsCompositionTab == true)" aria-label="@L["structure_tabSortOrder"]" />
 </RadzenStack>
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 @code {
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;

@@ -63,6 +63,7 @@ using ZauberCMS.Core.Sections.Authorization;
 using ZauberCMS.Core.Sections.Interfaces;
 using ZauberCMS.Core.Sections.Services;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Membership.Validation;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Plugins.Interfaces;
 using ZauberCMS.Core.Providers;
@@ -231,7 +232,10 @@ public static class ZauberSetup
             .AddClaimsPrincipalFactory<ZauberUserClaimsPrincipalFactory>()
             // SignInManager<User> is ZauberSignInManager (also resolvable as itself); registered once (ZA-121)
             .AddSignInManager<ZauberSignInManager>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            // Identity's own messages in ZauberCMS's text, so they follow the culture (D131); a site's own
+            // AddErrorDescriber after AddZauberCms wins
+            .AddErrorDescriber<ZauberIdentityErrorDescriber>();
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddAntiforgery();

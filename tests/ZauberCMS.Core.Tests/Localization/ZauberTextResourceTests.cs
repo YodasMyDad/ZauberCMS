@@ -123,6 +123,41 @@ public partial class ZauberTextResourceTests
         "ZauberCMS.Core/Shared/Validation/Models",
 
         // 10h-4
+        "ZauberCMS/Components",
+        "ZauberCMS.Components/Account/Pages",
+        "ZauberCMS.Components/Account/Shared",
+        "ZauberCMS.Components/Admin", // AdminIndex, DynamicContentProperty (converted at the 10h merge)
+        "ZauberCMS.Components/Admin/Layout",
+        "ZauberCMS.Components/Admin/SettingsSection",
+        "ZauberCMS.Components/Admin/SettingsSection/Dialogs",
+        "ZauberCMS.Components/Admin/SettingsSection/Navigation",
+        "ZauberCMS.Components/Admin/StructureSection",
+        "ZauberCMS.Components/Admin/StructureSection/Dialogs",
+        "ZauberCMS.Components/Admin/StructureSection/Navigation",
+        "ZauberCMS.Components/Admin/UsersSection",
+        "ZauberCMS.Components/Admin/UsersSection/Dialogs",
+        "ZauberCMS.Components/Admin/UsersSection/Navigation",
+        "ZauberCMS.Components/Controllers",
+        "ZauberCMS.Components/Pages",
+        "ZauberCMS.Core/Audit/Services",
+        "ZauberCMS.Core/Email",
+        "ZauberCMS.Core/Email/Services",
+        "ZauberCMS.Core/Languages",
+        "ZauberCMS.Core/Languages/Services",
+        "ZauberCMS.Core/Languages/Validation",
+        "ZauberCMS.Core/Membership",
+        "ZauberCMS.Core/Membership/Authentication",
+        "ZauberCMS.Core/Membership/Claims",
+        "ZauberCMS.Core/Membership/Middleware",
+        "ZauberCMS.Core/Membership/Models",
+        "ZauberCMS.Core/Membership/Parameters",
+        "ZauberCMS.Core/Membership/Services",
+        "ZauberCMS.Core/Membership/Stores",
+        "ZauberCMS.Core/Membership/Validation",
+        "ZauberCMS.Core/Sections/Authorization",
+        "ZauberCMS.Core/Sections/Services",
+        "ZauberCMS.Core/Security/Services",
+        "ZauberCMS.Core/Tags/Services",
     ];
 
     // Text in a converted folder that is not for a reader to read, "file: text" (the file relative to the repository).
@@ -175,12 +210,6 @@ public partial class ZauberTextResourceTests
         "ZauberCMS.Core/Media/Middleware/RestrictedMediaMiddleware.cs: Unauthorized access to media",
 
         // 10h-3
-        // ApiKeysPickerProperty.razor is 10h-4's (the API-key picker editor); these go when it is converted
-        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: The saved key is not one of the site's keys now. It is used as it was saved until you choose one.",
-        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: Choose a key",
-        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: API key",
-        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: Api Key Picker",
-        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: Pick one of the site's API keys by name (Global Settings or Zauber:ApiKeys); the page stores the name",
         "ZauberCMS.Components/Editors/BlockListEditorProperty.razor: Failed to deserialize BlockListEditor value for property {Alias} on content {ContentId}", // a log message
         "ZauberCMS.Core/Data/AfterCommitHooks.cs: The after-commit hook {Hook} failed; the change it was told about is stored", // a log message
         "ZauberCMS.Core/Extensions/DbContextExtensions.cs: Save of {Type} abandoned by the save hook {Hook}", // a log message
@@ -200,14 +229,30 @@ public partial class ZauberTextResourceTests
         "ZauberCMS.Core/Shared/Models/TreeLoadMore.cs: Show {Math.Min(PageSize, TotalItems - Skip)} more ({TotalItems - Skip} not shown)",
 
         // 10h-4
+        "ZauberCMS.Components/Admin/Layout/CurrentUserPanel.razor: @shown.Text", // a localised message, shown
+        "ZauberCMS.Components/Admin/StructureSection/ContentTypeEditor.razor: 1 && SelectedTabIndex", // a condition
+        // Exceptions and logs whose literal goes on below the throw or log line
+        "ZauberCMS.Components/Pages/EntryPage.razor: There is no published page at the error page address ({HttpContext.Request.Path}); ",
+        "ZauberCMS.Core/Email/Services/EmailService.cs: The email link needs the site's address: set Zauber:SiteUrl (there is no request to take it from).",
+        "ZauberCMS.Core/Membership/Services/MembershipService.Account.cs: Forgot your password\\",
+        // Commented-out code
+        "ZauberCMS.Core/Membership/IdentityComponentsEndpointRouteBuilderExtensions.cs: Unable to load user with ID '{userManager.GetUserId(context.User)}'.",
+        "ZauberCMS.Core/Membership/IdentityComponentsEndpointRouteBuilderExtensions.cs: Authenticator Key",
+        // Audit descriptions: stored and shown as data, English (Docs/AdminUI.md "Localisation" rule 9)
+        "ZauberCMS.Core/Languages/Services/LanguageService.cs: Language ({language.LanguageCultureName})",
+        "ZauberCMS.Core/Languages/Services/LanguageService.cs: Language Dictionary ({langDictionary.Key})",
+        "ZauberCMS.Core/Languages/Services/LanguageService.cs: Language Dictionary ({langDict.Key})",
+        "ZauberCMS.Core/Membership/Services/MembershipService.Profile.cs: {caller.Name} {what}",
+        "ZauberCMS.Core/Tags/Services/TagService.cs: Tag ({tag.TagName})",
+        "ZauberCMS.Core/Tags/Services/TagService.cs: Created Tag Item (TagId: {tagId}) added",
+        "ZauberCMS.Core/Tags/Services/TagService.cs: Deleted Tag Item (TagId: {tagItem.TagId}) removed",
+        "ZauberCMS.Core/Tags/Services/TagService.cs: {user.Name} {action}",
+        "ZauberCMS.Core/Membership/Models/Role.cs: System", // the system tab's name, stored with the role
     ];
 
     // Keys written ahead of the code that uses them (the part that converts that code takes its line out).
     private static readonly HashSet<string> NotUsedYet =
     [
-        // 10h-1 for 10h-4 (Admin/UsersSection is converted by 10h-4)
-        "sections_users",
-        "sections_usersGroup",
     ];
 
     [Fact]

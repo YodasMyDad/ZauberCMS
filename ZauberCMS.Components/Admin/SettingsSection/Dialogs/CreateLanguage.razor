@@ -4,7 +4,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Create Language" />
+        <PropertyInfo Name="@L["settings_createLanguage"]" />
     </LeftColumn>
     <CentreColumn>
         <RadzenDropDown
@@ -20,11 +20,12 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]" Click="Save"/>
 </RadzenStack>
 
 @code {
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
+    [Inject] public NotificationService NotificationService { get; set; } = null!;
 
     [Parameter] public Language? Language { get; set; }
     
@@ -66,6 +67,13 @@
             CultureInfo = Languages.FirstOrDefault(x => x.Name == Selected), 
             Id = Language?.Id
         });
+        if (!language.Success)
+        {
+            // Said here, and the panel stays open to choose again: it closed and the reason was never shown (ZA-282)
+            NotificationService.ShowNotifications(language.Messages, L);
+            return;
+        }
+
         await BlazoredModal.CloseAsync(ModalResult.Ok(language));
     }
 }

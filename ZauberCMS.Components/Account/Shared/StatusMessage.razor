@@ -5,7 +5,13 @@
 @inject IHtmlSanitizerService SanitizerService
 @if (!string.IsNullOrEmpty(DisplayMessage))
 {
-    var statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
+    var statusMessageClass = DisplayType switch
+    {
+        ResultMessageType.Error => "danger",
+        ResultMessageType.Warning => "warning",
+        ResultMessageType.Info => "info",
+        _ => "success"
+    };
     <div class="alert alert-@statusMessageClass" role="alert">
         @DisplayMessage
     </div>
@@ -41,12 +47,22 @@
 
 @code {
     private string? _messageFromCookie;
+    private ResultMessageType? _typeFromCookie;
 
     [Parameter] public string? Message { get; set; }
+
+    /// <summary>How <see cref="Message"/> is shown. Without it, a message that starts with "Error" is an error and
+    /// any other a success, as in ASP.NET's Identity template; a localised message needs it (ZA-280).</summary>
+    [Parameter] public ResultMessageType? MessageType { get; set; }
+
     [Parameter] public List<ResultMessage> ResultMessages { get; set; } = [];
     [CascadingParameter] private HttpContext? HttpContext { get; set; } = null!;
 
     private string? DisplayMessage => Message ?? _messageFromCookie;
+
+    private ResultMessageType DisplayType =>
+        (Message != null ? MessageType : _typeFromCookie) ??
+        (DisplayMessage?.StartsWith("Error", StringComparison.Ordinal) == true ? ResultMessageType.Error : ResultMessageType.Success);
 
     protected override void OnInitialized()
     {
@@ -55,6 +71,14 @@
         if (_messageFromCookie is not null)
         {
             HttpContext?.Response.Cookies.Delete(IdentityRedirectManager.StatusCookieName);
+        }
+
+        // Written beside the message by RedirectToWithStatus(uri, message, type, context)
+        var type = HttpContext?.Request.Cookies[IdentityRedirectManager.StatusTypeCookieName];
+        if (type is not null)
+        {
+            _typeFromCookie = Enum.TryParse<ResultMessageType>(type, out var parsed) ? parsed : null;
+            HttpContext?.Response.Cookies.Delete(IdentityRedirectManager.StatusTypeCookieName);
         }
     }
 

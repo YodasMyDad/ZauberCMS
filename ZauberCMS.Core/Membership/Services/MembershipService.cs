@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
@@ -11,6 +12,7 @@ using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Email.Services;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Membership.Parameters;
@@ -33,7 +35,8 @@ public partial class MembershipService(
     ProviderService providerService,
     IEmailService emailService,
     IOptions<ZauberSettings> settings,
-    ILogger<MembershipService> logger)
+    ILogger<MembershipService> logger,
+    IStringLocalizer<ZauberText> text)
     : IMembershipService
 {
     /// <summary>
@@ -201,7 +204,7 @@ public partial class MembershipService(
         }
         else
         {
-            handlerResult.Messages.Add(new ResultMessage("User is null", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_userIsNull"], ResultMessageType.Error));
         }
 
         return handlerResult;
@@ -346,7 +349,7 @@ public partial class MembershipService(
         }
         else
         {
-            handlerResult.Messages.Add(new ResultMessage("User is null", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_userIsNull"], ResultMessageType.Error));
         }
 
         return handlerResult;
@@ -373,7 +376,7 @@ public partial class MembershipService(
             : await dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId && !x.Deleted, cancellationToken);
         if (user == null)
         {
-            handlerResult.Messages.Add(new ResultMessage("User not found", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_userNotFound"], ResultMessageType.Error));
             return handlerResult;
         }
 
@@ -382,7 +385,7 @@ public partial class MembershipService(
         var deletedBy = await currentUserAccessor.GetUserAsync(cancellationToken);
         if (deletedBy?.Id == user.Id)
         {
-            handlerResult.Messages.Add(new ResultMessage("You cannot delete your own account", ResultMessageType.Error));
+            handlerResult.Messages.Add(new ResultMessage(text["membership_cannotDeleteOwnAccount"], ResultMessageType.Error));
             return handlerResult;
         }
 
@@ -393,7 +396,7 @@ public partial class MembershipService(
             !await adminUserIds.AnyAsync(id => id != user.Id, cancellationToken))
         {
             handlerResult.Messages.Add(new ResultMessage(
-                "This is the last administrator. Make another user an administrator first", ResultMessageType.Error));
+                text["membership_lastAdministrator"], ResultMessageType.Error));
             return handlerResult;
         }
 

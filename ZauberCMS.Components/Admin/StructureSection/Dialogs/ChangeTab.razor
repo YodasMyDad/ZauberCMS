@@ -6,7 +6,7 @@
                TextProperty="Name"
                ValueProperty="Id"
                Style="width: 100%; height: 100%;"
-               InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select new tab" } })"
+               InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["structure_selectNewTab"].Value } })"
                Change="@OnPropertySelected">
     <Template>
         @((context as Tab)?.Name)

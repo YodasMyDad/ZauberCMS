@@ -9,12 +9,13 @@
 @using ZauberCMS.Core.Settings
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Membership
+@using ZauberCMS.Core.Shared.Models
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [EnableRateLimiting("login")]
 
-<PageTitle>Register</PageTitle>
+<PageTitle>@L["account_register"]</PageTitle>
 
-<StatusMessage Message="@_message" />
+<StatusMessage Message="@_message" MessageType="ResultMessageType.Error" />
 
 @code {
     [Inject] public IdentityRedirectManager RedirectManager { get; set; } = null!;
@@ -47,13 +48,13 @@
     {
         if (RemoteError is not null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", $"Error from external provider: {RemoteError}", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", L["account_externalProviderError", RemoteError], ResultMessageType.Error, HttpContext);
         }
 
         var info = await SignInManager.GetExternalLoginInfoAsync();
         if (info is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", L["account_externalLoginInfoError"], ResultMessageType.Error, HttpContext);
         }
 
         _externalLoginInfo = info;
@@ -91,12 +92,12 @@
         }
         else if (result.IsLockedOut)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Unable to login please contact us.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", L["account_externalLoginLockedOut"], ResultMessageType.Error, HttpContext);
         }
 
-        _message = $"We could not sign you in with {_externalLoginInfo.ProviderDisplayName ?? _externalLoginInfo.LoginProvider}. " +
-                   ((await DataService.GetGlobalSettings()).AllowRegistration
-                       ? "An account is only created when the provider confirms your email address."
-                       : "This site is not accepting new accounts.");
+        var provider = _externalLoginInfo.ProviderDisplayName ?? _externalLoginInfo.LoginProvider;
+        _message = (await DataService.GetGlobalSettings()).AllowRegistration
+            ? L["account_externalSignInFailed", provider]
+            : L["account_externalSignInFailedClosed", provider];
     }
 }

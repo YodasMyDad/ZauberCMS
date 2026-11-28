@@ -21,19 +21,19 @@
     @if (!RegistrationOpen)
     {
         @* Registration is turned off (GlobalSettings.AllowRegistration): this address does not exist *@
-        <PageTitle>Page not found</PageTitle>
+        <PageTitle>@L["account_pageNotFound"]</PageTitle>
         @if (NotFoundType != null)
         {
             <DynamicComponent Type="NotFoundType"/>
         }
         else
         {
-            <h3>Page not found</h3>
+            <h3>@L["account_pageNotFound"]</h3>
         }
     }
     else
     {
-        <PageTitle>Register</PageTitle>
+        <PageTitle>@L["account_register"]</PageTitle>
 
         <div style="width: 100%; max-width: 700px;">
             <StatusMessage ResultMessages="@ResultMessages"/>
@@ -41,21 +41,21 @@
             {
                 <EditForm Model="RegisterUserCommand" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register" style="width: 100%;">
                     <DataAnnotationsValidator/>
-                    <h3>Create a new account.</h3>
+                    <h3>@L["account_createAccount"]</h3>
                     <ValidationSummary class="text-danger" role="alert"/>
                     <div class="form-floating mb-3">
-                        <InputText id="username" @bind-Value="RegisterUserCommand!.Username" class="form-control" autocomplete="nickname" aria-required="true" placeholder="Username"/>
-                        <label for="username">Username</label>
+                        <InputText id="username" @bind-Value="RegisterUserCommand!.Username" class="form-control" autocomplete="nickname" aria-required="true" placeholder="@L["general_username"]"/>
+                        <label for="username">@L["general_username"]</label>
                         <ValidationMessage For="() => RegisterUserCommand.Username" class="text-danger"/>
                     </div>
                     <div class="form-floating mb-3">
                         <InputText id="email" @bind-Value="RegisterUserCommand.Email" type="email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com"/>
-                        <label for="email">Email</label>
+                        <label for="email">@L["general_email"]</label>
                         <ValidationMessage For="() => RegisterUserCommand.Email" class="text-danger"/>
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText id="password" type="password" @bind-Value="RegisterUserCommand.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password"/>
-                        <label for="password">Password</label>
+                        <InputText id="password" type="password" @bind-Value="RegisterUserCommand.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="@L["general_password"]"/>
+                        <label for="password">@L["general_password"]</label>
                         <ValidationMessage For="() => RegisterUserCommand.Password" class="text-danger"/>
                     </div>
                     <FormProtectionFields Token="@FormToken"/>
@@ -65,7 +65,7 @@
                             <DynamicComponent Type="CaptchaProvider.Component"/>
                         </div>
                     }
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">@L["account_register"]</button>
                 </EditForm>
                 <ExternalLoginPicker/>
             }
@@ -137,7 +137,7 @@
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (RegistrationOpen && AuthState?.User.Identity?.IsAuthenticated == true && ResultMessages.Count == 0)
         {
-            ResultMessages.Add(new ResultMessage{Message = "You are already logged in", MessageType = ResultMessageType.Warning});
+            ResultMessages.Add(new ResultMessage{Message = L["account_alreadyLoggedIn"], MessageType = ResultMessageType.Warning});
         }
     }
 
@@ -158,10 +158,10 @@
             [
                 new ResultMessage(protection switch
                 {
-                    FormProtectionResult.TooFast => "That was quick. Please send the form again.",
-                    FormProtectionResult.Expired => "The form was open for too long. Please send it again.",
-                    FormProtectionResult.AlreadyUsed => "This form was sent already. Please send it again.",
-                    _ => "We could not create your account. Please try again."
+                    FormProtectionResult.TooFast => L["account_formTooFast"].Value,
+                    FormProtectionResult.Expired => L["account_formExpired"].Value,
+                    FormProtectionResult.AlreadyUsed => L["account_formAlreadySent"].Value,
+                    _ => L["account_registerFailed"].Value
                 }, ResultMessageType.Error)
             ];
             return;
@@ -173,7 +173,7 @@
         FormToken = null;
         if (!FormProtection.TryUseToken(token))
         {
-            ResultMessages = [new ResultMessage("This form was sent already. Please send it again.", ResultMessageType.Error)];
+            ResultMessages = [new ResultMessage(L["account_formAlreadySent"], ResultMessageType.Error)];
             return;
         }
 
@@ -192,7 +192,7 @@
 
             if (!verified)
             {
-                ResultMessages = [new ResultMessage("Please complete the check and send the form again.", ResultMessageType.Error)];
+                ResultMessages = [new ResultMessage(L["account_captchaFailed"], ResultMessageType.Error)];
                 return;
             }
         }

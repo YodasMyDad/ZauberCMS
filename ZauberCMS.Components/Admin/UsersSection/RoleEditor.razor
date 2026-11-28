@@ -15,27 +15,27 @@
 
 @layout SectionLayout
 
-<PageTitle>Update Role</PageTitle>
+<PageTitle>@L["users_updateRole"]</PageTitle>
 
 @if (Access is { Allowed: false })
 {
     @* Someone who may open Users, on a role they are not in or the Admin role (Roadmap D68) *@
-    <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="You cannot change this role"
+    <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="@L["users_cannotChangeRole"]"
                    DefaultMessage="@Access.Reason"/>
 }
 else if (Access != null)
 {
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
              Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Add Property" Click="@(AddProperty)"/>
-    <RadzenButton Variant="Variant.Filled" Text="Add Tab" Click="@(() => AddEditTab(null))"/>
+    <RadzenButton Variant="Variant.Filled" Text="@L["users_addProperty"]" Click="@(AddProperty)"/>
+    <RadzenButton Variant="Variant.Filled" Text="@L["users_addTab"]" Click="@(() => AddEditTab(null))"/>
     @if (TabIndex.Count > 1 && !TabIndex[SelectedTabIndex].IsSystemTab)
     {
-        <RadzenButton Variant="Variant.Filled" Text="Edit Tab" Click="@(() => AddEditTab(TabIndex[SelectedTabIndex]))"/>
+        <RadzenButton Variant="Variant.Filled" Text="@L["users_editTab"]" Click="@(() => AddEditTab(TabIndex[SelectedTabIndex]))"/>
     }
     @if (ShowDeleteButton)
     {
-        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteRole)"/>
+        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="@L["general_delete"]" Click="@(DeleteRole)"/>
     }
 </RadzenStack>
 
@@ -53,32 +53,30 @@ if (Role != null)
                         <RadzenIcon Icon="@(Role.Icon.IsNullOrWhiteSpace() ? "add" : Role.Icon)"
                                     style="font-weight: 300; color: dimgray;"/>
                     </RadzenStack>
-                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="@Role.Name"
-                                   aria-label="Name" ReadOnly="@IsAdminRole"/>
+                    <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="@L["general_name"]" @bind-Value="@Role.Name"
+                                   aria-label="@L["general_name"]" ReadOnly="@IsAdminRole"/>
                 </RadzenStack>
             </RadzenRow>
             @* Which sections of the admin the role's members may open (Roadmap D38, D66): every discovered ISection,
                plugins' included. A section the person editing cannot open themselves cannot be given (D68). *@
-            <RadzenFieldset Text="Sections" class="rz-mb-6">
+            <RadzenFieldset Text="@L["users_sections"]" class="rz-mb-6">
                 @if (IsAdminRole)
                 {
                     <RadzenText TextStyle="TextStyle.Body2">
-                        Administrators can open every section of the admin, including sections added later.
+                        @L["users_adminRoleSections"]
                     </RadzenText>
                 }
                 else if (IsStartingRole)
                 {
                     @* Everyone who registers gets it (Zauber:NewUserStartingRole), so it opens nothing (D71) *@
                     <RadzenText TextStyle="TextStyle.Body2">
-                        Everyone who registers gets this role, so it cannot open any section of the admin. Give
-                        sections to another role.
+                        @L["users_startingRoleSections"]
                     </RadzenText>
                 }
                 else
                 {
                     <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2">
-                        Members of this role can open these sections of the admin. With none ticked, the role gives no
-                        access to the admin.
+                        @L["users_roleSectionsHelp"]
                     </RadzenText>
                     <RadzenCheckBoxList TValue="string" Data="@SectionOptions" @bind-Value="@AllowedSections"
                                         TextProperty="@nameof(SectionOption.Name)"
@@ -87,7 +85,7 @@ if (Role != null)
                                         Orientation="Orientation.Horizontal"/>
                     @if (SectionOptions.Any(x => x.Disabled))
                     {
-                        <RadzenText TextStyle="TextStyle.Caption">You can only give sections you can open yourself.</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption">@L["users_onlyYourSections"]</RadzenText>
                     }
                 }
             </RadzenFieldset>
@@ -142,7 +140,7 @@ if (Role != null)
                                                              AlignItems="AlignItems.Center">
                                                     <RadzenButton Variant="Variant.Filled"
                                                                   ButtonStyle="ButtonStyle.Danger"
-                                                                  Text="Delete This Tab"
+                                                                  Text="@L["users_deleteThisTab"]"
                                                                   Click="@(() => DeleteTab(tab))"/>
                                                 </RadzenStack>
                                             }
@@ -156,7 +154,7 @@ if (Role != null)
             }
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right"
                          AlignItems="AlignItems.Center">
-                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save"/>
+                <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="@L["general_save"]"/>
             </RadzenStack>
         </EditForm>
     </RadzenPanel>
@@ -258,7 +256,7 @@ if (Role != null)
 
     private async Task SelectIcon()
     {
-        var dialog = DialogService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
+        var dialog = DialogService.OpenSidePanel<ListMaterialIconsDialog>(L["users_chooseIcon"]);
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: string icon })
         {
@@ -352,7 +350,7 @@ if (Role != null)
 
     private async Task ChangeTab(PropertyType property)
     {
-        var dialog = DialogService.OpenSidePanel<ChangeTab>("Change Tab",
+        var dialog = DialogService.OpenSidePanel<ChangeTab>(L["shared_changeTab"],
             new Dictionary<string, object>
             {
                 {
@@ -372,7 +370,7 @@ if (Role != null)
 
     private async Task Settings(PropertyType property)
     {
-        var dialog = DialogService.OpenSidePanel<ContentTypePropertySettingsEditor>("Edit Settings",
+        var dialog = DialogService.OpenSidePanel<ContentTypePropertySettingsEditor>(L["shared_editSettings"],
             new Dictionary<string, object>
             {
                 { nameof(ContentTypePropertySettingsEditor.PropertyType), property }
@@ -411,7 +409,7 @@ if (Role != null)
         var maySave = await BackOfficeAccess.CanSaveRoleAsync(AuthState.User, Role!);
         if (!maySave.Allowed)
         {
-            NotificationService.ShowErrorNotification(maySave.Reason ?? "You cannot save this role.");
+            NotificationService.ShowErrorNotification(maySave.Reason ?? L["users_cannotSaveRole"].Value);
             return;
         }
 
@@ -420,7 +418,7 @@ if (Role != null)
             var isNew = RoleId == null;
             var saveContentTypeCommand = new SaveRoleParameters { Role = Role };
             var result = await MembershipService.SaveRoleAsync(saveContentTypeCommand);
-            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Role?.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role?.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = L["users_saved", Role?.Name ?? string.Empty], Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["users_saveError", Role?.Name ?? string.Empty], Detail = result.Messages.MessagesAsString(), Duration = 4000 });
             if (result is { Success: true, Entity: not null } && isNew &&
                 !AuthState.User.IsInRole(Constants.Roles.AdminRoleName))
             {
@@ -465,13 +463,13 @@ if (Role != null)
         var mayDelete = await BackOfficeAccess.CanDeleteRoleAsync(AuthState.User, Role!.Id);
         if (!mayDelete.Allowed)
         {
-            NotificationService.ShowErrorNotification(mayDelete.Reason ?? "You cannot delete this role.");
+            NotificationService.ShowErrorNotification(mayDelete.Reason ?? L["users_cannotDeleteRole"].Value);
             return;
         }
 
         var confirmed = await ConfirmService.Confirm(
-            $"Delete the role {Role.Name}? Its members lose it, and with it the sections it opens.", "Delete role",
-            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+            L["users_deleteRoleConfirm", Role.Name ?? string.Empty], L["users_deleteRole"],
+            new ConfirmOptions { OkButtonText = L["general_delete"], CancelButtonText = L["general_cancel"] });
         if (confirmed != true)
         {
             return;
@@ -485,13 +483,13 @@ if (Role != null)
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = L["users_saveError", Role.Name ?? string.Empty], Detail = result.Messages.MessagesAsString(), Duration = 4000 });
         }
     }
 
     private async Task AddEditTab(Tab? tab)
     {
-        var dialog = DialogService.OpenSidePanel<AddTab>("Update Tab",
+        var dialog = DialogService.OpenSidePanel<AddTab>(L["users_updateTab"],
             new Dictionary<string, object>
             {
                 { nameof(AddTab.Tab), tab! },
@@ -534,11 +532,11 @@ if (Role != null)
     {
         if (Role!.Tabs.All(x => x.IsSystemTab))
         {
-            NotificationService.ShowNotification("You need to add a tab", NotificationSeverity.Info);
+            NotificationService.ShowNotification(L["users_addTabFirst"], NotificationSeverity.Info);
         }
         else
         {
-            var dialog = DialogService.OpenSidePanel<ListContentTypeProperties>("Add Property");
+            var dialog = DialogService.OpenSidePanel<ListContentTypeProperties>(L["users_addProperty"]);
             var result = await dialog.Result;
             if (result is { Confirmed: true, Data: IContentProperty property })
             {

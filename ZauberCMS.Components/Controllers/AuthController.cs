@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Membership.Models;
 
@@ -20,7 +22,8 @@ public class AuthController(
     SignInManager<User> signInManager,
     IAntiforgery antiforgery,
     RefreshSignInTicketService refreshSignInTickets,
-    IOptionsMonitor<CookieAuthenticationOptions> cookieOptions)
+    IOptionsMonitor<CookieAuthenticationOptions> cookieOptions,
+    IStringLocalizer<ZauberText> text)
     : ControllerBase
 {
     /// <summary>
@@ -94,15 +97,17 @@ public class AuthController(
         var safeRedirect = !string.IsNullOrEmpty(redirectUrl) && Url.IsLocalUrl(redirectUrl) ? redirectUrl : "/";
         var enc = HtmlEncoder.Default;
         var autoSubmit = IsFromThisSite(Request);
+        // In the request's culture (Roadmap D95); encoded, since a translation is text, not markup
+        var signOut = enc.Encode(text["account_signOut"].Value);
         var html =
             "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\">" +
-            "<title>Sign out</title></head><body>" +
+            $"<title>{signOut}</title></head><body>" +
             "<form id=\"zauber-logout\" method=\"post\" action=\"/api/auth/logout\">" +
             $"<input type=\"hidden\" name=\"{enc.Encode(tokens.FormFieldName)}\" value=\"{enc.Encode(tokens.RequestToken!)}\" />" +
             $"<input type=\"hidden\" name=\"redirectUrl\" value=\"{enc.Encode(safeRedirect)}\" />" +
             (autoSubmit
-                ? "<noscript><button type=\"submit\">Sign out</button></noscript>"
-                : "<p>Do you want to sign out?</p><button type=\"submit\">Sign out</button>") +
+                ? $"<noscript><button type=\"submit\">{signOut}</button></noscript>"
+                : $"<p>{enc.Encode(text["account_signOutConfirm"].Value)}</p><button type=\"submit\">{signOut}</button>") +
             "</form>" +
             (autoSubmit ? "<script>document.getElementById('zauber-logout').submit();</script>" : string.Empty) +
             "</body></html>";

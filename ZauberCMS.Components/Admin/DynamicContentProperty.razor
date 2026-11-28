@@ -2,7 +2,7 @@
 
 @* One editor that throws shows its error here instead of ending the circuit; the page's other editors and its
    unsaved values stay (ZA-097, D32). Its own value is kept as last reported, so saving does not lose it. *@
-<AdminErrorBoundary Name="@(string.IsNullOrWhiteSpace(PropertyAlias) ? "This editor" : $"The {PropertyAlias} editor")">
+<AdminErrorBoundary Name="@(string.IsNullOrWhiteSpace(PropertyAlias) ? L["layout_editorBoundary"] : L["layout_propertyEditorBoundary", PropertyAlias])">
     <CascadingValue Value="this">
         <DynamicComponent Type="@ComponentType" Parameters="@GetParameters()"/>
     </CascadingValue>

@@ -6,12 +6,12 @@
 
 @* /admin: each user starts in the first section they may open (Roadmap D67), as Umbraco opens the first section
    of the user's groups. [AuthorizeSection] with no alias lets in anyone who may open at least one. *@
-<PageTitle>Admin</PageTitle>
+<PageTitle>@L["layout_admin"]</PageTitle>
 
 @if (_noSection)
 {
-    <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="No section to open"
-                   DefaultMessage="Your roles do not give you any section of the admin. Ask an administrator for access."/>
+    <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="@L["layout_noSection"]"
+                   DefaultMessage="@L["layout_noSectionDetail"]"/>
 }
 
 @code {

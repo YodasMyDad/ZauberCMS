@@ -20,10 +20,6 @@ public class EditorConstructionTests
         .OrderBy(t => t.FullName, StringComparer.Ordinal)
         .ToArray();
 
-    // Editors whose text another part of Phase 10h converts (the API-key picker is 10h-4's); the test says when one
-    // is converted, so its line goes
-    private static readonly HashSet<string> NotConvertedYet = ["ApiKeysPickerProperty"];
-
     [Fact]
     public void An_editor_made_with_new_has_its_English_name_and_its_alias()
     {
@@ -71,11 +67,9 @@ public class EditorConstructionTests
             var rendered = (IContentProperty)ActivatorUtilities.CreateFactory(type, Type.EmptyTypes)(provider, null);
             var localised = discovered.Name.StartsWith("marker:", StringComparison.Ordinal) &&
                             rendered.Description.StartsWith("marker:", StringComparison.Ordinal);
-            if (localised == NotConvertedYet.Contains(type.Name))
+            if (!localised)
             {
-                problems.Add(localised
-                    ? $"{type.Name} is localised now: take it out of NotConvertedYet"
-                    : $"{type.Name}: '{discovered.Name}' / '{rendered.Description}'");
+                problems.Add($"{type.Name}: '{discovered.Name}' / '{rendered.Description}'");
             }
         }
 

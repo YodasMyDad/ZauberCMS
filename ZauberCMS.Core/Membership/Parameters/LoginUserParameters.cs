@@ -1,16 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Membership.Validation;
 
 namespace ZauberCMS.Core.Membership.Parameters;
 
 public class LoginUserParameters
 {
-    [Required]
-    [EmailAddress]
+    [ZauberRequired]
+    [ZauberEmailAddress]
     [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
+    [ZauberRequired]
     [DataType(DataType.Password)]
     [Display(Name = "Password")]
     public string Password { get; set; } = string.Empty;

@@ -9,7 +9,7 @@
        page carries on (ZA-215, D32), instead of the circuit ending; the exception is in the log. *@
     <span role="alert">
         <RadzenButton Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Icon="refresh"
-                      Text="The sections could not be shown: try again" Click="@LoadAsync"/>
+                      Text="@L["layout_sectionsFailed"]" Click="@LoadAsync"/>
     </span>
 }
 else

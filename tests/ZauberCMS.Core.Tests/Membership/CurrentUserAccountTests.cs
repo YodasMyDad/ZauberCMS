@@ -25,6 +25,10 @@ public partial class CurrentUserAccountTests : IAsyncLifetime
 {
     private const string Password = "Passw0rd-For-Tests";
 
+    // The English of membership_lockedWrongPasswords (Core's Membership.resx), which the tests' culture shows
+    private const string LockedOutMessage =
+        "Too many wrong passwords: the account is locked for a few minutes. Try again later.";
+
     /// <summary>Overridden by the PostgreSQL and SQL Server copies of this class at the end of the file.</summary>
     protected virtual string DatabaseProvider => TestSite.SqliteProvider;
 
@@ -126,12 +130,12 @@ public partial class CurrentUserAccountTests : IAsyncLifetime
         }
 
         var sixth = await ChangePasswordAsync(user, "Wrong-6", "N3w-Passw0rd-Chosen");
-        Assert.Equal(MembershipService.LockedOutMessage, TestSite.Describe(sixth.Messages));
+        Assert.Equal(LockedOutMessage, TestSite.Describe(sixth.Messages));
 
         // Locked: even the right password changes nothing until the lockout ends
         var right = await ChangePasswordAsync(user, Password, "N3w-Passw0rd-Chosen");
         Assert.False(right.Success);
-        Assert.Equal(MembershipService.LockedOutMessage, TestSite.Describe(right.Messages));
+        Assert.Equal(LockedOutMessage, TestSite.Describe(right.Messages));
         Assert.True(await CheckPasswordAsync(user.Id, Password));
     }
 

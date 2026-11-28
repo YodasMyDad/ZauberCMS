@@ -12,17 +12,17 @@
 @* Where the sign-in cookie sends a signed-in user that a page refused (its default AccessDeniedPath), and where the
    admin's router sends one (Roadmap D67). Before, there was no page here and the visitor got the not-found page. *@
 <LayoutView Layout="LayoutType">
-    <PageTitle>Access denied</PageTitle>
+    <PageTitle>@L["account_accessDenied"]</PageTitle>
     <div style="width: 100%; max-width: 700px;">
-        <h1>Access denied</h1>
-        <p>You are signed in, but you do not have access to that page.</p>
+        <h1>@L["account_accessDenied"]</h1>
+        <p>@L["account_accessDeniedDetail"]</p>
         <ul>
             @if (_hasAdminSection)
             {
-                <li><a href="@Urls.AdminBaseUrl" data-enhance-nav="false">Go to the parts of the admin you can open</a></li>
+                <li><a href="@Urls.AdminBaseUrl" data-enhance-nav="false">@L["account_goToAdmin"]</a></li>
             }
-            <li><a href="@LoginUrl" data-enhance-nav="false">Sign in with another account</a></li>
-            <li><a href="/">Go to the home page</a></li>
+            <li><a href="@LoginUrl" data-enhance-nav="false">@L["account_signInWithAnotherAccount"]</a></li>
+            <li><a href="/">@L["account_goToHomePage"]</a></li>
         </ul>
     </div>
 </LayoutView>

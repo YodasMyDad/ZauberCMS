@@ -12,4 +12,56 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="email_changeEmailBody" xml:space="preserve">
+    <value>Someone asked to change the email address of an account on this site to this one. To confirm it, {0}click here{1}.</value>
+    <comment>Email-change email, sent to the new address. {0} and {1} open and close the confirmation link</comment>
+  </data>
+  <data name="email_changeEmailIgnore" xml:space="preserve">
+    <value>If it was not you, ignore this email: nothing changes until the link is opened.</value>
+    <comment>Email-change email, after the link</comment>
+  </data>
+  <data name="email_changeEmailSubject" xml:space="preserve">
+    <value>Confirm your new email address</value>
+    <comment>Email-change email: subject</comment>
+  </data>
+  <data name="email_confirmAccountBody" xml:space="preserve">
+    <value>Please confirm your account by {0}clicking here{1}.</value>
+    <comment>Account confirmation email. {0} and {1} open and close the confirmation link</comment>
+  </data>
+  <data name="email_confirmAccountSubject" xml:space="preserve">
+    <value>Confirm your email</value>
+    <comment>Account confirmation email: subject</comment>
+  </data>
+  <data name="email_resetPasswordBody" xml:space="preserve">
+    <value>Please reset your password by {0}clicking here{1}.</value>
+    <comment>Password reset email. {0} and {1} open and close the reset link</comment>
+  </data>
+  <data name="email_resetPasswordCode" xml:space="preserve">
+    <value>Please reset your password using the following code: {0}</value>
+    <comment>Password reset email with a code (ASP.NET Identity's endpoints). {0} = the code</comment>
+  </data>
+  <data name="email_resetPasswordSubject" xml:space="preserve">
+    <value>Reset Password</value>
+    <comment>Password reset email ("Forgot your password"): subject</comment>
+  </data>
+  <data name="email_resetYourPasswordSubject" xml:space="preserve">
+    <value>Reset your password</value>
+    <comment>Password reset email (ASP.NET Identity's endpoints): subject</comment>
+  </data>
+  <data name="email_setPasswordBody" xml:space="preserve">
+    <value>To finish setting it up, choose its password by {0}clicking here{1}.</value>
+    <comment>Set-password email (an address on the admin list was registered). {0} and {1} open and close the link</comment>
+  </data>
+  <data name="email_setPasswordIgnore" xml:space="preserve">
+    <value>If you did not register, you can ignore this email.</value>
+    <comment>Set-password email: last paragraph</comment>
+  </data>
+  <data name="email_setPasswordRegistered" xml:space="preserve">
+    <value>An account was registered on this site with your email address.</value>
+    <comment>Set-password email: first paragraph</comment>
+  </data>
+  <data name="email_setPasswordSubject" xml:space="preserve">
+    <value>Finish setting up your account</value>
+    <comment>Set-password email: subject</comment>
+  </data>
 </root>

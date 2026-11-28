@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ZauberCMS.Core.Audit.Interfaces;
 using ZauberCMS.Core.Audit.Parameters;
 using ZauberCMS.Core.Audit.Mapping;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Models;
 using ZauberCMS.Core.Shared.Services;
@@ -16,7 +18,8 @@ public class AuditService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
     ExtensionManager extensionManager,
-    ILogger<AuditService> logger)
+    ILogger<AuditService> logger,
+    IStringLocalizer<ZauberText> text)
     : IAuditService
 {
     /// <summary>
@@ -52,7 +55,7 @@ public class AuditService(
             return await dbContext.SaveChangesAndLog(audit, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
-        handlerResult.AddMessage("Audit is null", ResultMessageType.Error);
+        handlerResult.AddMessage(text["audit_auditMissing"], ResultMessageType.Error);
         return handlerResult;
     }
 
@@ -127,19 +130,19 @@ public class AuditService(
                 logger.LogInformation("Successfully deleted {AuditCount} old audit records", auditCount);
                 
                 handlerResult.Entity = auditCount;
-                handlerResult.AddMessage($"Successfully deleted {auditCount} audit records older than {parameters.DaysToKeep} days", ResultMessageType.Success);
+                handlerResult.AddMessage(text["audit_oldRecordsDeleted", auditCount, parameters.DaysToKeep], ResultMessageType.Success);
             }
             else
             {
                 logger.LogInformation("No audit records older than {DaysToKeep} days found", parameters.DaysToKeep);
                 handlerResult.Entity = 0;
-                handlerResult.AddMessage($"No audit records older than {parameters.DaysToKeep} days found", ResultMessageType.Info);
+                handlerResult.AddMessage(text["audit_noOldRecords", parameters.DaysToKeep], ResultMessageType.Info);
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while cleaning up old audit records");
-            handlerResult.AddMessage("An error occurred while cleaning up old audit records", ResultMessageType.Error);
+            handlerResult.AddMessage(text["audit_cleanupFailed"], ResultMessageType.Error);
         }
 
         return handlerResult;

@@ -273,6 +273,9 @@ try {
     Assert-That ($script.Status -eq 200) "_framework/blazor.web.js is served ($($script.Status))"
     $page = Get-Page '/smoke-test-no-such-page'
     Assert-That ($page.Status -eq 404 -and $page.Body.Length -gt 0) "an unknown address answers 404 with a page ($($page.Status), $($page.Body.Length) characters)"
+    # The page a password-reset email links to, with its code (ZA-284: it threw for every link)
+    $page = Get-Page '/account/resetpassword?code=YWJj&email=someone%40example.test'
+    Assert-That ($page.Status -eq 200 -and $page.Body -match 'Reset your password') "the reset-password page opens from an email's link ($($page.Status))"
 
     Write-Step 'Admin (signed in by the installer) and its scripts and styles'
     # /admin sends each user to the first section they may open (Roadmap D67): the administrator to Content

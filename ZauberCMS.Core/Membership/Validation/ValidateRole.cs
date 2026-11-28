@@ -1,11 +1,13 @@
-﻿using ZauberCMS.Core.Extensions;
+﻿using Microsoft.Extensions.Localization;
+using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Shared.Validation.Interfaces;
 using ZauberCMS.Core.Shared.Validation.Models;
 
 namespace ZauberCMS.Core.Membership.Validation;
 
-public class ValidateRole : IValidate<Role>
+public class ValidateRole(IStringLocalizer<ZauberText> text) : IValidate<Role>
 {
     public Task<ValidateResult> Validate(Role item)
     {
@@ -13,12 +15,12 @@ public class ValidateRole : IValidate<Role>
         
         if (item.Name.IsNullOrWhiteSpace())
         {
-            validateResult.ErrorMessages.Add("You cannot leave the name empty");
+            validateResult.ErrorMessages.Add(text["membership_nameRequired"]);
         }
         
         if (item.Properties.Any(x => x.Name.IsNullOrWhiteSpace()))
         {
-            validateResult.ErrorMessages.Add("Some properties are missing a name (and alias)");
+            validateResult.ErrorMessages.Add(text["membership_propertiesMissingName"]);
         }
 
         return Task.FromResult(validateResult);

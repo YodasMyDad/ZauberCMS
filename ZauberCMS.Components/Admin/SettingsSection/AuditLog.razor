@@ -3,7 +3,7 @@
 @using ZauberCMS.Core.Audit.Models
 @layout SectionLayout
 
-<PageTitle>Audit Log</PageTitle>
+<PageTitle>@L["settings_auditLog"]</PageTitle>
 
 <RadzenPanel Class="rz-mx-auto">
     <RadzenDataGrid AllowFiltering="true"
@@ -19,8 +19,8 @@
                     PagerHorizontalAlign="HorizontalAlign.Center">
         <Columns>
             @*<RadzenDataGridColumn Property="Username" Title="Username"/>*@
-            <RadzenDataGridColumn Property="Description" Title="Description"/>
-            <RadzenDataGridColumn Property="DateCreated" Title="Created">
+            <RadzenDataGridColumn Property="Description" Title="@L["general_description"]"/>
+            <RadzenDataGridColumn Property="DateCreated" Title="@L["general_created"]">
                 <Template Context="data">
                     @data.DateCreated.Humanize()
                 </Template>

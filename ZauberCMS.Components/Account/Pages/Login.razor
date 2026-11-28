@@ -12,7 +12,7 @@
 @attribute [EnableRateLimiting("login")]
 
 <LayoutView Layout="LayoutType">
-    <PageTitle>Log in</PageTitle>
+    <PageTitle>@L["account_logIn"]</PageTitle>
 
 
     <div style="width: 100%; max-width: 700px;">
@@ -21,36 +21,36 @@
             {
                 <EditForm Model="LoginUserCommand" method="post" asp-route-returnUrl="@ReturnUrl" OnValidSubmit="LoginUser" FormName="login">
                     <DataAnnotationsValidator/>
-                    <h3>Log in.</h3>
+                    <h3>@L["account_logInHeading"]</h3>
 
                     <ValidationSummary class="text-danger" role="alert"/>
                     <div class="form-floating mb-3">
                         <InputText @bind-Value="LoginUserCommand!.Email" type="email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com"/>
-                        <label for="email" class="form-label">Email</label>
+                        <label for="email" class="form-label">@L["general_email"]</label>
                         <ValidationMessage For="() => LoginUserCommand.Email" class="text-danger"/>
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="LoginUserCommand.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password"/>
-                        <label for="password" class="form-label">Password</label>
+                        <InputText type="password" @bind-Value="LoginUserCommand.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="@L["general_password"]"/>
+                        <label for="password" class="form-label">@L["general_password"]</label>
                         <ValidationMessage For="() => LoginUserCommand.Password" class="text-danger"/>
                     </div>
                     <div class="checkbox mb-3">
                         <label class="form-label">
                             <InputCheckbox @bind-Value="LoginUserCommand.RememberMe" class="darker-border-checkbox form-check-input"/>
-                            Remember me
+                            @L["account_rememberMe"]
                         </label>
                     </div>
                     <div>
-                        <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                        <button type="submit" class="w-100 btn btn-lg btn-primary">@L["account_logIn"]</button>
                     </div>
                     <div style="padding-top: 10px;">
                         <p>
-                            <a href="/Account/ForgotPassword">Forgot your password?</a>
+                            <a href="/Account/ForgotPassword">@L["account_forgotPassword"]</a>
                         </p>
                         @if (RegistrationOpen)
                         {
                             <p>
-                                <a href="@(NavigationManager.GetUriWithQueryParameters("/Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
+                                <a href="@(NavigationManager.GetUriWithQueryParameters("/Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">@L["account_registerAsNewUser"]</a>
                             </p>
                         }
                     </div>
@@ -59,7 +59,7 @@
             }
             else
             {
-                <p>You can <a href="@(Urls.ApiLogout)">logout here</a></p>
+                <p><a href="@(Urls.ApiLogout)">@L["account_logOutHere"]</a></p>
             }
 
     </div>
@@ -93,7 +93,7 @@
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (AuthState?.User.Identity?.IsAuthenticated == true)
         {
-            ResultMessages.Add(new ResultMessage{Message = "You are already logged in", MessageType = ResultMessageType.Warning});
+            ResultMessages.Add(new ResultMessage{Message = L["account_alreadyLoggedIn"], MessageType = ResultMessageType.Warning});
         }
     }
 

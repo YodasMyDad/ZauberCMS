@@ -12,4 +12,168 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="users_addProperty" xml:space="preserve">
+    <value>Add Property</value>
+    <comment>Role page: button and side panel title that add a property to the role's members</comment>
+  </data>
+  <data name="users_addTab" xml:space="preserve">
+    <value>Add Tab</value>
+    <comment>Role page: button that adds a tab</comment>
+  </data>
+  <data name="users_addTabFirst" xml:space="preserve">
+    <value>You need to add a tab</value>
+    <comment>Role page: shown when a property is added before the role has a tab</comment>
+  </data>
+  <data name="users_adminRoleSections" xml:space="preserve">
+    <value>Administrators can open every section of the admin, including sections added later.</value>
+    <comment>Role page, "Sections" box, for the Admin role</comment>
+  </data>
+  <data name="users_atLeastOneRole" xml:space="preserve">
+    <value>User must be in at least one role</value>
+    <comment>Roles dialog: shown when no role is ticked</comment>
+  </data>
+  <data name="users_cannotChangeRole" xml:space="preserve">
+    <value>You cannot change this role</value>
+    <comment>Role page: heading of the alert shown instead of the role (the reason follows it)</comment>
+  </data>
+  <data name="users_cannotChangeUser" xml:space="preserve">
+    <value>You cannot change this user.</value>
+    <comment>User page: notification when a change is refused and no reason was given</comment>
+  </data>
+  <data name="users_cannotChangeUserTitle" xml:space="preserve">
+    <value>You cannot change this user</value>
+    <comment>User page: heading of the alert shown instead of the user (the reason follows it)</comment>
+  </data>
+  <data name="users_cannotDeleteRole" xml:space="preserve">
+    <value>You cannot delete this role.</value>
+    <comment>Role page: notification when deleting is refused and no reason was given</comment>
+  </data>
+  <data name="users_cannotGiveRoles" xml:space="preserve">
+    <value>You cannot give these roles.</value>
+    <comment>User page: notification when the roles chosen are refused and no reason was given</comment>
+  </data>
+  <data name="users_cannotSaveRole" xml:space="preserve">
+    <value>You cannot save this role.</value>
+    <comment>Role page: notification when saving is refused and no reason was given</comment>
+  </data>
+  <data name="users_changePassword" xml:space="preserve">
+    <value>Change Password</value>
+    <comment>User page: button and side panel title</comment>
+  </data>
+  <data name="users_chooseIcon" xml:space="preserve">
+    <value>Choose Icon</value>
+    <comment>Role page: side panel title of the icon picker</comment>
+  </data>
+  <data name="users_createRole" xml:space="preserve">
+    <value>Create Role</value>
+    <comment>Users section start page: button</comment>
+  </data>
+  <data name="users_deleteRole" xml:space="preserve">
+    <value>Delete role</value>
+    <comment>Role page: title of the delete confirmation</comment>
+  </data>
+  <data name="users_deleteRoleConfirm" xml:space="preserve">
+    <value>Delete the role {0}? Its members lose it, and with it the sections it opens.</value>
+    <comment>Role page: delete confirmation. {0} = the role's name</comment>
+  </data>
+  <data name="users_deleteThisTab" xml:space="preserve">
+    <value>Delete This Tab</value>
+    <comment>Role page: button on a tab with no properties</comment>
+  </data>
+  <data name="users_deleteUser" xml:space="preserve">
+    <value>Delete user</value>
+    <comment>User page: title of the delete confirmation</comment>
+  </data>
+  <data name="users_deleteUserConfirm" xml:space="preserve">
+    <value>Delete this user for good? Their name, email address, password and profile are erased; this cannot be undone. To stop someone signing in but keep the account, lock it instead.</value>
+    <comment>User page: delete confirmation</comment>
+  </data>
+  <data name="users_editTab" xml:space="preserve">
+    <value>Edit Tab</value>
+    <comment>Role page: button that edits the selected tab</comment>
+  </data>
+  <data name="users_editUser" xml:space="preserve">
+    <value>Edit User</value>
+    <comment>User page: browser tab title</comment>
+  </data>
+  <data name="users_lastUpdatedAgo" xml:space="preserve">
+    <value>Last Updated: {0}</value>
+    <comment>User page, under the name and email address. {0} = how long ago, such as "3 days ago"</comment>
+  </data>
+  <data name="users_newPassword" xml:space="preserve">
+    <value>New Password</value>
+    <comment>Change-password side panel: the password box's placeholder and label</comment>
+  </data>
+  <data name="users_noUser" xml:space="preserve">
+    <value>There is no user.</value>
+    <comment>User page: why nothing can be changed when the user was not found</comment>
+  </data>
+  <data name="users_noUserId" xml:space="preserve">
+    <value>There is no user id passed in</value>
+    <comment>User page opened without a user</comment>
+  </data>
+  <data name="users_onlyYourRoles" xml:space="preserve">
+    <value>You can only give roles you are in yourself.</value>
+    <comment>Roles dialog: caption under the roles when some cannot be ticked</comment>
+  </data>
+  <data name="users_onlyYourSections" xml:space="preserve">
+    <value>You can only give sections you can open yourself.</value>
+    <comment>Role page, "Sections" box: caption when some sections cannot be ticked</comment>
+  </data>
+  <data name="users_ownAccountCaption" xml:space="preserve">
+    <value>Change your own email address and password in "Your account", from the profile menu.</value>
+    <comment>User page, on your own account: caption under the email address. "Your account" is the profile menu item's name</comment>
+  </data>
+  <data name="users_passwordUpdated" xml:space="preserve">
+    <value>Password Updated</value>
+    <comment>User page: notification after the password was set</comment>
+  </data>
+  <data name="users_roleSectionsHelp" xml:space="preserve">
+    <value>Members of this role can open these sections of the admin. With none ticked, the role gives no access to the admin.</value>
+    <comment>Role page, "Sections" box: above the sections to tick</comment>
+  </data>
+  <data name="users_rolesUpdated" xml:space="preserve">
+    <value>Roles Updated</value>
+    <comment>User page: notification after the roles were saved</comment>
+  </data>
+  <data name="users_saved" xml:space="preserve">
+    <value>{0} Saved</value>
+    <comment>User and role pages: notification after saving. {0} = the user's or role's name</comment>
+  </data>
+  <data name="users_saveError" xml:space="preserve">
+    <value>{0} Error</value>
+    <comment>User and role pages: notification when saving or deleting failed. {0} = the user's or role's name</comment>
+  </data>
+  <data name="users_sections" xml:space="preserve">
+    <value>Sections</value>
+    <comment>Role page: heading of the box of sections the role opens</comment>
+  </data>
+  <data name="users_startingRoleSections" xml:space="preserve">
+    <value>Everyone who registers gets this role, so it cannot open any section of the admin. Give sections to another role.</value>
+    <comment>Role page, "Sections" box, for the role new registrations get (Zauber:NewUserStartingRole)</comment>
+  </data>
+  <data name="users_updateRole" xml:space="preserve">
+    <value>Update Role</value>
+    <comment>Role page: browser tab title</comment>
+  </data>
+  <data name="users_updateRoles" xml:space="preserve">
+    <value>Update Roles</value>
+    <comment>User page: button that opens the roles dialog</comment>
+  </data>
+  <data name="users_updateTab" xml:space="preserve">
+    <value>Update Tab</value>
+    <comment>Role page: side panel title for adding or editing a tab</comment>
+  </data>
+  <data name="users_updateUsersRoles" xml:space="preserve">
+    <value>Update User's Roles</value>
+    <comment>User page: side panel title of the roles dialog</comment>
+  </data>
+  <data name="users_userDeleted" xml:space="preserve">
+    <value>User deleted</value>
+    <comment>User page: notification after the user was deleted</comment>
+  </data>
+  <data name="users_yourAccount" xml:space="preserve">
+    <value>Your account</value>
+    <comment>User page, on your own account: side panel title of the current-user panel</comment>
+  </data>
 </root>

@@ -1,11 +1,11 @@
 ﻿@implements ZauberCMS.Core.Content.Interfaces.IContentView
 @layout BlankLayout
 
-<PageTitle>Missing View</PageTitle>
+<PageTitle>@L["account_missingView"]</PageTitle>
 
 <div class="text-center">
-    <h3>Missing View</h3>
-    <p>It looks like you haven't selected a Component View for the @Content?.Name page, or the Component View has been deleted.</p>
+    <h3>@L["account_missingView"]</h3>
+    <p>@(L["account_missingViewDetail", Content?.Name ?? string.Empty])</p>
 </div>
 
 @code {

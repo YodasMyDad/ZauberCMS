@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Email.Interfaces;
 using ZauberCMS.Core.Email.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Providers;
 using ZauberCMS.Core.Settings;
@@ -17,7 +19,8 @@ namespace ZauberCMS.Core.Email.Services;
 public class EmailService(
     IServiceScopeFactory serviceScopeFactory,
     IHttpContextAccessor httpContextAccessor,
-    ProviderService providerService)
+    ProviderService providerService,
+    IStringLocalizer<ZauberText> text)
     : IEmailService
 {
     /// <summary>
@@ -61,18 +64,19 @@ public class EmailService(
         var link = HtmlEncoder.Default.Encode(callbackUrl);
         if (isChange == "true")
         {
-            // Sent to the new address only: the account moves there when the link is opened (Roadmap D72)
-            await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(email, "Confirm your new email address",
+            // Sent to the new address only: the account moves there when the link is opened (Roadmap D72).
+            // In the caller's language; the link's opening and closing tags are the placeholders.
+            await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(email, text["email_changeEmailSubject"],
             [
-                $"Someone asked to change the email address of an account on this site to this one. To confirm it, <a href='{link}'>click here</a>.",
-                "If it was not you, ignore this email: nothing changes until the link is opened."
+                EmailHtml.Paragraph(text["email_changeEmailBody"], $"<a href='{link}'>", "</a>"),
+                EmailHtml.Paragraph(text["email_changeEmailIgnore"])
             ]);
             return;
         }
 
-        var paragraphs = new List<string> { $"Please confirm your account by <a href='{link}'>clicking here</a>." };
+        var paragraphs = new List<string> { EmailHtml.Paragraph(text["email_confirmAccountBody"], $"<a href='{link}'>", "</a>") };
 
-        await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(email!, "Confirm your email", paragraphs);
+        await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(email!, text["email_confirmAccountSubject"], paragraphs);
     }
 
     /// <summary>
