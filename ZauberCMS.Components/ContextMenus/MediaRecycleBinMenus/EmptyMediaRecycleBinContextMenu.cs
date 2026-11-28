@@ -54,7 +54,11 @@ public class EmptyMediaRecycleBinContextMenu(
             IncludeDescendants = false,
             Max = MaxUsages
         });
-        var message = text["contextMenus_emptyMediaRecycleBinConfirm", MediaUsageText.Describe(usages, MaxUsages, text), count].Value;
+        // One item is a sentence of its own: "all 1 items" read wrong (ZA-305)
+        var usage = MediaUsageText.Describe(usages, MaxUsages, text);
+        var message = count == 1
+            ? text["contextMenus_emptyMediaRecycleBinConfirmOne", usage].Value
+            : text["contextMenus_emptyMediaRecycleBinConfirm", usage, count].Value;
         var confirmed = await dialogService.Confirm(message, text["contextMenus_emptyRecycleBin"],
             new ConfirmOptions { OkButtonText = text["contextMenus_emptyRecycleBin"], CancelButtonText = text["general_cancel"] });
         if (confirmed != true)
@@ -65,7 +69,9 @@ public class EmptyMediaRecycleBinContextMenu(
         var result = await mediaService.EmptyMediaRecycleBinAsync(new EmptyMediaRecycleBinParameters());
         if (result.Success)
         {
-            notificationService.ShowSuccessNotification(text["contextMenus_mediaRecycleBinEmptied", result.Entity ?? 0]);
+            notificationService.ShowSuccessNotification(result.Entity == 1
+                ? text["contextMenus_mediaRecycleBinEmptiedOne"]
+                : text["contextMenus_mediaRecycleBinEmptied", result.Entity ?? 0]);
         }
 
         if (!result.Success || result.Messages.Count != 0)

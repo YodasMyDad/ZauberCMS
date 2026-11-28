@@ -25,8 +25,11 @@ public class ExtensionManager(IServiceProvider serviceProvider)
     /// <summary>
     /// ZauberCMS's text from this scope, for the static helpers a service gives its extension manager
     /// (<c>SaveChangesAndLog</c>): they write their messages in the caller's language (Docs/AdminUI.md "Localisation").
+    /// An extension manager built over a provider without ZauberCMS's text (a plugin's test, a tool) gets Core's
+    /// English, so a save still answers with its message instead of throwing (ZA-302).
     /// </summary>
-    internal IStringLocalizer<ZauberText> Text => serviceProvider.GetRequiredService<IStringLocalizer<ZauberText>>();
+    internal IStringLocalizer<ZauberText> Text =>
+        serviceProvider.GetService<IStringLocalizer<ZauberText>>() ?? CoreText.English;
 
     /// <summary>Empties the discovery caches; called when the scanned assemblies change.</summary>
     internal static void ClearCaches()

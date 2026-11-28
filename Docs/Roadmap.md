@@ -61,9 +61,11 @@
   **Phase 11j done** (front-end links, rich-text page links and redirect targets under a path base, and the sign-in
   with same-named cookies at `/`; D140–D143, ZA-251, ZA-252; ZA-290 found and fixed while building, ZA-291…ZA-298
   found by its `/audit changed` and fixed; 2026-11-28, merged after 10h).
+  **Phase 10h audit done** (`/audit changed` over the whole of 10h and 11i's merge: ZA-300…ZA-309 found and fixed,
+  D160–D162, ZP-030 and ZP-031 proposed; 2026-11-28, merged after 11j; see "Phase 10h audit").
   **7 open findings** (0 Critical, 0 High, 0 Medium, 7 Low), each one assigned below to a phase (10i).
   **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
-  whose theme fits. **Next: `/audit changed` over the whole of Phase 10h** (10h-1 to 10h-4), then 10i,
+  whose theme fits. **Next: 10i** (in progress in its own worktree),
   then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -170,11 +172,14 @@
 | D122 | **`SaveChangesAndLog` localises through the scope it is given.** Its messages (a save hook's veto, a concurrency conflict) come from `ExtensionManager.Text` (internal: the scope's `IStringLocalizer<ZauberText>`), so none of its callers change; AdminUI.md rule 8's "static helpers take it as a parameter" stays for the others. `EditContextFluentValidationExtensions.ValidatorFailedMessage` stays a public constant with the English, and the form shows `shared_validatorFailed` from the service provider it is given. Rejected: a localiser parameter on `SaveChangesAndLog` (every service in Core would change, across the parallel parts' folders). (Phase 10h-3) | D92 |
 | D130 | **The account forms' validation messages come from ZauberCMS's text through validation attributes that read the localiser from the validation's services.** The account parameter classes (`LoginUserParameters`, `RegisterUserParameters`, `ForgotPasswordParameters`, `ResetPasswordParameters`) carry `[ZauberRequired]`, `[ZauberEmailAddress]`, `[ZauberStringLength]` and `[ZauberComparePassword]` (internal, `Membership/Validation`), which keep the rules of `[Required]`, `[EmailAddress]`, `[StringLength]` and `[Compare]` and take their message from `IStringLocalizer<ZauberText>` in the `ValidationContext`: Blazor's `DataAnnotationsValidator` passes the page's services (the request's on the static account pages), so the message is in the request's culture; the field's name in it is ZauberCMS's text too (`membership_field*`). Validated without services (`Validator` called with none), each gives its base attribute's English, as before. `[Display]` and `[DataType]` stay for other code that reads them. The English is unchanged. Rejected: each page checking its fields itself (the rules twice, and the attributes gone from public classes a site may validate with), MVC's `DataAnnotationsLocalization` (Blazor does not use it), and a resource type on the attributes (`ErrorMessageResourceType` needs static properties, which cannot follow the layers of D90). Umbraco's member forms are templates the site edits and keep .NET's attributes as they are; ZauberCMS ships its account pages (D95), so it localises their messages as Umbraco localises its back office's validation messages from its language files. `NavigationItem` (the navigation editor's item dialog, the one other DataAnnotations model the admin validates) carries `[ZauberRequired]` too, its field names Core's `shared_navigationItem*` (at the 10h merge). (owner delegated to Umbraco parity, 2026-11-28, Phase 10h-4) | D92, D95 |
 | D131 | **ASP.NET Identity's own messages (the password rules, a name or address already taken, a wrong password, an invalid link) are ZauberCMS's text.** `ZauberIdentityErrorDescriber` (internal, `Membership/Validation`) overrides each `IdentityErrorDescriber` message with a `membership_identity*` key, keeping Identity's code and its English, so the account pages show them in the request's culture and the admin (a user's password, "Your account") in the admin's; it is registered with `AddErrorDescriber` in the bootstrap, and a site's own `AddErrorDescriber` after `AddZauberCms` wins. A message a later .NET adds and the class does not override stays Identity's English; a test fails when one is not overridden or its English differs from Identity's. Umbraco does the same: `BackOfficeErrorDescriber` and `MembersErrorDescriber` (over `UmbracoErrorDescriberBase`) localise Identity's errors through `ILocalizedTextService`. (owner delegated to Umbraco parity, 2026-11-28, Phase 10h-4) | D92 |
-| D132 | **An email is written in the culture of the code that sends it, and its sentences are encoded text with the link as their placeholders.** Registration, a resent confirmation and "Forgot your password" are sent from the account pages, in the request's culture; the set-password email an administrator's save sends and the change-email link from "Your account" are sent from the admin, in the admin's. ZauberCMS has one admin language and no language per user (D96), so it cannot write in the recipient's language; ZP-010 (a language per back-office user) would add that. Each paragraph is a whole sentence whose link's opening and closing tags are `{0}`/`{1}` (`Please confirm your account by {0}clicking here{1}.`): the sentence is HTML-encoded, then the tags (built and encoded in code) are put in, so a translation is text, never markup (`EmailHtml`, internal). Subjects are plain text. Umbraco writes a back-office user's emails (invitation, password reset) in that user's own language (`GetUserCulture`), which it can because each user has one. (owner delegated to Umbraco parity, 2026-11-28, Phase 10h-4) | D96, ZP-010 |
+| D132 | **An email is written in the culture of the code that sends it, and its sentences are encoded text with the link as their placeholders.** Registration, a resent confirmation, "Forgot your password" and the set-password email to an address on the admin list (sent at its registration, ZA-023) are sent from the account pages, in the request's culture; the change-email link from "Your account" is sent from the admin, in the admin's (wording corrected by the Phase 10h audit, ZA-309: no admin save sends an email). ZauberCMS has one admin language and no language per user (D96), so it cannot write in the recipient's language; ZP-010 (a language per back-office user) would add that. Each paragraph is a whole sentence whose link's opening and closing tags are `{0}`/`{1}` (`Please confirm your account by {0}clicking here{1}.`): the sentence is HTML-encoded, then the tags (built and encoded in code) are put in, so a translation is text, never markup (`EmailHtml`, internal). Subjects are plain text. Umbraco writes a back-office user's emails (invitation, password reset) in that user's own language (`GetUserCulture`), which it can because each user has one. (owner delegated to Umbraco parity, 2026-11-28, Phase 10h-4) | D96, ZP-010 |
 | D140 | **A view, layout or block links to a page with `NavigationManager.ToSiteUrl(content)` (new overload, public, `ZauberCMS.Core.Extensions`): the page's `ContentUrl.SiteRelative` site path read below the base address as D101 reads one (`/site/blog`), null for content with no URL.** `ContentUrl.SiteRelative` keeps its value (`/blog`): it is what rich text stores and the editor compares, and what server code puts `Request.PathBase` in front of. The template's layout and the sample site link this way, and the source scan of D101 now covers both and flags `href="@ContentUrl.SiteRelative(…)"`. Umbraco does the same: `IPublishedUrlProvider.GetUrl` (`content.Url()`) builds the address through `UriUtility.UriFromUmbraco`, whose `ToAbsolute` puts the application's virtual path in front. Rejected: links relative to `<base href>` (Blazor's idiom, but D101 made ZauberCMS's links paths from the host's root, and a relative link is right only in a page with that base), `SiteRelative` with the path base in it (a static helper has no request, and its value is stored), and a replaceable URL provider (nothing to plug in yet; content finders cover the way in). (owner delegated to Umbraco parity, 2026-11-28, Phase 11j) | ZA-251, D101 |
 | D141 | **Rich text: a link to a page (`<a data-contentid>`, whose href the link dialog's Content tab writes and the editor keeps as the page's site path) is rendered below the path base by the default sanitiser; the stored HTML is not changed, and an address an editor typed is rendered as typed.** `DefaultHtmlSanitizerService` (a new constructor, the one DI builds) takes the path base of the request, or in a circuit and a block preview the base address of its navigation manager; a scope with neither (a job) renders the site path. Umbraco does the same: a link to content is stored as `{localLink:…}` and resolved when it is rendered through the URL provider (virtual path included), and typed addresses are left alone (its `~/` resolution, `ResolveUrlsFromTextString`, is off by default). A site with its own sanitiser does it itself (FrontEnd.md). Rejected: every `/…` in rich text (a link that had the path base written in, to work around this, would get it twice), rewriting stored content when the site moves, and looking each page up again when it is rendered (a query per link; the editor already keeps the href in step). (owner delegated to Umbraco parity, 2026-11-28, Phase 11j) | ZA-251 |
 | D142 | **An SEO redirect's target on this site (`/new-page`) is a site path: it is sent below the path base (`/site/new-page`), as the From URL has always been matched below it; a full address is sent as it is.** `RedirectMiddleware` matched `FromUrl` against `Request.Path` and compared the target with it in that form already, so only the `Location` changes. Umbraco's redirect tracking keeps the page and sends the visitor to the address its URL provider builds, virtual path included. A target with the path base written into it, to work around this, now gets it twice: release notes. (owner delegated to Umbraco parity, 2026-11-28, Phase 11j) | ZA-251, D34 |
 | D143 | **Under a path base, of two cookies with one name the request reads the first the browser sends, which is the site's own; at the host's root nothing changes, and the cookie names stay.** Reproduced: ASP.NET Core 10 reads the last cookie of a repeated name (`Cookie: a=site; a=stale` gives `stale`), and Chromium sends the cookies of the longer path first (RFC 6265 §5.4), so under `/site` the site's sign-in and antiforgery cookies, which ASP.NET Core writes at the path base, lost to same-named ones at `/` from a site at the host's root or from this site before it moved: the sign-in did not hold and a form post was refused (400; the login page's in the Phase 11i browser check, a test's form here). `PathBaseCookiesMiddleware` (internal, right after the forwarded headers) gives a request with a path base a cookie feature that keeps the first of each name, parsed by the framework's own parser; the header stays as sent. At the root the site's cookies are at `/`, the shortest path, sent last, so the framework's rule is the right one there. The rule assumes the site's cookie is the one at the longest path: a site that writes its cookie above its path base (`Cookie.Path = "/"`), or two cookies that differ only by Domain, are read in the browser's order (ZA-295, FrontEnd.md). A cookies feature a site set before `AddZauberCms<T>` is kept, which is the way back to the framework's rule (ZA-294). Umbraco gives its back-office cookie a name of its own, a setting (`Umbraco:CMS:Security:AuthCookieName`, default `UMB_UCONTEXT`), and leaves members on Identity's default cookie, so two Umbraco sites on one host need a name each and a stale same-named cookie still wins there. Rejected: renaming ZauberCMS's cookies (it signs every site's users out on the update, and two ZauberCMS sites on one host would still share the names), a name with the path base in it (signs everyone out when the site moves), a Zauber setting for the names (ASP.NET Core's options already do it: `ConfigureApplicationCookie`, `AddAntiforgery`; FrontEnd.md), and rewriting the Cookie header (a proxy or a site's own code would see a different header). (owner delegated to Umbraco parity, 2026-11-28, Phase 11j) | ZA-252, ZA-290 |
+| D160 | **A sentence with a count is two keys, as English needs: `…One` for a count of one and the key itself for any other count, chosen in code.** "Permanently delete all 1 items" and "1 items deleted" read wrong, and a translator of one key could not fix them. Each key is a literal at the indexer (`count == 1 ? L["…One"] : L["…", count]`), so the guard sees both; a translator writes both, as for the media-usage sentences that already had `…One` keys. Texts written "item(s)" stay one key. Plural forms for languages with more than two (Polish, Russian, Arabic) need a rule per language and are proposed as ZP-030. Umbraco's back office writes a count as a function in its language file (`(count) => count === 1 ? … : …`), which `.resx` cannot hold; the two keys are its nearest equivalent. (owner delegated to Umbraco parity, Phase 10h audit, ZA-305) | D91, ZP-030 |
+| D161 | **The request cultures are the site's languages as they are now, not as they were at the start.** `UseRequestLocalization` (the account pages, the fallback pages, the sign-out page: D95) chose among the languages read once at start-up, so a language added in Settings > Languages, or by the installer on a site that started without a database, was not a request culture until a restart. `SiteLanguagesRequestCultureProvider` (internal, first of the providers) keeps the supported cultures the admin language and the site's languages from the languages' cached query (cleared with the `Language` prefix when one is saved, on every server with Redis), so a request costs one cache lookup; it chooses no culture itself, and a culture a request asks for that is not a site language is never added. Umbraco does the same: `DynamicRequestCultureProviderBase` adds the cultures its providers find to `SupportedCultures` at request time, under a lock. (owner delegated to Umbraco parity, Phase 10h audit, ZA-307) | D95 |
+| D162 | **A `ZauberText` file named for a culture .NET does not know is not used, and a warning names it.** The SDK builds `General.dk.resx` (Danish is `da`) or `General.en-UK.resx` into the assembly itself, not a satellite, so the catalog read it as a file with no culture and its text replaced the English in every language. A resource whose last part is a culture tag (an area starts with a capital, D91) is skipped at the step with no culture; AdminUI.md "Localisation" step 2 says to use a culture .NET knows. .NET's `ResourceManager` never reads such a file either; Umbraco's language files are named by culture code (`da.xml`, `en-us.xml`), and the name is what makes a file a language's, never a fallback for all of them. (owner delegated to Umbraco parity, Phase 10h audit, ZA-300) | D90 |
 
 ## Working rules for the rework
 
@@ -1453,7 +1458,7 @@ and converts the first screens; then **10h-2, 10h-3 and 10h-4 run in parallel**,
 converting only its own folders into its own area files, by the rules and area table in
 [AdminUI.md](AdminUI.md) "Localisation" (followed literally). ZA-129 closes with 10h-4; `/audit changed` runs once
 after 10h-4, over the whole of 10h.
-**DONE (2026-11-28): all four parts merged; ZA-129 fixed. Next: `/audit changed` over the whole of 10h.**
+**DONE (2026-11-28): all four parts merged; ZA-129 fixed. Audited (2026-11-28): "Phase 10h audit" below.**
 
 #### Phase 10h-1 — The mechanism and the first screens — DONE (2026-11-28)
 - **Mechanism (D90–D97).** `IStringLocalizer<ZauberText>` (`ZauberCMS.Core/Localization/`: the public marker
@@ -1708,6 +1713,10 @@ role, user, membership, security and email messages (Core `Languages`, `Audit`, 
   - `IdentityRedirectManager.RedirectToWithStatus(uri, message, type, context)` and `StatusMessage.MessageType` are
     new; a status message written without a type is still an error when it starts with "Error".
   - The account layout no longer sets the admin's culture (it had no effect).
+  - `MessagesAsString` (public, `ResultExtensions`) returns every message, one per line, as written (before: one
+    message as written, or several reduced to the success messages, each with a "." added; ZA-283). A status
+    message's type travels in a second essential cookie, `Identity.StatusMessageType`, beside `Identity.StatusMessage`
+    (added by the Phase 10h audit, ZA-309).
 - **For the merge**: files outside the part's folders: `ZauberCMS.Core/ZauberSetup.cs` (one `AddErrorDescriber`
   line and a `using`), `ZauberCMS.Core/Membership/IdentityRedirectManager.cs`, `ZauberCMS.Core/Extensions/
   ResultExtensions.cs` (`MessagesAsString`'s body and two `using`s, ZA-283; 10h-3's folder, no text there),
@@ -1737,6 +1746,92 @@ role, user, membership, security and email messages (Core `Languages`, `Audit`, 
   1533 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis (1521 on its own branch);
   template smoke test passes.
 
+#### Phase 10h audit — DONE (2026-11-28)
+`/audit changed` over `f7c38f2..b50f841`: the whole of Phase 10h (10h-1 to 10h-4) and Phase 11i's merge onto it,
+on branch `audit-10h`. Agents: K (build, the full suite on the four databases, pattern counts on the added lines,
+the packages' resources), four unit reviewers (the mechanism; Core's messages; Content, Media, the editors and SEO;
+Structure, Settings, Users, the layout and the account pages), a fresh diff reviewer over the five commits, and a
+verifier for ZA-307 and ZA-308. Nothing Critical or High, and nothing broken at the merge points: every part's "for
+the merge" step is in the code, no key is in two files (Core's and Components' together), 11i undid no conversion
+and every navigation 10h touched goes through `ToSiteUrl`; every literal key (1,672 reads) has as many arguments as
+placeholders; no text is read once and kept (discovered types read it per access, `GetInstances(true)` caches
+types, FluentValidation uses the lambda form); each message is in the right culture (the admin's, the request's on
+the account pages, the installer's own, the sender's for email); the packages carry every `.resx` (11 in Core, 16
+in Components; a site's `ZauberText/` and `Resources/ZauberText/` are both found); one lookup costs about 120 ns and
+56 bytes, with no lock on a hit; no persisted value changed.
+- **Found and fixed** (each test seen failing with its fix taken out, except ZA-302's log-once check, whose
+  behaviour is the same):
+  - **ZA-300 (Medium)** a `ZauberText` file named for a culture .NET does not know (`General.dk.resx`, `en-UK`) is
+    built into the assembly itself and was read as a file with no culture, so its text replaced the English in every
+    language: skipped with a warning (D162). Test: `ZauberTextTests.ZA300_…` with the test file `General.xx.resx`.
+  - **ZA-301 (Medium)** Radzen's bridge read a culture's `radzen_*` texts with `ToDictionary` over the localiser's
+    `GetAllStrings`, uncaught: a site's own localiser whose `GetAllStrings` throws (a common
+    `NotImplementedException`) or repeats a name stopped every grid, dialog and date picker of the admin. The first
+    of a name wins; a failure is logged and leaves Radzen its English. Test: `RadzenTextLocalizerTests`.
+  - **ZA-302 (Low)** the mechanism's edges: a missing key took every lock of the reported-keys dictionary on each
+    read (`Count`), and `ExtensionManager.Text` needed the localiser in DI, so a hand-built `ExtensionManager` made
+    `SaveChangesAndLog`'s concurrency catch throw; it falls back to Core's English (`CoreText`, internal). Tests:
+    `ZauberTextTests.ZA302_…`, `CoreMessageTextTests.ZA302_…`.
+  - **ZA-303 (Low)** the guard (D94) did not check argument counts against placeholders, values that do not format,
+    or the `ZauberCMS` project's keys (`Routes.razor`): `ZA303_every_literal_key_is_read_with_one_argument_per_placeholder`
+    (a bracket- and string-aware count; the wrappers `EmailHtml.Paragraph` and `InstallerMarkup.WithCode` count their
+    own; `FormattedByCaller` lists `CurrentUserPanel`'s split); `Log.Warning(` is a log line to it, as `LogWarning(`
+    was.
+  - **ZA-304 (Low)** text in HTML: the reset password's message (`membership_passwordResetDone`, shown as markup by
+    `StatusMessage`) put its link into an unencoded sentence, so a translation was markup: built through
+    `EmailHtml.Paragraph` now. `EmailHtml` wrote every letter outside Basic Latin as an entity (`best&#xE4;tigen`):
+    `HtmlEncoder.Create(UnicodeRanges.All)`. A translation whose placeholders did not match (or left the link open)
+    sent the email without its link and logged nothing: logged, and Core's English is used. Tests: `EmailHtmlTests`,
+    the reset message in `StartingRoleTests`. Not changed: Identity's messages that echo what the visitor typed (a
+    user name) are sanitised markup on the visitor's own page, as before 10h.
+  - **ZA-305 (Low)** English that read wrong: "delete all 1 items" and "1 items deleted" (four `…One` keys, D160),
+    the Settings group "Seo" (now "SEO") and seven "Url" texts ("URL"), the concurrency message naming the C# type
+    (`Content`, `GlobalData`; now "This item was changed by someone else…"), "please login" ("log in"). Tests: the
+    guard checks SEO and URL; `CoreMessageTextTests.ZA305_…`.
+  - **ZA-306 (Low)** a reset-password link a mail client cut short (its code not Base64Url) threw from the page and
+    showed the error page (older than 10h; ZA-284's page): it says "The reset link is not valid" now. Tests:
+    `ResetPasswordLinkTests`; the template smoke test opens such a link.
+  - **ZA-307 (Low)** the request cultures were the languages read at start-up, so a language added later (Settings >
+    Languages, or the installer on a site started without a database) was not used on the account, fallback and
+    sign-out pages until a restart (D161, `SiteLanguagesRequestCultureProvider`). Test: `RequestCultureTests` (the
+    real middleware: French saved after the first request is the next request's culture; German, not a site
+    language, is not added).
+  - **ZA-308 (Low)** `SectionLayout` set the admin culture in `OnInitialized`, which never reaches the render (the
+    no-op 10h-4 took out of `BlankLayout`), under a comment saying it covered the first render: removed (its
+    `Settings` property stays). Verified by the verifier's .NET 10 renderer probe; `AdminCultureCircuitHandler`
+    covers every circuit activity, the first render included.
+  - **ZA-309 (Low)** docs and notes: D132 placed the set-password email in the admin (it is sent at registration, in
+    the request's culture); 10h-4's release notes lacked `MessagesAsString`'s new output and the
+    `Identity.StatusMessageType` cookie; four editors (SEO, Rating, Custom Component Picker, API Key Picker) had no
+    `Name`/`Description` setters although D120 and Editors.md say every built-in editor has them (added); Editors.md
+    now says how a subclass gets the admin's language (`[ActivatorUtilitiesConstructor]`, which is not inherited);
+    Installer.md and AGENTS.md wording. Test: `EditorConstructionTests.ZA309_…`.
+- **Recorded for Phase 10i** (in ZA-128's roll-up): the sign-out page's `<html>` has no `lang`; six icon-only buttons
+  without a label (`NavigationItemEditor` ×2, `DictionaryEditor`, `ListEditor`, `TagEditor`, `PickerItem`); `label
+  for` without matching ids on `ForgotPassword` and `ResetPassword`. Open items checked, still open: ZA-128, ZA-194,
+  ZA-261…ZA-264, ZA-270 (10i); ZA-251, ZA-252 (open at the audit's base) were fixed by Phase 11j, which merged
+  first. Not reproduced (it needs a browser): the root "Sort Content"
+  that opened nothing in 10h-2's walk.
+- **Proposals:** ZP-030 plural forms for translators (a count chooses the key's CLDR form; D160's two keys until
+  then); ZP-031 a typed `RedirectToCurrentPageWithStatus` overload (ZA-280's type for the current-page variant).
+- **Verification:** Release build 0 warnings; full suite 1599 (all pass, none skipped; 1581 before, 18 new) on
+  SQLite, PostgreSQL, SQL Server LocalDB and Redis; template smoke test passes, with a new check (a damaged reset
+  link, ZA-306); vulnerable packages 0; each fix's test seen failing with its fix taken out. Not done: a product
+  agent or a browser walk (no screen's layout changed: wording, two one-item sentences, a message on the reset
+  page), the runtime probe R1 (the front-end path did not change), a translated site in a browser.
+- **Merged after Phase 11j** (cherry-picked onto `rework-2026`): conflicts only in the docs, both sides kept; no
+  code changed. The reset-done message's link, the one link the audit touched, keeps the path base (`HostPath`,
+  D101). Release build 0 warnings; full suite 1621 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server
+  LocalDB and Redis; the guard's placeholder check passes over 11j's code; template smoke test passes.
+- **Release notes (D18):**
+  - A `ZauberText` file named for a culture .NET does not know is no longer used (a warning names it); before, it
+    replaced the English in every language.
+  - The account, fallback and sign-out pages take a language added in Settings > Languages without a restart.
+  - Radzen's text from a site's own `IStringLocalizer<ZauberText>` survives a `GetAllStrings` that throws.
+  - English wording: "SEO", "URL", one-item sentences, the concurrency message, "please log in"; a site that
+    overrides those keys keeps its own text. The four editors above gain `Name`/`Description` setters (additive).
+  - `SectionLayout` no longer overrides `OnInitialized` (it had no effect).
+
 ### Phase 10i — Accessibility pass
 ZA-128 (Low). Labels on icon buttons and inputs, keyboard access and roles for the clickable divs (every tree
 button), `label for` matching real ids, focus in side panels. Last of the Phase 10 parts, so it covers 10g's screens
@@ -1751,6 +1846,9 @@ and uses 10h's localised text.
   **ZA-264** (`EditImage.razor`, the media image editor, cannot be opened, its button being commented out in
   `UpdateMediaForm`, and writes its crop boxes to the console: finish it or remove it). Decide it Umbraco's way:
   Umbraco never edits the stored file, crops are data.
+- From the Phase 10h audit, in **ZA-128**'s roll-up: the sign-out page's `<html>` has no `lang`; six icon-only
+  buttons without a label (`NavigationItemEditor` ×2, `DictionaryEditor`, `ListEditor`, `TagEditor`,
+  `PickerItem`); `label for` without matching ids on `ForgotPassword` and `ResetPassword` too.
 - From Phase 10h-3: **ZA-270**, the trees' "Show more" row (`TreeLoadMore.Name`) is English: the trees read it
   without `L`; give the row its text where the trees render it (it is a tree button, already 10i's: Core's
   `TreeLoadMore` builds it and `TreeExtensions`' static templates render it for the trees of Trees, Content and

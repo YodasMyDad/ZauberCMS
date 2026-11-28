@@ -197,11 +197,11 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
   (with the path base in it, for a site under one).
 - The admin always runs in `Zauber:AdminDefaultLanguage` (`CultureMiddleware` for requests,
   `AdminCultureCircuitHandler` for circuits); front-end pages run in the language of their content, the account
-  pages in the request's (`UseRequestLocalization`: the site's languages, D95). ZauberCMS's own text follows that
+  pages in the request's (`UseRequestLocalization`: the site's languages as they are now, D95, D161). ZauberCMS's own text follows that
   culture (`IStringLocalizer<ZauberText>`, [Docs/AdminUI.md](Docs/AdminUI.md) "Localisation").
 - Text ZauberCMS shows goes through `IStringLocalizer<ZauberText>` (`L` in every component, from `_Imports.razor`;
   a discovered type's text by constructor), keys `area_name`, English `.resx` per area in `Resources/ZauberText/` of
-  Components and Core (Roadmap D37, D90–D97; Phase 10h converts the admin part by part). A site, plugin or language
+  Components and Core (Roadmap D37, D90–D97, Phase 10h; D160–D162). A site, plugin or language
   pack adds `ZauberText/<Area>.<culture>.resx` in a scanned assembly to translate or override keys; a missing key
   falls back to English; Radzen's own text is `radzen_<Radzen key>`. Rules, area table:
   [Docs/AdminUI.md](Docs/AdminUI.md) "Localisation".

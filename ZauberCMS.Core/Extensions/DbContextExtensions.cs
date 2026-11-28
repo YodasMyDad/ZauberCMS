@@ -246,7 +246,7 @@ public static class DbContextExtensions
         catch (DbUpdateConcurrencyException ex)
         {
             crudResult.Success = false;
-            crudResult.AddMessage(extensionManager.Text["shared_changedBySomeoneElse", typeof(T).Name],
+            crudResult.AddMessage(extensionManager.Text["shared_changedBySomeoneElse"],
                 ResultMessageType.Error);
             Log.Warning(ex, "{Type} not saved: concurrency conflict", typeof(T).Name);
         }

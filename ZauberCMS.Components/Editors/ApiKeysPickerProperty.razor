@@ -25,9 +25,13 @@
     [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ApiKeysPickerProperty(IStringLocalizer<ZauberText> text) => _text = text;
 
-    public string Name => _text["editors_apiKeyPicker"];
+    // Settable, as every built-in editor's (D120: a subclass or a site may rename it); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_apiKeyPicker"].Value; set => _name = value; }
     public string Alias => "ZauberCMS.ApiKeyPicker";
-    public string Description => _text["editors_apiKeyPickerInfo"];
+    public string Description { get => _description ?? _text["editors_apiKeyPickerInfo"].Value; set => _description = value; }
     public string Icon => "api";
     public Type? SettingsComponent { get; set; }
 

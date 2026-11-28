@@ -185,7 +185,7 @@
     <comment>Version comparison: the label of a changed page name</comment>
   </data>
   <data name="content_versionFieldUrl" xml:space="preserve">
-    <value>Url</value>
+    <value>URL</value>
     <comment>Version comparison: the label of a changed page URL</comment>
   </data>
   <data name="content_versionNotFound" xml:space="preserve">

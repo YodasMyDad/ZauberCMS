@@ -61,7 +61,7 @@
     <value>Delete Image</value>
   </data>
   <data name="media_fileUrl" xml:space="preserve">
-    <value>File Url</value>
+    <value>File URL</value>
   </data>
   <data name="media_height" xml:space="preserve">
     <value>Height</value>

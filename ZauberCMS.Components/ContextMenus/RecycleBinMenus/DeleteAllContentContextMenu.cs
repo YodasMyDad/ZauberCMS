@@ -68,7 +68,10 @@ public class DeleteAllContentContextMenu(
         }
 
         // Confirm deletion
-        var confirmMessage = text["contextMenus_deleteAllContentConfirm", topLevelItems.Count].Value;
+        // One item is a sentence of its own: "the 1 items" read wrong (ZA-305)
+        var confirmMessage = topLevelItems.Count == 1
+            ? text["contextMenus_deleteAllContentConfirmOne"].Value
+            : text["contextMenus_deleteAllContentConfirm", topLevelItems.Count].Value;
         var confirmed = await dialogService.Confirm(confirmMessage, text["contextMenus_deleteAll"], 
             new ConfirmOptions { OkButtonText = text["contextMenus_deleteAll"], CancelButtonText = text["general_cancel"] });
         
@@ -107,7 +110,9 @@ public class DeleteAllContentContextMenu(
             {
                 Severity = NotificationSeverity.Success,
                 Summary = text["general_success"],
-                Detail = text["contextMenus_recycleBinItemsDeleted", successCount],
+                Detail = successCount == 1
+                    ? text["contextMenus_recycleBinItemsDeletedOne"]
+                    : text["contextMenus_recycleBinItemsDeleted", successCount],
                 Duration = 4000
             });
         }

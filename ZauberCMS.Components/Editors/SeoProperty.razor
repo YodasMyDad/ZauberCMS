@@ -127,9 +127,13 @@
     [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public SeoProperty(IStringLocalizer<ZauberText> text) => _text = text;
 
-    public string Name => _text["editors_seo"];
+    // Settable, as every built-in editor's (D120: a subclass or a site may rename it); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_seo"].Value; set => _name = value; }
     public string Alias => "ZauberCMS.Seo";
-    public string Description => _text["editors_seoInfo"];
+    public string Description { get => _description ?? _text["editors_seoInfo"].Value; set => _description = value; }
     public string Icon => "show_chart";
     public Type? SettingsComponent { get; set; }
     public List<string> Scripts { get; set; } = [];

@@ -62,5 +62,7 @@ internal sealed class ZauberTextLocalizer(ZauberTextCatalog catalog, ILogger<Zau
         catalog.All(CultureInfo.CurrentUICulture, includeParentCultures)
             .Select(entry => new LocalizedString(entry.Key, entry.Value, resourceNotFound: false, ZauberText.ResourceFolder));
 
-    private bool FirstReport(string id) => _reported.Count < MaxReported && _reported.TryAdd(id, true);
+    // ContainsKey takes no lock; Count takes all of them, so only a key not reported yet pays for it (ZA-302)
+    private bool FirstReport(string id) =>
+        !_reported.ContainsKey(id) && _reported.Count < MaxReported && _reported.TryAdd(id, true);
 }

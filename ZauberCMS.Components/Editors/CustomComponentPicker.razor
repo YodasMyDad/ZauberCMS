@@ -27,9 +27,13 @@
     [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public CustomComponentPicker(IStringLocalizer<ZauberText> text) => _text = text;
 
-    public string Name => _text["editors_customComponentPicker"];
+    // Settable, as every built-in editor's (D120: a subclass or a site may rename it); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_customComponentPicker"].Value; set => _name = value; }
     public string Alias => "ZauberCMS.CustomComponentPicker";
-    public string Description => _text["editors_customComponentPickerInfo"];
+    public string Description { get => _description ?? _text["editors_customComponentPickerInfo"].Value; set => _description = value; }
     public string Icon => "settings_ethernet";
     public Type? SettingsComponent { get; set; }
 

@@ -244,15 +244,20 @@ resource); ZauberCMS ships no Radzen file, so a key nobody translated is Radzen'
 2. Add a file per area with the culture in its name: `General.fr.resx`, `ContextMenus.fr.resx`, … holding the keys
    it translates, named as in ZauberCMS's English files (copy the file, translate the values, keep the `{0}`s). A
    key it leaves out stays English. The SDK builds them into a satellite assembly (`fr/MySite.resources.dll`),
-   which a NuGet package ships too: no build chain beyond `dotnet build`.
+   which a NuGet package ships too: no build chain beyond `dotnet build`. Name the file with a culture .NET knows
+   (`da`, not `dk`; `en-GB`, not `en-UK`): the SDK builds a file named for any other into the assembly itself, and
+   ZauberCMS does not use it and logs a warning naming it, so it never replaces the English (D162).
 3. Set `Zauber:AdminDefaultLanguage` to `fr`. The account pages use the request's culture, so they show French to a
-   request in a culture the site has (`UseRequestLocalization`: the site's languages).
+   request in a culture the site has (`UseRequestLocalization`: the site's languages as they are now, so a language
+   added in Settings > Languages is one without a restart, D161).
 4. To change ZauberCMS's English wording, `General.en.resx` with the keys to change. A file with no culture
    (`General.resx`) changes a key in every language that has no translation of it.
 5. Radzen: `Radzen.fr.resx` with `radzen_DataGrid_EmptyText` and the other keys it translates.
 6. Texts kept elsewhere (a database, JSON): register an `IStringLocalizer<ZauberText>` of your own, as a singleton
    (Radzen's bridge holds it), after `AddZauberCms` (it replaces ZauberCMS's; registered before, ZauberCMS's is not
-   added), and a Radzen `ILocalizer` if Radzen's text comes from there too.
+   added), and a Radzen `ILocalizer` if Radzen's text comes from there too. Radzen's bridge reads the `radzen_*`
+   texts through its `GetAllStrings(true)`, once per culture: one that throws leaves Radzen its own English (a
+   warning is logged), and the first of a name given twice wins.
 
 A plugin with admin text of its own does the same with its own area: `ZauberText/MyPlugin.resx` (English) with keys
 `myPlugin_*`, read with `IStringLocalizer<ZauberText>`, and a site or translator adds `MyPlugin.fr.resx`. (A plain
@@ -273,7 +278,10 @@ A plugin with admin text of its own does the same with its own area: `ZauberText
 4. **Placeholders**: one key per sentence, `L["contextMenus_deleteConfirm", page.Name]` with the value `Delete {0}?`
    and a `<comment>` naming each placeholder (`{0} = the page name`); numbered from `{0}`; never concatenate
    localised fragments or wrap localised text in `$"..."`. A comment that says where a text is shown helps the
-   translator.
+   translator. A count is two keys, as English needs: `…One` for a count of one (the sentence without the number) and
+   the key itself for any other count, chosen in code with each key a literal
+   (`count == 1 ? L["contextMenus_itemsDeletedOne"] : L["contextMenus_itemsDeleted", count]`); a translator writes
+   both (D160; plural forms for other languages are ZP-030).
 5. **Razor**: every component in ZauberCMS.Components has `L` (`@inject IStringLocalizer<ZauberText> L` in
    `ZauberCMS.Components/_Imports.razor`): `Text="@L["general_save"]"`, `@L["dashboards_recentActivity"]`, and
    `L["..."]` in `@code`. `L[...]` is a `LocalizedString`, which converts to `string`; write `.Value` where the target
@@ -319,7 +327,9 @@ A plugin with admin text of its own does the same with its own area: `ZauberText
    (`AccountValidationText.FieldName`). ASP.NET Identity's own messages go through
    `ZauberIdentityErrorDescriber` (`membership_identity*`, D131). An email's paragraph is
    `EmailHtml.Paragraph(text["email_…"], openTag, closeTag)`: the sentence HTML-encoded, the link's tags as
-   `{0}`/`{1}` (D132).
+   `{0}`/`{1}` (D132); a translation whose placeholders do not match is logged and Core's English is used, so the
+   link is never lost. The one account-page message with a link (`membership_passwordResetDone`, shown as markup by
+   `StatusMessage`) is built the same way (ZA-304).
 9. **Not text**: log messages and exception messages (English, for whoever reads the log); aliases, icon names, CSS,
    URLs; values that are stored and shown later as data (an audit row's description stays English, as Umbraco's
    audit comments do; the `"Unknown"` user name passed to `AppState` events; `CountriesDataSource`'s country names,
@@ -357,9 +367,13 @@ API-key picker editor and `ZauberCMS/Components/Routes.razor` (left out of 10h-1
 10h-4's.
 
 **The guard (D94)**, `tests/ZauberCMS.Core.Tests/Localization/ZauberTextResourceTests.cs`: every key is named after
-its file and is in one file once; texts are trimmed and their placeholders numbered from `{0}`; a translation has only
-keys of the English with the same placeholders; every literal key the code asks for is in the English files (Core's
-in Core's), every non-General key is used; every English text is in the built assemblies; and the folders listed in
+its file and is in one file once; texts are trimmed and their placeholders numbered from `{0}`, and the English
+writes SEO and URL in capitals; a translation has only keys of the English with the same placeholders; every literal
+key the code of Core, Components and `ZauberCMS` asks for is in the English files (Core's in Core's), every
+non-General key is used; every literal key is read with one argument per placeholder (the arguments of
+`EmailHtml.Paragraph` and `InstallerMarkup.WithCode` count for the key they wrap; `FormattedByCaller` lists the
+others) and every text with placeholders formats with that many (ZA-303); every English text is in the built
+assemblies; and the folders listed in
 `ConvertedFolders` keep no hard-coded text (markup text, text attributes, literals given to UI members and calls,
 sentences). A part adds its folders to its own block of `ConvertedFolders` (and `NotText`), so the parts merge
 cleanly. `ZauberTextTests` covers the lookup order and the bootstrap. A component test that renders with its own

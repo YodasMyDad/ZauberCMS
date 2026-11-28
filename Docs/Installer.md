@@ -55,8 +55,10 @@ result is the same whichever one runs:
 - EF creates the database itself when it is missing (SQLite file; `CREATE DATABASE` on SQL Server and
   PostgreSQL, when the login may). `DatabaseSetupOnServerTests` runs this against real servers.
 - What a site without a database skips at start-up, and what happens instead: the language list for request
-  localisation is just the admin language until the next start (content pages set their culture themselves, so
-  they are not affected); `DailyJob` (first run five minutes after start-up) and the sitemap generator do nothing
+  localisation starts as just the admin language, and takes the site's languages from its first request once the
+  installer has made the database (`SiteLanguagesRequestCultureProvider`, ZA-307; a language added later in
+  Settings > Languages is taken the same way, so the account, fallback and sign-out pages need no restart for it);
+  `DailyJob` (first run five minutes after start-up) and the sitemap generator do nothing
   on their first run and work from their next one (24 and 6 hours later), unless `Zauber:Jobs` turns them off. Nothing else at start-up touches the database.
 - **Plugins:** asking for `IZauberDbContext` while there is no database throws `InvalidOperationException` naming
   `/install`. The installer middleware keeps every request away, so only code that runs outside a request can

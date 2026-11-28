@@ -75,7 +75,7 @@
     <comment>Sitemap list column</comment>
   </data>
   <data name="seo_fromUrl" xml:space="preserve">
-    <value>From Url</value>
+    <value>From URL</value>
     <comment>The address a redirect is from</comment>
   </data>
   <data name="seo_fromUrlDescription" xml:space="preserve">
@@ -142,7 +142,7 @@
     <value>Regular expression?</value>
   </data>
   <data name="seo_regularExpressionDescription" xml:space="preserve">
-    <value>On: the From Url is a regular expression matched against the address (path and query string). Off: the address must be exactly the From Url.</value>
+    <value>On: the From URL is a regular expression matched against the address (path and query string). Off: the address must be exactly the From URL.</value>
   </data>
   <data name="seo_runChecks" xml:space="preserve">
     <value>Run SEO Checks</value>
@@ -187,11 +187,11 @@
     <comment>Button: stops the SEO checks</comment>
   </data>
   <data name="seo_toUrl" xml:space="preserve">
-    <value>To Url</value>
+    <value>To URL</value>
     <comment>The address a redirect goes to</comment>
   </data>
   <data name="seo_toUrlDescription" xml:space="preserve">
-    <value>Url you want to redirect to</value>
+    <value>URL you want to redirect to</value>
   </data>
   <data name="seo_toUrlEmpty" xml:space="preserve">
     <value>To url must not be empty</value>

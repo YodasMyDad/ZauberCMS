@@ -276,6 +276,9 @@ try {
     # The page a password-reset email links to, with its code (ZA-284: it threw for every link)
     $page = Get-Page '/account/resetpassword?code=YWJj&email=someone%40example.test'
     Assert-That ($page.Status -eq 200 -and $page.Body -match 'Reset your password') "the reset-password page opens from an email's link ($($page.Status))"
+    # A link a mail client cut short: its code is not Base64Url (ZA-306: the page threw and showed the error page)
+    $page = Get-Page '/account/resetpassword?code=a'
+    Assert-That ($page.Status -eq 200 -and $page.Body -match 'The reset link is not valid') "the reset-password page says a damaged link is not valid ($($page.Status))"
 
     Write-Step 'Admin (signed in by the installer) and its scripts and styles'
     # /admin sends each user to the first section they may open (Roadmap D67): the administrator to Content

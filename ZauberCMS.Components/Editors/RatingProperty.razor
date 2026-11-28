@@ -15,9 +15,13 @@
     [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public RatingProperty(IStringLocalizer<ZauberText> text) => _text = text;
 
-    public string Name => _text["editors_rating"];
+    // Settable, as every built-in editor's (D120: a subclass or a site may rename it); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_rating"].Value; set => _name = value; }
     public string Alias => "ZauberCMS.Rating";
-    public string Description => _text["editors_ratingInfo"];
+    public string Description { get => _description ?? _text["editors_ratingInfo"].Value; set => _description = value; }
     public string Icon => "star_half";
     public Type? SettingsComponent { get; set; } = typeof(RatingPropertySettings);
     public List<string> Scripts { get; set; } = [];

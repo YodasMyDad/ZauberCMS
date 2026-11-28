@@ -539,7 +539,11 @@ public partial class MembershipService
 
                     resetPasswordResult.Success = true;
                     resetPasswordResult.NavigateToUrl = parameters.ReturnUrl;
-                    resetPasswordResult.AddMessage(text["membership_passwordResetDone", $"<a class=\"underline\" href=\"{HostPath(Urls.Account.Login)}\">", "</a>"], ResultMessageType.Success);
+                    // HTML (the page shows it as markup): the sentence encoded, the link's tags its placeholders,
+                    // so a translation is text (ZA-304, as the emails' D132)
+                    resetPasswordResult.AddMessage(EmailHtml.Paragraph(text["membership_passwordResetDone"],
+                        $"<a class=\"underline\" href=\"{HtmlEncoder.Default.Encode(HostPath(Urls.Account.Login))}\">", "</a>"),
+                        ResultMessageType.Success);
                 }
                 else
                 {

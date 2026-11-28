@@ -39,6 +39,7 @@ using ZauberCMS.Core.Membership.Services;
 using ZauberCMS.Core.Media;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Services;
+using ZauberCMS.Core.Languages;
 using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Languages.Services;
 using ZauberCMS.Core.Localization;
@@ -650,6 +651,10 @@ public static class ZauberSetup
             .SetDefaultCulture(zauberSettings.AdminDefaultLanguage)
             .AddSupportedCultures(supportedCulturesArray)
             .AddSupportedUICultures(supportedCulturesArray);
+        // First: keeps the cultures above the site's languages as they are now, so a language added after the
+        // start is a request culture without a restart (ZA-307; it chooses none itself)
+        localizationOptions.RequestCultureProviders.Insert(0,
+            new SiteLanguagesRequestCultureProvider(localizationOptions, zauberSettings.AdminDefaultLanguage));
         app.UseRequestLocalization(localizationOptions);
 
         app.UseSerilogRequestLogging();

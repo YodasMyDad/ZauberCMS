@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection;
 using System.Resources;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 
 namespace ZauberCMS.Core.Localization;
@@ -105,7 +106,7 @@ internal interface IZauberTextLayer
 /// The <c>.resx</c> files of one assembly in a <see cref="ZauberText.ResourceFolder"/> folder: the neutral ones
 /// in the assembly itself, a culture's in its satellite assembly (<c>fr/MySite.resources.dll</c>).
 /// </summary>
-internal sealed class AssemblyTextLayer(Assembly assembly, ILogger logger) : IZauberTextLayer
+internal sealed partial class AssemblyTextLayer(Assembly assembly, ILogger logger) : IZauberTextLayer
 {
     private static readonly IReadOnlyDictionary<string, string> Empty = new Dictionary<string, string>();
     private const string Folder = ZauberText.ResourceFolder + ".";
@@ -147,6 +148,17 @@ internal sealed class AssemblyTextLayer(Assembly assembly, ILogger logger) : IZa
                 continue;
             }
 
+            // General.dk.resx: the SDK puts a file named for a culture .NET does not know ("dk", where Danish is
+            // "da") in the assembly itself, not in a satellite, so it would be read here as a file with no
+            // culture and replace the English in every language (ZA-300)
+            if (culture.Name.Length == 0 && UnknownCulture(name) is { } unknown)
+            {
+                logger.LogWarning("The text file {Resource} of {Assembly} is named for the culture {Culture}, which " +
+                                  ".NET does not know, so it is not used. Name it with a culture .NET knows " +
+                                  "(General.da.resx, not General.dk.resx)", name, assembly.GetName().Name, unknown);
+                continue;
+            }
+
             using var stream = source.GetManifestResourceStream(name);
             if (stream is null)
             {
@@ -173,6 +185,21 @@ internal sealed class AssemblyTextLayer(Assembly assembly, ILogger logger) : IZa
 
         return table;
     }
+
+    // MySite.ZauberText.General.dk.resources → "dk"; MySite.ZauberText.General.resources → null. An area is a
+    // file name that starts with a capital (D91), so a last part like a culture tag is the file's culture.
+    private static string? UnknownCulture(string resourceName)
+    {
+        var folder = resourceName.StartsWith(Folder, StringComparison.Ordinal)
+            ? Folder.Length
+            : resourceName.IndexOf("." + Folder, StringComparison.Ordinal) + Folder.Length + 1;
+        var file = resourceName[folder..^".resources".Length];
+        var dot = file.LastIndexOf('.');
+        return dot > 0 && CultureTag().IsMatch(file[(dot + 1)..]) ? file[(dot + 1)..] : null;
+    }
+
+    [GeneratedRegex("^[a-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$")]
+    private static partial Regex CultureTag();
 
     // A resource that is not a string (an image in a text file) is not text: skip it
     private static string? StringValue(IDictionaryEnumerator entries)

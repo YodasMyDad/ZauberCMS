@@ -13,8 +13,8 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="shared_changedBySomeoneElse" xml:space="preserve">
-    <value>{0} was changed by someone else since it was opened. Reload it and make the changes again.</value>
-    <comment>{0} = what was saved, by its type name (Content, Media, User, …)</comment>
+    <value>This item was changed by someone else since it was opened. Reload it and make the changes again.</value>
+    <comment>A save refused because the item changed in the database after it was read (a concurrency conflict)</comment>
   </data>
   <data name="shared_globalDataMissing" xml:space="preserve">
     <value>GlobalData is null</value>

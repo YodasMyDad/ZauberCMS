@@ -88,6 +88,34 @@ public class EditorConstructionTests
         Assert.Equal("One line", editor.Description);
     }
 
+    [Fact]
+    public void ZA309_every_built_in_editor_can_be_renamed_and_a_set_name_wins()
+    {
+        // D120 and Docs/Editors.md: a name or description set on an editor wins over its text. Four editors (SEO,
+        // Rating, Custom Component Picker, API Key Picker) had no setters, so the documented rename failed for them
+        var problems = new List<string>();
+        foreach (var type in Editors)
+        {
+            var editor = (IContentProperty)Activator.CreateInstance(type)!;
+            var name = type.GetProperty(nameof(IContentProperty.Name))!;
+            var description = type.GetProperty(nameof(IContentProperty.Description))!;
+            if (!name.CanWrite || !description.CanWrite)
+            {
+                problems.Add($"{type.Name}: Name or Description has no setter");
+                continue;
+            }
+
+            name.SetValue(editor, "Renamed");
+            description.SetValue(editor, "Described");
+            if (editor.Name != "Renamed" || editor.Description != "Described")
+            {
+                problems.Add($"{type.Name}: a set Name or Description does not win");
+            }
+        }
+
+        Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
+    }
+
     private static ServiceCollection TextServices()
     {
         var services = new ServiceCollection();

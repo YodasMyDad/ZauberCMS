@@ -72,4 +72,34 @@ public class CoreMessageTextTests
         Assert.Equal(ProviderService.NoStorageProviderMessage,
             catalog.Find("media_noStorageProvider", CultureInfo.InvariantCulture));
     }
+
+    [Fact]
+    public void ZA302_an_extension_manager_over_a_provider_without_the_text_gives_SaveChangesAndLog_Core_s_English()
+    {
+        // A plugin's test or tool builds its own ExtensionManager: before ZA-302, Text threw from DI, and a
+        // concurrency conflict in SaveChangesAndLog (whose catch reads it) escaped as that exception
+        var bare = new ExtensionManager(new ServiceCollection().BuildServiceProvider());
+
+        Assert.Equal("Save was purposely abandoned", bare.Text["shared_saveAbandoned"].Value);
+        Assert.False(bare.Text["shared_changedBySomeoneElse"].ResourceNotFound);
+
+        // With ZauberCMS's text in the provider, that one is used (a site's translation, a replaced localiser)
+        var services = new ServiceCollection().AddLogging()
+            .AddZauberText([Core, Components, Site], [Core, Components]).BuildServiceProvider();
+        var withText = new ExtensionManager(services);
+        Assert.Same(services.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<ZauberText>>(),
+            withText.Text);
+    }
+
+    [Fact]
+    public void ZA305_the_concurrency_message_names_no_CSharp_type()
+    {
+        var catalog = ZauberTextCatalog.FromAssemblies([Core], [Core], NullLoggerFactory.Instance);
+
+        // It was "{0} was changed …" with typeof(T).Name: "Content", "GlobalData", "UnpublishedContent" in a sentence
+        // a translator could not make right
+        var text = catalog.Find("shared_changedBySomeoneElse", CultureInfo.InvariantCulture);
+        Assert.NotNull(text);
+        Assert.DoesNotContain("{0}", text, StringComparison.Ordinal);
+    }
 }

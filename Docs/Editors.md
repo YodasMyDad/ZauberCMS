@@ -23,9 +23,14 @@ that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/Edit
   plain initialisers, or values from a constructor parameter. The built-in editors take
   `IStringLocalizer<ZauberText>` that way for `Name` and `Description` (keys `editors_*`, [AdminUI.md](AdminUI.md)
   "Localisation", rule 6), and keep a parameterless constructor for code that reads only their alias or type
-  (`new TextProperty().Alias`), whose text is then ZauberCMS's English, and their `Name`/`Description` setters (a
-  value set wins, so a subclass can rename one; Roadmap D120). An editor of a plugin does the same with its own
-  area, or keeps plain strings.
+  (`new TextProperty().Alias`), whose text is then ZauberCMS's English, and `Name`/`Description` setters on every
+  one (a value set wins, so a subclass can rename one; Roadmap D120). An editor of a plugin does the same with its
+  own area, or keeps plain strings.
+- **Subclassing a built-in editor.** A subclass with only a parameterless constructor calls the editor's
+  parameterless one, so its text is ZauberCMS's English (set `Name`/`Description` to rename it). For the admin's
+  language, give the subclass a constructor taking `IStringLocalizer<ZauberText>` that passes it to the base, and
+  mark it `[ActivatorUtilitiesConstructor]`: the attribute is not inherited, and a component with two public
+  constructors and no mark cannot be built by Blazor ("multiple constructors") or by discovery.
 - `Alias` must be globally unique (the "Add Property" picker resolves by it). Third-party editors must not use the
   `ZauberCMS.` prefix.
 - Required `[Parameter]`s — `DynamicContentProperty` always passes them and throws if one is missing:

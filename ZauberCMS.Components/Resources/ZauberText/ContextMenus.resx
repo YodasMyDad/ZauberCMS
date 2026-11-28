@@ -67,6 +67,10 @@
     <value>Permanently delete the {0} items in the recycle bin, and everything below them? This action cannot be undone.</value>
     <comment>{0} = the number of items at the top of the content recycle bin</comment>
   </data>
+  <data name="contextMenus_deleteAllContentConfirmOne" xml:space="preserve">
+    <value>Permanently delete the item in the recycle bin, and everything below it? This action cannot be undone.</value>
+    <comment>The confirm when the content recycle bin holds one item at its top (ZA-305)</comment>
+  </data>
   <data name="contextMenus_deleteFolderPermanentlyConfirm" xml:space="preserve">
     <value>{0} Permanently delete this folder, everything in it and their files? This can't be undone.</value>
     <comment>{0} = the sentence saying which pages and members still use the media (a space follows it), or nothing</comment>
@@ -95,6 +99,10 @@
     <value>{0} Permanently delete all {1} items in the media recycle bin and their files? This can't be undone.</value>
     <comment>{0} = the sentence saying which pages and members still use the media (a space follows it), or nothing; {1} = the number of items in the media recycle bin</comment>
   </data>
+  <data name="contextMenus_emptyMediaRecycleBinConfirmOne" xml:space="preserve">
+    <value>{0} Permanently delete the item in the media recycle bin and its files? This can't be undone.</value>
+    <comment>The confirm when the media recycle bin holds one item (ZA-305). {0} = the sentence saying which pages and members still use the media (a space follows it), or nothing</comment>
+  </data>
   <data name="contextMenus_emptyRecycleBin" xml:space="preserve">
     <value>Empty recycle bin</value>
   </data>
@@ -118,6 +126,10 @@
   <data name="contextMenus_mediaRecycleBinEmptied" xml:space="preserve">
     <value>{0} items deleted from the recycle bin</value>
     <comment>{0} = the number of media items deleted</comment>
+  </data>
+  <data name="contextMenus_mediaRecycleBinEmptiedOne" xml:space="preserve">
+    <value>One item deleted from the recycle bin</value>
+    <comment>When one media item was deleted (ZA-305)</comment>
   </data>
   <data name="contextMenus_mediaStillUsedBy" xml:space="preserve">
     <value>Still used by {0}: {1}. They will show a missing file.</value>
@@ -216,6 +228,10 @@
   <data name="contextMenus_recycleBinItemsDeleted" xml:space="preserve">
     <value>Successfully deleted {0} items from the recycle bin.</value>
     <comment>{0} = the number of items deleted</comment>
+  </data>
+  <data name="contextMenus_recycleBinItemsDeletedOne" xml:space="preserve">
+    <value>Successfully deleted one item from the recycle bin.</value>
+    <comment>When one item was deleted (ZA-305)</comment>
   </data>
   <data name="contextMenus_recycleBinItemsPartlyDeleted" xml:space="preserve">
     <value>Deleted {0} items, {1} failed.</value>

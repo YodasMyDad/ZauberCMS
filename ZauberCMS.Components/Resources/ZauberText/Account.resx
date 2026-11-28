@@ -192,6 +192,10 @@
     <value>Reset</value>
     <comment>Reset password page: button</comment>
   </data>
+  <data name="account_resetCodeInvalid" xml:space="preserve">
+    <value>The reset link is not valid: it may have been cut short. Ask for a new one.</value>
+    <comment>Reset password page: the link's code was changed or cut short (ZA-306)</comment>
+  </data>
   <data name="account_resetCodeMissing" xml:space="preserve">
     <value>A code must be supplied for password to be reset</value>
     <comment>Reset password page: the link has no code</comment>

@@ -241,7 +241,7 @@
     <comment>Your account: changing the password or email address of an account without a password</comment>
   </data>
   <data name="membership_passwordResetDone" xml:space="preserve">
-    <value>Your password has been reset, {0}please login{1}</value>
+    <value>Your password has been reset, {0}please log in{1}</value>
     <comment>Reset-password page: after the reset. {0} and {1} open and close the link to the sign-in page</comment>
   </data>
   <data name="membership_passwordResetLinkSent" xml:space="preserve">

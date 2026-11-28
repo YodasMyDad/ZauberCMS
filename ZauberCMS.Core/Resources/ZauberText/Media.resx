@@ -86,7 +86,7 @@
     <value>Unable to update, as no Media with that id exists</value>
   </data>
   <data name="media_urlRequired" xml:space="preserve">
-    <value>Url cannot be empty</value>
+    <value>URL cannot be empty</value>
   </data>
   <data name="media_useDeleteToRecycle" xml:space="preserve">
     <value>Use Delete to move media to the recycle bin; the save left it where it is</value>

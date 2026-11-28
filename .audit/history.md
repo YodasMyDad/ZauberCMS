@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After the Phase 10h audit (2026-11-28, `/audit changed` over f7c38f2..b50f841, the whole of 10h and 11i's merge, branch `audit-10h`, merged after 11j): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1621 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1599 on its own branch) · Template smoke test passes (a new check, ZA-306) · K, four unit reviewers, a diff reviewer, a verifier: ZA-300, ZA-301 (Medium), ZA-302…ZA-309 (Low) found and fixed (D160–D162); ZP-030, ZP-031 proposed; ZA-128's roll-up extended (10i). Next free IDs: ZA-320 (ZA-310…ZA-319 held by 10i), ZP-032
 After Roadmap Phase 11j (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1603 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1559 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-251, ZA-252 fixed (D140–D143); ZA-290 found and fixed while building; ZA-291 (Medium) and ZA-292…ZA-298 (Low) found by the audit and fixed. Next free ID: ZA-300 (ZA-299 unused, skipped, not to be filled; ZA-300…ZA-309 held by the Phase 10h audit, ZA-310…ZA-319 by Phase 10i, both in progress)
 After Roadmap Phase 11i (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1581 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1537 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-217, ZA-219, ZA-235 fixed (D100–D102); ZP-002, ZP-003 adopted and built (D103, D104); ZA-250 found and fixed while building; ZA-253 found by the audit and fixed (Low); ZA-251, ZA-252 recorded (Low, Phase 11j). Next free ID: ZA-300, numbering going on above every used and held ID (ZA-236…ZA-249, ZA-254…ZA-259, ZA-265…ZA-269, ZA-272…ZA-279, ZA-285…ZA-289 unused, skipped, not to be filled; ZA-290…ZA-299 held by Phase 11j, in progress)
 After Roadmap Phase 10h-4 (2026-11-28, merged after 10h-2 and 10h-3): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1533 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1521 on its own branch) · Template smoke test passes (with a new check, ZA-284); `doublecheck` self-review on the part. ZA-129 fixed (with 10h-1 to 10h-3 and the leftovers converted at the merge; Phase 10h done); ZA-271 fixed (D131); ZA-280…ZA-284 found and fixed (ZA-284 High). Next free ID: ZA-236 (ZA-285…ZA-289 unused, skipped, not to be filled; ZA-250…ZA-259 held by Phase 11i, in progress)
@@ -46,6 +47,57 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **The Phase 10h audit (2026-11-28, `/audit changed` over f7c38f2..b50f841: Phase 10h's four parts and Phase 11i's
+  merge onto them; D160–D162).** Release notes and the full account in the Roadmap's "Phase 10h audit". Agent K
+  (build, the suite on four databases, pattern counts, the packages' resources), four unit reviewers, a fresh diff
+  reviewer, a verifier for ZA-307 and ZA-308. Nothing Critical or High; the merge points are clean. After the fixes:
+  Release build 0 warnings; full suite 1599 (all pass, none skipped; 18 new) on SQLite, PostgreSQL, SQL Server LocalDB
+  and Redis; template smoke test passes with a new check. Each fix's test was seen failing with its fix taken out
+  (a mutation of each fix, all at once: 14 of the 19 new and changed checks failed; the other five pin behaviour
+  that did not change), except ZA-308 (a no-op removed; the verifier's .NET 10 renderer probe). Merged after Phase
+  11j (conflicts in the docs only): 1621 on the same four, template smoke test passes.
+  - **ZA-300 (Medium) — fixed.** A `ZauberText` file named for a culture .NET does not know (`General.dk.resx`) is
+    built into the assembly itself; the catalog read it as a file with no culture, so it replaced the English in every
+    language. Skipped with a warning (D162). Test: `ZauberTextTests.ZA300_…` (test file `General.xx.resx`).
+  - **ZA-301 (Medium) — fixed.** Radzen's bridge built a culture's table with `ToDictionary` over the localiser's
+    `GetAllStrings`, uncaught, and Radzen catches nothing: a site's own localiser that throws there, or repeats a
+    name, stopped every grid, dialog and date picker. First name wins; a failure is logged and leaves Radzen its
+    English. Test: `RadzenTextLocalizerTests` ×2.
+  - **ZA-302 (Low) — fixed.** A missing key took every lock of the reported-keys dictionary on each read; and
+    `ExtensionManager.Text` (D122) needed the localiser in DI, so a hand-built `ExtensionManager` made a concurrency
+    conflict throw out of `SaveChangesAndLog`: Core's English (`CoreText`) is the fallback. Tests:
+    `ZauberTextTests.ZA302_…`, `CoreMessageTextTests.ZA302_…`.
+  - **ZA-303 (Low) — fixed.** The guard (D94) counted no arguments against placeholders and did not scan
+    `ZauberCMS` (`Routes.razor`); `ZA303_every_literal_key_is_read_with_one_argument_per_placeholder` does, and
+    checks that every text with placeholders formats. Today's tree had no mismatch (1,672 reads). Seen failing with a
+    call's argument taken out.
+  - **ZA-304 (Low) — fixed.** `membership_passwordResetDone` (shown as markup by `StatusMessage`) is built through
+    `EmailHtml.Paragraph` (sentence encoded, link tags inserted); `EmailHtml` keeps every language's letters
+    (`HtmlEncoder.Create(UnicodeRanges.All)`) and, for a translation whose placeholders do not match or leave the
+    link open, logs and uses Core's English. Tests: `EmailHtmlTests` ×5, the message in `StartingRoleTests`.
+  - **ZA-305 (Low) — fixed.** "all 1 items" / "1 items deleted": `…One` keys (D160); "Seo" → "SEO", seven "Url" →
+    "URL" (the guard checks both now); the concurrency message no longer names the C# type; "please log in". Tests:
+    the guard, `CoreMessageTextTests.ZA305_…`.
+  - **ZA-306 (Low) — fixed.** A damaged reset link (code not Base64Url) threw from `ResetPassword.razor` and showed
+    the error page; it says the link is not valid (`account_resetCodeInvalid`). Tests: `ResetPasswordLinkTests` ×3,
+    the template smoke test.
+  - **ZA-307 (Low) — fixed.** The request cultures were the languages at start-up, so the account, fallback and
+    sign-out pages ignored a language added later until a restart; `SiteLanguagesRequestCultureProvider` keeps them
+    the site's languages as they are now (D161, Umbraco's `DynamicRequestCultureProviderBase` way). Tests:
+    `RequestCultureTests` ×2 (the real middleware).
+  - **ZA-308 (Low) — fixed.** `SectionLayout`'s `OnInitialized` set the admin culture, which never reached the
+    render, under a misleading comment: removed. Verified by the verifier's probe; `AdminCultureCircuitHandler`
+    covers every circuit activity.
+  - **ZA-309 (Low) — fixed.** D132's text (the set-password email is sent at registration, in the request's
+    culture); 10h-4's release notes (`MessagesAsString`, the `Identity.StatusMessageType` cookie); the SEO, Rating,
+    Custom Component Picker and API Key Picker editors gained the `Name`/`Description` setters D120 promises;
+    Editors.md on subclassing an editor; Installer.md and AGENTS.md wording. Test:
+    `EditorConstructionTests.ZA309_…`.
+  - Status of open items: ZA-128 (extended: the sign-out page's `lang`, six icon buttons, two pages' `label for`),
+    ZA-194, ZA-261…ZA-264, ZA-270 (10i) still open; ZA-251, ZA-252 (open at the audit's base) fixed by Phase 11j,
+    which merged first. ZP-030 (plural forms) and ZP-031 (a
+    typed `RedirectToCurrentPageWithStatus`) proposed.
 
 - **Roadmap Phase 11j (2026-11-28, front-end path base and sign-in cookies, D140–D143).** Release notes in the
   Roadmap's "Phase 11j". Full suite 1559 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
@@ -97,6 +149,7 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
     `ContentUrl.SiteRelative`; it names `NavigationManager.ToSiteUrl(content)`.
   - Checked, not filed: the second parse of the Cookie header under a path base (+0.6 µs typical, measured). Raised,
     not numbered: a site's own sanitiser could reuse the page-link rewrite (D141 says it does it itself).
+
 - **Roadmap Phase 11i (2026-11-28, start-up, path base and rate-limit leftovers, D100–D104).** Release notes in the
   Roadmap's "Phase 11i". Full suite 1537 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
   Redis; Release build 0 warnings; template smoke test passes. Merged onto Phase 10h (made from f7c38f2): 1581 on

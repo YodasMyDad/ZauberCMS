@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ZauberCMS.Components.Editors;
 using ZauberCMS.Core.Localization;
@@ -65,6 +66,46 @@ public class ZauberTextTests
         Assert.Equal("Plugin title", catalog.Find("testPlugin_title", CultureInfo.GetCultureInfo("en")));
         Assert.Equal("Titre du plugin", catalog.Find("testPlugin_title", French));
         Assert.Equal("Only in English", catalog.Find("testPlugin_onlyEnglish", French));
+    }
+
+    [Fact]
+    public void ZA300_a_file_named_for_a_culture_NET_does_not_know_is_not_read_as_a_file_with_no_culture()
+    {
+        // General.xx.resx: the SDK builds it into this assembly itself (no satellite), as it does General.dk.resx
+        var resources = Site.GetManifestResourceNames();
+        Assert.Contains(resources, n => n.EndsWith(".ZauberText.General.xx.resources", StringComparison.Ordinal));
+
+        var log = new RecordingLog();
+        var catalog = ZauberTextCatalog.FromAssemblies([Core, Components, Site], [Core, Components], log);
+
+        // Before ZA-300 its "xx Save" replaced the English in every language without a translation of its own
+        Assert.Equal("Save", catalog.Find("general_save", CultureInfo.GetCultureInfo("en")));
+        Assert.Equal("Save", catalog.Find("general_save", CultureInfo.GetCultureInfo("de")));
+        Assert.Equal("Enregistrer", catalog.Find("general_save", French));
+        Assert.Single(log.Warnings, w => w.Contains("General.xx.resources", StringComparison.Ordinal) &&
+                                         w.Contains("xx", StringComparison.Ordinal));
+        // A second look reads the table it kept: still one warning
+        Assert.Equal("Save", catalog.Find("general_save", CultureInfo.InvariantCulture));
+        Assert.Single(log.Warnings);
+    }
+
+    [Fact]
+    public void ZA302_a_missing_key_and_a_translation_that_does_not_format_are_each_logged_once()
+    {
+        var log = new RecordingLog();
+        var localizer = new ZauberTextLocalizer(
+            new ZauberTextCatalog([new FakeLayer().With("", "test_bad", "Only {1}")]),
+            log.CreateLogger<ZauberTextLocalizer>());
+
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Equal("test_missing", localizer["test_missing"].Value);
+            Assert.Equal("Only {1}", localizer["test_bad", "x"].Value);
+        }
+
+        Assert.Equal(2, log.Warnings.Count);
+        Assert.Single(log.Warnings, w => w.Contains("test_missing", StringComparison.Ordinal));
+        Assert.Single(log.Warnings, w => w.Contains("test_bad", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -144,6 +185,31 @@ public class ZauberTextTests
         {
             CultureInfo.CurrentUICulture = previous;
             Directory.Delete(contentRoot, recursive: true);
+        }
+    }
+
+    /// <summary>The warnings logged through it, as text (a logger factory that is its own logger).</summary>
+    private sealed class RecordingLog : ILoggerFactory, ILogger
+    {
+        public List<string> Warnings { get; } = [];
+
+        public ILogger CreateLogger(string categoryName) => this;
+        public void AddProvider(ILoggerProvider provider) { }
+        public void Dispose() { }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            if (logLevel == LogLevel.Warning)
+            {
+                lock (Warnings)
+                {
+                    Warnings.Add(formatter(state, exception));
+                }
+            }
         }
     }
 

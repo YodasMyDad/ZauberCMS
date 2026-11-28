@@ -49,7 +49,7 @@
     <comment>Media section: the nav group of the media tree</comment>
   </data>
   <data name="sections_seoGroup" xml:space="preserve">
-    <value>Seo</value>
+    <value>SEO</value>
     <comment>Settings section: the nav group of the SEO tools</comment>
   </data>
   <data name="sections_settings" xml:space="preserve">

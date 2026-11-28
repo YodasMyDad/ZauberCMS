@@ -231,6 +231,11 @@ public class StartingRoleTests : IAsyncLifetime
                 ConfirmPassword = password
             }, TestContext.Current.CancellationToken);
         Assert.True(result.Success, TestSite.Describe(result.Messages));
+        // ZA-304: the page shows this message as markup, so it is built as the emails are: the sentence encoded,
+        // the link to the sign-in page its only markup
+        var done = Assert.Single(result.Messages).Message;
+        Assert.StartsWith("Your password has been reset, <a class=\"underline\" href=\"", done, StringComparison.Ordinal);
+        Assert.EndsWith("/account/login\">please log in</a>", done, StringComparison.OrdinalIgnoreCase);
     }
 }
 

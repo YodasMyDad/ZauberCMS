@@ -88,14 +88,10 @@
     [Inject] public TreeState TreeState { get; set; } = null!;
     
     // The admin IP allow-list is enforced for every /admin request by AdminAccessMiddleware, not here.
+    // The admin's language comes from CultureMiddleware (requests) and AdminCultureCircuitHandler (every circuit
+    // activity, the first render included); a culture set in a lifecycle method here never reached the render
+    // (ZA-308), so the layout sets none.
 
-    protected override void OnInitialized()
-    {
-        // CultureMiddleware (requests) and AdminCultureCircuitHandler (circuits) keep the admin in its language;
-        // this covers the first render. It must not set the process-wide default culture.
-        ZauberCMS.Core.Languages.AdminCulture.Apply(Settings.Value);
-    }
-    
     private AdminErrorBoundary? _bodyBoundary;
     private AdminErrorBoundary? _treesBoundary;
     private AdminErrorBoundary? _dialogsBoundary;

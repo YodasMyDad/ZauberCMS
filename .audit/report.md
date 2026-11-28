@@ -1,8 +1,9 @@
 # ZauberCMS Audit Report
 
-Last full run: 5668365 (2026-11-25, full) · Last changed run: 5da6e2a+wt (2026-11-28, Roadmap Phase 11j, 5da6e2a..working tree, merged after Phase 10h) · Mode: fix
+Last full run: 5668365 (2026-11-25, full) · Last changed run: b50f841 (2026-11-28, the Phase 10h audit: f7c38f2..b50f841, the whole of Phase 10h and Phase 11i's merge onto it; merged after Phase 11j) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
-Next free IDs: ZA-300 (findings; numbering goes on above every used and held ID) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Used: ZA-001…ZA-235, ZA-250…ZA-253, ZA-260…ZA-264, ZA-270, ZA-271, ZA-280…ZA-284, ZA-290…ZA-298 · Unused (skipped, not to be filled): ZA-220…ZA-229, ZA-236…ZA-249, ZA-254…ZA-259, ZA-265…ZA-269, ZA-272…ZA-279, ZA-285…ZA-289, ZA-299 · Held: ZA-300…ZA-309 by the Phase 10h audit, ZA-310…ZA-319 by Phase 10i (both in progress) · Proposals: ZP-010 used by Phase 10h-1, ZP-011…ZP-019 unused (skipped, not to be filled)
+Next free IDs: ZA-320 (findings) · ZP-032 (proposals) — numbering goes on above every used and held ID, for both · Umbraco reference: not yet compared (first run with lenses G and H to come) · Used: ZA-001…ZA-219, ZA-230…ZA-235, ZA-250…ZA-253, ZA-260…ZA-264, ZA-270, ZA-271, ZA-280…ZA-284, ZA-290…ZA-298, ZA-300…ZA-309 · Unused (skipped, not to be filled): ZA-220…ZA-229, ZA-236…ZA-249, ZA-254…ZA-259, ZA-265…ZA-269, ZA-272…ZA-279, ZA-285…ZA-289, ZA-299 · Held: ZA-310…ZA-319 and ZP-020…ZP-029 by Phase 10i (in progress) · Proposals used: ZP-001…ZP-003, ZP-010 (Phase 10h-1), ZP-030, ZP-031 (the Phase 10h audit); unused (skipped, not to be filled): ZP-004…ZP-009, ZP-011…ZP-019
+After the Phase 10h audit (2026-11-28, `/audit changed` over f7c38f2..b50f841, the whole of 10h and 11i's merge, made on branch `audit-10h`, merged after 11j): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1621 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1599 on its own branch) · Template smoke test passes (with a new check, ZA-306) · agent K, four unit reviewers, a diff reviewer and a verifier: ZA-300, ZA-301 (Medium) and ZA-302…ZA-309 (Low) found and fixed (D160–D162); ZP-030, ZP-031 proposed; ZA-128's roll-up gains the sign-out page's `lang`, six icon buttons and two pages' `label for` (10i). Next free IDs: ZA-320 (ZA-310…ZA-319 held by 10i, in progress), ZP-032
 After Roadmap Phase 11j (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1603 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1559 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-251, ZA-252 fixed (D140–D143); ZA-290 found and fixed while building; ZA-291 (Medium) and ZA-292…ZA-298 (Low) found by the audit and fixed; ZA-299 unused (skipped, not to be filled). Next free ID: ZA-300 (ZA-300…ZA-319 held by the Phase 10h audit and Phase 10i, in progress)
 After Roadmap Phase 11i (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1581 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1537 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-217, ZA-219, ZA-235 fixed (D100–D102); ZP-002, ZP-003 adopted and built (D103, D104); ZA-250 found and fixed while building; ZA-253 found by the audit and fixed (Low); ZA-251, ZA-252 recorded (Low, Phase 11j); ZA-254…ZA-259 unused (skipped, not to be filled). Next free ID: ZA-300 (ZA-290…ZA-299 held by Phase 11j, in progress)
 After Roadmap Phase 10h-4 (2026-11-28, merged after 10h-2 and 10h-3): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1533 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1521 on its own branch) · Template smoke test passes (with a new check, ZA-284); `doublecheck` self-review on the part. ZA-129 fixed (Structure, Settings, Users, the layout, the account pages and Core's messages, D130–D132; with 10h-1 to 10h-3 and the leftovers converted at the merge, Phase 10h done); ZA-271 fixed (D131's describer); ZA-280…ZA-284 found and fixed while building (ZA-284 High: the reset-password page); ZA-285…ZA-289 unused (skipped, not to be filled). Next free ID: ZA-236
@@ -24,16 +25,19 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 
 ## Summary
 
-| Severity | Open | New this run (Phase 11j changed run) | Fixed this run (Phase 11j, its audit included) |
+| Severity | Open | New this run (the Phase 10h audit) | Fixed this run (the Phase 10h audit) |
 | --- | --- | --- | --- |
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 | 0 |
-| Medium | 0 | 1 (ZA-291) | 1 (ZA-291) |
-| Low | 7 | 8 (ZA-290, ZA-292…ZA-298) | 10 (ZA-251, ZA-252, ZA-290, ZA-292…ZA-298) |
+| Medium | 0 | 2 (ZA-300, ZA-301) | 2 (ZA-300, ZA-301) |
+| Low | 7 | 8 (ZA-302…ZA-309) | 8 (ZA-302…ZA-309) |
 
-Proposals: one open, ZP-010 (Phase 10h-1, owner decision). ZP-002 and ZP-003 adopted and built in Phase 11i (D103,
+Proposals: three open, ZP-010 (Phase 10h-1, owner decision), ZP-030 and ZP-031 (the Phase 10h audit, low value). ZP-002 and ZP-003 adopted and built in Phase 11i (D103,
 D104); ZP-001 built in Phase 10g-2 (D72).
 
+Phase 10h audit run (f7c38f2..b50f841): 8 hits on added lines, each read, none a defect (false positives, and
+`InstallerMarkup`, which encodes before it builds markup); whole tree against f7c38f2: empty-catch 17 → 18,
+unsanitised-markup 15 → 18 (the same helper), static-mutable 42 → 39, the rest flat.
 Phase 10g-2 run: on added lines, no sync-over-async, fire-and-forget, markup, raw SQL, local time, regex or
 suppression; the one `async void` is the modal's existing navigation handler, now guarded (ZA-197); three event
 unsubscriptions added (ZA-197); seven `catch` blocks, each logs or says why it is empty.
@@ -58,6 +62,7 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 
 - Where: `ZauberCMS.Components/Shared/TreeButton.razor:4`, `ZauberCMS.Components/Account/Pages/Login.razor:28-34` · Category: E · Since: 2026-11-25
 - Issue / Fix: 8 of 38 icon buttons unlabelled; 7 clickable divs with no role or key handler (every tree button); ~139 Radzen inputs vs ~75 labels; `label for` without matching ids.
+- Phase 10h audit (2026-11-28) adds: the sign-out page's `<html>` has no `lang` (`ZauberCMS.Components/Controllers/AuthController.cs`, its text is localised now); icon-only buttons without a label in `Editors/Dialogs/NavigationItemEditor.razor` (×2), `Shared/DictionaryEditor.razor`, `Shared/ListEditor.razor`, `Shared/TagEditor.razor`, `Shared/PickerItem.razor`; `label for` without matching ids on `Account/Pages/ForgotPassword.razor` and `ResetPassword.razor` too.
 
 ### ZA-194 [Low/High] With registration off, the not-found view is shown in the account layout
 - Where: `ZauberCMS.Components/Account/Pages/Register.razor` · Category: E · Since: 2026-11-27 (older; visible since 11a sends the HTML) · Roadmap: 10i
@@ -102,6 +107,24 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Why: Umbraco lets each back-office user pick their UI language from the installed language files
   (https://docs.umbraco.com/umbraco-cms/fundamentals/backoffice/users).
 
+### ZP-030 [Low/Medium] Plural forms for translators
+- Section: Developer experience (localisation) · Lens: F · Since: 2026-11-28 · Needs: owner decision (a CLDR rule table, or a small dependency)
+- Today: a sentence with a count is one key, or two since D160 (`…One` for a count of one, the key for any other),
+  which is English's rule; a language with three or more forms (Polish, Russian, Arabic) cannot be translated right.
+- Proposal: `L.Plural("contextMenus_itemsDeleted", count, …)` reads `key_one`/`key_few`/`key_many`/`key_other` by the
+  culture's CLDR category, falling back to `key_other`, then to `key`; the guard checks the forms' placeholders.
+- Why: Umbraco writes a count as a function in its language files
+  (https://docs.umbraco.com/umbraco-cms/customizing/foundation/localization, "Using arguments"), which `.resx`
+  cannot hold.
+
+### ZP-031 [Low/Small] A typed `RedirectToCurrentPageWithStatus`
+- Section: Users and access (account pages) · Lens: F · Since: 2026-11-28 · Needs: nothing
+- Today: `IdentityRedirectManager.RedirectToWithStatus(uri, message, type, context)` carries the message's type
+  (ZA-280), but `RedirectToCurrentPageWithStatus` has no type, so a site's own account page that uses it falls back
+  to the "starts with Error" rule, which a translation breaks.
+- Proposal: an overload with `ResultMessageType`, as the other one has. Why: the account pages are the site's to
+  extend; a status message in another language must still show as an error.
+
 ZP-002 (a test that runs CI's commit-back step against a local origin) and ZP-003 (a site can replace the `login`
 and `register` rate-limit policies) were adopted and built in Phase 11i (D103, D104).
 ZP-001 (every back-office user edits their own profile and password) was built in Phase 10g-2 (D72).
@@ -110,7 +133,20 @@ Lenses G (editor UX) and H (Umbraco alignment) have not had their first `full` r
 
 ## Fixed this run / Resolved since last run
 
-This run (Phase 11j changed run, 2026-11-28, merged after Phase 10h); details and how each was verified in
+This run (the Phase 10h audit, 2026-11-28, f7c38f2..b50f841, merged after Phase 11j); details and how each was verified in
+[history.md](history.md) and the Roadmap's "Phase 10h audit":
+- Medium: ZA-300 a `ZauberText` file named for a culture .NET does not know replaced the English in every language
+  (D162); ZA-301 a site's own localiser whose `GetAllStrings` throws or repeats a name stopped every Radzen component.
+- Low: ZA-302 the localiser's missing-key check took every lock, and `ExtensionManager.Text` threw without the
+  localiser in DI; ZA-303 the guard did not count arguments against placeholders (nor scan `ZauberCMS`); ZA-304 the
+  reset password's message was an unencoded translation shown as markup, and emails lost their link on a bad
+  translation and wrote letters as entities; ZA-305 English that read wrong ("all 1 items", "Seo", "Url", the C#
+  type in the concurrency message; D160); ZA-306 a damaged reset link showed the error page; ZA-307 a language added
+  after the start was no request culture until a restart (D161); ZA-308 `SectionLayout`'s culture no-op; ZA-309
+  docs and release notes (D132, `MessagesAsString`, the status cookie, four editors' setters, subclassing an editor).
+- Proposals ZP-030, ZP-031 recorded.
+
+Earlier this day (Phase 11j changed run, 2026-11-28, merged after Phase 10h); details and how each was verified in
 [history.md](history.md):
 - Medium: ZA-291 the docs said `Zauber:ForwardedHeaders` applies `X-Forwarded-Prefix` (found by the audit).
 - Low: ZA-251 front-end links, rich-text page links and SEO redirect targets under a path base (D140–D142); ZA-252
@@ -187,15 +223,24 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 | Config parity | Since Phase 11c the three `appsettings.json` files have the same `Zauber` keys and `Serilog` section (ZA-118, ZA-168; `AppSettingsParityTests`) |
 | Docs drift | Paths all resolve; ~55 claims spot-checked, 5 wrong, corrected this run |
 | Repo hygiene | Only `ZauberCMS.Web/app.db` tracked (exempt); `.gitattributes`, `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and an SDK pin since Phase 11b (ZA-131 fixed) |
-| Tests | Phase 11h run, after its fixes and the merge onto Phase 10g-2: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch). Phase 10g-2 run, after its fixes: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 10g run, after its fixes: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 11 run: 1165 |
+| Tests | Phase 10h audit, merged after Phase 11j: 1621 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1599 on its own branch, 1581 before it). Phase 11h run, after its fixes and the merge onto Phase 10g-2: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch). Phase 10g-2 run, after its fixes: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 10g run, after its fixes: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 11 run: 1165 |
 | Pattern counts | First counts in the Summary (Phase 11 run) |
 | Hot-path budget | First run, by reading: about 10 round-trips cold; 0 within 5 s of the same URL; 4–5 after 5 s idle; 2 per 404; +3 per block list, +1 per single media picker. Phase 10 changed front-end caching since: re-measure |
-| Package contents | Phase 11 run: all five packed; no stray files; Components carries the modal's script and CSS, Core no Radzen dependency or scoped CSS; dependencies at 4.1.3 |
+| Package contents | Phase 10h audit: Core's package carries its 11 `ZauberText` resources and Components' its 16 (and the obsolete `SharedResource`), no satellite folders. Phase 11 run: all five packed; no stray files; Components carries the modal's script and CSS, Core no Radzen dependency or scoped CSS; dependencies at 4.1.3 |
 | Template code | Phase 11 run: a site from the template, on project references, builds in Release with 0 warnings |
 | Template smoke test | `tests/template-smoke.ps1` since Phase 11c, in CI's build job; passes |
 
 ## Coverage
 
+- Phase 10h audit (2026-11-28, f7c38f2..b50f841, the whole of Phase 10h and 11i's merge): K (build, the full suite on
+  four databases, pattern counts on the added lines, the packages' resources, a throw-away site project for the
+  resource names); the mechanism, Core's messages, the Content/Media/editor/SEO screens and the
+  Structure/Settings/Users/layout/account screens end to end by four unit reviewers (with a script over every literal
+  key read); the five commits by a fresh diff reviewer; ZA-307 and ZA-308 by a verifier (.NET 10 renderer probe,
+  ASP.NET Core and Umbraco source). The orchestrator ran the full suite and the template smoke test after the fixes
+  and saw each fix's test fail with the fix taken out. Not done: a product agent or browser walk (no screen's layout
+  changed), R1 (the front-end path did not change), single-file or trimmed publish, a translated site in a browser,
+  the root "Sort Content" that opened nothing in 10h-2's walk (needs a browser).
 - Phase 11j changed run (2026-11-28, 5da6e2a..working tree): the whole diff by a reviewer given the code, U1/U7 (the
   pipeline, the cookie middleware, the status cookie; the real `AddZauberCms<T>` pipeline reproduced under a path base)
   and U2/U3/U9/U16 (the sanitiser, `ToSiteUrl`, the redirects, the template and the sample site, the tests) end to end

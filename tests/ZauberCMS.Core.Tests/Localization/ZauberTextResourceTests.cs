@@ -20,6 +20,16 @@ public partial class ZauberTextResourceTests
     private const string ComponentsProject = "ZauberCMS.Components";
     private static readonly string[] Projects = [CoreProject, ComponentsProject];
 
+    // The projects whose code asks for keys: the umbrella's Routes.razor too, which has no files of its own (ZA-303)
+    private static readonly string[] CodeProjects = [CoreProject, ComponentsProject, "ZauberCMS"];
+
+    // A key with placeholders read without arguments, its placeholders filled by the code after it (ZA-303); the
+    // wrappers EmailHtml.Paragraph and InstallerMarkup.WithCode are counted with their own arguments instead
+    private static readonly HashSet<string> FormattedByCaller =
+    [
+        "ZauberCMS.Components/Admin/Layout/CurrentUserPanel.razor: layout_signInWith", // split at {0} round a link
+    ];
+
     // The folders whose text is converted: their files may not keep hard-coded text. Not recursive: each folder is
     // listed. Each part of Phase 10h adds its folders in its own block, so the parts merge without touching each
     // other's lines.
@@ -301,6 +311,12 @@ public partial class ZauberTextResourceTests
                     problems.Add($"{file.Path}: {key} is empty or starts or ends with white space");
                 }
 
+                // ZA-305: the admin wrote "Seo" over "SEO Checker" and "From Url" beside "URL"
+                if (file.Culture is null && MixedCaseAcronym().Match(value) is { Success: true } acronym)
+                {
+                    problems.Add($"{file.Path}: {key} writes {acronym.Value}: SEO and URL are written in capitals");
+                }
+
                 var placeholders = Placeholders(value);
                 if (placeholders.Count > 0 && placeholders.Max() != placeholders.Count - 1)
                 {
@@ -334,7 +350,7 @@ public partial class ZauberTextResourceTests
         var allKeys = files.SelectMany(f => f.Entries).Select(e => e.Key).ToHashSet();
         var used = new HashSet<string>(StringComparer.Ordinal);
         var problems = new List<string>();
-        foreach (var project in Projects)
+        foreach (var project in CodeProjects)
         {
             foreach (var (path, file) in SourceFiles(project))
             {
@@ -363,6 +379,214 @@ public partial class ZauberTextResourceTests
         problems.AddRange(NotUsedYet.Where(used.Contains).Select(k => $"{k} is used now: take it out of NotUsedYet"));
 
         Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
+    }
+
+    [Fact]
+    public void ZA303_every_literal_key_is_read_with_one_argument_per_placeholder()
+    {
+        var files = ResourceFiles().ToList();
+        var english = files.Where(f => f.Culture is null).SelectMany(f => f.Entries)
+            .ToDictionary(e => e.Key, e => e.Value, StringComparer.Ordinal);
+        var problems = new List<string>();
+        var checkedReads = 0;
+        foreach (var project in CodeProjects)
+        {
+            foreach (var (path, file) in SourceFiles(project))
+            {
+                var source = Blank(Blank(file, RazorComment()), CommentLine());
+                foreach (Match match in KeyUse().Matches(source))
+                {
+                    var key = match.Groups["key"].Value;
+                    if (!english.TryGetValue(key, out var value))
+                    {
+                        continue; // the test above reports it
+                    }
+
+                    checkedReads++;
+                    var expected = ArgumentsFor(value);
+                    // The match ends at the ',' after the key or at the indexer's ']'
+                    var end = match.Index + match.Length - 1;
+                    var given = source[end] == ']' ? 0 : CountArguments(source, end + 1);
+                    if (given == 0 && expected > 0 && WrapperArguments(source, match.Index, end) is { } wrapped)
+                    {
+                        given = wrapped;
+                    }
+
+                    if (given != expected && !(given == 0 && FormattedByCaller.Contains($"{path}: {key}")))
+                    {
+                        problems.Add($"{path}:{LineOf(source, match.Index)}: {key} has {expected} placeholder(s) " +
+                                     $"and is read with {given} argument(s)");
+                    }
+                }
+            }
+        }
+
+        // A value with placeholders must format with that many arguments, in every language: one with a stray
+        // brace ("{0}}") would be shown unformatted
+        foreach (var file in files)
+        {
+            foreach (var (key, value) in file.Entries)
+            {
+                var count = ArgumentsFor(english.GetValueOrDefault(key, value));
+                if (count == 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    _ = string.Format(CultureInfo.InvariantCulture, value, Enumerable.Repeat<object>("x", count).ToArray());
+                }
+                catch (FormatException)
+                {
+                    problems.Add($"{file.Path}: {key} does not format with {count} argument(s)");
+                }
+            }
+        }
+
+        Assert.True(checkedReads > 1000, $"Only {checkedReads} key reads found: the scan is broken");
+        Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
+    }
+
+    // {0} to {n}: n + 1 arguments
+    private static int ArgumentsFor(string value) => Placeholders(value) is { Count: > 0 } found ? found.Max() + 1 : 0;
+
+    // EmailHtml.Paragraph(text["k"], open, close) and InstallerMarkup.WithCode(L["k"], "a", "b") fill the key's
+    // placeholders themselves: the arguments after the key's ']' up to the wrapper's ')'. Null when not wrapped.
+    private static int? WrapperArguments(string source, int indexer, int end)
+    {
+        var before = source.AsSpan(0, indexer).TrimEnd();
+        while (before.Length > 0 && (char.IsLetterOrDigit(before[^1]) || before[^1] == '_'))
+        {
+            before = before[..^1]; // the localiser's name: L, text, _text
+        }
+
+        before = before.TrimEnd();
+        if (!before.EndsWith("Paragraph(", StringComparison.Ordinal) && !before.EndsWith("WithCode(", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var next = end + 1;
+        while (next < source.Length && char.IsWhiteSpace(source[next]))
+        {
+            next++;
+        }
+
+        return next < source.Length && source[next] == ',' ? CountArguments(source, next + 1) : 0;
+    }
+
+    // The arguments from just after a ',' to the ']' or ')' that closes the list: its top-level commas, skipping
+    // nested brackets, strings (verbatim, interpolated, raw) and characters
+    private static int CountArguments(string source, int start)
+    {
+        var count = 1;
+        var depth = 0;
+        for (var i = start; i < source.Length; i++)
+        {
+            var c = source[i];
+            if (c is '"' or '$' or '@' && StringAt(source, i))
+            {
+                i = SkipString(source, i) - 1;
+            }
+            else if (c == '\'')
+            {
+                i = source.IndexOf('\'', i + (source[i + 1] == '\\' ? 3 : 2));
+            }
+            else if (c is '(' or '[' or '{')
+            {
+                depth++;
+            }
+            else if (c is ')' or ']' or '}')
+            {
+                if (depth-- == 0)
+                {
+                    return count;
+                }
+            }
+            else if (c == ',' && depth == 0)
+            {
+                count++;
+            }
+        }
+
+        throw new InvalidOperationException($"No end to the argument list at {start}");
+    }
+
+    private static bool StringAt(string source, int i)
+    {
+        while (i < source.Length && source[i] is '$' or '@')
+        {
+            i++;
+        }
+
+        return i < source.Length && source[i] == '"';
+    }
+
+    // The index just after the string literal at i: "…", @"…", $"…{x}…", $@"…", a raw """…"""
+    private static int SkipString(string source, int i)
+    {
+        var interpolated = false;
+        var verbatim = false;
+        while (source[i] is '$' or '@')
+        {
+            interpolated |= source[i] == '$';
+            verbatim |= source[i] == '@';
+            i++;
+        }
+
+        const string raw = "\"\"\"";
+        if (source.AsSpan(i).StartsWith(raw, StringComparison.Ordinal))
+        {
+            return source.IndexOf(raw, i + raw.Length, StringComparison.Ordinal) + raw.Length;
+        }
+
+        for (i++; i < source.Length; i++)
+        {
+            var c = source[i];
+            if (c == '\\' && !verbatim)
+            {
+                i++;
+            }
+            else if (c == '"')
+            {
+                if (verbatim && i + 1 < source.Length && source[i + 1] == '"')
+                {
+                    i++;
+                    continue;
+                }
+
+                return i + 1;
+            }
+            else if (c == '{' && interpolated)
+            {
+                if (source[i + 1] == '{')
+                {
+                    i++;
+                    continue;
+                }
+
+                // An interpolation hole: code up to its '}'
+                var depth = 0;
+                for (i++; i < source.Length; i++)
+                {
+                    if (source[i] is '"' or '$' or '@' && StringAt(source, i))
+                    {
+                        i = SkipString(source, i) - 1;
+                    }
+                    else if (source[i] is '(' or '[' or '{')
+                    {
+                        depth++;
+                    }
+                    else if (source[i] is ')' or ']' or '}' && depth-- == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return source.Length;
     }
 
     [Fact]
@@ -531,6 +755,9 @@ public partial class ZauberTextResourceTests
     [GeneratedRegex("^[a-z][A-Za-z0-9]*_[a-z][A-Za-z0-9]*$")]
     private static partial Regex KeyName();
 
+    [GeneratedRegex(@"\b(?:Seo|Url)s?\b")]
+    private static partial Regex MixedCaseAcronym();
+
     // L["general_save"], text["contextMenus_delete", name], Localizer["seo_title"]
     [GeneratedRegex("""\[\s*"(?<key>[a-z][A-Za-z0-9]*_[a-z][A-Za-z0-9]*)"\s*[,\]]""")]
     private static partial Regex KeyUse();
@@ -563,7 +790,8 @@ public partial class ZauberTextResourceTests
     private static partial Regex Word();
 
     // Lines whose literals are for logs, exceptions and attributes
-    [GeneratedRegex(@"\bLog(?:Trace|Debug|Information|Warning|Error|Critical)?\(|\bthrow\b|Exception\(|\bnameof\(|\[Obsolete|\[Description")]
+    // logger.LogWarning(…) and Serilog's static Log.Warning(…)
+    [GeneratedRegex(@"\bLog\.?(?:Trace|Debug|Information|Warning|Error|Critical|Verbose|Fatal)?\(|\bthrow\b|Exception\(|\bnameof\(|\[Obsolete|\[Description")]
     private static partial Regex NotForReaders();
 
     [GeneratedRegex(@"(?:\b(?:Summary|Detail|Text|Title|OkButtonText|CancelButtonText|Heading|Name|TabName|Description|Placeholder)\s*(?:=>|=)\s*|\b(?:Show\w*Notifications?|Confirm|Alert|OpenSidePanel<[^>()]+>|Show<[^>()]+>)\(\s*)\$?""(?<text>(?:[^""\\]|\\.)*)""")]
