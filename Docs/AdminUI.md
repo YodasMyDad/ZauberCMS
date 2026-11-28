@@ -293,6 +293,11 @@ A plugin with admin text of its own does the same with its own area: `ZauberText
        public string TabName => _text["dashboards_latestContent"];
    }
    ```
+
+   A built-in property editor also keeps its parameterless constructor (an RTE toolbar item its `(IModalService)`
+   one), for code that reads only its alias or type (`new TextProperty().Alias`): it passes `EditorText.English`
+   (ZauberCMS's English) to the localising one, which is marked `[ActivatorUtilitiesConstructor]` so discovery and
+   Blazor choose it; an editor's `Name` and `Description` keep their setters, and a value set wins (D120).
 7. **Notifications**: `NotificationService.ShowNotifications(result.Messages, L)` (the summary in the admin's
    language); a summary of your own: `L["general_success"]` / `L["general_error"]`; Radzen confirms:
    `new ConfirmOptions { OkButtonText = L["general_yes"], CancelButtonText = L["general_no"] }`.
@@ -302,7 +307,10 @@ A plugin with admin text of its own does the same with its own area: `ZauberText
    Core's file of the area (`ZauberCMS.Core/Resources/ZauberText/<Area>.resx`): Core's code uses Core's keys only (it
    runs without Components' files). `HandlerResult` and `ResultMessage` carry the text, already in the caller's
    culture, as before: no keys, no API change. An `IValidate<T>` takes it by constructor (rule 6); FluentValidation:
-   `.WithMessage(_ => text["…"])`, so each call reads the current culture. Static helpers take it as a parameter.
+   `.WithMessage(_ => text["…"])`, so each call reads the current culture. Static helpers take it as a parameter;
+   `SaveChangesAndLog`'s messages come from the `ExtensionManager` it is given (`ExtensionManager.Text`, internal),
+   so its callers do not change (D122). A message that travels in an exception because it is written for the person
+   at a form is localised too (`DatabaseSetupParameters.BuildConnectionString(text)`, D121).
    DataAnnotations (`[Required(ErrorMessage = …)]`, `[Display(Name = …)]`, only on the account parameter classes):
    Blazor shows those messages as written, so 10h-4 moves them to a check that has the localiser (a validation
    attribute that reads it from `ValidationContext.GetService`, which Blazor's validator fills from the circuit, or

@@ -19,7 +19,13 @@ that opens a dialog: `Editors/EditorNotesProperty.razor` + `Editors/Dialogs/Edit
 ## Editor contract
 
 - **Metadata** (`Name`, `Alias`, `Description`, `Icon`, `SettingsComponent`, `Scripts`, `Styles`, `FullWidth`) is read
-  from an instance built without DI — plain initialisers only.
+  from an instance discovery builds (`ExtensionManager`: constructor injection, no `[Inject]` properties) —
+  plain initialisers, or values from a constructor parameter. The built-in editors take
+  `IStringLocalizer<ZauberText>` that way for `Name` and `Description` (keys `editors_*`, [AdminUI.md](AdminUI.md)
+  "Localisation", rule 6), and keep a parameterless constructor for code that reads only their alias or type
+  (`new TextProperty().Alias`), whose text is then ZauberCMS's English, and their `Name`/`Description` setters (a
+  value set wins, so a subclass can rename one; Roadmap D120). An editor of a plugin does the same with its own
+  area, or keeps plain strings.
 - `Alias` must be globally unique (the "Add Property" picker resolves by it). Third-party editors must not use the
   `ZauberCMS.` prefix.
 - Required `[Parameter]`s — `DynamicContentProperty` always passes them and throws if one is missing:
@@ -121,4 +127,3 @@ content types **and** roles. An editor in a separate class library appears only 
 - Theme is bound and starts light (the admin is light); `Auto` would follow the OS.
 - `InsertContentLinkItem` selects the whole existing link *before* it opens the dialog, so the saved selection
   covers it and the edited link replaces the old one.
-

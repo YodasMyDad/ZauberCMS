@@ -1,11 +1,25 @@
 ﻿@implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
-<RadzenSwitch @bind-Value="@Selected" Change=@(args => OnChange(args, "Switch")) InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Switch value" }})" />
+<RadzenSwitch @bind-Value="@Selected" Change=@(args => OnChange(args, "Switch")) InputAttributes="@(new Dictionary<string,object>{ { "aria-label", L["editors_switchValue"].Value }})" />
 
 @code {
-    public string Name { get; set; } = "True/False";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public SwitchProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public SwitchProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_trueFalse"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.TrueFalse";
-    public string Description { get; set; } = "True false picker (Switch)";
+    public string Description { get => _description ?? _text["editors_trueFalseInfo"].Value; set => _description = value; }
     public string Icon { get; set; } = "tune";
     public Type? SettingsComponent { get; set; }
     private bool Selected { get; set; }

@@ -9,7 +9,7 @@
 @if (SettingsModel.AllowTagEditing)
 {
     <div class="mb-2">
-        <RadzenButton Variant="Variant.Text" Shade="Shade.Light" Click=@(OpenTagEditor) Text="Edit Tags" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" />
+        <RadzenButton Variant="Variant.Text" Shade="Shade.Light" Click=@(OpenTagEditor) Text="@L["editors_editTags"]" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" />
     </div>
 }
 
@@ -21,13 +21,27 @@
                 ValueProperty="Id"
                 Multiple="true" 
                 AllowClear="false" 
-                Placeholder="Select tags" Chips="true" Style="width: 100%;"/>
+                Placeholder="@L["editors_selectTags"]" Chips="true" Style="width: 100%;"/>
 
 @code {
-    public string Name { get; set; } = "Tags";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public TagsProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public TagsProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_tags"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.Tags";
     public string Icon { get; set; } = "sell";
-    public string Description { get; set; } = "Tags are used for categorising items";
+    public string Description { get => _description ?? _text["editors_tagsInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(TagPropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
@@ -80,7 +94,7 @@
     
     private async Task OpenTagEditor()
     {
-        var modalRef = ModalService!.OpenSidePanel<TagEditor>("Edit Tags");
+        var modalRef = ModalService!.OpenSidePanel<TagEditor>(L["editors_editTags"]);
         var result = await modalRef.Result;
         // Refresh tags regardless of whether they saved or cancelled
         await SetTags();

@@ -9,7 +9,7 @@
 @if (SettingsModel.MaxLength != null)
 {
     <div>
-        <RadzenText TextStyle="TextStyle.Caption">Max Length: @SettingsModel.MaxLength</RadzenText>
+        <RadzenText TextStyle="TextStyle.Caption">@L["editors_maxLength", SettingsModel.MaxLength]</RadzenText>
     </div>
 }
 
@@ -25,10 +25,24 @@
     public List<string> Styles { get; set; } = [];
     public bool FullWidth { get; set; }
     
-    public string Name { get; set; } = "Textbox";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public TextProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public TextProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_textbox"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.Textbox";
     public string Icon { get; set; } = "border_color";
-    public string Description { get; set; } = "Standard text box";
+    public string Description { get => _description ?? _text["editors_textboxInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(TextContentSettings);
 
     private TextContentSettingsModel SettingsModel { get; set; } = new();

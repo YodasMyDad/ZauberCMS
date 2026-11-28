@@ -191,7 +191,7 @@ public static class DbContextExtensions
                     {
                         Log.Information("Save of {Type} abandoned by the save hook {Hook}", type.Name, beforeSave.Name);
                         crudResult.Success = false;
-                        crudResult.AddMessage("Save was purposely abandoned", ResultMessageType.Error);
+                        crudResult.AddMessage(extensionManager.Text["shared_saveAbandoned"], ResultMessageType.Error);
                         return crudResult;
                     }
                 }
@@ -246,8 +246,7 @@ public static class DbContextExtensions
         catch (DbUpdateConcurrencyException ex)
         {
             crudResult.Success = false;
-            crudResult.AddMessage(
-                $"{typeof(T).Name} was changed by someone else since it was opened. Reload it and make the changes again.",
+            crudResult.AddMessage(extensionManager.Text["shared_changedBySomeoneElse", typeof(T).Name],
                 ResultMessageType.Error);
             Log.Warning(ex, "{Type} not saved: concurrency conflict", typeof(T).Name);
         }

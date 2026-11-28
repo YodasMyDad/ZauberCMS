@@ -4,14 +4,28 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentProperty
 
 <RadzenNumeric TValue="double" Value="@SavedValue" Change="@(args => OnChange(args))" class="w-full"
-               InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "enter numeric value" }})"
+               InputAttributes="@(new Dictionary<string,object>{ { "aria-label", L["editors_numericValue"].Value }})"
                @attributes="GetAdditionalAttributes()" />
 
 @code {
-    public string Name { get; set; } = "Numeric Text Field";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public NumericProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public NumericProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_numeric"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.Numeric";
     public string Icon { get; set; } = "pin";
-    public string Description { get; set; } = "Text field that only allows numbers";
+    public string Description { get => _description ?? _text["editors_numericInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(NumericPropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];

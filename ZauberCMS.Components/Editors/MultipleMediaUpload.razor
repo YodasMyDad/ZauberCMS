@@ -13,7 +13,7 @@
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Center" Gap="0" class="pb-1">
     @if (EnableFolderSelection)
     {
-            <RadzenButton Click="@(() => AddMedia())" Variant="Variant.Text">Select Folder</RadzenButton> 
+            <RadzenButton Click="@(() => AddMedia())" Variant="Variant.Text">@L["editors_selectFolder"]</RadzenButton> 
     }
     @if (ParentFolder != null)
     {
@@ -38,8 +38,8 @@
     </div>
 </div>
 
-<RadzenButton Click="@(() => Save())" Disabled="@_busy">Save</RadzenButton>
-<RadzenButton Click="@(() => Clear())" Disabled="@_busy">Clear</RadzenButton>
+<RadzenButton Click="@(() => Save())" Disabled="@_busy">@L["general_save"]</RadzenButton>
+<RadzenButton Click="@(() => Clear())" Disabled="@_busy">@L["general_clear"]</RadzenButton>
 
 <RadzenStack Visible="@ErrorMessages.Any()" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start" Gap="0" class="error-message-container">
     @foreach (var error in ErrorMessages)
@@ -122,7 +122,7 @@
             { nameof(MediaTree.MediaTypes), new List<MediaType> { MediaType.Folder } }
         };
 
-        Modal = ModalService?.OpenSidePanel<MediaTree>("Choose Media", parameters);
+        Modal = ModalService?.OpenSidePanel<MediaTree>(L["editors_chooseMedia"], parameters);
     }
     
     private void OnValueChangedHandler(object value)
@@ -150,14 +150,15 @@
 
         if ((e.FileCount + FilesToUpload.Count) > MaxAllowedFiles)
         {
-            ErrorMessages.Add(new ResultMessage{Message = $"Only {MaxAllowedFiles} files can be uploaded", MessageType = ResultMessageType.Error});
+            ErrorMessages.Add(new ResultMessage{Message = L["editors_tooManyFiles", MaxAllowedFiles], MessageType = ResultMessageType.Error});
             return;
         }
 
-        // A site whose storage setting is blank stores no files: the editor names the setting (ZA-196)
+        // A site whose storage setting is blank stores no files: the editor names the setting (ZA-196), with
+        // MediaService's text for that refusal (Core's media_noStorageProvider)
         if (ProviderService.StorageProvider is not { } storage)
         {
-            ErrorMessages.Add(new ResultMessage { Message = ProviderService.NoStorageProviderMessage, MessageType = ResultMessageType.Error });
+            ErrorMessages.Add(new ResultMessage { Message = L["media_noStorageProvider"], MessageType = ResultMessageType.Error });
             return;
         }
 
@@ -193,7 +194,7 @@
                     // file is not added, the editor says why, and the circuit carries on
                     Logger.LogWarning(ex, "Upload of {FileName} could not be staged", file.Name);
                     ErrorMessages.Add(new ResultMessage
-                        { Message = $"{file.Name} could not be read. Choose it again.", MessageType = ResultMessageType.Error });
+                        { Message = L["editors_fileNotRead", file.Name], MessageType = ResultMessageType.Error });
                 }
             }
         }
@@ -276,7 +277,7 @@
         }
         else
         {
-            NotificationService.ShowSuccessNotification($"{savedMediaItems.Count} Media Saved");
+            NotificationService.ShowSuccessNotification(L["editors_mediaSaved", savedMediaItems.Count]);
         }
     }
 

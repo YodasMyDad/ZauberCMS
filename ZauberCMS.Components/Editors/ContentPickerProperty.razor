@@ -13,15 +13,29 @@
 </SortableList>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start">
-    <RadzenButton Variant="Variant.Text" Click="@(() => AddContent())">Add Content</RadzenButton>
+    <RadzenButton Variant="Variant.Text" Click="@(() => AddContent())">@L["editors_addContent"]</RadzenButton>
 </RadzenStack>
 
 @code {
     [Inject] NotificationService NotificationService { get; set; } = null!;
     
-    public string Name { get; set; } = "Content Picker";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public ContentPickerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public ContentPickerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_contentPicker"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.ContentPicker";
-    public string Description { get; set; } = "Content picker using the content tree";
+    public string Description { get => _description ?? _text["editors_contentPickerInfo"].Value; set => _description = value; }
     public string Icon { get; set; } = "account_tree";
     public Type? SettingsComponent { get; set; } = typeof(ContentPickerPropertySettings);
 
@@ -82,7 +96,7 @@
             { nameof(ContentTree.DisableContextMenu), true }
         };
 
-        Modal = ModalService?.OpenSidePanel<ContentTree>("Choose Content", parameters);
+        Modal = ModalService?.OpenSidePanel<ContentTree>(L["editors_chooseContent"], parameters);
     }
 
     private async Task OnValueChangedHandler(object value)
@@ -90,7 +104,7 @@
         if (SettingsModel.MaxAllowed != null && ContentItems.Count >= SettingsModel.MaxAllowed)
         {
             Modal?.Close();
-            NotificationService.ShowErrorNotification($"You can only pick {SettingsModel.MaxAllowed}");
+            NotificationService.ShowErrorNotification(L["editors_pickMax", SettingsModel.MaxAllowed]);
             return;
         }
 
@@ -100,7 +114,7 @@
             {
                 if (!SettingsModel.AllowedContentTypes.Contains(content.ContentTypeId))
                 {
-                    NotificationService.ShowErrorNotification("You are not allowed to pick that content type");
+                    NotificationService.ShowErrorNotification(L["editors_contentTypeNotAllowed"]);
                     return;
                 }
             }
@@ -109,7 +123,7 @@
             {
                 if (content.ParentId != null)
                 {
-                    NotificationService.ShowErrorNotification("You can only pick content at the root of the tree");
+                    NotificationService.ShowErrorNotification(L["editors_pickRootContentOnly"]);
                     return;
                 }
             }

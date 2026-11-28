@@ -132,8 +132,7 @@ public class WeakEventManager<TEventArgs>
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex,
-                    "Error invoking weak event handler {Method} on {DeclaringType}",
+                _logger?.LogError(ex, "Error invoking weak event handler {Method} on {DeclaringType}",
                     handler.Method.Name,
                     handler.Method.DeclaringType?.FullName);
             }

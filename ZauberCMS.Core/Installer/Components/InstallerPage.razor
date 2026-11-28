@@ -1,12 +1,12 @@
 @* The whole installer response. Rendered to a string by InstallerMiddleware (no router, no layout, no
    interactivity): everything it needs is in the model. *@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@CultureInfo.CurrentUICulture.Name">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="robots" content="noindex, nofollow"/>
-    <title>@(HasProblem ? "Error: " : "")@Title – ZauberCMS</title>
+    <title>@(HasProblem ? L["installer_pageTitleProblem", Title] : L["installer_pageTitle", Title])</title>
     <style nonce="@Model.Nonce">@((MarkupString)InstallerAssets.Css)</style>
 </head>
 <body>
@@ -18,25 +18,25 @@
         <span>ZauberCMS</span>
     </div>
 
-    <ol class="steps" aria-label="Installation steps">
+    <ol class="steps" aria-label="@L["installer_steps"]">
         <li data-state="@DatabaseState" aria-current="@(DatabaseState == "current" ? "step" : null)">
-            Database
+            @L["installer_database"]
             @if (Model.ConfiguredDatabase != null)
             {
                 <small>@Model.ConfiguredDatabase</small>
             }
         </li>
-        <li data-rail="admin" data-state="@PaneState("admin")">Administrator</li>
-        <li data-rail="site" data-state="@PaneState("site")">Your site</li>
-        <li data-rail="starter" data-state="@PaneState("starter")">Starter content</li>
-        <li data-rail="review" data-state="@PaneState("review")">Review</li>
+        <li data-rail="admin" data-state="@PaneState("admin")">@L["installer_administrator"]</li>
+        <li data-rail="site" data-state="@PaneState("site")">@L["installer_yourSite"]</li>
+        <li data-rail="starter" data-state="@PaneState("starter")">@L["installer_starterContent"]</li>
+        <li data-rail="review" data-state="@PaneState("review")">@L["installer_review"]</li>
     </ol>
 
     <div class="rail-note">
-        <p>Until the site is installed, anyone who can open this page can install it. Finish before you make the site public.</p>
+        <p>@L["installer_openToAnyone"]</p>
         @if (!string.IsNullOrEmpty(Model.Version))
         {
-            <p>Version @Model.Version</p>
+            <p>@L["installer_version", Model.Version]</p>
         }
     </div>
 </aside>
@@ -75,10 +75,10 @@
 
     private string Title => Model.Step switch
     {
-        InstallerStep.Database => "Choose a database",
-        InstallerStep.ManualConfiguration => "Finish the database set-up",
-        InstallerStep.Setup => "Install",
-        _ => Model.MessageTitle ?? "Install"
+        InstallerStep.Database => L["installer_chooseDatabase"],
+        InstallerStep.ManualConfiguration => L["installer_finishDatabase"],
+        InstallerStep.Setup => L["installer_install"],
+        _ => Model.MessageTitle ?? L["installer_install"]
     };
 
     private string DatabaseState => Model.Step switch

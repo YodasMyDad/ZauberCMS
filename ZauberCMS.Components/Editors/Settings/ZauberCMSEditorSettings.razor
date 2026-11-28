@@ -3,27 +3,27 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Height" Description="Optional initial height (e.g., 300px, 50vh). Leave empty for default."/>
+        <PropertyInfo Name="@L["editors_zauberHeight"]" Description="@L["editors_zauberHeightInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenTextBox @bind-Value="@Settings.Height" Style="width: 100%;" Placeholder="e.g., 300px" />
+        <RadzenTextBox @bind-Value="@Settings.Height" Style="width: 100%;" Placeholder="@L["editors_zauberHeightExample"]" />
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Toolbar Layout" Description="Choose between full-featured or simple toolbar"/>
+        <PropertyInfo Name="@L["editors_zauberToolbar"]" Description="@L["editors_zauberToolbarInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenDropDown @bind-Value="@Settings.ToolbarLayout" 
-                        Data="@ToolbarLayouts" 
+                        Data="@ToolbarLayouts" TextProperty="Text" ValueProperty="Value"
                         Style="width: 100%;" />
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Allow Base64 Upload" Description="Allow uploading images as base64"/>
+        <PropertyInfo Name="@L["editors_zauberBase64"]" Description="@L["editors_zauberBase64Info"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowBase64ImageUpload" />
@@ -31,7 +31,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save" />
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save" />
 </RadzenStack>
 
 @code {
@@ -39,10 +39,14 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     public ZauberCMSEditorSettingsModel Settings { get; set; } = new();
 
-    private List<string> ToolbarLayouts = ["Full", "Minimal"];
+    // The stored values ("Full", "Minimal") with their names in the admin's language
+    private List<ToolbarLayoutOption> ToolbarLayouts { get; set; } = [];
+
+    private sealed record ToolbarLayoutOption(string Value, string Text);
 
     protected override void OnInitialized()
     {
+        ToolbarLayouts = [new("Full", L["editors_zauberToolbarFull"]), new("Minimal", L["editors_zauberToolbarMinimal"])];
         Settings = this.GetPropertySettings();
     }
 

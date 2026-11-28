@@ -53,16 +53,30 @@
                  JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
         <RadzenButton Icon="add" Size="ButtonSize.Medium"
                      Click="@(() => HandleInsert(State.Items.Count))"
-                     class="rz-border-radius-10" aria-label="Add new block" />
-        <div class="text-sm">Add New Block</div>
+                     class="rz-border-radius-10" aria-label="@L["editors_addNewBlock"]" />
+        <div class="text-sm">@L["editors_addNewBlock"]</div>
     </RadzenStack>
 </div>
 
 @code {
     // IContentProperty implementation
-    public string Name { get; set; } = "Block List Editor";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public BlockListEditorProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public BlockListEditorProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_blockList"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.BlockListEditor";
-    public string Description { get; set; } = "Creates a list of content blocks with drag-and-drop ordering";
+    public string Description { get => _description ?? _text["editors_blockListInfo"].Value; set => _description = value; }
     public string Icon { get; set; } = "format_align_justify";
     public Type? SettingsComponent { get; set; } = typeof(BlockListEditorSettings);
     public List<string> Scripts { get; set; } = [];
@@ -215,9 +229,9 @@
 
         var content = State.Items[index];
         var confirmed = await DialogService.Confirm(
-            "Are you sure you want to delete this block?",
-            "Delete Block",
-            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
+            L["editors_deleteBlockConfirm"],
+            L["editors_deleteBlock"],
+            new ConfirmOptions { OkButtonText = L["general_yes"], CancelButtonText = L["general_no"] }
         );
 
         if (confirmed == true)
@@ -301,13 +315,13 @@
         }
         else
         {
-            contentParams.Add(nameof(ContentEditor.DefaultName), $"Block {(State.Items.Count + 1).ToWords()}");
+            contentParams.Add(nameof(ContentEditor.DefaultName), L["editors_blockDefaultName", (State.Items.Count + 1).ToWords()].Value);
         }
 
         ModalResult result;
         try
         {
-            result = await ModalService.OpenSidePanel<ContentEditor>("Edit Content Block", contentParams).Result;
+            result = await ModalService.OpenSidePanel<ContentEditor>(L["editors_editBlock"], contentParams).Result;
         }
         catch
         {
@@ -329,8 +343,8 @@
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Warning,
-                Summary = "Block changes not kept",
-                Detail = "The page was reloaded while the block was open. Open the block again and redo the changes.",
+                Summary = L["editors_blockChangesNotKept"],
+                Detail = L["editors_blockChangesNotKeptDetail"],
                 Duration = 10000
             });
             return;

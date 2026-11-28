@@ -3,16 +3,16 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Allow Tag Editing" Description="Enables to user to add/edit/update the tags below from within the tag property"/>
+        <PropertyInfo Name="@L["editors_tagsAllowEditing"]" Description="@L["editors_tagsAllowEditingInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenSwitch @bind-Value="@Settings.AllowTagEditing" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Allow Tag Editing" }})" />
+        <RadzenSwitch @bind-Value="@Settings.AllowTagEditing" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", L["editors_tagsAllowEditing"].Value }})" />
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Tags" Description="Manage the tags the user can pick from"/>
+        <PropertyInfo Name="@L["editors_tagsList"]" Description="@L["editors_tagsListInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <TagEditor />
@@ -21,7 +21,7 @@
 
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

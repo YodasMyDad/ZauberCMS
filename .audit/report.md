@@ -2,7 +2,8 @@
 
 Last full run: 5668365 (2026-11-25, full) · Last changed run: 7442f14+wt (2026-11-28, Roadmap Phase 11h, 7442f14..working tree, merged after Phase 10g-2) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
-Next free IDs: ZA-236 (findings) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Parallel parts: ZA-220…ZA-229 unused (skipped, not to be filled); ZA-240…ZA-249 unused (Phase 10h-1's range; skipped, not to be filled); ZA-250…ZA-259 held by Phase 11i (in progress); ZP-010 used by Phase 10h-1, ZP-011…ZP-019 unused (skipped, not to be filled)
+Next free IDs: ZA-236 (findings) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Parallel parts: ZA-220…ZA-229 unused (skipped, not to be filled); ZA-240…ZA-249 unused (Phase 10h-1's range; skipped, not to be filled); ZA-250…ZA-259 held by Phase 11i (in progress); ZA-260…ZA-264 used by Phase 10h-2, ZA-265…ZA-269 unused (skipped, not to be filled); ZA-270, ZA-271 used by Phase 10h-3, ZA-272…ZA-279 unused (skipped, not to be filled); ZA-280…ZA-289 held by Phase 10h-4 (in progress); ZP-010 used by Phase 10h-1, ZP-011…ZP-019 unused (skipped, not to be filled)
+After Roadmap Phase 10h-3 (2026-11-28, merged after 10h-2): Build PASS · Warnings: 0 · Tests: 1510 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1505 on its own branch) · Template smoke test passes; `doublecheck` self-review (with an independent review of the editors). The property editors, the installer and Core's generic messages localised (D120–D122); ZA-129 still in progress (closes with 10h-4); ZA-270, ZA-271 recorded (Low, Phase 10i); ZA-264 moved from Phase 12 to 10i (owner); ZA-272…ZA-279 unused (skipped, not to be filled). Next free ID: ZA-236
 After Roadmap Phase 10h-2 (2026-11-28, on its own branch): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1505 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part (three independent diff reviewers); verified in the browser. ZA-129 in progress (Content, Media, the editor dialogs and SEO converted, D110, D111; it closes with 10h-4); ZA-260 found and fixed (Low); ZA-261…ZA-263 recorded (Low, Phase 10i), ZA-264 (Low, Phase 12). ZA-265…ZA-269 unused (Phase 10h-2's range; skipped, not to be filled)
 After Roadmap Phase 10h-1 (2026-11-28, merged after 10g-2 and 11h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1500 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1377 on its own branch) · Template smoke test passes; `doublecheck` self-review on the part. ZA-129 in progress (the mechanism and the first screens, D90–D97; it closes with 10h-4); ZP-010 proposed. Next free ID: ZA-236
 After Roadmap Phase 11h (2026-11-28, merged after 10g-2): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch) · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-191, ZA-192, ZA-195, ZA-196 fixed (D80–D83); ZA-230 found and fixed while building; ZA-231…ZA-234 found by the audit and fixed (Low); ZA-235 recorded (Low, Phase 12); ZP-002, ZP-003 proposed. Next free ID: ZA-236
@@ -25,7 +26,7 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 | 0 |
 | Medium | 0 | 1 (10g-2: ZA-218) | 1 (10g-2: ZA-218) |
-| Low | 10 | 9 (11h: ZA-230…ZA-235; 10g-2: ZA-216, ZA-217, ZA-219) | 13 (11h: ZA-191, ZA-192, ZA-195, ZA-196, ZA-230…ZA-234; 10g-2: ZA-197, ZA-214…ZA-216) |
+| Low | 12 | 9 (11h: ZA-230…ZA-235; 10g-2: ZA-216, ZA-217, ZA-219) | 13 (11h: ZA-191, ZA-192, ZA-195, ZA-196, ZA-230…ZA-234; 10g-2: ZA-197, ZA-214…ZA-216) |
 
 Proposals: three open, ZP-002 and ZP-003 (Phase 11h, owner decision) and ZP-010 (Phase 10h-1, owner decision);
 ZP-001 built in Phase 10g-2 (D72).
@@ -43,7 +44,7 @@ event-unsubscribe 22 · httpcontext-accessor 5 · exception-text 11. Flat agains
 suppressed warnings 35 → 18; every hit on an added line is moved code or a suppression with its reason.
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10h: ZA-129; 10i: ZA-128, ZA-194, ZA-261…ZA-263; 12: ZA-217, ZA-219, ZA-235, ZA-264); there is no Backlog (owner, 2026-11-27).
+a phase (10h: ZA-129; 10i: ZA-128, ZA-194, ZA-261…ZA-264, ZA-270, ZA-271; 12: ZA-217, ZA-219, ZA-235); there is no Backlog (owner, 2026-11-27).
 The run's two owner questions were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
@@ -65,6 +66,8 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   "Localisation"). Closes with 10h-4.
 - Progress (Phase 10h-2, 2026-11-28): Content, Media, the editor dialogs and SEO, and Core's content, media,
   storage and SEO text (D110, D111).
+- Progress (Phase 10h-3, 2026-11-28): the property editors (`Editors` but `Dialogs` and the API-key picker), the
+  installer and Core's generic messages (D120–D122).
 
 ### ZA-194 [Low/High] With registration off, the not-found view is shown in the account layout
 - Where: `ZauberCMS.Components/Account/Pages/Register.razor` · Category: E · Since: 2026-11-27 (older; visible since 11a sends the HTML) · Roadmap: 10i
@@ -106,9 +109,22 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   (`AllowedMediaTypes = [MediaType.Image]`), as Umbraco's image pickers do.
 
 ### ZA-264 [Low/High] The media image editor cannot be opened and writes to the console
-- Where: `ZauberCMS.Components/Admin/MediaSection/Dialogs/EditImage.razor:265-266`, `Dialogs/UpdateMediaForm.razor:84-89` · Category: F · Since: 2026-11-28 (older; found by Phase 10h-2) · Roadmap: 12
+- Where: `ZauberCMS.Components/Admin/MediaSection/Dialogs/EditImage.razor:265-266`, `Dialogs/UpdateMediaForm.razor:84-89` · Category: F · Since: 2026-11-28 (older; found by Phase 10h-2) · Roadmap: 10i (moved from 12, owner: every Phase 10/11 finding is done in those phases)
 - Issue / Fix: the button that opens `EditImage` is commented out, so the component ships unused, and it writes its
-  crop boxes with `Console.WriteLine`. Finish it (cropping through the storage provider) or remove it.
+  crop boxes with `Console.WriteLine`. Finish it or remove it, decided Umbraco's way: Umbraco never edits the stored
+  file, crops are data (kept with the media, applied when the image is served).
+
+### ZA-270 [Low/High] The trees' "Show more" row is not localised
+- Where: `ZauberCMS.Core/Shared/Models/TreeLoadMore.cs:22` (`Name`), read by `ZauberCMS.Components/Core/Extensions/TreeExtensions.cs` (`TreeNodeText`, `AddLoadMore`) · Category: E · Since: 2026-11-28 (found by Phase 10h-3) · Roadmap: 10i
+- Issue / Fix: "Show {n} more ({m} not shown)" is built in a Core model and rendered by static tree helpers, which
+  have no localiser, so it stays English in every admin language. Give the row its text where the trees render it
+  (a `shared_`/`trees_` key read with `L`, the counts as placeholders); the row is a tree button, already 10i's.
+
+### ZA-271 [Low/High] Identity's own messages are English in the installer and the account pages
+- Where: `ZauberCMS.Core/Installer/Services/InstallService.cs` (`error.Description` of the password and user validators), the account pages that show `IdentityResult` errors · Category: E · Since: 2026-11-28 (found by Phase 10h-3) · Roadmap: 10i
+- Issue / Fix: a refused password or a taken user name shows ASP.NET Core Identity's English
+  (`IdentityErrorDescriber`) whatever the language. Register an `IdentityErrorDescriber` that reads ZauberCMS's
+  text (Core area Membership), as Umbraco localises its member and user validation messages.
 
 ## Improvement proposals
 

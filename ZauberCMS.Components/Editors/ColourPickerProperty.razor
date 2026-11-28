@@ -3,9 +3,23 @@
 <RadzenColorPicker @bind-Value="@Value" ShowHSV="@ShowHsv" ShowRGBA="@ShowRgba" ShowColors="@ShowColors" ShowButton="@ShowButton" Change="@OnChange"/>
 
 @code {
-    public string Name { get; set; } = "Colour Picker";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public ColourPickerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public ColourPickerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_colourPicker"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.ColourPicker";
-    public string Description { get; set; } = "Standard colour picker";
+    public string Description { get => _description ?? _text["editors_colourPickerInfo"].Value; set => _description = value; }
     public string Icon { get; set; } = "palette";
     public Type? SettingsComponent { get; set; }
 

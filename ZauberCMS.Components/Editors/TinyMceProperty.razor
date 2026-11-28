@@ -25,10 +25,24 @@
     
     [CascadingParameter] public IModalService? ModalService { get; set; }
     
-    public string Name { get; set; } = "Text Editor (TinyMCE)";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public TinyMceProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public TinyMceProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_tinyMce"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.TinyMce";
     public string Icon { get; set; } = "edit_note";
-    public string Description { get; set; } = "TinyMCE Rich Text Editor";
+    public string Description { get => _description ?? _text["editors_tinyMceInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(TinyMcePropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];

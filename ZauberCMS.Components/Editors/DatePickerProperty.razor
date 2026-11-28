@@ -7,9 +7,23 @@
                   @attributes="GetAdditionalAttributes()" />
 
 @code {
-    public string Name { get; set; } = "Date Picker";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public DatePickerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public DatePickerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_datePicker"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.DatePicker";
-    public string Description { get; set; } = "Standard date picker";
+    public string Description { get => _description ?? _text["editors_datePickerInfo"].Value; set => _description = value; }
     public string Icon { get; set; } = "calendar_today";
     public Type? SettingsComponent { get; set; } = typeof(DatePickerPropertySettings);
     private DateTime? DateValue { get; set; }

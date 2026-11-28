@@ -12,4 +12,871 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="editors_addColour" xml:space="preserve">
+    <value>Add Colour</value>
+  </data>
+  <data name="editors_addColourInfo" xml:space="preserve">
+    <value>Add a colour to the list of allowed colours.</value>
+  </data>
+  <data name="editors_addContent" xml:space="preserve">
+    <value>Add Content</value>
+  </data>
+  <data name="editors_addItem" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="editors_addMedia" xml:space="preserve">
+    <value>Add Media</value>
+  </data>
+  <data name="editors_addNewBlock" xml:space="preserve">
+    <value>Add New Block</value>
+  </data>
+  <data name="editors_blockChangesNotKept" xml:space="preserve">
+    <value>Block changes not kept</value>
+    <comment>A notification's summary</comment>
+  </data>
+  <data name="editors_blockChangesNotKeptDetail" xml:space="preserve">
+    <value>The page was reloaded while the block was open. Open the block again and redo the changes.</value>
+  </data>
+  <data name="editors_blockDefaultName" xml:space="preserve">
+    <value>Block {0}</value>
+    <comment>A new block's name; {0} = its number in words, in the admin's language (one, two, …)</comment>
+  </data>
+  <data name="editors_blockElementTypes" xml:space="preserve">
+    <value>Allowed Element Types</value>
+  </data>
+  <data name="editors_blockElementTypesInfo" xml:space="preserve">
+    <value>Select which element types can be used in this block list. If none are selected, all element types will be available.</value>
+  </data>
+  <data name="editors_blockList" xml:space="preserve">
+    <value>Block List Editor</value>
+  </data>
+  <data name="editors_blockListInfo" xml:space="preserve">
+    <value>Creates a list of content blocks with drag-and-drop ordering</value>
+  </data>
+  <data name="editors_blockStylesheets" xml:space="preserve">
+    <value>Stylesheets</value>
+  </data>
+  <data name="editors_blockStylesheetsInfo" xml:space="preserve">
+    <value>Add the stylesheets needed for this block list editor (Path should be relative to the website root i.e. '/css/styles.css')</value>
+  </data>
+  <data name="editors_changeFrequencyAlways" xml:space="preserve">
+    <value>Always</value>
+    <comment>A sitemap change frequency</comment>
+  </data>
+  <data name="editors_changeFrequencyDaily" xml:space="preserve">
+    <value>Daily</value>
+    <comment>A sitemap change frequency</comment>
+  </data>
+  <data name="editors_changeFrequencyHourly" xml:space="preserve">
+    <value>Hourly</value>
+    <comment>A sitemap change frequency</comment>
+  </data>
+  <data name="editors_changeFrequencyMonthly" xml:space="preserve">
+    <value>Monthly</value>
+    <comment>A sitemap change frequency</comment>
+  </data>
+  <data name="editors_changeFrequencyNever" xml:space="preserve">
+    <value>Never</value>
+    <comment>A sitemap change frequency</comment>
+  </data>
+  <data name="editors_changeFrequencyWeekly" xml:space="preserve">
+    <value>Weekly</value>
+    <comment>A sitemap change frequency</comment>
+  </data>
+  <data name="editors_changeFrequencyYearly" xml:space="preserve">
+    <value>Yearly</value>
+    <comment>A sitemap change frequency</comment>
+  </data>
+  <data name="editors_checkboxList" xml:space="preserve">
+    <value>Checkbox List</value>
+  </data>
+  <data name="editors_checkboxListInfo" xml:space="preserve">
+    <value>Checkbox list using manual or custom data</value>
+  </data>
+  <data name="editors_chooseContent" xml:space="preserve">
+    <value>Choose Content</value>
+    <comment>The side panel's title</comment>
+  </data>
+  <data name="editors_chooseIcon" xml:space="preserve">
+    <value>Choose Icon</value>
+    <comment>The side panel's title</comment>
+  </data>
+  <data name="editors_chooseMedia" xml:space="preserve">
+    <value>Choose Media</value>
+    <comment>The side panel's title</comment>
+  </data>
+  <data name="editors_codeEditor" xml:space="preserve">
+    <value>Code Editor</value>
+  </data>
+  <data name="editors_codeEditorInfo" xml:space="preserve">
+    <value>Editor for writing code</value>
+  </data>
+  <data name="editors_codeHeight" xml:space="preserve">
+    <value>Editor Height</value>
+  </data>
+  <data name="editors_codeHeightInfo" xml:space="preserve">
+    <value>The height of the editor in pixels.</value>
+  </data>
+  <data name="editors_codeLanguage" xml:space="preserve">
+    <value>Default Language</value>
+  </data>
+  <data name="editors_codeLanguageInfo" xml:space="preserve">
+    <value>Choose the default language for the editor.</value>
+  </data>
+  <data name="editors_colourPicker" xml:space="preserve">
+    <value>Colour Picker</value>
+  </data>
+  <data name="editors_colourPickerInfo" xml:space="preserve">
+    <value>Standard colour picker</value>
+  </data>
+  <data name="editors_colourThemePicker" xml:space="preserve">
+    <value>Colour Theme Picker</value>
+  </data>
+  <data name="editors_colourThemePickerInfo" xml:space="preserve">
+    <value>Allows you to pick from a specified colour list</value>
+  </data>
+  <data name="editors_contentPicker" xml:space="preserve">
+    <value>Content Picker</value>
+  </data>
+  <data name="editors_contentPickerInfo" xml:space="preserve">
+    <value>Content picker using the content tree</value>
+  </data>
+  <data name="editors_contentTypeNotAllowed" xml:space="preserve">
+    <value>You are not allowed to pick that content type</value>
+  </data>
+  <data name="editors_contentTypes" xml:space="preserve">
+    <value>Content Types</value>
+  </data>
+  <data name="editors_contentTypesInfo" xml:space="preserve">
+    <value>Select the allowed content types for this picker</value>
+  </data>
+  <data name="editors_customComponentPicker" xml:space="preserve">
+    <value>Custom Component Picker</value>
+  </data>
+  <data name="editors_customComponentPickerInfo" xml:space="preserve">
+    <value>Renders custom Blazor components on the page</value>
+  </data>
+  <data name="editors_dateInline" xml:space="preserve">
+    <value>Inline Calendar</value>
+  </data>
+  <data name="editors_dateInlineInfo" xml:space="preserve">
+    <value>Turns the date picker into an inline calendar on the page</value>
+  </data>
+  <data name="editors_dateMax" xml:space="preserve">
+    <value>Max End Date</value>
+  </data>
+  <data name="editors_dateMaxInfo" xml:space="preserve">
+    <value>Set the max/end date value for the picker</value>
+  </data>
+  <data name="editors_dateMin" xml:space="preserve">
+    <value>Starting Date</value>
+  </data>
+  <data name="editors_dateMinInfo" xml:space="preserve">
+    <value>Set the min/starting date value for the picker</value>
+  </data>
+  <data name="editors_datePicker" xml:space="preserve">
+    <value>Date Picker</value>
+  </data>
+  <data name="editors_datePickerInfo" xml:space="preserve">
+    <value>Standard date picker</value>
+  </data>
+  <data name="editors_dateTimeOnly" xml:space="preserve">
+    <value>Show Time Only</value>
+  </data>
+  <data name="editors_dateTimeOnlyInfo" xml:space="preserve">
+    <value>Turns the date picker into a time only picker</value>
+  </data>
+  <data name="editors_deleteBlock" xml:space="preserve">
+    <value>Delete Block</value>
+    <comment>The confirm's title</comment>
+  </data>
+  <data name="editors_deleteBlockConfirm" xml:space="preserve">
+    <value>Are you sure you want to delete this block?</value>
+  </data>
+  <data name="editors_deletedItemsRemoved" xml:space="preserve">
+    <value>Deleted Items Removed</value>
+    <comment>A notification's summary</comment>
+  </data>
+  <data name="editors_deletedItemsRemovedDetail" xml:space="preserve">
+    <value>{0} deleted item(s) removed or unlinked. Please save the page to persist changes.</value>
+    <comment>{0} = the number of images and links taken out</comment>
+  </data>
+  <data name="editors_deleteItem" xml:space="preserve">
+    <value>Delete {0}</value>
+    <comment>{0} = the block's name</comment>
+  </data>
+  <data name="editors_dictionaryManager" xml:space="preserve">
+    <value>Simple Dictionary Manager</value>
+  </data>
+  <data name="editors_dictionaryManagerInfo" xml:space="preserve">
+    <value>Simple editor to manage a dictionary of strings</value>
+  </data>
+  <data name="editors_dropdownList" xml:space="preserve">
+    <value>Dropdown List</value>
+  </data>
+  <data name="editors_dropdownListInfo" xml:space="preserve">
+    <value>Dropdown list using manual or custom data, for multiple select items</value>
+  </data>
+  <data name="editors_editBlock" xml:space="preserve">
+    <value>Edit Content Block</value>
+    <comment>The side panel's title</comment>
+  </data>
+  <data name="editors_editItem" xml:space="preserve">
+    <value>Edit {0}</value>
+    <comment>{0} = the block's name</comment>
+  </data>
+  <data name="editors_editorNotes" xml:space="preserve">
+    <value>Editor Notes</value>
+  </data>
+  <data name="editors_editorNotesInfo" xml:space="preserve">
+    <value>Add useful notes for editors either inline or in a dialog panel</value>
+  </data>
+  <data name="editors_editTags" xml:space="preserve">
+    <value>Edit Tags</value>
+    <comment>The button and the side panel's title</comment>
+  </data>
+  <data name="editors_fileNotRead" xml:space="preserve">
+    <value>{0} could not be read. Choose it again.</value>
+    <comment>{0} = the file name</comment>
+  </data>
+  <data name="editors_googleMapPicker" xml:space="preserve">
+    <value>Google Map Picker</value>
+  </data>
+  <data name="editors_googleMapPickerInfo" xml:space="preserve">
+    <value>Pick and save a location with a Google map</value>
+  </data>
+  <data name="editors_googleMapsNoApiKey" xml:space="preserve">
+    <value>There is no API key named 'GoogleMaps' (Global Settings, or Zauber:ApiKeys in the site's configuration)</value>
+    <comment>GoogleMaps and Zauber:ApiKeys are names: keep them</comment>
+  </data>
+  <data name="editors_insertLink" xml:space="preserve">
+    <value>Insert Link</value>
+    <comment>The toolbar button, its tooltip and the side panel's title</comment>
+  </data>
+  <data name="editors_insertMedia" xml:space="preserve">
+    <value>Insert Media</value>
+    <comment>The toolbar button and the side panel's title</comment>
+  </data>
+  <data name="editors_linksUpdated" xml:space="preserve">
+    <value>URLs Updated</value>
+    <comment>A notification's summary</comment>
+  </data>
+  <data name="editors_linksUpdatedDetail" xml:space="preserve">
+    <value>{0} link URL(s) updated. Please save the page to persist changes.</value>
+    <comment>{0} = the number of links whose address changed</comment>
+  </data>
+  <data name="editors_listAmountAllowed" xml:space="preserve">
+    <value>Amount Allowed</value>
+  </data>
+  <data name="editors_listChooseDataSource" xml:space="preserve">
+    <value>Choose available data sources:</value>
+  </data>
+  <data name="editors_listData" xml:space="preserve">
+    <value>Data</value>
+    <comment>A tab</comment>
+  </data>
+  <data name="editors_listDataSource" xml:space="preserve">
+    <value>Datasource</value>
+  </data>
+  <data name="editors_listManager" xml:space="preserve">
+    <value>Simple List Manager</value>
+  </data>
+  <data name="editors_listManagerInfo" xml:space="preserve">
+    <value>Simple editor to manage a list of strings</value>
+  </data>
+  <data name="editors_listManualData" xml:space="preserve">
+    <value>Manual Data</value>
+  </data>
+  <data name="editors_mapLatitude" xml:space="preserve">
+    <value>Latitude</value>
+  </data>
+  <data name="editors_mapLatitudeInfo" xml:space="preserve">
+    <value>Set the default latitude for the map</value>
+  </data>
+  <data name="editors_mapLocation" xml:space="preserve">
+    <value>Latitude: {0}, Longitude: {1}</value>
+    <comment>{0} = the latitude, {1} = the longitude</comment>
+  </data>
+  <data name="editors_mapLongitude" xml:space="preserve">
+    <value>Longitude</value>
+  </data>
+  <data name="editors_mapLongitudeInfo" xml:space="preserve">
+    <value>Set the default longitude for the map</value>
+  </data>
+  <data name="editors_mapZoom" xml:space="preserve">
+    <value>Zoom Level</value>
+  </data>
+  <data name="editors_mapZoomInfo" xml:space="preserve">
+    <value>Set the default zoom level for the map</value>
+  </data>
+  <data name="editors_materialIconPicker" xml:space="preserve">
+    <value>Material Icon Picker</value>
+  </data>
+  <data name="editors_materialIconPickerInfo" xml:space="preserve">
+    <value>Pick an icon from the Material icons list</value>
+  </data>
+  <data name="editors_maxAllowed" xml:space="preserve">
+    <value>Max allowed: {0}</value>
+    <comment>{0} = the most items that can be chosen</comment>
+  </data>
+  <data name="editors_maxAllowedItems" xml:space="preserve">
+    <value>Max Allowed Items</value>
+  </data>
+  <data name="editors_maxAllowedItemsInfo" xml:space="preserve">
+    <value>The maximum allowed items to be picked</value>
+  </data>
+  <data name="editors_maxLength" xml:space="preserve">
+    <value>Max Length: {0}</value>
+    <comment>{0} = the most characters the field takes</comment>
+  </data>
+  <data name="editors_mediaPicker" xml:space="preserve">
+    <value>Media Picker</value>
+  </data>
+  <data name="editors_mediaPickerInfo" xml:space="preserve">
+    <value>Media picker using the media tree</value>
+  </data>
+  <data name="editors_mediaSaved" xml:space="preserve">
+    <value>{0} Media Saved</value>
+    <comment>{0} = the number of media items saved</comment>
+  </data>
+  <data name="editors_mediaTypeArchive" xml:space="preserve">
+    <value>Archive</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_mediaTypeAudio" xml:space="preserve">
+    <value>Audio</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_mediaTypeDocument" xml:space="preserve">
+    <value>Document</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_mediaTypeImage" xml:space="preserve">
+    <value>Image</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_mediaTypeNotAllowed" xml:space="preserve">
+    <value>You are not allowed to pick that media type</value>
+  </data>
+  <data name="editors_mediaTypePdf" xml:space="preserve">
+    <value>PDF</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_mediaTypePresentation" xml:space="preserve">
+    <value>Presentation</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_mediaTypes" xml:space="preserve">
+    <value>Media Types</value>
+  </data>
+  <data name="editors_mediaTypesInfo" xml:space="preserve">
+    <value>Select the allowed media types for this picker</value>
+  </data>
+  <data name="editors_mediaTypeSpreadsheet" xml:space="preserve">
+    <value>Spreadsheet</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_mediaTypeText" xml:space="preserve">
+    <value>Text</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_mediaTypeVideo" xml:space="preserve">
+    <value>Video</value>
+    <comment>A media type</comment>
+  </data>
+  <data name="editors_navigationItem" xml:space="preserve">
+    <value>Navigation Item</value>
+    <comment>The side panel's title</comment>
+  </data>
+  <data name="editors_navigationTree" xml:space="preserve">
+    <value>Navigation Tree</value>
+  </data>
+  <data name="editors_navigationTreeInfo" xml:space="preserve">
+    <value>A navigation builder in a tree</value>
+  </data>
+  <data name="editors_noteBackground" xml:space="preserve">
+    <value>Background Color</value>
+  </data>
+  <data name="editors_noteBackgroundInfo" xml:space="preserve">
+    <value>Optional background color override</value>
+  </data>
+  <data name="editors_noteIconInfo" xml:space="preserve">
+    <value>Optional icon override</value>
+  </data>
+  <data name="editors_noteInline" xml:space="preserve">
+    <value>Show Inline</value>
+  </data>
+  <data name="editors_noteInlineInfo" xml:space="preserve">
+    <value>Notes open in a side dialog by default, change the note to be inline within the page</value>
+  </data>
+  <data name="editors_noteText" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="editors_noteTextInfo" xml:space="preserve">
+    <value>The main note you want the editor to know</value>
+  </data>
+  <data name="editors_noteTitle" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="editors_noteTitleInfo" xml:space="preserve">
+    <value>Title first shown to the user</value>
+  </data>
+  <data name="editors_numeric" xml:space="preserve">
+    <value>Numeric Text Field</value>
+  </data>
+  <data name="editors_numericAlignRight" xml:space="preserve">
+    <value>Align Right</value>
+  </data>
+  <data name="editors_numericAlignRightInfo" xml:space="preserve">
+    <value>Align the numbers to the right</value>
+  </data>
+  <data name="editors_numericFormat" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="editors_numericFormatInfo" xml:space="preserve">
+    <value>Format the input using a string format (i.e. #.0000, c, ### m2)</value>
+  </data>
+  <data name="editors_numericInfo" xml:space="preserve">
+    <value>Text field that only allows numbers</value>
+  </data>
+  <data name="editors_numericMax" xml:space="preserve">
+    <value>Max</value>
+  </data>
+  <data name="editors_numericMaxInfo" xml:space="preserve">
+    <value>Set a maximum value</value>
+  </data>
+  <data name="editors_numericMin" xml:space="preserve">
+    <value>Min</value>
+  </data>
+  <data name="editors_numericMinInfo" xml:space="preserve">
+    <value>Set a minimum starting value</value>
+  </data>
+  <data name="editors_numericPlaceholder" xml:space="preserve">
+    <value>Placeholder</value>
+  </data>
+  <data name="editors_numericPlaceholderInfo" xml:space="preserve">
+    <value>Set placeholder text for the user</value>
+  </data>
+  <data name="editors_numericStep" xml:space="preserve">
+    <value>Increment Step</value>
+  </data>
+  <data name="editors_numericStepInfo" xml:space="preserve">
+    <value>Set the incremental step (i.e. 0.5)</value>
+  </data>
+  <data name="editors_numericValue" xml:space="preserve">
+    <value>Enter numeric value</value>
+    <comment>The field's label for screen readers</comment>
+  </data>
+  <data name="editors_pickMax" xml:space="preserve">
+    <value>You can only pick {0}</value>
+    <comment>{0} = the most items that can be picked</comment>
+  </data>
+  <data name="editors_previewFailed" xml:space="preserve">
+    <value>{0}: the preview could not be shown</value>
+    <comment>{0} = the block's name</comment>
+  </data>
+  <data name="editors_radioButtonList" xml:space="preserve">
+    <value>Radio Button List</value>
+  </data>
+  <data name="editors_radioButtonListInfo" xml:space="preserve">
+    <value>Radio button list using manual or custom data</value>
+  </data>
+  <data name="editors_radzenEditor" xml:space="preserve">
+    <value>Text Editor (Radzen)</value>
+  </data>
+  <data name="editors_radzenEditorInfo" xml:space="preserve">
+    <value>Radzen's Rich Text Editor</value>
+  </data>
+  <data name="editors_rating" xml:space="preserve">
+    <value>Rating</value>
+  </data>
+  <data name="editors_ratingInfo" xml:space="preserve">
+    <value>A property that allows star ratings</value>
+  </data>
+  <data name="editors_ratingStars" xml:space="preserve">
+    <value>Amount Of Stars</value>
+  </data>
+  <data name="editors_ratingStarsInfo" xml:space="preserve">
+    <value>The amount of stars to display</value>
+  </data>
+  <data name="editors_pickRootContentOnly" xml:space="preserve">
+    <value>You can only pick content at the root of the tree</value>
+  </data>
+  <data name="editors_rootContentOnly" xml:space="preserve">
+    <value>Root Content Only</value>
+  </data>
+  <data name="editors_rootContentOnlyInfo" xml:space="preserve">
+    <value>Only allow the user to pick content that is in the root of the tree</value>
+  </data>
+  <data name="editors_rteAlignCenter" xml:space="preserve">
+    <value>Align Center</value>
+  </data>
+  <data name="editors_rteAlignCenterInfo" xml:space="preserve">
+    <value>Align text to the center</value>
+  </data>
+  <data name="editors_rteAlignLeft" xml:space="preserve">
+    <value>Align Left</value>
+  </data>
+  <data name="editors_rteAlignLeftInfo" xml:space="preserve">
+    <value>Align text to the left</value>
+  </data>
+  <data name="editors_rteAlignRight" xml:space="preserve">
+    <value>Align Right</value>
+  </data>
+  <data name="editors_rteAlignRightInfo" xml:space="preserve">
+    <value>Align text to the right</value>
+  </data>
+  <data name="editors_rteBackgroundColor" xml:space="preserve">
+    <value>Background Color</value>
+  </data>
+  <data name="editors_rteBackgroundColorInfo" xml:space="preserve">
+    <value>Change the background color of selected text</value>
+  </data>
+  <data name="editors_rteBold" xml:space="preserve">
+    <value>Bold</value>
+  </data>
+  <data name="editors_rteBoldInfo" xml:space="preserve">
+    <value>Toggle bold style for selected text</value>
+  </data>
+  <data name="editors_rteFontColor" xml:space="preserve">
+    <value>Font Color</value>
+  </data>
+  <data name="editors_rteFontColorInfo" xml:space="preserve">
+    <value>Change the color of the selected text</value>
+  </data>
+  <data name="editors_rteFontName" xml:space="preserve">
+    <value>Font Name</value>
+  </data>
+  <data name="editors_rteFontNameInfo" xml:space="preserve">
+    <value>Choose the font family for selected text</value>
+  </data>
+  <data name="editors_rteFontSize" xml:space="preserve">
+    <value>Font Size</value>
+  </data>
+  <data name="editors_rteFontSizeInfo" xml:space="preserve">
+    <value>Change font size of selected text</value>
+  </data>
+  <data name="editors_rteFormatBlock" xml:space="preserve">
+    <value>Format Block</value>
+  </data>
+  <data name="editors_rteFormatBlockInfo" xml:space="preserve">
+    <value>Apply paragraph or heading format</value>
+  </data>
+  <data name="editors_rteIndent" xml:space="preserve">
+    <value>Indent</value>
+  </data>
+  <data name="editors_rteIndentInfo" xml:space="preserve">
+    <value>Indent selected text</value>
+  </data>
+  <data name="editors_rteItalic" xml:space="preserve">
+    <value>Italic</value>
+  </data>
+  <data name="editors_rteItalicInfo" xml:space="preserve">
+    <value>Toggle italic style for selected text</value>
+  </data>
+  <data name="editors_rteJustify" xml:space="preserve">
+    <value>Justify</value>
+  </data>
+  <data name="editors_rteJustifyInfo" xml:space="preserve">
+    <value>Justify text across the line width</value>
+  </data>
+  <data name="editors_rteLink" xml:space="preserve">
+    <value>Link</value>
+  </data>
+  <data name="editors_rteLinkInfo" xml:space="preserve">
+    <value>Insert a hyperlink</value>
+  </data>
+  <data name="editors_rteOrderedList" xml:space="preserve">
+    <value>Ordered List</value>
+  </data>
+  <data name="editors_rteOrderedListInfo" xml:space="preserve">
+    <value>Insert a numbered list</value>
+  </data>
+  <data name="editors_rteOutdent" xml:space="preserve">
+    <value>Outdent</value>
+  </data>
+  <data name="editors_rteOutdentInfo" xml:space="preserve">
+    <value>Outdent selected text</value>
+  </data>
+  <data name="editors_rteShowRedo" xml:space="preserve">
+    <value>Show redo button</value>
+    <comment>The redo switch, read by screen readers</comment>
+  </data>
+  <data name="editors_rteShowUndo" xml:space="preserve">
+    <value>Show undo button</value>
+    <comment>The undo switch, read by screen readers</comment>
+  </data>
+  <data name="editors_rteRedo" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="editors_rteRedoInfo" xml:space="preserve">
+    <value>Button to allow the user to redo the last undone action</value>
+  </data>
+  <data name="editors_rteRemoveFormat" xml:space="preserve">
+    <value>Remove Format</value>
+  </data>
+  <data name="editors_rteRemoveFormatInfo" xml:space="preserve">
+    <value>Clear formatting from selected text</value>
+  </data>
+  <data name="editors_rteSourceEdit" xml:space="preserve">
+    <value>Source Edit</value>
+  </data>
+  <data name="editors_rteSourceEditInfo" xml:space="preserve">
+    <value>Edit the raw HTML source</value>
+  </data>
+  <data name="editors_rteStrikethrough" xml:space="preserve">
+    <value>Strikethrough</value>
+  </data>
+  <data name="editors_rteStrikethroughInfo" xml:space="preserve">
+    <value>Toggle strikethrough style for selected text</value>
+  </data>
+  <data name="editors_rteSubscript" xml:space="preserve">
+    <value>Subscript</value>
+  </data>
+  <data name="editors_rteSubscriptInfo" xml:space="preserve">
+    <value>Format text as subscript</value>
+  </data>
+  <data name="editors_rteSuperscript" xml:space="preserve">
+    <value>Superscript</value>
+  </data>
+  <data name="editors_rteSuperscriptInfo" xml:space="preserve">
+    <value>Format text as superscript</value>
+  </data>
+  <data name="editors_rteUnderline" xml:space="preserve">
+    <value>Underline</value>
+  </data>
+  <data name="editors_rteUnderlineInfo" xml:space="preserve">
+    <value>Toggle underline style for selected text</value>
+  </data>
+  <data name="editors_rteUndo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="editors_rteUndoInfo" xml:space="preserve">
+    <value>Button to allow the user to undo the last action</value>
+  </data>
+  <data name="editors_rteUnlink" xml:space="preserve">
+    <value>Unlink</value>
+  </data>
+  <data name="editors_rteUnlinkInfo" xml:space="preserve">
+    <value>Remove a hyperlink</value>
+  </data>
+  <data name="editors_rteUnorderedList" xml:space="preserve">
+    <value>Unordered List</value>
+  </data>
+  <data name="editors_rteUnorderedListInfo" xml:space="preserve">
+    <value>Insert a bulleted list</value>
+  </data>
+  <data name="editors_selectComponents" xml:space="preserve">
+    <value>Select components</value>
+  </data>
+  <data name="editors_selectElementTypes" xml:space="preserve">
+    <value>Select Element Types</value>
+  </data>
+  <data name="editors_selectFolder" xml:space="preserve">
+    <value>Select Folder</value>
+  </data>
+  <data name="editors_selectItems" xml:space="preserve">
+    <value>Select items</value>
+  </data>
+  <data name="editors_selectMaxAmount" xml:space="preserve">
+    <value>You can only select a maximum amount of {0}</value>
+    <comment>{0} = the most items that can be selected</comment>
+  </data>
+  <data name="editors_selectTags" xml:space="preserve">
+    <value>Select tags</value>
+  </data>
+  <data name="editors_seo" xml:space="preserve">
+    <value>SEO</value>
+  </data>
+  <data name="editors_seoChangeFrequency" xml:space="preserve">
+    <value>Change Frequency</value>
+  </data>
+  <data name="editors_seoChangeFrequencyInfo" xml:space="preserve">
+    <value>How frequently the page is likely to change. This affects how search engines treat your page.</value>
+  </data>
+  <data name="editors_seoChecker" xml:space="preserve">
+    <value>SEO Checker</value>
+    <comment>A tab</comment>
+  </data>
+  <data name="editors_seoExcludeFromSitemap" xml:space="preserve">
+    <value>Exclude From Sitemap</value>
+  </data>
+  <data name="editors_seoExcludeFromSitemapInfo" xml:space="preserve">
+    <value>Removes this page from your website's sitemap, so search engines won't prioritize it. Useful for utility pages or duplicates.</value>
+  </data>
+  <data name="editors_seoFields" xml:space="preserve">
+    <value>Fields</value>
+    <comment>A tab</comment>
+  </data>
+  <data name="editors_seoHideFromSearchEngines" xml:space="preserve">
+    <value>Hide From Search Engines</value>
+  </data>
+  <data name="editors_seoHideFromSearchEnginesInfo" xml:space="preserve">
+    <value>Prevents this page from appearing in Google and other search engines. Use this for private or low-value pages.</value>
+  </data>
+  <data name="editors_seoInfo" xml:space="preserve">
+    <value>Adds meta and SEO tools to your page</value>
+  </data>
+  <data name="editors_seoMetaDescription" xml:space="preserve">
+    <value>Meta Description</value>
+  </data>
+  <data name="editors_seoMetaDescriptionInfo" xml:space="preserve">
+    <value>A short summary of the page that appears in search results. Aim for 150–160 characters to ensure it's fully visible.</value>
+  </data>
+  <data name="editors_seoMetaDescriptionLength" xml:space="preserve">
+    <value>Meta description is {0} characters</value>
+    <comment>{0} = the number of characters</comment>
+  </data>
+  <data name="editors_seoOpenGraphImage" xml:space="preserve">
+    <value>Open Graph Image</value>
+  </data>
+  <data name="editors_seoOpenGraphImageInfo" xml:space="preserve">
+    <value>The image used when your page is shared on social media (Facebook, X, etc.). Upload a high-quality image, ideally 1200x630 pixels.</value>
+  </data>
+  <data name="editors_seoPageTitle" xml:space="preserve">
+    <value>Page Title</value>
+  </data>
+  <data name="editors_seoPageTitleInfo" xml:space="preserve">
+    <value>The title that appears in search engine results and browser tabs. Keep it under 60 characters for the best SEO results.</value>
+  </data>
+  <data name="editors_seoPageTitleLength" xml:space="preserve">
+    <value>Page title is {0} characters</value>
+    <comment>{0} = the number of characters</comment>
+  </data>
+  <data name="editors_seoPriority" xml:space="preserve">
+    <value>Priority</value>
+  </data>
+  <data name="editors_seoPriorityInfo" xml:space="preserve">
+    <value>Relative importance of this page compared to other pages on your site.</value>
+  </data>
+  <data name="editors_seoSitemap" xml:space="preserve">
+    <value>Sitemap</value>
+    <comment>A tab</comment>
+  </data>
+  <data name="editors_sortItems" xml:space="preserve">
+    <value>Sort Items</value>
+    <comment>The button and the side panel's title</comment>
+  </data>
+  <data name="editors_storeSettings" xml:space="preserve">
+    <value>Store Settings</value>
+    <comment>The button that keeps an editor's settings</comment>
+  </data>
+  <data name="editors_switchValue" xml:space="preserve">
+    <value>Switch value</value>
+    <comment>The switch's label for screen readers</comment>
+  </data>
+  <data name="editors_tags" xml:space="preserve">
+    <value>Tags</value>
+    <comment>The editor's name</comment>
+  </data>
+  <data name="editors_tagsAllowEditing" xml:space="preserve">
+    <value>Allow Tag Editing</value>
+  </data>
+  <data name="editors_tagsAllowEditingInfo" xml:space="preserve">
+    <value>Enables the user to add/edit/update the tags below from within the tag property</value>
+  </data>
+  <data name="editors_tagsInfo" xml:space="preserve">
+    <value>Tags are used for categorising items</value>
+  </data>
+  <data name="editors_tagsList" xml:space="preserve">
+    <value>Tags</value>
+    <comment>The setting that lists the tags</comment>
+  </data>
+  <data name="editors_tagsListInfo" xml:space="preserve">
+    <value>Manage the tags the user can pick from</value>
+  </data>
+  <data name="editors_textArea" xml:space="preserve">
+    <value>TextArea</value>
+  </data>
+  <data name="editors_textAreaInfo" xml:space="preserve">
+    <value>Standard text area</value>
+  </data>
+  <data name="editors_textbox" xml:space="preserve">
+    <value>Textbox</value>
+  </data>
+  <data name="editors_textboxInfo" xml:space="preserve">
+    <value>Standard text box</value>
+  </data>
+  <data name="editors_textMaxLength" xml:space="preserve">
+    <value>Max Length</value>
+  </data>
+  <data name="editors_textMaxLengthInfo" xml:space="preserve">
+    <value>The maximum allowed length in the textbox</value>
+  </data>
+  <data name="editors_tinyMce" xml:space="preserve">
+    <value>Text Editor (TinyMCE)</value>
+  </data>
+  <data name="editors_tinyMceApiKey" xml:space="preserve">
+    <value>TinyMCE API Key</value>
+  </data>
+  <data name="editors_tinyMceApiKeyInfo" xml:space="preserve">
+    <value>Select the API key to use for TinyMCE</value>
+  </data>
+  <data name="editors_tinyMceInfo" xml:space="preserve">
+    <value>TinyMCE Rich Text Editor</value>
+  </data>
+  <data name="editors_tinyMceMenuBar" xml:space="preserve">
+    <value>Show Menu Bar</value>
+  </data>
+  <data name="editors_tinyMceMenuBarInfo" xml:space="preserve">
+    <value>Show the top drop down menus</value>
+  </data>
+  <data name="editors_tinyMceMenuItems" xml:space="preserve">
+    <value>Choose Menu Bar</value>
+  </data>
+  <data name="editors_tinyMceMenuItemsInfo" xml:space="preserve">
+    <value>Choose which menu items to show</value>
+  </data>
+  <data name="editors_tinyMceToolbarItems" xml:space="preserve">
+    <value>Choose Toolbar Items</value>
+  </data>
+  <data name="editors_tinyMceToolbarItemsInfo" xml:space="preserve">
+    <value>Choose which buttons to show in the toolbar</value>
+  </data>
+  <data name="editors_tooManyFiles" xml:space="preserve">
+    <value>Only {0} files can be uploaded</value>
+    <comment>{0} = the most files uploaded at a time</comment>
+  </data>
+  <data name="editors_trueFalse" xml:space="preserve">
+    <value>True/False</value>
+  </data>
+  <data name="editors_trueFalseInfo" xml:space="preserve">
+    <value>True false picker (Switch)</value>
+  </data>
+  <data name="editors_zauberBase64" xml:space="preserve">
+    <value>Allow Base64 Upload</value>
+  </data>
+  <data name="editors_zauberBase64Info" xml:space="preserve">
+    <value>Allow uploading images as base64</value>
+  </data>
+  <data name="editors_zauberEditor" xml:space="preserve">
+    <value>Text Editor (ZauberCMS RTE)</value>
+  </data>
+  <data name="editors_zauberEditorInfo" xml:space="preserve">
+    <value>ZauberCMS Rich Text Editor - Modern Blazor native editor</value>
+  </data>
+  <data name="editors_zauberHeight" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="editors_zauberHeightExample" xml:space="preserve">
+    <value>e.g., 300px</value>
+    <comment>The height field's placeholder</comment>
+  </data>
+  <data name="editors_zauberHeightInfo" xml:space="preserve">
+    <value>Optional initial height (e.g., 300px, 50vh). Leave empty for default.</value>
+  </data>
+  <data name="editors_zauberToolbar" xml:space="preserve">
+    <value>Toolbar Layout</value>
+  </data>
+  <data name="editors_zauberToolbarFull" xml:space="preserve">
+    <value>Full</value>
+    <comment>A toolbar layout</comment>
+  </data>
+  <data name="editors_zauberToolbarInfo" xml:space="preserve">
+    <value>Choose between full-featured or simple toolbar</value>
+  </data>
+  <data name="editors_zauberToolbarMinimal" xml:space="preserve">
+    <value>Minimal</value>
+    <comment>A toolbar layout</comment>
+  </data>
 </root>

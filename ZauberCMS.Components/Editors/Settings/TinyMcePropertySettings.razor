@@ -3,7 +3,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="TinyMCE API Key" Description="Select the API key to use for TinyMCE"/>
+        <PropertyInfo Name="@L["editors_tinyMceApiKey"]" Description="@L["editors_tinyMceApiKeyInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <ApiKeysPickerProperty Value="@Settings.SelectedApiKey" 
@@ -13,10 +13,10 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Show Menu Bar" Description="Show the top drop down menus"/>
+        <PropertyInfo Name="@L["editors_tinyMceMenuBar"]" Description="@L["editors_tinyMceMenuBarInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenSwitch @bind-Value="@Settings.ShowMenuBar" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Show menu bar" }})" />
+        <RadzenSwitch @bind-Value="@Settings.ShowMenuBar" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", L["editors_tinyMceMenuBar"].Value }})" />
     </CentreColumn>
 </EditorRow>
 
@@ -24,7 +24,7 @@
 {
     <EditorRow>
         <LeftColumn>
-            <PropertyInfo Name="Choose Menu Bar" Description="Choose which menu items to show"/>
+            <PropertyInfo Name="@L["editors_tinyMceMenuItems"]" Description="@L["editors_tinyMceMenuItemsInfo"]"/>
         </LeftColumn>
         <CentreColumn>
             <RadzenListBox @bind-Value="@Settings.SelectedMenuBar"
@@ -35,14 +35,14 @@
                            Multiple="true"
                            AllowClear="true"
                            Style="width: 100%; height: 350px"
-                           InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select menu bar" } })"/>
+                           InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_tinyMceMenuItems"].Value } })"/>
         </CentreColumn>
     </EditorRow>   
 }
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Choose Toolbar Items" Description="Choose which buttons to show in the toolbar"/>
+        <PropertyInfo Name="@L["editors_tinyMceToolbarItems"]" Description="@L["editors_tinyMceToolbarItemsInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenListBox @bind-Value="@Settings.SelectedToolBar"
@@ -53,12 +53,12 @@
                        Multiple="true"
                        AllowClear="true"
                        Style="width: 100%; height: 350px"
-                       InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select tool bar items" } })"/>
+                       InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_tinyMceToolbarItems"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

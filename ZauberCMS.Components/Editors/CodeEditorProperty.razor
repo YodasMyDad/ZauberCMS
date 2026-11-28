@@ -22,10 +22,24 @@
     [AllowNull]
     private StandaloneCodeEditor _editor = null!;
     
-    public string Name { get; set; } = "Code Editor";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public CodeEditorProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public CodeEditorProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_codeEditor"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.CodeEditor";
     public string Icon { get; set; } = "code";
-    public string Description { get; set; } = "Editor for writing code";
+    public string Description { get => _description ?? _text["editors_codeEditorInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(CodeEditorPropertySettings);
     public bool FullWidth { get; set; }
     public List<string> Scripts { get; set; } = [

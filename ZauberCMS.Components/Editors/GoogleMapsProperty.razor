@@ -9,13 +9,13 @@
 @if (Location is { Lat: not 0, Lng: not 0 })
 {
     <div>
-        <RadzenText TextStyle="TextStyle.Subtitle1">Latitude: @Location.Lat, Longitude: @Location.Lng</RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle1">@L["editors_mapLocation", Location.Lat, Location.Lng]</RadzenText>
     </div>
 }
 @* Not before the key is known: the map loads Google's script with the key on its first render *@
 @if (_keyLoaded && ApiKey.IsNullOrWhiteSpace())
 {
-    <div>There is no API key named 'GoogleMaps' (Global Settings, or Zauber:ApiKeys in the site's configuration)</div>
+    <div>@L["editors_googleMapsNoApiKey"]</div>
 }
 
 @if (_keyLoaded)
@@ -33,10 +33,24 @@
 }
 
 @code {
-    public string Name { get; set; } = "Google Map Picker";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public GoogleMapsProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public GoogleMapsProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_googleMapPicker"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.GoogleMapPicker";
     public string Icon { get; set; } = "add_location";
-    public string Description { get; set; } = "Pick and save a location with a Google map";
+    public string Description { get => _description ?? _text["editors_googleMapPickerInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(GoogleMapsPropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];

@@ -146,6 +146,6 @@ internal static class GridQueryGuard
                    ValueOwners.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
         }
 
-        private ArgumentException Refused(string reason) => new($"The grid {what} was refused: {reason}.");
+        private ArgumentException Refused(string reason) => new ArgumentException($"The grid {what} was refused: {reason}.");
     }
 }

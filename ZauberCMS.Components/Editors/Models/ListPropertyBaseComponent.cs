@@ -2,10 +2,12 @@
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Radzen;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Plugins;
 
 namespace ZauberCMS.Components.Editors.Models;
@@ -15,6 +17,9 @@ public class ListPropertyBaseComponent : ComponentBase
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Inject] public IServiceProvider ServiceProvider { get; set; } = null!;
+
+    /// <summary>ZauberCMS's text (Docs/AdminUI.md "Localisation"); the Razor editors built on this class also have <c>L</c>.</summary>
+    [Inject] private IStringLocalizer<ZauberText> Text { get; set; } = null!;
 
     [Parameter] public string? Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
@@ -77,8 +82,8 @@ public class ListPropertyBaseComponent : ComponentBase
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = $"You can only select a maximum amount of {SettingsModel.MaxAmount}",
+                Summary = Text["general_error"],
+                Detail = Text["editors_selectMaxAmount", SettingsModel.MaxAmount],
                 Duration = 4000
             });
 

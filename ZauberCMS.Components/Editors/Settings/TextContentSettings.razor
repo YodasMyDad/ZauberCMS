@@ -3,15 +3,15 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Max Length" Description="The maximum allowed length in the textbox"/>
+        <PropertyInfo Name="@L["editors_textMaxLength"]" Description="@L["editors_textMaxLengthInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.MaxLength" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max length" } })"/>
+        <RadzenNumeric @bind-Value="@Settings.MaxLength" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_textMaxLength"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

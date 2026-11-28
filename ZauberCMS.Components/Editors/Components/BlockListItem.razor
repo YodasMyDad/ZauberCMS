@@ -28,8 +28,8 @@
         <!-- Edit Button -->
         <button type="button" class="p-3 flex items-center justify-center cursor-pointer hover:bg-gray-100 flex-shrink-0 border-0 bg-transparent"
                 draggable="false"
-                aria-label="@($"Edit {Content.Name}")"
-                title="Edit"
+                aria-label="@L["editors_editItem", Content.Name ?? string.Empty]"
+                title="@L["general_edit"]"
                 @onclick="HandleEdit"
                 @onclick:stopPropagation>
             <RadzenIcon Icon="edit" Style="font-size: 2rem" class="text-slate-600"/>
@@ -38,8 +38,8 @@
         <!-- Delete Button -->
         <button type="button" class="p-3 flex items-center justify-center cursor-pointer hover:bg-gray-100 flex-shrink-0 border-0 bg-transparent"
                 draggable="false"
-                aria-label="@($"Delete {Content.Name}")"
-                title="Delete"
+                aria-label="@L["editors_deleteItem", Content.Name ?? string.Empty]"
+                title="@L["general_delete"]"
                 @onclick="HandleDelete"
                 @onclick:stopPropagation>
             <RadzenIcon Icon="delete" Style="font-size: 2rem" class="text-slate-600"/>

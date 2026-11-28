@@ -47,10 +47,13 @@
   **Phase 10h-2 done** (admin localisation of Content, Media, the editor dialogs and SEO, and of Core's content,
   media, storage and SEO text; D110, D111; ZA-260 found and fixed, ZA-261…ZA-264 recorded for 10i and 12;
   2026-11-28, on its own branch).
-  **10 open findings** (0 Critical, 0 High, 0 Medium, 10 Low), each one assigned below to a phase (10h, 10i, 12).
+  **Phase 10h-3 done** (the property editors, the installer and Core's generic messages localised, D120–D122;
+  ZA-270 and ZA-271 recorded for 10i; 2026-11-28, merged after 10h-2). ZA-264 moved from Phase 12 to 10i (owner,
+  2026-11-28: every Phase 10/11 finding is done in those phases).
+  **12 open findings** (0 Critical, 0 High, 0 Medium, 12 Low), each one assigned below to a phase (10h, 10i, 12).
   **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
-  whose theme fits. **Next: Phase 10h-2, 10h-3 and 10h-4 in parallel** (admin localisation, D37, ZA-129; it covers
-  the new screens of 10g and 10g-2), then 10i,
+  whose theme fits. **Next: Phase 10h-4** (in progress; admin localisation, D37, closes ZA-129; it covers the new
+  screens of 10g and 10g-2), then 10i,
   then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
@@ -147,6 +150,9 @@
 | D97 | **Every component in ZauberCMS.Components has `L`; a type discovery builds gets the localiser by constructor.** `@inject IStringLocalizer<ZauberText> L` is in `ZauberCMS.Components/_Imports.razor`, as the services there are. `ExtensionManager` builds discovered types with `ActivatorUtilities`, which fills constructor parameters but not `[Inject]` properties, so a type whose text is read from such an instance (a section's name, a dashboard's tab, a nav group's heading, a tree context menu's text, a data source's name, an editor's name) takes `IStringLocalizer<ZauberText>` as a constructor parameter, a `.razor` one in a constructor in `@code` (Blazor builds components with constructor injection too). The built-in types' constructors gain the parameter (v5 release notes). `ZauberCMS.Components.SharedResource` (one key, its generated class colliding by name) is `[Obsolete]`; its file stays so `IStringLocalizer<SharedResource>` still resolves. (Phase 10h-1) | D37, D18 |
 | D110 | **What Content, Media and SEO keep in English: what is stored, and what reaches the editor from an exception.** The version comments a save writes ("Content updated", "Draft saved - unpublished changes") are stored on the version and stay English, as audit descriptions do (D95); so do the " (Copy)" a copy's stored name gets, a new content type's stored "System" tab (shown as `content_systemTab`), the SEO checks' word lists (detection data) and the 401 body of `RestrictedMediaMiddleware` (a plain status answer, written before the culture middleware runs). The text of an exception shown inside a localised sentence (`seo_pageLoadFailed`'s `{0}`, a network error) stays as .NET or the thrower wrote it. `ProviderService.NoStorageProviderMessage` stays a public constant: the English of the exception and of the result message `media_noStorageProvider` (the Phase 11h refusal, now localised). Umbraco stores its audit and version comments as written and shows exception messages untranslated. (owner delegated to Umbraco parity, Phase 10h-2) | D37, D95 |
 | D111 | **An SEO check's name and results, and the states the admin shows from an enum, are in the admin's language, read when shown.** The built-in checks take `IStringLocalizer<ZauberText>` by constructor (D97) and read `Name` and every message per call, since the checker caches the instances (`GetInstances<ISeoCheck>(true)`); a site's own check does the same with its own area. The checker orders the checks of one `SortOrder` by the name shown, so alphabetically in the admin's language. A version's status (Draft, Published, ...) and a block's change (Added, Removed, Modified), shown with `ToString()` before, have a key per value; the stored enums do not change. Umbraco's back office shows its content states and its health checks' names and results from its language files. (owner delegated to Umbraco parity, Phase 10h-2) | D37, D97 |
+| D120 | **A built-in property editor keeps its parameterless constructor and its `Name`/`Description` setters beside the localising constructor.** The localising constructor (`IStringLocalizer<ZauberText>`, D97) is marked `[ActivatorUtilitiesConstructor]`, so discovery (`ExtensionManager`, `ActivatorUtilities.CreateInstance`) and Blazor (`ActivatorUtilities.CreateFactory`) always choose it; built with `new` (a starter kit that reads `new TextProperty().Alias`, as Installer.md tells sites to and the template's kit does), its name and description are ZauberCMS's English (`EditorText`, internal, reads `Editors.resx`); a name or description set on an editor (a site, a subclass) wins over the text, as the setters did before. The RTE toolbar items keep their `(IModalService)` constructor the same way. So nothing a site wrote against the editors breaks. Umbraco: a data editor's name is attribute metadata that the back office localises by key; ZauberCMS reads it from an instance, so the instance carries the localiser. Rejected: only the localising constructor and get-only names (breaks the template's starter kit, every site that followed the documented pattern and every subclass that renames an editor); `typeof(T)` and alias constants (a second pattern for sites to learn). (Phase 10h-3) | D97, D18 |
+| D121 | **The installer's messages are in the installer's language, including the one that travels in an exception.** `DatabaseSetupParameters.BuildConnectionString(IStringLocalizer<ZauberText>)` throws `ArgumentException` with a message documented as written for the person at the form, so it takes the localiser (the parameterless method is gone; v5 release notes), as `InstallService` does (its last constructor parameter) and the internal `InstallerDatabase`; every other exception stays English (AdminUI.md rule 9). The installer sets the admin culture itself for its requests (`AdminCulture.Apply`, D95), since request localisation would pick one of the site's languages once its database has some, and its page's `lang` is that culture. A sentence that names a file, setting or command is one key with placeholders, the names shown as code (`InstallerMarkup.WithCode`, both encoded); the password rules are one sentence per rule. What the database or the system says (a connection error, why a file cannot be written) and Identity's own password messages stay as they come (ZA-271). Umbraco localises its installer through its `installer` area. (Phase 10h-3) | D95, D92, D18 |
+| D122 | **`SaveChangesAndLog` localises through the scope it is given.** Its messages (a save hook's veto, a concurrency conflict) come from `ExtensionManager.Text` (internal: the scope's `IStringLocalizer<ZauberText>`), so none of its callers change; AdminUI.md rule 8's "static helpers take it as a parameter" stays for the others. `EditContextFluentValidationExtensions.ValidatorFailedMessage` stays a public constant with the English, and the form shows `shared_validatorFailed` from the service provider it is given. Rejected: a localiser parameter on `SaveChangesAndLog` (every service in Core would change, across the parallel parts' folders). (Phase 10h-3) | D92 |
 
 ## Working rules for the rework
 
@@ -1498,7 +1504,7 @@ after 10h-4, over the whole of 10h.
   find … content type" messages are one key; "Loading" is General's "Loading…".
 - **Found and fixed:** ZA-260 (Low), a content type import dropped its warnings (a composition, child or parent
   type, language or property the site lacks); they go back with the save's result now (`ContentDataTests`).
-  **Recorded:** ZA-261, ZA-262, ZA-263 (Phase 10i), ZA-264 (Phase 12).
+  **Recorded:** ZA-261, ZA-262, ZA-263 (Phase 10i), ZA-264 (Phase 12; moved to 10i at 10h-3's merge).
 - **Tests:** `Localization/CoreMessageTextTests` (an SEO check built by discovery answers in each call's culture,
   a site's French over Core's English, through the bootstrap; the storage refusal's English is the constant), with
   the test file `Localization/ZauberText/Seo.fr.resx`; `Infrastructure/TestText` (Core's English for a test that
@@ -1532,10 +1538,59 @@ after 10h-4, over the whole of 10h.
     one. `InsertMedia.Title` is `string?`, null meaning the localised "Insert image".
   - A content type import returns its warnings (ZA-260).
 
-#### Phase 10h-3 — Editors and the installer (parallel)
-The rest of `Editors` (root, `Settings`, `Components`, `Models`, `ToolbarItems`, `Interfaces`; area Editors), the
-installer (`ZauberCMS.Core/Installer`, Core area Installer, D95) and Core's generic messages (`Shared`,
-`Extensions` — the save messages — and `Data`; Core area Shared).
+#### Phase 10h-3 — Editors and the installer — DONE (2026-11-28)
+- **Converted** (about 400 keys): the rest of `Editors` — root, `Components`, `Interfaces`, `Models`, `Settings`,
+  `ToolbarItems` (area Editors, 270 keys: the 27 editors' names and descriptions by constructor, their markup,
+  settings panels, notifications, the block list, the upload editor, the RTE toolbar items' labels and side panels;
+  `ApiKeysPickerProperty` left to 10h-4, its text in the guard's `NotText` until then); the installer (Core area
+  Installer, 126 keys: the pages, the password rules, `InstallService`'s and the connection test's messages,
+  `DatabaseSetupParameters`' form checks; the reveal button's Show/Hide come from the page, `data-show`/`data-hide`);
+  Core's generic messages (Core area Shared, 4 keys: `SaveChangesAndLog`'s veto and concurrency messages,
+  `DataService`'s, the validator-failed message). Not text, kept English: audit descriptions, log lines, exceptions
+  (but D121's), product and font names, what the database or the system says inside a message.
+- **Decisions:** D120 (a built-in editor keeps its parameterless constructor and its `Name`/`Description` setters;
+  the localising constructor is `[ActivatorUtilitiesConstructor]`), D121 (the installer's messages, including
+  `BuildConnectionString`'s exception, in the admin language, which the installer sets itself), D122
+  (`SaveChangesAndLog` localises through the `ExtensionManager` it is given). Also: a new block's default name
+  (`Block one`) is in the admin's language (it is a suggestion the editor sees and can change, then the block's
+  name); the `<html lang>` of the installer is its culture; screen-reader labels of the editors' settings reuse the
+  visible label's key (the lower-case "enter max allowed" kind become "Max Allowed Items"); typos fixed while
+  converting ("Enables to user", "calender", "in an dialog", "blazor", "Standard Text area", "Pdf").
+- **Tests:** `EditorConstructionTests` (an editor made with `new` has its English and alias; every built-in editor
+  built as discovery and as Blazor builds it gets the site's localiser, the toolbar items too; a set name wins);
+  `InstallerMiddlewareTests.D95_…` (a site's `Installer.fr.resx` and `AdminDefaultLanguage` `fr` give a French
+  installer with `lang="fr"` whatever the browser asks, an untranslated key stays English); `DatabaseSetupTests`
+  (a form check's message is a text, not a key). Guard: the 10h-3 block of `ConvertedFolders` (29 folders) and
+  `NotText` pass.
+- **Verified in the browser** (dev site on a scratch copy of `app.db`, port 5330; scratch sites with no database
+  settings on 5331): the installer's database step (SQLite/SQL Server/PostgreSQL texts, the code examples, a
+  refused SQL Server check, a SQLite test), the manual-configuration page (reached because the command line set the
+  database keys), a fresh site's database step then set-up form, a refused install ("Enter the administrator's
+  email address."), the set-up form's panes, review values and Show/Hide, an install through to `/admin`, all in
+  English with a `de-DE` and an `fr-FR` browser; in the admin, every editor's name and description in the Add
+  Property panel, the settings panels of 19 editors, the content editor's SEO tabs and change-frequency list
+  (stored value still shown), the block list, and the RTE's Insert Media and Insert Link side panels. No raw keys.
+- **Not verified in the browser:** a whole French admin or installer (the D95 test covers the installer), the
+  "installed, but not everything went well" page, the upload editor's refusals, the Google Maps, navigation tree and
+  dictionary editors' own screens (their settings panels and names were seen).
+- **For the merge:** `EditorConstructionTests` lists `ApiKeysPickerProperty` in `NotConvertedYet` and fails once
+  10h-4 localises it, saying to take it out; the `NotText` lines for it go then too. Files outside the part's
+  folders: `ZauberCMS.Core/Plugins/ExtensionManager.cs` (internal `Text`, D122).
+- **Merged onto Phase 10h-2** (made alongside it from ec60912): the upload editor's no-storage refusal reads Core's
+  `media_noStorageProvider` (10h-2's text for `MediaService`'s same refusal), so its own `editors_noStorageProvider`
+  is gone (Editors 269 keys). Of 10h-2's notes for 10h-3: the editors' dialog titles were already converted here;
+  `TreeLoadMore.Name` is ZA-270; `NavigationItem`'s `[Required]` (Core `Shared/Models`, shown by
+  `Editors/Dialogs/NavigationItemEditor` as DataAnnotations' English "The Name field is required.") is left for
+  10h-4's DataAnnotations check (AdminUI.md rule 8). The two parts' guard blocks merged unchanged.
+  Full suite after the merge 1510 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis
+  (1505 on its own branch); template smoke test passes.
+- **Release notes (D18):**
+  - The property editors and the installer are localisable (area files `Editors`, `Installer`). The installer runs
+    in `Zauber:AdminDefaultLanguage` whatever the browser asks; its password rules are one sentence per rule.
+  - Breaking (constructors and one method): `InstallService` and `DataService` take an `IStringLocalizer<ZauberText>`
+    (last parameter); `DatabaseSetupParameters.BuildConnectionString()` is `BuildConnectionString(IStringLocalizer<ZauberText>)`.
+  - Not breaking: the built-in editors and the RTE toolbar items gain a localising constructor and keep the ones
+    they had; an editor's `Name`/`Description` setters still work (a set value wins).
 
 #### Phase 10h-4 — Structure, Settings, Users, layout, account (parallel)
 `Admin/StructureSection`, `Admin/SettingsSection`, `Admin/UsersSection`, `Admin/Layout`, `Account/*`, `Pages` and
@@ -1556,6 +1611,14 @@ and uses 10h's localised text.
 - From Phase 10h-2: **ZA-261** (the redirect panel's Domain list is announced by the selected id, and the page
   checker's address box has no label), **ZA-262** (a list view's Delete moves the page to the recycle bin without
   asking), **ZA-263** (the SEO property's Open Graph image picker accepts any media, a folder too).
+- From Phase 10h-2, moved from Phase 12 (owner, 2026-11-28: every Phase 10/11 finding is done in those phases):
+  **ZA-264** (`EditImage.razor`, the media image editor, cannot be opened, its button being commented out in
+  `UpdateMediaForm`, and writes its crop boxes to the console: finish it or remove it). Decide it Umbraco's way:
+  Umbraco never edits the stored file, crops are data.
+- From Phase 10h-3: **ZA-270**, the trees' "Show more" row (`TreeLoadMore.Name`) is English: the trees read it
+  without `L`; give the row its text where the trees render it (it is a tree button, already 10i's). **ZA-271**,
+  Identity's own messages (the password rules a refused password breaks, a taken user name) are ASP.NET Core's
+  English in the installer and the account pages: an `IdentityErrorDescriber` that reads ZauberCMS's text.
 
 ### Phase 11 — Engineering baseline, API clean-up, v5 — DONE 2026-11-27
 ZA-089, ZA-087, ZA-094, ZA-090, ZA-091, ZA-092, ZA-164 (Medium); ZA-109, ZA-118, ZA-119, ZA-120, ZA-121, ZA-123,
@@ -2324,8 +2387,7 @@ sign-in refresh and the `Urls.*` `NavigateTo` calls, ignore a path base; the pan
 From the Phase 11h audit: **ZA-235** (an out-of-range `Zauber:ImageResize` value, such as a `DefaultQuality` outside
 1–100, passes the Zauber settings check and stops the start in ImageResize's own validator, after the migrations,
 without naming the setting: check it in `ZauberSettingsValidator`, D48).
-From Phase 10h-2: **ZA-264** (`EditImage.razor`, the media image editor, cannot be opened, its button being commented
-out in `UpdateMediaForm`, and writes its crop boxes to the console: finish it or remove it).
+(ZA-264, from Phase 10h-2, moved to Phase 10i.)
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 

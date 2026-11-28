@@ -5,9 +5,19 @@
 <RadzenRating TValue="int" Value="@SavedValue" Change="@(args => Changed(args))" Stars="@RatingPropertySettingsModel.AmountOfStars" />
 
 @code {
-    public string Name => "Rating";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public RatingProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public RatingProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    public string Name => _text["editors_rating"];
     public string Alias => "ZauberCMS.Rating";
-    public string Description => "A property that allows star ratings";
+    public string Description => _text["editors_ratingInfo"];
     public string Icon => "star_half";
     public Type? SettingsComponent { get; set; } = typeof(RatingPropertySettings);
     public List<string> Scripts { get; set; } = [];

@@ -196,7 +196,21 @@
         //console.Log($"Execute: {args.CommandName}");
     }
 
-    public string Name { get; set; } = "Text Editor (Radzen)";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public RichTextEditorProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public RichTextEditorProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_radzenEditor"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.RichTextEditor";
 
     [Parameter] public string? Value { get; set; } = string.Empty;
@@ -210,7 +224,7 @@
     public List<string> Styles { get; set; } = [];
     public bool FullWidth { get; set; }
     public string Icon { get; set; } = "edit_note";
-    public string Description { get; set; } = "Radzen's Rich Text Editor";
+    public string Description { get => _description ?? _text["editors_radzenEditorInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(RichTextEditorSettings);
     
     private RichTextEditorSettingsModel SettingsModel { get; set; } = new();

@@ -6,7 +6,7 @@
 @if (SettingsModel.MaxAmount > 0)
 {
     <div>
-        <RadzenText TextStyle="TextStyle.Caption">Max allowed: @SettingsModel.MaxAmount</RadzenText>
+        <RadzenText TextStyle="TextStyle.Caption">@L["editors_maxAllowed", SettingsModel.MaxAmount]</RadzenText>
     </div>
 }
 
@@ -20,15 +20,29 @@
                Multiple="true"
                AllowClear="true"
                Change="@(args => Changed(args))"
-               Placeholder="Search" 
+               Placeholder="@L["general_search"]" 
                Style="width: 100%; max-height: 400px" />
                     
 @code {
     
-    public string Name { get; set; } = "Checkbox List";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public CheckboxListProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public CheckboxListProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_checkboxList"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.CheckboxList";
     public string Icon { get; set; } = "list";
-    public string Description { get; set; } = "Checkbox list using manual or custom data";
+    public string Description { get => _description ?? _text["editors_checkboxListInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(ListPropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];

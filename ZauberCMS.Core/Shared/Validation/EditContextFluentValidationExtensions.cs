@@ -4,7 +4,9 @@ using FluentValidation.Internal;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Plugins;
 
 namespace ZauberCMS.Core.Shared.Validation;
@@ -17,7 +19,10 @@ public static class EditContextFluentValidationExtensions
     private static readonly List<AssemblyScanner.AssemblyScanResult> AssemblyScanResults = new();
     public const string PendingAsyncValidation = "AsyncValidationTask";
 
-    /// <summary>The message shown when a validator throws, so the form stays invalid instead of passing.</summary>
+    /// <summary>
+    /// The message shown when a validator throws, so the form stays invalid instead of passing: its English. The
+    /// form shows it in the reader's language (<c>shared_validatorFailed</c>) when ZauberCMS's text is registered.
+    /// </summary>
     public const string ValidatorFailedMessage = "Validation could not run. Try again, or contact your administrator.";
 
     /// <summary>
@@ -44,7 +49,7 @@ public static class EditContextFluentValidationExtensions
             {
                 logger?.LogError(ex, "Validating {Model} failed", context.Model.GetType().FullName);
                 messages.Clear();
-                messages.Add(new FieldIdentifier(context.Model, string.Empty), ValidatorFailedMessage);
+                messages.Add(new FieldIdentifier(context.Model, string.Empty), FailedMessage(serviceProvider));
                 context.NotifyValidationStateChanged();
             }
         };
@@ -60,7 +65,7 @@ public static class EditContextFluentValidationExtensions
                 logger?.LogError(ex, "Validating {Field} on {Model} failed", eventArgs.FieldIdentifier.FieldName,
                     eventArgs.FieldIdentifier.Model.GetType().FullName);
                 messages.Clear(eventArgs.FieldIdentifier);
-                messages.Add(eventArgs.FieldIdentifier, ValidatorFailedMessage);
+                messages.Add(eventArgs.FieldIdentifier, FailedMessage(serviceProvider));
                 editContext.NotifyValidationStateChanged();
             }
         };
@@ -109,7 +114,7 @@ public static class EditContextFluentValidationExtensions
 
         // Always leave a task for FluentValidationValidator.ValidateAsync to await, one that never faults: a model with
         // no validator passes, and a validator that throws fails with ValidatorFailedMessage.
-        var asyncValidationTask = RunValidator(validator, context, editContext.Model, logger);
+        var asyncValidationTask = RunValidator(validator, context, editContext.Model, logger, serviceProvider);
         editContext.Properties[PendingAsyncValidation] = asyncValidationTask;
         var validationResults = await asyncValidationTask;
 
@@ -124,7 +129,7 @@ public static class EditContextFluentValidationExtensions
     }
 
     private static async Task<ValidationResult> RunValidator(IValidator? validator, ValidationContext<object> context,
-        object model, ILogger? logger)
+        object model, ILogger? logger, IServiceProvider serviceProvider)
     {
         if (validator is null)
         {
@@ -139,9 +144,13 @@ public static class EditContextFluentValidationExtensions
         {
             logger?.LogError(ex, "Validator {Validator} threw for {Model}", validator.GetType().FullName,
                 model.GetType().FullName);
-            return new ValidationResult([new ValidationFailure(string.Empty, ValidatorFailedMessage)]);
+            return new ValidationResult([new ValidationFailure(string.Empty, FailedMessage(serviceProvider))]);
         }
     }
+
+    // In the reader's language; the English when the site has no ZauberCMS text registered (it always has)
+    private static string FailedMessage(IServiceProvider serviceProvider) =>
+        serviceProvider.GetService<IStringLocalizer<ZauberText>>()?["shared_validatorFailed"] ?? ValidatorFailedMessage;
 
     private static async Task ValidateField(EditContext editContext,
         ValidationMessageStore messages,

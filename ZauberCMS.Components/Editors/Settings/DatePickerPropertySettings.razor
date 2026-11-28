@@ -3,7 +3,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Starting Date" Description="Set the min/starting date value for the picker"/>
+        <PropertyInfo Name="@L["editors_dateMin"]" Description="@L["editors_dateMinInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenDatePicker @bind-Value="@Settings.MinDate" Name="MinDatePicker" />
@@ -12,7 +12,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Max End Date" Description="Set the max/end date value for the picker"/>
+        <PropertyInfo Name="@L["editors_dateMax"]" Description="@L["editors_dateMaxInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenDatePicker @bind-Value="@Settings.MaxDate" Name="MaxDatePicker" />
@@ -21,7 +21,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Show Time Only" Description="Turns the date picker into a time only picker"/>
+        <PropertyInfo Name="@L["editors_dateTimeOnly"]" Description="@L["editors_dateTimeOnlyInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.ShowTimeOnly"/>
@@ -30,7 +30,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Inline Calendar" Description="Turns the date picker into an inline calender on the page"/>
+        <PropertyInfo Name="@L["editors_dateInline"]" Description="@L["editors_dateInlineInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.InlineCalendar"/>
@@ -38,7 +38,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

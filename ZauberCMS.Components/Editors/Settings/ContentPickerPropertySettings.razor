@@ -4,16 +4,16 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Max Allowed Items" Description="The maximum allowed items to be picked"/>
+        <PropertyInfo Name="@L["editors_maxAllowedItems"]" Description="@L["editors_maxAllowedItemsInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max allowed" } })"/>
+        <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_maxAllowedItems"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Content Types" Description="Select the allowed content types for this picker"/>
+        <PropertyInfo Name="@L["editors_contentTypes"]" Description="@L["editors_contentTypesInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedContentTypes" TValue="Guid" TextProperty="Name" ValueProperty="Id"/>
@@ -22,7 +22,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Root Content Only" Description="Only allow the user to pick content that is in the root of the tree"/>
+        <PropertyInfo Name="@L["editors_rootContentOnly"]" Description="@L["editors_rootContentOnlyInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.OnlyRootContent" />
@@ -30,7 +30,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

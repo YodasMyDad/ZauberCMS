@@ -14,10 +14,24 @@
     public List<string> Styles { get; set; } = [];
     public bool FullWidth { get; set; }
     
-    public string Name { get; set; } = "Simple List Manager";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public ListManagerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public ListManagerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_listManager"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.ListManager";
     public string Icon { get; set; } = "menu";
-    public string Description { get; set; } = "Simple editor to manage list of strings";
+    public string Description { get => _description ?? _text["editors_listManagerInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; }
 
     private List<string> Model { get; set; } = [];

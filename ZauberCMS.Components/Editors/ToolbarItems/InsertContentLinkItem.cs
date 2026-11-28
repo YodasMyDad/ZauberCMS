@@ -1,9 +1,13 @@
 using Blazored.Modal.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Components.Editors.Dialogs;
 using ZauberCMS.Components.Editors.Dialogs.Models;
+using ZauberCMS.Components.Editors.Models;
 using ZauberCMS.Core.Content.Interfaces;
 using ZauberCMS.Core.Content.Models;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.RTE.Models;
 
 namespace ZauberCMS.Components.Editors.ToolbarItems;
@@ -11,11 +15,17 @@ namespace ZauberCMS.Components.Editors.ToolbarItems;
 /// <summary>
 /// Toolbar item for inserting links to content or external URLs
 /// </summary>
-public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
+[method: ActivatorUtilitiesConstructor]
+public class InsertContentLinkItem(IModalService modalService, IStringLocalizer<ZauberText> text) : ToolbarItemBase
 {
+    /// <summary>Made by hand rather than by the editor: its text is ZauberCMS's English.</summary>
+    public InsertContentLinkItem(IModalService modalService) : this(modalService, EditorText.English)
+    {
+    }
+
     public override string Id => "insertContentLink";
-    public override string Label => "Insert Link";
-    public override string Tooltip => "Insert Link";
+    public override string Label => text["editors_insertLink"];
+    public override string Tooltip => text["editors_insertLink"];
     public override string IconSvg =>
         "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5\"/><path d=\"M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5\"/></svg>";
     public override string Shortcut => "Control+k";
@@ -60,7 +70,7 @@ public class InsertContentLinkItem(IModalService modalService) : ToolbarItemBase
                 }
             }
 
-            var modal = modalService.OpenSidePanel<ContentLinkDialog>("Insert Link", parameters);
+            var modal = modalService.OpenSidePanel<ContentLinkDialog>(text["editors_insertLink"], parameters);
             var result = await modal.Result;
 
             if (result.Confirmed && result.Data != null)

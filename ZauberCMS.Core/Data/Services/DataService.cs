@@ -3,10 +3,12 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Data.Models;
 using ZauberCMS.Core.Data.Parameters;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Shared.Interfaces;
 using ZauberCMS.Core.Shared.Models;
@@ -17,7 +19,8 @@ namespace ZauberCMS.Core.Data.Services;
 public class DataService(
     IServiceScopeFactory serviceScopeFactory,
     ICacheService cacheService,
-    ExtensionManager extensionManager)
+    ExtensionManager extensionManager,
+    IStringLocalizer<ZauberText> text)
     : IDataService
 {
     /// <summary>
@@ -73,7 +76,7 @@ public class DataService(
             return await dbContext.SaveChangesAndLog(gData, handlerResult, cacheService, extensionManager, cancellationToken);
         }
 
-        handlerResult.AddMessage("GlobalData is null", ResultMessageType.Error);
+        handlerResult.AddMessage(text["shared_globalDataMissing"], ResultMessageType.Error);
         return handlerResult;
     }
 

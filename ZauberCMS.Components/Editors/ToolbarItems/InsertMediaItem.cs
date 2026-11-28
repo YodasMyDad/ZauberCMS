@@ -1,8 +1,12 @@
 using Blazored.Modal;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
+using ZauberCMS.Components.Editors.Models;
 using ZauberCMS.Components.Trees;
 using ZauberCMS.Core.Extensions;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.RTE.Models;
 
@@ -11,14 +15,20 @@ namespace ZauberCMS.Components.Editors.ToolbarItems;
 /// <summary>
 /// Toolbar item for inserting media (images, documents, etc.) from the media library
 /// </summary>
-public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
+[method: ActivatorUtilitiesConstructor]
+public class InsertMediaItem(IModalService modalService, IStringLocalizer<ZauberText> text) : ToolbarItemBase
 {
+    /// <summary>Made by hand rather than by the editor: its text is ZauberCMS's English.</summary>
+    public InsertMediaItem(IModalService modalService) : this(modalService, EditorText.English)
+    {
+    }
+
     private Media? SelectedMedia { get; set; }
     private Guid? SelectedMediaId { get; set; }
     private IModalReference? Modal { get; set; }
 
     public override string Id => "insertMedia";
-    public override string Label => "Insert Media";
+    public override string Label => text["editors_insertMedia"];
     public override string IconSvg =>
         "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"14\" height=\"14\" rx=\"2\"/><circle cx=\"8\" cy=\"8\" r=\"1.5\"/><path d=\"m17 13-3.5-3.5L5 17\"/><path d=\"M21 8v11a2 2 0 0 1-2 2H8\"/></svg>";
     public override bool IsToggle => false;
@@ -35,7 +45,7 @@ public class InsertMediaItem(IModalService modalService) : ToolbarItemBase
         };
         
         
-        Modal = modalService.OpenSidePanel<MediaTree>("Insert Media", parameters);
+        Modal = modalService.OpenSidePanel<MediaTree>(text["editors_insertMedia"], parameters);
         var result = await Modal.Result;
         
         if (result.Confirmed && SelectedMedia != null)

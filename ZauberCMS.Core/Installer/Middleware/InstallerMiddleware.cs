@@ -9,13 +9,17 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Installer.Components;
 using ZauberCMS.Core.Installer.Interfaces;
 using ZauberCMS.Core.Installer.Models;
 using ZauberCMS.Core.Installer.Parameters;
+using ZauberCMS.Core.Languages;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Installer.Middleware;
 
@@ -77,6 +81,13 @@ internal class InstallerMiddleware(
         }
 
         var isInstaller = IsInstallerPath(context.Request.Path);
+        if (isInstaller)
+        {
+            // The installer's pages and messages are in the admin's language (Roadmap D95), whatever the
+            // request asked for: a site without a database has no other
+            AdminCulture.Apply(context.RequestServices.GetRequiredService<IOptions<ZauberSettings>>().Value);
+        }
+
         var installService = context.RequestServices.GetRequiredService<IInstallService>();
 
         if (installState.IsDatabaseConfigured)
@@ -94,17 +105,14 @@ internal class InstallerMiddleware(
                     return;
                 }
 
+                var text = Text(context);
                 await RenderAsync(context, new InstallerPageModel
                 {
                     Step = InstallerStep.Message,
-                    MessageTitle = "The database cannot be used",
+                    MessageTitle = text["installer_databaseUnusable"],
                     MessageIsProblem = true,
-                    MessageLines =
-                    [
-                        "The site is configured with a database, but it could not be opened or brought up to date: " +
-                        Innermost(ex).Message
-                    ],
-                    MessageLinkText = "Try again",
+                    MessageLines = [text["installer_databaseUnusableReason", Innermost(ex).Message]],
+                    MessageLinkText = text["installer_tryAgain"],
                     MessageLinkUrl = context.Request.PathBase + Path
                 }, StatusCodes.Status503ServiceUnavailable);
                 return;
@@ -178,6 +186,7 @@ internal class InstallerMiddleware(
     private async Task HandleAsync(HttpContext context, IInstallService installService)
     {
         var request = context.Request;
+        var text = Text(context);
         if (HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method))
         {
             try
@@ -192,9 +201,9 @@ internal class InstallerMiddleware(
                 await RenderAsync(context, new InstallerPageModel
                 {
                     Step = InstallerStep.Message,
-                    MessageTitle = "Something went wrong",
+                    MessageTitle = text["installer_somethingWentWrong"],
                     MessageIsProblem = true,
-                    MessageLines = ["The installer could not be shown. The details are in the site's log."],
+                    MessageLines = [text["installer_pageFailed"]],
                     ConfiguredDatabase = ConfiguredDatabaseName()
                 }, StatusCodes.Status500InternalServerError);
             }
@@ -216,9 +225,9 @@ internal class InstallerMiddleware(
             await RenderAsync(context, new InstallerPageModel
             {
                 Step = InstallerStep.Message,
-                MessageTitle = "Too many attempts",
-                MessageLines = ["Wait a few minutes, then open the installer again."],
-                MessageLinkText = "Back to the installer",
+                MessageTitle = text["installer_tooManyAttempts"],
+                MessageLines = [text["installer_tooManyAttemptsWait"]],
+                MessageLinkText = text["installer_backToInstaller"],
                 MessageLinkUrl = request.PathBase + Path,
                 ConfiguredDatabase = ConfiguredDatabaseName()
             }, StatusCodes.Status429TooManyRequests);
@@ -230,7 +239,7 @@ internal class InstallerMiddleware(
         {
             await RenderCurrentStepAsync(context, installService, new InstallerPageModel
             {
-                Errors = ["This page was open for too long. Fill it in again."]
+                Errors = [text["installer_pageExpired"]]
             }, StatusCodes.Status400BadRequest);
             return;
         }
@@ -258,11 +267,11 @@ internal class InstallerMiddleware(
             await RenderAsync(context, new InstallerPageModel
             {
                 Step = InstallerStep.Message,
-                MessageTitle = "Something went wrong",
+                MessageTitle = text["installer_somethingWentWrong"],
                 MessageIsProblem = true,
                 // What went wrong is in the log; this page is public
-                MessageLines = ["The installer could not finish this step. The details are in the site's log."],
-                MessageLinkText = "Back to the installer",
+                MessageLines = [text["installer_stepFailed"]],
+                MessageLinkText = text["installer_backToInstaller"],
                 MessageLinkUrl = request.PathBase + Path,
                 ConfiguredDatabase = ConfiguredDatabaseName()
             }, StatusCodes.Status500InternalServerError);
@@ -379,13 +388,14 @@ internal class InstallerMiddleware(
             return;
         }
 
+        var text = Text(context);
         await RenderAsync(context, new InstallerPageModel
         {
             Step = InstallerStep.Message,
-            MessageTitle = "ZauberCMS is installed, but not everything went well",
+            MessageTitle = text["installer_installedWithWarnings"],
             MessageIsProblem = true,
             MessageLines = result.Warnings,
-            MessageLinkText = "Open the admin",
+            MessageLinkText = text["installer_openAdmin"],
             MessageLinkUrl = adminUrl,
             ConfiguredDatabase = ConfiguredDatabaseName()
         });
@@ -402,15 +412,16 @@ internal class InstallerMiddleware(
             return;
         }
 
+        var text = Text(context);
         model.Step = InstallerStep.Setup;
         model.ConfiguredDatabase = ConfiguredDatabaseName();
         model.Languages = AllLanguages.Value;
         model.PasswordRules = DescribePasswordRules(
-            context.RequestServices.GetRequiredService<IOptions<IdentityOptions>>().Value.Password);
+            context.RequestServices.GetRequiredService<IOptions<IdentityOptions>>().Value.Password, text);
 
         var kits = new List<InstallerOption>
         {
-            new(string.Empty, "An empty site", "No pages and no page types. You build everything in the admin.")
+            new(string.Empty, text["installer_emptySite"], text["installer_emptySiteInfo"])
         };
         kits.AddRange(installService.GetStarterKits().Select(k => new InstallerOption(k.Key, k.Value.Name, k.Value.Description)));
         model.StarterKits = kits;
@@ -504,37 +515,35 @@ internal class InstallerMiddleware(
         return languages.FirstOrDefault(l => l.Value == "en-US")?.Value ?? languages[0].Value;
     }
 
-    private static string DescribePasswordRules(PasswordOptions options)
+    // One sentence per rule, so a translation never has to fit a rule into another sentence
+    private static string DescribePasswordRules(PasswordOptions options, IStringLocalizer<ZauberText> text)
     {
-        var parts = new List<string>();
+        var rules = new List<string> { text["installer_passwordLength", options.RequiredLength] };
         if (options.RequireDigit)
         {
-            parts.Add("a digit");
+            rules.Add(text["installer_passwordDigit"]);
         }
 
         if (options.RequireLowercase)
         {
-            parts.Add("a lowercase letter");
+            rules.Add(text["installer_passwordLowercase"]);
         }
 
         if (options.RequireUppercase)
         {
-            parts.Add("an uppercase letter");
+            rules.Add(text["installer_passwordUppercase"]);
         }
 
         if (options.RequireNonAlphanumeric)
         {
-            parts.Add("a symbol");
+            rules.Add(text["installer_passwordSymbol"]);
         }
 
-        var text = $"At least {options.RequiredLength} characters";
-        return parts.Count switch
-        {
-            0 => text + ".",
-            1 => $"{text}, with {parts[0]}.",
-            _ => $"{text}, with {string.Join(", ", parts.Take(parts.Count - 1))} and {parts[^1]}."
-        };
+        return string.Join(" ", rules);
     }
+
+    private static IStringLocalizer<ZauberText> Text(HttpContext context) =>
+        context.RequestServices.GetRequiredService<IStringLocalizer<ZauberText>>();
 
     private static Exception Innermost(Exception exception)
     {

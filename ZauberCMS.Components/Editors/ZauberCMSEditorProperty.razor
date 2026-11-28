@@ -27,10 +27,24 @@
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Inject] public ZauberCMS.Core.Shared.Services.IRichTextEmbedService EmbedService { get; set; } = null!;
     
-    public string Name { get; set; } = "Text Editor (ZauberCMS RTE)";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public ZauberCMSEditorProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public ZauberCMSEditorProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_zauberEditor"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.ZauberRTE";
     public string Icon { get; set; } = "edit_note";
-    public string Description { get; set; } = "ZauberCMS Rich Text Editor - Modern Blazor native editor";
+    public string Description { get => _description ?? _text["editors_zauberEditorInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(ZauberCMSEditorSettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
@@ -196,14 +210,14 @@
             // Show notifications
             if (updatedUrls.Any())
             {
-                var detail = $"{updatedUrls.Count} link URL(s) updated. Please save the page to persist changes.";
-                NotificationService.ShowNotification("URLs Updated", NotificationSeverity.Info, detail);
+                NotificationService.ShowNotification(L["editors_linksUpdated"], NotificationSeverity.Info,
+                    L["editors_linksUpdatedDetail", updatedUrls.Count]);
             }
             
             if (deletedItems.Any())
             {
-                var detail = $"{deletedItems.Count} deleted item(s) removed or unlinked. Please save the page to persist changes.";
-                NotificationService.ShowWarningNotification("Deleted Items Removed", detail);
+                NotificationService.ShowWarningNotification(L["editors_deletedItemsRemoved"],
+                    L["editors_deletedItemsRemovedDetail", deletedItems.Count]);
             }
         }
     }

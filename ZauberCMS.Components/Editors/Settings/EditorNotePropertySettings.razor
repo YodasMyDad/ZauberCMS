@@ -4,7 +4,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Title" Description="Title first shown to the user"/>
+        <PropertyInfo Name="@L["editors_noteTitle"]" Description="@L["editors_noteTitleInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox @bind-Value="@Settings.Title" Style="width: 100%;" />
@@ -13,7 +13,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Note" Description="The main note you want the editor to know"/>
+        <PropertyInfo Name="@L["editors_noteText"]" Description="@L["editors_noteTextInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenHtmlEditor @bind-Value="@Settings.Note" style="height: 300px;" />
@@ -22,7 +22,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Background Color" Description="Optional background color override"/>
+        <PropertyInfo Name="@L["editors_noteBackground"]" Description="@L["editors_noteBackgroundInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenColorPicker @bind-Value="@Settings.BackgroundColor" ShowHSV="true" ShowRGBA="true" />
@@ -31,7 +31,7 @@
             <div>
                 <RadzenButton Variant="Variant.Text" 
                               Size="ButtonSize.ExtraSmall"
-                              Click=@(ClearColor) Text="Clear"
+                              Click=@(ClearColor) Text="@L["general_clear"]"
                               ButtonStyle="ButtonStyle.Primary" />
             </div>
         }
@@ -40,7 +40,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Icon" Description="Optional icon override"/>
+        <PropertyInfo Name="@L["general_icon"]" Description="@L["editors_noteIconInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="width: 40px; height: 40px; border: 1px #ccc solid; cursor: pointer;" @onclick="@(SelectIcon)">
@@ -51,7 +51,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Show Inline" Description="Notes open in a side dialog by default, change the note to be inline within the page"/>
+        <PropertyInfo Name="@L["editors_noteInline"]" Description="@L["editors_noteInlineInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.ShowInline" />
@@ -59,7 +59,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {
@@ -87,7 +87,7 @@
     
     private async Task SelectIcon()
     {
-        var dialog = DialogService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
+        var dialog = DialogService.OpenSidePanel<ListMaterialIconsDialog>(L["editors_chooseIcon"]);
         var result = await dialog.Result;
         if (result is { Confirmed: true, Data: string icon })
         {

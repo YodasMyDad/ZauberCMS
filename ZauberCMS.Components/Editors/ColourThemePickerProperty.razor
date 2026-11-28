@@ -13,9 +13,23 @@
 @code {
     [Inject] NotificationService NotificationService { get; set; } = null!; 
     
-    public string Name { get; set; } = "Colour Theme Picker";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public ColourThemePickerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public ColourThemePickerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_colourThemePicker"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.ColourThemePicker";
-    public string Description { get; set; } = "Allows you to pick from a specified colour list";
+    public string Description { get => _description ?? _text["editors_colourThemePickerInfo"].Value; set => _description = value; }
     public string Icon { get; set; } = "palette";
     public Type? SettingsComponent { get; set; } = typeof(ColourThemePickerPropertySettings);
 

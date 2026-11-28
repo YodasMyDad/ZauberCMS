@@ -5,9 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Data.Interfaces;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Plugins;
@@ -19,6 +21,12 @@ public class ExtensionManager(IServiceProvider serviceProvider)
     // a key (ZA-120). Both caches are emptied when AssemblyManager.SetAssemblies changes the assemblies.
     private static readonly ConcurrentDictionary<(Type Type, bool OnlyExportedTypes), Dictionary<string, Type>> TypeCache = new();
     private static readonly ConcurrentDictionary<string, Type> NameCache = new();
+
+    /// <summary>
+    /// ZauberCMS's text from this scope, for the static helpers a service gives its extension manager
+    /// (<c>SaveChangesAndLog</c>): they write their messages in the caller's language (Docs/AdminUI.md "Localisation").
+    /// </summary>
+    internal IStringLocalizer<ZauberText> Text => serviceProvider.GetRequiredService<IStringLocalizer<ZauberText>>();
 
     /// <summary>Empties the discovery caches; called when the scanned assemblies change.</summary>
     internal static void ClearCaches()

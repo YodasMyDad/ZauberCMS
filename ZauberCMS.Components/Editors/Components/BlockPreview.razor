@@ -107,7 +107,7 @@ else
         {
             Logger.LogWarning(ex, "The preview {PreviewType} of block {BlockId} failed", previewType.FullName,
                 block.Id);
-            return $"<div>{System.Net.WebUtility.HtmlEncode(block.Name)}: the preview could not be shown</div>";
+            return "<div>" + System.Net.WebUtility.HtmlEncode(L["editors_previewFailed", block.Name ?? string.Empty].Value) + "</div>";
         }
     }
 }

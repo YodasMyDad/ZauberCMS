@@ -87,7 +87,11 @@ The pages are Razor components rendered to a string with `HtmlRenderer` (`Instal
 pages: no router, no layout, no static files, no interactivity. Style and script are inline and allowed by a
 per-response CSP nonce. Forms carry an antiforgery token; POSTs are limited to 20 per address per 5 minutes.
 The components and `InstallerPageModel` are public only because Razor components are; they are not an
-extension point. The pages cannot be restyled or extended from a site today (open question in the roadmap);
+extension point. Their text, and the installer's messages (`InstallService`, `DatabaseSetupParameters`), are
+ZauberCMS's text (area `Installer`, `ZauberCMS.Core/Resources/ZauberText/Installer.resx`; Roadmap D95, D121), in
+`Zauber:AdminDefaultLanguage`: the middleware sets that culture for every installer request, whatever the browser
+asks for, so a site translates the installer with an `Installer.<culture>.resx` of its own ([AdminUI.md](AdminUI.md)
+"Localisation"). What comes from the database or the system (a connection error, a file error) stays as it comes. The pages cannot be restyled or extended from a site today (open question in the roadmap);
 `IInstallService` can be replaced, and `InstallService`'s methods are virtual.
 
 ## Steps

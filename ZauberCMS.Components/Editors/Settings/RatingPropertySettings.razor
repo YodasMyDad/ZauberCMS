@@ -3,15 +3,15 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Amount Of Stars" Description="The amount of stars to display"/>
+        <PropertyInfo Name="@L["editors_ratingStars"]" Description="@L["editors_ratingStarsInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.AmountOfStars" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter amount" } })"/>
+        <RadzenNumeric @bind-Value="@Settings.AmountOfStars" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_ratingStars"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

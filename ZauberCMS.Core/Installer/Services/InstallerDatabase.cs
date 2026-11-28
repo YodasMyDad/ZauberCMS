@@ -4,9 +4,11 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Localization;
 using Npgsql;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Installer.Models;
+using ZauberCMS.Core.Localization;
 
 namespace ZauberCMS.Core.Installer.Services;
 
@@ -21,17 +23,17 @@ internal static class InstallerDatabase
 
     /// <summary>
     /// Tries the connection without changing anything. A database that does not exist yet is fine as long as the
-    /// server accepts the login: the migrations create it.
+    /// server accepts the login: the migrations create it. The message is in <paramref name="text"/>'s language.
     /// </summary>
     public static async Task<DatabaseTestResult> TestAsync(string provider, string connectionString,
-        CancellationToken cancellationToken = default)
+        IStringLocalizer<ZauberText> text, CancellationToken cancellationToken = default)
     {
         try
         {
             switch (DatabaseProviders.Normalise(provider))
             {
                 case DatabaseProviders.Sqlite:
-                    return await TestSqliteAsync(connectionString, cancellationToken);
+                    return await TestSqliteAsync(connectionString, text, cancellationToken);
 
                 case DatabaseProviders.SqlServer:
                 {
@@ -50,7 +52,7 @@ internal static class InstallerDatabase
                         {
                             builder.InitialCatalog = "master";
                             return new SqlConnection(builder.ConnectionString);
-                        }, cancellationToken);
+                        }, text, cancellationToken);
                 }
 
                 case DatabaseProviders.PostgreSql:
@@ -68,16 +70,16 @@ internal static class InstallerDatabase
                         {
                             builder.Database = "postgres";
                             return new NpgsqlConnection(builder.ConnectionString);
-                        }, cancellationToken);
+                        }, text, cancellationToken);
                 }
 
                 default:
-                    return new DatabaseTestResult(false, false, "Choose a database type.");
+                    return new DatabaseTestResult(false, false, text["installer_chooseDatabaseType"]);
             }
         }
         catch (Exception ex) when (ex is ArgumentException or FormatException or KeyNotFoundException)
         {
-            return new DatabaseTestResult(false, false, $"The connection string is not valid: {ex.Message}");
+            return new DatabaseTestResult(false, false, text["installer_connectionStringInvalid", ex.Message]);
         }
     }
 
@@ -108,18 +110,18 @@ internal static class InstallerDatabase
     }
 
     private static async Task<DatabaseTestResult> TestSqliteAsync(string connectionString,
-        CancellationToken cancellationToken)
+        IStringLocalizer<ZauberText> text, CancellationToken cancellationToken)
     {
         var builder = new SqliteConnectionStringBuilder(connectionString);
         if (string.IsNullOrWhiteSpace(builder.DataSource))
         {
-            return new DatabaseTestResult(false, false, "Enter a file name for the SQLite database.");
+            return new DatabaseTestResult(false, false, text["installer_enterSqliteFile"]);
         }
 
         if (builder.Mode == SqliteOpenMode.Memory || builder.DataSource == ":memory:")
         {
             // Legitimate for tests; nothing to check on disk
-            return new DatabaseTestResult(true, false, "An in-memory database: everything in it is lost when the site stops.");
+            return new DatabaseTestResult(true, false, text["installer_sqliteInMemory"]);
         }
 
         // A share or device path would make the server reach out with its own credentials on behalf of a
@@ -127,7 +129,7 @@ internal static class InstallerDatabase
         if (builder.DataSource.StartsWith(@"\\", StringComparison.Ordinal) ||
             builder.DataSource.StartsWith("//", StringComparison.Ordinal))
         {
-            return new DatabaseTestResult(false, false, "The SQLite file must be on a local disk, not on a network share.");
+            return new DatabaseTestResult(false, false, text["installer_sqliteOnShare"]);
         }
 
         var path = Path.GetFullPath(builder.DataSource);
@@ -147,16 +149,16 @@ internal static class InstallerDatabase
             }
             catch (SqliteException ex)
             {
-                return new DatabaseTestResult(false, false, $"{path} exists but is not a SQLite database: {ex.Message}");
+                return new DatabaseTestResult(false, false, text["installer_sqliteNotADatabase", path, ex.Message]);
             }
 
-            return new DatabaseTestResult(true, true, $"Found the database file {path}.");
+            return new DatabaseTestResult(true, true, text["installer_sqliteFound", path]);
         }
 
         var folder = Path.GetDirectoryName(path);
         if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
         {
-            return new DatabaseTestResult(false, false, $"The folder {folder} does not exist.");
+            return new DatabaseTestResult(false, false, text["installer_sqliteNoFolder", folder ?? string.Empty]);
         }
 
         try
@@ -167,18 +169,19 @@ internal static class InstallerDatabase
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return new DatabaseTestResult(false, false, $"The site cannot write to {folder}: {ex.Message}");
+            return new DatabaseTestResult(false, false, text["installer_sqliteCannotWrite", folder, ex.Message]);
         }
 
-        return new DatabaseTestResult(true, false, $"The database file {path} is created when you continue.");
+        return new DatabaseTestResult(true, false, text["installer_sqliteCreated", path]);
     }
 
     private static async Task<DatabaseTestResult> TestServerAsync(string database,
-        Func<DbConnection> openDatabase, Func<DbConnection> openServer, CancellationToken cancellationToken)
+        Func<DbConnection> openDatabase, Func<DbConnection> openServer, IStringLocalizer<ZauberText> text,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(database))
         {
-            return new DatabaseTestResult(false, false, "The connection string does not name a database.");
+            return new DatabaseTestResult(false, false, text["installer_noDatabaseName"]);
         }
 
         DbException failure;
@@ -186,7 +189,7 @@ internal static class InstallerDatabase
         {
             await using var connection = openDatabase();
             await connection.OpenAsync(cancellationToken);
-            return new DatabaseTestResult(true, true, $"Connected to the database \"{database}\".");
+            return new DatabaseTestResult(true, true, text["installer_connected", database]);
         }
         catch (DbException ex)
         {
@@ -209,9 +212,7 @@ internal static class InstallerDatabase
             var exists = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) > 0;
             if (!exists)
             {
-                return new DatabaseTestResult(true, false,
-                    $"Connected to the server. The database \"{database}\" does not exist yet and is created when " +
-                    "you continue; the login needs permission to create databases.");
+                return new DatabaseTestResult(true, false, text["installer_connectedNoDatabase", database]);
             }
         }
         catch (DbException)
@@ -219,6 +220,6 @@ internal static class InstallerDatabase
             // The first failure is the one that describes the problem
         }
 
-        return new DatabaseTestResult(false, false, $"Could not connect: {failure.Message}");
+        return new DatabaseTestResult(false, false, text["installer_connectFailed", failure.Message]);
     }
 }

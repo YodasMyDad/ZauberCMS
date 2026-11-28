@@ -3,25 +3,25 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Min" Description="Set a minimum starting value"/>
+        <PropertyInfo Name="@L["editors_numericMin"]" Description="@L["editors_numericMinInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.Min" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter min value" } })"/>
+        <RadzenNumeric @bind-Value="@Settings.Min" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_numericMin"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Max" Description="Set a maximum value"/>
+        <PropertyInfo Name="@L["editors_numericMax"]" Description="@L["editors_numericMaxInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.Max" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max value" } })"/>
+        <RadzenNumeric @bind-Value="@Settings.Max" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_numericMax"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Increment Step" Description="Set the incremental step (i.e. 0.5)"/>
+        <PropertyInfo Name="@L["editors_numericStep"]" Description="@L["editors_numericStepInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox @bind-Value="@Settings.Step" Style="width: 100%;" />
@@ -30,7 +30,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Placeholder" Description="Set placeholder text for the user"/>
+        <PropertyInfo Name="@L["editors_numericPlaceholder"]" Description="@L["editors_numericPlaceholderInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox @bind-Value="@Settings.Placeholder" Style="width: 100%;" />
@@ -39,7 +39,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Format" Description="Format the input using a string format (i.e. #.0000, c, ### m2)"/>
+        <PropertyInfo Name="@L["editors_numericFormat"]" Description="@L["editors_numericFormatInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenTextBox @bind-Value="@Settings.Format" Style="width: 100%;" />
@@ -48,7 +48,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Align Right" Description="Align the numbers to the right"/>
+        <PropertyInfo Name="@L["editors_numericAlignRight"]" Description="@L["editors_numericAlignRightInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AlignRight" />
@@ -56,7 +56,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

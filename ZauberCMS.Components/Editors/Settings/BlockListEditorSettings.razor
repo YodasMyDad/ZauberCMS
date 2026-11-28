@@ -4,7 +4,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Stylesheets" Description="Add the stylesheets needed for this block list editor (Path should be relative to the website root i.e. '/css/styles.css')"/>
+        <PropertyInfo Name="@L["editors_blockStylesheets"]" Description="@L["editors_blockStylesheetsInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <ListEditor TItem="string" @bind-Value="@Settings.Stylesheets" />
@@ -13,7 +13,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Allowed Element Types" Description="Select which element types can be used in this block list. If none are selected, all element types will be available."/>
+        <PropertyInfo Name="@L["editors_blockElementTypes"]" Description="@L["editors_blockElementTypesInfo"]"/>
     </LeftColumn>
     <CentreColumn>
             <RadzenListBox @bind-Value="@Settings.AllowedElementTypeIds"
@@ -25,14 +25,14 @@
                            ValueProperty="Id"
                            Multiple="true"
                            AllowClear="true"
-                           Placeholder="Select Element Types"
+                           Placeholder="@L["editors_selectElementTypes"]"
                            Style="width: 100%; height: 250px"
-                           InputAttributes="@(new Dictionary<string, object> { { "aria-label", "select element types" } })"/>
+                           InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_selectElementTypes"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 

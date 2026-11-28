@@ -5,10 +5,13 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
 using ZauberCMS.Core.Data;
 using ZauberCMS.Core.Installer;
 using ZauberCMS.Core.Installer.Interfaces;
 using ZauberCMS.Core.Installer.Parameters;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Tests.Infrastructure;
 
 namespace ZauberCMS.Core.Tests.Installer;
@@ -19,6 +22,11 @@ namespace ZauberCMS.Core.Tests.Installer;
 /// </summary>
 public class DatabaseSetupTests : IAsyncLifetime
 {
+    // ZauberCMS's English, as the site's localiser gives it to the installer
+    private static readonly IStringLocalizer<ZauberText> Text = new ZauberTextLocalizer(
+        ZauberTextCatalog.FromAssemblies([typeof(ZauberText).Assembly], [typeof(ZauberText).Assembly],
+            NullLoggerFactory.Instance), NullLogger<ZauberTextLocalizer>.Instance);
+
     private readonly string _contentRoot = TestSite.CreateContentRoot();
     private WebApplication? _app;
 
@@ -258,7 +266,7 @@ public class DatabaseSetupTests : IAsyncLifetime
             Username = "site",
             Password = "p;a=ss'word",
             TrustServerCertificate = true
-        }.BuildConnectionString();
+        }.BuildConnectionString(Text);
         var parsedSqlServer = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(sqlServer);
         Assert.Equal("Zauber;Integrated Security=true", parsedSqlServer.InitialCatalog);
         Assert.False(parsedSqlServer.IntegratedSecurity);
@@ -273,7 +281,7 @@ public class DatabaseSetupTests : IAsyncLifetime
             Database = "zauber",
             Username = "site",
             Password = "se;cret"
-        }.BuildConnectionString();
+        }.BuildConnectionString(Text);
         var parsedPostgres = new Npgsql.NpgsqlConnectionStringBuilder(postgres);
         Assert.Equal("db.internal", parsedPostgres.Host);
         Assert.Equal(6543, parsedPostgres.Port);
@@ -285,7 +293,7 @@ public class DatabaseSetupTests : IAsyncLifetime
             Server = "localhost",
             Database = "Zauber",
             IntegratedSecurity = true
-        }.BuildConnectionString();
+        }.BuildConnectionString(Text);
         Assert.True(new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(windows).IntegratedSecurity);
     }
 
@@ -302,7 +310,9 @@ public class DatabaseSetupTests : IAsyncLifetime
             Provider = provider, Server = server, Database = database, Username = username
         };
 
-        Assert.Throws<ArgumentException>(() => parameters.BuildConnectionString());
+        var refused = Assert.Throws<ArgumentException>(() => parameters.BuildConnectionString(Text));
+        // Written for the person at the form, in the installer's language (Roadmap D121): a text, not a key
+        Assert.StartsWith(provider == "Oracle" ? "Choose" : "Enter", refused.Message);
     }
 
     [Fact]
@@ -315,10 +325,10 @@ public class DatabaseSetupTests : IAsyncLifetime
             ConnectionString = "Server=.;Database=Zauber;Nonsense Keyword=1"
         };
 
-        Assert.Throws<ArgumentException>(() => parameters.BuildConnectionString());
+        Assert.Throws<ArgumentException>(() => parameters.BuildConnectionString(Text));
 
         parameters.ConnectionString = " Server=.;Database=Zauber;Integrated Security=true ";
-        Assert.Equal("Server=.;Database=Zauber;Integrated Security=true", parameters.BuildConnectionString());
+        Assert.Equal("Server=.;Database=Zauber;Integrated Security=true", parameters.BuildConnectionString(Text));
     }
 
     [Fact]

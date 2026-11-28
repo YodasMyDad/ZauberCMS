@@ -19,18 +19,32 @@
 </BaseTree>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Gap="5" Style="margin-top: 0; padding-bottom: 0; padding-top: 10px;">
-    <RadzenButton Variant="Variant.Text" Text="Add Item" Click="@(() => AddNavigationItem())"/>
-    <RadzenButton Variant="Variant.Text" Text="Sort Items" Click="@(() => SortChildren(Data))"/>
+    <RadzenButton Variant="Variant.Text" Text="@L["editors_addItem"]" Click="@(() => AddNavigationItem())"/>
+    <RadzenButton Variant="Variant.Text" Text="@L["editors_sortItems"]" Click="@(() => SortChildren(Data))"/>
 </RadzenStack>
 
 @code {
     [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
     
-    public string Name { get; set; } = "Navigation Tree";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public NavigationProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public NavigationProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_navigationTree"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.NavigationTree";
     public string Icon { get; set; } = "account_tree";
-    public string Description { get; set; } = "A navigation builder in a tree";
+    public string Description { get => _description ?? _text["editors_navigationTreeInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; }
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
@@ -75,7 +89,7 @@
             {
                 dict.Add(nameof(NavigationItemEditor.ParentNavigationItem), parentNavigationItem);
             }
-            var dialog = ModalService.OpenSidePanel<NavigationItemEditor>("Navigation Item", dict);
+            var dialog = ModalService.OpenSidePanel<NavigationItemEditor>(L["editors_navigationItem"], dict);
             var result = await dialog.Result;
             if (result is { Confirmed: true, Data: NavigationItem item })
             {
@@ -102,7 +116,7 @@
                 { nameof(NavigationItemSort.Items), items },
                 {nameof(NavigationItemSort.PropertyAlias), Alias}
             };
-            var dialog = ModalService.OpenSidePanel<NavigationItemSort>("Sort Items", dict);
+            var dialog = ModalService.OpenSidePanel<NavigationItemSort>(L["editors_sortItems"], dict);
             var result = await dialog.Result;
             if (result is { Confirmed: true })
             {
@@ -116,7 +130,7 @@
     {
         if (ModalService != null)
         {
-            var dialog = ModalService.OpenSidePanel<NavigationItemEditor>("Navigation Item",
+            var dialog = ModalService.OpenSidePanel<NavigationItemEditor>(L["editors_navigationItem"],
                 new Dictionary<string, object>
                 {
                     { nameof(NavigationItemEditor.NavigationItem), item }
@@ -178,18 +192,18 @@
         return false;
     }
 
-    private static List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
+    private List<ContextMenuItem> MenuItems(TreeItemContextMenuEventArgs args)
     {
         var items = new List<ContextMenuItem>();
         // Some logic here
         if (args.Value is NavigationItem navigationItem)
         {
-            items.Add(new ContextMenuItem { Text = "Create", Value = 1 });
-            items.Add(new ContextMenuItem { Text = "Delete", Value = 2 });
+            items.Add(new ContextMenuItem { Text = L["general_create"], Value = 1 });
+            items.Add(new ContextMenuItem { Text = L["general_delete"], Value = 2 });
             
             if (navigationItem.Children.Any())
             {
-                items.Add(new ContextMenuItem { Text = "Sort", Value = 3 });   
+                items.Add(new ContextMenuItem { Text = L["general_sort"], Value = 3 });   
             }
         }
         

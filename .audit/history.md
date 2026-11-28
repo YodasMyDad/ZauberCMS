@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10h-3 (2026-11-28, merged after 10h-2): Build PASS · Warnings: 0 · Tests: 1510 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1505 on its own branch) · Template smoke test passes; `doublecheck` self-review with an independent review of the editors. ZA-129 in progress (the property editors, the installer and Core's generic messages converted, D120–D122; it closes with 10h-4); ZA-270, ZA-271 recorded (Low, 10i); ZA-264 moved from Phase 12 to 10i (owner). Next free ID: ZA-236 (ZA-265…ZA-269 and ZA-272…ZA-279 unused, skipped, not to be filled; ZA-250…ZA-259 held by Phase 11i, ZA-280…ZA-289 by Phase 10h-4, both in progress)
 After Roadmap Phase 10h-2 (2026-11-28, on its own branch): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1505 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part (three independent diff reviewers); verified in the browser. ZA-129 in progress (Content, Media, the editor dialogs and SEO converted, D110, D111; it closes with 10h-4); ZA-260 found and fixed (Low); ZA-261…ZA-263 recorded (Low, Phase 10i), ZA-264 (Low, Phase 12). ZA-265…ZA-269 unused (Phase 10h-2's range; skipped, not to be filled)
 After Roadmap Phase 10h-1 (2026-11-28, merged after 10g-2 and 11h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1500 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1377 on its own branch) · Template smoke test passes; `doublecheck` self-review on the part. ZA-129 in progress (the mechanism and the first screens, D90–D97; it closes with 10h-4); ZP-010 proposed. Next free ID: ZA-236 (ZA-240…ZA-249, this part's range, unused; ZA-250…ZA-259 held by Phase 11i, in progress); proposals ZP-004 (ZP-010 used, ZP-011…ZP-019 unused)
 After Roadmap Phase 11h (2026-11-28, merged after 10g-2): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch) · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-191, ZA-192, ZA-195, ZA-196 fixed (D80–D83); ZA-230 found and fixed while building; ZA-231…ZA-234 found by the audit and fixed (Low); ZA-235 recorded (Low, Phase 12); ZP-002, ZP-003 proposed. Next free ID: ZA-236 (ZA-220…ZA-229 unused; ZA-240…ZA-249 held by a part in progress)
@@ -42,6 +43,26 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 10h-3 (2026-11-28, admin localisation: the property editors and the installer, D37, D120–D122).**
+  Release notes in the Roadmap's "Phase 10h-3". Full suite 1505 on its branch (all pass, none skipped) on SQLite,
+  PostgreSQL, SQL Server LocalDB and Redis, 1510 after the merge onto 10h-2; Release build 0 warnings; template
+  smoke test passes; `doublecheck` self-review, with an independent reviewer over the editors' diff (its findings
+  fixed: setters kept, D120; the root-content keys renamed; the undo/redo switch labels kept; every editor's
+  constructor path tested).
+  - **ZA-129 (Low) — in progress, stays open until 10h-4.** Converted: `Editors` but `Dialogs` and the API-key
+    picker (area Editors, 270 keys; 269 after the merge, the upload editor's no-storage refusal being 10h-2's
+    `media_noStorageProvider`), the installer (Core area Installer, 126 keys), Core's `Shared`, `Extensions`,
+    `Data` messages (Core area Shared, 4 keys). Tests: `Components.Tests/Editors/EditorConstructionTests` (an editor
+    made with `new` keeps its English and alias; discovery's and Blazor's construction give every built-in editor
+    and both toolbar items the site's localiser; a set name wins); `InstallerMiddlewareTests.D95_…` (a site's
+    French file and `AdminDefaultLanguage` `fr` give a French installer page whatever the browser asks);
+    `DatabaseSetupTests` (a form check's message is text). Browser (scratch copies, ports 5330/5331): the installer
+    from an empty site to `/admin` and its error and manual pages; the editors' names, 19 settings panels, the SEO
+    tabs, the block list and the RTE's Insert Media and Insert Link panels; English, no raw keys.
+  - **ZA-270, ZA-271 (Low) — recorded for Phase 10i:** the trees' "Show more" row; Identity's own messages.
+  - **ZA-264 (Low) — moved from Phase 12 to Phase 10i** at this merge (owner: every Phase 10/11 finding is done in
+    those phases; decide Umbraco's way: Umbraco never edits the stored file, crops are data).
 
 - **Roadmap Phase 10h-2 (2026-11-28, admin localisation: Content, Media, the editor dialogs and SEO, D37, D110,
   D111).** Release notes in the Roadmap's "Phase 10h-2". Full suite 1505 on its branch (all pass, none skipped) on

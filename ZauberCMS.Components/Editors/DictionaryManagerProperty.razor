@@ -14,10 +14,24 @@
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];
     
-    public string Name { get; set; } = "Simple Dictionary Manager";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public DictionaryManagerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public DictionaryManagerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_dictionaryManager"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.DictionaryManager";
     public string Icon { get; set; } = "dictionary";
-    public string Description { get; set; } = "Simple editor to manage dictionary of strings";
+    public string Description { get => _description ?? _text["editors_dictionaryManagerInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; }
     public bool FullWidth { get; set; }
 

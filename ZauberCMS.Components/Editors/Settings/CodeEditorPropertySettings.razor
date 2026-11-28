@@ -2,16 +2,16 @@
 @implements ZauberCMS.Core.Content.Interfaces.IContentPropertySettings<ZauberCMS.Components.Editors.Models.CodeEditorPropertySettingsModel>
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Editor Height" Description="The height of the editor in pixels."/>
+        <PropertyInfo Name="@L["editors_codeHeight"]" Description="@L["editors_codeHeightInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.Height" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max height" } })"/>
+        <RadzenNumeric @bind-Value="@Settings.Height" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_codeHeight"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Default Language" Description="Choose the default language for the editor."/>
+        <PropertyInfo Name="@L["editors_codeLanguage"]" Description="@L["editors_codeLanguageInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenDropDown 
@@ -22,7 +22,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

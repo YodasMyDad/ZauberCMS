@@ -17,16 +17,30 @@
 </SortableList>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start">
-    <RadzenButton Click="@(() => AddMedia())" Variant="Variant.Text">Add Media</RadzenButton>
+    <RadzenButton Click="@(() => AddMedia())" Variant="Variant.Text">@L["editors_addMedia"]</RadzenButton>
 </RadzenStack>
 
 @code {
     [Inject] NotificationService NotificationService { get; set; } = null!;
     [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
 
-    public string Name { get; set; } = "Media Picker";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public MediaPickerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public MediaPickerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_mediaPicker"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.MediaPicker";
-    public string Description { get; set; } = "Media picker using the media tree";
+    public string Description { get => _description ?? _text["editors_mediaPickerInfo"].Value; set => _description = value; }
     public string Icon { get; set; } = "image";
     public Type? SettingsComponent { get; set; } = typeof(MediaPickerPropertySettings);
     public List<string> Scripts { get; set; } = [];
@@ -80,20 +94,12 @@
 
     private void AddMedia()
     {
-        /*var parameters = new Dictionary<string, object>
-        {
-            { nameof(MediaTree.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) },
-            { nameof(MediaTree.DisableContextMenu), true }
-        };
-
-        Modal = ModalService?.OpenSidePanel<MediaTree>("Choose Media", parameters);*/
-        
         var parameters = new Dictionary<string, object>
         {
             { nameof(MediaTreeWithUpload.ValueChanged), EventCallback.Factory.Create<object>(this, OnValueChangedHandler) },
         };
 
-        Modal = ModalService?.OpenSidePanel<MediaTreeWithUpload>("Choose Media", parameters);
+        Modal = ModalService?.OpenSidePanel<MediaTreeWithUpload>(L["editors_chooseMedia"], parameters);
     }
     
 
@@ -102,7 +108,7 @@
         if (SettingsModel.MaxAllowed != null && MediaItems.Count >= SettingsModel.MaxAllowed)
         {
             Modal?.Close();
-            NotificationService.ShowErrorNotification($"You can only pick {SettingsModel.MaxAllowed}");
+            NotificationService.ShowErrorNotification(L["editors_pickMax", SettingsModel.MaxAllowed]);
             return;
         }
 
@@ -112,7 +118,7 @@
             {
                 if (!SettingsModel.AllowedMediaTypes.Contains(media.MediaType))
                 {
-                    NotificationService.ShowErrorNotification("You are not allowed to pick that media type");
+                    NotificationService.ShowErrorNotification(L["editors_mediaTypeNotAllowed"]);
                     return;
                 }
             }

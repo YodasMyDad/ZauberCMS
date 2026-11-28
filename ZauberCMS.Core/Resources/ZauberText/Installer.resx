@@ -12,4 +12,417 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="installer_adminHeading" xml:space="preserve">
+    <value>Create the administrator</value>
+  </data>
+  <data name="installer_administrator" xml:space="preserve">
+    <value>Administrator</value>
+  </data>
+  <data name="installer_adminLead" xml:space="preserve">
+    <value>This account can change everything on the site. You sign in with the email address and the password.</value>
+  </data>
+  <data name="installer_adminNameHint" xml:space="preserve">
+    <value>Shown next to what you change, in the audit log for example.</value>
+  </data>
+  <data name="installer_allowRegistration" xml:space="preserve">
+    <value>Let visitors create accounts</value>
+  </data>
+  <data name="installer_allowRegistrationHint" xml:space="preserve">
+    <value>Leave this off unless the site has members. While it is off there is no registration page.</value>
+  </data>
+  <data name="installer_alreadyInstalled" xml:space="preserve">
+    <value>This site is already installed.</value>
+  </data>
+  <data name="installer_back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="installer_backToInstaller" xml:space="preserve">
+    <value>Back to the installer</value>
+  </data>
+  <data name="installer_chooseDatabase" xml:space="preserve">
+    <value>Choose a database</value>
+  </data>
+  <data name="installer_chooseDatabaseFirst" xml:space="preserve">
+    <value>Choose a database first.</value>
+  </data>
+  <data name="installer_chooseDatabaseType" xml:space="preserve">
+    <value>Choose a database type.</value>
+  </data>
+  <data name="installer_chooseLanguage" xml:space="preserve">
+    <value>Choose the language of the site.</value>
+  </data>
+  <data name="installer_connected" xml:space="preserve">
+    <value>Connected to the database "{0}".</value>
+    <comment>{0} = the database name</comment>
+  </data>
+  <data name="installer_connectedNoDatabase" xml:space="preserve">
+    <value>Connected to the server. The database "{0}" does not exist yet and is created when you continue; the login needs permission to create databases.</value>
+    <comment>{0} = the database name</comment>
+  </data>
+  <data name="installer_connectFailed" xml:space="preserve">
+    <value>Could not connect: {0}</value>
+    <comment>{0} = the database's own message</comment>
+  </data>
+  <data name="installer_connectionString" xml:space="preserve">
+    <value>Connection string</value>
+  </data>
+  <data name="installer_connectionStringHint" xml:space="preserve">
+    <value>It is saved in {0} exactly as you type it.</value>
+    <comment>{0} = the settings file name (appsettings.json), shown as code</comment>
+  </data>
+  <data name="installer_connectionStringInvalid" xml:space="preserve">
+    <value>The connection string is not valid: {0}</value>
+    <comment>{0} = the reason, from the system</comment>
+  </data>
+  <data name="installer_connectionStringInvalidFor" xml:space="preserve">
+    <value>The connection string is not valid for {0}: {1}</value>
+    <comment>{0} = the database (SQLite, SQL Server, PostgreSQL); {1} = the reason, from the system</comment>
+  </data>
+  <data name="installer_continue" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="installer_database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="installer_databaseAlreadyConfigured" xml:space="preserve">
+    <value>This site already has a database. Change it in the site's configuration.</value>
+  </data>
+  <data name="installer_databaseHeading" xml:space="preserve">
+    <value>Where should the site keep its content?</value>
+  </data>
+  <data name="installer_databaseLead" xml:space="preserve">
+    <value>Pages, accounts and settings live in a database. Choose one and the tables are created for you.</value>
+  </data>
+  <data name="installer_databaseName" xml:space="preserve">
+    <value>Database name</value>
+  </data>
+  <data name="installer_databaseNameHint" xml:space="preserve">
+    <value>If it does not exist yet it is created, when the login is allowed to.</value>
+  </data>
+  <data name="installer_databaseSetUpFailed" xml:space="preserve">
+    <value>The database could not be set up: {0}</value>
+    <comment>{0} = the database's own message</comment>
+  </data>
+  <data name="installer_databaseUnusable" xml:space="preserve">
+    <value>The database cannot be used</value>
+  </data>
+  <data name="installer_databaseUnusableReason" xml:space="preserve">
+    <value>The site is configured with a database, but it could not be opened or brought up to date: {0}</value>
+    <comment>{0} = the database's own message</comment>
+  </data>
+  <data name="installer_emailAddress" xml:space="preserve">
+    <value>Email address</value>
+  </data>
+  <data name="installer_emptySite" xml:space="preserve">
+    <value>An empty site</value>
+    <comment>The starter content choice that installs none</comment>
+  </data>
+  <data name="installer_emptySiteInfo" xml:space="preserve">
+    <value>No pages and no page types. You build everything in the admin.</value>
+  </data>
+  <data name="installer_enterAdminEmail" xml:space="preserve">
+    <value>Enter the administrator's email address.</value>
+  </data>
+  <data name="installer_enterAdminName" xml:space="preserve">
+    <value>Enter a user name for the administrator.</value>
+  </data>
+  <data name="installer_enterAdminPassword" xml:space="preserve">
+    <value>Enter a password for the administrator.</value>
+  </data>
+  <data name="installer_enterConnectionString" xml:space="preserve">
+    <value>Enter a connection string.</value>
+  </data>
+  <data name="installer_enterDatabaseName" xml:space="preserve">
+    <value>Enter the name of the database.</value>
+  </data>
+  <data name="installer_enterDatabaseUser" xml:space="preserve">
+    <value>Enter the user name the site signs in to the database with.</value>
+  </data>
+  <data name="installer_enterServer" xml:space="preserve">
+    <value>Enter the server the database is on.</value>
+  </data>
+  <data name="installer_enterSiteName" xml:space="preserve">
+    <value>Enter a name for the site.</value>
+  </data>
+  <data name="installer_enterSqliteFile" xml:space="preserve">
+    <value>Enter a file name for the SQLite database.</value>
+  </data>
+  <data name="installer_fileName" xml:space="preserve">
+    <value>File name</value>
+  </data>
+  <data name="installer_fileNameHint" xml:space="preserve">
+    <value>Created in the folder the site runs in. A full path works too.</value>
+  </data>
+  <data name="installer_finishDatabase" xml:space="preserve">
+    <value>Finish the database set-up</value>
+  </data>
+  <data name="installer_hide" xml:space="preserve">
+    <value>Hide</value>
+    <comment>The same button while the password is shown</comment>
+  </data>
+  <data name="installer_install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="installer_installedWithWarnings" xml:space="preserve">
+    <value>ZauberCMS is installed, but not everything went well</value>
+  </data>
+  <data name="installer_installZauberCms" xml:space="preserve">
+    <value>Install ZauberCMS</value>
+  </data>
+  <data name="installer_language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="installer_languageHint" xml:space="preserve">
+    <value>The language your pages are written in. More can be added later.</value>
+  </data>
+  <data name="installer_languageNotSaved" xml:space="preserve">
+    <value>The language could not be saved: {0}</value>
+    <comment>{0} = the reason, from the system</comment>
+  </data>
+  <data name="installer_languageNotSavedNamed" xml:space="preserve">
+    <value>The language {0} could not be saved: {1}</value>
+    <comment>{0} = the language, in English; {1} = the reasons</comment>
+  </data>
+  <data name="installer_manualAsVariables" xml:space="preserve">
+    <value>Or as environment variables (restart the site after setting them):</value>
+  </data>
+  <data name="installer_manualCopy" xml:space="preserve">
+    <value>Copy the values before you leave this page: it is not shown again. When the site can see the database, the installer carries on with the next step; until then it asks for the database again.</value>
+  </data>
+  <data name="installer_manualHeading" xml:space="preserve">
+    <value>One thing to do by hand</value>
+  </data>
+  <data name="installer_manualInFile" xml:space="preserve">
+    <value>In {0}:</value>
+    <comment>{0} = the settings file name (appsettings.json), shown as code; the settings follow</comment>
+  </data>
+  <data name="installer_manualLead" xml:space="preserve">
+    <value>The database is ready, but the site's configuration could not be changed. {0}.</value>
+    <comment>{0} = why, without a full stop (installer_settingsNotWritten, installer_settingsNotReloaded or installer_settingsOverridden)</comment>
+  </data>
+  <data name="installer_manualOverridden" xml:space="preserve">
+    <value>{0} already has the two settings below. Find the place that sets {1} or {2} to something else (as environment variables they are {3} and {4}) and remove it or give it these values, then restart the site.</value>
+    <comment>{0} = the settings file name; {1}, {2} = the two setting names; {3}, {4} = the same as environment variables; all shown as code</comment>
+  </data>
+  <data name="installer_manualSettings" xml:space="preserve">
+    <value>These are the two settings the site needs. Put them where its configuration comes from.</value>
+  </data>
+  <data name="installer_noDatabaseName" xml:space="preserve">
+    <value>The connection string does not name a database.</value>
+  </data>
+  <data name="installer_noRegistration" xml:space="preserve">
+    <value>No registration</value>
+  </data>
+  <data name="installer_noStarterKits" xml:space="preserve">
+    <value>This project contains no starter content. A site made with {0} has some.</value>
+    <comment>{0} = the command that makes a site from the template (dotnet new zaubercms), shown as code</comment>
+  </data>
+  <data name="installer_openAdmin" xml:space="preserve">
+    <value>Open the admin</value>
+  </data>
+  <data name="installer_openAgain" xml:space="preserve">
+    <value>Open the installer again</value>
+  </data>
+  <data name="installer_openToAnyone" xml:space="preserve">
+    <value>Until the site is installed, anyone who can open this page can install it. Finish before you make the site public.</value>
+  </data>
+  <data name="installer_pageExpired" xml:space="preserve">
+    <value>This page was open for too long. Fill it in again.</value>
+  </data>
+  <data name="installer_pageFailed" xml:space="preserve">
+    <value>The installer could not be shown. The details are in the site's log.</value>
+  </data>
+  <data name="installer_pageTitle" xml:space="preserve">
+    <value>{0} – ZauberCMS</value>
+    <comment>{0} = the step or message title; the browser tab</comment>
+  </data>
+  <data name="installer_pageTitleProblem" xml:space="preserve">
+    <value>Error: {0} – ZauberCMS</value>
+    <comment>{0} = the step or message title; the browser tab when the page shows a problem</comment>
+  </data>
+  <data name="installer_password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="installer_passwordDigit" xml:space="preserve">
+    <value>At least one digit.</value>
+  </data>
+  <data name="installer_passwordLength" xml:space="preserve">
+    <value>At least {0} characters.</value>
+    <comment>{0} = the shortest password allowed; the password rules are one sentence each, shown together</comment>
+  </data>
+  <data name="installer_passwordLowercase" xml:space="preserve">
+    <value>At least one lowercase letter.</value>
+  </data>
+  <data name="installer_passwordSymbol" xml:space="preserve">
+    <value>At least one symbol.</value>
+  </data>
+  <data name="installer_passwordUppercase" xml:space="preserve">
+    <value>At least one uppercase letter.</value>
+  </data>
+  <data name="installer_port" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="installer_portOutOfRange" xml:space="preserve">
+    <value>The port must be a number between {0} and {1}.</value>
+    <comment>{0}, {1} = the lowest and highest port</comment>
+  </data>
+  <data name="installer_postgreSqlInfo" xml:space="preserve">
+    <value>A PostgreSQL server.</value>
+  </data>
+  <data name="installer_review" xml:space="preserve">
+    <value>Review</value>
+  </data>
+  <data name="installer_reviewHeading" xml:space="preserve">
+    <value>Ready to install</value>
+  </data>
+  <data name="installer_reviewLead" xml:space="preserve">
+    <value>Check what you entered. The administrator, the site details and the starter content are saved when you install.</value>
+  </data>
+  <data name="installer_server" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="installer_serverHint" xml:space="preserve">
+    <value>For example {0}, {1} or {2}.</value>
+    <comment>{0}, {1}, {2} = example SQL Server names, shown as code</comment>
+  </data>
+  <data name="installer_settingsNotReloaded" xml:space="preserve">
+    <value>{0} was updated, but the site's configuration could not be read again: {1}</value>
+    <comment>{0} = the path of appsettings.json; {1} = the reason, from the system</comment>
+  </data>
+  <data name="installer_settingsNotSaved" xml:space="preserve">
+    <value>The site's settings could not be saved. The details are in the site's log.</value>
+  </data>
+  <data name="installer_settingsNotSavedReason" xml:space="preserve">
+    <value>The site's settings could not be saved: {0}</value>
+    <comment>{0} = the reason, from the system</comment>
+  </data>
+  <data name="installer_settingsNotWritten" xml:space="preserve">
+    <value>The site cannot write to {0}: {1}</value>
+    <comment>{0} = the path of appsettings.json; {1} = the reason, from the system</comment>
+  </data>
+  <data name="installer_settingsOverridden" xml:space="preserve">
+    <value>{0} was updated, but another configuration source (an environment variable, {1}, a command-line argument) sets the same keys and wins</value>
+    <comment>{0} = the path of appsettings.json; {1} = the settings file of the environment (appsettings.Production.json)</comment>
+  </data>
+  <data name="installer_setUpDatabase" xml:space="preserve">
+    <value>Set up the database</value>
+  </data>
+  <data name="installer_show" xml:space="preserve">
+    <value>Show</value>
+    <comment>The button that shows the password being typed</comment>
+  </data>
+  <data name="installer_siteHeading" xml:space="preserve">
+    <value>Name your site</value>
+  </data>
+  <data name="installer_siteLead" xml:space="preserve">
+    <value>All of this can be changed later in the admin, under Settings.</value>
+  </data>
+  <data name="installer_siteName" xml:space="preserve">
+    <value>Site name</value>
+  </data>
+  <data name="installer_siteNameTooLong" xml:space="preserve">
+    <value>The site name can be at most {0} characters.</value>
+    <comment>{0} = the longest name allowed</comment>
+  </data>
+  <data name="installer_somethingWentWrong" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="installer_sqliteCannotWrite" xml:space="preserve">
+    <value>The site cannot write to {0}: {1}</value>
+    <comment>{0} = the folder path; {1} = the reason, from the system</comment>
+  </data>
+  <data name="installer_sqliteCreated" xml:space="preserve">
+    <value>The database file {0} is created when you continue.</value>
+    <comment>{0} = the file path</comment>
+  </data>
+  <data name="installer_sqliteFound" xml:space="preserve">
+    <value>Found the database file {0}.</value>
+    <comment>{0} = the file path</comment>
+  </data>
+  <data name="installer_sqliteInfo" xml:space="preserve">
+    <value>A file next to the site. Nothing to set up.</value>
+  </data>
+  <data name="installer_sqliteInMemory" xml:space="preserve">
+    <value>An in-memory database: everything in it is lost when the site stops.</value>
+  </data>
+  <data name="installer_sqliteNoFolder" xml:space="preserve">
+    <value>The folder {0} does not exist.</value>
+    <comment>{0} = the folder path</comment>
+  </data>
+  <data name="installer_sqliteNotADatabase" xml:space="preserve">
+    <value>{0} exists but is not a SQLite database: {1}</value>
+    <comment>{0} = the file path; {1} = the reason, from SQLite</comment>
+  </data>
+  <data name="installer_sqliteOnShare" xml:space="preserve">
+    <value>The SQLite file must be on a local disk, not on a network share.</value>
+  </data>
+  <data name="installer_sqlServerInfo" xml:space="preserve">
+    <value>Microsoft SQL Server or Azure SQL.</value>
+  </data>
+  <data name="installer_starterContent" xml:space="preserve">
+    <value>Starter content</value>
+  </data>
+  <data name="installer_starterHeading" xml:space="preserve">
+    <value>Start with some content?</value>
+  </data>
+  <data name="installer_starterKitFailed" xml:space="preserve">
+    <value>The starter content "{0}" could not be installed: {1}</value>
+    <comment>{0} = the starter content name; {1} = the reason, from the system</comment>
+  </data>
+  <data name="installer_starterKitUnavailable" xml:space="preserve">
+    <value>The starter content you chose is not available in this site.</value>
+  </data>
+  <data name="installer_starterLead" xml:space="preserve">
+    <value>Starter content gives you pages and page types to change into your own. An empty site leaves all of that to you.</value>
+  </data>
+  <data name="installer_stepFailed" xml:space="preserve">
+    <value>The installer could not finish this step. The details are in the site's log.</value>
+  </data>
+  <data name="installer_steps" xml:space="preserve">
+    <value>Installation steps</value>
+    <comment>The list of steps beside the form, read by screen readers</comment>
+  </data>
+  <data name="installer_testConnection" xml:space="preserve">
+    <value>Test the connection</value>
+  </data>
+  <data name="installer_tooManyAttempts" xml:space="preserve">
+    <value>Too many attempts</value>
+  </data>
+  <data name="installer_tooManyAttemptsWait" xml:space="preserve">
+    <value>Wait a few minutes, then open the installer again.</value>
+  </data>
+  <data name="installer_trustCertificate" xml:space="preserve">
+    <value>Trust the server's certificate</value>
+  </data>
+  <data name="installer_trustCertificateHint" xml:space="preserve">
+    <value>Needed for most local and test servers, which have no certificate from a trusted authority.</value>
+  </data>
+  <data name="installer_tryAgain" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="installer_useConnectionString" xml:space="preserve">
+    <value>Enter a connection string instead</value>
+  </data>
+  <data name="installer_userName" xml:space="preserve">
+    <value>User name</value>
+  </data>
+  <data name="installer_version" xml:space="preserve">
+    <value>Version {0}</value>
+    <comment>{0} = the ZauberCMS version number</comment>
+  </data>
+  <data name="installer_visitorAccounts" xml:space="preserve">
+    <value>Visitor accounts</value>
+  </data>
+  <data name="installer_visitorsCanRegister" xml:space="preserve">
+    <value>Visitors can register</value>
+  </data>
+  <data name="installer_windowsAuthentication" xml:space="preserve">
+    <value>Use Windows authentication</value>
+  </data>
+  <data name="installer_windowsAuthenticationHint" xml:space="preserve">
+    <value>The site signs in as the Windows account it runs under.</value>
+  </data>
+  <data name="installer_yourSite" xml:space="preserve">
+    <value>Your site</value>
+  </data>
 </root>

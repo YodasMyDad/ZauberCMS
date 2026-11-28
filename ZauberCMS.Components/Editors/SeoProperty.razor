@@ -7,11 +7,11 @@
 
 <RadzenTabs TabPosition="TabPosition.Left">
     <Tabs>
-        <RadzenTabsItem Text="Fields">
+        <RadzenTabsItem Text="@L["editors_seoFields"]">
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Page Title"
-                                  Description="The title that appears in search engine results and browser tabs. Keep it under 60 characters for the best SEO results."/>
+                    <PropertyInfo Name="@L["editors_seoPageTitle"]"
+                                  Description="@L["editors_seoPageTitleInfo"]"/>
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenTextBox Change="@(async () => await NotifyValueChanged())"
@@ -21,7 +21,7 @@
                     @if (!string.IsNullOrEmpty(Meta.PageTitle) && Meta.PageTitle.Length > 60)
                     {
                         <div class="mt-1">
-                            <TailwindAlert Type="AlertType.Warning" Title="@($"Page title is {Meta.PageTitle.Length} characters")" />
+                            <TailwindAlert Type="AlertType.Warning" Title="@L["editors_seoPageTitleLength", Meta.PageTitle.Length]" />
                         </div>
                     }
 
@@ -30,8 +30,8 @@
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Meta Description"
-                                  Description="A short summary of the page that appears in search results. Aim for 150–160 characters to ensure it's fully visible."/>
+                    <PropertyInfo Name="@L["editors_seoMetaDescription"]"
+                                  Description="@L["editors_seoMetaDescriptionInfo"]"/>
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenTextArea
@@ -42,7 +42,7 @@
                     @if (!string.IsNullOrEmpty(Meta.MetaDescription) && Meta.MetaDescription.Length > 160)
                     {
                         <div class="mt-1">
-                            <TailwindAlert Type="AlertType.Warning" Title="@($"Meta description is {Meta.MetaDescription.Length} characters")" />
+                            <TailwindAlert Type="AlertType.Warning" Title="@L["editors_seoMetaDescriptionLength", Meta.MetaDescription.Length]" />
                         </div>
                     }
                 </CentreColumn>
@@ -50,8 +50,8 @@
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Open Graph Image"
-                                  Description="The image used when your page is shared on social media (Facebook, X, etc.). Upload a high-quality image, ideally 1200x630 pixels."/>
+                    <PropertyInfo Name="@L["editors_seoOpenGraphImage"]"
+                                  Description="@L["editors_seoOpenGraphImageInfo"]"/>
                 </LeftColumn>
                 <CentreColumn>
                     <MediaPickerProperty
@@ -63,61 +63,73 @@
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Hide From Search Engines"
-                                  Description="Prevents this page from appearing in Google and other search engines. Use this for private or low-value pages."/>
+                    <PropertyInfo Name="@L["editors_seoHideFromSearchEngines"]"
+                                  Description="@L["editors_seoHideFromSearchEnginesInfo"]"/>
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenSwitch @bind-Value="@Meta.HideFromSearchEngines"
                                   Change="@(async () => await NotifyValueChanged())"
-                                  InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Hide from search engines" } })"/>
+                                  InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_seoHideFromSearchEngines"].Value } })"/>
                 </CentreColumn>
             </EditorRow>
         </RadzenTabsItem>
-        <RadzenTabsItem Text="Sitemap">
+        <RadzenTabsItem Text="@L["editors_seoSitemap"]">
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Exclude From Sitemap"
-                                  Description="Removes this page from your website's sitemap, so search engines won't prioritize it. Useful for utility pages or duplicates."/>
+                    <PropertyInfo Name="@L["editors_seoExcludeFromSitemap"]"
+                                  Description="@L["editors_seoExcludeFromSitemapInfo"]"/>
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenSwitch @bind-Value="@Meta.ExcludeFromSitemap"
                                   Change="@(async () => await NotifyValueChanged())"
-                                  InputAttributes="@(new Dictionary<string, object> { { "aria-label", "Exclude from sitemap" } })"/>
+                                  InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_seoExcludeFromSitemap"].Value } })"/>
                 </CentreColumn>
             </EditorRow>
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Change Frequency"
-                                  Description="How frequently the page is likely to change. This affects how search engines treat your page."/>
+                    <PropertyInfo Name="@L["editors_seoChangeFrequency"]"
+                                  Description="@L["editors_seoChangeFrequencyInfo"]"/>
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenDropDown
                         @bind-Value="Meta.ChangeFrequency"
-                        Data="ChangeFrequencies"
+                        Data="ChangeFrequencyOptions"
+                        TextProperty="Text"
+                        ValueProperty="Value"
                         Style="width: 100%;" />
                 </CentreColumn>
             </EditorRow>
 
             <EditorRow>
                 <LeftColumn>
-                    <PropertyInfo Name="Priority"
-                                  Description="Relative importance of this page compared to other pages on your site."/>
+                    <PropertyInfo Name="@L["editors_seoPriority"]"
+                                  Description="@L["editors_seoPriorityInfo"]"/>
                 </LeftColumn>
                 <CentreColumn>
                     <RadzenNumeric Style="width: 100%;" TValue="double" @bind-Value="@Meta.Priority" />
                 </CentreColumn>
             </EditorRow>
         </RadzenTabsItem>
-        <RadzenTabsItem Text="SEO Checker">
+        <RadzenTabsItem Text="@L["editors_seoChecker"]">
             <SeoChecker Content="Content" FullUrl="@FullUrl" />
         </RadzenTabsItem>
     </Tabs>
 </RadzenTabs>
 
 @code {
-    public string Name => "SEO";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public SeoProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public SeoProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    public string Name => _text["editors_seo"];
     public string Alias => "ZauberCMS.Seo";
-    public string Description => "Adds meta and SEO tools to your page";
+    public string Description => _text["editors_seoInfo"];
     public string Icon => "show_chart";
     public Type? SettingsComponent { get; set; }
     public List<string> Scripts { get; set; } = [];
@@ -136,6 +148,23 @@
     public SeoSitemapChangeFrequency[] ChangeFrequencies { get; set; } =
         Enum.GetValues(typeof(SeoSitemapChangeFrequency)).Cast<SeoSitemapChangeFrequency>().ToArray();
 
+    // The change frequencies with their names in the admin's language; the value stays the frequency
+    private List<ChangeFrequencyOption> ChangeFrequencyOptions { get; set; } = [];
+
+    private sealed record ChangeFrequencyOption(SeoSitemapChangeFrequency Value, string Text);
+
+    private string ChangeFrequencyText(SeoSitemapChangeFrequency frequency) => frequency switch
+    {
+        SeoSitemapChangeFrequency.Always => L["editors_changeFrequencyAlways"],
+        SeoSitemapChangeFrequency.Hourly => L["editors_changeFrequencyHourly"],
+        SeoSitemapChangeFrequency.Daily => L["editors_changeFrequencyDaily"],
+        SeoSitemapChangeFrequency.Weekly => L["editors_changeFrequencyWeekly"],
+        SeoSitemapChangeFrequency.Monthly => L["editors_changeFrequencyMonthly"],
+        SeoSitemapChangeFrequency.Yearly => L["editors_changeFrequencyYearly"],
+        SeoSitemapChangeFrequency.Never => L["editors_changeFrequencyNever"],
+        _ => frequency.ToString()
+    };
+
     
     private async Task SetOpenGraphMedia(string? e)
     {
@@ -148,6 +177,7 @@
     
     protected override void OnInitialized()
     {
+        ChangeFrequencyOptions = ChangeFrequencies.Select(f => new ChangeFrequencyOption(f, ChangeFrequencyText(f))).ToList();
         if (!Value.IsNullOrWhiteSpace())
         {
             Meta = JsonSerializer.Deserialize<Meta>(Value) ?? new Meta();

@@ -1,38 +1,34 @@
-<h1>One thing to do by hand</h1>
+<h1>@L["installer_manualHeading"]</h1>
 <p class="lead">
-    The database is ready, but the site's configuration could not be changed.
-    @Model.ManualConfiguration?.ManualConfigurationReason.
+    @L["installer_manualLead", Model.ManualConfiguration?.ManualConfigurationReason ?? string.Empty]
 </p>
 
 @if (Model.ManualConfiguration?.SettingsFileWritten == true)
 {
     <p>
-        <code>appsettings.json</code> already has the two settings below. Find the place that sets
-        <code>Zauber:DatabaseProvider</code> or <code>Zauber:ConnectionString</code> to something else (as environment
-        variables they are <code>Zauber__DatabaseProvider</code> and <code>Zauber__ConnectionString</code>) and
-        remove it or give it these values, then restart the site.
+        @InstallerMarkup.WithCode(L["installer_manualOverridden"], "appsettings.json", "Zauber:DatabaseProvider",
+            "Zauber:ConnectionString", "Zauber__DatabaseProvider", "Zauber__ConnectionString")
     </p>
     <pre>@Snippet</pre>
 }
 else
 {
-    <p>These are the two settings the site needs. Put them where its configuration comes from.</p>
+    <p>@L["installer_manualSettings"]</p>
 
-    <p>In <code>appsettings.json</code>:</p>
+    <p>@InstallerMarkup.WithCode(L["installer_manualInFile"], "appsettings.json")</p>
     <pre>@Snippet</pre>
 
-    <p>Or as environment variables (restart the site after setting them):</p>
+    <p>@L["installer_manualAsVariables"]</p>
     <pre>Zauber__DatabaseProvider=@Model.ManualConfiguration?.DatabaseProvider
 Zauber__ConnectionString=@Model.ManualConfiguration?.ConnectionString</pre>
 }
 
 <p>
-    Copy the values before you leave this page: it is not shown again. When the site can see the database, the
-    installer carries on with the next step; until then it asks for the database again.
+    @L["installer_manualCopy"]
 </p>
 
 <div class="actions">
-    <a class="button" href="@Model.FormAction">Open the installer again</a>
+    <a class="button" href="@Model.FormAction">@L["installer_openAgain"]</a>
 </div>
 
 @code {

@@ -3,25 +3,25 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Undo" Description="Button to allow the user to undo the last action"/>
+        <PropertyInfo Name="@L["editors_rteUndo"]" Description="@L["editors_rteUndoInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenSwitch @bind-Value="@Settings.AllowUndo" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Show undo button" }})" />
+        <RadzenSwitch @bind-Value="@Settings.AllowUndo" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", L["editors_rteShowUndo"].Value }})" />
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Redo" Description="Button to allow the user to redo the last undone action"/>
+        <PropertyInfo Name="@L["editors_rteRedo"]" Description="@L["editors_rteRedoInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenSwitch @bind-Value="@Settings.AllowRedo" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", "Show redo button" }})" />
+        <RadzenSwitch @bind-Value="@Settings.AllowRedo" InputAttributes="@(new Dictionary<string,object>{ { "aria-label", L["editors_rteShowRedo"].Value }})" />
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Bold" Description="Toggle bold style for selected text"/>
+        <PropertyInfo Name="@L["editors_rteBold"]" Description="@L["editors_rteBoldInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowBold" />
@@ -30,7 +30,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Italic" Description="Toggle italic style for selected text"/>
+        <PropertyInfo Name="@L["editors_rteItalic"]" Description="@L["editors_rteItalicInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowItalic" />
@@ -39,7 +39,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Underline" Description="Toggle underline style for selected text"/>
+        <PropertyInfo Name="@L["editors_rteUnderline"]" Description="@L["editors_rteUnderlineInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowUnderline" />
@@ -48,7 +48,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Strikethrough" Description="Toggle strikethrough style for selected text"/>
+        <PropertyInfo Name="@L["editors_rteStrikethrough"]" Description="@L["editors_rteStrikethroughInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowStrikeThrough" />
@@ -57,7 +57,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Align Left" Description="Align text to the left"/>
+        <PropertyInfo Name="@L["editors_rteAlignLeft"]" Description="@L["editors_rteAlignLeftInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowAlignLeft" />
@@ -66,7 +66,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Align Center" Description="Align text to the center"/>
+        <PropertyInfo Name="@L["editors_rteAlignCenter"]" Description="@L["editors_rteAlignCenterInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowAlignCenter" />
@@ -75,7 +75,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Align Right" Description="Align text to the right"/>
+        <PropertyInfo Name="@L["editors_rteAlignRight"]" Description="@L["editors_rteAlignRightInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowAlignRight" />
@@ -84,7 +84,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Justify" Description="Justify text across the line width"/>
+        <PropertyInfo Name="@L["editors_rteJustify"]" Description="@L["editors_rteJustifyInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowJustify" />
@@ -93,7 +93,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Indent" Description="Indent selected text"/>
+        <PropertyInfo Name="@L["editors_rteIndent"]" Description="@L["editors_rteIndentInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowIndent" />
@@ -102,7 +102,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Outdent" Description="Outdent selected text"/>
+        <PropertyInfo Name="@L["editors_rteOutdent"]" Description="@L["editors_rteOutdentInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowOutdent" />
@@ -111,7 +111,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Unordered List" Description="Insert a bulleted list"/>
+        <PropertyInfo Name="@L["editors_rteUnorderedList"]" Description="@L["editors_rteUnorderedListInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowUnorderedList" />
@@ -120,7 +120,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Ordered List" Description="Insert a numbered list"/>
+        <PropertyInfo Name="@L["editors_rteOrderedList"]" Description="@L["editors_rteOrderedListInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowOrderedList" />
@@ -129,7 +129,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Font Color" Description="Change the color of the selected text"/>
+        <PropertyInfo Name="@L["editors_rteFontColor"]" Description="@L["editors_rteFontColorInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowColor" />
@@ -138,7 +138,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Background Color" Description="Change the background color of selected text"/>
+        <PropertyInfo Name="@L["editors_rteBackgroundColor"]" Description="@L["editors_rteBackgroundColorInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowBackground" />
@@ -147,7 +147,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Remove Format" Description="Clear formatting from selected text"/>
+        <PropertyInfo Name="@L["editors_rteRemoveFormat"]" Description="@L["editors_rteRemoveFormatInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowRemoveFormat" />
@@ -156,7 +156,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Subscript" Description="Format text as subscript"/>
+        <PropertyInfo Name="@L["editors_rteSubscript"]" Description="@L["editors_rteSubscriptInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowSubscript" />
@@ -165,7 +165,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Superscript" Description="Format text as superscript"/>
+        <PropertyInfo Name="@L["editors_rteSuperscript"]" Description="@L["editors_rteSuperscriptInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowSuperscript" />
@@ -174,7 +174,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Link" Description="Insert a hyperlink"/>
+        <PropertyInfo Name="@L["editors_rteLink"]" Description="@L["editors_rteLinkInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowLink" />
@@ -183,7 +183,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Unlink" Description="Remove a hyperlink"/>
+        <PropertyInfo Name="@L["editors_rteUnlink"]" Description="@L["editors_rteUnlinkInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowUnlink" />
@@ -201,7 +201,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Font Name" Description="Choose the font family for selected text"/>
+        <PropertyInfo Name="@L["editors_rteFontName"]" Description="@L["editors_rteFontNameInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowFontName" />
@@ -210,7 +210,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Font Size" Description="Change font size of selected text"/>
+        <PropertyInfo Name="@L["editors_rteFontSize"]" Description="@L["editors_rteFontSizeInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowFontSize" />
@@ -219,7 +219,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Format Block" Description="Apply paragraph or heading format"/>
+        <PropertyInfo Name="@L["editors_rteFormatBlock"]" Description="@L["editors_rteFormatBlockInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowFormatBlock" />
@@ -228,7 +228,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Source Edit" Description="Edit the raw HTML source"/>
+        <PropertyInfo Name="@L["editors_rteSourceEdit"]" Description="@L["editors_rteSourceEditInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenSwitch @bind-Value="@Settings.AllowSourceEdit" />
@@ -237,7 +237,7 @@
 
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save" />
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save" />
 </RadzenStack>
 
 @code {

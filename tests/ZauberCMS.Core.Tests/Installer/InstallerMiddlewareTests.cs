@@ -314,4 +314,42 @@ public class InstallerMiddlewareTests : IAsyncLifetime
         Assert.Equal(StatusCodes.Status303SeeOther, context.Response.StatusCode);
         Assert.Equal("/install", context.Response.Headers.Location.ToString());
     }
+
+    // Roadmap Phase 10h-3 (D95): the installer's text is ZauberCMS's text, in Zauber:AdminDefaultLanguage whatever
+    // the browser asks for; a key the site has not translated stays English. This test assembly plays the site
+    // (Localization/ZauberText/Installer.fr.resx), on a site that has no database yet.
+    [Fact]
+    public async Task D95_the_installer_is_in_the_admin_language_from_the_site_s_translation()
+    {
+        var contentRoot = TestSite.CreateContentRoot();
+        try
+        {
+            await using var app = TestSite.BuildApp("", "", contentRoot, validateContainer: false,
+                extraSettings: new Dictionary<string, string?> { ["Zauber:AdminDefaultLanguage"] = "fr" },
+                additionalAssemblies: [typeof(InstallerMiddlewareTests).Assembly]);
+            var middleware = new InstallerMiddleware(_ => Task.CompletedTask,
+                app.Services.GetRequiredService<InstallState>(), app.Services.GetRequiredService<ILoggerFactory>());
+
+            using var scope = app.Services.CreateScope();
+            var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+            context.Request.Method = "GET";
+            context.Request.Path = "/install";
+            context.Request.Headers.AcceptLanguage = "en-US";
+            context.Response.Body = new MemoryStream();
+            await middleware.InvokeAsync(context);
+            context.Response.Body.Position = 0;
+            var body = await new StreamReader(context.Response.Body, Encoding.UTF8).ReadToEndAsync(Ct);
+
+            Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+            Assert.Contains("<html lang=\"fr\">", body);
+            Assert.Contains(">Tester la connexion</button>", body);
+            // The script swaps the reveal button's words from the page, so they are translated too
+            Assert.Contains("data-show=\"Afficher\" data-hide=\"Masquer\">Afficher</button>", body);
+            Assert.Contains(">Set up the database</button>", body);
+        }
+        finally
+        {
+            Directory.Delete(contentRoot, recursive: true);
+        }
+    }
 }

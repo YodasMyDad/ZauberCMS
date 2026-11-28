@@ -4,16 +4,16 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Max Allowed Items" Description="The maximum allowed items to be picked"/>
+        <PropertyInfo Name="@L["editors_maxAllowedItems"]" Description="@L["editors_maxAllowedItemsInfo"]"/>
     </LeftColumn>
     <CentreColumn>
-        <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", "enter max allowed" } })"/>
+        <RadzenNumeric @bind-Value="@Settings.MaxAllowed" Style="width: 100%;" InputAttributes="@(new Dictionary<string, object> { { "aria-label", L["editors_maxAllowedItems"].Value } })"/>
     </CentreColumn>
 </EditorRow>
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Media Types" Description="Select the allowed media types for this picker"/>
+        <PropertyInfo Name="@L["editors_mediaTypes"]" Description="@L["editors_mediaTypesInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <RadzenCheckBoxList Orientation="Orientation.Vertical" Data="@Data" @bind-Value="@Settings.AllowedMediaTypes" TValue="MediaType" TextProperty="Name" ValueProperty="Value"/>
@@ -21,7 +21,7 @@
 </EditorRow>
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {
@@ -36,7 +36,7 @@
     {
         Data = Enum.GetValues(typeof(MediaType))
             .Cast<MediaType>()
-            .Select(e => new EnumObject { Value = e, Name = e.ToString() });
+            .Select(e => new EnumObject { Value = e, Name = MediaTypeName(e) });
 
         Settings = this.GetPropertySettings();
     }
@@ -45,6 +45,22 @@
     {
         await this.SavePropertySettings(Settings);
     }
+
+    private string MediaTypeName(MediaType mediaType) => mediaType switch
+    {
+        MediaType.Folder => L["general_folder"],
+        MediaType.Image => L["editors_mediaTypeImage"],
+        MediaType.Video => L["editors_mediaTypeVideo"],
+        MediaType.Audio => L["editors_mediaTypeAudio"],
+        MediaType.Pdf => L["editors_mediaTypePdf"],
+        MediaType.Document => L["editors_mediaTypeDocument"],
+        MediaType.Spreadsheet => L["editors_mediaTypeSpreadsheet"],
+        MediaType.Presentation => L["editors_mediaTypePresentation"],
+        MediaType.Archive => L["editors_mediaTypeArchive"],
+        MediaType.Text => L["editors_mediaTypeText"],
+        MediaType.Unknown => L["general_unknown"],
+        _ => mediaType.ToString()
+    };
 
     private sealed class EnumObject
     {

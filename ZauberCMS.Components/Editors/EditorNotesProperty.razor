@@ -31,10 +31,24 @@
 @code {
     [Inject] public IModalService DialogService { get; set; } = null!;
     
-    public string Name { get; set; } = "Editor Notes";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public EditorNotesProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public EditorNotesProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_editorNotes"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.EditorNotes";
     public string Icon { get; set; } = "format_align_justify";
-    public string Description { get; set; } = "Add useful notes for editors either inline or in an dialog panel";
+    public string Description { get => _description ?? _text["editors_editorNotesInfo"].Value; set => _description = value; }
     public Type? SettingsComponent { get; set; } = typeof(EditorNotePropertySettings);
     public List<string> Scripts { get; set; } = [];
     public List<string> Styles { get; set; } = [];

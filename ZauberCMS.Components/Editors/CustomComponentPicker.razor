@@ -12,14 +12,24 @@
                 Change="@(_ => OnChange())"
                 TextProperty="Name"
                 ValueProperty="Value"
-                Multiple="true" AllowClear="true" Placeholder="Select components" Chips="true" Style="width: 100%;"/>
+                Multiple="true" AllowClear="true" Placeholder="@L["editors_selectComponents"]" Chips="true" Style="width: 100%;"/>
 
 @code {
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     
-    public string Name => "Custom Component Picker";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public CustomComponentPicker() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public CustomComponentPicker(IStringLocalizer<ZauberText> text) => _text = text;
+
+    public string Name => _text["editors_customComponentPicker"];
     public string Alias => "ZauberCMS.CustomComponentPicker";
-    public string Description => "Renders custom blazor components on the page";
+    public string Description => _text["editors_customComponentPickerInfo"];
     public string Icon => "settings_ethernet";
     public Type? SettingsComponent { get; set; }
 

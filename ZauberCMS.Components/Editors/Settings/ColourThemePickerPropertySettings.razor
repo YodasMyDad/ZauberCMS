@@ -3,7 +3,7 @@
 
 <EditorRow>
     <LeftColumn>
-        <PropertyInfo Name="Add Colour" Description="Add a colour to the list of allowed colours."/>
+        <PropertyInfo Name="@L["editors_addColour"]" Description="@L["editors_addColourInfo"]"/>
     </LeftColumn>
     <CentreColumn>
         <ColourPickerProperty ValueChanged="@(s => OnColourPicked(s))"/>
@@ -22,7 +22,7 @@
 
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
              class="rz-mt-3">
-    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="Store Settings" Click="Save"/>
+    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Text="@L["editors_storeSettings"]" Click="Save"/>
 </RadzenStack>
 
 @code {

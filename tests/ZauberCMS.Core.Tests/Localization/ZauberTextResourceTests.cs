@@ -92,6 +92,35 @@ public partial class ZauberTextResourceTests
         "ZauberCMS.Core/Seo/Services",
 
         // 10h-3
+        "ZauberCMS.Components/Editors",
+        "ZauberCMS.Components/Editors/Components",
+        "ZauberCMS.Components/Editors/Interfaces",
+        "ZauberCMS.Components/Editors/Models",
+        "ZauberCMS.Components/Editors/Settings",
+        "ZauberCMS.Components/Editors/ToolbarItems",
+        "ZauberCMS.Core/Data",
+        "ZauberCMS.Core/Data/Interfaces",
+        "ZauberCMS.Core/Data/Mapping",
+        "ZauberCMS.Core/Data/Models",
+        "ZauberCMS.Core/Data/Parameters",
+        "ZauberCMS.Core/Data/Services",
+        "ZauberCMS.Core/Extensions",
+        "ZauberCMS.Core/Installer",
+        "ZauberCMS.Core/Installer/Components",
+        "ZauberCMS.Core/Installer/Interfaces",
+        "ZauberCMS.Core/Installer/Middleware",
+        "ZauberCMS.Core/Installer/Models",
+        "ZauberCMS.Core/Installer/Parameters",
+        "ZauberCMS.Core/Installer/Services",
+        "ZauberCMS.Core/Shared",
+        "ZauberCMS.Core/Shared/Comparers",
+        "ZauberCMS.Core/Shared/Interfaces",
+        "ZauberCMS.Core/Shared/Mapping",
+        "ZauberCMS.Core/Shared/Models",
+        "ZauberCMS.Core/Shared/Services",
+        "ZauberCMS.Core/Shared/Validation",
+        "ZauberCMS.Core/Shared/Validation/Interfaces",
+        "ZauberCMS.Core/Shared/Validation/Models",
 
         // 10h-4
     ];
@@ -146,6 +175,29 @@ public partial class ZauberTextResourceTests
         "ZauberCMS.Core/Media/Middleware/RestrictedMediaMiddleware.cs: Unauthorized access to media",
 
         // 10h-3
+        // ApiKeysPickerProperty.razor is 10h-4's (the API-key picker editor); these go when it is converted
+        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: The saved key is not one of the site's keys now. It is used as it was saved until you choose one.",
+        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: Choose a key",
+        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: API key",
+        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: Api Key Picker",
+        "ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor: Pick one of the site's API keys by name (Global Settings or Zauber:ApiKeys); the page stores the name",
+        "ZauberCMS.Components/Editors/BlockListEditorProperty.razor: Failed to deserialize BlockListEditor value for property {Alias} on content {ContentId}", // a log message
+        "ZauberCMS.Core/Data/AfterCommitHooks.cs: The after-commit hook {Hook} failed; the change it was told about is stored", // a log message
+        "ZauberCMS.Core/Extensions/DbContextExtensions.cs: Save of {Type} abandoned by the save hook {Hook}", // a log message
+        "ZauberCMS.Core/Extensions/AuditExtensions.cs: Recycle Binned", // an audit description: stored, shown as data (rule 9)
+        "ZauberCMS.Core/Extensions/AuditExtensions.cs: Misc action on", // an audit description
+        "ZauberCMS.Core/Installer/Components/InstallerPage.razor: ZauberCMS", // the product's name
+        "ZauberCMS.Core/Installer/Components/InstallerAssets.cs: Iowan Old Style", // the stylesheet's font names
+        "ZauberCMS.Core/Installer/Components/InstallerAssets.cs: Palatino Linotype",
+        "ZauberCMS.Core/Installer/Components/InstallerAssets.cs: Book Antiqua",
+        "ZauberCMS.Core/Installer/Components/InstallerAssets.cs: Segoe UI Variable Text",
+        "ZauberCMS.Core/Installer/Components/InstallerAssets.cs: Segoe UI",
+        "ZauberCMS.Core/Installer/Components/InstallerAssets.cs: Helvetica Neue",
+        "ZauberCMS.Core/Installer/Components/InstallerAssets.cs: Cascadia Mono",
+        // The public constant keeps the English; the form shows shared_validatorFailed
+        "ZauberCMS.Core/Shared/Validation/EditContextFluentValidationExtensions.cs: Validation could not run. Try again, or contact your administrator.",
+        // ZA-270 (Phase 10i): the trees' "Show more" row is built in a Core model the trees read without L
+        "ZauberCMS.Core/Shared/Models/TreeLoadMore.cs: Show {Math.Min(PageSize, TotalItems - Skip)} more ({TotalItems - Skip} not shown)",
 
         // 10h-4
     ];

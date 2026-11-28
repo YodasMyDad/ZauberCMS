@@ -239,7 +239,8 @@ internal static class InstallerAssets
               var input = document.getElementById(button.getAttribute('data-reveal'));
               var show = input.type === 'password';
               input.type = show ? 'text' : 'password';
-              button.textContent = show ? 'Hide' : 'Show';
+              // The words are the page's (data-show, data-hide), in the installer's language
+              button.textContent = button.getAttribute(show ? 'data-hide' : 'data-show');
             });
           });
 

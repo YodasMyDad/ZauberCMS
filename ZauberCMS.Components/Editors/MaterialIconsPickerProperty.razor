@@ -10,9 +10,23 @@
 </RadzenStack>
 
 @code {
-    public string Name { get; set; } = "Material Icon Picker";
+    private readonly IStringLocalizer<ZauberText> _text;
+
+    /// <summary>For code that only reads the editor's alias or type (a starter kit): its text is ZauberCMS's English.</summary>
+    public MaterialIconsPickerProperty() : this(Models.EditorText.English)
+    {
+    }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public MaterialIconsPickerProperty(IStringLocalizer<ZauberText> text) => _text = text;
+
+    // Settable, as before v5 (a subclass or a site may rename the editor); unset, ZauberCMS's text
+    private string? _name;
+    private string? _description;
+
+    public string Name { get => _name ?? _text["editors_materialIconPicker"].Value; set => _name = value; }
     public string Alias { get; set; } = "ZauberCMS.MaterialIconPicker";
-    public string Description { get; set; } = "Pick an icon from the Material icons list";
+    public string Description { get => _description ?? _text["editors_materialIconPickerInfo"].Value; set => _description = value; }
     public string Icon { get; set; } = "insert_emoticon";
     public Type? SettingsComponent { get; set; }
     public List<string> Scripts { get; set; } = [];
@@ -29,7 +43,7 @@
     {
         if (ModalService != null)
         {
-            var dialog = ModalService.OpenSidePanel<ListMaterialIconsDialog>("Choose Icon");
+            var dialog = ModalService.OpenSidePanel<ListMaterialIconsDialog>(L["editors_chooseIcon"]);
             var result = await dialog.Result;
             if (result is { Confirmed: true, Data: string icon })
             {

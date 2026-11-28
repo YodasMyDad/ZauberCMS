@@ -12,4 +12,19 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="shared_changedBySomeoneElse" xml:space="preserve">
+    <value>{0} was changed by someone else since it was opened. Reload it and make the changes again.</value>
+    <comment>{0} = what was saved, by its type name (Content, Media, User, …)</comment>
+  </data>
+  <data name="shared_globalDataMissing" xml:space="preserve">
+    <value>GlobalData is null</value>
+    <comment>A global data value was saved without its alias or data</comment>
+  </data>
+  <data name="shared_saveAbandoned" xml:space="preserve">
+    <value>Save was purposely abandoned</value>
+    <comment>A save hook (IBeforeEntitySave) stopped the save</comment>
+  </data>
+  <data name="shared_validatorFailed" xml:space="preserve">
+    <value>Validation could not run. Try again, or contact your administrator.</value>
+  </data>
 </root>

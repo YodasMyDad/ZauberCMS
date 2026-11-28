@@ -1,7 +1,9 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Localization;
 using Npgsql;
 using ZauberCMS.Core.Data;
+using ZauberCMS.Core.Localization;
 
 namespace ZauberCMS.Core.Installer.Parameters;
 
@@ -41,18 +43,22 @@ public class DatabaseSetupParameters
     /// The connection string for these values. The provider's own builder does the quoting, so a value cannot add
     /// keywords of its own.
     /// </summary>
+    /// <param name="text">ZauberCMS's text (<c>IStringLocalizer&lt;ZauberText&gt;</c>): the exception's message is
+    /// in its language.</param>
     /// <exception cref="ArgumentException">A required value is missing or the connection string cannot be read.
-    /// The message is written for the person filling in the form.</exception>
-    public string BuildConnectionString()
+    /// The message is written for the person filling in the form, so unlike other exceptions it is localised
+    /// (Roadmap D121).</exception>
+    public string BuildConnectionString(IStringLocalizer<ZauberText> text)
     {
+        ArgumentNullException.ThrowIfNull(text);
         var provider = DatabaseProviders.Normalise(Provider)
-                       ?? throw new ArgumentException("Choose a database type.");
+                       ?? throw new ArgumentException(text["installer_chooseDatabaseType"]);
 
         if (UseConnectionString)
         {
             if (string.IsNullOrWhiteSpace(ConnectionString))
             {
-                throw new ArgumentException("Enter a connection string.");
+                throw new ArgumentException(text["installer_enterConnectionString"]);
             }
 
             var connectionString = ConnectionString.Trim();
@@ -68,7 +74,7 @@ public class DatabaseSetupParameters
             }
             catch (Exception ex) when (ex is ArgumentException or FormatException or KeyNotFoundException)
             {
-                throw new ArgumentException($"The connection string is not valid for {DisplayName(provider)}: {ex.Message}");
+                throw new ArgumentException(text["installer_connectionStringInvalidFor", DisplayName(provider), ex.Message]);
             }
 
             return connectionString;
@@ -79,7 +85,7 @@ public class DatabaseSetupParameters
             case DatabaseProviders.Sqlite:
                 if (string.IsNullOrWhiteSpace(SqliteFile))
                 {
-                    throw new ArgumentException("Enter a file name for the SQLite database.");
+                    throw new ArgumentException(text["installer_enterSqliteFile"]);
                 }
 
                 return new SqliteConnectionStringBuilder
@@ -90,7 +96,7 @@ public class DatabaseSetupParameters
 
             case DatabaseProviders.SqlServer:
             {
-                RequireServerAndDatabase();
+                RequireServerAndDatabase(text);
                 var builder = new SqlConnectionStringBuilder
                 {
                     DataSource = Server!.Trim(),
@@ -103,7 +109,7 @@ public class DatabaseSetupParameters
                 }
                 else
                 {
-                    RequireUsername();
+                    RequireUsername(text);
                     builder.UserID = Username!.Trim();
                     builder.Password = Password ?? string.Empty;
                 }
@@ -113,8 +119,8 @@ public class DatabaseSetupParameters
 
             default:
             {
-                RequireServerAndDatabase();
-                RequireUsername();
+                RequireServerAndDatabase(text);
+                RequireUsername(text);
                 var builder = new NpgsqlConnectionStringBuilder
                 {
                     Host = Server!.Trim(),
@@ -128,7 +134,7 @@ public class DatabaseSetupParameters
                 }
                 else if (Port != null)
                 {
-                    throw new ArgumentException("The port must be a number between 1 and 65535.");
+                    throw new ArgumentException(text["installer_portOutOfRange", 1, 65535]);
                 }
 
                 return builder.ConnectionString;
@@ -145,24 +151,24 @@ public class DatabaseSetupParameters
         _ => provider ?? string.Empty
     };
 
-    private void RequireServerAndDatabase()
+    private void RequireServerAndDatabase(IStringLocalizer<ZauberText> text)
     {
         if (string.IsNullOrWhiteSpace(Server))
         {
-            throw new ArgumentException("Enter the server the database is on.");
+            throw new ArgumentException(text["installer_enterServer"]);
         }
 
         if (string.IsNullOrWhiteSpace(Database))
         {
-            throw new ArgumentException("Enter the name of the database.");
+            throw new ArgumentException(text["installer_enterDatabaseName"]);
         }
     }
 
-    private void RequireUsername()
+    private void RequireUsername(IStringLocalizer<ZauberText> text)
     {
         if (string.IsNullOrWhiteSpace(Username))
         {
-            throw new ArgumentException("Enter the user name the site signs in to the database with.");
+            throw new ArgumentException(text["installer_enterDatabaseUser"]);
         }
     }
 }

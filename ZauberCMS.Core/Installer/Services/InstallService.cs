@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
@@ -20,6 +21,7 @@ using ZauberCMS.Core.Languages;
 using ZauberCMS.Core.Languages.Interfaces;
 using ZauberCMS.Core.Languages.Models;
 using ZauberCMS.Core.Languages.Parameters;
+using ZauberCMS.Core.Localization;
 using ZauberCMS.Core.Membership.Interfaces;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
@@ -40,8 +42,12 @@ public class InstallService(
     IServiceProvider serviceProvider,
     ExtensionManager extensionManager,
     IOptions<ZauberSettings> settings,
-    ILogger<InstallService> logger) : IInstallService
+    ILogger<InstallService> logger,
+    IStringLocalizer<ZauberText> text) : IInstallService
 {
+    // The longest site name the installer accepts (the form's maxlength says the same)
+    private const int MaxSiteNameLength = 200;
+
     private string SettingsFile => Path.Combine(environment.ContentRootPath, "appsettings.json");
 
     public virtual async Task InitialiseDatabaseAsync(CancellationToken cancellationToken = default)
@@ -88,9 +94,9 @@ public class InstallService(
         // A database that already has users was set up before the installer existed (or by a seeder): installed
         if (!await CheckInstalledAsync(usersCountAsInstalled: true, cancellationToken))
         {
-            logger.LogWarning(
-                "This site is not installed yet. Until it is, every request is sent to the installer, and the " +
-                "first visitor to finish it becomes the administrator: install the site before making it public");
+            logger.LogWarning("This site is not installed yet. Until it is, every request is sent to the installer, " +
+                              "and the first visitor to finish it becomes the administrator: install the site " +
+                              "before making it public");
         }
 
         await RecoverAdminAsync(cancellationToken);
@@ -143,14 +149,14 @@ public class InstallService(
         string connectionString;
         try
         {
-            connectionString = parameters.BuildConnectionString();
+            connectionString = parameters.BuildConnectionString(text);
         }
         catch (ArgumentException ex)
         {
             return new DatabaseTestResult(false, false, ex.Message);
         }
 
-        return await InstallerDatabase.TestAsync(parameters.Provider, connectionString, cancellationToken);
+        return await InstallerDatabase.TestAsync(parameters.Provider, connectionString, text, cancellationToken);
     }
 
     public virtual async Task<DatabaseSetupResult> SetUpDatabaseAsync(DatabaseSetupParameters parameters,
@@ -163,7 +169,7 @@ public class InstallService(
         {
             if (installState.IsDatabaseConfigured)
             {
-                result.Errors.Add("This site already has a database. Change it in the site's configuration.");
+                result.Errors.Add(text["installer_databaseAlreadyConfigured"]);
                 return result;
             }
 
@@ -175,7 +181,7 @@ public class InstallService(
             }
 
             var provider = DatabaseProviders.Normalise(parameters.Provider)!;
-            var connectionString = parameters.BuildConnectionString();
+            var connectionString = parameters.BuildConnectionString(text);
             result.DatabaseProvider = provider;
             result.ConnectionString = connectionString;
 
@@ -189,7 +195,7 @@ public class InstallService(
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex, "The installer could not create the {Provider} database", provider);
-                result.Errors.Add($"The database could not be set up: {Describe(ex)}");
+                result.Errors.Add(text["installer_databaseSetUpFailed", Describe(ex)]);
                 return result;
             }
 
@@ -199,7 +205,7 @@ public class InstallService(
                 logger.LogWarning("The installer could not write {File}: {Reason}", SettingsFile, written.Error);
                 result.ManualConfigurationRequired = true;
                 result.ManualConfigurationReason =
-                    $"The site cannot write to {SettingsFile}: {written.Error?.TrimEnd('.')}";
+                    text["installer_settingsNotWritten", SettingsFile, written.Error?.TrimEnd('.') ?? string.Empty];
                 return result;
             }
 
@@ -215,7 +221,7 @@ public class InstallService(
                 logger.LogError(ex, "Configuration could not be reloaded after the installer wrote {File}", SettingsFile);
                 result.ManualConfigurationRequired = true;
                 result.ManualConfigurationReason =
-                    $"{SettingsFile} was updated, but the site's configuration could not be read again: {Describe(ex).TrimEnd('.')}";
+                    text["installer_settingsNotReloaded", SettingsFile, Describe(ex).TrimEnd('.')];
                 return result;
             }
 
@@ -224,10 +230,8 @@ public class InstallService(
                 installState.ConnectionString != connectionString)
             {
                 result.ManualConfigurationRequired = true;
-                result.ManualConfigurationReason =
-                    $"{SettingsFile} was updated, but another configuration source (an environment variable, " +
-                    $"appsettings.{environment.EnvironmentName}.json, a command-line argument) sets the same keys " +
-                    "and wins";
+                result.ManualConfigurationReason = text["installer_settingsOverridden", SettingsFile,
+                    $"appsettings.{environment.EnvironmentName}.json"];
                 return result;
             }
 
@@ -266,14 +270,14 @@ public class InstallService(
         {
             if (!installState.IsDatabaseConfigured)
             {
-                result.Errors.Add("Choose a database first.");
+                result.Errors.Add(text["installer_chooseDatabaseFirst"]);
                 return result;
             }
 
             if (await CheckInstalledAsync(usersCountAsInstalled: true, cancellationToken))
             {
                 result.AlreadyInstalled = true;
-                result.Errors.Add("This site is already installed.");
+                result.Errors.Add(text["installer_alreadyInstalled"]);
                 return result;
             }
 
@@ -289,26 +293,26 @@ public class InstallService(
 
             if (string.IsNullOrEmpty(adminName))
             {
-                Refuse("admin", "Enter a user name for the administrator.");
+                Refuse("admin", text["installer_enterAdminName"]);
             }
 
             if (string.IsNullOrEmpty(adminEmail) || !new EmailAddressAttribute().IsValid(adminEmail))
             {
-                Refuse("admin", "Enter the administrator's email address.");
+                Refuse("admin", text["installer_enterAdminEmail"]);
             }
 
             if (string.IsNullOrEmpty(parameters.AdminPassword))
             {
-                Refuse("admin", "Enter a password for the administrator.");
+                Refuse("admin", text["installer_enterAdminPassword"]);
             }
 
             if (string.IsNullOrEmpty(siteName))
             {
-                Refuse("site", "Enter a name for the site.");
+                Refuse("site", text["installer_enterSiteName"]);
             }
-            else if (siteName.Length > 200)
+            else if (siteName.Length > MaxSiteNameLength)
             {
-                Refuse("site", "The site name can be at most 200 characters.");
+                Refuse("site", text["installer_siteNameTooLong", MaxSiteNameLength]);
             }
 
             // No language is acceptable (a server without culture data offers none); an unknown one is not
@@ -318,7 +322,7 @@ public class InstallService(
                 culture = CultureLookup.FindSpecific(parameters.Language);
                 if (culture == null)
                 {
-                    Refuse("site", "Choose the language of the site.");
+                    Refuse("site", text["installer_chooseLanguage"]);
                 }
             }
 
@@ -336,7 +340,7 @@ public class InstallService(
 
                 if (starterKit == null)
                 {
-                    Refuse("starter", "The starter content you chose is not available in this site.");
+                    Refuse("starter", text["installer_starterKitUnavailable"]);
                 }
             }
 
@@ -460,7 +464,7 @@ public class InstallService(
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "The installer could not finish setting up after the install");
-                    result.Warnings.Add($"The language could not be saved: {Describe(ex)}");
+                    result.Warnings.Add(text["installer_languageNotSaved", Describe(ex)]);
                 }
 
                 if (starterKit != null)
@@ -477,7 +481,7 @@ public class InstallService(
                     catch (Exception ex)
                     {
                         logger.LogError(ex, "Starter kit {Kit} failed", starterKit.GetType().FullName);
-                        result.Warnings.Add($"The starter content \"{starterKit.Name}\" could not be installed: {Describe(ex)}");
+                        result.Warnings.Add(text["installer_starterKitFailed", starterKit.Name, Describe(ex)]);
                     }
                 }
             }
@@ -508,7 +512,7 @@ public class InstallService(
         }
     }
 
-    private static async Task<Language?> SaveLanguageAsync(IServiceProvider services, CultureInfo culture,
+    private async Task<Language?> SaveLanguageAsync(IServiceProvider services, CultureInfo culture,
         InstallResult result, CancellationToken cancellationToken)
     {
         var languageService = services.GetRequiredService<ILanguageService>();
@@ -529,8 +533,8 @@ public class InstallService(
             return saved.Entity;
         }
 
-        result.Warnings.Add($"The language {culture.EnglishName} could not be saved: " +
-                            string.Join(" ", saved.Messages.Select(m => m.Message)));
+        result.Warnings.Add(text["installer_languageNotSavedNamed", culture.EnglishName,
+            string.Join(" ", saved.Messages.Select(m => m.Message))]);
         return null;
     }
 
@@ -547,12 +551,12 @@ public class InstallService(
             globalSettings.AllowRegistration = allowRegistration;
             return await dataService.SaveGlobalSettings(globalSettings)
                 ? null
-                : "The site's settings could not be saved. The details are in the site's log.";
+                : text["installer_settingsNotSaved"].Value;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "The installer could not save the global settings");
-            return $"The site's settings could not be saved: {Describe(ex)}";
+            return text["installer_settingsNotSavedReason", Describe(ex)];
         }
     }
 
