@@ -89,6 +89,23 @@ public class RestrictedMediaTests : IAsyncLifetime
         Assert.True(passedOn);
     }
 
+    [Theory]
+    [InlineData(Constants.Roles.EditorRoleName, true)]
+    [InlineData(Constants.Roles.StandardRoleName, false)]
+    public async Task D67_whoever_may_open_the_Media_section_gets_media_in_the_recycle_bin(string role, bool expected)
+    {
+        // The seeded Editor role has the Media section; a front-end member has no section
+        await AddMediaAsync("/media/public/Logo.png", requiresAuthentication: false, deleted: true);
+
+        var (status, passedOn) = await RequestAsync("/media/public/Logo.png", signedIn: true, role: role);
+
+        Assert.Equal(expected, passedOn);
+        if (!expected)
+        {
+            Assert.Equal(StatusCodes.Status404NotFound, status);
+        }
+    }
+
     [Fact]
     public async Task A_recycled_item_does_not_hide_a_file_that_a_live_public_item_also_uses()
     {
@@ -132,7 +149,8 @@ public class RestrictedMediaTests : IAsyncLifetime
         });
     }
 
-    private async Task<(int Status, bool PassedOn)> RequestAsync(string path, bool signedIn, bool admin = false)
+    private async Task<(int Status, bool PassedOn)> RequestAsync(string path, bool signedIn, bool admin = false,
+        string? role = null)
     {
         var passedOn = false;
         var middleware = new RestrictedMediaMiddleware(
@@ -153,6 +171,11 @@ public class RestrictedMediaTests : IAsyncLifetime
             if (admin)
             {
                 claims.Add(new Claim(ClaimTypes.Role, Constants.Roles.AdminRoleName));
+            }
+
+            if (role != null)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
             context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));

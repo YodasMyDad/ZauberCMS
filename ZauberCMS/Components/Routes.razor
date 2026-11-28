@@ -2,7 +2,9 @@
 @using ZauberCMS.Core
 @using ZauberCMS.Core.Membership.Middleware
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Sections.Interfaces
 @inject NavigationManager NavigationManager
+@inject IBackOfficeAccessService BackOfficeAccess
 @using ZauberCMS.Components.Account.Shared
 
 <Router
@@ -12,23 +14,39 @@
         <CascadingValue Value="routeData">
             @if (IsUnprotectedAdminPage(routeData))
             {
-                @* A page under /admin that declares no [Authorize] of its own is for administrators only.
+                @* A page under /admin that declares no [Authorize] of its own is for the users who may open the
+                   section its address is under, or for administrators only when it is under none (Roadmap D67).
                    AdminAccessMiddleware applies the same rule to requests; this covers navigation inside a
                    circuit, which makes no request. *@
-                <AuthorizeView Roles="@Constants.Roles.AdminRoleName">
-                    <Authorized>
-                        <RouteView RouteData="routeData" />
-                    </Authorized>
-                    <NotAuthorized>
-                        <RedirectToLogin />
-                    </NotAuthorized>
-                </AuthorizeView>
+                var sectionPolicy = AdminAccess.UndeclaredPagePolicy(AdminAccess.GetBaseRelativePath(NavigationManager), BackOfficeAccess);
+                if (sectionPolicy != null)
+                {
+                    <AuthorizeView Policy="@sectionPolicy">
+                        <Authorized>
+                            <RouteView RouteData="routeData" />
+                        </Authorized>
+                        <NotAuthorized Context="authState">
+                            <RedirectNotAuthorized User="@authState.User" />
+                        </NotAuthorized>
+                    </AuthorizeView>
+                }
+                else
+                {
+                    <AuthorizeView Roles="@Constants.Roles.AdminRoleName">
+                        <Authorized>
+                            <RouteView RouteData="routeData" />
+                        </Authorized>
+                        <NotAuthorized Context="authState">
+                            <RedirectNotAuthorized User="@authState.User" />
+                        </NotAuthorized>
+                    </AuthorizeView>
+                }
             }
             else
             {
                 <AuthorizeRouteView Resource="routeData" RouteData="routeData">
-                    <NotAuthorized>
-                        <RedirectToLogin />
+                    <NotAuthorized Context="authState">
+                        <RedirectNotAuthorized User="@authState.User" />
                     </NotAuthorized>
                 </AuthorizeRouteView>
             }
@@ -38,6 +56,7 @@
 </Router>
 
 @code {
+    // Below the path base: NavigationManager.Uri starts with it (ZA-199)
     private bool IsUnprotectedAdminPage(RouteData routeData) =>
-        AdminAccess.IsAdminPath(NavigationManager.Uri) && !AdminAccess.DeclaresAuthorization(routeData.PageType);
+        AdminAccess.IsAdminPath(NavigationManager) && !AdminAccess.DeclaresAuthorization(routeData.PageType);
 }

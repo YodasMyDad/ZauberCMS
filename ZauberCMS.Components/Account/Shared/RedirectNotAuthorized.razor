@@ -1,0 +1,17 @@
+@using System.Security.Claims
+@inject NavigationManager NavigationManager
+
+@* What a page that refuses the user does: nobody signed in goes to the login page, which comes back here; a
+   signed-in user who may not open it goes to the access-denied page, not to a login they already have (Roadmap D67) *@
+@code {
+    [Parameter] public ClaimsPrincipal? User { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var here = Uri.EscapeDataString(NavigationManager.Uri);
+        NavigationManager.NavigateTo(User?.Identity?.IsAuthenticated == true
+                ? $"{ZauberCMS.Core.Urls.Account.AccessDenied.TrimStart('/')}?returnUrl={here}"
+                : $"Account/Login?returnUrl={here}",
+            forceLoad: true);
+    }
+}

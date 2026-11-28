@@ -1,4 +1,6 @@
-﻿@using Microsoft.Extensions.Logging
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Logging
 @using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Sections.Interfaces
 
@@ -38,6 +40,9 @@
     [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Inject] public ILogger<SectionTrees> Logger { get; set; } = null!;
+    [Inject] public IAuthorizationService AuthorizationService { get; set; } = null!;
+    [Inject] public IAuthorizationPolicyProvider AuthorizationPolicyProvider { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     
     private Dictionary<string, ISectionNavGroup> NavGroups { get; set; } = new();
     private Dictionary<string, ISectionNav> NavItems { get; set; } = new();
@@ -50,13 +55,28 @@
         NavGroups = sectionNavGroups.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        NavItems = ExtensionManager.GetInstances<ISectionNav>(true);
+        // A nav item that carries [Authorize] (or [AuthorizeSection]) is shown only to users who pass it, the way a
+        // page is opened only to them (Roadmap D70); a group with no item left is not shown
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        NavItems = new Dictionary<string, ISectionNav>();
+        foreach (var (key, navItem) in ExtensionManager.GetInstances<ISectionNav>(true))
+        {
+            if (await AdminExtensionAccess.MayUseAsync(navItem.GetType(), user, AuthorizationService, AuthorizationPolicyProvider))
+            {
+                NavItems[key] = navItem;
+            }
+        }
 
-        var navGroupActions = ExtensionManager.GetInstances<ISectionNavGroupAction>(true)
-            .OrderBy(x => x.Value.SortOrder)
-            .ToList();
+        var navGroupActions = new List<KeyValuePair<string, ISectionNavGroupAction>>();
+        foreach (var action in ExtensionManager.GetInstances<ISectionNavGroupAction>(true).OrderBy(x => x.Value.SortOrder))
+        {
+            if (await AdminExtensionAccess.MayUseAsync(action.Value.GetType(), user, AuthorizationService, AuthorizationPolicyProvider))
+            {
+                navGroupActions.Add(action);
+            }
+        }
         for (var i = 0; i < navGroupActions.Count; i++)
         {
             var sectionNavGroupAction = navGroupActions.ElementAt(i);

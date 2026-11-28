@@ -4,6 +4,8 @@
 @using ZauberCMS.Core.Membership.Models
 @using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Sections.Interfaces
+@using ZauberCMS.Core.Sections.Models
 @using ZauberCMS.Core.Shared
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Shared.Models
@@ -15,6 +17,14 @@
 
 <PageTitle>Update Role</PageTitle>
 
+@if (Access is { Allowed: false })
+{
+    @* Someone who may open Users, on a role they are not in or the Admin role (Roadmap D68) *@
+    <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="You cannot change this role"
+                   DefaultMessage="@Access.Reason"/>
+}
+else if (Access != null)
+{
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
              Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
     <RadzenButton Variant="Variant.Filled" Text="Add Property" Click="@(AddProperty)"/>
@@ -29,7 +39,7 @@
     }
 </RadzenStack>
 
-@if (Role != null)
+if (Role != null)
 {
     <RadzenPanel Class="rz-mx-auto">
         <EditForm Model="Role" OnSubmit="Save">
@@ -44,9 +54,43 @@
                                     style="font-weight: 300; color: dimgray;"/>
                     </RadzenStack>
                     <RadzenTextBox Style="width: 100%;" Name="Name" Placeholder="Name" @bind-Value="@Role.Name"
-                                   aria-label="Name"/>
+                                   aria-label="Name" ReadOnly="@IsAdminRole"/>
                 </RadzenStack>
             </RadzenRow>
+            @* Which sections of the admin the role's members may open (Roadmap D38, D66): every discovered ISection,
+               plugins' included. A section the person editing cannot open themselves cannot be given (D68). *@
+            <RadzenFieldset Text="Sections" class="rz-mb-6">
+                @if (IsAdminRole)
+                {
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Administrators can open every section of the admin, including sections added later.
+                    </RadzenText>
+                }
+                else if (IsStartingRole)
+                {
+                    @* Everyone who registers gets it (Zauber:NewUserStartingRole), so it opens nothing (D71) *@
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Everyone who registers gets this role, so it cannot open any section of the admin. Give
+                        sections to another role.
+                    </RadzenText>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2">
+                        Members of this role can open these sections of the admin. With none ticked, the role gives no
+                        access to the admin.
+                    </RadzenText>
+                    <RadzenCheckBoxList TValue="string" Data="@SectionOptions" @bind-Value="@AllowedSections"
+                                        TextProperty="@nameof(SectionOption.Name)"
+                                        ValueProperty="@nameof(SectionOption.Alias)"
+                                        DisabledProperty="@nameof(SectionOption.Disabled)"
+                                        Orientation="Orientation.Horizontal"/>
+                    @if (SectionOptions.Any(x => x.Disabled))
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption">You can only give sections you can open yourself.</RadzenText>
+                    }
+                }
+            </RadzenFieldset>
             @if (Role.Tabs.Count > 0)
             {
                 <RadzenTabs @ref="Tabs" RenderMode="TabRenderMode.Client" Change="@(i => TabChange(i))">
@@ -117,6 +161,7 @@
         </EditForm>
     </RadzenPanel>
 }
+}
 
 
 @code {
@@ -125,6 +170,10 @@
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] public ValidateService<Role> ValidateService { get; set; } = null!;
+    [Inject] public IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    [Inject] public Microsoft.Extensions.Options.IOptions<ZauberCMS.Core.Settings.ZauberSettings> ZauberSettings { get; set; } = null!;
+    [Inject] public DialogService ConfirmService { get; set; } = null!;
 
     [Parameter] public Guid? RoleId { get; set; }
 
@@ -137,6 +186,16 @@
     private RadzenTabs Tabs { get; set; } = null!;
     private Dictionary<string, IContentProperty> ContentProperties { get; set; } = [];
     private AuthenticationState AuthState { get; set; } = null!;
+    // Null until the role is loaded: nothing is shown and nothing can be changed
+    private BackOfficeAccessResult? Access { get; set; }
+    private List<SectionOption> SectionOptions { get; set; } = [];
+    private IEnumerable<string> AllowedSections { get; set; } = [];
+    // The stored name decides: the Admin role keeps its name and every section (D66, D68)
+    private bool IsAdminRole { get; set; }
+    // The role new registrations get: no sections (D71)
+    private bool IsStartingRole { get; set; }
+
+    private sealed record SectionOption(string Alias, string Name, bool Disabled);
 
     protected override void OnInitialized()
     {
@@ -158,11 +217,40 @@
 
         IsLoaded = true;
         LoadedRoleId = RoleId;
+        // Another role in the same page: the tabs are this role's, from the first tab (ZA-208)
+        TabIndex.Clear();
+        SelectedTabIndex = 0;
+
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        Access = await BackOfficeAccess.CanEditRoleAsync(AuthState.User, RoleId ?? Guid.Empty);
+        if (!Access.Allowed)
+        {
+            Role = null;
+            return;
+        }
 
         if (RoleId != null)
         {
             Role = await MembershipService.GetRoleAsync(new GetRoleParameters { Id = RoleId.Value });
-            ShowDeleteButton = true;
+            IsAdminRole = string.Equals(Role?.Name, Constants.Roles.AdminRoleName, StringComparison.Ordinal);
+            ShowDeleteButton = Role != null && !IsAdminRole;
+        }
+        else
+        {
+            Role = new Role();
+            IsAdminRole = false;
+            ShowDeleteButton = false;
+        }
+
+        IsStartingRole = Role != null && string.Equals(Role.Name,
+            ZauberSettings.Value.NewUserStartingRole ?? Constants.Roles.StandardRoleName, StringComparison.OrdinalIgnoreCase);
+        AllowedSections = Role?.GetAllowedSections() ?? [];
+        var editorIsAdmin = AuthState.User.IsInRole(Constants.Roles.AdminRoleName);
+        SectionOptions = [];
+        foreach (var section in BackOfficeAccess.GetAllSections())
+        {
+            var mayGive = editorIsAdmin || await BackOfficeAccess.CanOpenSectionAsync(AuthState.User, section.Alias);
+            SectionOptions.Add(new SectionOption(section.Alias, section.Name, !mayGive));
         }
 
         InitializeTabsAndSortOrders();
@@ -314,18 +402,83 @@
 
     private async Task Save()
     {
+        // The Admin role opens every section without a list (D66)
+        // The starting role opens none, whatever was stored on it (D71)
+        Role!.SetAllowedSections(IsAdminRole || IsStartingRole ? [] : AllowedSections);
+
+        // The page is the check (D27): no role gets a section, and no other role is changed, by someone it would
+        // give more than they have (D68)
+        var maySave = await BackOfficeAccess.CanSaveRoleAsync(AuthState.User, Role!);
+        if (!maySave.Allowed)
+        {
+            NotificationService.ShowErrorNotification(maySave.Reason ?? "You cannot save this role.");
+            return;
+        }
+
         if (await ValidateService.CanSave(Role!))
         {
+            var isNew = RoleId == null;
             var saveContentTypeCommand = new SaveRoleParameters { Role = Role };
             var result = await MembershipService.SaveRoleAsync(saveContentTypeCommand);
             NotificationService.Notify(result.Success ? new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"{Role?.Name} Saved", Detail = "", Duration = 4000 } : new NotificationMessage { Severity = NotificationSeverity.Error, Summary = $"{Role?.Name} Error", Detail = result.Messages.MessagesAsString(), Duration = 4000 });
+            if (result is { Success: true, Entity: not null } && isNew &&
+                !AuthState.User.IsInRole(Constants.Roles.AdminRoleName))
+            {
+                await JoinNewRoleAsync(result.Entity);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Someone who is not an administrator and makes a role is put in it, as Umbraco does with a user group, so they
+    /// can go on changing it and give it to others (D68). Its sections are ones they have, so it widens nothing.
+    /// </summary>
+    private async Task JoinNewRoleAsync(Role role)
+    {
+        var me = await MembershipService.GetUserAsync(new GetUserParameters { Id = AuthState.User.GetUserId() });
+        if (me == null || string.IsNullOrEmpty(role.Name))
+        {
+            return;
+        }
+
+        var roles = me.UserRoles.Select(x => x.Role.Name).OfType<string>().Append(role.Name)
+            .Distinct(StringComparer.Ordinal).ToList();
+        var joined = await MembershipService.SaveUserAsync(new SaveUserParameters { User = me, Roles = roles });
+        if (!joined.Success)
+        {
+            NotificationService.ShowErrorNotification(joined.Messages.MessagesAsString());
+            return;
+        }
+
+        if (joined.RefreshSignIn)
+        {
+            // The new role is in the sign-in only once it is issued again; then back to this role
+            var back = System.Net.WebUtility.UrlEncode($"{Urls.AdminUsersEditRole}/{role.Id}");
+            NavigationManager.NavigateTo(
+                $"{Urls.ApiRefreshSignIn}?redirectUrl={back}&ticket={System.Net.WebUtility.UrlEncode(joined.RefreshSignInTicket)}",
+                true);
         }
     }
 
     private async Task DeleteRole()
     {
+        var mayDelete = await BackOfficeAccess.CanDeleteRoleAsync(AuthState.User, Role!.Id);
+        if (!mayDelete.Allowed)
+        {
+            NotificationService.ShowErrorNotification(mayDelete.Reason ?? "You cannot delete this role.");
+            return;
+        }
+
+        var confirmed = await ConfirmService.Confirm(
+            $"Delete the role {Role.Name}? Its members lose it, and with it the sections it opens.", "Delete role",
+            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+        if (confirmed != true)
+        {
+            return;
+        }
+
         // Check no content is using it first
-        var result = await MembershipService.DeleteRoleAsync(new DeleteRoleParameters { RoleId = Role!.Id });
+        var result = await MembershipService.DeleteRoleAsync(new DeleteRoleParameters { Id = Role!.Id });
         if (result.Success)
         {
             NavigationManager.NavigateTo(Urls.AdminUsersBaseUrl);

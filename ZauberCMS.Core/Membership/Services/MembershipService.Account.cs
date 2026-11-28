@@ -13,6 +13,7 @@ using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Membership.Parameters;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Providers;
+using ZauberCMS.Core.Sections.Interfaces;
 using ZauberCMS.Core.Settings;
 using ZauberCMS.Core.Shared.Models;
 
@@ -46,8 +47,11 @@ public partial class MembershipService
 
                 if (loginResult.Success)
                 {
+                    // Anyone who may open a section of the admin starts there (Roadmap D67), not only administrators
                     var userPrincipal = await signInManager.CreateUserPrincipalAsync(user);
-                    if (parameters.ReturnUrl.IsNullOrWhiteSpace() && userPrincipal.IsInRole(Constants.Roles.AdminRoleName))
+                    if (parameters.ReturnUrl.IsNullOrWhiteSpace() &&
+                        (await scope.ServiceProvider.GetRequiredService<IBackOfficeAccessService>()
+                            .GetSectionsAsync(userPrincipal, cancellationToken)).Count > 0)
                     {
                         parameters.ReturnUrl = Urls.AdminBaseUrl;
                     }
@@ -233,7 +237,9 @@ public partial class MembershipService
                         var signInResult = await signInManager.PasswordSignInAsync(user!, parameters.Password, parameters.RememberMe, lockoutOnFailure: true);
                         registrationResult.Success = signInResult.Succeeded;
                     
-                        if (parameters.ReturnUrl.IsNullOrWhiteSpace() && await userManager.IsInRoleAsync(user!, Constants.Roles.AdminRoleName))
+                        if (parameters.ReturnUrl.IsNullOrWhiteSpace() &&
+                            (await scope.ServiceProvider.GetRequiredService<IBackOfficeAccessService>()
+                                .GetSectionsAsync(await signInManager.CreateUserPrincipalAsync(user!), cancellationToken)).Count > 0)
                         {
                             parameters.ReturnUrl = Urls.AdminBaseUrl;
                         }

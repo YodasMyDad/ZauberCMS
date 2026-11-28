@@ -11,6 +11,7 @@ using ZauberCMS.Core.Installer.Interfaces;
 using ZauberCMS.Core.Installer.Models;
 using ZauberCMS.Core.Installer.Parameters;
 using ZauberCMS.Core.Membership.Models;
+using ZauberCMS.Core.SeedData;
 using ZauberCMS.Core.Tests.Infrastructure;
 
 namespace ZauberCMS.Core.Tests.Installer;
@@ -125,7 +126,8 @@ public class InstallServiceTests : IAsyncLifetime
         Assert.Equal(expectedPart, result.ErrorPart);
         Assert.False(State.IsInstalled);
         Assert.False(await _site.QueryDatabaseAsync(db => db.Users.AnyAsync(Ct)));
-        Assert.False(await _site.QueryDatabaseAsync(db => db.GlobalDatas.AnyAsync(Ct)));
+        // The seed data ran before the installer (the Editor role's marker row); the installer itself saved nothing
+        Assert.False(await _site.QueryDatabaseAsync(db => db.GlobalDatas.AnyAsync(x => x.Alias != SeedEditorRole.MarkerAlias, Ct)));
         Assert.False(await _site.QueryDatabaseAsync(db => db.Languages.AnyAsync(Ct)));
     }
 

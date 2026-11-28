@@ -5,7 +5,11 @@
         <RadzenGravatar Email="@AuthState.User.GetUserEmail()"/>
     </Template>
     <ChildContent>
-        <ProfileMenuItem Icon="edit" Name="Edit" OnClick="() => Edit()"/>
+        @* The account is edited on its page in the Users section, so only for those who may open it (Roadmap D70) *@
+        @if (_mayOpenUsers)
+        {
+            <ProfileMenuItem Icon="edit" Name="Edit" OnClick="() => Edit()"/>
+        }
         <ProfileMenuItem Icon="logout" Name="Logout" OnClick="() => Logout()"/>
     </ChildContent>
 </RadzenProfileMenu>
@@ -13,7 +17,9 @@
 @code {
 
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    [Inject] public ZauberCMS.Core.Sections.Interfaces.IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
     private AuthenticationState AuthState { get; set; } = null!;
+    private bool _mayOpenUsers;
 
     private void Edit()
     {
@@ -28,6 +34,7 @@
     protected override async Task OnInitializedAsync()
     {
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _mayOpenUsers = await BackOfficeAccess.CanOpenSectionAsync(AuthState.User, Constants.Sections.UsersSection);
     }
 
 }

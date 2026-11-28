@@ -53,7 +53,8 @@ internal sealed class AdminCultureCircuitHandler(NavigationManager navigation, I
     {
         try
         {
-            return AdminAccess.IsAdminPath(navigation.Uri);
+            // Below the path base: the address starts with it (ZA-199)
+            return AdminAccess.IsAdminPath(navigation);
         }
         catch (InvalidOperationException)
         {

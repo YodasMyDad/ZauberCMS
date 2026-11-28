@@ -275,7 +275,10 @@ try {
     Assert-That ($page.Status -eq 404 -and $page.Body.Length -gt 0) "an unknown address answers 404 with a page ($($page.Status), $($page.Body.Length) characters)"
 
     Write-Step 'Admin (signed in by the installer) and its scripts and styles'
+    # /admin sends each user to the first section they may open (Roadmap D67): the administrator to Content
     $page = Get-Page '/admin'
+    Assert-That (Test-RedirectTo $page '/admin/content') "the admin address opens the first section ($($page.Status) $(Get-RedirectTarget $page))"
+    $page = Get-Page '/admin/content'
     Assert-That ($page.Status -eq 200) "the admin page answers 200 ($($page.Status) $(Get-RedirectTarget $page))"
     $assets = @([regex]::Matches($page.Body, '<(?:script src|link rel="stylesheet" href)="([^"]+)"') | ForEach-Object { $_.Groups[1].Value } | Where-Object { $_ -notmatch '^https?:' })
     Assert-That ($assets.Count -ge 5) "the admin page loads its scripts and styles ($($assets.Count))"

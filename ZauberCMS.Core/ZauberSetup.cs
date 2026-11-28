@@ -58,6 +58,10 @@ using ZauberCMS.Core.Media.Middleware;
 using ZauberCMS.Core.Membership;
 using ZauberCMS.Core.Middleware;
 using ZauberCMS.Core.Membership.Claims;
+using Microsoft.AspNetCore.Authorization;
+using ZauberCMS.Core.Sections.Authorization;
+using ZauberCMS.Core.Sections.Interfaces;
+using ZauberCMS.Core.Sections.Services;
 using ZauberCMS.Core.Membership.Models;
 using ZauberCMS.Core.Plugins;
 using ZauberCMS.Core.Plugins.Interfaces;
@@ -322,8 +326,13 @@ public static class ZauberSetup
         });
         authBuilder.AddIdentityCookies();
 
-        /*services.AddAuthorizationBuilder()
-                    .AddPolicy("AdminOnly", policy => policy.RequireRole(Constants.Roles.AdminRoleName));*/
+        // Back-office access per section and role (Roadmap D38, D66-D68): the section policies are built by name
+        // (SectionPolicies, [AuthorizeSection]), so a plugin's section needs no registration; the decision is
+        // IBackOfficeAccessService's, which a site can replace.
+        builder.Services.AddAuthorization();
+        builder.Services.Replace(ServiceDescriptor.Singleton<IAuthorizationPolicyProvider, SectionAuthorizationPolicyProvider>());
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Scoped<IAuthorizationHandler, SectionAccessHandler>());
+        builder.Services.AddScoped<IBackOfficeAccessService, BackOfficeAccessService>();
         
         
         // Build explicit assembly list - only scan assemblies we explicitly register

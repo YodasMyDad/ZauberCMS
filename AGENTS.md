@@ -40,7 +40,10 @@ in every phase of the rework, against this:
   format or config key without the `[Obsolete]` path (rule 2); new settings need a default that keeps existing
   sites working; a behaviour change that a consumer could notice goes in the release notes.
 - **Security and structure changes include the plugin author's path.** When something is locked down (for example
-  `/admin/**` authorisation), say in the docs what a plugin page or extension has to do to keep working.
+  `/admin/**` authorisation), say in the docs what a plugin page or extension has to do to keep working. Back-office
+  access (D38, D66–D71): a plugin section is an `ISection` (discovered; roles are given it on the role screen); its
+  pages under its `IndexUrl` are opened to that section's users with no attribute, or declare
+  `[AuthorizeSection("MySection")]` (a controller too); anything else under `/admin` stays administrators-only.
 - When a design choice trades internal neatness against ease of extending or updating, extending and updating win.
   If a change would make either harder, stop and raise it with the owner.
 
@@ -97,7 +100,7 @@ don't reorder without a reason written in the commit.
 4. **Soft delete is partial.** Only `Content`, `Media`, `User` have `Deleted`. There are **no global query filters** —
    every query on those three must filter `!x.Deleted` (or pass `IncludeDeleted` for recycle-bin paths). Everything
    else is hard-deleted; recycle-bin purge is a hard delete. Content and Media recycle, restore and purge act on the
-   whole subtree; a media purge also removes the files and their resized copies, and recycled media is not served
+   whole subtree; a media purge also removes the files and their resized copies, and recycled media is served only to users who may open Media
    (→ [Docs/Services.md](Docs/Services.md) "Deletes").
 5. **Writes go through `SaveChangesAndLog`**: stage the whole change (audit row included), then call it once. It runs
    the `IBeforeEntitySave<T>`/`IAfterEntitySave<T>` hooks for every row the save writes, of every type, and one veto
@@ -118,7 +121,7 @@ don't reorder without a reason written in the commit.
 | `IContentBlockView` / `IContentBlockPreview` | Block render on site / preview in admin (matched by `ContentTypeAlias`) |
 | `IContentProperty` (+ `IContentPropertySettings<T>`) | Property editor (+ its settings UI) |
 | `INestedContentReferenceProvider` | Which blocks an editor's value owns (by editor alias), so they are saved, deleted, versioned and copied with the page |
-| `ISection`, `ISectionNavGroup`, `ISectionNav`, `ISectionNavGroupAction`, `ISectionDashboard` | Admin sections, nav groups, nav items, group "…" actions, dashboard tabs |
+| `ISection`, `ISectionNavGroup`, `ISectionNav`, `ISectionNavGroupAction`, `ISectionDashboard` | Admin sections, nav groups, nav items, group "…" actions, dashboard tabs; which roles may open a section is set on the role (D66); a nav item, group action, dashboard or tree context menu with `[Authorize]` shows only to users who pass it |
 | `ITreeContextMenu` | Admin tree right-click menu items |
 | `ICustomContentComponent`, `IDataListSource`, `ISeoCheck`, `IAccountLayout` | Components an editor picks for a page (given its `ContentId`, not the page), list-editor data sources, SEO checks, account-page layout |
 | `IStorageProvider`, `IEmailProvider` | Media storage / email backend (selected by `Zauber:Plugins:*`) |
@@ -164,12 +167,19 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
   setting the password from an emailed link); an opened confirmation link is not enough. `GlobalSettings.AllowRegistration` turns
   public registration off (page 404, external first sign-in refused); when on, the page uses the replaceable
   `IFormProtectionService` (honeypot + fill time). → [Docs/Installer.md](Docs/Installer.md)
-- Admin is gated by `[Authorize(Roles = Admin)]` in `ZauberCMS.Components/Admin/_Imports.razor` (that folder only).
-  `AdminAccessMiddleware` (requests) and `Routes.razor` (navigation inside a circuit) treat any other page under
-  `/admin` that has no `[Authorize]`/`[AllowAnonymous]` of its own as admin-only, and the middleware enforces
-  `GlobalSettings.AllowedAdminIpAddress`. A plugin page for another role declares its own `[Authorize(Roles = …)]`.
+- Admin access is per section and role (Roadmap D38, D66–D71): a role's sections are stored on the role
+  (`ExtendedData` `AllowedSections`, `RoleExtensions.Get/SetAllowedSections`) and ticked on the role screen; a user
+  opens the sections of all their roles; `Admin` opens every section and cannot be renamed or deleted; a seeded
+  `Editor` role (once, only if absent) has Content and Media. `IBackOfficeAccessService` (replaceable) decides; the
+  pages of each section folder carry `[AuthorizeSection(alias)]` (from that folder's `_Imports.razor`), a policy the
+  ZauberCMS policy provider builds by name. `AdminAccessMiddleware` (requests) and `Routes.razor` (circuit) treat a
+  page under `/admin` with no `[Authorize]`/`[AllowAnonymous]` as the section's whose `IndexUrl` it is under, else
+  admin-only; the middleware enforces `GlobalSettings.AllowedAdminIpAddress`. `/admin` lands on the user's first
+  section; Global Settings stay admin-only; the starting role opens no section (D71); a non-admin who may open Users
+  cannot change an administrator or a user with a section they lack, or give a role or section they do not have
+  (D68). → [Docs/AdminUI.md](Docs/AdminUI.md) "Access"
 - **Services do no authorisation** (Roadmap D27): the page, component or endpoint that calls a service checks
-  access first. Services read the caller only to record who made a change, through `ICurrentUserAccessor` (circuit,
+  access first (in the admin, through `IBackOfficeAccessService`). Services read the caller only to record who made a change, through `ICurrentUserAccessor` (circuit,
   static page, controller or job; `RunAs` for code with nobody signed in). Never inject `AuthenticationStateProvider`
   into a service. → [Docs/Services.md](Docs/Services.md) "Callers and access"
 - Behind a reverse proxy set `Zauber:ForwardedHeaders`; set `Zauber:SiteUrl` on any site that sends email.

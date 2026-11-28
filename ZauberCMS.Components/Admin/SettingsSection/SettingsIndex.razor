@@ -1,16 +1,28 @@
 ﻿@attribute [Route(Url)]
 @layout SectionLayout
+@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Core.Sections.Interfaces
 @using ZauberCMS.Core.Plugins
 @implements ZauberCMS.Core.Sections.Interfaces.ISection
 
 <PageTitle>@Name</PageTitle>
 
-<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Create Content Type" Click="@(_ => NavigationManager.NavigateTo(Urls.AdminStructureCreateContentType))"/>
-</RadzenStack>
+@* The button opens the Structure section: only for those who may open it (Roadmap D67) *@
+@if (_mayOpenStructure)
+{
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Reverse="true" Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+        <RadzenButton Variant="Variant.Filled" Text="Create Content Type" Click="@(_ => NavigationManager.NavigateTo(Urls.AdminStructureCreateContentType))"/>
+    </RadzenStack>
+}
 
-<SectionDashboards SectionAlias="@(Alias)"/>
+@if (_hasDashboards)
+{
+    <SectionDashboards SectionAlias="@(Alias)"/>
+}
+else
+{
+    <RadzenText TextStyle="TextStyle.Body1">Choose a setting from the navigation.</RadzenText>
+}
 
 @code {
     private const string Url = Urls.AdminSettingsBaseUrl; // So we only have on string
@@ -18,19 +30,29 @@
     public string Alias => Constants.Sections.SettingsSection;
     public string IndexUrl => Url;
     public int SortOrder => 2;
-    
+
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
     [Inject] private ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] private IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
-    protected override void OnInitialized()
+    private bool _hasDashboards = true;
+    private bool _mayOpenStructure;
+
+    protected override async Task OnInitializedAsync()
     {
         Layout?.SetSection(Alias);
-        
-        // See if we have any dashboards for settings
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        _mayOpenStructure = await BackOfficeAccess.CanOpenSectionAsync(user, Constants.Sections.StructureSection);
 
+        // See if we have any dashboards for settings
         var dashboards = ExtensionManager.GetInstances<ISectionDashboard>(true);
-        if (dashboards.All(x => x.Value.SectionAlias != Constants.Sections.SettingsSection))
+        _hasDashboards = dashboards.Any(x => x.Value.SectionAlias == Constants.Sections.SettingsSection);
+
+        // Without one, an administrator starts at the global settings. They are for administrators only (Roadmap
+        // D70), so anyone else stays here and picks from the navigation.
+        if (!_hasDashboards && user.IsInRole(Constants.Roles.AdminRoleName))
         {
             NavigationManager.NavigateTo(Urls.AdminSettingsGlobalSettings);
         }

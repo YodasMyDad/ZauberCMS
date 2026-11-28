@@ -48,14 +48,27 @@
     [Inject] public ContextMenuService ContextMenuService { get; set; } = null!;
     [Inject] public NotificationService NotificationService { get; set; } = null!;
     [Inject] public ILogger<BaseTree<T>> Logger { get; set; } = null!;
+    [Inject] public Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService { get; set; } = null!;
+    [Inject] public Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider AuthorizationPolicyProvider { get; set; } = null!;
+    [Inject] public Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     
     private RadzenTree Tree { get; set; } = null!;
 
     private Dictionary<int, ITreeContextMenu> ContextMenus { get; set; } = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var menuItems = ExtensionManager.GetInstances<ITreeContextMenu>(true);
+        // A context menu item with [Authorize] shows only to users who pass it (Roadmap D67)
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var menuItems = new Dictionary<string, ITreeContextMenu>();
+        foreach (var (key, menuItem) in ExtensionManager.GetInstances<ITreeContextMenu>(true))
+        {
+            if (await ZauberCMS.Components.Admin.Shared.AdminExtensionAccess.MayUseAsync(menuItem.GetType(), user,
+                    AuthorizationService, AuthorizationPolicyProvider))
+            {
+                menuItems[key] = menuItem;
+            }
+        }
 
         var filteredMenuItems = new List<KeyValuePair<string, ITreeContextMenu>>();
 

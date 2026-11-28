@@ -67,18 +67,22 @@
         
         if (Content != null)
         {
+            // Role-based content restriction: a visitor who may not see the page is sent to the login page and the
+            // page is not rendered. The view is only chosen once access is settled, so nothing of the page can be
+            // rendered even where NavigateTo does not end the render (ZA-110), whichever view would show it: the
+            // page's own or the MissingView, which a site's own may render in full (ZA-188).
+            if (!MayView(Content))
+            {
+                ComponentView = null;
+                // Signed in already: the login page would only say so; the access-denied page says why (D67)
+                NavigationManager.NavigateTo(AuthState.User.Identity?.IsAuthenticated == true
+                    ? $"{Urls.Account.AccessDenied}?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}"
+                    : Settings.Value.Identity.DefaultLoginRedirectUrl);
+                return;
+            }
+
             if (AllContentViews.TryGetValue(Content.ViewComponent, out var contentView))
             {
-                // Role-based content restriction: a visitor who may not see the page is sent to the login page and
-                // the page is not rendered. The view is only chosen once access is settled, so nothing of the page
-                // can be rendered even where NavigateTo does not end the render (ZA-110).
-                if (!MayView(Content))
-                {
-                    ComponentView = null;
-                    NavigationManager.NavigateTo(Settings.Value.Identity.DefaultLoginRedirectUrl);
-                    return;
-                }
-
                 ComponentView = contentView;
                 LayoutType = LayoutResolver.GetLayoutType(ComponentView);
                 Parameters = new Dictionary<string, object> { ["Content"] = Content, ["LanguageKeys"] = LanguageKeys };

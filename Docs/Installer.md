@@ -47,6 +47,11 @@ result is the same whichever one runs:
 | No connection string at start-up, set by hand later while the site runs | On the first request after configuration shows it (`InstallerMiddleware`). A failure shows "The database cannot be used" and is tried again on the next request. |
 
 - A failing seeder is logged and skipped in all three, as it always was.
+- `SeedEditorRole` (Roadmap D69) creates the back-office role `Editor`, with the Content and Media sections, once per
+  database: a `GlobalData` row `ZauberEditorRoleSeeded` records that it ran, so a deleted or renamed `Editor` does not
+  come back, and a role of that name the site already has (perhaps for front-end members) is left as it is. So a new
+  site has `Editor` before the installer creates `Admin` and the starting role, and an upgraded one gets it at its
+  first start, with nobody in it.
 - EF creates the database itself when it is missing (SQLite file; `CREATE DATABASE` on SQL Server and
   PostgreSQL, when the login may). `DatabaseSetupOnServerTests` runs this against real servers.
 - What a site without a database skips at start-up, and what happens instead: the language list for request
@@ -149,6 +154,13 @@ literals.
   would hand that person an administrator account. The registration page says nothing different for a listed
   address. A session that is already signed in gets the new role when its sign-in is next refreshed.
 - `RecoverAdminUser` (above), and an administrator editing a user's roles.
+
+Everyone else who works in the admin gets there through a role with sections (Roadmap D38, D66): the seeded
+`Editor` (Content and Media) or any role an administrator ticks sections for on its page in Users
+([AdminUI.md](AdminUI.md) "Access"). They open only those sections; one who may open Users still cannot change an
+administrator or give the `Admin` role, or any role or section they do not have themselves (D68). The starting role
+(`Zauber:NewUserStartingRole`, `Member` by default) opens no section whatever is stored on it, and its page refuses
+sections (D71): whoever registers gets it.
 
 ## Public registration
 

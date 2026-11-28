@@ -8,25 +8,36 @@
 @using ZauberCMS.Core.Shared.Models
 @using ZauberCMS.Core.Shared.Services
 @using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Sections.Interfaces
+@using ZauberCMS.Core.Sections.Models
 @layout SectionLayout
 
 @attribute [Route($"{Urls.AdminUsersEdit}/{{UserId:guid}}")]
 
 <PageTitle>Edit User</PageTitle>
 
-<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
-             Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
-    <RadzenButton Variant="Variant.Filled" Text="Update Roles" Click="@(UpdateRoles)"/>
-    <RadzenButton Variant="Variant.Filled" Text="Change Password" Click="@(ChangePassword)"/>
-    <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteUser)"/>
-</RadzenStack>
+@if (Access is { Allowed: true })
+{
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center"
+                 Gap="5" Style="margin-top: -5px; padding-top: 0; padding-bottom: 10px;">
+        <RadzenButton Variant="Variant.Filled" Text="Update Roles" Click="@(UpdateRoles)"/>
+        <RadzenButton Variant="Variant.Filled" Text="Change Password" Click="@(ChangePassword)"/>
+        <RadzenButton Variant="Variant.Filled" ButtonStyle="ButtonStyle.Danger" Text="Delete" Click="@(DeleteUser)"/>
+    </RadzenStack>
+}
 
 <RadzenPanel Class="rz-mx-auto">
     @if (UserId == null)
     {
         <p>There is no user id passed in</p>
     }
-    else if (User != null)
+    else if (Access is { Allowed: false })
+    {
+        @* Someone who may open Users but not change this user: an administrator (Roadmap D68) *@
+        <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="You cannot change this user"
+                       DefaultMessage="@Access.Reason"/>
+    }
+    else if (Access != null && User != null)
     {
         <EditForm Model="@User" OnSubmit="Save">
 
@@ -129,6 +140,7 @@
     [Inject] public IServiceScopeFactory ScopeFactory { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public ValidateService<User> ValidateService { get; set; } = null!;
+    [Inject] public IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
 
     [Parameter] public Guid? UserId { get; set; }
 
@@ -142,6 +154,8 @@
     private List<Tab> AllTabs { get; set; } = [];
     private List<PropertyType> AllContentProperties { get; set; } = [];
     private AuthenticationState AuthState { get; set; } = null!;
+    // Null until the user is loaded: nothing is shown and nothing can be changed
+    private BackOfficeAccessResult? Access { get; set; }
 
     [CascadingParameter] protected SectionLayout? Layout { get; set; }
 
@@ -169,6 +183,14 @@
         AllProperties = ExtensionManager.GetInstances<IContentProperty>(true);
         if (UserId != null)
         {
+            // The page is the check (D27): someone who may open Users still may not change an administrator (D68)
+            Access = await BackOfficeAccess.CanEditUserAsync(AuthState.User, UserId.Value);
+            if (!Access.Allowed)
+            {
+                User = null;
+                return;
+            }
+
             User = await MembershipService.GetUserAsync(new GetUserParameters { Id = UserId.Value });
             InitialUsername = User?.UserName;
             InitialEmail = User?.Email;
@@ -176,8 +198,27 @@
         }
     }
 
+    /// <summary>Asks again before each change: the user's roles may have changed since the page opened.</summary>
+    private async Task<bool> MayChangeAsync()
+    {
+        Access = User == null
+            ? BackOfficeAccessResult.Deny("There is no user.")
+            : await BackOfficeAccess.CanEditUserAsync(AuthState.User, User.Id);
+        if (!Access.Allowed)
+        {
+            NotificationService.ShowErrorNotification(Access.Reason ?? "You cannot change this user.");
+        }
+
+        return Access.Allowed;
+    }
+
     private async Task ChangePassword()
     {
+        if (!await MayChangeAsync())
+        {
+            return;
+        }
+
         var dialog = ModalService.OpenSidePanel<ChangePassword>("Change Password",
             new Dictionary<string, object>
             {
@@ -214,6 +255,11 @@
 
     private async Task UpdateRoles()
     {
+        if (!await MayChangeAsync())
+        {
+            return;
+        }
+
         var dialog = ModalService.OpenSidePanel<UpdateRoles>("Update Users Roles",
             new Dictionary<string, object>
             {
@@ -226,6 +272,14 @@
         {
             var allRoles = await MembershipService.QueryRolesAsync(new QueryRolesParameters { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200 });
             var roleNames = allRoles.Items.Where(x => roles.Contains(x.Id)).Select(x => x.Name).ToList();
+            // Nobody gives a role they are not in, or Admin, unless they are an administrator (D68)
+            var mayGive = await BackOfficeAccess.CanSetUserRolesAsync(AuthState.User, User.Id, roleNames!);
+            if (!mayGive.Allowed)
+            {
+                NotificationService.ShowErrorNotification(mayGive.Reason ?? "You cannot give these roles.");
+                return;
+            }
+
             var roleUpdateResult = await MembershipService.SaveUserAsync(new SaveUserParameters { User = User, Roles = roleNames! });
             if (!roleUpdateResult.Success)
             {
@@ -248,6 +302,11 @@
 
     private async Task DeleteUser()
     {
+        if (!await MayChangeAsync())
+        {
+            return;
+        }
+
         var delete = await DialogService.Confirm("Delete this user for good? Their name, email address, password and profile are erased; this cannot be undone. To stop someone signing in but keep the account, lock it instead.", "Delete user", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
         if (delete == true)
         {
@@ -331,6 +390,11 @@
 
     private async Task Save()
     {
+        if (!await MayChangeAsync())
+        {
+            return;
+        }
+
         if (await ValidateService.CanSave(User!))
         {
             var saveUserCommand = new SaveUserParameters { User = User };

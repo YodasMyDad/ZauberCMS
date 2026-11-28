@@ -25,6 +25,40 @@ public static class NavigationManagerExtensions
         return authority + "/" + navigation.ToBaseRelativePath(uri ?? navigation.Uri);
     }
 
+    /// <summary>
+    /// A return address that is safe to send the visitor back to: a path from the host's root (starting with <c>/</c>,
+    /// the site's path base and the query string kept), or null for an empty one, an absolute one that is not below
+    /// this site's base address, or one a browser reads as another host (<c>//host</c>, <c>/\host</c>). For the
+    /// <c>returnUrl</c> a login link carries (ZA-201).
+    /// </summary>
+    public static string? ToLocalReturnUrl(this NavigationManager navigation, string? returnUrl)
+    {
+        ArgumentNullException.ThrowIfNull(navigation);
+        if (string.IsNullOrWhiteSpace(returnUrl))
+        {
+            return null;
+        }
+
+        var url = returnUrl.Trim();
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute) && !absolute.IsFile)
+        {
+            // On this site and below its base address: the path from the host's root, path base included
+            var baseUri = navigation.BaseUri;
+            var onThisSite = url.StartsWith(baseUri, StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(url + "/", baseUri, StringComparison.OrdinalIgnoreCase);
+            return onThisSite ? SitePath(absolute.PathAndQuery + absolute.Fragment) : null;
+        }
+
+        return SitePath(url);
+    }
+
+    // A path from the host's root; never one a browser reads as another host ("//host", "/\host")
+    private static string? SitePath(string path) =>
+        path.StartsWith('/') && !path.StartsWith("//", StringComparison.Ordinal) &&
+        !path.StartsWith("/\\", StringComparison.Ordinal)
+            ? path
+            : null;
+
     public static bool TryGetQueryString<T>(this NavigationManager navManager, string key, out T value)
     {
         var uri = navManager.ToAbsoluteUri(navManager.Uri);

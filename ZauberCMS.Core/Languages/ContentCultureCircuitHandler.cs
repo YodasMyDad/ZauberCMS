@@ -56,7 +56,7 @@ internal sealed class ContentCultureCircuitHandler(
             return null; // the circuit has not been given its address yet
         }
 
-        if (AdminAccess.IsAdminPath(uri))
+        if (AdminAccess.IsAdminPath(navigation)) // below the path base (ZA-199)
         {
             return null; // AdminCultureCircuitHandler
         }

@@ -40,7 +40,9 @@ How Core services are built. Paths relative to `ZauberCMS.Core/`. Standards: [St
 ## Callers and access (Roadmap D27)
 
 - **Services trust their caller.** They don't decide who may do what; whatever calls them does. Admin pages are
-  gated by `[Authorize(Roles = Admin)]` ([AdminUI.md](AdminUI.md)); the account pages have their own checks
+  gated per section and role (`[AuthorizeSection]`, `IBackOfficeAccessService`, Roadmap D38; [AdminUI.md](AdminUI.md)
+  "Access"), and the user and role pages ask that service before a change that could give someone more access
+  (D68); the account pages have their own checks
   (registration switch, emailed tokens, passwords, rate limits). A front-end component, controller, minimal API or
   plugin that calls a write method checks access itself first: `[Authorize]` on the endpoint, or comparing the
   signed-in user with the item an id from the address points at. Front-end code that writes on purpose (a sign-up
@@ -212,7 +214,8 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   permanent delete only when its files are gone and the rows are committed (D62). `GetMediaUsageAsync` finds the content and members whose property values contain the media's id
   (pickers, and the `media/{id}/` folder of a disk file) or URL: a scan of every property value, for a delete
   confirmation, never for a hot path; drafts are not searched.
-  Recycled media is not served: `RestrictedMediaMiddleware` answers 404 to anyone but an administrator, unless a live
+  Recycled media is not served: `RestrictedMediaMiddleware` answers 404 to anyone who may not open the Media section
+  (administrators and roles given Media, Roadmap D67), unless a live
   public item has the same file, and marks every restricted or binned file it lets through `Cache-Control: private,
   no-store`. That covers files served by the site (`media/…`); a storage provider that serves files from its own
   address (a CDN, a bucket) has to keep binned files private itself, and a CDN in front of the site keeps the copies

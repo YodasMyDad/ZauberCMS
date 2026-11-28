@@ -14,7 +14,7 @@ registered by `Startup/AdminUiStartup.cs`. A plugin with admin UI references `Za
 ```razor
 @page "/admin/myfeature"
 @layout SectionLayout
-@attribute [Authorize(Roles = Constants.Roles.AdminRoleName)]   @* automatic only inside Components/Admin/ *@
+@attribute [AuthorizeSection(MySection.SectionAlias)]   @* ZauberCMS.Core.Sections.Authorization; automatic inside each Components/Admin/<Section>/ folder *@
 
 @code {
     [CascadingParameter] public SectionLayout? Layout { get; set; }
@@ -39,11 +39,8 @@ registered by `Startup/AdminUiStartup.cs`. A plugin with admin UI references `Za
   (`zauber.admin.sidebarWidth`). Keyboard: focus the divider, arrow keys (Shift for bigger steps), Home, End; Enter or
   a double-click goes back to the theme's 300px. Hidden on narrow screens and when the sidebar is collapsed. The
   trees scroll inside `.zauber-sidebar-scroll`.
-- Access: a page under `/admin` is admin-only unless it says otherwise. Pages in `ZauberCMS.Components/Admin/` get
-  `[Authorize(Roles = Admin)]` from `_Imports.razor`; a page anywhere else (your site, a plugin) with no
-  `[Authorize]` or `[AllowAnonymous]` is treated the same way by `AdminAccessMiddleware` and `Routes.razor`.
-  To open an admin page to another role, put `@attribute [Authorize(Roles = "Editor")]` on it.
-  The admin IP allow-list (`GlobalSettings.AllowedAdminIpAddress`) is enforced by the middleware: 403.
+- Access: per section and role, see "Access" below. The admin IP allow-list (`GlobalSettings.AllowedAdminIpAddress`)
+  is enforced by `AdminAccessMiddleware` for every `/admin` request: 403.
   The layout is cascaded with `IsFixed="true"`: use it to call `SetSection`, don't read changing state from it.
 - An editor page loads its model when its route values change, not on every `OnParametersSetAsync` — parameters
   are set again whenever a parent re-renders, and reloading there drops unsaved edits (see `ContentTypeEditor`).
@@ -52,11 +49,76 @@ registered by `Startup/AdminUiStartup.cs`. A plugin with admin UI references `Za
 - Routes are found because `Routes.razor` passes `ExtensionManager.GetFilteredAssemblies(null)` as additional assemblies.
 - Admin URLs live in `ZauberCMS.Core/Urls.cs` (e.g. `Urls.AdminUpdateContent`). Plugins use their own constants.
 
+## Access: sections and roles (Roadmap D38, D66–D71)
+
+Umbraco's user groups, first step: which roles may open each section. Start nodes and per-action permissions
+(publish, delete, move) are not part of it; a user who may open a section can do everything its pages offer.
+
+- **Stored on the role.** `Role.ExtendedData["AllowedSections"]`, a list of `ISection.Alias`es, read and written with
+  `RoleExtensions.GetAllowedSections()` / `SetAllowedSections()`, saved with the role (`SaveRoleAsync`). No table or
+  column. A user opens the sections of all their roles together; `Admin` opens every section, plugins' included,
+  without a list. Set on the role's page in Users (the "Sections" box lists every discovered section). The role
+  every registration gets (`Zauber:NewUserStartingRole`, default `Member`) opens no section, whatever is stored on
+  it, and its page refuses sections (D71).
+- **Seeded:** an `Editor` role with Content and Media, once per database (`SeedEditorRole`, marker `GlobalData`
+  `ZauberEditorRoleSeeded`), and only when no role of that name exists: a site's own `Editor` (perhaps a front-end
+  members' role) is left as it is, and a deleted one does not come back. A plugin section is in no role until an
+  administrator ticks it.
+- **The decision** is `IBackOfficeAccessService` (`ZauberCMS.Core.Sections.Interfaces`, scoped, replaceable):
+  `GetSectionsAsync(user)`, `CanOpenSectionAsync(user, alias)`, `GetSectionForPath(path)`, and the user and role
+  rules below. The role → sections list is cached under the `Role` prefix, cleared by every role save and delete
+  (with the restricted-media lookup, which compares role names too). For pages and the navigation a user's roles are
+  the ones their sign-in carries, as for every other role check: a page request renews them every five minutes, an
+  open admin tab at its next full load (a circuit checks the security stamp every ten minutes), so a role renamed or
+  taken away reaches an open session then. The checks that could give access (users, roles, sections) read the
+  editor's roles as stored, not the sign-in's.
+- **Pages.** `[AuthorizeSection("Alias", …)]` (an `[Authorize]` whose policy, `SectionPolicies.ForSections(...)`,
+  the ZauberCMS policy provider builds by name: no registration) lets in whoever may open any of the named sections;
+  with no alias, anyone who may open at least one (`SectionPolicies.BackOffice`). The pages in each
+  `Components/Admin/<Section>/` folder get it from that folder's `_Imports.razor`; the SEO pages carry Settings. A page
+  under `/admin` that declares nothing (`[Authorize]`/`[AllowAnonymous]`) is for the users of the section whose
+  `IndexUrl` its address is under (longest match, whole segments; `/admin` itself and an address under no section:
+  administrators only), in `AdminAccessMiddleware` for requests and `Routes.razor` for navigation in a circuit.
+- **Landing and refusal.** A request for `/admin` is redirected by `AdminAccessMiddleware` to the first section the
+  user may open (navigating to `/admin` inside a circuit, `Admin/AdminIndex.razor` does the same); signing in
+  without a return address sends anyone with a section there, and with one (a page that sent the visitor to sign
+  in) back to it when it is on this site (ZA-201). A refused signed-in user goes to
+  `/account/accessdenied` (the cookie's default access-denied address, status 403; links to the admin and to sign in
+  as someone else); nobody signed in goes to the login page.
+- **Navigation and extensions.** `SectionLinks` shows the user's sections only. A nav item (`ISectionNav`), nav group
+  action (`ISectionNavGroupAction`), dashboard (`ISectionDashboard`) or tree context menu (`ITreeContextMenu`) whose
+  type carries `[Authorize]`/`[AuthorizeSection]` shows only to users who pass it (a nav group left with no item is
+  hidden): a plugin keeps an administrators-only tool in a section other roles open with
+  `[Authorize(Roles = Constants.Roles.AdminRoleName)]` on its type. The profile menu's "Edit" (the user's page in
+  Users) shows only to users who may open Users.
+- **Endpoints.** Recycled and role-restricted media files are served to whoever may open Media (before D38: Admin
+  only). A controller or minimal API the admin calls carries `[AuthorizeSection(...)]` or
+  `.RequireAuthorization(SectionPolicies.ForSections(...))`.
+- **Administrators only, whoever else may open Settings (D70):** Global Settings (who gets in, uploads, API keys): its
+  page and nav item carry `[Authorize(Roles = Admin)]`.
+- **Users and roles without widening access (D68), as Umbraco's user and user-group editors check:** someone who may
+  open Users but is not an administrator cannot change, delete, set the password of, or change the roles of an
+  administrator, or of a user who opens a section they cannot (that would hand them the section); can give only
+  roles they are in (never `Admin`); can open and save only roles they are in (never
+  `Admin`) and give a role only sections they can open; can make a new role with those sections, and is put in it
+  (as Umbraco puts a group's maker in the group), so they can go on managing and giving it. The pages ask
+  `CanEditUserAsync`, `CanSetUserRolesAsync`, `CanEditRoleAsync`, `CanSaveRoleAsync`, `CanDeleteRoleAsync` before
+  each change (D27: the services do not check), and the dialogs disable what cannot be given. The `Admin` role
+  cannot be renamed or deleted by anyone (`IMembershipService` refuses, as it refuses removing the last
+  administrator). No role that pages or media are restricted to can be deleted (it would open them to everyone,
+  ZA-202); the role page asks before it deletes.
+- **A plugin section:** implement `ISection` (its index page, as below), put its pages under its `IndexUrl`, and
+  they are opened to the section's users without an attribute; or put `[AuthorizeSection("MySection")]` on each
+  (needed for a page elsewhere, and for a controller). A page meant for administrators only says
+  `[Authorize(Roles = Constants.Roles.AdminRoleName)]`. A site that registers its own
+  `IAuthorizationPolicyProvider` derives it from `SectionAuthorizationPolicyProvider`, or the section policies are
+  not found.
+
 ## Building blocks
 
 | Need | Implement | Copy |
 | --- | --- | --- |
-| Top-level section (nav button + index page) | routable page `@implements ISection` (Name, Alias, IndexUrl, SortOrder) | `Admin/ContentSection/ContentIndex.razor` |
+| Top-level section (nav button + index page) | routable page `@implements ISection` (Name, Alias, IndexUrl, SortOrder); roles are given it on the role page, pages under `IndexUrl` follow it ("Access") | `Admin/ContentSection/ContentIndex.razor` |
 | Sidebar group | `ISectionNavGroup` (Heading, Alias, SortOrder, SectionAlias) | `ContentNavGroup.cs` (its `Actions` is obsolete and never read: group actions are `ISectionNavGroupAction`s) |
 | Sidebar item/tree | component `@implements ISectionNav` (SortOrder, SectionNavGroupAlias, **Dispose**) | `Admin/SettingsSection/Navigation/SettingsTree.razor` |
 | Group "…" menu action | `ISectionNavGroupAction` (`ContextMenuAction(...)`; call `contextMenuService.Close()` first) | `ContextMenus/SectionNavGroups/CreateContentNavMenu.cs` |
@@ -139,8 +201,10 @@ in the compiled CSS (or ship their own stylesheet).
 
 ## Rules
 
-- Admin pages outside `Components/Admin/` must add the `[Authorize]` attribute themselves. The page is the check:
-  the services don't decide who may write ([Services.md](Services.md) "Callers and access"), so a page or menu
-  opened to another role can do whatever the services it calls can do.
+- An admin page outside the section folders of `Components/Admin/` declares its access itself (`[AuthorizeSection]`,
+  `[Authorize]`), unless its address is under its section's `IndexUrl` ("Access"). The page is the check: the
+  services don't decide who may write ([Services.md](Services.md) "Callers and access"), so a page or menu opened to
+  a section's users can do whatever the services it calls can do; a change that could widen someone's access asks
+  `IBackOfficeAccessService` first.
 - Never call EF directly from components — use services.
 - Every service save result goes to the user via the notification extensions; never show raw exception text.

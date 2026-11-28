@@ -1,0 +1,69 @@
+@page "/Account/AccessDenied"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
+@using Microsoft.Extensions.Options
+@using ZauberCMS.Core
+@using ZauberCMS.Core.Membership.Interfaces
+@using ZauberCMS.Core.Plugins
+@using ZauberCMS.Core.Sections.Interfaces
+@using ZauberCMS.Core.Settings
+@attribute [ExcludeFromInteractiveRouting]
+
+@* Where the sign-in cookie sends a signed-in user that a page refused (its default AccessDeniedPath), and where the
+   admin's router sends one (Roadmap D67). Before, there was no page here and the visitor got the not-found page. *@
+<LayoutView Layout="LayoutType">
+    <PageTitle>Access denied</PageTitle>
+    <div style="width: 100%; max-width: 700px;">
+        <h1>Access denied</h1>
+        <p>You are signed in, but you do not have access to that page.</p>
+        <ul>
+            @if (_hasAdminSection)
+            {
+                <li><a href="@Urls.AdminBaseUrl" data-enhance-nav="false">Go to the parts of the admin you can open</a></li>
+            }
+            <li><a href="@LoginUrl" data-enhance-nav="false">Sign in with another account</a></li>
+            <li><a href="/">Go to the home page</a></li>
+        </ul>
+    </div>
+</LayoutView>
+
+@code {
+    [Inject] public IOptions<ZauberSettings> Settings { get; set; } = null!;
+    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+
+    private Type LayoutType { get; set; } = null!;
+    private bool _hasAdminSection;
+
+    // Signs this user out first (the login page only says "already logged in" to a signed-in user), then the login
+    // page, which comes back to the refused address when it is on this site
+    private string LoginUrl
+    {
+        get
+        {
+            var login = NavigationManager.ToLocalReturnUrl(ReturnUrl) is { } local
+                ? $"{Urls.Account.Login}?returnUrl={Uri.EscapeDataString(local)}"
+                : Urls.Account.Login;
+            return $"{Urls.ApiLogout}?redirectUrl={Uri.EscapeDataString(login)}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allLayouts = ExtensionManager.GetImplementations<IAccountLayout>(true);
+        if (allLayouts.TryGetValue(Settings.Value.Identity.AccountLayout!, out var accountLayout))
+        {
+            LayoutType = accountLayout;
+        }
+
+        HttpContext?.SetStatusCodeWhenResponseStarts(StatusCodes.Status403Forbidden);
+
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        _hasAdminSection = (await BackOfficeAccess.GetSectionsAsync(user)).Count > 0;
+    }
+}

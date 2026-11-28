@@ -1,5 +1,7 @@
 ﻿@using ZauberCMS.Core.Plugins
 @using ZauberCMS.Core.Sections.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @if (Dashboards.Any())
 {
     <RadzenPanel Class="rz-mx-auto">
@@ -22,12 +24,26 @@
 @code {
     [Parameter] public string? SectionAlias { get; set; }
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public IAuthorizationService AuthorizationService { get; set; } = null!;
+    [Inject] public IAuthorizationPolicyProvider AuthorizationPolicyProvider { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     private Dictionary<string, ISectionDashboard> Dashboards { get; set; } = new();
     private int SelectedIndex { get; set; }
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var sectionDashboards = ExtensionManager.GetInstances<ISectionDashboard>(true);
-        Dashboards = sectionDashboards.Where(x => x.Value.SectionAlias.Equals(SectionAlias, StringComparison.CurrentCultureIgnoreCase)).ToDictionary();
+        // A dashboard with [Authorize] shows only to users who pass it (Roadmap D67)
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var dashboards = new Dictionary<string, ISectionDashboard>();
+        foreach (var (key, dashboard) in ExtensionManager.GetInstances<ISectionDashboard>(true))
+        {
+            if (dashboard.SectionAlias.Equals(SectionAlias, StringComparison.OrdinalIgnoreCase) &&
+                await AdminExtensionAccess.MayUseAsync(dashboard.GetType(), user, AuthorizationService, AuthorizationPolicyProvider))
+            {
+                dashboards[key] = dashboard;
+            }
+        }
+
+        Dashboards = dashboards;
     }
 
 }

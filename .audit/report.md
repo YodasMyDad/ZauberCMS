@@ -1,8 +1,9 @@
 # ZauberCMS Audit Report
 
-Last full run: 5668365 (2026-11-25, full) · Last changed run: 773505c (2026-11-27, Roadmap Phase 11, 2f4dc41..773505c) · Mode: fix
+Last full run: 5668365 (2026-11-25, full) · Last changed run: a749761+wt (2026-11-28, Roadmap Phase 10g, a749761..working tree) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
-Next free IDs: ZA-199 (findings) · ZP-001 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+Next free IDs: ZA-216 (findings) · ZP-002 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+After Roadmap Phase 10g (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-188 fixed (D38 phase, D66–D71); ZA-199…ZA-201 found and fixed while building; ZA-202…ZA-213 found by the audit and fixed (3 High, 4 Medium, 5 Low); ZA-214, ZA-215 recorded (Low, Phase 12); ZP-001 proposed. Next free ID: ZA-216
 After Roadmap Phase 10f-2 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1221 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · ZA-187 (the URL lookup cached per domain and slug, D64), ZA-190 (domains matched below the path base everywhere, D64), ZA-189 (every redirect honoured, D65) fixed; Phase 10f done. Next free ID: ZA-199
 After Roadmap Phase 10f-1 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1205 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · ZA-163 (after-commit hook `IAfterEntityCommit<T>`, D62), ZA-155 (resized copies removed with their image, D63), ZA-193 (a domain's redirects deleted through the change) fixed. Next free ID: ZA-199
 After the Phase 11 audit follow-ups (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1175 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · the owner's answers built: ZA-185 (antiforgery attributes on site controllers, D60) and ZA-198 (`Zauber:Jobs` switches, D61) fixed. Next free ID: ZA-199
@@ -15,12 +16,15 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 
 ## Summary
 
-| Severity | Open | New this run (Phase 11 changed run) | Fixed this run |
+| Severity | Open | New this run (Phase 10g changed run) | Fixed this run (Phase 10g, its audit included) |
 | --- | --- | --- | --- |
 | Critical | 0 | 0 | 0 |
-| High | 0 | 0 (ZA-187 was High, downgraded to Medium on verification) | 0 |
-| Medium | 0 | 8 | 7 |
-| Low | 9 | 22 | 12 |
+| High | 0 | 3 (ZA-202, ZA-203, ZA-204) | 3 |
+| Medium | 0 | 4 (ZA-205…ZA-208) | 4 |
+| Low | 10 | 7 (ZA-209…ZA-215) | 9 (ZA-188, ZA-199…ZA-201, ZA-209…ZA-213) |
+
+Phase 10g run: no pattern count rose on an added line except two `MarkupString`s, now through the sanitiser (ZA-204),
+and one `#pragma warning disable CS0618` with its reason (ZA-200).
 
 Trend (first pattern counts, 2026-11-27, Phase 11 run): sync-over-async 48 · async-void 2 · fire-and-forget 7 ·
 empty-catch 15 · unsanitised-markup 15 · raw-sql 1 · new-httpclient 0 · culture-unsafe-compare 6 (the suppressed EF
@@ -29,8 +33,8 @@ event-unsubscribe 22 · httpcontext-accessor 5 · exception-text 11. Flat agains
 suppressed warnings 35 → 18; every hit on an added line is moved code or a suppression with its reason.
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10g: ZA-188; 10h: ZA-129; 10i: ZA-128, ZA-194,
-ZA-197; 12: ZA-191, ZA-192, ZA-195, ZA-196); there is no Backlog (owner, 2026-11-27). The run's two owner questions
+a phase (10h: ZA-129; 10i: ZA-128, ZA-194,
+ZA-197; 12: ZA-191, ZA-192, ZA-195, ZA-196, ZA-214, ZA-215); there is no Backlog (owner, 2026-11-27). The run's two owner questions
 were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
@@ -46,11 +50,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 
 - Where: `ZauberCMS.Components/` (166 razor files) · Category: E · Since: 2026-11-25
 - Issue / Fix: 0 localiser uses, ~370 literal strings; `AdminDefaultLanguage` only affects formatting.
-
-### ZA-188 [Low/High] A role-restricted page whose view is missing skips the role check
-- Where: `ZauberCMS.Components/Pages/EntryPage.razor` (`OnParametersSetAsync`, the `MissingView` branch) · Category: D · Since: 2026-11-27 (code from Phase 10e) · Roadmap: 10g
-- Issue / Fix: the shipped `MissingView` shows only the page's name, but a site's own gets the whole page. Run the
-  role check before choosing the view.
 
 ### ZA-191 [Low/High] `GetContentFromRequestParameters.IgnoreInternalRedirect` is never read
 - Where: `ZauberCMS.Core/Content/Parameters/GetContentFromRequestParameters.cs` · Category: F · Since: 2026-11-27 (older) · Roadmap: 12
@@ -80,12 +79,42 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Issue / Fix: `OnModalInstanceAdded`, `OnModalCloseRequested` and `LocationChanged` are never removed; harmless
   while the modal lives as long as the circuit, a leak if a layout re-creates it. Unsubscribe in `DisposeAsync`.
 
+### ZA-214 [Low/Medium] The API-key picker stores and shows the key's value
+- Where: `ZauberCMS.Components/Editors/ApiKeysPickerProperty.razor` · Category: D · Since: 2026-11-28 (older; visible since D70 keeps Global Settings admin-only) · Roadmap: 12
+- Issue / Fix: the picker lists every `GlobalSettings.ApiKeys` entry and saves the chosen key's value into the page,
+  so whoever edits that page (or its drafts and versions) reads the secret. Store the key's name and resolve the
+  value where it is used (a stored-format change: old values read as they are).
+
+### ZA-215 [Low/Medium] The section checks in the header and the router read the database outside the error boundaries
+- Where: `ZauberCMS.Components/Admin/Layout/SectionLinks.razor`, `UserProfile.razor`, `ZauberCMS/Components/Routes.razor` · Category: E · Since: 2026-11-28 (Phase 10g) · Roadmap: 12
+- Issue / Fix: on a cache miss `IBackOfficeAccessService` reads the roles; a failed read there ends the circuit instead
+  of showing in an `AdminErrorBoundary` (D32). Catch and log in the header components; the router's check has no
+  boundary to show in.
+
 ## Improvement proposals
 
-None recorded yet: lenses G (editor UX) and H (Umbraco alignment) were added to the audit on 2026-11-27 and have
-not run. The next `full` run (or `/audit G,H`) fills this section.
+### ZP-001 [Medium/Medium] Every back-office user edits their own profile and password
+- Section: Users and access · Lens: G | H · Since: 2026-11-28 · Needs: owner decision
+- Today: a user's page is in the Users section, so only users who may open Users (and administrators) can change
+  their own name, email or password in the admin; the others use "Forgot your password" (D70).
+- Proposal: a current-user panel from the profile menu: name, email, password (with the current one), nothing else.
+- Why: Umbraco's current-user panel does this for every back-office user
+  (https://docs.umbraco.com/umbraco-cms/fundamentals/backoffice/users).
+
+Lenses G (editor UX) and H (Umbraco alignment) have not had their first `full` run; the next one fills this section.
 
 ## Fixed this run / Resolved since last run
+
+This run (Phase 10g changed run, 2026-11-28); details and how each was verified in [history.md](history.md):
+- High: ZA-202 deleting a role opened what it restricted; ZA-203 a user manager could take over a user with more
+  sections; ZA-204 Editor Notes markup unsanitised.
+- Medium: ZA-205 the D68 checks read stale sign-in roles; ZA-206 the starting role could open sections (D71); ZA-207
+  role save left the restricted-media lookup cached; ZA-208 the role editor kept the previous role's tabs.
+- Low: ZA-188 (the phase's own); ZA-199 the admin under a path base; ZA-200 the role editor could not delete; ZA-201
+  login ignored its return address; ZA-209 `[Authorize]` on admin extensions; ZA-210 refused signed-in visitors sent
+  to login; ZA-211 the return-address check; ZA-212 the change-password dialog; ZA-213 a routable dialog.
+
+Earlier runs, kept until the next full run:
 
 Since this run: Roadmap Phase 10f-1 (2026-11-27) fixed ZA-155, ZA-163 and ZA-193 (Low); details in
 [history.md](history.md).
@@ -105,14 +134,14 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 | Check | Result |
 | --- | --- |
 | Build (`dotnet build ZauberCMS.sln -c Release`) | Phase 11 run: PASS, 0 warnings (warnings are errors). First run: 70 warnings, all `NU1902`/`NU1903` |
-| Vulnerable packages | Phase 11 run: 0, direct and transitive. First run: 4 → ZA-102 |
+| Vulnerable packages | Phase 10g run: 0, direct and transitive. Phase 11 run: 0. First run: 4 → ZA-102 |
 | Outdated packages | Phase 11 run: HtmlSanitizer 11.0.26 → 11.0.74 and Radzen.Blazor 13.3.0 → 13.4.0 (no advisory); 15 majors, the .NET 11 set (D4). First run: see ZA-130 |
 | Version alignment | OK — one `<Version>` 4.1.3 for the four packages, the template and its site match |
 | Migration parity | OK — 5 migrations per provider, same names; Phase 11 changed only `public` → `internal` on them (no Up/Down change) |
 | Config parity | Since Phase 11c the three `appsettings.json` files have the same `Zauber` keys and `Serilog` section (ZA-118, ZA-168; `AppSettingsParityTests`) |
 | Docs drift | Paths all resolve; ~55 claims spot-checked, 5 wrong, corrected this run |
 | Repo hygiene | Only `ZauberCMS.Web/app.db` tracked (exempt); `.gitattributes`, `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and an SDK pin since Phase 11b (ZA-131 fixed) |
-| Tests | Phase 11 run, after its fixes: 1165 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis |
+| Tests | Phase 10g run, after its fixes: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 11 run: 1165 |
 | Pattern counts | First counts in the Summary (Phase 11 run) |
 | Hot-path budget | First run, by reading: about 10 round-trips cold; 0 within 5 s of the same URL; 4–5 after 5 s idle; 2 per 404; +3 per block list, +1 per single media picker. Phase 10 changed front-end caching since: re-measure |
 | Package contents | Phase 11 run: all five packed; no stray files; Components carries the modal's script and CSS, Core no Radzen dependency or scoped CSS; dependencies at 4.1.3 |
@@ -120,6 +149,13 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 | Template smoke test | `tests/template-smoke.ps1` since Phase 11c, in CI's build job; passes |
 
 ## Coverage
+
+- Phase 10g changed run (2026-11-28, a749761..working tree): the whole diff by a reviewer given the code and the
+  requirement; Core (the access service, policies, middlewares, seeder, membership changes) and the UI (router, entry
+  page, account pages, layout, Users and Settings screens) end to end by two unit reviewers. The orchestrator walked
+  the screens in a browser on a scratch site while building (see the Roadmap's Phase 10g). Not done: a separate
+  product agent and R1 (no front-end or caching change beyond the role-cache), pattern counts over the whole tree
+  (added lines only), a site under a real path base, two servers.
 
 - Phase 11 changed run (2026-11-27, 2f4dc41..773505c): the front-end path (content finders, not-found status,
   redirects and domains), bootstrap and start-up (validation, list binding, discovery, DI removals), the public

@@ -5,7 +5,7 @@
 @using ZauberCMS.Core
 
 @attribute [Route(Urls.AdminSeoSitemaps)]
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = ZauberCMS.Core.Constants.Roles.AdminRoleName)]
+@attribute [ZauberCMS.Core.Sections.Authorization.AuthorizeSection(ZauberCMS.Core.Constants.Sections.SettingsSection)]
 
 @layout SectionLayout
 

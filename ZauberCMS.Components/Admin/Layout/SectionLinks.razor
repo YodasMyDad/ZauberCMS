@@ -1,23 +1,26 @@
-﻿@using ZauberCMS.Core.Plugins
+﻿@using Microsoft.AspNetCore.Components.Authorization
 @using ZauberCMS.Core.Sections.Interfaces
 @using ZauberCMS.Core.Shared
-@foreach (var section in Sections.OrderBy(x => x.Value.SortOrder))
+@* Only the sections the signed-in user may open (Roadmap D38, D67); their pages refuse everyone else as well *@
+@foreach (var section in Sections)
 {
-    <RadzenButton Variant="Variant.Text" Text="@(section.Value.Name)" class="@(section.Value.Alias == CurrentSection ? "section-nav-active" : "")" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigateTo(section.Value.IndexUrl))/>
+    <RadzenButton Variant="Variant.Text" Text="@(section.Name)" class="@(section.Alias == CurrentSection ? "section-nav-active" : "")" ButtonStyle="ButtonStyle.Light" Click=@(args => NavigateTo(section.IndexUrl))/>
 }
 
 @code {
     
-    [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
+    [Inject] public IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] public TreeState TreeState { get; set; } = null!;
     
-    private Dictionary<string, ISection> Sections { get; set; } = new();
+    private IReadOnlyList<ISection> Sections { get; set; } = [];
     
     [Parameter] public string? CurrentSection { get; set; }
     
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Sections = ExtensionManager.GetInstances<ISection>(true);
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        Sections = await BackOfficeAccess.GetSectionsAsync(user);
     }
 
     private void NavigateTo(string url)

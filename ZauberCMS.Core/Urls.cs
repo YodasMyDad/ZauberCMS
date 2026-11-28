@@ -47,6 +47,9 @@ public static class Urls
     public static class Account
     {
             
+        /// <summary>Where a signed-in user is sent when a page refuses them: the cookie's default access-denied
+        /// address (Roadmap D67).</summary>
+        public const string AccessDenied = "/account/accessdenied";
         public const string ConfirmEmail = "/account/confirmemail";
         public const string ConfirmEmailChange = "/account/confirmemailchange";
         public const string ExternalLogin = "/account/externallogin";

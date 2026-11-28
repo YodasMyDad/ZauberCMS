@@ -50,6 +50,10 @@ public static class Constants
         public const string TempUiMessages = "TempUiMessages";
         public const string IsExternalLogin = "IsExternalLogin";
         public const string NewEmailAddress = "NewEmailAddress";
+
+        /// <summary>On a <c>Role</c>: the aliases of the admin sections its members may open (Roadmap D66). Read and
+        /// write it with <c>RoleExtensions.GetAllowedSections</c> / <c>SetAllowedSections</c>.</summary>
+        public const string AllowedSections = "AllowedSections";
     }
     
     public static class Assets
@@ -114,7 +118,13 @@ public static class Constants
     
     public static class Roles
     {
+        /// <summary>The administrators' role: every section of the admin, always (Roadmap D38). It cannot be
+        /// renamed or deleted.</summary>
         public const string AdminRoleName = "Admin";
         public const string StandardRoleName = "Member";
+
+        /// <summary>The back-office role ZauberCMS seeds once, with the Content and Media sections (Roadmap D38,
+        /// D69). A site may rename, change or delete it.</summary>
+        public const string EditorRoleName = "Editor";
     }
 }

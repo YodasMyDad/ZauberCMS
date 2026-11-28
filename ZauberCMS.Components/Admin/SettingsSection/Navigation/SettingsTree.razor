@@ -1,6 +1,10 @@
 ﻿@implements ZauberCMS.Core.Sections.Interfaces.ISectionNav
 @implements IDisposable
 
+@* Shown to administrators only, as its page is (Roadmap D70): SectionTrees hides a nav item whose [Authorize]
+   the user does not pass *@
+@attribute [Authorize(Roles = Constants.Roles.AdminRoleName)]
+
 <TreeButton Icon="settings" Name="Global Settings" Url="@(Urls.AdminSettingsGlobalSettings)" />
 
 @code {

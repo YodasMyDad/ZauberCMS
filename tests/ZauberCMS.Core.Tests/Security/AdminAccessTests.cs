@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using ZauberCMS.Core.Data.Interfaces;
 using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Membership.Middleware;
+using ZauberCMS.Core.Sections.Interfaces;
 using ZauberCMS.Core.Seo;
 using ZauberCMS.Core.Seo.Interfaces;
 using ZauberCMS.Core.Seo.Models;
@@ -41,6 +42,60 @@ public class AdminAccessTests : IAsyncLifetime
     public void Admin_paths_are_recognised_whatever_the_case(string path, bool expected)
     {
         Assert.Equal(expected, AdminAccess.IsAdminPath(path));
+    }
+
+    [Theory]
+    [InlineData("http://localhost/site/", "http://localhost/site/admin/content", true)]
+    [InlineData("http://localhost/site/", "http://localhost/site/Admin?x=1", true)]
+    [InlineData("http://localhost/site/", "http://localhost/site/blog/admin", false)]
+    [InlineData("http://localhost/site/", "http://localhost/site/administration", false)]
+    [InlineData("http://localhost/", "http://localhost/admin/users#top", true)]
+    [InlineData("http://localhost/", "http://localhost/", false)]
+    public void ZA199_the_admin_is_recognised_below_the_path_base(string baseUri, string uri, bool expected)
+    {
+        var navigation = new FixedNavigationManager(baseUri, uri);
+
+        Assert.Equal(expected, AdminAccess.IsAdminPath(navigation));
+    }
+
+    [Fact]
+    public void ZA199_the_base_relative_path_leaves_out_the_path_base_and_the_query()
+    {
+        var navigation = new FixedNavigationManager("http://localhost/site/", "http://localhost/site/admin/media?x=1");
+
+        Assert.Equal("/admin/media", AdminAccess.GetBaseRelativePath(navigation));
+        // What App.razor and Routes.razor tested before: the absolute address keeps the path base
+        Assert.False(AdminAccess.IsAdminPath(navigation.Uri));
+    }
+
+    [Theory]
+    [InlineData("/admin/settings", "/admin/settings")]
+    [InlineData("http://localhost/site/admin/users?x=1", "/site/admin/users?x=1")]
+    [InlineData("http://LOCALHOST/site/", "/site/")]
+    [InlineData("http://localhost/site", "/site")]
+    [InlineData("https://evil.example/admin", null)]
+    [InlineData("http://localhost/other/admin", null)]
+    [InlineData("//evil.example/admin", null)]
+    [InlineData("/\\evil.example", null)]
+    [InlineData("javascript:alert(1)", null)]
+    [InlineData("admin", null)]
+    [InlineData("", null)]
+    [InlineData(null, null)]
+    public void ZA201_only_an_address_on_this_site_is_kept_as_the_return_address(string? returnUrl, string? expected)
+    {
+        var navigation = new FixedNavigationManager("http://localhost/site/", "http://localhost/site/account/login");
+
+        Assert.Equal(expected, navigation.ToLocalReturnUrl(returnUrl));
+    }
+
+    [Theory]
+    [InlineData("http://localhost//evil.example/x")]
+    [InlineData(@"http://localhost/\evil.example")]
+    public void ZA201_an_address_on_this_site_that_a_browser_reads_as_another_host_is_not_kept(string returnUrl)
+    {
+        var navigation = new FixedNavigationManager("http://localhost/", "http://localhost/account/login");
+
+        Assert.Null(navigation.ToLocalReturnUrl(returnUrl));
     }
 
     [Fact]
@@ -223,7 +278,8 @@ public class AdminAccessTests : IAsyncLifetime
         context.User = User(Constants.Roles.AdminRoleName);
         context.SetEndpoint(new Endpoint(_ => Task.CompletedTask, new EndpointMetadataCollection(), "test page"));
 
-        await middleware.InvokeAsync(context, scope.ServiceProvider.GetRequiredService<IDataService>());
+        await middleware.InvokeAsync(context, scope.ServiceProvider.GetRequiredService<IDataService>(),
+            scope.ServiceProvider.GetRequiredService<IBackOfficeAccessService>());
         await response.StartAsync();
         string? header = context.Response.Headers[AdminAccess.EnhancedNavigationHeader];
         return (header, passedOn);
@@ -245,6 +301,12 @@ public class AdminAccessTests : IAsyncLifetime
                 await _starting[i].Callback(_starting[i].State);
             }
         }
+    }
+
+    /// <summary>A navigation manager at a fixed address, as a request or a circuit gives one.</summary>
+    private sealed class FixedNavigationManager : Microsoft.AspNetCore.Components.NavigationManager
+    {
+        public FixedNavigationManager(string baseUri, string uri) => Initialize(baseUri, uri);
     }
 
     private static ClaimsPrincipal User(string role) => new(new ClaimsIdentity(
@@ -273,7 +335,8 @@ public class AdminAccessTests : IAsyncLifetime
         var metadata = endpointMetadata == null ? new EndpointMetadataCollection() : new EndpointMetadataCollection(endpointMetadata);
         context.SetEndpoint(new Endpoint(_ => Task.CompletedTask, metadata, "test page"));
 
-        await middleware.InvokeAsync(context, scope.ServiceProvider.GetRequiredService<IDataService>());
+        await middleware.InvokeAsync(context, scope.ServiceProvider.GetRequiredService<IDataService>(),
+            scope.ServiceProvider.GetRequiredService<IBackOfficeAccessService>());
         return (context, passedOn);
     }
 }

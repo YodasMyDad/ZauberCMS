@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 10g (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-188 fixed (D38 phase, D66–D71); ZA-199…ZA-201 found and fixed while building; ZA-202…ZA-213 found by the audit and fixed (3 High, 4 Medium, 5 Low); ZA-214, ZA-215 recorded (Low, Phase 12); ZP-001 proposed. Next free ID: ZA-216
 After Roadmap Phase 10f-2 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1221 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part. ZA-187, ZA-189, ZA-190 fixed (D64, D65); Phase 10f done. Next free ID: ZA-199
 After Roadmap Phase 10f-1 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1205 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes; `doublecheck` self-review on the part. ZA-155, ZA-163, ZA-193 fixed (D62, D63). Next free ID: ZA-199
 After the Phase 11 audit follow-ups (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1175 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review. ZA-185 (behaviour, D60) and ZA-198 (D61) fixed. Next free ID: ZA-199
@@ -37,6 +38,42 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 10g (2026-11-28, back-office access per section and role, D38, D66–D71).** Release notes in the
+  Roadmap's "Phase 10g". Full suite 1366 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
+  Redis; Release build 0 warnings; template smoke test passes; checked in a browser on a scratch site (the Roadmap's
+  Phase 10g lists what). The ZA-188, ZA-200, ZA-202, ZA-207 and D67-media tests were seen failing with their fix
+  reverted; the rest test code new in the phase.
+  - **ZA-188 (Low) — fixed.** `EntryPage` runs the page's role check before choosing a view, the MissingView too.
+    Tests: `Content/RestrictedPageViewTests` (anonymous visitor: nothing of the page, sent on; a member: shown).
+  - **ZA-199 (Low, found while building) — fixed.** `App.razor`, `Routes.razor` and the two culture circuit handlers
+    tested `NavigationManager.Uri` (with the path base) for `/admin`; now `AdminAccess.IsAdminPath(NavigationManager)`,
+    and `<base href>` is the request's path base. Tests: `Security/AdminAccessTests` ZA199 ×7. Not run under a real
+    path base.
+  - **ZA-200 (Low, found while building) — fixed.** The role editor set `DeleteRoleParameters.RoleId`, which
+    `DeleteRoleAsync` never read; `RoleId` is read when `Id` is empty and is `[Obsolete]`. Test: `SectionAccessTests` ZA200.
+  - **ZA-201 (Low, found while building) — fixed.** The login page passes its `returnUrl` on, when it is on this site
+    (`NavigationManager.ToLocalReturnUrl`). Tests: `AdminAccessTests` ZA201 ×14; browser (sign in from
+    `/admin/settings/languages` returns there).
+  - **ZA-202 (High, audit) — fixed.** Deleting a role removed its page and media links, which made what it restricted
+    public: `DeleteRoleAsync` refuses while any are restricted to it; the role page confirms. Test: `SectionAccessTests` ZA202 ×3 providers; browser (the confirmation).
+  - **ZA-203 (High, audit) — fixed.** `CanEditUserAsync` refuses a user who opens a section the editor cannot. Test: ZA203.
+  - **ZA-204 (High, audit) — fixed.** The Editor Notes property and dialog render the note through
+    `IHtmlSanitizerService`. Verified by reading (no component test harness; the sanitiser is tested elsewhere).
+  - **ZA-205 (Medium, audit) — fixed.** The D68 checks read the editor's stored roles (by the sign-in's user id). Test: ZA205.
+  - **ZA-206 (Medium, audit) — fixed (D71).** The starting role opens no section; saving sections on it is refused.
+    Test: ZA206; browser (the Member role page shows the note, no boxes).
+  - **ZA-207 (Medium, audit) — fixed.** Role save and delete clear the `Media` prefix. Test: ZA207 ×3 providers.
+  - **ZA-208 (Medium, audit) — fixed.** The role editor clears its tab index when it loads another role. By reading.
+  - **ZA-209 (Low, audit) — fixed.** `AdminExtensionAccess` applies a type's `[Authorize]` to nav items, nav group
+    actions, dashboards and tree context menus. Tests: `ZauberCMS.Components.Tests` `AdminExtensionAccessTests`;
+    browser (Global Settings item and its group hidden from a Settings user).
+  - **ZA-210 (Low, audit) — fixed.** A signed-in visitor outside a page's roles goes to the access-denied page; its
+    "Sign in with another account" signs out first. By reading.
+  - **ZA-211 (Low, audit) — fixed.** `ToLocalReturnUrl` keeps the path base and refuses `//host`. Tests: ZA201/ZA211.
+  - **ZA-212 (Low, audit) — fixed.** The change-password dialog uses its own scope and a password box. By reading.
+  - **ZA-213 (Low, audit) — fixed.** The ChangeTab dialog lost its stray route. Test: the admin-pages test.
+  - **ZA-214, ZA-215 (Low) — recorded**, Phase 12. **ZP-001** proposed (own profile for every back-office user).
 
 - **Roadmap Phase 10f-2 (2026-11-27, front-end cache and domains).** Release notes in the Roadmap's "Phase 10f-2".
   The fix-dependent tests were seen failing with their fix reverted (the helper and provider tests are controls).

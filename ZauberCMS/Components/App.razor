@@ -5,7 +5,9 @@
 <!DOCTYPE html>
 <html lang="@CurrentLanguage">
 <head>
-    <base href="/"/>
+    @* The site's path base (UsePathBase), so a circuit's base address is the request's and the admin is found below
+       it (ZA-199) *@
+    <base href="@BaseHref"/>
     <HeadOutlet @rendermode="RenderModeForPage" />
     <ImportMap />
     @if (IsAdmin)
@@ -51,6 +53,8 @@
 
 @code {
     [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    private string BaseHref => (HttpContext?.Request.PathBase ?? PathString.Empty).ToUriComponent() + "/";
     [Inject] public ExtensionManager ExtensionManager { get; set; } = null!;
     
     private List<string> PageScripts { get; set; } = [];
@@ -79,8 +83,9 @@
             contentProperties.SelectMany(x => x.Styles).Distinct().ToList());
     }
 
-    // /admin and below, on whole segments: a site page at /administration is not the admin (ZA-095)
-    private bool IsAdmin => AdminAccess.IsAdminPath(NavigationManager.Uri);
+    // /admin and below, on whole segments: a site page at /administration is not the admin (ZA-095); below the
+    // site's path base, which NavigationManager.Uri starts with (ZA-199)
+    private bool IsAdmin => AdminAccess.IsAdminPath(NavigationManager);
 
     private IComponentRenderMode? RenderModeForPage
     {

@@ -1,4 +1,7 @@
 ﻿@attribute [Route(Urls.AdminSettingsGlobalSettings)]
+@* Administrators only, whoever else may open Settings: these settings decide who gets in (admin email addresses,
+   the admin IP list, registration), what may be uploaded, and hold the API keys (Roadmap D70) *@
+@attribute [Authorize(Roles = Constants.Roles.AdminRoleName)]
 @layout SectionLayout
 
 <PageTitle>Global Settings</PageTitle>

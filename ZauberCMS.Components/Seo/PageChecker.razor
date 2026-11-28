@@ -1,5 +1,5 @@
 ﻿@attribute [Route(Urls.AdminSeoPageChecker)]
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = ZauberCMS.Core.Constants.Roles.AdminRoleName)]
+@attribute [ZauberCMS.Core.Sections.Authorization.AuthorizeSection(ZauberCMS.Core.Constants.Sections.SettingsSection)]
 @using ZauberCMS.Core
 
 @layout SectionLayout

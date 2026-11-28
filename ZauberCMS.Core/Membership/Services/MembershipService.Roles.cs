@@ -77,6 +77,14 @@ public partial class MembershipService
             }
             else
             {
+                // Every check of the admin compares with this name, letter for letter: the role keeps it (Roadmap D68)
+                if (IsAdminRole(role.Name) && !string.Equals(parameters.Role.Name, Constants.Roles.AdminRoleName, StringComparison.Ordinal))
+                {
+                    handlerResult.Messages.Add(new ResultMessage(
+                        $"The {Constants.Roles.AdminRoleName} role cannot be renamed", ResultMessageType.Error));
+                    return handlerResult;
+                }
+
                 isUpdate = true;
                 parameters.Role.MapTo(role);
                 role.DateUpdated = DateTime.UtcNow;
@@ -104,8 +112,12 @@ public partial class MembershipService
 
         if (handlerResult.Success)
         {
-            // Cached front-end pages hold their roles (and the role names the access check compares)
+            // Cached front-end pages hold their roles (and the role names the access check compares); the
+            // sections each role may open are cached under the Role prefix (BackOfficeAccessService)
             cacheService.ClearCachedItemsWithPrefix(nameof(Content.Models.Content));
+            cacheService.ClearCachedItemsWithPrefix(nameof(Role));
+            // The restricted-media lookup holds the role names it compares too (ZA-207)
+            cacheService.ClearCachedItemsWithPrefix(nameof(Media.Models.Media));
         }
 
         return handlerResult;
@@ -124,7 +136,35 @@ public partial class MembershipService
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var handlerResult = new HandlerResult<Role>();
 
-        var role = await roleManager.FindByIdAsync(parameters.Id.ToString());
+        // RoleId is the old name the role editor set, and it was never read (ZA-200)
+#pragma warning disable CS0618
+        var roleId = parameters.Id != Guid.Empty ? parameters.Id : parameters.RoleId;
+#pragma warning restore CS0618
+        var role = await roleManager.FindByIdAsync(roleId.ToString());
+        if (role != null && IsAdminRole(role.Name))
+        {
+            // Without it nobody could open the admin (Roadmap D68)
+            handlerResult.Messages.Add(new ResultMessage(
+                $"The {Constants.Roles.AdminRoleName} role cannot be deleted", ResultMessageType.Error));
+            return handlerResult;
+        }
+
+        if (role != null)
+        {
+            // The links go with the role, and a page or file restricted to no role is open to everyone: deleting the
+            // role would publish what it protects (ZA-202)
+            var dbContext = scope.ServiceProvider.GetRequiredService<IZauberDbContext>();
+            var pages = await dbContext.ContentRoles.CountAsync(x => x.RoleId == role.Id, cancellationToken);
+            var files = await dbContext.MediaRoles.CountAsync(x => x.RoleId == role.Id, cancellationToken);
+            if (pages + files > 0)
+            {
+                handlerResult.Messages.Add(new ResultMessage(
+                    $"{role.Name} restricts {pages} page(s) and {files} media item(s) to its members; deleting it would " +
+                    "open them to everyone. Take the role off their access first", ResultMessageType.Error));
+                return handlerResult;
+            }
+        }
+
         if (role != null)
         {
             // Note: Audit logging would need to be implemented without mediator
@@ -149,10 +189,16 @@ public partial class MembershipService
         {
             // Cached front-end pages hold their roles (and the role names the access check compares)
             cacheService.ClearCachedItemsWithPrefix(nameof(Content.Models.Content));
+            cacheService.ClearCachedItemsWithPrefix(nameof(Role));
+            // The restricted-media lookup holds the role names it compares too (ZA-207)
+            cacheService.ClearCachedItemsWithPrefix(nameof(Media.Models.Media));
         }
 
         return handlerResult;
     }
+
+    private static bool IsAdminRole(string? roleName) =>
+        string.Equals(roleName?.Trim(), Constants.Roles.AdminRoleName, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Queries roles with filtering, ordering and paging.

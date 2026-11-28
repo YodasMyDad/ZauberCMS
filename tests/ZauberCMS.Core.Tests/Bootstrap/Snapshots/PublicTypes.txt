@@ -18,6 +18,7 @@ ZauberCMS.Components: Blazored.Modal.Services.IModalService
 ZauberCMS.Components: Blazored.Modal.Services.ModalResult
 ZauberCMS.Components: Blazored.Modal.Services.ModalService
 ZauberCMS.Components: Blazored.Modal._Imports
+ZauberCMS.Components: ZauberCMS.Components.Account.Pages.AccessDenied
 ZauberCMS.Components: ZauberCMS.Components.Account.Pages.ConfirmEmail
 ZauberCMS.Components: ZauberCMS.Components.Account.Pages.ExternalLogin
 ZauberCMS.Components: ZauberCMS.Components.Account.Pages.ForgotPassword
@@ -25,8 +26,10 @@ ZauberCMS.Components: ZauberCMS.Components.Account.Pages.Login
 ZauberCMS.Components: ZauberCMS.Components.Account.Pages.Register
 ZauberCMS.Components: ZauberCMS.Components.Account.Pages.ResetPassword
 ZauberCMS.Components: ZauberCMS.Components.Account.Shared.ExternalLoginPicker
+ZauberCMS.Components: ZauberCMS.Components.Account.Shared.RedirectNotAuthorized
 ZauberCMS.Components: ZauberCMS.Components.Account.Shared.RedirectToLogin
 ZauberCMS.Components: ZauberCMS.Components.Account.Shared.StatusMessage
+ZauberCMS.Components: ZauberCMS.Components.Admin.AdminIndex
 ZauberCMS.Components: ZauberCMS.Components.Admin.ContentSection.ContentEditor
 ZauberCMS.Components: ZauberCMS.Components.Admin.ContentSection.ContentIndex
 ZauberCMS.Components: ZauberCMS.Components.Admin.ContentSection.ContentListView
@@ -41,6 +44,7 @@ ZauberCMS.Components: ZauberCMS.Components.Admin.ContentSection.EditContent
 ZauberCMS.Components: ZauberCMS.Components.Admin.ContentSection.Navigation.ContentNavGroup
 ZauberCMS.Components: ZauberCMS.Components.Admin.ContentSection.Navigation.ContentSectionTree
 ZauberCMS.Components: ZauberCMS.Components.Admin.ContentSection.Navigation.RecycleBinTree
+ZauberCMS.Components: ZauberCMS.Components.Admin.ContentSection._Imports
 ZauberCMS.Components: ZauberCMS.Components.Admin.Dashboards.LatestRolesDashboard
 ZauberCMS.Components: ZauberCMS.Components.Admin.Dashboards.LatestUsersDashboard
 ZauberCMS.Components: ZauberCMS.Components.Admin.Dashboards.MainContentDashboard
@@ -65,6 +69,7 @@ ZauberCMS.Components: ZauberCMS.Components.Admin.MediaSection.Navigation.MediaNa
 ZauberCMS.Components: ZauberCMS.Components.Admin.MediaSection.Navigation.MediaRecycleBinTree
 ZauberCMS.Components: ZauberCMS.Components.Admin.MediaSection.Navigation.MediaSectionTree
 ZauberCMS.Components: ZauberCMS.Components.Admin.MediaSection.UpdateMedia
+ZauberCMS.Components: ZauberCMS.Components.Admin.MediaSection._Imports
 ZauberCMS.Components: ZauberCMS.Components.Admin.SettingsSection.AuditLog
 ZauberCMS.Components: ZauberCMS.Components.Admin.SettingsSection.Dialogs.CreateLanguage
 ZauberCMS.Components: ZauberCMS.Components.Admin.SettingsSection.Dialogs.SaveLanguageDictionary
@@ -78,6 +83,7 @@ ZauberCMS.Components: ZauberCMS.Components.Admin.SettingsSection.Navigation.Sett
 ZauberCMS.Components: ZauberCMS.Components.Admin.SettingsSection.Navigation.SettingsNavGroup
 ZauberCMS.Components: ZauberCMS.Components.Admin.SettingsSection.Navigation.SettingsTree
 ZauberCMS.Components: ZauberCMS.Components.Admin.SettingsSection.SettingsIndex
+ZauberCMS.Components: ZauberCMS.Components.Admin.SettingsSection._Imports
 ZauberCMS.Components: ZauberCMS.Components.Admin.Shared.Dialogs.ChangeAlias
 ZauberCMS.Components: ZauberCMS.Components.Admin.Shared.ExtendedDataEditor
 ZauberCMS.Components: ZauberCMS.Components.Admin.Shared.PropertyEditor
@@ -95,6 +101,7 @@ ZauberCMS.Components: ZauberCMS.Components.Admin.StructureSection.Navigation.Con
 ZauberCMS.Components: ZauberCMS.Components.Admin.StructureSection.Navigation.ElementTypesNavGroup
 ZauberCMS.Components: ZauberCMS.Components.Admin.StructureSection.Navigation.ElementTypesTree
 ZauberCMS.Components: ZauberCMS.Components.Admin.StructureSection.StructureIndex
+ZauberCMS.Components: ZauberCMS.Components.Admin.StructureSection._Imports
 ZauberCMS.Components: ZauberCMS.Components.Admin.UsersSection.Dialogs.ChangePassword
 ZauberCMS.Components: ZauberCMS.Components.Admin.UsersSection.Dialogs.UpdateRoles
 ZauberCMS.Components: ZauberCMS.Components.Admin.UsersSection.Navigation.UsersNavGroup
@@ -103,6 +110,7 @@ ZauberCMS.Components: ZauberCMS.Components.Admin.UsersSection.RoleEditor
 ZauberCMS.Components: ZauberCMS.Components.Admin.UsersSection.UserEditor
 ZauberCMS.Components: ZauberCMS.Components.Admin.UsersSection.UsersIndex
 ZauberCMS.Components: ZauberCMS.Components.Admin.UsersSection.UsersList
+ZauberCMS.Components: ZauberCMS.Components.Admin.UsersSection._Imports
 ZauberCMS.Components: ZauberCMS.Components.Admin._Imports
 ZauberCMS.Components: ZauberCMS.Components.ContentComponents.ContentBlockPreviewFallback
 ZauberCMS.Components: ZauberCMS.Components.ContentComponents.RenderBlock`1
@@ -552,14 +560,22 @@ ZauberCMS.Core: ZauberCMS.Core.Providers.DiskStorageProvider
 ZauberCMS.Core: ZauberCMS.Core.Providers.IStorageProvider
 ZauberCMS.Core: ZauberCMS.Core.Providers.ProviderService
 ZauberCMS.Core: ZauberCMS.Core.Providers.SmtpEmailProvider
+ZauberCMS.Core: ZauberCMS.Core.Sections.Authorization.AuthorizeSectionAttribute
+ZauberCMS.Core: ZauberCMS.Core.Sections.Authorization.SectionAccessRequirement
+ZauberCMS.Core: ZauberCMS.Core.Sections.Authorization.SectionAuthorizationPolicyProvider
+ZauberCMS.Core: ZauberCMS.Core.Sections.Authorization.SectionPolicies
+ZauberCMS.Core: ZauberCMS.Core.Sections.Interfaces.IBackOfficeAccessService
 ZauberCMS.Core: ZauberCMS.Core.Sections.Interfaces.ISection
 ZauberCMS.Core: ZauberCMS.Core.Sections.Interfaces.ISectionDashboard
 ZauberCMS.Core: ZauberCMS.Core.Sections.Interfaces.ISectionNav
 ZauberCMS.Core: ZauberCMS.Core.Sections.Interfaces.ISectionNavGroup
+ZauberCMS.Core: ZauberCMS.Core.Sections.Models.BackOfficeAccessResult
+ZauberCMS.Core: ZauberCMS.Core.Sections.Services.BackOfficeAccessService
 ZauberCMS.Core: ZauberCMS.Core.Security.Interfaces.ICaptchaProvider
 ZauberCMS.Core: ZauberCMS.Core.Security.Interfaces.IFormProtectionService
 ZauberCMS.Core: ZauberCMS.Core.Security.Models.FormProtectionResult
 ZauberCMS.Core: ZauberCMS.Core.Security.Services.FormProtectionService
+ZauberCMS.Core: ZauberCMS.Core.SeedData.SeedEditorRole
 ZauberCMS.Core: ZauberCMS.Core.SeedData.SyncTabsToUseAlias
 ZauberCMS.Core: ZauberCMS.Core.Seo.Checks.AiContentCheck
 ZauberCMS.Core: ZauberCMS.Core.Seo.Checks.BrokenLinksCheck

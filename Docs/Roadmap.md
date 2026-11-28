@@ -3,7 +3,7 @@
 **Start here when resuming the rework.** Read order: [AGENTS.md](../AGENTS.md) → this file →
 [.audit/report.md](../.audit/report.md) (findings by ID) → the Docs file for the area you're touching.
 
-## Status (2026-11-27)
+## Status (2026-11-28)
 
 - Branch **`rework-2026`** (pushed). All rework happens here. **Do not merge or push to `main-static`** until the
   owner says so — every push there publishes to nuget.org.
@@ -34,11 +34,12 @@
   image, D63, ZA-155; a domain's redirects deleted through the change, ZA-193; 2026-11-27).
   **Phase 10f-2 done** (the URL lookup cached per domain and slug, and domains matched below the path base on both
   sides, D64, ZA-187, ZA-190; every redirect honoured, D65, ZA-189; 2026-11-27). **Phase 10f is done.**
-  **9 open findings** (0 Critical, 0 High, 0 Medium, 9 Low), each one assigned below to a phase (10g, 10h, 10i, 12),
-  plus back-office roles (D38). **There is no Backlog** (owner, 2026-11-27): every open item is in a phase,
-  and a new finding goes into the phase whose theme fits. **Next: Phase 10g** (back-office roles, D38, with ZA-188),
-  then 10h, 10i, then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner
-  delegated).
+  **Phase 10g done** (back-office access per section and role, D38, D66–D71; ZA-188, ZA-199…ZA-201 found and fixed
+  while building, ZA-202…ZA-213 found by its `/audit changed` and fixed, ZA-214 and ZA-215 recorded; 2026-11-28).
+  **10 open findings** (0 Critical, 0 High, 0 Medium, 10 Low), each one assigned below to a phase (10h, 10i, 12).
+  **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
+  whose theme fits. **Next: Phase 10h** (admin localisation, D37, ZA-129; it covers 10g's new screens), then 10i,
+  then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
 - Findings come from reading code + a real build/package scan; items marked "needs repro" must be reproduced before
   or while fixing. Since Phase 6 the tests run on PostgreSQL and Redis too (Docker).
 - Tests: `dotnet test --solution ZauberCMS.sln -c Release` (see [Standards.md](Standards.md) §9).
@@ -112,6 +113,12 @@
 | D63 | **The resized copies of an image are kept in a folder per image, and a permanent delete removes them.** ImageResize names a copy by a hash of the image's path, the size and the original's date and length, which can't be traced back, and offers no way to remove one image's copies; it does let the cache be replaced. ZauberCMS gives the resizer (`IImageResizerService`) a cache (`ResizedImageCache`, internal) that wraps the registered `IImageCache` and puts each copy in `{CacheRoot}/{shards}/{hash of the image's path}/`; reading, writing, the size limit and the start-up prune stay ImageResize's (the registered `IImageCache` is unchanged, so its prune still runs). `DiskStorageProvider.DeleteFile` removes that folder after the file, and `SaveFile` over a file of the same name removes the old copies. Rejected: clearing the whole cache on every purge (every image on the site would be resized again after each emptied bin), and changing the ImageResize package (another product's release). Umbraco keeps its ImageSharp cache outside the web root and leaves crops of deleted media until `CacheMaxAge` (a year); a delete for good (GDPR) asks for more, so ZauberCMS removes them. Copies on other servers of a web farm with a cache per server stay (they are never served through a resize URL again, the original being gone). (owner delegated, Phase 10f-1) | ZA-155 |
 | D64 | **A front-end address is matched to a domain on its path below the site's path base, the same way everywhere, and the URL → page lookup is cached on that domain, the normalised slug and the flags.** The middlewares, `EntryPage` and a front-end circuit all match `example.com/fr` against the path without `PathBase` (components build the address with `NavigationManager.GetContentRequestUrl()`, public in `ZauberCMS.Core.Extensions`), so under `/site` the address `/site/fr/about` is on `example.com/fr` on every side; the stored domain needs no path base in it and keeps working when the site moves to another one. The lookup's cache key is what decides the answer: the matched domain's id (none: every host on no domain, which all share one entry), the slug in the stored form and `IsRootContent`/`IncludeChildren`/`IgnoreInternalRedirect`; the host, port, query string and spelling of the path are not in it, so an arbitrary Host header or a new spelling never makes a new entry, and only found pages are kept. Umbraco does the same: `UriUtility.UriToUmbraco` takes the application's virtual path off the request address before routing, its domains are matched on that address, and its published-content route cache is keyed on the domain's root and the path (`{root id}/{path}`), not the host. (owner delegated, Phase 10f-2) | ZA-187, ZA-190, D42 |
 | D65 | **Every saved redirect is honoured: the compiled list holds all of them.** `RedirectMiddleware` loaded the newest 5000 (`QueryRedirectsParameters.Amount`'s default) and ignored the rest without a word. It now loads every row once into its compiled list (cleared by any redirect save, as before). Umbraco honours every redirect by looking the address up in its redirect table on each request (`IRedirectUrlService.GetMostRecentRedirectUrl`, by a hash of the route); ZauberCMS keeps the compiled list, because regex redirects and the domain rule (D42) need the whole list, and a query per request would cost every page a round trip and need a case-insensitive index on three providers (a migration). The list is what editors saved, not what visitors send, so its size is the site's own. Rejected: logging when the cap is hit (the redirects would still be ignored). The default of `Amount` (5000) stays for other callers. (owner delegated, Phase 10f-2) | ZA-189 |
+| D66 | **A role's sections are stored on the role; a user opens the sections of all their roles; Admin opens every section.** The aliases (`ISection.Alias`) are a list in the role's `ExtendedData` (`AllowedSections`, read and written with `RoleExtensions.GetAllowedSections`/`SetAllowedSections`), saved with the role by `SaveRoleAsync`: no table, no column, no migration (rule 1), and a site's code reads and sets them like any role data. They are ticked on the role's page in Users, which lists every discovered section, plugins' included (no registration). `Admin` has no list: it opens every section, including ones a plugin adds later. A plugin section is in no other role until an administrator ticks it. The decision is a new replaceable service, `IBackOfficeAccessService` (Core, `Sections`), which caches the role → sections list per server under the `Role` prefix (every role save and delete clears it, Redis carries the clear) and takes a user's roles from their sign-in for the pages and the navigation, as every role check does (a renamed or removed role reaches an open session when its sign-in is renewed: five minutes for page requests, the next full load for an open admin tab); the checks that could give access read the roles as stored (D68). Rejected: role claims (`ZauberRoleClaims` rows): Identity's place for a role's permissions, but a second save path beside the role editor's, and nothing else in ZauberCMS uses them. Umbraco stores a user group's allowed sections with the group (`umbracoUserGroup2App`), a user's sections are the union of their groups', and the Administrators group has every section; the role is ZauberCMS's user group. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38, ZA-140 |
+| D67 | **Pages, endpoints and the navigation are gated by section, with an `[Authorize]` attribute whose policy is built from its name.** `[AuthorizeSection("Alias", …)]` (Core, `Sections.Authorization`) is an `AuthorizeAttribute` with the policy `SectionPolicies.ForSections(...)`; ZauberCMS's policy provider (`SectionAuthorizationPolicyProvider`, ASP.NET's default plus these names) builds it on first use, so a plugin section needs no policy registration; with no alias it asks for any section (`SectionPolicies.BackOffice`); the request pipeline, Blazor's `AuthorizeRouteView` and controllers all honour it. The pages of each `Components/Admin/<Section>/` folder carry their section (that folder's `_Imports.razor`; the root `[Authorize(Roles = Admin)]` is gone), the SEO pages carry Settings. A page under `/admin` that declares no authorisation is for the users of the section whose `IndexUrl` its address is under (longest match on whole segments), else administrators only, as before: a plugin's pages under its section's address work for its users with no change. `/admin` sends each user to their first section (a redirect in `AdminAccessMiddleware`; `AdminIndex` in a circuit), signing in without a return address sends anyone with a section to the admin, a refused signed-in user gets an access-denied page (`/account/accessdenied`, the cookie's default address, status 403; there was none, so a refused member got the not-found page), the top navigation lists the user's sections only, and a nav item, nav group action, dashboard or tree context menu whose type carries `[Authorize]` is hidden from users who do not pass it (the last three since the phase's audit, ZA-209). Recycled and role-restricted media files are served to whoever may open Media (they were Admin-only). Rejected: a hand-kept list of page → section (the URL rule and the attribute need nothing kept), and `IAuthorizationRequirementData` on the attribute (Blazor's router reads only `IAuthorizeData`). Umbraco does the same: its Management API controllers carry section policies (`[Authorize(Policy = AuthorizationPolicies.SectionAccessContent)]`), a plugin's controller declares one, the back office shows only the user's sections and opens the first. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38 |
+| D68 | **Someone who manages users and roles cannot give anybody more than they have; the `Admin` role cannot be renamed or deleted.** A user who may open Users but is not an administrator cannot change, delete, set the password of, or change the roles of an administrator, or of a user who opens a section they cannot (setting that user's password would hand them the section; found by the phase's audit, ZA-203); gives only roles they are in, never `Admin` (taking a role away is allowed); opens and saves only roles they are in, never `Admin`, and adds to a role only sections they can open; can make a new role with those sections, and is then put in it, as Umbraco puts the maker of a user group in it (so they can go on managing it; it widens nothing). The user and role pages ask `IBackOfficeAccessService` (`CanEditUserAsync`, `CanSetUserRolesAsync`, `CanEditRoleAsync`, `CanSaveRoleAsync`, `CanDeleteRoleAsync`) before each change and say why when it refuses; these checks read the editor's roles as stored, not their sign-in's, so someone whose role was just taken away cannot give it back from an open session (ZA-205); the roles dialog and the role's section boxes disable what cannot be given. The services stay unchecked (D27). Nobody, an administrator included, renames or deletes `Admin`: `IMembershipService` refuses, as it refuses removing the last administrator, because every admin check compares that name; nor deletes a role that pages or media are restricted to, which would open them to everyone (ZA-202). Umbraco's `UserEditorAuthorizationHelper` and user-group authorisation do the same: a non-admin cannot save an administrator, assign a group they are not in, change a group they are not in or the administrators' group, or add a section they do not have; Umbraco's administrators group cannot be deleted. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38, D27 |
+| D69 | **The `Editor` role (Content and Media) is seeded once per database, and only when no role of that name exists.** `SeedEditorRole` (an `ISeedData`) creates it and writes a `GlobalData` marker (`ZauberEditorRoleSeeded`), so a site that deletes or renames it does not get it back at the next start; a role named `Editor` that a site already has (it may be a role for front-end members) is left untouched, so an upgrade gives nobody access to the admin. New sites have it before the installer runs; upgraded sites get it, empty, at their first start. Umbraco creates its default user groups (Administrators, Editors, Writers, Translators, Sensitive data) when it installs, and an upgrade migration adds a new one once. Only `Editor` is seeded (D38). (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38 |
+| D70 | **Global Settings stay administrators-only, whoever else may open Settings; a user edits their own account in Users only when they may open Users.** The global settings decide who gets in (admin email addresses, which promote an address's owner to administrator, the admin IP list, registration), what may be uploaded, and hold the API keys: anyone who could change them could make themselves an administrator. The page and its nav item carry `[Authorize(Roles = Admin)]`; the Settings index no longer sends non-administrators there; the rest of Settings (languages, dictionary, audit log, SEO) follows the section. The profile menu's "Edit" opens the user's page in Users, so it shows only to users who may open Users. Umbraco keeps these settings in configuration (`appsettings.json`: `Security`, `Content:DisallowedUploadFiles`), out of the Settings section's reach; it has a current-user panel for one's own profile, which ZauberCMS has not built (a user without Users changes their password through "Forgot your password"). (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38 |
+| D71 | **The role every registration gets opens no section of the admin.** `Zauber:NewUserStartingRole` (default `Member`) is given to whoever registers or first signs in externally, so sections on it would let anyone with an email address into the admin: `BackOfficeAccessService` leaves it out of every user's sections, whatever is stored on it, and saving sections on it is refused, for administrators too, with the reason on its role page (which shows a note instead of the boxes). A site that wants registrants in the admin gives them another role afterwards. Nothing changes on upgrade (no role had sections before D38); a new site whose starting role is `Editor` gets the seeded `Editor` with no effect until it changes the setting. Found by the phase's audit (ZA-206). Umbraco keeps members (who register) and back-office users apart, so a registration can never reach the back office; ZauberCMS has one user table, so it keeps the registration role out of the back office instead. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38, D23 |
 
 ## Working rules for the rework
 
@@ -1145,16 +1152,129 @@ ZA-187 (Medium), ZA-189, ZA-190 (Low) fixed. Decisions D64 and D65 (delegated, U
     after the upgrade; delete the ones that should not.
   - Breaking: none.
 
-### Phase 10g — Back-office roles: section access per role (D38)
-The feature the owner chose (2026-11-27); it replaces the Backlog row "Back-office roles other than Admin".
-- Which roles may open each section, set on an admin screen and stored as data; Admin always all; a seeded "Editor"
-  role with Content and Media; plugin sections (`ISection`) take part with no extra registration.
-- Gate the section navigation, the pages under `/admin` (`AdminAccessMiddleware` and `Routes.razor`, today
-  Admin-only through `Components/Admin/_Imports.razor`) and the endpoints the admin calls. Services stay
-  unchecked (D27).
-- Docs: what a plugin section or page has to do (AGENTS.md "Core principle"), Installer.md, AdminUI.md.
-- From the Phase 11 audit: **ZA-188**, a role-restricted page whose view is missing is rendered through
-  `MissingView` without the role check (a site's own `MissingView` gets the whole page).
+### Phase 10g — Back-office roles: section access per role (D38) — DONE (2026-11-28)
+The feature the owner chose (2026-11-27); it replaces the Backlog row "Back-office roles other than Admin". ZA-188
+fixed; ZA-199, ZA-200, ZA-201 found and fixed while building (all Low); the phase's `/audit changed` found ZA-202…ZA-213
+(3 High, 4 Medium, 5 Low), all fixed, and recorded ZA-214 and ZA-215 (Low, Phase 12). Decisions D66–D71 (delegated,
+Umbraco's way). Start nodes and per-action permissions are not part of it (D38).
+- **Sections per role (D66).** `Role.ExtendedData["AllowedSections"]` (`RoleExtensions.Get/SetAllowedSections`),
+  ticked in a "Sections" box on the role's page, which lists every discovered `ISection`; a user opens the sections
+  of all their roles; `Admin` every section. `IBackOfficeAccessService` / `BackOfficeAccessService` (Core,
+  `Sections`, scoped, replaceable) decides, with the role → sections list cached under the `Role` prefix (role save
+  and delete now clear it).
+- **Gating (D67).** `[AuthorizeSection]` with `SectionPolicies` and `SectionAuthorizationPolicyProvider` (policies by
+  name) plus an internal `SectionAccessHandler`; a section `_Imports.razor` in each of `Admin/ContentSection`,
+  `MediaSection`, `SettingsSection`, `StructureSection`, `UsersSection` (the root one's `[Authorize(Roles = Admin)]`
+  removed); the SEO pages carry Settings. `AdminAccessMiddleware` and `Routes.razor`: a page under `/admin` with no
+  authorisation of its own follows the section its address is under, else Admin only; `/admin` is redirected to the
+  user's first section (`Admin/AdminIndex.razor` for a circuit; the Content index lost its `/admin` route). A refused
+  signed-in user goes to the new `/account/accessdenied` page (`RedirectNotAuthorized` in a circuit), nobody signed
+  in to the login page. `SectionLinks` lists the user's sections, `SectionTrees` hides a nav item whose `[Authorize]`
+  the user fails, and a group left empty. Signing in sends anyone with a section to `/admin`.
+  `RestrictedMediaMiddleware` serves recycled and restricted files to whoever may open Media.
+- **Users and roles (D68).** `UserEditor` refuses (with the reason) to change an administrator for a non-admin and
+  checks every change again; the roles dialog disables roles the editor cannot give; `RoleEditor` refuses the Admin
+  role and roles the editor is not in, disables sections they cannot give, keeps the Admin role's name and hides its
+  Delete, and puts a non-administrator who makes a role into it (then renews their sign-in). `MembershipService`
+  refuses renaming or deleting `Admin`.
+- **The Editor role (D69).** `SeedEditorRole`, once per database, only if absent.
+- **The starting role (D71).** No sections for `Zauber:NewUserStartingRole`: left out of the access check, refused on
+  save, a note on its role page.
+- **Administrators only (D70).** Global Settings page and nav item `[Authorize(Roles = Admin)]`; the Settings index
+  sends only administrators there; the profile menu's "Edit" only with Users.
+- **ZA-188.** `EntryPage` runs the page's role check before it chooses a view, so the MissingView (a site's own may
+  render the whole page) is never shown to a visitor outside the page's roles.
+- **ZA-199 (found here).** `App.razor`, `Routes.razor` and the two culture circuit handlers tested
+  `NavigationManager.Uri` (which starts with the path base) for `/admin`, so under `UsePathBase` the admin was not
+  recognised: rendered without interactivity, and in a circuit an undeclared admin page was not gated (the request
+  still was). New `AdminAccess.IsAdminPath(NavigationManager)` / `GetBaseRelativePath`.
+- **ZA-200 (found here).** The role editor deleted with `DeleteRoleParameters.RoleId`, which `DeleteRoleAsync` never
+  read (it read `Id`), so no role could be deleted from the admin. `RoleId` is read when `Id` is empty and is
+  `[Obsolete]`; the editor sets `Id`.
+- **ZA-201 (found here).** The login page never passed its `returnUrl` to `LoginUserAsync`, so signing in from a
+  refused or protected page always went to `/admin` or the home page. It passes it now when it is on this site
+  (`NavigationManager.ToLocalReturnUrl`, public, in `ZauberCMS.Core.Extensions`); the access-denied page uses the
+  same check.
+- **`/audit changed` (2026-11-28):** a diff reviewer and two unit reviewers (Core; UI), given the code and the
+  requirement, not the design. Fixed: **ZA-202** (High) deleting a role that pages or media are restricted to opened
+  them to everyone (its links go with it), with no confirmation: `DeleteRoleAsync` refuses while any are, the role
+  page asks first. **ZA-203** (High) a non-admin with Users could set the password of a user with more sections and
+  sign in as them: `CanEditUserAsync` also needs every section of the user. **ZA-204** (High) the Editor Notes editor
+  rendered its note as raw markup in every editor's page, so a Structure user could run script in an administrator's
+  session: through `IHtmlSanitizerService` now. **ZA-205** (Medium) the D68 checks read the sign-in's roles, so a
+  manager whose role was taken away could give it back within the session: they read the stored roles. **ZA-206**
+  (Medium) the starting role could carry sections (D71). **ZA-207** (Medium) role save and delete left the
+  restricted-media lookup (role names) cached for up to four hours: they clear the `Media` prefix. **ZA-208** (Medium)
+  going from one role to another in the role editor kept the first one's tabs (Add Property filed under a tab the
+  role does not have). **ZA-209** (Low) `[Authorize]` was honoured on nav items only: also on nav group actions,
+  dashboards and tree context menus (`AdminExtensionAccess`), so a plugin's admin-only tool in Content or Media can
+  stay admin-only. **ZA-210** (Low) a signed-in visitor outside a restricted page's roles was sent to the login page
+  (now the access-denied page), and its "Sign in with another account" left them signed in (now it signs out first).
+  **ZA-211** (Low) `ToLocalReturnUrl` dropped the path base and could return `//host`: it returns the path from the
+  host's root and refuses one a browser reads as another host. **ZA-212** (Low) the change-password dialog used the
+  circuit's `UserManager` (a second change failed) and showed the password: own scope, a password box. **ZA-213** (Low)
+  the ChangeTab dialog had a route (`/ChangeTab/{id}`) outside `/admin`. With ZA-199: `App.razor`'s `<base href>` is
+  the request's path base now, so a circuit's base address matches it. Recorded: **ZA-214** the API-key picker stores
+  and shows the key's value to whoever edits the page (Phase 12: a stored-format change); **ZA-215** the section
+  checks in the header and the router read the database outside the D32 error boundaries (Phase 12). Not changed:
+  a role rename reaches open sessions only when their sign-in is renewed (D66, documented); a site's own
+  `IAuthorizationPolicyProvider` registered before `AddZauberCms` is replaced (documented: derive from
+  `SectionAuthorizationPolicyProvider` and register it after). Proposal ZP-001 (own profile and password for every
+  back-office user, as Umbraco's current-user panel) is in the report.
+- Tests: `Security/SectionAccessTests` (seeding ×3, sections ×4, address → section ×9, policies, attribute,
+  undeclared pages ×5, the `/admin` redirect ×3, every shipped admin page declares its access, D68 ×4, the Admin role
+  protected, ZA-200, ZA-202, ZA-203, ZA-205, ZA-206, ZA-207, sign-in redirect), on SQLite, PostgreSQL and SQL Server;
+  `ZauberCMS.Components.Tests` `AdminExtensionAccessTests` (ZA-209); `Content/RestrictedPageViewTests`
+  (ZA-188 and its control, rendering `EntryPage`); `Media/RestrictedMediaTests` D67 ×2 (×3 providers);
+  `Security/AdminAccessTests` ZA-199 ×7 and ZA-201/ZA-211 ×14; `InstallServiceTests` allows the seed marker. ZA-188, ZA-200,
+  ZA-202, ZA-207 and the D67 media test were seen failing with their fix reverted. PublicApiTests snapshot: 16 new public types
+  (the attribute, policies, requirement, provider, service and result, the seeder, `AdminIndex`, `AccessDenied`,
+  `RedirectNotAuthorized`, five section `_Imports`). Full suite 1366 (all pass, none skipped) on SQLite,
+  PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings; template smoke test passes (start-up touched).
+- **Verified in the browser** (dev site, Release, Development, on a scratch SQLite database through the installer;
+  `app.db` untouched): the installer, then `Editor` seeded and listed; the role page's Sections box (Editor: Content and
+  Media ticked; Admin: the "every section" note, no Delete); a new role "Managers" (Content, Users) saved with its
+  sections; an administrator's roles dialog with every role enabled. As `editor1` (Editor): only Content and Media in
+  the navigation, no "Edit" in the profile menu, Media opens, `/admin/users` by address and `/admin/settings/languages`
+  by in-circuit navigation both end on the access-denied page (403, with "Go to the parts of the admin you can
+  open"). As a member with no section: `/admin` → access denied. As `manager1` (Managers): an administrator's user
+  page says "Only an administrator can change an administrator" with no buttons; the roles dialog has Admin and
+  Editor disabled; the Managers role page has Media, Settings, Structure disabled; the Admin role page refuses; a new
+  role "Interns" (Content) made by manager1 is saved, manager1 is put in it and comes back to its page, able to edit
+  it. With
+  Settings added: Settings shows SEO, Languages and Advanced but no Global Settings item and no "Create Content Type"
+  button, and SEO Redirects opens. `/admin` lands on Content with one page load (the redirect); signing in from
+  `/admin/settings/languages` returns there (ZA-201). After the audit's fixes: the Member role page shows the
+  starting-role note instead of the boxes (D71), and Delete on a role asks first (ZA-202).
+- **Not verified in the browser:** a plugin section (none installed: covered by the address → section and middleware
+  tests); the admin under a real path base (ZA-199: unit tests only); recycled media thumbnails for an Editor
+  (middleware test only); Redis carrying the role-cache clear to a second server (the existing bus, not exercised by
+  a 10g test).
+- **For 10h and 10i:** new admin text to localise: the role page's "Sections" box (heading, the three explanations
+  for Admin, the starting role and the others, the caption), the role delete confirmation, the change-password
+  placeholder, the roles dialog caption, the user and role refusal alerts and the `BackOfficeAccessResult` reasons
+  (built in `BackOfficeAccessService`), `AdminIndex`'s "No section to open", the Settings index's "Choose a setting
+  from the navigation.", and the access-denied page (an account page, so the account layout's language). 10i: the
+  checkbox lists are Radzen's (labels come from the data); the disabled items have no explanation of their own beyond
+  the caption.
+- **Release notes (D18):**
+  - Back-office roles: a role's page in Users has a "Sections" box; tick sections to let the role's members into
+    them. An `Editor` role (Content and Media, nobody in it) is created at the first start, unless the site has a
+    role of that name, which is left alone. `Admin` cannot be renamed or deleted any more.
+  - Pages under `/admin` that declare no authorisation are open to the users of the section whose address they are
+    under; under no section they stay Admin-only. A plugin page elsewhere can declare `[AuthorizeSection("Alias")]`.
+    A site with its own `IAuthorizationPolicyProvider` must derive it from `SectionAuthorizationPolicyProvider`.
+  - `/admin` redirects to the user's first section (it showed the Content section); the Content index is only at
+    `/admin/content`. A refused signed-in user sees `/account/accessdenied` (403) instead of the not-found page.
+  - Recycled and role-restricted media files are served to anyone who may open Media, not only administrators.
+  - Signing in now returns to the page that asked for it (`returnUrl`), when it is on the site.
+  - `DeleteRoleParameters.RoleId` is obsolete (use `Id`); both work.
+  - A role that pages or media are restricted to cannot be deleted any more (it opened them to everyone); take it
+    off their access first. The starting role (`Zauber:NewUserStartingRole`) cannot be given sections.
+  - A nav group action, dashboard or tree context menu whose type carries `[Authorize]` shows only to users who
+    pass it (as a nav item does). Under a path base the `<base href>` is the path base.
+  - Breaking: none in the API. `AdminAccessMiddleware` is internal; `IBackOfficeAccessService` is new and registered
+    by `AddZauberCms`.
 
 ### Phase 10h — Admin localisation, English resources (D37)
 ZA-129 (Low). Every admin string through `IStringLocalizer` with English resource files; a site adds a language
@@ -1852,6 +1972,10 @@ not reach the bootstrap's copy, which configures ImageResize, Identity, rate lim
 options), **ZA-195** (CI's commit-back of the stamped version conflicts when two pushes to `main-static` are in flight;
 it heals on the next push), **ZA-196** (a blank storage or email provider passes start-up and the first upload or
 email throws `NullReferenceException` without naming the setting).
+From the Phase 10g audit: **ZA-214** (the API-key picker saves the chosen key's value into the page, so whoever edits
+it reads the secret: store the key's name and resolve it where used, reading old values as they are), **ZA-215** (the
+section checks in the admin header and the router read the database outside the D32 error boundaries: catch and log
+in the header).
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 

@@ -140,10 +140,13 @@ removed line is a breaking change for the release notes.
 
 ## 7. Security baseline
 
-- Admin pages/components: `[Authorize(Roles = Constants.Roles.AdminRoleName)]` (automatic only inside
-  `ZauberCMS.Components/Admin/`; elsewhere under `/admin` a page without its own attribute is admin-only by
-  fallback — still write the attribute, the fallback is a safety net). Controllers/endpoints authorise explicitly; state-changing endpoints are POST +
-  antiforgery.
+- Admin pages/components: `[AuthorizeSection(alias)]` for the section's users (automatic inside each
+  `ZauberCMS.Components/Admin/<Section>/` folder), `[Authorize(Roles = Constants.Roles.AdminRoleName)]` for
+  administrators only; elsewhere under `/admin` a page without its own attribute is for the users of the section its
+  address is under, else admin-only, by fallback — still write the attribute, the fallback is a safety net (Roadmap
+  D38, D67; [AdminUI.md](AdminUI.md) "Access"). A change that could give someone more access (users, roles, sections)
+  asks `IBackOfficeAccessService` first (D68). Controllers/endpoints authorise explicitly; state-changing endpoints
+  are POST + antiforgery.
 - Output: never render user/content HTML via `MarkupString` without `IHtmlSanitizerService`.
 - Uploads: extension allow-list + content check (`UploadContentCheck`) + the size limit (`GlobalSettings.MaxUploadFileSizeInBytes`); never trust client paths.
   SVG is off by default; when allowed it is stored through `SvgSanitizer`. A new `IStorageProvider` must do both.

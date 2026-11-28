@@ -1,3 +1,6 @@
-﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authorization
 @using ZauberCMS.Core
-@attribute [Authorize(Roles = Constants.Roles.AdminRoleName)]
+@using ZauberCMS.Core.Sections.Authorization
+@* Access (Roadmap D38, D67): each section folder's _Imports.razor puts [AuthorizeSection] on its pages. A routable
+   page anywhere else under /admin that declares nothing is for the users of the section its address is under, or
+   administrators only (AdminAccessMiddleware, Routes.razor). *@

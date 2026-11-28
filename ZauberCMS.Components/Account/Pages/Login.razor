@@ -101,6 +101,8 @@
     {
         if (editContext.Validate())
         {
+            // Back to the page that sent the visitor here, when it is on this site; it was never passed on (ZA-201)
+            LoginUserCommand!.ReturnUrl = NavigationManager.ToLocalReturnUrl(ReturnUrl);
             var result = await MembershipService.LoginUserAsync(LoginUserCommand!);
 
             if (result.Messages.ErrorMessages().Any() == false && result.Success)

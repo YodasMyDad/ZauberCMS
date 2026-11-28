@@ -1,0 +1,36 @@
+@attribute [Route(Urls.AdminBaseUrl)]
+@attribute [AuthorizeSection]
+@layout SectionLayout
+@using Microsoft.AspNetCore.Components.Authorization
+@using ZauberCMS.Core.Sections.Interfaces
+
+@* /admin: each user starts in the first section they may open (Roadmap D67), as Umbraco opens the first section
+   of the user's groups. [AuthorizeSection] with no alias lets in anyone who may open at least one. *@
+<PageTitle>Admin</PageTitle>
+
+@if (_noSection)
+{
+    <TailwindAlert Type="ZauberCMS.Core.Shared.Models.AlertType.Warning" Title="No section to open"
+                   DefaultMessage="Your roles do not give you any section of the admin. Ask an administrator for access."/>
+}
+
+@code {
+    [Inject] public IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+
+    private bool _noSection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var sections = await BackOfficeAccess.GetSectionsAsync(user);
+        var first = sections.Count > 0 ? sections[0] : null;
+        if (first == null || string.IsNullOrWhiteSpace(first.IndexUrl))
+        {
+            _noSection = true;
+            return;
+        }
+
+        NavigationManager.NavigateTo(first.IndexUrl, replace: true);
+    }
+}

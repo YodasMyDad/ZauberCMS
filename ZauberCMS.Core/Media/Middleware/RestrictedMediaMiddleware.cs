@@ -6,6 +6,7 @@ using ZauberCMS.Core.Extensions;
 using ZauberCMS.Core.Media.Interfaces;
 using ZauberCMS.Core.Media.Models;
 using ZauberCMS.Core.Media.Parameters;
+using ZauberCMS.Core.Sections.Interfaces;
 using ZauberCMS.Core.Settings;
 
 namespace ZauberCMS.Core.Media.Middleware;
@@ -31,8 +32,15 @@ internal class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider 
 
             if (entry is not null)
             {
-                // Recycled media is not served: only an administrator (the recycle bin shows it) gets the file
-                if (entry.InRecycleBin && !context.User.IsInRole(Constants.Roles.AdminRoleName))
+                // The people who manage media: the Media section shows them recycled and restricted files alike
+                // (Roadmap D67; before D38 that was administrators only)
+                var mayManageMedia = context.User.Identity?.IsAuthenticated == true &&
+                                     await scope.ServiceProvider.GetRequiredService<IBackOfficeAccessService>()
+                                         .CanOpenSectionAsync(context.User, Constants.Sections.MediaSection,
+                                             context.RequestAborted);
+
+                // Recycled media is not served, except to the people who manage media (the recycle bin shows it)
+                if (entry.InRecycleBin && !mayManageMedia)
                 {
                     context.Response.StatusCode = StatusCodes.Status404NotFound;
                     return;
@@ -47,9 +55,9 @@ internal class RestrictedMediaMiddleware(RequestDelegate next, IServiceProvider 
                 }
 
                 // Empty role list means "any authenticated user"; otherwise enforce role membership.
-                // Admins are always allowed (matches EntryPage role-check pattern for content).
+                // Administrators and the others who may open the Media section are always allowed.
                 if (entry.AllowedRoleNames.Count > 0 &&
-                    !context.User.IsInRole(Constants.Roles.AdminRoleName) &&
+                    !mayManageMedia &&
                     !entry.AllowedRoleNames.Any(r => !string.IsNullOrEmpty(r) && context.User.IsInRole(r)))
                 {
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;

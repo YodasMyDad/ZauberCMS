@@ -1,4 +1,4 @@
-﻿@page "/ChangeTab/{ContentTypeId:guid}"
+﻿@* A side-panel dialog, not a page: it had a route ("/ChangeTab/{id}") outside /admin (ZA-213) *@
 @using ZauberCMS.Core.Shared.Models
 
 <RadzenListBox @bind-Value="@SelectedTabId"

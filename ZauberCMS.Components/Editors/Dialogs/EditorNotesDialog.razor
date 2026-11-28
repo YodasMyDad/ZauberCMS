@@ -1,7 +1,8 @@
-﻿@using ZauberCMS.Components.Editors.Models
+﻿@inject ZauberCMS.Core.Shared.Services.IHtmlSanitizerService Sanitizer
+@using ZauberCMS.Components.Editors.Models
 
 <div>
-    @((MarkupString)(Model.Note ?? string.Empty))
+    @((MarkupString)Sanitizer.Sanitize(Model.Note))
 </div>
 
 @code {

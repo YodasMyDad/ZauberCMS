@@ -1,10 +1,20 @@
-﻿@using ZauberCMS.Core.Membership.Parameters
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using ZauberCMS.Core.Membership.Parameters
 @using ZauberCMS.Core.Membership.Models
+@using ZauberCMS.Core.Sections.Interfaces
 
 @if (User != null)
 {
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Start">
-        <RadzenCheckBoxList Data="@Roles" Orientation="Orientation.Vertical" @bind-Value=@UsersRoles TValue="Guid" TextProperty="Name" ValueProperty="Id" />
+        @* A role you could not give (D68: one you are not in, or Admin, unless you are an administrator) can be
+           neither ticked nor unticked here *@
+        <RadzenCheckBoxList Data="@Roles" Orientation="Orientation.Vertical" @bind-Value=@UsersRoles TValue="Guid"
+                            TextProperty="@nameof(RoleOption.Name)" ValueProperty="@nameof(RoleOption.Id)"
+                            DisabledProperty="@nameof(RoleOption.Disabled)" />
+        @if (Roles.Any(x => x.Disabled))
+        {
+            <RadzenText TextStyle="TextStyle.Caption">You can only give roles you are in yourself.</RadzenText>
+        }
     </RadzenStack>
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Right" AlignItems="AlignItems.Center" class="rz-mt-3">
         <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Icon="save" Text="Save" Click="Save"/>
@@ -14,10 +24,12 @@
 @code
 {
     [Inject] NotificationService NotificationService { get; set; } = null!;
+    [Inject] IBackOfficeAccessService BackOfficeAccess { get; set; } = null!;
+    [Inject] AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = null!;
     [Parameter, EditorRequired] public Guid UserId { get; set; }
     private User? User { get; set; }
-    private IEnumerable<Role> Roles { get; set; } = [];
+    private IEnumerable<RoleOption> Roles { get; set; } = [];
     private IEnumerable<Guid> UsersRoles { get; set; } = [];
     protected override async Task OnInitializedAsync()
     {
@@ -27,8 +39,13 @@
         });
         if (User != null) UsersRoles = User.UserRoles.Select(x => x.Role.Id);
         var roles = await MembershipService.QueryRolesAsync(new QueryRolesParameters { OrderBy = GetRolesOrderBy.Name, AmountPerPage = 200});
-        Roles = roles.Items;
+        var editor = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        Roles = roles.Items
+            .Select(role => new RoleOption(role.Id, role.Name ?? string.Empty, !BackOfficeAccess.CanGiveRole(editor, role.Name)))
+            .ToList();
     }
+
+    private sealed record RoleOption(Guid Id, string Name, bool Disabled);
 
     private async Task Save()
     {

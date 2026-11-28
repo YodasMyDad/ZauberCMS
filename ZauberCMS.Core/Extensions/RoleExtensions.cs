@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Data;
@@ -107,6 +108,75 @@ public static class RoleExtensions
             logger.LogInformation("{UserName} confirmed an email address on the admin list and is now an administrator",
                 user.UserName);
             return true;
+        }
+
+        /// <summary>
+        /// The aliases of the admin sections the role's members may open (Roadmap D38, D66), as stored in the role's
+        /// <c>ExtendedData</c> under <see cref="Constants.ExtendedDataKeys.AllowedSections"/>; empty when none is set.
+        /// The Admin role opens every section whatever this says.
+        /// </summary>
+        public static IReadOnlyList<string> GetAllowedSections(this Role role)
+        {
+            if (!role.ExtendedData.TryGetValue(Constants.ExtendedDataKeys.AllowedSections, out var value))
+            {
+                return [];
+            }
+
+            // Read from the database the value is a JsonElement; set in memory it is a list of strings
+            IEnumerable<string?> aliases = value switch
+            {
+                JsonElement { ValueKind: JsonValueKind.Array } array => array.EnumerateArray()
+                    .Where(item => item.ValueKind == JsonValueKind.String)
+                    .Select(item => item.GetString()),
+                JsonElement { ValueKind: JsonValueKind.String } text => ReadJsonList(text.GetString()),
+                string text => ReadJsonList(text),
+                IEnumerable<string> list => list,
+                _ => []
+            };
+
+            return aliases
+                .Where(alias => !string.IsNullOrWhiteSpace(alias))
+                .Select(alias => alias!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Sets the admin sections the role's members may open (Roadmap D66): the aliases of <c>ISection</c>s. An
+        /// empty list removes the entry. Saved with the role (<c>IMembershipService.SaveRoleAsync</c>).
+        /// </summary>
+        public static void SetAllowedSections(this Role role, IEnumerable<string> sectionAliases)
+        {
+            var aliases = sectionAliases
+                .Where(alias => !string.IsNullOrWhiteSpace(alias))
+                .Select(alias => alias.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (aliases.Count == 0)
+            {
+                role.ExtendedData.Remove(Constants.ExtendedDataKeys.AllowedSections);
+            }
+            else
+            {
+                role.ExtendedData[Constants.ExtendedDataKeys.AllowedSections] = aliases;
+            }
+        }
+
+        private static List<string?> ReadJsonList(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return [];
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<string?>>(json) ?? [];
+            }
+            catch (JsonException)
+            {
+                return [];
+            }
         }
 
         /// <summary>
