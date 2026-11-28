@@ -106,6 +106,17 @@ internal sealed class ZauberSettingsValidator(IServiceProvider services) : IVali
     /// </summary>
     internal static IEnumerable<string> FindWarnings(ZauberSettings settings, ExtensionManager extensionManager)
     {
+        // A blank storage provider is a site that stores no files (D83): it starts, as it always has, but its media
+        // section cannot upload. A blank email provider is a site that sends no email, as Umbraco runs without SMTP,
+        // so it is not warned about: a send says what to set (ProviderService.GetRequiredEmailProvider).
+        if (string.IsNullOrWhiteSpace(settings.Plugins.StorageProvider))
+        {
+            yield return "Zauber:Plugins:StorageProvider is empty, so this site has no media storage: uploads and " +
+                         "permanent deletes of media files are refused. Set it to " +
+                         "ZauberCMS.Core.Providers.DiskStorageProvider (the default) or to the full type name of an " +
+                         "IStorageProvider of your own.";
+        }
+
         if (!string.IsNullOrWhiteSpace(settings.SiteUrl) &&
             !(Uri.TryCreate(settings.SiteUrl, UriKind.Absolute, out var siteUri) &&
               (siteUri.Scheme == Uri.UriSchemeHttp || siteUri.Scheme == Uri.UriSchemeHttps)))
@@ -137,6 +148,71 @@ internal sealed class ZauberSettingsValidator(IServiceProvider services) : IVali
                          "the scanned assemblies, so the account pages use no layout. Use the layout's full type name.";
         }
     }
+
+    /// <summary>
+    /// The settings that decide which services <c>AddZauberCms(builder)</c> registers are read from configuration
+    /// (D81), as Umbraco reads what it composes from <c>builder.Config</c>: the database (<c>DatabaseProvider</c>,
+    /// <c>ConnectionString</c>, which the installer writes to configuration and the DbContexts read from it) and
+    /// whether Redis is used, which is decided while the services are registered. What does not apply is a start-up
+    /// warning: a database setting changed in code (<c>Configure&lt;ZauberSettings&gt;</c>, <c>PostConfigure</c>), and
+    /// Redis set after the services were registered, in code or by a configuration source added after
+    /// <c>AddZauberCms(builder)</c> (ZA-231). No value is written out: a connection string holds a password.
+    /// </summary>
+    /// <param name="composed">The settings as the bootstrap read them while it registered the services.</param>
+    /// <param name="configured">The settings as configuration has them now, every source included.</param>
+    /// <param name="options">The settings as <c>IOptions&lt;ZauberSettings&gt;</c> has them, code changes included.</param>
+    internal static IEnumerable<string> FindChangesThatDoNotApply(ZauberSettings composed, ZauberSettings configured,
+        ZauberSettings options)
+    {
+        const string setInConfiguration = "Set it in configuration instead (appsettings.json, environment " +
+                                          "variables, user secrets or another configuration source).";
+        if (!string.Equals(configured.DatabaseProvider?.Trim(), options.DatabaseProvider?.Trim(),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            yield return "Zauber:DatabaseProvider is changed in code (IOptions<ZauberSettings> differs from " +
+                         "configuration), which does nothing: the database is read from configuration, where the " +
+                         "installer writes it. " + setInConfiguration;
+        }
+
+        if (!string.Equals(configured.ConnectionString, options.ConnectionString, StringComparison.Ordinal))
+        {
+            yield return "Zauber:ConnectionString is changed in code (IOptions<ZauberSettings> differs from " +
+                         "configuration), which does nothing: the database is read from configuration, where the " +
+                         "installer writes it. " + setInConfiguration;
+        }
+
+        if (string.IsNullOrWhiteSpace(composed.RedisConnectionString) &&
+            !string.IsNullOrWhiteSpace(options.RedisConnectionString))
+        {
+            yield return "Zauber:RedisConnectionString is set " + RedisChangedBy(configured, options) + ", which " +
+                         "does nothing: whether Redis carries the cache clears between servers is decided when " +
+                         "AddZauberCms(builder) registers the services, so this site runs without Redis. Set it in " +
+                         "configuration, with every configuration source added before builder.AddZauberCms().";
+        }
+    }
+
+    /// <summary>
+    /// A change that would leave registered services unable to work, or <c>null</c>: Redis set when the services
+    /// were registered (D81) but emptied afterwards, in code or by a configuration source added after
+    /// <c>AddZauberCms(builder)</c>. The Redis services would have no address, so the start stops naming the setting
+    /// (D48).
+    /// </summary>
+    internal static string? ChangeThatCannotWork(ZauberSettings composed, ZauberSettings configured,
+        ZauberSettings options) =>
+        !string.IsNullOrWhiteSpace(composed.RedisConnectionString) &&
+        string.IsNullOrWhiteSpace(options.RedisConnectionString)
+            ? "Zauber:RedisConnectionString was set when AddZauberCms(builder) registered the services, so the Redis " +
+              "services are registered, but it is emptied " + RedisChangedBy(configured, options) + ": they would " +
+              "have no address. To run without Redis, remove it from configuration, with every configuration source " +
+              "added before builder.AddZauberCms()."
+            : null;
+
+    // Where a Redis change made after the services were registered came from: code, when the options differ from
+    // configuration, else a configuration source added after AddZauberCms(builder)
+    private static string RedisChangedBy(ZauberSettings configured, ZauberSettings options) =>
+        string.Equals(configured.RedisConnectionString, options.RedisConnectionString, StringComparison.Ordinal)
+            ? "by a configuration source added after AddZauberCms(builder)"
+            : "in code (Configure<ZauberSettings>)";
 
     private static void AddIfFailed(List<string> failures, string? failure)
     {

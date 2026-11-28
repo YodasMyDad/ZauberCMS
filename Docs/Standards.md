@@ -128,8 +128,20 @@ removed line is a breaking change for the release notes.
   or environment variables keeps the higher indexes of `appsettings.json` (`["uploads"]` over
   `["img", "images", "media"]` gives `uploads, images, media`), so tell site builders to set a whole list in one
   place, or remove it from the earlier file. A blank `Zauber:Plugins:StorageProvider` or `EmailProvider` passes the
-  check and means no provider, which does not stop the start: media upload or sending email then fails when it is
-  used (a `NullReferenceException`, not a message naming the setting).
+  check and means no provider (D83): a blank storage provider is a start-up warning, and an upload or a permanent
+  delete of a file is refused with `ProviderService.NoStorageProviderMessage`; a blank email provider is a site that
+  sends no email (no warning, as Umbraco runs without SMTP), and a send throws `InvalidOperationException` with
+  `NoEmailProviderMessage`. Code that needs a provider calls `ProviderService.GetRequiredStorageProvider()` /
+  `GetRequiredEmailProvider()` or checks the nullable property, never `StorageProvider!` (a test looks for it).
+- Settings set in code (D81): a site may change `ZauberSettings` with `Configure<ZauberSettings>`/`PostConfigure`,
+  so code reads them from `IOptions<ZauberSettings>` where they are used, including the options of another library
+  that the bootstrap sets from them (an `IConfigureOptions<T>` in `Settings/OptionsFromZauberSettings.cs`, never a
+  lambda over the bootstrap's copy). Only a setting that decides which services `AddZauberCms(builder)` registers is
+  read from configuration (`DatabaseProvider` and `ConnectionString`, which the DbContexts read live, and
+  `RedisConnectionString` set or not, decided while registering); it gets a check in
+  `ZauberSettingsValidator.FindChangesThatDoNotApply` / `ChangeThatCannotWork`, so a change made in code, or Redis
+  changed by a configuration source added after `builder.AddZauberCms()` (ZA-231), is a start-up warning (or stops
+  the start when it cannot work). Tell site builders to add configuration sources before `builder.AddZauberCms()`.
 - Code that runs in `AddZauberCms(builder)` has no logger yet: add to `StartupMessages`, which `AddZauberCms(app)`
   writes to the log (category `ZauberCMS.Startup`). It writes them before it reads the settings, and logs a
   setting that fails as critical in the same category before the start stops (ZA-176).

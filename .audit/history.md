@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11h (2026-11-28, merged after 10g-2): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch) · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-191, ZA-192, ZA-195, ZA-196 fixed (D80–D83); ZA-230 found and fixed while building; ZA-231…ZA-234 found by the audit and fixed (Low); ZA-235 recorded (Low, Phase 12); ZP-002, ZP-003 proposed. Next free ID: ZA-236 (ZA-220…ZA-229 unused; ZA-240…ZA-249 held by a part in progress)
 After Roadmap Phase 10g-2 (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the part (a diff reviewer and two unit reviewers): ZP-001 built (D72); ZA-214, ZA-215 fixed (D73); ZA-216, ZA-197 found while building and fixed; ZA-218 (Medium) found by the audit and fixed; ZA-217, ZA-219 recorded (Low, Phase 12). Next free ID: ZA-220
 After Roadmap Phase 10g (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-188 fixed (D38 phase, D66–D71); ZA-199…ZA-201 found and fixed while building; ZA-202…ZA-213 found by the audit and fixed (3 High, 4 Medium, 5 Low); ZA-214, ZA-215 recorded (Low, Phase 12); ZP-001 proposed. Next free ID: ZA-216
 After Roadmap Phase 10f-2 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1221 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · `doublecheck` self-review on the part. ZA-187, ZA-189, ZA-190 fixed (D64, D65); Phase 10f done. Next free ID: ZA-199
@@ -39,6 +40,51 @@ After Roadmap Phase 3 (2026-11-25): Build PASS · Warnings: 0 · Tests: 65 (62 p
 After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Outdated majors: 1 held on purpose (Serilog.AspNetCore 11, needs .NET 11 packages)
 
 ## Fixed, resolved, closed and declined
+
+- **Roadmap Phase 11h (2026-11-28, the Phase 11 audit's leftovers, D80–D83).** Release notes in the Roadmap's
+  "Phase 11h". Full suite 1400 on its branch (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
+  Redis; Release build 0 warnings; vulnerable packages 0; template smoke test passes. `/audit changed` over the
+  phase: a diff reviewer given the code and a unit reviewer for bootstrap and settings, each reproducing in a
+  worktree of its own.
+  - **ZA-191 (Low) — fixed.** `GetContentFromRequestParameters.IgnoreInternalRedirect` returns the page at the
+    address itself, for the URL lookup and a content finder's page; cached apart (D80). Tests:
+    `Content/ContentIntegrityTests` ZA191 ×3 (×3 providers), `Content/ContentFinderTests` ZA191; seen failing with
+    the condition reverted.
+  - **ZA-192 (Low) — fixed.** Settings set in code reach ImageResize, Identity, the rate limits, the Redis address and
+    detailed errors (`IConfigureOptions` over `IOptions<ZauberSettings>`); the database and Redis on or off come from
+    configuration, with start-up warnings (D81). Tests: `Bootstrap/SettingsInCodeTests` ZA192 ×13 (the rate limit
+    over HTTP on Kestrel); 9 fail on the old bootstrap.
+  - **ZA-195 (Low) — fixed.** CI's commit-back replays the bump on the newest `main-static`, keeping a higher version
+    and a person's change, with retries (D82). Checked: actionlint 1.7.12 and shellcheck 0.11.0 clean; the stamp and
+    commit-back steps run as written against a bare origin in the .NET SDK container, 35 checks over 9 cases (the old
+    step conflicted in the first); again by the diff reviewer on Ubuntu 24.04. CI itself not run (nothing pushed to
+    `main-static`). Test: `Packaging/BuildBaselineTests` ZA195 (fails on the old workflow).
+  - **ZA-196 (Low) — fixed.** A blank storage provider is a start-up warning and an upload or file delete is refused
+    naming the setting; a blank email provider sends none and a send throws `InvalidOperationException` naming it;
+    `ProviderService.GetRequiredStorageProvider()`/`GetRequiredEmailProvider()` (D83). Tests:
+    `Bootstrap/BlankProviderTests` ZA196 ×7 (with a source scan for `StorageProvider!`/`EmailProvider!`); the upload
+    case and the scan fail with the fix reverted.
+  - **ZA-230 (Low, found while building) — fixed.** `Zauber:ShowDetailedErrors` never reached static rendering
+    (ASP.NET's post-configure of `RazorComponentsServiceOptions` reset it); now a post-configure step. Tests:
+    `SettingsInCodeTests` detailed errors ×4.
+  - **ZA-231 (Low, audit) — fixed.** A configuration source added after `builder.AddZauberCms()` was reported as a
+    change made in code, wrongly for the connection string the DbContexts use: the database settings are compared
+    with the configuration at `AddZauberCms(app)`, and the Redis messages name code or the later source; the template's
+    `Program.cs` says to add sources first. Tests: `SettingsInCodeTests` ZA231 ×3; all three fail with the old compare.
+  - **ZA-232 (Low, audit) — fixed.** The comment that a site's own `Configure<T>` always wins (untrue for the rate-limit
+    policies and detailed errors) says what happens. No test (a comment).
+  - **ZA-233 (Low, audit; the old step had it too) — fixed.** The commit-back stops with a warning when `main-static`
+    no longer contains the commit built, instead of replaying commits a rollback removed. Checked: simulation case 9;
+    `BuildBaselineTests` ZA195 pins the order.
+  - **ZA-234 (Low, audit) — fixed.** The commit-back's messages: a replay with nothing left says so, a refused push is
+    "refused", not "moved". Checked: simulation cases 5 and 6.
+  - Recorded: **ZA-235** (Low, older) out-of-range `Zauber:ImageResize` values are not named at start-up (Phase 12).
+  - **ZP-002 and ZP-003 (proposals) — recorded**, owner decision: run CI's commit-back step in a test against a
+    local origin instead of pinning its text; let a site replace the `login`/`register` rate-limit policies. Numbered
+    at the merge (no ZP range was reserved on the branch).
+  - **Merged onto Phase 10g-2** (made alongside it from 7442f14): 10g-2's change-of-address email in `EmailService`
+    used `providerService.EmailProvider!`, which the ZA-196 source scan refuses; it calls `GetRequiredEmailProvider()`
+    as the other sends do. Full suite after the merge 1489 (all pass, none skipped) on the same four.
 
 - **Roadmap Phase 10g-2 (2026-11-28, back-office roles follow-ups, D72–D73).** Release notes in the Roadmap's
   "Phase 10g-2". Full suite 1455 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis;

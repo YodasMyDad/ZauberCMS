@@ -39,7 +39,10 @@
   **Phase 10g-2 done** (your account for every back-office user, D72, ZP-001; API keys by name, D73, ZA-214, ZA-216;
   the access checks inside the error boundaries, ZA-215, with ZA-197; ZA-218 found by its `/audit changed` and
   fixed; ZA-217 and ZA-219 recorded; 2026-11-28).
-  **9 open findings** (0 Critical, 0 High, 0 Medium, 9 Low), each one assigned below to a phase (10h, 10i, 12).
+  **Phase 11h done** (the Phase 11 audit's leftovers: `IgnoreInternalRedirect` honoured, settings set in code,
+  CI's commit-back, blank providers; D80–D83, ZA-191, ZA-192, ZA-195, ZA-196; ZA-230 found and fixed while
+  building, ZA-231…ZA-234 found by its `/audit changed` and fixed, ZA-235 recorded for Phase 12; 2026-11-28).
+  **6 open findings** (0 Critical, 0 High, 0 Medium, 6 Low), each one assigned below to a phase (10h, 10i, 12).
   **There is no Backlog** (owner, 2026-11-27): every open item is in a phase, and a new finding goes into the phase
   whose theme fits. **Next: Phase 10h** (admin localisation, D37, ZA-129; it covers 10g's new screens), then 10i,
   then Phase 12 (design questions inside a phase are decided Umbraco's way and recorded, as the owner delegated).
@@ -124,6 +127,10 @@
 | D71 | **The role every registration gets opens no section of the admin.** `Zauber:NewUserStartingRole` (default `Member`) is given to whoever registers or first signs in externally, so sections on it would let anyone with an email address into the admin: `BackOfficeAccessService` leaves it out of every user's sections, whatever is stored on it, and saving sections on it is refused, for administrators too, with the reason on its role page (which shows a note instead of the boxes). A site that wants registrants in the admin gives them another role afterwards. Nothing changes on upgrade (no role had sections before D38); a new site whose starting role is `Editor` gets the seeded `Editor` with no effect until it changes the setting. Found by the phase's audit (ZA-206). Umbraco keeps members (who register) and back-office users apart, so a registration can never reach the back office; ZauberCMS has one user table, so it keeps the registration role out of the back office instead. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g) | D38, D23 |
 | D72 | **Every back-office user changes their own name, email address and password in "Your account", a side panel from the profile menu, and nothing else of their account there.** The name changes at once (checked as any user name; the security stamp is kept, so no session ends: users sign in with their email address, and a sign-in shows the new name once it is renewed). The address needs the current password and moves only when the link sent to the new address is opened (ASP.NET Identity's change-email token, through the existing confirmation page); until then the old address signs in; opening it ends the user's other sessions, and the confirmation page renews the sign-in of that same user in that browser; one link per account per minute on each server, and only the newest works (a link for an address the user then replaced, mistyped say, is refused, so its reader cannot take the account); whether the new address belongs to another account is not said (that would tell a user who has an account), the link is refused when it is opened; a confirmed address on the admin list does not promote (D22). The password needs the current one, then the new one twice and the site's password rules; a wrong current password counts towards the lockout as at sign-in (six lock the account for five minutes); the new security stamp ends the other sessions, and this browser's sign-in is renewed through the refresh endpoint (a full load, so the panel says to save first). Each change writes an audit row (never the address). The panel acts only on whoever is signed in, read from the sign-in for each change and never taken from a parameter: that is the access check (D27); roles, sections and profile properties stay on the user's page in Users (D68), which the panel opens for users who may open Users; there, on their own page, the address box is read-only and "Change Password" opens the panel, so the current password is asked whoever changes their own (Umbraco asks for the old password when a user changes their own in the user editor too). The service side, `IMembershipService.ChangeUserNameAsync`, `ChangePasswordAsync` and `RequestEmailChangeAsync`, checks no access, as every service (D27). Umbraco's current-user panel (the avatar) gives every back-office user Change password (the current password asked; an administrator resetting another user's is not), Log out, two-factor and external logins, and Edit (their user in the Users section) only to users who have that section; name and email are changed there, at once and without a confirmation. ZauberCMS adds name and email to the panel because ZP-001 asked for them for users without Users, and because it is the session's owner, not a user manager, who changes the address, the address is confirmed by link and needs the current password, so a stolen session cannot move the account to an address of its own and reset the password from there (re-authentication for sensitive changes, as OWASP advises). Not built: avatar, a language per user, two-factor and external-login management (separate features in Umbraco). (owner delegated to Umbraco parity, 2026-11-28, Phase 10g-2) | ZP-001, D70, D27, D68 |
 | D73 | **API keys are referred to by name; the admin never shows a key's value once it is saved; a site can keep its keys in configuration.** `IApiKeyService` (Core, `Settings`, scoped, replaceable) lists the names and gives a value on the server where it is used: `Zauber:ApiKeys:<name>` from configuration (appsettings, environment variables, user secrets, a key vault; read again, as it had been read by nothing since the keys moved to Global Settings in 2024, ZA-216) wins over a key of the same name in Global Settings, and an empty value is ignored (the shipped `appsettings.json` has an empty `TinyMCE`). The API Key Picker and TinyMCE's settings store the key's name, not its value; `GetPickedApiKeyAsync` reads a value stored before v5 (the key itself) as it is, and the picker shows such a value as its key's name and stores the name the next time the page or the settings are saved. No data migration: the values live in pages, drafts, versions and block snapshots on three providers, as in D30. Global Settings lists the names; each value box starts empty (an empty box keeps the saved value, a typed one replaces it), and the names configuration sets are listed. A key that a script in the browser needs (TinyMCE's cloud key, the Maps JavaScript key) still reaches the browser, as those providers intend; restrict it to the site's domains with the provider. Because TinyMCE sends whichever key its settings name to the browser, whoever may change content types can see any key's value through it, as they could before (the settings then held the value itself); keys that must stay on the server belong in a configuration section of the site's own, not in `Zauber:ApiKeys` or Global Settings, which are for keys editors and views pick by name. Pages and settings keep the name, so renaming or removing a key leaves them without it (the Global Settings page says so; the picker then says the saved key is not one of the site's keys). Umbraco keeps secrets in configuration (appsettings, environment variables, user secrets, Azure Key Vault) and its back office never shows them; it has no API-key store in the back office at all. ZauberCMS keeps the Global Settings keys (sites use them) but write-only, and reads configuration again so a site can keep its keys out of the database as Umbraco does. Rejected: encrypting the values in the database (the server needs the plain value anyway, and it adds a key-management dependency to every deployment), and a data migration of stored values. (owner delegated to Umbraco parity, 2026-11-28, Phase 10g-2) | ZA-214, ZA-216, D30 |
+| D80 | **`GetContentFromRequestParameters.IgnoreInternalRedirect` is honoured: true returns the page at the address itself, false (the default, and every page request) the page its internal redirect shows.** The switch was read until a 2024 refactor of the lookup dropped it, and its one caller (a layout that loaded the root page with its children for the navigation while the root showed another page) went with it; it stayed in the cache key. Honoured rather than made obsolete: it costs one condition, nothing changes for a caller that does not set it, and it is the only way to look a page up by address, with the domain rule and the live rule, without following the redirect. It applies to the URL lookup and to a page a content finder names (D55); the two answers are cached apart; only a live page is returned either way. Umbraco makes the same split: its router (`PublishedRouter`) always follows `umbracoInternalRedirectId` when it routes a request, while its content cache's `GetByRoute`/`GetAtRoot` return the node at the route without following it, which is what navigation and site code use. (owner delegated to Umbraco parity, 2026-11-28, Phase 11h) | ZA-191, D55 |
+| D81 | **Settings changed in code count wherever ZauberCMS uses them; only the ones that decide which services are registered come from configuration, and a change in code to those is a start-up warning.** `AddZauberCms(builder)` set ImageResize, Identity's password rules and confirmed-account sign-in, the login and register rate limits, the Redis address and Blazor's detailed errors from its own copy of the configuration, so a site's `Configure<ZauberSettings>`/`PostConfigure` changed `IOptions<ZauberSettings>` but not those. Each is now an internal `IConfigureOptions<T>` (detailed errors: `IPostConfigureOptions<T>`) over `IOptions<ZauberSettings>` (`Settings/OptionsFromZauberSettings.cs`), run when those options are first built; a site's own `Configure<IdentityOptions>` registered after `AddZauberCms` still runs after them and wins. Read while composing, from configuration: `DatabaseProvider` and `ConnectionString` (which DbContext is registered; the installer writes them to configuration, D19, D40) and whether `RedisConnectionString` is set (the Redis cache, the invalidation bus and its listener). `AddZauberCms(app)` compares those with the options: a database setting changed in code (the options differ from the configuration as it is then; the DbContexts read the configuration live, so a source added after `AddZauberCms(builder)` is used, ZA-231) is a warning that names the setting and shows no value (a connection string holds a password); Redis set after the services were registered, in code or by a configuration source added after `AddZauberCms(builder)`, is a warning, and Redis emptied that way while it was set stops the start (its services would have no address, D48). The template's `Program.cs` says to add configuration sources before `builder.AddZauberCms()`. Rejected: building a second service provider to read the options while composing (ASP0000, a parallel singleton container), and reading every setting from configuration only (a site that keeps secrets in a vault sets them in code). Umbraco does the same: its settings are read through `IOptions<T>` by `IConfigureOptions` classes (`ConfigureBackOfficeIdentityOptions` from its password and security settings, `ConfigureImageSharpMiddlewareOptions` from `ImagingSettings`), so `Configure<T>` in code works, and what it composes (the runtime mode, the database, ModelsBuilder's mode) it reads from `builder.Config`. (owner delegated to Umbraco parity, 2026-11-28, Phase 11h) | ZA-192, D48, D19 |
+| D82 | **The stamped version is committed back on top of whatever `main-static` has by then; only this job's own earlier bumps are overridden, never a person's change or a higher version.** The publish jobs already ran one at a time (the `concurrency` group), so with two pushes in flight the second job's `pull --rebase` replayed its bump over the first job's bump of the same lines and conflicted, after its packages were out. Each attempt now fetches `main-static`; it commits nothing when that already has a higher version (a rerun of an older release); it only warns when a commit after the one built changed one of the three stamped files and is not one of this job's bumps (a person's version or edit: that commit's own run stamps it); otherwise it replays the bump with `rebase -X theirs` (where only bumps changed the lines, this version wins) and pushes, and a push that loses a race is tried again, five times at most. Rejected: dropping the commit-back and taking the version from the tags alone (the version rule already works from the tags, D44, but the repository's files would lag the releases: a change to the owner's release flow for a defect that the rebase fixes). Umbraco commits nothing back: Nerdbank.GitVersioning computes the version from `version.json` and the git height, and a release manager tags; ZauberCMS keeps its push-to-publish flow (D44) and makes the commit-back safe. (owner delegated to Umbraco parity, 2026-11-28, Phase 11h) | ZA-195, D44 |
+| D83 | **A blank `Zauber:Plugins:StorageProvider` is a site that stores no files and a blank `EmailProvider` a site that sends no email; both start, and what needs one says which setting to set.** D48 kept blank as "no provider" (a site that runs with it must still start after the update), but an upload or an email then threw `NullReferenceException`. Storage: a warning at every start (a media section that cannot upload is almost never meant), and an upload or a permanent delete of a file is refused with a message that names the setting (`ProviderService.NoStorageProviderMessage`: a failed `HandlerResult`, the upload dialog's error). Email: no start-up warning, since a site may send none; a send throws `InvalidOperationException` naming the setting (`NoEmailProviderMessage`), as the SMTP provider already does when `Zauber:Email:Smtp:Host` is empty (ZA-032), and the callers that log and carry on (forgot password, the set-password email, a resent confirmation) log that. New: `ProviderService.GetRequiredStorageProvider()`/`GetRequiredEmailProvider()`, which throw it; the nullable properties stay; a test fails on `StorageProvider!`/`EmailProvider!` anywhere in the packages. Umbraco runs without SMTP configured (`IEmailSender.CanSendRequiredEmail()` is false, a send is skipped with a log line, and the features that need email check it first); it has no setting for "no media storage" (its media file system is always there), so a blank one here is a warning, not a start-up failure. (owner delegated to Umbraco parity, 2026-11-28, Phase 11h) | ZA-196, D48, ZA-032 |
 
 ## Working rules for the rework
 
@@ -2084,17 +2091,97 @@ The owner answered the audit's two questions (2026-11-27): ZA-185 "Register them
     daily clean-up.
   - Breaking: none.
 
+#### Phase 11h — Phase 11 audit leftovers — DONE (2026-11-28)
+The four Low findings the Phase 11 audit assigned to Phase 12, decided Umbraco's way (D80–D83) and done before it.
+- **`IgnoreInternalRedirect` honoured (ZA-191, D80).** `LoadEntryAsync` follows a page's `InternalRedirectId` only
+  when the lookup does not set it, for the URL lookup and for a page a content finder names; the finder's page cache
+  key now carries the flag, as the URL lookup's already did. History: the flag was read until the lookup moved into
+  the middleware (2024); its one caller, a layout loading the root with its children, went with that refactor.
+- **Settings set in code reach the bootstrap's options (ZA-192, D81).** `Settings/OptionsFromZauberSettings.cs`
+  (internal): `IConfigureOptions` for ImageResize, Identity (password rules, confirmed-account sign-in), the rate
+  limiter's `login`/`register` policies and the Redis cache's address, and `IPostConfigureOptions` for Blazor's
+  detailed errors, all over `IOptions<ZauberSettings>`; `AddZauberCms(builder)` registers them instead of lambdas
+  over its own copy. The copy is kept as `ComposedZauberSettings` (internal) for what decides registrations: Redis
+  on or off. `ZauberSettingsValidator.FindChangesThatDoNotApply` (warnings, no values written: the database
+  settings against the configuration as it is at `AddZauberCms(app)`, Redis against the copy) and
+  `ChangeThatCannotWork` (Redis emptied after registration: the start stops) run in `AddZauberCms(app)`. ImageResize
+  validates its options at start too: when the Zauber settings fail their own check, its options are not a second
+  copy of that error. `AddDatabaseDeveloperPageExceptionFilter` is registered in Development, where the developer
+  exception page that uses it is shown (it was: with `ShowDetailedErrors` outside Production).
+- **CI's commit-back made safe (ZA-195, D82).** `.github/workflows/ci.yml`, the publish job's last step: fetch, keep
+  a higher version, keep (and warn about) a person's later change to the three stamped files, else `rebase -X
+  theirs` over the job's own earlier bumps and push, five attempts. Checked with `actionlint` 1.7.12 and `shellcheck`
+  0.11.0 (clean), and by running the stamp and commit-back steps as written against a scratch repository with a bare
+  origin in the .NET SDK container (Debian: bash 5.2, mawk): 35 checks over 9 cases (two pushes in flight, a single
+  push, a person's later version, a person's later edit of the props, a rerun of an older release, a push that loses
+  a race, a rerun of the newest release, a prerelease and its release, a rollback of `main-static` past the commit);
+  the old step conflicted in the first case. The audit's diff reviewer ran it again on Ubuntu 24.04 (git 2.43, mawk).
+- **Blank providers name the setting (ZA-196, D83).** `ProviderService.GetRequiredStorageProvider()` /
+  `GetRequiredEmailProvider()` and `NoStorageProviderMessage` / `NoEmailProviderMessage` (public, new);
+  `MediaService.SaveMediaAsync` and the permanent delete refuse with the message, the upload dialog shows it, the six
+  email sends and `FileExtensions`' commented-out helper use the required getters; `FindWarnings` warns about a blank
+  storage provider.
+- **ZA-230 (Low, found while building) — fixed.** `Zauber:ShowDetailedErrors` never reached static rendering:
+  ASP.NET's post-configure of `RazorComponentsServiceOptions` sets `DetailedErrors` from its own `DetailedErrors`
+  key alone, which undid `AddRazorComponents(c => c.DetailedErrors = true)`. The Zauber setting is now a post-configure
+  step (only ever turning it on, never in Production).
+- **`/audit changed` over the phase** (a diff reviewer given the code and a unit reviewer for bootstrap and settings,
+  both reproducing with throwaway tests in worktrees of their own): nothing Critical, High or Medium. Fixed (Low):
+  ZA-231 a configuration source added after `builder.AddZauberCms()` (Key Vault, another JSON file) was reported as
+  "changed in code", and for the connection string, which the DbContexts read live, the warning was wrong: the
+  database settings are now compared with the configuration as it is at `AddZauberCms(app)`, Redis says which of
+  code or a later source changed it; ZA-232 the comment that a site's own `Configure<T>` always wins, untrue for the
+  rate-limit policies and detailed errors; ZA-233 the commit-back would put back commits that a rollback of
+  `main-static` removed (it now stops with a warning when `main-static` no longer holds the commit built); ZA-234 the
+  commit-back said "Committed" for a push with nothing in it and "moved" for any refused push. Recorded: ZA-235 (Low,
+  older, Phase 12) an out-of-range `Zauber:ImageResize` value stops the start with ImageResize's own message, after
+  the migrations, not naming the Zauber setting. Two proposals, numbered at the merge: ZP-002 run the commit-back
+  step in a test against a local origin instead of pinning its text; ZP-003 let a site replace the `login`/`register`
+  rate-limit policies (both owner decision, [report.md](../.audit/report.md)).
+- Tests (34 new cases): `Content/ContentIntegrityTests` ZA191 ×3 (×3 providers: the page itself and the redirect
+  target cached apart, the root with its children, still only a live page), `Content/ContentFinderTests` ZA191 (a
+  finder's page), `Bootstrap/SettingsInCodeTests` ZA192 ×13 (ImageResize, Identity and a site's own
+  `Configure<IdentityOptions>` winning, the login limit over HTTP on Kestrel, the Redis address, detailed errors in
+  three environments and by default, the warnings with no values, the Redis failure) and ZA231 ×3 (a later
+  configuration source: its connection string used with no warning, Redis set or emptied by it named as
+  configuration), `Bootstrap/BlankProviderTests` ZA196 ×7 (upload and permanent delete refused, sends fail naming
+  the setting, the getters, the warning, a source scan for `StorageProvider!`/`EmailProvider!`),
+  `Packaging/BuildBaselineTests` ZA195. Seen failing with the fix reverted: ZA191 (3), ZA192 (9 of 13, the old
+  bootstrap), ZA195, ZA196 (upload, source scan), ZA231 (3); ZA-230's cases fail on the old bootstrap too. Full suite
+  1400 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and Redis; Release build 0 warnings;
+  vulnerable packages 0; the template smoke test passes (Windows PowerShell 5.1).
+- **Not verified:** CI itself (it runs only on GitHub, and nothing was pushed to `main-static`; the first release
+  push after this is the first real run of the new step); a real Redis server with its address set in code (the
+  options are checked, the Redis tests use the configured address); the upload dialog's message in a browser.
+- **Release notes (D18):**
+  - `GetContentFromRequestParameters.IgnoreInternalRedirect` works: true returns the page at the address itself
+    (also for a page a content finder names); page requests still follow internal redirects.
+  - Settings changed in code (`Configure<ZauberSettings>`, `PostConfigure`) now reach ImageResize, Identity's
+    password rules and `SignInRequireConfirmedAccount`, the login and registration rate limits, the Redis address and
+    the detailed errors; before, only configuration did. `DatabaseProvider`, `ConnectionString` and whether
+    `RedisConnectionString` is set are still read from configuration: a change to them in code is a new start-up
+    warning, and Redis emptied in code while configuration sets it stops the start with a message. Redis on or off
+    is decided while `builder.AddZauberCms()` runs, so a configuration source that sets it must be added before that
+    line (one added after is now a warning); the template's `Program.cs` says so.
+  - A blank `Zauber:Plugins:StorageProvider` is a start-up warning; an upload or a permanent delete of a file is
+    refused with a message that names the setting. A blank `EmailProvider` sends no email: a send throws
+    `InvalidOperationException` naming the setting (was `NullReferenceException`). New:
+    `ProviderService.GetRequiredStorageProvider()`, `GetRequiredEmailProvider()` and the two message constants.
+  - `Zauber:ShowDetailedErrors` (outside Production) now also turns on static rendering's detailed errors; the
+    database error page filter is registered in Development whatever the setting.
+  - CI: a release pushed while the previous one is still publishing no longer fails its commit-back (build only).
+  - Breaking: none.
+
 ### Phase 12 — .NET 11 (D4)
-From the Phase 11 audit, to do with the release planning: **ZA-191** (`GetContentFromRequestParameters.IgnoreInternalRedirect`
-is public and never read: honour or obsolete it), **ZA-192** (settings set in code with `Configure<ZauberSettings>` do
-not reach the bootstrap's copy, which configures ImageResize, Identity, rate limits and Redis: document or read the
-options), **ZA-195** (CI's commit-back of the stamped version conflicts when two pushes to `main-static` are in flight;
-it heals on the next push), **ZA-196** (a blank storage or email provider passes start-up and the first upload or
-email throws `NullReferenceException` without naming the setting).
-(ZA-214 and ZA-215, from the Phase 10g audit, were done in Phase 10g-2.) From Phase 10g-2: **ZA-217** (a site with no
-`wwwroot` folder fails at start with an `ArgumentNullException` from the ImageResize options, `ZauberSetup.cs`: name
-the folder or create it), **ZA-219** (admin navigations to absolute addresses, `UserEditor`'s and `RoleEditor`'s
+The Phase 11 audit's four leftovers (ZA-191, ZA-192, ZA-195, ZA-196) were done in Phase 11h (D80–D83).
+(ZA-214 and ZA-215, from the Phase 10g audit, were done in Phase 10g-2.)
+From Phase 10g-2: **ZA-217** (a site with no
+`wwwroot` folder fails at start with an `ArgumentNullException` from the ImageResize options,
+`OptionsFromZauberSettings.cs` since 11h: name the folder or create it), **ZA-219** (admin navigations to absolute addresses, `UserEditor`'s and `RoleEditor`'s
 sign-in refresh and the `Urls.*` `NavigateTo` calls, ignore a path base; the panel's own were fixed in 10g-2).
+From the Phase 11h audit: **ZA-235** (an out-of-range `Zauber:ImageResize` value, such as a `DefaultQuality` outside
+1–100, passes the Zauber settings check and stops the start in ImageResize's own validator, after the migrations,
+without naming the setting: check it in `ZauberSettingsValidator`, D48).
 Retarget to `net11.0` (`Directory.Build.props`, and the template's own csprojs), move `AnalysisLevel` to 11.0 (D43) and the `global.json` SDK pin to the 11.0 band, move Microsoft/EF/Npgsql packages to 11.x (`Directory.Packages.props`), Serilog.AspNetCore 11 (ZauberCMS.RTE 4 is already in — it has a net11.0 build), full retest on SQLite, SQL Server, PostgreSQL and
 Redis, then release planning with the owner.
 

@@ -12,6 +12,12 @@ public class GetContentFromRequestParameters
     /// <summary>Also loads the page's live children.</summary>
     public bool IncludeChildren { get; set; }
 
+    /// <summary>
+    /// Returns the page at the address itself, not the page its internal redirect (<c>InternalRedirectId</c>) shows
+    /// (ZA-191, Roadmap D80): for code that wants the page as it is in the tree, such as a layout that lists the root
+    /// page's children when the root shows another page. A page request follows the redirect (false, the default),
+    /// as Umbraco's router follows <c>umbracoInternalRedirectId</c>; the two are cached apart.
+    /// </summary>
     public bool IgnoreInternalRedirect { get; set; }
 
     /// <summary>

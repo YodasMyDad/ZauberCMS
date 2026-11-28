@@ -154,13 +154,20 @@
             return;
         }
 
+        // A site whose storage setting is blank stores no files: the editor names the setting (ZA-196)
+        if (ProviderService.StorageProvider is not { } storage)
+        {
+            ErrorMessages.Add(new ResultMessage { Message = ProviderService.NoStorageProviderMessage, MessageType = ResultMessageType.Error });
+            return;
+        }
+
         _busy = true;
         try
         {
             var maxBytes = (await DataService.GetGlobalSettings()).MaxUploadFileSizeInBytes;
             foreach (var file in e.GetMultipleFiles(MaxAllowedFiles))
             {
-                var result = await ProviderService.StorageProvider!.CanUseFile(file, OnlyImages);
+                var result = await storage.CanUseFile(file, OnlyImages);
                 if (!result.Success)
                 {
                     ErrorMessages.AddRange(result.Messages.ErrorMessages());

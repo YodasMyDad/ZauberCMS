@@ -219,7 +219,9 @@ public partial class ContentService
             }
 
             var contentId = result.ContentId;
-            var cacheKey = $"ContentFinder-{bucket}-{contentId}-{request.IncludeChildren}-{matchedDomain?.Id}"
+            var cacheKey = string.Create(CultureInfo.InvariantCulture,
+                    $"ContentFinder-{bucket}-{contentId}-{request.IncludeChildren}-{request.IgnoreInternalRedirect}-" +
+                    $"{matchedDomain?.Id}")
                 .GenerateCacheKey<Models.Content>();
             var entry = await cacheService.GetSetCachedItemAsync(cacheKey, async () =>
             {
@@ -358,7 +360,10 @@ public partial class ContentService
     {
         var entryModel = new EntryModel();
         var content = page;
-        if (content?.InternalRedirectId != null && content.InternalRedirectId != Guid.Empty)
+        // A page request shows the page the internal redirect points at; IgnoreInternalRedirect asks for the page
+        // itself (ZA-191, D80). Either way only a live page is served.
+        if (!request.IgnoreInternalRedirect && content?.InternalRedirectId != null &&
+            content.InternalRedirectId != Guid.Empty)
         {
             var internalRedirectIdValue = content.InternalRedirectId.Value;
             content = await LiveContent(dbContext).Where(c => c.Id == internalRedirectIdValue)

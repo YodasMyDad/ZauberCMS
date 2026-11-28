@@ -28,7 +28,7 @@ namespace ZauberCMS.Core.Extensions;
         public static async Task<Media.Models.Media?> AddMediaToDb<T>(this IBrowserFile browserFile, string id, HandlerResult<T> result, 
             ProviderService providerService, ZauberDbContext dbContext)
         {
-            var fileSaveResult = await providerService.StorageProvider!.SaveFile(browserFile, null, id);
+            var fileSaveResult = await providerService.GetRequiredStorageProvider().SaveFile(browserFile, null, id);
             if (!fileSaveResult.Success)
             {
                 foreach (var errorMessage in fileSaveResult.ErrorMessages)
@@ -40,7 +40,7 @@ namespace ZauberCMS.Core.Extensions;
             }
 
             // Create the file
-            var file = await providerService.StorageProvider.ToMedia(fileSaveResult);
+            var file = await providerService.GetRequiredStorageProvider().ToMedia(fileSaveResult);
 
             // Save the file first
             dbContext.Medias.Add(file);

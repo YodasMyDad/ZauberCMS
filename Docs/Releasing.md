@@ -56,8 +56,14 @@
      `dotnet nuget push` sends each `.snupkg` with its package. On the first run a version that already exists on
      nuget.org fails the push; on a rerun of the tagged commit the packages pushed before are skipped
      (`--skip-duplicate`).
-  5. Commit `Bump version to X.Y.Z [skip ci]` back to `main-static` when the stamped files changed. Pull before
-     your next push.
+  5. Commit `Bump version to X.Y.Z [skip ci]` back to `main-static` when the stamped files changed, on top of
+     whatever `main-static` has by then (D82): the bump is replayed on the newest `main-static`, and where only this
+     job's earlier bumps changed the same lines, its version wins (two pushes in flight conflicted here before,
+     ZA-195). It commits nothing when `main-static` already has a higher version (a rerun of an older release), and
+     only warns when a later commit of a person changed one of the three files (that commit's own run stamps it). A
+     push that loses a race is fetched and replayed again, up to five times. Pull before your next push.
+     The publish jobs run one at a time in push order (a `concurrency` group); a run still waiting when a newer push
+     arrives is cancelled, and the newer one publishes both changes.
 - After a failed publish: rerun the job for the same commit (it finds its tag and finishes the push), or push a
   new commit (it gets the next version; the reserved one stays unused or partly published). Never delete a
   version tag whose packages reached nuget.org.

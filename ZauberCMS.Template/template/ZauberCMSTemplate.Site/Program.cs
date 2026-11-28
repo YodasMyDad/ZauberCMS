@@ -3,6 +3,8 @@ using ZauberCMS.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add configuration sources of your own (Key Vault, another JSON file) above this line: AddZauberCms reads some
+// Zauber settings while it registers the services. Settings changed in code (Configure<ZauberSettings>) work too.
 builder.AddZauberCms();
 
 var app = builder.Build();

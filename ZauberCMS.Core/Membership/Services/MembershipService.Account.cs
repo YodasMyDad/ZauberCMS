@@ -451,7 +451,7 @@ public partial class MembershipService
                     var callbackUrl = httpContextAccessor.ToAbsoluteUrl(Urls.Account.ResetPassword, new { code, email = parameters.Email });
 
                     var paragraphs = new List<string> { $"Please reset your password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>." };
-                    await providerService.EmailProvider!.SendEmailWithTemplateAsync(parameters.Email, "Reset Password", paragraphs);
+                    await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(parameters.Email, "Reset Password", paragraphs);
                 }
             }
         }
@@ -480,7 +480,7 @@ public partial class MembershipService
             $"To finish setting it up, choose its password by <a class=\"underline\" href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.",
             "If you did not register, you can ignore this email."
         };
-        await providerService.EmailProvider!.SendEmailWithTemplateAsync(user.Email!, "Finish setting up your account", paragraphs);
+        await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(user.Email!, "Finish setting up your account", paragraphs);
     }
 
     /// <summary>

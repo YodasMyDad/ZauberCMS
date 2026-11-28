@@ -90,7 +90,14 @@ public class MediaService(
         // If we are either creating a new file or over writing the current one
         if (parameters.FileToSave != null)
         {
-            result = await providerService.StorageProvider!.SaveFile(parameters.FileToSave, parameters.MediaToSave);
+            // A site whose storage setting is blank stores no files: say which setting, not a NullReferenceException (ZA-196)
+            if (providerService.StorageProvider is not { } storage)
+            {
+                result.AddMessage(ProviderService.NoStorageProviderMessage, ResultMessageType.Error);
+                return result;
+            }
+
+            result = await storage.SaveFile(parameters.FileToSave, parameters.MediaToSave);
             if (!result.Success)
             {
                 return result;
@@ -599,7 +606,7 @@ public class MediaService(
         var storage = providerService.StorageProvider;
         if (deleteFiles && storage == null)
         {
-            handlerResult.AddMessage("No storage provider is set up, so the files can't be removed", ResultMessageType.Error);
+            handlerResult.AddMessage(ProviderService.NoStorageProviderMessage, ResultMessageType.Error);
             return handlerResult;
         }
 

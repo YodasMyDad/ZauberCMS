@@ -240,25 +240,85 @@ jobs:
               "${skip[@]}"
           done
 
+      # By now main-static may have moved on: commits pushed after this one, and the bump of the release before
+      # this one (the concurrency group runs the publish jobs one at a time, in push order). Both bumps change the
+      # same lines, so a plain rebase conflicted after the packages were out (ZA-195). The bump is replayed on the
+      # newest main-static instead, its version lines winning, but only over this job's own earlier bumps: a
+      # version a person set in a later commit, or a newer version (a rerun of an older release), is kept, and that
+      # commit's own run publishes and stamps it. A push that loses a race is fetched and replayed again.
       - name: Commit the stamped version back to main-static
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
+          bot_email="41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add \
-            Directory.Build.props \
-            ZauberCMS.Template/ZauberCMS.Template.csproj \
+          git config user.email "${bot_email}"
+          files=(
+            Directory.Build.props
+            ZauberCMS.Template/ZauberCMS.Template.csproj
             ZauberCMS.Template/template/ZauberCMSTemplate.Site/ZauberCMSTemplate.Site.csproj
+          )
 
+          git add "${files[@]}"
           if git diff --cached --quiet; then
             echo "No version change to commit (already ${VERSION})."
             exit 0
           fi
-
           git commit -m "Bump version to ${VERSION} [skip ci]"
-          git pull --rebase origin main-static
-          git push origin HEAD:main-static
+          built="$(git rev-parse HEAD~1)"
+
+          # True when version $1 is above version $2 (X.Y.Z[-label]; a prerelease is below its release).
+          is_higher() {
+            local a="$1" b="$2"
+            if [[ "$a" == "$b" ]]; then return 1; fi
+            local a_core="${a%%-*}" b_core="${b%%-*}"
+            if [[ "$a_core" != "$b_core" ]]; then
+              [[ "$(printf '%s\n%s\n' "$a_core" "$b_core" | sort -V | tail -n 1)" == "$a_core" ]]
+              return
+            fi
+            if [[ "$a" == "$a_core" ]]; then return 0; fi
+            if [[ "$b" == "$b_core" ]]; then return 1; fi
+            [[ "$(printf '%s\n%s\n' "${a#*-}" "${b#*-}" | sort -V | tail -n 1)" == "${a#*-}" ]]
+          }
+
+          for attempt in 1 2 3 4 5; do
+            git fetch --quiet origin +refs/heads/main-static:refs/remotes/origin/main-static
+            tip=refs/remotes/origin/main-static
+
+            # A main-static rewritten without the commit built (a rollback): replaying would put it back (ZA-233)
+            if ! git merge-base --is-ancestor "${built}" "${tip}"; then
+              echo "::warning::${VERSION} is published and tagged, but not committed back: main-static no longer contains the commit it was built from."
+              exit 0
+            fi
+
+            current="$(git show "${tip}:Directory.Build.props" | sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' | head -n 1)"
+            if is_higher "${current}" "${VERSION}"; then
+              echo "main-static already has ${current}, above ${VERSION}: nothing to commit back."
+              exit 0
+            fi
+
+            # Commits since the one built that changed the version files, other than this job's bumps
+            others="$(git log --format='%h%x09%ae%x09%s' "${built}..${tip}" -- "${files[@]}" \
+              | awk -F '\t' -v bot="${bot_email}" \
+                  '!($2 == bot && $3 ~ /^Bump version to [^ ]+ \[skip ci\]$/) { print $1 " " $3 }')"
+            if [[ -n "${others}" ]]; then
+              echo "::warning::${VERSION} is published and tagged, but not committed back: main-static has later changes to the version files (${others//$'\n'/; }). Their own run publishes and stamps them."
+              exit 0
+            fi
+
+            # Only bumps of older releases changed these lines since: where they clash, this version wins
+            git rebase --quiet -X theirs "${tip}"
+            if [[ "$(git rev-parse HEAD)" == "$(git rev-parse "${tip}")" ]]; then
+              echo "main-static already has the ${VERSION} bump: nothing to commit back."
+              exit 0
+            fi
+            if git push origin HEAD:main-static; then
+              echo "Committed ${VERSION} back to main-static."
+              exit 0
+            fi
+            echo "The push to main-static was refused (attempt ${attempt}), usually because a push landed meanwhile; fetching it again."
+          done
+          echo "::error::${VERSION} is published and tagged, but committing it back to main-static failed 5 times."
+          exit 1

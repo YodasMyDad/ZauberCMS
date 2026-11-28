@@ -62,7 +62,7 @@ public class EmailService(
         if (isChange == "true")
         {
             // Sent to the new address only: the account moves there when the link is opened (Roadmap D72)
-            await providerService.EmailProvider!.SendEmailWithTemplateAsync(email, "Confirm your new email address",
+            await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(email, "Confirm your new email address",
             [
                 $"Someone asked to change the email address of an account on this site to this one. To confirm it, <a href='{link}'>click here</a>.",
                 "If it was not you, ignore this email: nothing changes until the link is opened."
@@ -72,7 +72,7 @@ public class EmailService(
 
         var paragraphs = new List<string> { $"Please confirm your account by <a href='{link}'>clicking here</a>." };
 
-        await providerService.EmailProvider!.SendEmailWithTemplateAsync(email!, "Confirm your email", paragraphs);
+        await providerService.GetRequiredEmailProvider().SendEmailWithTemplateAsync(email!, "Confirm your email", paragraphs);
     }
 
     /// <summary>

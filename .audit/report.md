@@ -1,8 +1,9 @@
 # ZauberCMS Audit Report
 
-Last full run: 5668365 (2026-11-25, full) · Last changed run: 7442f14+wt (2026-11-28, Roadmap Phase 10g-2, 7442f14..working tree) · Mode: fix
+Last full run: 5668365 (2026-11-25, full) · Last changed run: 7442f14+wt (2026-11-28, Roadmap Phase 11h, 7442f14..working tree, merged after Phase 10g-2) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
-Next free IDs: ZA-220 (findings) · ZP-002 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come)
+Next free IDs: ZA-236 (findings) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Parallel parts: ZA-220…ZA-229 unused (skipped, not to be filled); ZA-240…ZA-249 and ZP-010…ZP-019 held by a part in progress
+After Roadmap Phase 11h (2026-11-28, merged after 10g-2): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch) · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-191, ZA-192, ZA-195, ZA-196 fixed (D80–D83); ZA-230 found and fixed while building; ZA-231…ZA-234 found by the audit and fixed (Low); ZA-235 recorded (Low, Phase 12); ZP-002, ZP-003 proposed. Next free ID: ZA-236
 After Roadmap Phase 10g-2 (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · ZP-001 built (D72); ZA-214 (D73), ZA-215 fixed; ZA-216 and ZA-197 found while building and fixed; ZA-217 recorded (Phase 12); `/audit changed` over the part (a diff reviewer and two unit reviewers): ZA-218 (Medium) found and fixed with the part's own findings, ZA-219 recorded (Low, Phase 12). Next free ID: ZA-220
 After Roadmap Phase 10g (2026-11-28): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · Template smoke test passes · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-188 fixed (D38 phase, D66–D71); ZA-199…ZA-201 found and fixed while building; ZA-202…ZA-213 found by the audit and fixed (3 High, 4 Medium, 5 Low); ZA-214, ZA-215 recorded (Low, Phase 12); ZP-001 proposed. Next free ID: ZA-216
 After Roadmap Phase 10f-2 (2026-11-27): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1221 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis · ZA-187 (the URL lookup cached per domain and slug, D64), ZA-190 (domains matched below the path base everywhere, D64), ZA-189 (every redirect honoured, D65) fixed; Phase 10f done. Next free ID: ZA-199
@@ -17,14 +18,14 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 
 ## Summary
 
-| Severity | Open | New this run (Phase 10g-2 changed run) | Fixed this run (Phase 10g-2, its audit included) |
+| Severity | Open | New this run (Phase 11h and Phase 10g-2 changed runs) | Fixed this run (Phase 11h and Phase 10g-2, their audits included) |
 | --- | --- | --- | --- |
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 | 0 |
-| Medium | 0 | 1 (ZA-218) | 1 (ZA-218) |
-| Low | 9 | 3 (ZA-216, ZA-217, ZA-219) | 4 (ZA-197, ZA-214, ZA-215, ZA-216) |
+| Medium | 0 | 1 (10g-2: ZA-218) | 1 (10g-2: ZA-218) |
+| Low | 6 | 9 (11h: ZA-230…ZA-235; 10g-2: ZA-216, ZA-217, ZA-219) | 13 (11h: ZA-191, ZA-192, ZA-195, ZA-196, ZA-230…ZA-234; 10g-2: ZA-197, ZA-214…ZA-216) |
 
-Proposals: none open (ZP-001 built in Phase 10g-2, D72).
+Proposals: two open, ZP-002 and ZP-003 (Phase 11h, owner decision); ZP-001 built in Phase 10g-2 (D72).
 
 Phase 10g-2 run: on added lines, no sync-over-async, fire-and-forget, markup, raw SQL, local time, regex or
 suppression; the one `async void` is the modal's existing navigation handler, now guarded (ZA-197); three event
@@ -39,9 +40,8 @@ event-unsubscribe 22 · httpcontext-accessor 5 · exception-text 11. Flat agains
 suppressed warnings 35 → 18; every hit on an added line is moved code or a suppression with its reason.
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10h: ZA-129; 10i: ZA-128, ZA-194; 12: ZA-191, ZA-192, ZA-195, ZA-196, ZA-217, ZA-219); there is no Backlog
-(owner, 2026-11-27). The run's two owner questions
-were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
+a phase (10h: ZA-129; 10i: ZA-128, ZA-194; 12: ZA-217, ZA-219, ZA-235); there is no Backlog (owner, 2026-11-27).
+The run's two owner questions were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
 
@@ -57,31 +57,12 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 - Where: `ZauberCMS.Components/` (166 razor files) · Category: E · Since: 2026-11-25
 - Issue / Fix: 0 localiser uses, ~370 literal strings; `AdminDefaultLanguage` only affects formatting.
 
-### ZA-191 [Low/High] `GetContentFromRequestParameters.IgnoreInternalRedirect` is never read
-- Where: `ZauberCMS.Core/Content/Parameters/GetContentFromRequestParameters.cs` · Category: F · Since: 2026-11-27 (older) · Roadmap: 12
-- Issue / Fix: a public switch that does nothing. Honour it or make it `[Obsolete]`.
-
-### ZA-192 [Low/High] Settings set in code do not reach the bootstrap's copy
-- Where: `ZauberCMS.Core/ZauberSetup.cs` (`AddZauberCms(builder)`) · Category: F · Since: 2026-11-27 (older) · Roadmap: 12
-- Issue / Fix: `Configure<ZauberSettings>` changes `IOptions<ZauberSettings>` but not the copy the bootstrap reads
-  for ImageResize, Identity, rate limits and Redis. Document it, or read those from the options.
-
 ### ZA-194 [Low/High] With registration off, the not-found view is shown in the account layout
 - Where: `ZauberCMS.Components/Account/Pages/Register.razor` · Category: E · Since: 2026-11-27 (older; visible since 11a sends the HTML) · Roadmap: 10i
 - Issue / Fix: the not-found view renders inside the account layout, not its own. Render it as `EntryPage` does.
 
-### ZA-195 [Low/High] CI's commit-back conflicts when two pushes are in flight
-- Where: `.github/workflows/ci.yml` (publish job, commit-back) · Category: F · Since: 2026-11-27 (older) · Roadmap: 12
-- Issue / Fix: the `concurrency` group serialises the publish jobs, but the second one's `pull --rebase` of the
-  stamped version conflicts after its packages are pushed; the next push heals it. Stamp from the tag, or retry.
-
-### ZA-196 [Low/High] A blank storage or email provider fails at first use without naming the setting
-- Where: `ZauberCMS.Core/Providers/ProviderService.cs` and its ten callers (only `MediaService` checks) · Category: C · Since: 2026-11-27 (as before Phase 11d) · Roadmap: 12
-- Issue / Fix: a blank `Zauber:Plugins:StorageProvider`/`EmailProvider` passes start-up and the first upload or email
-  throws `NullReferenceException`. Throw a message that names the setting, or refuse blank at start-up.
-
 ### ZA-217 [Low/High] A site with no `wwwroot` folder fails at start without saying why
-- Where: `ZauberCMS.Core/ZauberSetup.cs:111` (`AddImageResize` options) · Category: F · Since: 2026-11-28 (older; found while building Phase 10g-2) · Roadmap: 12
+- Where: `ZauberCMS.Core/Settings/OptionsFromZauberSettings.cs:46` (`ImageResizeOptionsFromZauberSettings`; was `ZauberSetup.cs:111` before Phase 11h moved it) · Category: F · Since: 2026-11-28 (older; found while building Phase 10g-2) · Roadmap: 12
 - Issue / Fix: with no web root, `IWebHostEnvironment.WebRootPath` is null and `Path.Combine` throws
   `ArgumentNullException` (`path1`) when the options are validated at start. Fall back to the content root's
   `wwwroot` (or create it), or stop with a message that names the folder.
@@ -92,15 +73,54 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
   `redirectUrl` lacks it. Navigate to base-relative addresses (the current-user panel's were fixed in 10g-2), and
   pass `new Uri(NavigationManager.Uri).PathAndQuery` as the return address.
 
+### ZA-235 [Low/High] An out-of-range `Zauber:ImageResize` value stops the start without naming the setting
+- Where: `ZauberCMS.Core/Settings/ZauberSettingsValidator.cs` (`Validate`), ImageResize's options validator · Category: F · Since: 2026-11-28 (older; found by the Phase 11h audit) · Roadmap: 12
+- Issue / Fix: a `DefaultQuality` outside 1–100, a `PngCompressionLevel` outside 0–9 or a negative cache or response
+  number passes the Zauber check, then fails in the host's start-up validator from `app.Run()`, after the migrations,
+  with ImageResize's message and no `Zauber:ImageResize:` path (D48). Run ImageResize's validator on the mapped
+  options in `ZauberSettingsValidator` and name the setting.
+
 ## Improvement proposals
 
-None open. ZP-001 (every back-office user edits their own profile and password) was built in Phase 10g-2 (D72).
+### ZP-002 [Low/Medium] A test that runs CI's commit-back step against a local origin
+- Section: Developer experience · Lens: F · Since: 2026-11-28 (Phase 11h audit) · Needs: owner decision
+- Today: `Packaging/BuildBaselineTests` ZA195 pins the text of the "Commit the stamped version back to main-static"
+  step in `.github/workflows/ci.yml` (its order and commands). A reworded step that works fails the test, and a step
+  that keeps the pinned text but breaks passes it; Phase 11h checked the behaviour by hand instead (the stamp and
+  commit-back steps against a bare origin, 35 checks over 9 cases, again by its diff reviewer on Ubuntu 24.04).
+- Proposal: a test that takes the step's script out of the workflow, runs it with `bash` and `git` against a
+  scratch bare origin for those cases (a push in flight, a higher version, a person's change, a rollback, a lost push)
+  and checks the result, skipped where `bash` is missing; the text pin then keeps only what the order needs.
+- Why: the commit-back runs only on a push to `main-static`, which publishes to nuget.org, so a broken step is found
+  after a release; the hand-run cases would be kept for every later change to the step.
+
+### ZP-003 [Low/Medium] A site can replace the `login` and `register` rate-limit policies
+- Section: Users and access · Lens: F · Since: 2026-11-28 (Phase 11h audit) · Needs: owner decision
+- Today: `RateLimiterOptionsFromZauberSettings` (`ZauberCMS.Core/Settings/OptionsFromZauberSettings.cs`) adds the
+  two policies, a sliding window per IP address from `Zauber:Identity:LoginRateLimit` / `RegisterRateLimit`. A site
+  can change the numbers or turn a limit off, but not the limiter (partition key, algorithm, a store shared by the
+  servers of a farm): adding its own policy of either name fails with `RateLimiterOptions`' duplicate-name error.
+- Proposal: a replaceable default (AGENTS.md core principle), for example the two policies behind a public
+  interface with the current ones as its default, or the policy names the account pages use as settings, so a site
+  points them at a policy of its own. A public API and a release-notes entry either way.
+- Why: the sign-in and registration limits are a security setting a site may need to fit its host (a CDN, a web
+  farm, per-account limits) without forking ZauberCMS or giving up the built-in pages.
+
+ZP-001 (every back-office user edits their own profile and password) was built in Phase 10g-2 (D72).
 
 Lenses G (editor UX) and H (Umbraco alignment) have not had their first `full` run; the next one fills this section.
 
 ## Fixed this run / Resolved since last run
 
-This run (Phase 10g-2 changed run, 2026-11-28); details and how each was verified in [history.md](history.md):
+This run (Phase 11h changed run, 2026-11-28, merged after Phase 10g-2); details and how each was verified in
+[history.md](history.md):
+- Low: ZA-191 `IgnoreInternalRedirect` honoured (D80); ZA-192 settings set in code reach the bootstrap's options
+  (D81); ZA-195 CI's commit-back with two pushes in flight (D82); ZA-196 blank providers name the setting (D83);
+  ZA-230 detailed errors for static rendering; ZA-231 a later configuration source reported as code; ZA-232 an
+  options comment; ZA-233 the commit-back after a rollback; ZA-234 the commit-back's messages.
+- Proposals ZP-002 and ZP-003 recorded (owner decision).
+
+Earlier this day (Phase 10g-2 changed run, 2026-11-28):
 - Medium: ZA-218 the sign-in renewal after a change of the security stamp failed for a cookie over five minutes old,
   and the confirmation page renewed with the old stamp.
 - Low: ZA-197 the vendored modal's subscriptions (moved from 10i); ZA-214 API keys stored and shown by value (D73);
@@ -137,14 +157,14 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 | Check | Result |
 | --- | --- |
 | Build (`dotnet build ZauberCMS.sln -c Release`) | Phase 11 run: PASS, 0 warnings (warnings are errors). First run: 70 warnings, all `NU1902`/`NU1903` |
-| Vulnerable packages | Phase 10g run: 0, direct and transitive. Phase 11 run: 0. First run: 4 → ZA-102 |
+| Vulnerable packages | Phase 11h run: 0. Phase 10g run: 0, direct and transitive. Phase 11 run: 0. First run: 4 → ZA-102 |
 | Outdated packages | Phase 11 run: HtmlSanitizer 11.0.26 → 11.0.74 and Radzen.Blazor 13.3.0 → 13.4.0 (no advisory); 15 majors, the .NET 11 set (D4). First run: see ZA-130 |
 | Version alignment | OK — one `<Version>` 4.1.3 for the four packages, the template and its site match |
 | Migration parity | OK — 5 migrations per provider, same names; Phase 11 changed only `public` → `internal` on them (no Up/Down change) |
 | Config parity | Since Phase 11c the three `appsettings.json` files have the same `Zauber` keys and `Serilog` section (ZA-118, ZA-168; `AppSettingsParityTests`) |
 | Docs drift | Paths all resolve; ~55 claims spot-checked, 5 wrong, corrected this run |
 | Repo hygiene | Only `ZauberCMS.Web/app.db` tracked (exempt); `.gitattributes`, `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and an SDK pin since Phase 11b (ZA-131 fixed) |
-| Tests | Phase 10g-2 run, after its fixes: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 10g run: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 11 run: 1165 |
+| Tests | Phase 11h run, after its fixes and the merge onto Phase 10g-2: 1489 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1400 on its own branch). Phase 10g-2 run, after its fixes: 1455 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 10g run, after its fixes: 1366 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis. Phase 11 run: 1165 |
 | Pattern counts | First counts in the Summary (Phase 11 run) |
 | Hot-path budget | First run, by reading: about 10 round-trips cold; 0 within 5 s of the same URL; 4–5 after 5 s idle; 2 per 404; +3 per block list, +1 per single media picker. Phase 10 changed front-end caching since: re-measure |
 | Package contents | Phase 11 run: all five packed; no stray files; Components carries the modal's script and CSS, Core no Radzen dependency or scoped CSS; dependencies at 4.1.3 |
@@ -152,6 +172,14 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 | Template smoke test | `tests/template-smoke.ps1` since Phase 11c, in CI's build job; passes |
 
 ## Coverage
+
+- Phase 11h changed run (2026-11-28, 7442f14..working tree, made alongside Phase 10g-2 and merged after it): the
+  whole diff by a reviewer given the code (with the CI commit-back run against a local origin on Ubuntu 24.04), and
+  bootstrap and settings end to end by a unit reviewer (ImageResize 3.5.0 probed: every part reads `IOptions`). At the
+  merge, 10g-2's new email send was moved to `GetRequiredEmailProvider()` (the ZA-196 source scan) and the full suite
+  run again. Not done: a product agent (no screen changed beyond the upload dialog's message), R1 (the default lookup
+  path is unchanged), CI itself, a real Redis server with its address set in code; neither part's reviewers saw the
+  other's code.
 
 - Phase 10g-2 changed run (2026-11-28, 7442f14..working tree): the whole diff by a reviewer given the code and the
   requirement; Core (the account changes, confirmation, API keys, settings) and the UI (the panel, header, router,

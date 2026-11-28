@@ -10,10 +10,30 @@ public class ProviderService(IOptions<ZauberSettings> settings, ExtensionManager
 {
     private readonly ZauberSettings _settings = settings.Value;
 
+    /// <summary>
+    /// Why a file cannot be stored or removed on a site whose <c>Zauber:Plugins:StorageProvider</c> is blank
+    /// (ZA-196, Roadmap D83).
+    /// </summary>
+    public const string NoStorageProviderMessage =
+        "Media storage is not set up: Zauber:Plugins:StorageProvider is empty, so files cannot be stored or removed. " +
+        "Set it to ZauberCMS.Core.Providers.DiskStorageProvider (the default) or to the full type name of an " +
+        "IStorageProvider of your own.";
+
+    /// <summary>
+    /// Why an email cannot be sent on a site whose <c>Zauber:Plugins:EmailProvider</c> is blank: such a site sends no
+    /// email (ZA-196, Roadmap D83), as an SMTP provider without <c>Zauber:Email:Smtp:Host</c> sends none.
+    /// </summary>
+    public const string NoEmailProviderMessage =
+        "Email is not set up: Zauber:Plugins:EmailProvider is empty, so no email can be sent. Set it to " +
+        "ZauberCMS.Core.Providers.SmtpEmailProvider (the default, with Zauber:Email) or to the full type name of an " +
+        "IEmailProvider of your own.";
+
     private IStorageProvider? _storageProvider;
 
     /// <summary>
-    /// The media storage chosen by <c>Zauber:Plugins:StorageProvider</c>, or <c>null</c> when that is blank.
+    /// The media storage chosen by <c>Zauber:Plugins:StorageProvider</c>, or <c>null</c> when that is blank (a site
+    /// that stores no files; start-up warns about it). Code that stores or removes a file calls
+    /// <see cref="GetRequiredStorageProvider"/>, which says what to set.
     /// </summary>
     /// <exception cref="InvalidOperationException">The setting names no discovered provider (start-up already
     /// refuses that, ZA-120).</exception>
@@ -21,13 +41,28 @@ public class ProviderService(IOptions<ZauberSettings> settings, ExtensionManager
         _storageProvider ??= Configured<IStorageProvider>(nameof(PluginSettings.StorageProvider),
             _settings.Plugins.StorageProvider);
 
+    /// <summary>The media storage chosen by <c>Zauber:Plugins:StorageProvider</c>.</summary>
+    /// <exception cref="InvalidOperationException">The setting is blank (<see cref="NoStorageProviderMessage"/>), or
+    /// names no discovered provider.</exception>
+    public IStorageProvider GetRequiredStorageProvider() =>
+        StorageProvider ?? throw new InvalidOperationException(NoStorageProviderMessage);
+
     private IEmailProvider? _emailProvider;
 
-    /// <summary>The email backend chosen by <c>Zauber:Plugins:EmailProvider</c>, or <c>null</c> when that is blank.</summary>
+    /// <summary>
+    /// The email backend chosen by <c>Zauber:Plugins:EmailProvider</c>, or <c>null</c> when that is blank (a site that
+    /// sends no email). Code that sends one calls <see cref="GetRequiredEmailProvider"/>, which says what to set.
+    /// </summary>
     /// <exception cref="InvalidOperationException">The setting names no discovered provider.</exception>
     public IEmailProvider? EmailProvider =>
         _emailProvider ??= Configured<IEmailProvider>(nameof(PluginSettings.EmailProvider),
             _settings.Plugins.EmailProvider);
+
+    /// <summary>The email backend chosen by <c>Zauber:Plugins:EmailProvider</c>.</summary>
+    /// <exception cref="InvalidOperationException">The setting is blank (<see cref="NoEmailProviderMessage"/>), or
+    /// names no discovered provider.</exception>
+    public IEmailProvider GetRequiredEmailProvider() =>
+        EmailProvider ?? throw new InvalidOperationException(NoEmailProviderMessage);
 
     private T? Configured<T>(string setting, string? configured) where T : class
     {

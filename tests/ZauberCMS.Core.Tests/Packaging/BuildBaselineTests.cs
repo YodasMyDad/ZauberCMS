@@ -142,6 +142,34 @@ public partial class BuildBaselineTests
     }
 
     [Fact]
+    public void ZA195_the_commit_back_replays_the_bump_on_the_newest_main_static_without_overwriting_a_persons_change()
+    {
+        var text = File.ReadAllText(Path.Combine(RepositoryRoot(), ".github/workflows/ci.yml")).ReplaceLineEndings("\n");
+        var start = text.IndexOf("- name: Commit the stamped version back to main-static", StringComparison.Ordinal);
+        Assert.True(start > text.IndexOf("dotnet nuget push", StringComparison.Ordinal),
+            "the version is committed back after the packages are pushed");
+        var step = text[start..];
+
+        // A plain `pull --rebase` conflicted with the bump of the release before when two pushes were in flight
+        Assert.DoesNotContain("git pull --rebase", step, StringComparison.Ordinal);
+        var fetch = step.IndexOf("git fetch --quiet origin +refs/heads/main-static:refs/remotes/origin/main-static",
+            StringComparison.Ordinal);
+        var rolledBack = step.IndexOf("if ! git merge-base --is-ancestor \"${built}\" \"${tip}\"; then",
+            StringComparison.Ordinal);
+        var newerKept = step.IndexOf("if is_higher \"${current}\" \"${VERSION}\"", StringComparison.Ordinal);
+        var personsKept = step.IndexOf("main-static has later changes to the version files", StringComparison.Ordinal);
+        var replay = step.IndexOf("git rebase --quiet -X theirs \"${tip}\"", StringComparison.Ordinal);
+        var push = step.IndexOf("if git push origin HEAD:main-static; then", StringComparison.Ordinal);
+        Assert.True(fetch > 0 && rolledBack > fetch && newerKept > rolledBack && personsKept > newerKept &&
+                    replay > personsKept && push > replay,
+            "each attempt fetches main-static, stops when it no longer holds the commit built (ZA-233), keeps a " +
+            "newer version and a person's change, then replays the bump and pushes");
+        // Only this job's own bumps are overridden, and a lost race is tried again
+        Assert.Contains("$2 == bot && $3 ~ /^Bump version to [^ ]+ \\[skip ci\\]$/", step, StringComparison.Ordinal);
+        Assert.Contains("for attempt in 1 2 3 4 5; do", step, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ZA180_vulnerability_warnings_and_an_unreadable_audit_are_not_build_errors()
     {
         var props = Load("Directory.Build.props");

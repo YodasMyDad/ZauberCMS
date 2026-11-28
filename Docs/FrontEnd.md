@@ -13,6 +13,10 @@ Static SSR Razor components rendered by the catch-all route. Reference implement
    page), so `/About-Us/` finds `about-us` on every database. Only pages that are published, not in the recycle
    bin and not blocks are served — also as a domain root or an internal-redirect target — and the `Children` it
    loads follow the same rule. Blocks have no URL.
+   A page with an internal redirect (`InternalRedirectId`) shows the page it points at under its own address, as
+   Umbraco's `umbracoInternalRedirectId` does. Code that wants the page itself, such as a layout that lists the root
+   page's children when the root shows another page, sets `GetContentFromRequestParameters.IgnoreInternalRedirect`;
+   the two answers are cached apart, and either way only a live page is returned (D80).
    `CultureMiddleware` looks content up only when the matched endpoint is the content catch-all (a route that is just
    `{**slug}`) or the Razor page at `/` (the home page has a page of its own, `Index.razor`; see
    `CultureMiddleware.IsContentEndpoint`). A site's own pages and endpoints, `/_blazor` and 404s are
@@ -60,7 +64,8 @@ It is ZauberCMS's form of Umbraco's `IContentFinder`; Umbraco's last-chance find
   an old address to a new one can look the new one up without starting itself over.
 - A result names the page by id (`new ContentFinderResult(page)` or `(page.Id)`). ZauberCMS loads that page again
   as the URL lookup would, and serves it only when it is published, not in the recycle bin and not a block (its
-  internal redirect is followed, role restrictions apply as usual); otherwise the next finder is asked. So a finder
+  internal redirect is followed unless the lookup sets `IgnoreInternalRedirect`, role restrictions apply as usual);
+  otherwise the next finder is asked. So a finder
   cannot show an unpublished page, and unpublishing the page takes every address it served off the site.
 - `RouteValues` go to the view through `EntryModel.RouteValues`; `EntryPage` cascades the `EntryModel` to the view
   and its layout. `LanguageIsoCode` sets the language the page is shown in; it wins over the domain's and the

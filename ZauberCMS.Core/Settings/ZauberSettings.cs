@@ -3,8 +3,21 @@
 public class ZauberSettings
 {
     public string? NewUserStartingRole { get; set; } = "Member";
+
+    /// <summary>
+    /// The database (Sqlite, SqlServer or PostgreSql), read from configuration when the site starts (the installer
+    /// writes it there, with <see cref="ConnectionString"/>). Changed in code, it does nothing: a start-up warning
+    /// says so (Roadmap D81). Empty, with an empty connection string: the installer.
+    /// </summary>
     public string? DatabaseProvider { get; set; } = "Sqlite";
+
+    /// <summary>The database's connection string; read from configuration, as <see cref="DatabaseProvider"/>.</summary>
     public string? ConnectionString { get; set; } = "DataSource=app.db;Cache=Shared";
+
+    /// <summary>
+    /// Redis, which carries the cache clears between the servers of a site (Roadmap D13). Whether Redis is used is
+    /// decided from configuration when the site starts; the address itself may be changed in code (D81).
+    /// </summary>
     public string? RedisConnectionString { get; set; }
     public string? UploadFolderName { get; set; } = "media";
     public string AdminDefaultLanguage { get; set; } = "en-US";

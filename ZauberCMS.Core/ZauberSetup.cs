@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Threading.RateLimiting;
 using ImageResize.Core.Configuration;
 using ImageResize.Core.Extensions;
 using ImageResize.Core.Interfaces;
@@ -102,24 +101,15 @@ public static class ZauberSetup
         builder.Services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IValidateOptions<ZauberSettings>, ZauberSettingsValidator>());
 
-        // Configure ImageResize with settings from ZauberSettings
-        builder.Services.AddImageResize(o =>
-        {
-            o.EnableMiddleware = zauberSettings.ImageResize.EnableMiddleware;
-            o.ContentRoots = [.. zauberSettings.ImageResize.ContentRoots];
-            o.WebRoot = zauberSettings.ImageResize.WebRoot ?? builder.Environment.WebRootPath;
-            o.CacheRoot = zauberSettings.ImageResize.CacheRoot ?? Path.Combine(builder.Environment.WebRootPath, "_mediacache");
-            o.AllowUpscale = zauberSettings.ImageResize.AllowUpscale;
-            o.DefaultQuality = zauberSettings.ImageResize.DefaultQuality;
-            o.PngCompressionLevel = zauberSettings.ImageResize.PngCompressionLevel;
-            o.HashOriginalContent = zauberSettings.ImageResize.HashOriginalContent;
-            o.Cache.FolderSharding = zauberSettings.ImageResize.Cache.FolderSharding;
-            o.Cache.PruneOnStartup = zauberSettings.ImageResize.Cache.PruneOnStartup;
-            o.Cache.MaxCacheBytes = zauberSettings.ImageResize.Cache.MaxCacheBytes;
-            o.ResponseCache.ClientCacheSeconds = zauberSettings.ImageResize.ResponseCache.ClientCacheSeconds;
-            o.ResponseCache.SendETag = zauberSettings.ImageResize.ResponseCache.SendETag;
-            o.ResponseCache.SendLastModified = zauberSettings.ImageResize.ResponseCache.SendLastModified;
-        });
+        // The copy read above decides only what is registered (the database, Redis on or off), so those come from
+        // configuration. Everything else is read from IOptions<ZauberSettings> where it is used, also the options
+        // of the libraries ZauberCMS sets up (OptionsFromZauberSettings), so settings changed in code count; a code
+        // change to one of the first kind is a start-up warning (ZA-192, Roadmap D81).
+        builder.Services.AddSingleton(new ComposedZauberSettings(zauberSettings));
+
+        // ImageResize, set from Zauber:ImageResize
+        builder.Services.AddImageResize();
+        builder.Services.ConfigureOptions<ImageResizeOptionsFromZauberSettings>();
         // The resizer keeps each image's copies in a folder of their own, so a permanent delete removes them (D63).
         // Only the resizer's cache is wrapped: the registered IImageCache stays ImageResize's (or the site's), so
         // its start-up prune still runs.
@@ -159,12 +149,11 @@ public static class ZauberSetup
 
         builder.Services.AddHostedService<DailyJob>();
 
+        // Redis on or off is decided here, from configuration; its address is read from the options (D81)
         if (!zauberSettings.RedisConnectionString.IsNullOrWhiteSpace())
         {
-            builder.Services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = zauberSettings.RedisConnectionString;
-            });
+            builder.Services.AddStackExchangeRedisCache(_ => { });
+            builder.Services.ConfigureOptions<RedisCacheOptionsFromZauberSettings>();
         }
 
         // A provider that is named but unknown is a configuration mistake. A blank one (or a blank connection
@@ -191,28 +180,17 @@ public static class ZauberSetup
 
         var identityBuilder = builder.Services.AddIdentityCore<User>(options =>
         {
-            {
-                // Password settings.
-                options.Password.RequireDigit = zauberSettings.Identity.PasswordRequireDigit;
-                options.Password.RequireLowercase = zauberSettings.Identity.PasswordRequireLowercase;
-                options.Password.RequireNonAlphanumeric = zauberSettings.Identity.PasswordRequireNonAlphanumeric;
-                options.Password.RequireUppercase = zauberSettings.Identity.PasswordRequireUppercase;
-                options.Password.RequiredLength = zauberSettings.Identity.PasswordRequiredLength;
-                options.Password.RequiredUniqueChars = zauberSettings.Identity.PasswordRequiredUniqueChars;
+            // Lockout settings.
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+            options.Lockout.MaxFailedAccessAttempts = 6;
+            options.Lockout.AllowedForNewUsers = true;
 
-                // Lockout settings.
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                options.Lockout.MaxFailedAccessAttempts = 6;
-                options.Lockout.AllowedForNewUsers = true;
-
-                // User settings.
-                options.User.RequireUniqueEmail = true;
-                options.User.AllowedUserNameCharacters += " ";
-
-                // Email
-                options.SignIn.RequireConfirmedAccount = zauberSettings.Identity.SignInRequireConfirmedAccount;
-            }
+            // User settings.
+            options.User.RequireUniqueEmail = true;
+            options.User.AllowedUserNameCharacters += " ";
         });
+        // The password rules and confirmed-account sign-in, from Zauber:Identity (D81)
+        builder.Services.ConfigureOptions<IdentityOptionsFromZauberSettings>();
 
         identityBuilder.AddRoles<Role>();
 
@@ -257,34 +235,10 @@ public static class ZauberSetup
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddAntiforgery();
         
-        // Add rate limiting for authentication endpoints
-        builder.Services.AddRateLimiter(options =>
-        {
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            
-            // The limits come from Zauber:Identity:LoginRateLimit / RegisterRateLimit (ZA-149); the defaults are
-            // the values that were fixed here before. A PermitLimit of 0 turns that limit off.
-            var loginLimit = zauberSettings.Identity.LoginRateLimit;
-            var registerLimit = zauberSettings.Identity.RegisterRateLimit;
-
-            // Sliding window rate limiter for login attempts (10 per address in 5 minutes by default)
-            options.AddPolicy("login", httpContext =>
-                loginLimit.PermitLimit > 0
-                    ? RateLimitPartition.GetSlidingWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                        factory: _ => loginLimit.ToLimiterOptions())
-                    : RateLimitPartition.GetNoLimiter("login-off"));
-
-            // Registration has a limit of its own, so a flood of sign-ups neither uses up the login allowance
-            // of the people behind the same address nor hides inside it. Only the posts count: looking at the
-            // form is free, sending it is not (5 per address in 10 minutes by default).
-            options.AddPolicy(RegisterRateLimitPolicy, httpContext =>
-                HttpMethods.IsPost(httpContext.Request.Method) && registerLimit.PermitLimit > 0
-                    ? RateLimitPartition.GetSlidingWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                        factory: _ => registerLimit.ToLimiterOptions())
-                    : RateLimitPartition.GetNoLimiter("register-view"));
-        });
+        // Rate limiting for the sign-in and registration pages: the "login" and "register" policies, from
+        // Zauber:Identity:LoginRateLimit / RegisterRateLimit (ZA-149, D81)
+        builder.Services.AddRateLimiter(_ => { });
+        builder.Services.ConfigureOptions<RateLimiterOptionsFromZauberSettings>();
 
         builder.Services.AddScoped<ExtensionManager>();
         builder.Services.AddScoped<ProviderService>();
@@ -391,22 +345,17 @@ public static class ZauberSetup
             }
         });
 
-        // Detailed errors are clamped to non-Production environments regardless of the
-        // setting — leaking exception messages / stack traces / SQL parameter values to
-        // an end-user browser is exactly the misconfiguration that turns a low-severity
-        // bug into an information-disclosure CVE. Operators who genuinely need them in
-        // Production must set ASPNETCORE_ENVIRONMENT=Development.
-        if (zauberSettings.ShowDetailedErrors && !builder.Environment.IsProduction())
+        // Detailed errors (Zauber:ShowDetailedErrors) are clamped to non-Production environments regardless of the
+        // setting — leaking exception messages / stack traces / SQL parameter values to an end-user browser is
+        // exactly the misconfiguration that turns a low-severity bug into an information-disclosure CVE. Operators
+        // who genuinely need them in Production must set ASPNETCORE_ENVIRONMENT=Development. Read from the options
+        // (D81). The database error page is the developer exception page's, which only Development shows.
+        builder.Services.AddRazorComponents()
+            .AddInteractiveServerComponents();
+        builder.Services.ConfigureOptions<DetailedErrorsFromZauberSettings>();
+        if (builder.Environment.IsDevelopment())
         {
-            builder.Services
-                .AddRazorComponents(c => c.DetailedErrors = true)
-                .AddInteractiveServerComponents(c => c.DetailedErrors = true);
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-        }
-        else
-        {
-            builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
         }
 
         // Controllers (the admin's AuthController, and a site's or plugin's own). ZauberCMS renders no MVC views
@@ -501,8 +450,22 @@ public static class ZauberSetup
             }
         }
 
+        // A setting that decides what is registered, changed where it no longer applies (D81, ZA-231)
+        if (services.GetService<ComposedZauberSettings>() is { } composed)
+        {
+            foreach (var warning in ZauberSettingsValidator.FindChangesThatDoNotApply(composed.Settings,
+                         ConfiguredSettings(services), zauberSettings))
+            {
+                startupMessages.Warning(warning);
+            }
+        }
+
         startupMessages.WriteTo(services.GetRequiredService<ILoggerFactory>().CreateLogger("ZauberCMS.Startup"));
     }
+
+    /// <summary>The <c>Zauber</c> section as configuration has it now, every source included (no code changes).</summary>
+    private static ZauberSettings ConfiguredSettings(IServiceProvider services) =>
+        ZauberSettingsBinding.Read(services.GetRequiredService<IConfiguration>().GetSection(Constants.SettingsConfigName));
 
     /// <summary>
     /// Writes what the bootstrap collected, then reads (and so validates) the settings and writes their warnings. A
@@ -519,6 +482,12 @@ public static class ZauberSetup
         try
         {
             zauberSettings = services.GetRequiredService<IOptions<ZauberSettings>>().Value;
+            if (services.GetService<ComposedZauberSettings>() is { } composed &&
+                ZauberSettingsValidator.ChangeThatCannotWork(composed.Settings, ConfiguredSettings(services),
+                    zauberSettings) is { } failure)
+            {
+                throw new InvalidOperationException(failure);
+            }
         }
         catch (Exception ex)
         {

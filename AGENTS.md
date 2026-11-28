@@ -146,7 +146,10 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
 - Config section `"Zauber"` → `ZauberSettings` (`ZauberCMS.Core/Settings/ZauberSettings.cs`), read by
   `ZauberSettingsBinding` (a list the configuration sets replaces its default, ZA-167) and checked at start-up by
   `ZauberSettingsValidator` (D48): a setting that would fail at first use stops the start naming the setting; one
-  that only does nothing as written is a start-up warning. A new setting must keep the defaults passing. Admin-editable runtime
+  that only does nothing as written is a start-up warning. A new setting must keep the defaults passing. Read settings
+  from `IOptions<ZauberSettings>`, so ones a site sets in code (`Configure<ZauberSettings>`) count; only the database
+  and Redis on or off come from configuration, Redis while the services are registered, so a site adds its
+  configuration sources before `builder.AddZauberCms()` (D81). Admin-editable runtime
   settings → `GlobalSettings`, stored as `GlobalData` alias `"GlobalSettings"`, read via `dataService.GetGlobalSettings()`.
 - Cache: `ICacheService` keeps values in each server's memory (`ServerCache`); keys `TypeName-<hash of SQL + includes>`;
   invalidation by prefix (`StartsWith`). With `RedisConnectionString` set, Redis carries only the clears to the other

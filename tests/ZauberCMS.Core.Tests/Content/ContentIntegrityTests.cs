@@ -309,6 +309,62 @@ public class ContentIntegrityTests : IAsyncLifetime
         Assert.Null(entry.Content);
     }
 
+    // ---- ZA-191: IgnoreInternalRedirect returns the page at the address itself (D80) ----
+
+    [Fact]
+    public async Task ZA191_IgnoreInternalRedirect_returns_the_page_itself_and_is_cached_apart()
+    {
+        var target = await _site.CreateContentAsync(_pageType, "Target");
+        var redirect = await _site.CreateContentAsync(_pageType, "Redirect");
+        await SetAsync(redirect.Id, c => c.InternalRedirectId = target.Id);
+
+        // Asked both ways, in both orders against the cache: each gets its own answer
+        var followed = await GetEntryAsync("redirect");
+        var itself = await GetEntryAsync("redirect", ignoreInternalRedirect: true);
+        var followedAgain = await GetEntryAsync("redirect");
+
+        Assert.Equal(target.Id, followed.Content?.Id);
+        Assert.Equal(redirect.Id, itself.Content?.Id);
+        Assert.Equal(target.Id, followedAgain.Content?.Id);
+    }
+
+    [Fact]
+    public async Task ZA191_the_root_page_and_its_children_without_its_internal_redirect()
+    {
+        // What the flag was made for: a layout that lists the root's children when the root shows another page
+        var root = await _site.CreateContentAsync(_pageType, "Root");
+        var home = await _site.CreateContentAsync(_pageType, "Home", root.Id);
+        var about = await _site.CreateContentAsync(_pageType, "About", root.Id);
+        await SetAsync(root.Id, c => c.InternalRedirectId = home.Id);
+
+        var shown = await WithContentService(s => s.GetContentFromRequestAsync(new GetContentFromRequestParameters
+        {
+            IsRootContent = true, IncludeChildren = true, Url = "http://localhost/"
+        }, Ct));
+        var website = await WithContentService(s => s.GetContentFromRequestAsync(new GetContentFromRequestParameters
+        {
+            IsRootContent = true, IncludeChildren = true, IgnoreInternalRedirect = true, Url = "http://localhost/"
+        }, Ct));
+
+        Assert.Equal(home.Id, shown.Content?.Id);
+        Assert.Equal(root.Id, website.Content?.Id);
+        Assert.Equal(new[] { home.Id, about.Id }.Order(), website.Content!.Children.Select(x => x.Id).Order());
+    }
+
+    [Fact]
+    public async Task ZA191_the_page_itself_is_still_only_a_live_page()
+    {
+        var target = await _site.CreateContentAsync(_pageType, "Target");
+        var redirect = await _site.CreateContentAsync(_pageType, "Redirect");
+        await SetAsync(redirect.Id, c =>
+        {
+            c.InternalRedirectId = target.Id;
+            c.Published = false;
+        });
+
+        Assert.Null((await GetEntryAsync("redirect", ignoreInternalRedirect: true)).Content);
+    }
+
     [Fact]
     public async Task ZA065_An_unpublished_domain_root_is_not_served()
     {
@@ -569,10 +625,10 @@ public class ContentIntegrityTests : IAsyncLifetime
     private Task<HandlerResult<ContentItem>> CopyAsync(Guid id) =>
         WithContentService(s => s.CopyContentAsync(new CopyContentParameters { ContentToCopy = id }, Ct));
 
-    private Task<EntryModel> GetEntryAsync(string slug) =>
+    private Task<EntryModel> GetEntryAsync(string slug, bool ignoreInternalRedirect = false) =>
         WithContentService(s => s.GetContentFromRequestAsync(new GetContentFromRequestParameters
         {
-            Slug = slug, Url = $"http://localhost/{slug.Trim('/')}"
+            Slug = slug, Url = $"http://localhost/{slug.Trim('/')}", IgnoreInternalRedirect = ignoreInternalRedirect
         }, Ct));
 
     private async Task<List<ContentVersion>> VersionsAsync(Guid contentId) =>

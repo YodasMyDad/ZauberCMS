@@ -151,6 +151,25 @@ public class ContentFinderTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ZA191_a_finder_page_follows_its_internal_redirect_unless_the_lookup_ignores_it()
+    {
+        var target = await _site.CreateContentAsync(_pageType, "Target");
+        var named = await _site.CreateContentAsync(_pageType, "Named");
+        await _site.QueryDatabaseAsync(async db =>
+        {
+            (await db.Contents.SingleAsync(x => x.Id == named.Id, Ct)).InternalRedirectId = target.Id;
+            return await db.SaveChangesAsync(Ct);
+        });
+        using var script = ContentFinderScript.Start();
+        script.First = _ => new ContentFinderSearch(named.Id);
+
+        // Both lookups name the same page: the one that ignores the redirect has a cache entry of its own
+        Assert.Equal(target.Id, (await GetEntryAsync("somewhere")).Content?.Id);
+        Assert.Equal(named.Id, (await GetEntryAsync("somewhere", ignoreInternalRedirect: true)).Content?.Id);
+        Assert.Equal(target.Id, (await GetEntryAsync("somewhere")).Content?.Id);
+    }
+
+    [Fact]
     public async Task A_page_recycled_after_it_was_served_through_a_finder_is_not_served_again()
     {
         var page = await _site.CreateContentAsync(_pageType, "Page");
@@ -280,13 +299,14 @@ public class ContentFinderTests : IAsyncLifetime
         Assert.Equal("", Assert.Single(script.Contexts).Slug);
     }
 
-    private async Task<EntryModel> GetEntryAsync(string path)
+    private async Task<EntryModel> GetEntryAsync(string path, bool ignoreInternalRedirect = false)
     {
         using var scope = _site.CreateScope();
         return await scope.ServiceProvider.GetRequiredService<IContentService>().GetContentFromRequestAsync(
             new GetContentFromRequestParameters
             {
-                Slug = path, Url = $"http://localhost/{path.TrimStart('/')}?ref=mail"
+                Slug = path, Url = $"http://localhost/{path.TrimStart('/')}?ref=mail",
+                IgnoreInternalRedirect = ignoreInternalRedirect
             }, Ct);
     }
 }
