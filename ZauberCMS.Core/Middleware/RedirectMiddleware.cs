@@ -200,7 +200,11 @@ internal class RedirectMiddleware(RequestDelegate next, ILogger<RedirectMiddlewa
     private void PerformRedirect(HttpContext context, string toUrl, bool isPermanent)
     {
         context.Response.StatusCode = isPermanent ? StatusCodes.Status301MovedPermanently : StatusCodes.Status302Found;
-        context.Response.Headers.Location = toUrl;
+        // A target on this site (/new-page) is a site path, read below the path base as the From URL is (ZA-251,
+        // D142); a full address is sent as it is. RedirectTarget.IsValid has refused //host and /\host already.
+        context.Response.Headers.Location = toUrl.StartsWith('/')
+            ? context.Request.PathBase.ToUriComponent() + toUrl
+            : toUrl;
         logger.LogInformation("Redirecting {From} -> {To} ({StatusCode})",
             context.Request.Path, toUrl, context.Response.StatusCode);
     }

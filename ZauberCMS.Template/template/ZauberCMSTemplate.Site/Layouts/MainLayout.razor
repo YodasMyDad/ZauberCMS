@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @inject IContentService ContentService
 @inject IDataService DataService
+@inject NavigationManager Navigation
 @* The layout of the starter site: the site name, a menu of the pages under the home page, and a footer.
    It is yours: change the markup here and the styles in wwwroot/css/site.css. *@
 
@@ -11,13 +12,15 @@
 </HeadContent>
 
 <header class="site-header">
-    <a class="site-name" href="/">@(string.IsNullOrWhiteSpace(SiteName) ? "Home" : SiteName)</a>
+    @* Links on the site go through Navigation.ToSiteUrl: it keeps the site's path base when the site runs below
+       one (https://example.com/site/), which a link written from the host's root would leave *@
+    <a class="site-name" href="@Navigation.ToSiteUrl("/")">@(string.IsNullOrWhiteSpace(SiteName) ? "Home" : SiteName)</a>
     <nav aria-label="Main">
-        <a href="/">Home</a>
+        <a href="@Navigation.ToSiteUrl("/")">Home</a>
         @foreach (var item in MenuPages)
         {
-            @* Always build links to pages with ContentUrl: it knows how a stored URL becomes an address *@
-            <a href="@ContentUrl.SiteRelative(item)">@item.Name</a>
+            @* A page's link: its URL as an address on this site *@
+            <a href="@Navigation.ToSiteUrl(item)">@item.Name</a>
         }
     </nav>
 </header>

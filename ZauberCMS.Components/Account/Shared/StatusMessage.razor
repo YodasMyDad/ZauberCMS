@@ -66,20 +66,32 @@
 
     protected override void OnInitialized()
     {
-        _messageFromCookie = HttpContext?.Request.Cookies[IdentityRedirectManager.StatusCookieName];
+        if (HttpContext is null)
+        {
+            return;
+        }
+
+        _messageFromCookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
 
         if (_messageFromCookie is not null)
         {
-            HttpContext?.Response.Cookies.Delete(IdentityRedirectManager.StatusCookieName);
+            DeleteCookie(HttpContext, IdentityRedirectManager.StatusCookieName);
         }
 
         // Written beside the message by RedirectToWithStatus(uri, message, type, context)
-        var type = HttpContext?.Request.Cookies[IdentityRedirectManager.StatusTypeCookieName];
+        var type = HttpContext.Request.Cookies[IdentityRedirectManager.StatusTypeCookieName];
         if (type is not null)
         {
             _typeFromCookie = Enum.TryParse<ResultMessageType>(type, out var parsed) ? parsed : null;
-            HttpContext?.Response.Cookies.Delete(IdentityRedirectManager.StatusTypeCookieName);
+            DeleteCookie(HttpContext, IdentityRedirectManager.StatusTypeCookieName);
         }
     }
+
+    // At the path both were written at: the site's path base, as IdentityRedirectManager writes them (ZA-290)
+    private static void DeleteCookie(HttpContext context, string name) =>
+        context.Response.Cookies.Delete(name, new CookieOptions
+        {
+            Path = context.Request.PathBase.HasValue ? context.Request.PathBase.ToString() : "/"
+        });
 
 }

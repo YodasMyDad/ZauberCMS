@@ -40,6 +40,80 @@ public partial class PathBaseNavigationTests
         Assert.Equal(expected, navigation.ToSiteUrl(url));
     }
 
+    [Theory]
+    [InlineData("https://example.com/site/", "blog/my-post", "/site/blog/my-post")]
+    [InlineData("https://example.com/my%20site/", "about", "/my%20site/about")]
+    [InlineData("https://example.com/", "about", "/about")]
+    [InlineData("https://example.com/site/", null, null)]
+    public void ZA251_a_link_to_a_page_is_read_below_the_base_address(string baseUri, string? url, string? expected)
+    {
+        var navigation = new FixedNavigationManager(baseUri, baseUri);
+
+        Assert.Equal(expected, navigation.ToSiteUrl(new ZauberCMS.Core.Content.Models.Content { Url = url }));
+    }
+
+    [Theory]
+    // A link to a page (data-contentid) holds its site path; under a path base it is rendered below it
+    [InlineData("/site", """<a href="/blog?page=2#top" data-contentid="5">Blog</a>""",
+        """<a href="/site/blog?page=2#top" data-contentid="5">Blog</a>""")]
+    [InlineData("/my%20site", """<a href="/" data-contentid="5">Home</a>""",
+        """<a href="/my%20site/" data-contentid="5">Home</a>""")]
+    // At the host's root, nothing changes
+    [InlineData("", """<a href="/blog" data-contentid="5">Blog</a>""", """<a href="/blog" data-contentid="5">Blog</a>""")]
+    // What an editor typed is rendered as typed, as Umbraco does; so is a page link to a full address
+    [InlineData("/site", """<a href="/contact">Contact</a>""", """<a href="/contact">Contact</a>""")]
+    [InlineData("/site", """<a href="https://other.example/x" data-contentid="5">X</a>""",
+        """<a href="https://other.example/x" data-contentid="5">X</a>""")]
+    [InlineData("/site", """<img src="media/1/photo.jpg" data-mediaid="7">""", """<img src="media/1/photo.jpg" data-mediaid="7">""")]
+    public void ZA251_a_page_link_in_rich_text_is_rendered_below_the_requests_path_base(string pathBase, string html,
+        string expected)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.PathBase = new PathString(Uri.UnescapeDataString(pathBase));
+        var sanitizer = new ZauberCMS.Core.Shared.Services.DefaultHtmlSanitizerService(null, null,
+            new HttpContextAccessor { HttpContext = context }, null);
+
+        Assert.Equal(expected, sanitizer.Sanitize(html));
+    }
+
+    [Fact]
+    public void ZA251_in_a_circuit_a_page_link_in_rich_text_is_rendered_below_its_base_address()
+    {
+        // A circuit, and a block preview rendered in one, has no request: its navigation manager has the base address
+        var sanitizer = new ZauberCMS.Core.Shared.Services.DefaultHtmlSanitizerService(null, null,
+            new HttpContextAccessor(), new FixedNavigationManager("https://example.com/site/", "https://example.com/site/"));
+
+        Assert.Equal("""<a href="/site/blog" data-contentid="5">Blog</a>""",
+            sanitizer.Sanitize("""<a href="/blog" data-contentid="5">Blog</a>"""));
+    }
+
+    [Fact]
+    public void ZA251_with_no_request_or_circuit_a_page_link_is_rendered_as_stored()
+    {
+        // A background job's scope: the navigation manager is there but was never initialised
+        var sanitizer = new ZauberCMS.Core.Shared.Services.DefaultHtmlSanitizerService(null, null,
+            new HttpContextAccessor(), new UninitialisedNavigationManager());
+
+        Assert.Equal("""<a href="/blog" data-contentid="5">Blog</a>""",
+            sanitizer.Sanitize("""<a href="/blog" data-contentid="5">Blog</a>"""));
+    }
+
+    [Fact]
+    public async Task ZA251_the_sanitiser_a_site_resolves_renders_page_links_below_the_path_base()
+    {
+        // The registration builds the sanitiser with the request's accessor, so a view's @inject gets the path base
+        await using var site = await TestSite.CreateAsync();
+        using var scope = site.CreateScope();
+        var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        context.Request.PathBase = "/site";
+        scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext = context;
+
+        var sanitizer = scope.ServiceProvider.GetRequiredService<ZauberCMS.Core.Shared.Services.IHtmlSanitizerService>();
+
+        Assert.Equal("""<p><a href="/site/blog" data-contentid="5">Blog</a></p>""",
+            sanitizer.Sanitize("""<p><a href="/blog" data-contentid="5">Blog</a></p>"""));
+    }
+
     [Fact]
     public void ZA219_the_return_address_keeps_the_path_base_and_the_query()
     {
@@ -152,19 +226,23 @@ public partial class PathBaseNavigationTests
     public void ZA219_no_package_navigates_links_or_redirects_to_a_site_path_from_the_host_root()
     {
         // NavigateTo("/admin/..."), href="/admin/..." and Redirect("/...") read the path from the host's root and leave
-        // a path base: site paths go through ToSiteUrl (components) or the request's PathBase (server code)
+        // a path base: site paths go through ToSiteUrl (components) or the request's PathBase (server code). Also the
+        // template's site and the sample site, which sites copy (ZA-251): href="@ContentUrl.SiteRelative(page)" too.
         var root = RepositoryRoot();
-        var offenders = PackagedProjects
+        var offenders = ScannedProjects
             .SelectMany(project => Directory.EnumerateFiles(Path.Combine(root, project), "*.*", SearchOption.AllDirectories))
             .Where(path => path.EndsWith(".cs", StringComparison.Ordinal) || path.EndsWith(".razor", StringComparison.Ordinal) ||
-                           (path.EndsWith(".js", StringComparison.Ordinal) && !path.EndsWith(".min.js", StringComparison.Ordinal)))
+                           (path.EndsWith(".js", StringComparison.Ordinal) && !path.EndsWith(".min.js", StringComparison.Ordinal)) ||
+                           (path.EndsWith(".css", StringComparison.Ordinal) && !path.EndsWith(".min.css", StringComparison.Ordinal)))
             .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
                            !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
                            !path.Contains($"{Path.DirectorySeparatorChar}lib{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
                            !path.Contains($"{Path.DirectorySeparatorChar}node_modules{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
             .SelectMany(path =>
             {
-                var pattern = path.EndsWith(".js", StringComparison.Ordinal) ? ScriptFromHostRoot() : FromHostRoot();
+                var pattern = path.EndsWith(".js", StringComparison.Ordinal) ? ScriptFromHostRoot()
+                    : path.EndsWith(".css", StringComparison.Ordinal) ? StyleFromHostRoot()
+                    : FromHostRoot();
                 // Comments may show the wrong way (a line that starts with //, ///, @* or *): blanked, lines kept
                 var text = string.Join('\n', File.ReadAllLines(path).Select(line =>
                     line.TrimStart() is var code && (code.StartsWith("//", StringComparison.Ordinal) ||
@@ -180,19 +258,28 @@ public partial class PathBaseNavigationTests
         Assert.True(offenders.Count == 0, "A site path from the host's root: " + string.Join(", ", offenders));
     }
 
-    private static readonly string[] PackagedProjects =
-        ["ZauberCMS.Core", "ZauberCMS.Components", "ZauberCMS.Routing", "ZauberCMS"];
+    private static readonly string[] ScannedProjects =
+    [
+        "ZauberCMS.Core", "ZauberCMS.Components", "ZauberCMS.Routing", "ZauberCMS",
+        Path.Combine("ZauberCMS.Template", "template"), "ZauberCMS.Web"
+    ];
 
     // A call that navigates or redirects (NavigateTo, Redirect, RedirectTo, RedirectToWithStatus) with a "/…" literal
     // or a Urls constant in its arguments that no ToSiteUrl, GetReturnUrl, SitePath, HostPath or PathBase + wraps
-    // (a ternary across lines too); or an href, src, action or Radzen Path attribute, also one written in a C#
-    // string (\"), that starts with "/" or a Urls constant.
+    // (a ternary across lines too); or an href, src, srcset, action or Radzen Path attribute, also one written in a C#
+    // string (\"), that starts with "/", a Urls constant or a page's ContentUrl.SiteRelative link; or a static asset
+    // (Assets["/…"]), a style's url(/…) or a media fallback (GetMediaItems(…, "/…")) from the host's root (ZA-297).
     [GeneratedRegex(HostRootPattern)]
     private static partial Regex FromHostRoot();
 
     private const string HostRootPattern =
         """\b(NavigateTo|Redirect|RedirectTo|RedirectToWithStatus)\((?:(?!ToSiteUrl\(|GetReturnUrl\(|SitePath\(|HostPath\(|PathBase\s*\+)[^;])*?(\$?"/(?![/\\])|\$"\{(ZauberCMS\.Core\.)?Urls\.|(?<![\w.])(ZauberCMS\.Core\.)?Urls\.[A-Z])""" +
-        """|\b(href|src|action|Path)=\\?["'](/(?![/\\])|@\(?\$?"/|@\(?\$?"?\{?(ZauberCMS\.Core\.)?Urls\.)""";
+        """|\b(href|src|srcset|action|Path)=\\?["'](/(?![/\\])|@\(?\$?"/|@\(?\$?"?\{?(ZauberCMS\.Core\.)?Urls\.|@\(?(ZauberCMS\.Core\.Content\.)?ContentUrl\.SiteRelative\()""" +
+        """|Assets\["/(?![/\\])|url\(\s*(&\#x27;|['"])?/(?![/\\])|GetMediaItems\([^;]*?"/(?![/\\])""";
+
+    // In a stylesheet: url(/…) from the host's root (a font or image the page's path base does not reach)
+    [GeneratedRegex("""url\(\s*['"]?/(?![/\\])""")]
+    private static partial Regex StyleFromHostRoot();
 
     // In a script: a fetch or an address set to a path from the host's root
     [GeneratedRegex("""fetch\(\s*['"`]/(?![/\\])|location(\.href)?\s*=\s*['"`]/(?![/\\])|['"`]/(api|admin|account)/""")]
@@ -219,4 +306,7 @@ public partial class PathBaseNavigationTests
         protected override void NavigateToCore(string uri, Microsoft.AspNetCore.Components.NavigationOptions options) =>
             LastNavigation = uri;
     }
+
+    /// <summary>A navigation manager outside a page or circuit: never initialised.</summary>
+    private sealed class UninitialisedNavigationManager : Microsoft.AspNetCore.Components.NavigationManager;
 }

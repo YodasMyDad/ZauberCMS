@@ -116,7 +116,9 @@ content types **and** roles. An editor in a separate class library appears only 
   matches the page's URL is rewritten to `ContentUrl.SiteRelative` (`/blog`; a `?query` or `#fragment` is kept);
   both sides are compared through `ContentUrl.Normalize`, so `/blog` and `blog` are the same. A link to an
   unpublished or recycled page is kept; only a link to a page that no longer exists becomes plain text. Editing a content link on
-  the Manual tab keeps its `data-contentid` while the URL still points at that page.
+  the Manual tab keeps its `data-contentid` while the URL still points at that page. Under a path base the
+  stored href stays the site path; the default sanitiser renders it below the path base (D141). A typed site
+  address (`/contact`, no `data-contentid`) is rendered as typed.
 - **Video embeds are placeholders, not iframes.** The `embed` toolbar item stores
   `<figure data-embed="youtube" data-embed-id="…" data-embed-url="…">`. An existing `<iframe>` from an allowed
   provider is converted to a placeholder when the editor loads the value; an iframe from anywhere else is

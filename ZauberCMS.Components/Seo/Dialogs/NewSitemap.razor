@@ -96,7 +96,8 @@
         {
             SeoSitemap = new SeoSitemap
             {
-                Domain = new Uri(NavigationManager.Uri).GetLeftPart(UriPartial.Authority)
+                // The site's base address: scheme, host and a path base, which every <loc> starts with (ZA-296)
+                Domain = NavigationManager.BaseUri.TrimEnd('/')
             };
         }
         

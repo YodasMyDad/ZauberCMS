@@ -16,8 +16,8 @@ public static class ContentExtensions
     /// <summary>
     /// The page's stored URL: the same as <see cref="Content.Models.Content.Url"/>, which it only returns.
     /// </summary>
-    [Obsolete("Read the Content.Url property, which this returns unchanged, or ContentUrl.SiteRelative(content) for " +
-              "the link (/blog). Url() will be removed in a later major version (Roadmap D57).")]
+    [Obsolete("Read the Content.Url property, which this returns unchanged, or NavigationManager.ToSiteUrl(content) " +
+              "for the link (/blog, with a path base). Url() will be removed in a later major version (Roadmap D57).")]
     public static string? Url(this Content.Models.Content content) => content.Url;
 
 
@@ -204,7 +204,8 @@ public static class ContentExtensions
     /// <param name="content">The content item that holds the media property.</param>
     /// <param name="alias">The alias of the media property to fetch.</param>
     /// <param name="mediaService">The mediator to send queries to retrieve media information.</param>
-    /// <param name="fallBackUrl">A fallback URL to use if no media is found.</param>
+    /// <param name="fallBackUrl">A fallback URL to use if no media is found, in the form a media item's URL has
+    /// (<c>assets/img/header.jpg</c>, read against the page's base address, so it keeps a path base).</param>
     /// <returns>The media in the order the editor chose (recycled media left out); when there is none, a list holding
     /// one item with the fallback URL, or an empty list.</returns>
     public static async Task<List<Media.Models.Media>> GetMediaItems(this IHasPropertyValues content, string? alias,

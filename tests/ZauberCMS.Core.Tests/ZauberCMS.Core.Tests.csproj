@@ -12,6 +12,9 @@
 
     <ItemGroup>
         <None Update="Bootstrap/Snapshots/*.txt" CopyToOutputDirectory="PreserveNewest" />
+        <!-- An empty static web assets manifest, so a test can run the whole AddZauberCms<T> pipeline (MapStaticAssets
+             reads <application>.staticwebassets.endpoints.json) -->
+        <None Update="ZauberCMS.Core.Tests.staticwebassets.endpoints.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>

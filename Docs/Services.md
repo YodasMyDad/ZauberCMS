@@ -233,7 +233,8 @@ obsolete. No sync EF call (`FirstOrDefault`, `ToList`, `Any`…) inside an async
   `DeleteFile`.
 - Content URLs: one per page (not blocks; blocks have none). A typed URL another live page has is refused; a
   generated, copied or restored one gets a suffix. Stored form and request slugs go through `ContentUrl.Normalize`
-  (lower case, no slashes around); links on the site use `ContentUrl.SiteRelative` (`/blog`).
+  (lower case, no slashes around); links on the site use `ContentUrl.SiteRelative` (`/blog`), and in a component
+  `NavigationManager.ToSiteUrl(content)`, which keeps a path base (D140).
 - Drafts (`UnpublishedContent`): `SaveUnpublishedOnly` stores one; a save with property data publishes over it and
   removes it; a save with `ExcludePropertyData` (sort, move, restrict, culture, restore) keeps it and the stored
   `UnpublishedContentId`, whatever the caller's copy says. The editor shows a

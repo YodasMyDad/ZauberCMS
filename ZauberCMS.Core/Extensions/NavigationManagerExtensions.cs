@@ -72,6 +72,21 @@ public static class NavigationManagerExtensions
     }
 
     /// <summary>
+    /// The link to a page of this site, for an <c>href</c> in a view, layout or block (ZA-251, Roadmap D140): its
+    /// <see cref="Content.ContentUrl.SiteRelative(Content.Models.Content)"/> link (<c>/blog</c>) read as
+    /// <see cref="ToSiteUrl(NavigationManager, string)"/> reads a site path, so under a path base <c>/site</c> it is
+    /// <c>/site/blog</c> (the site's root is <c>ToSiteUrl("/")</c>). Null when the content has no URL (a block).
+    /// </summary>
+    /// <param name="navigation">The page's or circuit's navigation manager.</param>
+    /// <param name="content">The page to link to.</param>
+    public static string? ToSiteUrl(this NavigationManager navigation, Content.Models.Content content)
+    {
+        ArgumentNullException.ThrowIfNull(navigation);
+        ArgumentNullException.ThrowIfNull(content);
+        return Content.ContentUrl.SiteRelative(content) is { } link ? navigation.ToSiteUrl(link) : null;
+    }
+
+    /// <summary>
     /// The address to come back to, in the form a return address takes (<c>returnUrl</c>, the sign-in refresh's
     /// <c>redirectUrl</c>): a path from the host's root with the site's path base and the query string, as ASP.NET's
     /// cookie handler writes <c>ReturnUrl</c> and as <see cref="ToLocalReturnUrl"/> gives (ZA-219). The current

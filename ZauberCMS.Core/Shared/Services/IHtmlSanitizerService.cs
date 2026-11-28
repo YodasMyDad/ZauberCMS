@@ -7,7 +7,9 @@ namespace ZauberCMS.Core.Shared.Services;
 public interface IHtmlSanitizerService
 {
     /// <summary>
-    /// Sanitizes the provided HTML string by removing potentially dangerous content.
+    /// Sanitizes the provided HTML string by removing potentially dangerous content. The result is for the page it is
+    /// rendered on (the default one puts the request's path base in front of page links, Roadmap D141): sanitise stored
+    /// HTML once, when it is rendered, and don't store or sanitise the result again.
     /// </summary>
     /// <param name="html">The HTML string to sanitize</param>
     /// <returns>The sanitized HTML string</returns>

@@ -72,7 +72,7 @@ every `ISeedData`, works out whether the site is installed, and makes two intent
 initialise and the culture query).
 A site whose `Zauber:DatabaseProvider` / `ConnectionString` are empty starts **without a database** and serves only
 the installer (→ [Docs/Installer.md](Docs/Installer.md)). Middleware order there is deliberate
-(forwarded headers when enabled → error page outside Development (D33) → installer → authentication → media security headers → restricted-media →
+(forwarded headers when enabled → path-base cookies (D143) → error page outside Development (D33) → installer → authentication → media security headers → restricted-media →
 image-resize → static files → routing → redirect → culture → admin access → rate limiter → authz → antiforgery);
 don't reorder without a reason written in the commit.
 
@@ -166,7 +166,9 @@ engine), so a site's or plugin's controller can use the antiforgery attributes (
   five minutes.
 - Under a path base (`UsePathBase`), site paths (`Urls.*`, `IndexUrl`, tree and media addresses) go through
   `NavigationManager.ToSiteUrl` for navigation and links, return addresses through `GetReturnUrl()`; server code
-  prefixes `Request.PathBase` (D101). A site without `wwwroot` gets one in its content root at start (D100).
+  prefixes `Request.PathBase` (D101). On the front end a page's link is `NavigationManager.ToSiteUrl(content)`;
+  rich-text page links and SEO redirect targets get the path base when sent, and the first cookie of a repeated name
+  is read (D140–D143). A site without `wwwroot` gets one in its content root at start (D100).
 - The first administrator comes from the installer, never from registering first. "Installed" is a `GlobalData`
   flag that is never unset; `Zauber:Identity:RecoverAdminUser` is the way back in for a site with no administrator.
   There is no switch for the installer: empty database settings always show it (D24).

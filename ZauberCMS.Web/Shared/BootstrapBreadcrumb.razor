@@ -14,7 +14,7 @@
                 else
                 {
                     <li class="breadcrumb-item">
-                        <a href="@contentItem.Value.Url">@contentItem.Value.Name</a>
+                        <a href="@NavigationManager.ToSiteUrl(contentItem.Value)">@contentItem.Value.Name</a>
                     </li>
                 }
             }

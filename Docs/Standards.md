@@ -169,14 +169,20 @@ removed line is a breaking change for the release notes.
 - Grid filter/sort strings go through `GridQueryGuard`, never straight into `Where(string)` / `OrderBy(string)`.
 - Redirects: local URLs only (`returnUrl` validated); SEO redirect targets pass `RedirectTarget.IsValid`.
 - Content URLs: compare and store through `ContentUrl.Normalize`; build links with `ContentUrl.SiteRelative`
-  (never a script address or another host). Don't hand-roll `"/" + url` or `ToLower()` on URLs.
+  (never a script address or another host), in a component's `href` through `NavigationManager.ToSiteUrl(content)`
+  (D140). Don't hand-roll `"/" + url` or `ToLower()` on URLs.
   Absolute links in emails come from `ToAbsoluteUrl` (uses `Zauber:SiteUrl`, its path kept, else the request's path
   base), never from the `Host` header directly.
 - Path base (`UsePathBase`, D101): a site path (`/admin/…`, the `Urls` constants, an `IndexUrl`, a tree item's or
   media item's address) goes through `NavigationManager.ToSiteUrl` for `NavigateTo`, `href`, `src` and Radzen
   `Path`; a return address (`returnUrl`, `redirectUrl`) is `NavigationManager.GetReturnUrl()` (the path from the
-  host's root, path base included); server code prefixes `Request.PathBase`. `NavigateTo("/admin")` and
-  `href="/admin"` leave the path base; `Security/PathBaseNavigationTests` fails on them in the packages.
+  host's root, path base included); server code prefixes `Request.PathBase`. The front end too: a page's link is
+  `ToSiteUrl(content)`, rich-text page links and SEO redirect targets get the path base when they are sent
+  (D140–D142). `NavigateTo("/admin")` and `href="/admin"` leave the path base; `Security/PathBaseNavigationTests`
+  fails on them in the packages, the template's site and the sample site.
+- Cookies ZauberCMS writes itself are built with ASP.NET Core's `RequestPathBaseCookieBuilder`, so they are at the
+  site's path base as the framework's own are (ZA-290); under a path base the first cookie of a name is the one read
+  (`PathBaseCookiesMiddleware`, D143).
 - Secrets never in committed `appsettings*.json`; use user-secrets / environment / vault.
 - Outbound HTTP to user-supplied URLs uses the `SeoHttp` client (refuses private addresses, has timeouts), or a
   client built the same way. Never `new HttpClient()` / `HtmlWeb.Load` on such a URL.

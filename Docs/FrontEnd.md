@@ -209,9 +209,48 @@ rather than render a 404, so the built-in page is sent; that shows in the log as
 | `GetMediaItems` / `GetMedia` | Media picker values |
 | `GetContentItems` / `GetContent` | Content picker values |
 | `GetUsers` / `GetUser` | User picker values |
-| `NavigationItems`, `Content.Url` | Menus and links (`Content.Url` is the stored form, `blog`; `ContentUrl.SiteRelative(content)` gives the link, `/blog`; the `Url()` extension is obsolete, D57) |
+| `NavigationItems`, `Content.Url` | Menus and links (`Content.Url` is the stored form, `blog`; `NavigationManager.ToSiteUrl(content)` gives the link, `/blog`, or `/site/blog` under a path base; `ContentUrl.SiteRelative(content)` is the site path `/blog`; the `Url()` extension is obsolete, D57) |
 
 Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the request path.
+
+## Under a path base (Roadmap D101, D140–D143)
+
+A site can run below a path base: `app.UsePathBase("/site")` before `app.AddZauberCms<App>()` (behind a proxy that
+passes `/site/…` on as it is), or an IIS virtual directory. `Zauber:ForwardedHeaders` reads `X-Forwarded-For` and
+`X-Forwarded-Proto` only: behind a proxy that takes the prefix off and sends `X-Forwarded-Prefix`, the site adds
+ASP.NET Core's own `app.UseForwardedHeaders(...)` with `ForwardedHeaders.XForwardedPrefix` (and its proxies) before
+`AddZauberCms<App>()`. Pages are matched below the path base (D64), and every address on the site keeps it:
+
+- **Links to pages:** `href="@NavigationManager.ToSiteUrl(page)"` (`/site/blog`; null for content with no URL),
+  and a site path such as the home page through `NavigationManager.ToSiteUrl("/")` (D140). `ContentUrl.SiteRelative(page)`
+  is the site path without the path base (`/blog`): what rich text stores, and what server code puts
+  `Request.PathBase` in front of. `href="/"` and `href="@ContentUrl.SiteRelative(page)"` leave the site; the
+  template's layout and the sample site link the right way, and `Security/PathBaseNavigationTests` checks them.
+- **Static files and media:** `@Assets["css/site.css"]` and a media item's `Url` (`media/…`, also a
+  `GetMediaItems` fallback such as `assets/img/header.jpg`) are relative to the page's `<base href>`, which
+  `App.razor` sets to the path base. Don't start them with `/`.
+- **Rich text:** a link an editor made to a page with the link dialog's Content tab (it carries `data-contentid`) is
+  rendered below the path base by the default sanitiser, in a page, a circuit or a block preview; the stored HTML
+  keeps the site path, so the site can move to another path base (D141). An address an editor typed (`/contact`) is
+  rendered as typed, as Umbraco does: link to pages with the Content tab. The sanitiser's result is for the page it
+  is rendered on: sanitise the stored HTML once, when it is rendered, and don't store or sanitise the result again,
+  or page links get the path base twice (ZA-292).
+- **SEO redirects:** a target on this site (`/new-page`) is sent below the path base (`/site/new-page`), as the From
+  URL is matched below it; a full address is sent as it is (D142).
+- **SEO tags and sitemaps:** `RenderSeoTags` builds the canonical URL and `og:url` from the base address, path base
+  included. A sitemap's addresses start with its Domain as typed: put the path base in it (`https://example.com/site`).
+- **Cookies:** ASP.NET Core writes a site's sign-in, external sign-in and antiforgery cookies at its path base, and
+  a browser sends the cookies of a longer path first. Under a path base the first cookie of a name is read, the
+  site's own, so a cookie of the same name at `/` (a site at the host's root, or this one before it moved) no longer
+  stops the sign-in or a form post (D143); at the host's root nothing changes. The rule assumes the site's cookie is
+  the one at the longest path: a site under a path base that writes a cookie above it (`Cookie.Path = "/"`) reads a
+  same-named one still at its path base first, until that one expires or is cleared, and of two at one path (a
+  changed `Cookie.Domain`) the older is read (ZA-295). A site that wants the framework's rule back sets a cookies
+  feature of its own (an `IRequestCookiesFeature` of its own type) in a middleware before `AddZauberCms<App>()`;
+  ZauberCMS keeps it (ZA-294). A site that wants cookie names of its own (two sites on one host and path) sets them
+  the ASP.NET Core way after `AddZauberCms`:
+  `builder.Services.ConfigureApplicationCookie(o => o.Cookie.Name = "MySite.Auth")` and
+  `builder.Services.AddAntiforgery(o => o.Cookie.Name = "MySite.Antiforgery")` (a new name signs everyone out once).
 
 ## Blocks
 
@@ -232,7 +271,8 @@ Use `Cached = true` on every `QueryContentAsync`/`GetContentAsync` on the reques
   560 × 315 by attribute. Make them responsive in the site's CSS, for example
   `.zauber-embed iframe { width: 100%; height: auto; aspect-ratio: 16 / 9; }`. A site with its own
   `IHtmlSanitizerService` must call `IRichTextEmbedService.Expand` on the sanitised HTML itself, or videos do
-  not show.
+  not show, and under a path base put the path base in front of the site path of each page link
+  (`a[data-contentid]`), as the default one does (D141).
 - Details: [BlockListEditor.md](BlockListEditor.md).
 
 ## Interactivity

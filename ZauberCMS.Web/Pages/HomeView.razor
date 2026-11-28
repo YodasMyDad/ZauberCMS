@@ -78,7 +78,7 @@
 
         BlogPosts = posts.Items;
 
-        HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "/assets/img/home-bg.jpg")).FirstOrDefault()!;
+        HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "assets/img/home-bg.jpg")).FirstOrDefault()!;
         
         ContentBlocks = await Content!.GetBlocks("Content", ContentService);
     }

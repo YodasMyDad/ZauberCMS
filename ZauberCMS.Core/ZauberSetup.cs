@@ -573,6 +573,12 @@ public static class ZauberSetup
             app.UseForwardedHeaders(BuildForwardedHeadersOptions(zauberSettings.ForwardedHeaders));
         }
 
+        // Under a path base (UsePathBase, an IIS virtual directory, a site's own UseForwardedHeaders with
+        // X-Forwarded-Prefix: all set by now), the first cookie of a name is read, which is the site's own, not one
+        // at "/" of another site (ZA-252, D143).
+        // Before everything that reads a cookie: the installer, authentication, antiforgery.
+        app.UseMiddleware<PathBaseCookiesMiddleware>();
+
         // The error page (ZA-098, D33), in front of everything else so it catches what they throw. Development
         // keeps the developer exception page. The built-in page answers when the site's own page cannot.
         if (!app.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(zauberSettings.ErrorPagePath))

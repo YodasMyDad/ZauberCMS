@@ -9,6 +9,7 @@ one line at the top of the run log.
 
 ## Run log
 
+After Roadmap Phase 11j (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1603 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1559 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-251, ZA-252 fixed (D140–D143); ZA-290 found and fixed while building; ZA-291 (Medium) and ZA-292…ZA-298 (Low) found by the audit and fixed. Next free ID: ZA-300 (ZA-299 unused, skipped, not to be filled; ZA-300…ZA-309 held by the Phase 10h audit, ZA-310…ZA-319 by Phase 10i, both in progress)
 After Roadmap Phase 11i (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1581 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1537 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-217, ZA-219, ZA-235 fixed (D100–D102); ZP-002, ZP-003 adopted and built (D103, D104); ZA-250 found and fixed while building; ZA-253 found by the audit and fixed (Low); ZA-251, ZA-252 recorded (Low, Phase 11j). Next free ID: ZA-300, numbering going on above every used and held ID (ZA-236…ZA-249, ZA-254…ZA-259, ZA-265…ZA-269, ZA-272…ZA-279, ZA-285…ZA-289 unused, skipped, not to be filled; ZA-290…ZA-299 held by Phase 11j, in progress)
 After Roadmap Phase 10h-4 (2026-11-28, merged after 10h-2 and 10h-3): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1533 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1521 on its own branch) · Template smoke test passes (with a new check, ZA-284); `doublecheck` self-review on the part. ZA-129 fixed (with 10h-1 to 10h-3 and the leftovers converted at the merge; Phase 10h done); ZA-271 fixed (D131); ZA-280…ZA-284 found and fixed (ZA-284 High). Next free ID: ZA-236 (ZA-285…ZA-289 unused, skipped, not to be filled; ZA-250…ZA-259 held by Phase 11i, in progress)
 After Roadmap Phase 10h-3 (2026-11-28, merged after 10h-2): Build PASS · Warnings: 0 · Tests: 1510 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1505 on its own branch) · Template smoke test passes; `doublecheck` self-review with an independent review of the editors. ZA-129 in progress (the property editors, the installer and Core's generic messages converted, D120–D122; it closes with 10h-4); ZA-270, ZA-271 recorded (Low, 10i); ZA-264 moved from Phase 12 to 10i (owner). Next free ID: ZA-236 (ZA-265…ZA-269 and ZA-272…ZA-279 unused, skipped, not to be filled; ZA-250…ZA-259 held by Phase 11i, ZA-280…ZA-289 by Phase 10h-4, both in progress)
@@ -46,6 +47,56 @@ After Roadmap Phase 1 (2026-11-25, working tree): Build PASS · Warnings: 0 · V
 
 ## Fixed, resolved, closed and declined
 
+- **Roadmap Phase 11j (2026-11-28, front-end path base and sign-in cookies, D140–D143).** Release notes in the
+  Roadmap's "Phase 11j". Full suite 1559 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
+  Redis; Release build 0 warnings; template smoke test passes. Each fix's tests were seen failing with the fix taken
+  out (the sanitiser's rewrite, the redirect's path base, the cookie feature, the middleware's line in
+  `AddZauberCms<T>`, a site's own feature kept, the status cookie's builder, two of the sample site's fixes for the
+  source scan). `/audit changed`: a diff reviewer given the code and two unit reviewers (U1/U7, U2/U3/U9/U16), each
+  reproducing in a worktree of its own. Merged onto Phase 10h (made from 5da6e2a): 1603 on the same four, template
+  smoke test and `tests/commit-back-test.sh` (55 checks) pass; 10h-4's status message type cookie
+  (`Identity.StatusMessageType`, written with the same builder) is now deleted at the path base too, and
+  `PathBaseCookieTests` ZA290 covers both cookies (seen failing without it under `/site`).
+  - **ZA-251 (Low) — fixed.** A page's link is `NavigationManager.ToSiteUrl(content)` (D140); the template's layout
+    and the sample site use it. The default sanitiser renders a rich-text page link (`a[data-contentid]`) below the
+    request's or circuit's path base, stored HTML unchanged, typed links as typed (D141). An SEO redirect's target on
+    the site is sent below `Request.PathBase` (D142). Tests: `Security/PathBaseNavigationTests` ZA251 ×13 and the
+    source scan over the template and the sample site, `Seo/RedirectAndCultureTests` ZA251. Browser: the dev site under
+    `/site` (menu, brand, blog previews, breadcrumb, a rich-text page link on the page and in a block preview, a
+    redirect).
+  - **ZA-252 (Low) — fixed.** Reproduced: ASP.NET Core 10 reads the last cookie of a repeated name; Chromium sends the
+    longer path first. `PathBaseCookiesMiddleware` (internal, right after the forwarded headers) reads the first of
+    each name under a path base; the root is unchanged; names unchanged (D143). Tests:
+    `Security/PathBaseCookieTests` ZA252 ×5 (incl. sign-in and antiforgery over HTTP, the whole `AddZauberCms<T>`
+    pipeline). Browser: the installer's post and a sign-in under `/site` with another site's cookies at `/`.
+  - **ZA-290 (Low, found while building) — fixed.** The account pages' status message cookie was written and deleted
+    at `/` (a plain `CookieBuilder`), so under a path base it reached every site on the host; now at the path base
+    (`RequestPathBaseCookieBuilder`), deleted at the same path. Test: `PathBaseCookieTests` ZA290 ×2.
+  - **ZA-291 (Medium, found by the audit) — fixed.** The phase's new docs and a comment said `Zauber:ForwardedHeaders`
+    applies `X-Forwarded-Prefix`; it reads For and Proto only (reproduced by the unit reviewer). FrontEnd.md now says
+    a proxy that takes the prefix off needs the site's own `UseForwardedHeaders` with `XForwardedPrefix`. Docs only.
+  - **ZA-292 (Low, found by the audit) — fixed.** Sanitising the default sanitiser's result again gave page links the
+    path base twice (reproduced). No ZauberCMS code does; `IHtmlSanitizerService`'s doc and FrontEnd.md say the
+    result is for the page it is rendered on.
+  - **ZA-293 (Low, found by the audit) — fixed.** Nothing pinned `PathBaseCookiesMiddleware`'s place in
+    `AddZauberCms<T>`: `ZA252_the_whole_pipeline_reads_the_sites_antiforgery_cookie_under_a_path_base` runs the
+    whole pipeline (no database, the installer's form under `/site`, an empty static web assets manifest for the
+    test assembly); it fails with the line taken out.
+  - **ZA-294 (Low, found by the audit) — fixed.** A cookies feature a site set before `AddZauberCms<T>` was replaced
+    under a path base; now only the framework's own is, which is also the way back to the framework's rule. Test:
+    `PathBaseCookieTests` ZA294.
+  - **ZA-295 (Low, found by the audit) — fixed (documented).** The first-wins rule reads a stale cookie when the site
+    writes its own above its path base (`Cookie.Path = "/"`) or two differ only by Domain; FrontEnd.md says so and
+    gives the way back (ZA-294).
+  - **ZA-296 (Low, found by the audit) — fixed.** The new sitemap dialog's default Domain was scheme and host only;
+    it is the site's base address now. Browser: `http://127.0.0.1:5370/site` under `/site`.
+  - **ZA-297 (Low, found by the audit) — fixed.** The source scan missed `Assets["/…"]`, `srcset`, `url(/…)` in
+    styles and stylesheets, and `GetMediaItems` fallbacks from the host's root; it flags the sample site's seven at
+    `5da6e2a` now (two seen failing).
+  - **ZA-298 (Low, found by the audit) — fixed.** The obsolete `Url()` extension's message pointed component links at
+    `ContentUrl.SiteRelative`; it names `NavigationManager.ToSiteUrl(content)`.
+  - Checked, not filed: the second parse of the Cookie header under a path base (+0.6 µs typical, measured). Raised,
+    not numbered: a site's own sanitiser could reuse the page-link rewrite (D141 says it does it itself).
 - **Roadmap Phase 11i (2026-11-28, start-up, path base and rate-limit leftovers, D100–D104).** Release notes in the
   Roadmap's "Phase 11i". Full suite 1537 (all pass, none skipped) on SQLite, PostgreSQL, SQL Server LocalDB and
   Redis; Release build 0 warnings; template smoke test passes. Merged onto Phase 10h (made from f7c38f2): 1581 on

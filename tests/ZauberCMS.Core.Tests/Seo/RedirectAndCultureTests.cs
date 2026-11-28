@@ -65,6 +65,26 @@ public class RedirectAndCultureTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ZA251_under_a_path_base_a_redirect_to_a_site_path_stays_below_it()
+    {
+        // Under UsePathBase("/site") the From URL is matched below the path base (/site/old-page is /old-page), and the
+        // target, a site path, is sent below it too: /new-page would leave the site
+        var token = TestContext.Current.CancellationToken;
+        await SaveAsync(new SeoRedirect { FromUrl = "/old-page", ToUrl = "/new-page?from=old" }, token);
+        await SaveAsync(new SeoRedirect { FromUrl = "/partner", ToUrl = "https://partner.example/landing" }, token);
+        await SaveAsync(new SeoRedirect { FromUrl = "^/blog/.*", ToUrl = "/blog/archive", IsRegex = true }, token);
+
+        Assert.Equal("/site/new-page?from=old", await RedirectLocationAsync("/old-page", "/site"));
+        Assert.Equal("/my%20site/new-page?from=old", await RedirectLocationAsync("/old-page", "/my site"));
+        Assert.Equal("/site/blog/archive", await RedirectLocationAsync("/blog/2019/post", "/site"));
+        // A full address is sent as it is; a site at the host's root is unchanged
+        Assert.Equal("https://partner.example/landing", await RedirectLocationAsync("/partner", "/site"));
+        Assert.Equal("/new-page?from=old", await RedirectLocationAsync("/old-page"));
+        // The target itself is not redirected again
+        Assert.Null(await RedirectLocationAsync("/blog/archive", "/site"));
+    }
+
+    [Fact]
     public async Task ZA116_a_regex_redirect_matches_by_pattern_and_never_sends_an_address_to_itself()
     {
         var token = TestContext.Current.CancellationToken;
@@ -302,12 +322,13 @@ public class RedirectAndCultureTests : IAsyncLifetime
         Assert.Contains(scope.ServiceProvider.GetServices<CircuitHandler>(), h => h is AdminCultureCircuitHandler);
     }
 
-    private async Task<string?> RedirectLocationAsync(string path)
+    private async Task<string?> RedirectLocationAsync(string path, string? pathBase = null)
     {
         using var scope = _site.CreateScope();
         var middleware = new RedirectMiddleware(_ => Task.CompletedTask, NullLogger<RedirectMiddleware>.Instance);
 
         var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        context.Request.PathBase = pathBase;
         var query = path.IndexOf('?');
         context.Request.Path = query < 0 ? path : path[..query];
         context.Request.QueryString = query < 0 ? QueryString.Empty : new QueryString(path[query..]);

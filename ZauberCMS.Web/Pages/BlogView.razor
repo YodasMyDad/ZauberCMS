@@ -74,7 +74,7 @@
                 CurrentPage = page;
         }
         BlogPages = await ContentService.QueryContentAsync(queryContentCommand);
-        HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "/assets/img/about-bg.jpg")).FirstOrDefault()!;
+        HeaderImage = (await Content!.GetMediaItems("HeaderImage", MediaService, "assets/img/about-bg.jpg")).FirstOrDefault()!;
         ContentBlocks = await Content!.GetBlocks("Content", ContentService);
     }
 }

@@ -1,8 +1,9 @@
 # ZauberCMS Audit Report
 
-Last full run: 5668365 (2026-11-25, full) · Last changed run: f7c38f2+wt (2026-11-28, Roadmap Phase 11i, f7c38f2..working tree, merged after Phase 10h) · Mode: fix
+Last full run: 5668365 (2026-11-25, full) · Last changed run: 5da6e2a+wt (2026-11-28, Roadmap Phase 11j, 5da6e2a..working tree, merged after Phase 10h) · Mode: fix
 Build: PASS · Warnings: 0 (warnings are errors since Phase 11b) · Vulnerable packages: 0 · Outdated majors: 15 (the .NET 11 set, held by D4)
-Next free IDs: ZA-300 (findings; numbering goes on above every used and held ID) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Used: ZA-001…ZA-235, ZA-250…ZA-253, ZA-260…ZA-264, ZA-270, ZA-271, ZA-280…ZA-284 · Unused (skipped, not to be filled): ZA-220…ZA-229, ZA-236…ZA-249, ZA-254…ZA-259, ZA-265…ZA-269, ZA-272…ZA-279, ZA-285…ZA-289 · Held: ZA-290…ZA-299 by Phase 11j (in progress) · Proposals: ZP-010 used by Phase 10h-1, ZP-011…ZP-019 unused (skipped, not to be filled)
+Next free IDs: ZA-300 (findings; numbering goes on above every used and held ID) · ZP-004 (proposals) · Umbraco reference: not yet compared (first run with lenses G and H to come) · Used: ZA-001…ZA-235, ZA-250…ZA-253, ZA-260…ZA-264, ZA-270, ZA-271, ZA-280…ZA-284, ZA-290…ZA-298 · Unused (skipped, not to be filled): ZA-220…ZA-229, ZA-236…ZA-249, ZA-254…ZA-259, ZA-265…ZA-269, ZA-272…ZA-279, ZA-285…ZA-289, ZA-299 · Held: ZA-300…ZA-309 by the Phase 10h audit, ZA-310…ZA-319 by Phase 10i (both in progress) · Proposals: ZP-010 used by Phase 10h-1, ZP-011…ZP-019 unused (skipped, not to be filled)
+After Roadmap Phase 11j (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1603 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1559 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and two unit reviewers): ZA-251, ZA-252 fixed (D140–D143); ZA-290 found and fixed while building; ZA-291 (Medium) and ZA-292…ZA-298 (Low) found by the audit and fixed; ZA-299 unused (skipped, not to be filled). Next free ID: ZA-300 (ZA-300…ZA-319 held by the Phase 10h audit and Phase 10i, in progress)
 After Roadmap Phase 11i (2026-11-28, merged after 10h): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1581 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1537 on its own branch) · Template smoke test passes · commit-back step test 55 checks pass · `/audit changed` over the phase (a diff reviewer and a unit reviewer): ZA-217, ZA-219, ZA-235 fixed (D100–D102); ZP-002, ZP-003 adopted and built (D103, D104); ZA-250 found and fixed while building; ZA-253 found by the audit and fixed (Low); ZA-251, ZA-252 recorded (Low, Phase 11j); ZA-254…ZA-259 unused (skipped, not to be filled). Next free ID: ZA-300 (ZA-290…ZA-299 held by Phase 11j, in progress)
 After Roadmap Phase 10h-4 (2026-11-28, merged after 10h-2 and 10h-3): Build PASS · Warnings: 0 · Vulnerable packages: 0 · Tests: 1533 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1521 on its own branch) · Template smoke test passes (with a new check, ZA-284); `doublecheck` self-review on the part. ZA-129 fixed (Structure, Settings, Users, the layout, the account pages and Core's messages, D130–D132; with 10h-1 to 10h-3 and the leftovers converted at the merge, Phase 10h done); ZA-271 fixed (D131's describer); ZA-280…ZA-284 found and fixed while building (ZA-284 High: the reset-password page); ZA-285…ZA-289 unused (skipped, not to be filled). Next free ID: ZA-236
 After Roadmap Phase 10h-3 (2026-11-28, merged after 10h-2): Build PASS · Warnings: 0 · Tests: 1510 (all pass, none skipped), SQL Server (LocalDB), PostgreSQL and Redis (1505 on its own branch) · Template smoke test passes; `doublecheck` self-review (with an independent review of the editors). The property editors, the installer and Core's generic messages localised (D120–D122); ZA-129 still in progress (closes with 10h-4); ZA-270, ZA-271 recorded (Low, Phase 10i); ZA-264 moved from Phase 12 to 10i (owner); ZA-272…ZA-279 unused (skipped, not to be filled). Next free ID: ZA-236
@@ -23,12 +24,12 @@ After Roadmap Phase 11 (audit, 2026-11-27): Build PASS · Warnings: 0 · Vulnera
 
 ## Summary
 
-| Severity | Open | New this run (Phase 11i changed run) | Fixed this run (Phase 11i, its audit included) |
+| Severity | Open | New this run (Phase 11j changed run) | Fixed this run (Phase 11j, its audit included) |
 | --- | --- | --- | --- |
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 | 0 |
-| Medium | 0 | 0 | 0 |
-| Low | 9 | 4 (ZA-250…ZA-253) | 5 (ZA-217, ZA-219, ZA-235, ZA-250, ZA-253) |
+| Medium | 0 | 1 (ZA-291) | 1 (ZA-291) |
+| Low | 7 | 8 (ZA-290, ZA-292…ZA-298) | 10 (ZA-251, ZA-252, ZA-290, ZA-292…ZA-298) |
 
 Proposals: one open, ZP-010 (Phase 10h-1, owner decision). ZP-002 and ZP-003 adopted and built in Phase 11i (D103,
 D104); ZP-001 built in Phase 10g-2 (D72).
@@ -46,7 +47,7 @@ event-unsubscribe 22 · httpcontext-accessor 5 · exception-text 11. Flat agains
 suppressed warnings 35 → 18; every hit on an added line is moved code or a suppression with its reason.
 
 **Work order and owner decisions: [Docs/Roadmap.md](../Docs/Roadmap.md).** Every open finding is assigned there to
-a phase (10i: ZA-128, ZA-194, ZA-261…ZA-264, ZA-270; 11j, in progress: ZA-251, ZA-252); there is no Backlog (owner, 2026-11-27).
+a phase (10i: ZA-128, ZA-194, ZA-261…ZA-264, ZA-270); there is no Backlog (owner, 2026-11-27).
 The run's two owner questions were answered and built in the Phase 11 audit follow-ups: ZA-185 (D60) and ZA-198 (D61).
 ZA-151 was declined (D39). What each phase fixed and how it was
 verified: [history.md](history.md); the earlier after-phase status lines are in its run log.
@@ -61,20 +62,6 @@ verified: [history.md](history.md); the earlier after-phase status lines are in 
 ### ZA-194 [Low/High] With registration off, the not-found view is shown in the account layout
 - Where: `ZauberCMS.Components/Account/Pages/Register.razor` · Category: E · Since: 2026-11-27 (older; visible since 11a sends the HTML) · Roadmap: 10i
 - Issue / Fix: the not-found view renders inside the account layout, not its own. Render it as `EntryPage` does.
-
-### ZA-251 [Low/High] The front end under a path base: content links and redirect targets start at the host's root
-- Where: `ZauberCMS.Core/Content/ContentUrl.cs` (`SiteRelative`), `ZauberCMS.Core/Middleware/RedirectMiddleware.cs` (`ToUrl`), rich-text and block-preview HTML · Category: E · Since: 2026-11-28 (older; found in the Phase 11i browser check and its audit) · Roadmap: 11j (in progress)
-- Issue / Fix: under `UsePathBase("/site")` a page's links to other pages (`/about`, from `ContentUrl.SiteRelative`
-  and links stored in rich text), an SEO redirect's target (written as stored) and the links in a block preview
-  leave the site. The admin was fixed in Phase 11i (D101). Decide Umbraco's way, whose URL provider adds the
-  application's virtual path when it builds a URL, without rewriting stored content.
-
-### ZA-252 [Low/Medium] Cookies of the same names at the path `/` stop sign-in under a path base
-- Where: Identity's and antiforgery's cookies (`.AspNetCore.Identity.Application`, `.AspNetCore.Antiforgery.*`) · Category: C · Since: 2026-11-28 (seen in the Phase 11i browser check) · Roadmap: 11j (in progress)
-- Issue / Fix: a browser that held cookies of those names at the path `/` (from earlier sites on the same host and
-  port) got 400 on the login post and was not signed in under `/site` until they were cleared; with them cleared
-  everything worked. Needs repro: which of two same-named cookies ASP.NET Core reads, and whether a site under a
-  path base (or two sites on one host) needs cookie names of its own.
 
 ### ZA-261 [Low/High] Two SEO inputs have no accessible name of their own
 - Where: `ZauberCMS.Components/Seo/Dialogs/AddEditRedirect.razor:9` (the Domain list), `ZauberCMS.Components/Seo/SeoChecker.razor:9` (the address box) · Category: E · Since: 2026-11-28 (older; seen in the Phase 10h-2 browser check) · Roadmap: 10i
@@ -123,8 +110,16 @@ Lenses G (editor UX) and H (Umbraco alignment) have not had their first `full` r
 
 ## Fixed this run / Resolved since last run
 
-This run (Phase 11i changed run, 2026-11-28, merged after Phase 10h); details and how each was verified in
+This run (Phase 11j changed run, 2026-11-28, merged after Phase 10h); details and how each was verified in
 [history.md](history.md):
+- Medium: ZA-291 the docs said `Zauber:ForwardedHeaders` applies `X-Forwarded-Prefix` (found by the audit).
+- Low: ZA-251 front-end links, rich-text page links and SEO redirect targets under a path base (D140–D142); ZA-252
+  the sign-in with same-named cookies at `/` (D143); ZA-290 the status message cookie at `/` (found while building);
+  ZA-292 the sanitiser's result sanitised again; ZA-293 the middleware's place untested; ZA-294 a site's own cookies
+  feature replaced; ZA-295 the first-wins rule's limits; ZA-296 the new sitemap's default Domain; ZA-297 the source
+  scan's gaps; ZA-298 the obsolete `Url()` message (found by the audit).
+
+Earlier this day (Phase 11i changed run, 2026-11-28, merged after Phase 10h):
 - Low: ZA-217 a site without `wwwroot` (D100); ZA-219 the path base in the admin's navigation, links and redirects,
   and in email links (D101); ZA-235 `Zauber:ImageResize` checked with the Zauber settings (D102); ZA-250 the
   commit-back's last refusal message (found while building); ZA-253 crafted return addresses on the external
@@ -201,6 +196,13 @@ This run (Phase 11 changed run, 2026-11-27); details and how each was verified i
 
 ## Coverage
 
+- Phase 11j changed run (2026-11-28, 5da6e2a..working tree): the whole diff by a reviewer given the code, U1/U7 (the
+  pipeline, the cookie middleware, the status cookie; the real `AddZauberCms<T>` pipeline reproduced under a path base)
+  and U2/U3/U9/U16 (the sanitiser, `ToSiteUrl`, the redirects, the template and the sample site, the tests) end to end
+  by two unit reviewers, each reproducing in a worktree of its own; the orchestrator ran the build, the full suite on
+  all four databases and the template smoke test, and walked the installer, the sign-in, the front end and a block
+  preview under `UsePathBase("/site")` in Chromium. Not done: a product agent (no admin screen changed), R1 (no query
+  or cache change; the cookie parse was measured by the unit reviewer), Firefox and Safari, IIS, an OAuth sign-in.
 - Phase 11i changed run (2026-11-28, f7c38f2..working tree): the whole diff by a reviewer given the code, and U1
   (bootstrap, settings, the rate limits) with U7 (the account pages, the sign-in endpoints, the return addresses)
   end to end by a unit reviewer, each reproducing in a worktree of its own; the orchestrator ran the build, the full

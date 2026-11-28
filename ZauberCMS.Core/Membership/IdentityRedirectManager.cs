@@ -9,7 +9,9 @@ public sealed class IdentityRedirectManager(NavigationManager navigationManager)
 {
     public const string StatusCookieName = "Identity.StatusMessage";
 
-    private static readonly CookieBuilder StatusCookieBuilder = new()
+    // At the site's path base, as ASP.NET Core writes its own cookies, not at "/": there it reached every site on the
+    // host (ZA-290). StatusMessage deletes it at the same path.
+    private static readonly CookieBuilder StatusCookieBuilder = new Microsoft.AspNetCore.Authentication.RequestPathBaseCookieBuilder
     {
         SameSite = SameSiteMode.Strict,
         HttpOnly = true,

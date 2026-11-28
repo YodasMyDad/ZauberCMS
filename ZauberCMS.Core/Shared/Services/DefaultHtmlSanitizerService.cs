@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
 using AngleSharp.Dom;
 using Ganss.Xss;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using ZauberCMS.Core.Settings;
 
@@ -15,7 +17,9 @@ namespace ZauberCMS.Core.Shared.Services;
 /// (<c>Zauber:HtmlSanitizer:AllowedIframeHosts</c>, by default YouTube and Vimeo);</item>
 /// <item><c>data:</c> addresses are kept only as the source of an <c>&lt;img&gt;</c> holding a bitmap;</item>
 /// <item>video embed placeholders written by the rich text editor are turned into players by
-/// <see cref="IRichTextEmbedService"/> after sanitising, so the result is ready to render.</item>
+/// <see cref="IRichTextEmbedService"/> after sanitising, so the result is ready to render;</item>
+/// <item>a link to a page (<c>data-contentid</c>, a site path such as <c>/blog</c>) is given the path base of the
+/// request or circuit it is rendered for (ZA-251, Roadmap D141).</item>
 /// </list>
 /// </summary>
 public partial class DefaultHtmlSanitizerService : IHtmlSanitizerService
@@ -27,9 +31,22 @@ public partial class DefaultHtmlSanitizerService : IHtmlSanitizerService
     private readonly HtmlSanitizer _sanitizer;
     private readonly HashSet<string> _iframeHosts;
     private readonly IRichTextEmbedService _embeds;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
+    private readonly NavigationManager? _navigation;
+    private string? _pathBase;
 
     public DefaultHtmlSanitizerService() : this(null)
     {
+    }
+
+    /// <summary>
+    /// The sanitiser of a request or circuit: links to pages get its path base (D141). The one DI builds.
+    /// </summary>
+    public DefaultHtmlSanitizerService(IOptions<ZauberSettings>? settings, IRichTextEmbedService? embeds,
+        IHttpContextAccessor? httpContextAccessor, NavigationManager? navigation) : this(settings, embeds)
+    {
+        _httpContextAccessor = httpContextAccessor;
+        _navigation = navigation;
     }
 
     public DefaultHtmlSanitizerService(IOptions<ZauberSettings>? settings, IRichTextEmbedService? embeds = null)
@@ -71,6 +88,7 @@ public partial class DefaultHtmlSanitizerService : IHtmlSanitizerService
 
         _sanitizer.FilterUrl += KeepDataUrlsForImagesOnly;
         _sanitizer.PostProcessNode += RemoveForeignIframes;
+        _sanitizer.PostProcessNode += GivePageLinksThePathBase;
     }
 
     public string Sanitize(string? html)
@@ -120,6 +138,61 @@ public partial class DefaultHtmlSanitizerService : IHtmlSanitizerService
         {
             // Replacing the node with empty text removes it.
             e.ReplacementNodes.Add(e.Document.CreateTextNode(string.Empty));
+        }
+    }
+
+    /// <summary>
+    /// A link to a page (<c>data-contentid</c>) holds the page's site path (<c>/blog</c>), as the editor's content link
+    /// writes it and keeps it, so under a path base (<c>/site</c>) it is given the path base when it is rendered
+    /// (<c>/site/blog</c>, ZA-251, D141): Umbraco resolves its <c>{localLink}</c> through its URL provider the same way.
+    /// The stored HTML keeps the site path, so the site can move to another path base. An address an editor typed is
+    /// left as typed, as Umbraco does.
+    /// </summary>
+    private void GivePageLinksThePathBase(object? sender, PostProcessNodeEventArgs e)
+    {
+        if (e.Node is not IElement element ||
+            !string.Equals(element.LocalName, "a", StringComparison.OrdinalIgnoreCase) ||
+            !element.HasAttribute("data-contentid") ||
+            element.GetAttribute("href") is not { } href ||
+            !href.StartsWith('/') || href.StartsWith("//", StringComparison.Ordinal) ||
+            href.StartsWith("/\\", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var pathBase = _pathBase ??= ReadPathBase();
+        if (pathBase.Length > 0)
+        {
+            element.SetAttribute("href", pathBase + href);
+        }
+    }
+
+    /// <summary>
+    /// The path base of the request or circuit this sanitiser belongs to (<c>/site</c>, escaped as in an address;
+    /// empty at the host's root). A page request (static rendering, a controller) has it on its HttpContext; a
+    /// circuit, and a block preview rendered in one, in its navigation manager's base address. A scope with
+    /// neither (a background job, or <c>new DefaultHtmlSanitizerService()</c>) renders site paths as they are.
+    /// </summary>
+    private string ReadPathBase()
+    {
+        if (_httpContextAccessor?.HttpContext is { } context)
+        {
+            return context.Request.PathBase.ToUriComponent();
+        }
+
+        if (_navigation == null)
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            return new Uri(_navigation.BaseUri).AbsolutePath.TrimEnd('/');
+        }
+        catch (InvalidOperationException)
+        {
+            // Not initialised: this scope renders no page and has no circuit, so it has no path base either
+            return string.Empty;
         }
     }
 

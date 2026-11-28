@@ -5,7 +5,9 @@ namespace ZauberCMS.Core.Content;
 /// <summary>
 /// One set of rules for content URLs, used by the front-end lookup, the admin link editor and the services.
 /// A content URL is stored lower case without leading or trailing slashes (<c>blog/my-post</c>); a link to it on
-/// the site is that value with a leading slash (<c>/blog/my-post</c>).
+/// the site is that value with a leading slash (<c>/blog/my-post</c>), a site path. Under a path base
+/// (<c>UsePathBase("/site")</c>) a component links to it with <c>NavigationManager.ToSiteUrl(content)</c>
+/// (<c>/site/blog/my-post</c>) and server code puts <c>Request.PathBase</c> in front (ZA-251, Roadmap D140).
 /// </summary>
 public static class ContentUrl
 {
